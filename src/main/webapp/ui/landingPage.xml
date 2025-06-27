@@ -1,4 +1,4 @@
-    <?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <html xmlns="http://www.w3.org/1999/xhtml"
     xmlns:ev="http://www.w3.org/2001/xml-events"
     xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
@@ -15,12 +15,12 @@
         <script lazy="false" type="text/javascript"><![CDATA[
 // 로그인 페이지로 이동
 scwin.goToLogin = function() {
-	window.location.href = "/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/login/login.xml";
+	window.location.href = "/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/loginPage.xml";
 };
 
 // 회원가입 페이지로 이동  
 scwin.goToSignup = function() {
-	window.location.href = "/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/login/signup.xml";
+	window.location.href = "/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/signupPage.xml";
 };
 
 scwin.onpageload = function() {
