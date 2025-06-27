@@ -368,16 +368,16 @@ scwin.onpageload = function() {
 				*[class*="main-title"],
 				*[style*="color:#0000FF"],
 				*[style*="초급 개발자를"] {
-					font-size: clamp(2.4rem, 5.5vw, 3rem) !important;
-					margin-left: 20px !important; /* 30px → 20px (비례적으로 조정) */
+					font-size: clamp(2.8rem, 6.5vw, 3.5rem) !important; /* 모바일에서 제목 크기 키움 */
+					margin-left: 0px !important; /* 다른 요소들과 같은 라인 */
 				}
 				
 				.sub-title,
 				*[class*="sub-title"],
 				*[style*="color:#FFC107"],
 				*[style*="올인원 협업"] {
-					font-size: clamp(2.4rem, 5.5vw, 3rem) !important;
-					margin-left: 20px !important; /* 30px → 20px (비례적으로 조정) */
+					font-size: clamp(2.8rem, 6.5vw, 3.5rem) !important; /* 모바일에서 제목 크기 키움 */
+					margin-left: 0px !important; /* 다른 요소들과 같은 라인 */
 				}
 				
 				/* 모바일에서 버튼 margin 조정 */
@@ -392,6 +392,7 @@ scwin.onpageload = function() {
 				*[class*="description"],
 				*[style*="일정 관리부터"] {
 					margin-left: 0px !important; /* 제목들과 같은 라인 */
+					font-size: clamp(1.4rem, 4vw, 1.8rem) !important; /* 모바일에서 글자 크기 키움 */
 				}
 				
 				/* 모바일에서 설명 텍스트는 줄바꿈 허용 */
@@ -473,7 +474,7 @@ scwin.onpageload = function() {
 				*[style*="color:#0000FF"],
 				*[style*="초급 개발자를"],
 				*[style*="margin-left: 50px"] {
-					font-size: clamp(2rem, 4.5vw, 2.5rem) !important;
+					font-size: clamp(2.4rem, 5.5vw, 3rem) !important; /* 작은 모바일에서도 제목 크기 키움 */
 					margin-left: 0px !important;
 					margin-right: auto !important;
 					text-align: left !important;
@@ -484,7 +485,7 @@ scwin.onpageload = function() {
 				*[style*="color:#FFC107"],
 				*[style*="올인원 협업"],
 				*[style*="margin-left: 50px"] {
-					font-size: clamp(2rem, 4.5vw, 2.5rem) !important;
+					font-size: clamp(2.4rem, 5.5vw, 3rem) !important; /* 작은 모바일에서도 제목 크기 키움 */
 					margin-left: 0px !important;
 					margin-right: auto !important;
 					text-align: left !important;
