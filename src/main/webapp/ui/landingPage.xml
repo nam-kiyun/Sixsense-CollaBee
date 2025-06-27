@@ -244,7 +244,7 @@ scwin.onpageload = function() {
 				word-break: keep-all !important;
 				overflow: hidden !important;
 				text-overflow: ellipsis !important;
-				margin-left: 140px !important;
+				margin-left: 0px !important; 
 			}
 			
 			.sub-title,
@@ -257,14 +257,14 @@ scwin.onpageload = function() {
 				word-break: keep-all !important;
 				overflow: hidden !important;
 				text-overflow: ellipsis !important;
-				margin-left: 140px !important;
+				margin-left: 0px !important; 
 			}
 			
-			/* 첫번째 버튼 오른쪽 이동 */
+			/* 첫번째 버튼 왼쪽 정렬 */
 			#btn_start_free_1,
 			*[id="btn_start_free_1"],
 			*[style*="linear-gradient"] {
-				margin-left: 245px !important;
+				margin-left: 0px !important; /* 제목들과 같은 라인에서 시작 */
 			}
 			
 			.description,
@@ -276,6 +276,7 @@ scwin.onpageload = function() {
 				word-break: keep-all !important;
 				overflow: hidden !important;
 				text-overflow: ellipsis !important;
+				margin-left: 0px !important; /* 제목들과 같은 라인에서 시작 */
 			}
 			
 			/* CTA 섹션 텍스트 - 줄바꿈 방지하고 크기만 조절 */
@@ -368,7 +369,7 @@ scwin.onpageload = function() {
 				*[style*="color:#0000FF"],
 				*[style*="초급 개발자를"] {
 					font-size: clamp(2.4rem, 5.5vw, 3rem) !important;
-					margin-left: 40px !important;
+					margin-left: 20px !important; /* 30px → 20px (비례적으로 조정) */
 				}
 				
 				.sub-title,
@@ -376,14 +377,21 @@ scwin.onpageload = function() {
 				*[style*="color:#FFC107"],
 				*[style*="올인원 협업"] {
 					font-size: clamp(2.4rem, 5.5vw, 3rem) !important;
-					margin-left: 40px !important;
+					margin-left: 20px !important; /* 30px → 20px (비례적으로 조정) */
 				}
 				
 				/* 모바일에서 버튼 margin 조정 */
 				#btn_start_free_1,
 				*[id="btn_start_free_1"],
 				*[style*="linear-gradient"] {
-					margin-left: 85px !important;
+					margin-left: 0px !important; /* 제목들과 같은 라인 */
+				}
+				
+				/* 모바일에서 설명 텍스트도 조정 */
+				.description,
+				*[class*="description"],
+				*[style*="일정 관리부터"] {
+					margin-left: 0px !important; /* 제목들과 같은 라인 */
 				}
 				
 				/* 모바일에서 설명 텍스트는 줄바꿈 허용 */
@@ -453,9 +461,9 @@ scwin.onpageload = function() {
 				}
 				
 				/* 인라인 스타일 강제 오버라이드 */
-				*[style*="margin-left: 140px"][style*="color:#0000FF"],
-				*[style*="margin-left: 140px"][style*="color:#FFC107"],
-				*[style*="margin-left: 245px"][style*="linear-gradient"] {
+				*[style*="margin-left: 50px"][style*="color:#0000FF"],
+				*[style*="margin-left: 50px"][style*="color:#FFC107"],
+				*[style*="linear-gradient"] {
 					margin-left: 0px !important;
 					margin-right: auto !important;
 					transform: translateX(0) !important;
@@ -464,7 +472,7 @@ scwin.onpageload = function() {
 				*[class*="main-title"],
 				*[style*="color:#0000FF"],
 				*[style*="초급 개발자를"],
-				*[style*="margin-left: 140px"] {
+				*[style*="margin-left: 50px"] {
 					font-size: clamp(2rem, 4.5vw, 2.5rem) !important;
 					margin-left: 0px !important;
 					margin-right: auto !important;
@@ -475,7 +483,7 @@ scwin.onpageload = function() {
 				*[class*="sub-title"],
 				*[style*="color:#FFC107"],
 				*[style*="올인원 협업"],
-				*[style*="margin-left: 140px"] {
+				*[style*="margin-left: 50px"] {
 					font-size: clamp(2rem, 4.5vw, 2.5rem) !important;
 					margin-left: 0px !important;
 					margin-right: auto !important;
@@ -485,8 +493,7 @@ scwin.onpageload = function() {
 				/* 작은 모바일에서 버튼 margin 조정 */
 				#btn_start_free_1,
 				*[id="btn_start_free_1"],
-				*[style*="linear-gradient"],
-				*[style*="margin-left: 245px"] {
+				*[style*="linear-gradient"] {
 					margin-left: 0px !important;
 					margin-right: auto !important;
 					display: block !important;
@@ -503,6 +510,7 @@ scwin.onpageload = function() {
 					word-break: keep-all !important;
 					overflow: visible !important;
 					text-overflow: unset !important;
+					margin-left: 0px !important; /* 작은 모바일에서는 왼쪽 끝 */
 				}
 				
 				/* 작은 모바일에서도 CTA 텍스트 줄바꿈 허용 */
@@ -554,24 +562,24 @@ scwin.onpageload = function() {
     		style="background:#FFF4D6;min-height: 80vh;display: flex;align-items: center;padding: 60px 20px;color: white;font-size:1em;margin-top: 60px;overflow: hidden;width: 100%;"
     		id="group_hero" class="hero-container">
     		<xf:group style="flex: 1;padding-right: 40px;padding-left: 10%;" id="hero_left" class="hero-left">
-    						<xf:output style="font-size: 3rem; font-weight: bold; margin-bottom: 10px;color:#0000FF;margin-left: 140px;" label="" id="" class="main-title">
+    						<xf:output style="font-size: 3rem; font-weight: bold; margin-bottom: 10px;color:#0000FF;margin-left: 50px;" label="" id="" class="main-title">
 				<xf:label><![CDATA[초급 개발자를 위한]]></xf:label>
 			</xf:output>
-			<xf:output style="font-size: 3rem; font-weight: bold;color:#FFC107; margin-bottom: 20px;margin-left: 140px;" label="" id="" class="sub-title">
+			<xf:output style="font-size: 3rem; font-weight: bold;color:#FFC107; margin-bottom: 20px;margin-left: 50px;" label="" id="" class="sub-title">
 				<xf:label><![CDATA[올인원 협업 플랫폼]]></xf:label>
 			</xf:output>
     			<xf:output style="font-size: 1.2rem; margin-bottom: 40px; opacity: 0.95;color:#000000;font-weight:bold;" label="" id="" class="description">
     				<xf:label><![CDATA[일정 관리부터 협업까지, 개발자가 필요한 모든 도구를 한 곳에서!]]></xf:label>
     			</xf:output>
     						<xf:trigger
-				style="background: linear-gradient(45deg, #FFB823, #f59e0b);color: white;border: none;border-radius: 50px;padding: 15px 35px;font-size: 1.1rem;font-weight: bold;box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);cursor: pointer;transition: all 0.3s ease;text-transform: none;margin-left: 245px;"
+				style="background: linear-gradient(45deg, #FFB823, #f59e0b);color: white;border: none;border-radius: 50px;padding: 15px 35px;font-size: 1.1rem;font-weight: bold;box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);cursor: pointer;transition: all 0.3s ease;text-transform: none;"
 				id="btn_start_free_1" type="button" ev:onclick="scwin.goToLogin">
 				<xf:label><![CDATA[무료로 시작하기]]></xf:label>
 			</xf:trigger>
     		</xf:group>
     		<xf:group style="flex:1;position: relative;height: 500px;overflow: hidden;padding-right: 5%;animation: cardFloat 4s ease-in-out infinite;" id="hero_right" class="hero-right">
     			<xf:group
-    				style="position: absolute;top: 60px;left: 20px;background: rgba(255,255,255,0.95);border-radius: 20px;padding: 20px;width: 140px;box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);text-align: center;animation: cardFloat 4s ease-in-out infinite;"
+    				style="position: absolute;top: 60px;left: 20px;background: rgba(255,255,255,0.95);border-radius: 20px;padding: 20px;width: 140px;box-shadow: 0 10px 15px rgba(245, 158, 11, 0.2);text-align: center;animation: cardFloat 4s ease-in-out infinite;"
     				id="Group_card1" class="floating-card floating-card-1">
     				<xf:output style="font-size: 4rem;color: #FFB823;margin-bottom: 15px;display: block;text-align: center;line-height: 1;"
     					label="" id="" class="fa-solid fa-calendar">
