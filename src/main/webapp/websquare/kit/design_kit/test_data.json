@@ -1,0 +1,566 @@
+{
+    "resource": [
+        {
+            "id": "00_화면시작/0_01 페이지시작.xml",
+            "category": "00_화면시작",
+            "title": "0_01 페이지시작",
+            "iconSrc": "/cm/template/snippets/00_화면시작/0_01 페이지시작_icon.png",
+            "previewSrc": "/cm/template/snippets/00_화면시작/0_01 페이지시작_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\00_화면시작\\0_01 페이지시작.xml",
+            "rowStatus": "R",
+            "favMenu": "1"
+        },
+        {
+            "id": "00_화면시작/0_02 팝업페이지시작.xml",
+            "category": "00_화면시작",
+            "title": "0_02 팝업페이지시작",
+            "iconSrc": "/cm/template/snippets/00_화면시작/0_02 팝업페이지시작_icon.png",
+            "previewSrc": "/cm/template/snippets/00_화면시작/0_02 팝업페이지시작_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\00_화면시작\\0_02 팝업페이지시작.xml",
+            "rowStatus": "R",
+            "favMenu": "1"
+        },
+        {
+            "id": "01_화면분할/1_01 가변 2단 분할.xml",
+            "category": "01_화면분할",
+            "title": "1_01 가변 2단 분할",
+            "iconSrc": "/cm/template/snippets/01_화면분할/1_01 가변 2단 분할_icon.png",
+            "previewSrc": "/cm/template/snippets/01_화면분할/1_01 가변 2단 분할_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\01_화면분할\\1_01 가변 2단 분할.xml",
+            "rowStatus": "R",
+            "favMenu": "1"
+        },
+        {
+            "id": "01_화면분할/1_02 가변 3단 분할.xml",
+            "category": "01_화면분할",
+            "title": "1_02 가변 3단 분할",
+            "iconSrc": "/cm/template/snippets/01_화면분할/1_02 가변 3단 분할_icon.png",
+            "previewSrc": "/cm/template/snippets/01_화면분할/1_02 가변 3단 분할_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\01_화면분할\\1_02 가변 3단 분할.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "01_화면분할/1_03 가변 3단 분할_width값 고정 33per.xml",
+            "category": "01_화면분할",
+            "title": "1_03 가변 3단 분할_width값 고정 33per",
+            "iconSrc": "/cm/template/snippets/01_화면분할/1_03 가변 3단 분할_width값 고정 33per_icon.png",
+            "previewSrc": "/cm/template/snippets/01_화면분할/1_03 가변 3단 분할_width값 고정 33per_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\01_화면분할\\1_03 가변 3단 분할_width값 고정 33per.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "01_화면분할/1_04 가변 4단 분할_width값 고정 25per.xml",
+            "category": "01_화면분할",
+            "title": "1_04 가변 4단 분할_width값 고정 25per",
+            "iconSrc": "/cm/template/snippets/01_화면분할/1_04 가변 4단 분할_width값 고정 25per_icon.png",
+            "previewSrc": "/cm/template/snippets/01_화면분할/1_04 가변 4단 분할_width값 고정 25per_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\01_화면분할\\1_04 가변 4단 분할_width값 고정 25per.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "01_화면분할/1_05 좌측 고정 2단 분할_width값 200px.xml",
+            "category": "01_화면분할",
+            "title": "1_05 좌측 고정 2단 분할_width값 200px",
+            "iconSrc": "/cm/template/snippets/01_화면분할/1_05 좌측 고정 2단 분할_width값 200px_icon.png",
+            "previewSrc": "/cm/template/snippets/01_화면분할/1_05 좌측 고정 2단 분할_width값 200px_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\01_화면분할\\1_05 좌측 고정 2단 분할_width값 200px.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "01_화면분할/1_06 좌측 고정 2단 분할_width값 300px.xml",
+            "category": "01_화면분할",
+            "title": "1_06 좌측 고정 2단 분할_width값 300px",
+            "iconSrc": "/cm/template/snippets/01_화면분할/1_06 좌측 고정 2단 분할_width값 300px_icon.png",
+            "previewSrc": "/cm/template/snippets/01_화면분할/1_06 좌측 고정 2단 분할_width값 300px_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\01_화면분할\\1_06 좌측 고정 2단 분할_width값 300px.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "02_타이틀/2_01 페이지타이틀.xml",
+            "category": "02_타이틀",
+            "title": "2_01 페이지타이틀",
+            "iconSrc": "/cm/template/snippets/02_타이틀/2_01 페이지타이틀_icon.png",
+            "previewSrc": "/cm/template/snippets/02_타이틀/2_01 페이지타이틀_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\02_타이틀\\2_01 페이지타이틀.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "02_타이틀/2_02 서브타이틀(h3).xml",
+            "category": "02_타이틀",
+            "title": "2_02 서브타이틀(h3)",
+            "iconSrc": "/cm/template/snippets/02_타이틀/2_02 서브타이틀(h3)_icon.png",
+            "previewSrc": "/cm/template/snippets/02_타이틀/2_02 서브타이틀(h3)_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\02_타이틀\\2_02 서브타이틀(h3).xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "02_타이틀/2_03 서브타이틀(h4).xml",
+            "category": "02_타이틀",
+            "title": "2_03 서브타이틀(h4)",
+            "iconSrc": "/cm/template/snippets/02_타이틀/2_03 서브타이틀(h4)_icon.png",
+            "previewSrc": "",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\02_타이틀\\2_03 서브타이틀(h4).xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "03_조회영역/3_01 조회조건1행.xml",
+            "category": "03_조회영역",
+            "title": "3_01 조회조건1행",
+            "iconSrc": "/cm/template/snippets/03_조회영역/3_01 조회조건1행_icon.png",
+            "previewSrc": "/cm/template/snippets/03_조회영역/3_01 조회조건1행_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\03_조회영역\\3_01 조회조건1행.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "03_조회영역/3_02 조회조건2행.xml",
+            "category": "03_조회영역",
+            "title": "3_02 조회조건2행",
+            "iconSrc": "/cm/template/snippets/03_조회영역/3_02 조회조건2행_icon.png",
+            "previewSrc": "/cm/template/snippets/03_조회영역/3_02 조회조건2행_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\03_조회영역\\3_02 조회조건2행.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "04_탭/4_01 탭.xml",
+            "category": "04_탭",
+            "title": "4_01 탭",
+            "iconSrc": "/cm/template/snippets/04_탭/4_01 탭_icon.png",
+            "previewSrc": "/cm/template/snippets/04_탭/4_01 탭_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\04_탭\\4_01 탭.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "04_탭/4_02 서브탭.xml",
+            "category": "04_탭",
+            "title": "4_02 서브탭",
+            "iconSrc": "/cm/template/snippets/04_탭/4_02 서브탭_icon.png",
+            "previewSrc": "/cm/template/snippets/04_탭/4_02 서브탭_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\04_탭\\4_02 서브탭.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "05_입출력테이블/5_01 1단테이블.xml",
+            "category": "05_입출력테이블",
+            "title": "5_01 1단테이블",
+            "iconSrc": "/cm/template/snippets/05_입출력테이블/5_01 1단테이블_icon.png",
+            "previewSrc": "/cm/template/snippets/05_입출력테이블/5_01 1단테이블_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\05_입출력테이블\\5_01 1단테이블.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "05_입출력테이블/5_02 2단테이블.xml",
+            "category": "05_입출력테이블",
+            "title": "5_02 2단테이블",
+            "iconSrc": "/cm/template/snippets/05_입출력테이블/5_02 2단테이블_icon.png",
+            "previewSrc": "/cm/template/snippets/05_입출력테이블/5_02 2단테이블_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\05_입출력테이블\\5_02 2단테이블.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "05_입출력테이블/5_03 3단테이블.xml",
+            "category": "05_입출력테이블",
+            "title": "5_03 3단테이블",
+            "iconSrc": "/cm/template/snippets/05_입출력테이블/5_03 3단테이블_icon.png",
+            "previewSrc": "/cm/template/snippets/05_입출력테이블/5_03 3단테이블_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\05_입출력테이블\\5_03 3단테이블.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "05_입출력테이블/5_04 4단테이블.xml",
+            "category": "05_입출력테이블",
+            "title": "5_04 4단테이블",
+            "iconSrc": "/cm/template/snippets/05_입출력테이블/5_04 4단테이블_icon.png",
+            "previewSrc": "/cm/template/snippets/05_입출력테이블/5_04 4단테이블_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\05_입출력테이블\\5_04 4단테이블.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "06_그리드/6_01 그리드.xml",
+            "category": "06_그리드",
+            "title": "6_01 그리드",
+            "iconSrc": "/cm/template/snippets/06_그리드/6_01 그리드_icon.png",
+            "previewSrc": "/cm/template/snippets/06_그리드/6_01 그리드_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\06_그리드\\6_01 그리드.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "06_그리드/6_02 그리드_순번_상태.xml",
+            "category": "06_그리드",
+            "title": "6_02 그리드_순번_상태",
+            "iconSrc": "/cm/template/snippets/06_그리드/6_02 그리드_순번_상태_icon.png",
+            "previewSrc": "/cm/template/snippets/06_그리드/6_02 그리드_순번_상태_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\06_그리드\\6_02 그리드_순번_상태.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "06_그리드/6_03 페이지리스트.xml",
+            "category": "06_그리드",
+            "title": "6_03 페이지리스트",
+            "iconSrc": "/cm/template/snippets/06_그리드/6_03 페이지리스트_icon.png",
+            "previewSrc": "/cm/template/snippets/06_그리드/6_03 페이지리스트_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\06_그리드\\6_03 페이지리스트.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "07_트리/7_01 트리.xml",
+            "category": "07_트리",
+            "title": "7_01 트리",
+            "iconSrc": "/cm/template/snippets/07_트리/7_01 트리_icon.png",
+            "previewSrc": "/cm/template/snippets/07_트리/7_01 트리_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\07_트리\\7_01 트리.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "08_버튼/8_01 기본버튼.xml",
+            "category": "08_버튼",
+            "title": "8_01 기본버튼",
+            "iconSrc": "/cm/template/snippets/08_버튼/8_01 기본버튼_icon.png",
+            "previewSrc": "",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\08_버튼\\8_01 기본버튼.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "08_버튼/8_02 아이콘조회버튼.xml",
+            "category": "08_버튼",
+            "title": "8_02 아이콘조회버튼",
+            "iconSrc": "/cm/template/snippets/08_버튼/8_02 아이콘조회버튼_icon.png",
+            "previewSrc": "/cm/template/snippets/08_버튼/8_02 아이콘조회버튼_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\08_버튼\\8_02 아이콘조회버튼.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "08_버튼/8_03 아이콘삭제버튼.xml",
+            "category": "08_버튼",
+            "title": "8_03 아이콘삭제버튼",
+            "iconSrc": "/cm/template/snippets/08_버튼/8_03 아이콘삭제버튼_icon.png",
+            "previewSrc": "/cm/template/snippets/08_버튼/8_03 아이콘삭제버튼_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\08_버튼\\8_03 아이콘삭제버튼.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "08_버튼/8_04 전체제어버튼.xml",
+            "category": "08_버튼",
+            "title": "8_04 전체제어버튼",
+            "iconSrc": "/cm/template/snippets/08_버튼/8_04 전체제어버튼_icon.png",
+            "previewSrc": "/cm/template/snippets/08_버튼/8_04 전체제어버튼_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\08_버튼\\8_04 전체제어버튼.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "08_버튼/8_05 팝업전체제어버튼.xml",
+            "category": "08_버튼",
+            "title": "8_05 팝업전체제어버튼",
+            "iconSrc": "/cm/template/snippets/08_버튼/8_05 팝업전체제어버튼_icon.png",
+            "previewSrc": "/cm/template/snippets/08_버튼/8_05 팝업전체제어버튼_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\08_버튼\\8_05 팝업전체제어버튼.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "09_아코디언/9_01 아코디언.xml",
+            "category": "09_아코디언",
+            "title": "9_01 아코디언",
+            "iconSrc": "/cm/template/snippets/09_아코디언/9_01 아코디언_icon.png",
+            "previewSrc": "/cm/template/snippets/09_아코디언/9_01 아코디언_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\09_아코디언\\9_01 아코디언.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_01 InputBox.xml",
+            "category": "10_입력폼",
+            "title": "10_01 InputBox",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_01 InputBox_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_01 InputBox_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_01 InputBox.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_02 SelectBox.xml",
+            "category": "10_입력폼",
+            "title": "10_02 SelectBox",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_02 SelectBox_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_02 SelectBox_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_02 SelectBox.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_03 AutoComplete.xml",
+            "category": "10_입력폼",
+            "title": "10_03 AutoComplete",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_03 AutoComplete_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_03 AutoComplete_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_03 AutoComplete.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_04 Upload.xml",
+            "category": "10_입력폼",
+            "title": "10_04 Upload",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_04 Upload_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_04 Upload_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_04 Upload.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_05 Radio.xml",
+            "category": "10_입력폼",
+            "title": "10_05 Radio",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_05 Radio_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_05 Radio_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_05 Radio.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_06 Checkbox.xml",
+            "category": "10_입력폼",
+            "title": "10_06 Checkbox",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_06 Checkbox_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_06 Checkbox_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_06 Checkbox.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_07 Inputbox_100per.xml",
+            "category": "10_입력폼",
+            "title": "10_07 Inputbox_100per",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_07 Inputbox_100per_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_07 Inputbox_100per_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_07 Inputbox_100per.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_08 Selectbox_100per.xml",
+            "category": "10_입력폼",
+            "title": "10_08 Selectbox_100per",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_08 Selectbox_100per_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_08 Selectbox_100per_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_08 Selectbox_100per.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_09 Textarea_100per.xml",
+            "category": "10_입력폼",
+            "title": "10_09 Textarea_100per",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_09 Textarea_100per_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_09 Textarea_100per_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_09 Textarea_100per.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_10 InputBox_조회버튼.xml",
+            "category": "10_입력폼",
+            "title": "10_10 InputBox_조회버튼",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_10 InputBox_조회버튼_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_10 InputBox_조회버튼_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_10 InputBox_조회버튼.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_11 기간조회.xml",
+            "category": "10_입력폼",
+            "title": "10_11 기간조회",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_11 기간조회_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_11 기간조회_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_11 기간조회.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_12 금액.xml",
+            "category": "10_입력폼",
+            "title": "10_12 금액",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_12 금액_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_12 금액_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_12 금액.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_13 이메일.xml",
+            "category": "10_입력폼",
+            "title": "10_13 이메일",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_13 이메일_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_13 이메일_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_13 이메일.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_14 flex_auto.xml",
+            "category": "10_입력폼",
+            "title": "10_14 flex_auto",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_14 flex_auto_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_14 flex_auto_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_14 flex_auto.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_15 flex_fixed.xml",
+            "category": "10_입력폼",
+            "title": "10_15 flex_fixed",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_15 flex_fixed_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_15 flex_fixed_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_15 flex_fixed.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "10_입력폼/10_16 출력텍스트.xml",
+            "category": "10_입력폼",
+            "title": "10_16 출력텍스트",
+            "iconSrc": "/cm/template/snippets/10_입력폼/10_16 출력텍스트_icon.png",
+            "previewSrc": "/cm/template/snippets/10_입력폼/10_16 출력텍스트_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\10_입력폼\\10_16 출력텍스트.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "11_메시지/11_01 경고메시지.xml",
+            "category": "11_메시지",
+            "title": "11_01 경고메시지",
+            "iconSrc": "/cm/template/snippets/11_메시지/11_01 경고메시지_icon.png",
+            "previewSrc": "/cm/template/snippets/11_메시지/11_01 경고메시지_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\11_메시지\\11_01 경고메시지.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "11_메시지/11_02 정상처리메시지.xml",
+            "category": "11_메시지",
+            "title": "11_02 정상처리메시지",
+            "iconSrc": "/cm/template/snippets/11_메시지/11_02 정상처리메시지_icon.png",
+            "previewSrc": "/cm/template/snippets/11_메시지/11_02 정상처리메시지_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\11_메시지\\11_02 정상처리메시지.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "11_메시지/11_03 정보제공메시지.xml",
+            "category": "11_메시지",
+            "title": "11_03 정보제공메시지",
+            "iconSrc": "/cm/template/snippets/11_메시지/11_03 정보제공메시지_icon.png",
+            "previewSrc": "/cm/template/snippets/11_메시지/11_03 정보제공메시지_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\11_메시지\\11_03 정보제공메시지.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "11_메시지/11_04 에러메시지.xml",
+            "category": "11_메시지",
+            "title": "11_04 에러메시지",
+            "iconSrc": "/cm/template/snippets/11_메시지/11_04 에러메시지_icon.png",
+            "previewSrc": "/cm/template/snippets/11_메시지/11_04 에러메시지_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\11_메시지\\11_04 에러메시지.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        },
+        {
+            "id": "11_메시지/11_05 에러메시지박스.xml",
+            "category": "11_메시지",
+            "title": "11_05 에러메시지박스",
+            "iconSrc": "/cm/template/snippets/11_메시지/11_05 에러메시지박스_icon.png",
+            "previewSrc": "/cm/template/snippets/11_메시지/11_05 에러메시지박스_preview.png",
+            "xmlpath": "C:\\workspace\\SP5_adminUX\\WebContent\\cm\\template\\snippets\\11_메시지\\11_05 에러메시지박스.xml",
+            "rowStatus": "R",
+            "favMenu": "0"
+        }
+    ],
+    "category": [
+        {
+            "id": "00_화면시작",
+            "iconSrc": "/cm/template/snippets/00_화면시작/00_화면시작.png",
+            "path": "/cm/template/snippets/00_화면시작"
+        },
+        {
+            "id": "01_화면분할",
+            "iconSrc": "/cm/template/snippets/01_화면분할/01_화면분할.png",
+            "path": "/cm/template/snippets/01_화면분할"
+        },
+        {
+            "id": "02_타이틀",
+            "iconSrc": "/cm/template/snippets/02_타이틀/02_타이틀.png",
+            "path": "/cm/template/snippets/02_타이틀"
+        },
+        {
+            "id": "03_조회영역",
+            "iconSrc": "/cm/template/snippets/03_조회영역/03_조회영역.png",
+            "path": "/cm/template/snippets/03_조회영역"
+        },
+        {
+            "id": "04_탭",
+            "iconSrc": "/cm/template/snippets/04_탭/04_탭.png",
+            "path": "/cm/template/snippets/04_탭"
+        },
+        {
+            "id": "05_입출력테이블",
+            "iconSrc": "/cm/template/snippets/05_입출력테이블/05_입출력테이블.png",
+            "path": "/cm/template/snippets/05_입출력테이블"
+        },
+        {
+            "id": "06_그리드",
+            "iconSrc": "/cm/template/snippets/06_그리드/06_그리드.png",
+            "path": "/cm/template/snippets/06_그리드"
+        },
+        {
+            "id": "07_트리",
+            "iconSrc": "/cm/template/snippets/07_트리/07_트리.png",
+            "path": "/cm/template/snippets/07_트리"
+        },
+        {
+            "id": "08_버튼",
+            "iconSrc": "/cm/template/snippets/08_버튼/08_버튼.png",
+            "path": "/cm/template/snippets/08_버튼"
+        },
+        {
+            "id": "09_아코디언",
+            "iconSrc": "/cm/template/snippets/09_아코디언/09_아코디언.png",
+            "path": "/cm/template/snippets/09_아코디언"
+        },
+        {
+            "id": "10_입력폼_서식",
+            "iconSrc": "/cm/template/snippets/10_입력폼_서식/10_입력폼_서식.png",
+            "path": "/cm/template/snippets/10_입력폼_서식"
+        },
+        {
+            "id": "11_메시지",
+            "iconSrc": "/cm/template/snippets/11_메시지/11_메시지.png",
+            "path": "/cm/template/snippets/11_메시지"
+        }
+    ]
+}

@@ -1,0 +1,83 @@
+@charset "UTF-8";
+
+/* inputBox 스타일 */
+.input-group-container {
+	border: none;
+	outline: none;
+	height:35px;
+	width:89.68%;
+	background:transparent;
+	outline:none;
+	border:none;
+}
+
+.input-group-container:active {
+	border: none;
+	outline: none;
+}
+
+.input-group-container:focus {
+	border: none;
+	outline: none;
+	box-shadow: none;
+}
+
+/* input group 스타일 */
+.input-group {
+	display: flex;
+	flex-direction: row;
+	text-align: center;
+	align-items: center;
+	height: 35px;
+	border: 1px solid #DAD3D3;
+	border-radius: 6px;
+	box-sizing: border-box;
+	padding-left: 10px;
+}
+
+/* 아이콘 스타일 */
+.auth-icon {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: 20px;
+	text-align: center;
+	color: #D9D9D9;
+	width: 30px;
+	height: 100%;
+}
+
+/* 이메일 입력 스타일 */
+.email-group .input-group {
+	width: 70%;
+}
+
+/* 중복 확인 버튼(회원가입) */
+.duplicateCheck-button {
+	width: 20%;
+}
+
+/* 버튼 스타일 */
+.auth-button{
+	width: 60%;
+	height: 35px;
+	border-radius: 6px;
+	background-color: #FFB823;
+	outline: none;
+	border: none;
+}
+.auth-button:hover {
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* 전체 form */
+.auth-form {
+    background-color: white;
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    border: 1px solid #D9D9D9;
+}

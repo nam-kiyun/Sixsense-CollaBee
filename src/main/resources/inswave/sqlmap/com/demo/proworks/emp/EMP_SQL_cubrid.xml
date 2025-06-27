@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<!--
+	@subject	 : 사원정보 관련 처리를 하는 SQL Mapper
+	@description : 사원정보 관련 처리를 하는 SQL Mapper
+	@author		 : 개발팀
+	@since       : #!CREATE_DATE!#
+	@modification
+	===========================================================
+	DATE              AUTHOR             NOTE
+	===========================================================
+	#!CREATE_DATE!#		샘플개발팀			최초 생성
+ -->
+<sqlMap namespace="Emp">
+	<insert id="empDAO_insertEmp" parameterClass="#!PACKAGE_NM!#.emp.vo.EmpVo">
+		<!-- 사원 정보를 등록 처리한다. -->
+	
+	    <selectKey keyProperty="empno" resultClass="java.lang.String">         
+		    SELECT                  
+                #empno# AS EMPNO
+            FROM DUAL
+        </selectKey> 	
+		
+        INSERT INTO EMP   /* QueryID : empDAO_insertEmp */
+        ( 
+         	EMPNO          
+	        <isNotNull property="ename"    > , ENAME     </isNotNull>   
+	        <isNotNull property="job"	   > , JOB       </isNotNull>     
+	        <isNotNull property="mgr"	   > , MGR       </isNotNull>     
+	        <isNotNull property="hiredate" > , HIREDATE  </isNotNull>
+	        <isNotNull property="sal"	   > , SAL       </isNotNull>     
+	        <isNotNull property="comm"	   > , COMM      </isNotNull>    
+	        <isNotNull property="deptno"   > , DEPTNO    </isNotNull>  
+	        <isNotNull property="account"  > , ACCOUNT   </isNotNull>  
+        )
+        VALUES  
+        ( 
+	         #empno#   
+	        <isNotNull property="ename"    > , #ename#          </isNotNull>   
+	        <isNotNull property="job"	   > , #job#            </isNotNull>     
+	        <isNotNull property="mgr"	   > , #mgr#            </isNotNull>     
+	        <isNotNull property="hiredate" > , TO_DATE( #hiredate# , 'yyyy-MM-dd HH24:MI:SS') </isNotNull>
+	        <isNotNull property="sal"	   > , #sal#            </isNotNull>     
+	        <isNotNull property="comm"	   > , #comm#           </isNotNull>    
+	        <isNotNull property="deptno"   > , #deptno#         </isNotNull>  
+	        <isNotNull property="account"  > , #account:CLOB#   </isNotNull>
+        )          
+	</insert>	
+	
+	<update id="empDAO_updateEmp" parameterClass="#!PACKAGE_NM!#.emp.vo.EmpVo">
+		<!-- 사원 정보를 갱신 처리한다. -->
+		
+        UPDATE EMP       /* QueryID : empDAO_insertEmp */    
+      	  SET            
+              EMPNO    =  #empno# 
+             <isNotNull property="ename"    >, ENAME    =  #ename#          </isNotNull>   
+             <isNotNull property="job"	    >, JOB      =  #job#            </isNotNull>     
+             <isNotNull property="mgr"      >, MGR      =  #mgr#            </isNotNull>     
+             <isNotNull property="hiredate" >, HIREDATE =  TO_DATE( #hiredate# , 'yyyy-MM-dd HH24:MI:SS') </isNotNull>
+             <isNotNull property="sal"	    >, SAL      =  #sal#            </isNotNull>     
+             <isNotNull property="comm"	    >, COMM     =  #comm#           </isNotNull>    
+             <isNotNull property="deptno"   >, DEPTNO   =  #deptno#         </isNotNull>                  
+             <isNotNull property="account"  >, ACCOUNT  =  #account:CLOB#   </isNotNull>
+        WHERE   EMPNO = #empno#
+	</update>
+	
+	<delete id="empDAO_deleteEmp" parameterClass="#!PACKAGE_NM!#.emp.vo.EmpVo">
+		<!-- 사원 정보를 삭제 처리한다. -->
+		
+		<![CDATA[
+        DELETE FROM EMP    /* QueryID : empDAO_insertEmp */
+        WHERE   EMPNO = #empno#   
+		]]>
+	</delete>
+	
+	<select id="empDAO_selectEmp" parameterClass="#!PACKAGE_NM!#.emp.vo.EmpVo" resultClass="#!PACKAGE_NM!#.emp.vo.EmpVo">
+		<!-- 사원 정보를 상세 조회한다. -->
+		
+			SELECT     /* QueryID : empDAO_selectEmp */
+				  EMPNO, ENAME, JOB, MGR, TO_CHAR( HIREDATE , 'yyyy-MM-dd') HIREDATE 
+	            , SAL, COMM, DEPTNO, ACCOUNT
+	            , (SELECT DNAME FROM DEPT WHERE DEPTNO = E.DEPTNO) DNAME
+	            , (SELECT ENAME FROM EMP WHERE EMPNO=E.MGR) MGRNAME     
+			FROM EMP E 
+			WHERE EMPNO = #empno#   
+	</select>
+	
+	<select id="empDAO_selectEmpList" parameterClass="#!PACKAGE_NM!#.emp.vo.EmpVo" resultClass="#!PACKAGE_NM!#.emp.vo.EmpVo">
+		<!-- 사원정보 목록을 조회한다. -->
+		
+	       SELECT      /* QueryID : empDAO_selectEmpList */
+				  EMPNO, ENAME, JOB, MGR, TO_CHAR( HIREDATE , 'yyyy-MM-dd') HIREDATE 
+	            , SAL, COMM, DEPTNO
+	            , (SELECT DNAME FROM DEPT WHERE DEPTNO = A.DEPTNO) DNAME
+	            , (SELECT ENAME FROM EMP WHERE EMPNO=A.MGR) MGRNAME      			       
+	       FROM (
+		       SELECT  S.*, CEIL( (ROWNUM-1) / #pageSize# ) AS PAGE
+			   FROM (				
+			        SELECT 
+			              *  		                  
+			        FROM EMP
+			        WHERE  1=1    		
+						<isNotEmpty property="scEname" prepend="AND">
+							ENAME LIKE '%' || #scEname# || '%'
+						</isNotEmpty>		     
+						<isNotEmpty property="scDname" prepend="AND">
+							DEPTNO IN (SELECT DEPTNO FROM DEPT WHERE DNAME LIKE '%' || #scDname# || '%')      
+						</isNotEmpty>					
+						<isNotEmpty property="scDeptno" prepend="AND">
+							DEPTNO = #scDeptno#      
+						</isNotEmpty>					
+					ORDER BY EMPNO ASC																		
+				) S
+			 ) A
+		 WHERE PAGE = (#pageIndex# -1 )
+	</select>
+	
+	<select id="empDAO_selectEmpListTotCnt" parameterClass="#!PACKAGE_NM!#.emp.vo.EmpVo" resultClass="long">
+		<!-- 사원 정보 목록 건수를 조회한다. -->
+		
+	        SELECT     /* QueryID : empDAO_selectEmpListTotCnt */
+	            COUNT(*) totcnt  		                  
+	        FROM EMP
+	        WHERE  1=1    		
+				<isNotEmpty property="scEname" prepend="AND">
+					ENAME LIKE '%' || #scEname# || '%'
+				</isNotEmpty>		     
+				<isNotEmpty property="scDname" prepend="AND">
+					DEPTNO IN (SELECT DEPTNO FROM DEPT WHERE DNAME LIKE '%' || #scDname# || '%')      
+				</isNotEmpty>					
+				<isNotEmpty property="scDeptno" prepend="AND">
+					DEPTNO = #scDeptno#      
+				</isNotEmpty>
+	</select>
+
+	<select id="empDAO_selectDeptList" parameterClass="java.util.HashMap" resultClass="com.inswave.elfw.util.vo.DefaultSelectVo">
+		<!-- 부서 정보 목록을 조회한다. -->
+		
+		   SELECT     /* QueryID : empDAO_selectDeptList */
+		       DEPTNO AS VAL , DNAME AS TEXT
+	       FROM DEPT 
+	       ORDER BY DNAME ASC
+	</select>
+
+	<insert id="empFileDAO_insert" parameterClass="#!PACKAGE_NM!#.emp.vo.EmpFileVo">
+		<!-- 사원 첨부파일 정보를 등록 처리한다. -->
+		
+        INSERT INTO EMP_FILE     /* QueryID : empFileDAO_insert */
+        ( 
+         	EMPNO          	       
+	        <isNotNull property="fileName"> , FILE_NAME </isNotNull>
+	        <isNotNull property="fileData"> , FILE_DATA </isNotNull>
+        )
+        VALUES  
+        ( 
+	         #empno#   	        
+	        <isNotNull property="fileName"> , #fileName#      </isNotNull>
+	        <isNotNull property="fileData"> , #fileData:BLOB# </isNotNull>
+        )          
+	</insert>	
+
+	<update id="empFileDAO_update" parameterClass="#!PACKAGE_NM!#.emp.vo.EmpFileVo">
+		<!-- 사원 첨부파일 정보를 갱신 처리한다. -->
+		
+        UPDATE EMP    /* QueryID : empFileDAO_update */       
+      	  SET                        
+             <isNotNull property="fileName">, FILE_NAME=  #fileName#      </isNotNull>
+             <isNotNull property="fileData">, FILE_DATA=  #fileData:BLOB# </isNotNull>
+        WHERE   EMPNO = #empno#
+	</update>
+		
+	<delete id="empFileDAO_delete" parameterClass="#!PACKAGE_NM!#.emp.vo.EmpFileVo">
+		<!-- 사원 첨부파일 정보를 삭제 처리한다. -->
+		
+        DELETE FROM EMP_FILE     /* QueryID : empFileDAO_delete */
+        WHERE   EMPNO = #empno#   
+	</delete>
+	
+	<select id="empFileDAO_select" parameterClass="#!PACKAGE_NM!#.emp.vo.EmpFileVo" resultClass="#!PACKAGE_NM!#.emp.vo.EmpFileVo">
+		<!-- 사원 첨부파일 정보를 상세 조회한다. -->
+			
+        SELECT     /* QueryID : empFileDAO_select */
+            EMPNO, FILE_NAME as fileName  , FILE_DATA as fileData
+        FROM EMP_FILE
+        WHERE   EMPNO = #empno#   	
+	</select>	
+</sqlMap>

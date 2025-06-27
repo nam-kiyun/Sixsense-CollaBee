@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare"
+	xmlns:xf="http://www.w3.org/2002/xforms">
+	<head>
+		<w2:type>COMPONENT</w2:type>
+		<w2:buildDate />
+		<w2:MSA />
+		<xf:model>
+			<w2:dataCollection baseNode="map">
+				<w2:dataMap baseNode="map" id="dmp_deptVo" style="">
+					<w2:keyInfo>
+						<w2:key dataType="text" id="scDeptno" name="search_DEPTNO"></w2:key>
+                        <w2:key dataType="text" id="scDname" name="search_DNAME"></w2:key>
+                       
+						<w2:key dataType="text" id="pageIndex" name="페이지_번호" defaultValue="1"></w2:key>
+						<w2:key dataType="text" id="pageSize" name="페이지_건수" defaultValue="10"></w2:key>
+					</w2:keyInfo>
+					<w2:data use="false"></w2:data>
+				</w2:dataMap>
+				<w2:dataList baseNode="list" id="dlt_deptVoList" repeatNode="map" saveRemovedData="true" style="">
+					<w2:columnInfo>
+						<w2:column dataType="text" id="deptno" name="DEPTNO"></w2:column>
+                        <w2:column dataType="text" id="dname" name="DNAME"></w2:column>
+                        <w2:column dataType="text" id="loc" name="LOC"></w2:column>
+                       
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataMap baseNode="map" id="dmp_deptVoDetail" style="">
+					<w2:keyInfo>
+						
+					</w2:keyInfo>
+				</w2:dataMap>
+			</w2:dataCollection>
+			<w2:workflowCollection></w2:workflowCollection>
+
+			<xf:submission id="sbm_selectDeptVoList" ref='data:json,{"id":"dmp_deptVo","key":"deptVo"}'
+				target='data:json,{"id":"dlt_deptVoList","key":"elData.deptVoList"}' action="/InsWebApp/SVC0001List.pwkjson" method="post"
+				mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+				processMsg="부서 정보 리스트를 조회 중입니다." ev:submit="scwin.sbm_selectDeptVoList_submit" ev:submitdone="scwin.sbm_deptList_submitdone" ev:submiterror="" abortTrigger="">
+			</xf:submission>
+		</xf:model>
+		<w2:layoutInfo></w2:layoutInfo>
+		<w2:publicInfo method="" />
+		<script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function () {
+    //search_box
+    var cptIbxName = $p.getComponentById("searchComp_1");
+    if (cptIbxName == undefined) {
+        search_box.hide();
+    }
+
+    // 부서 정보 조회
+    scwin.btn_search_onclick();
+};
+
+/************************** 이벤트 함수 *************************/
+
+/**
+ * 조회 버튼 클릭 이벤트
+ * @date
+ * @memberOf
+ * @param 
+ * @returns
+ * @author 
+ * @example
+ */
+scwin.btn_search_onclick = function (e) {
+
+
+
+    // 서버통신 - 부서 정보 조회
+    $c.sbm.execute(sbm_selectDeptVoList);
+
+    //$p.executeSubmission("sbm_selectDeptVoList"); //이렇게 사용하지 말고, 위에처럼 $c를 이용
+};
+
+//통신 전처리
+scwin.sbm_selectDeptVoList_submit = function (e) {
+    // PGAE번호 초기화
+    dmp_deptVo.set("pageIndex", "1");
+    pgl_deptList.setSelectedIndex(1);
+};
+
+//통신 후처리
+scwin.sbm_deptList_submitdone = function (e) {
+
+    // error 수신시
+    var elData = e.responseJSON.elData;
+    var elHeader = e.responseJSON.elHeader;
+    if (elHeader == null || elHeader == "" || elHeader == "undefiend" || elHeader.resSuc == false) {
+        $c.win.alert(`에러코드 : ${elHeader.resCode}\n에러메시지 : ${elHeader.resMsg}`);
+        return false;
+    }
+
+    // 부서 정보 dataMap 초기화
+    dmp_deptVoDetail.setEmptyValue();
+
+    // 총 레코드 수 업데이트
+    spn_listCnt.setLabel(elData.totalCount);
+
+    // 데이터를 그리드에 셋팅
+    dlt_deptVoList.setJSON(elData.deptVoList);
+
+    // 페이지 네비게이터 업데이트
+    var totalPageCount = Math.ceil(elData.totalCount / dmp_deptVo.get("pageSize"));
+    pgl_deptList.setCount(totalPageCount);
+
+    // 페이징 정보 업데이트
+    spn_totalPageCount.setValue(totalPageCount);
+    spn_pageIndex.setValue(dmp_deptVo.get("pageIndex"));
+    pgl_deptList.setSelectedIndex(dmp_deptVo.get("pageIndex"));
+};
+
+/**
+ * 페이지 번호 클릭 이벤트
+ * @date
+ * @memberOf
+ * @param 
+ * @returns 
+ * @author 
+ * @example
+ */
+scwin.pgl_deptList_onclick = function (idx) {
+
+    // 페이지 번호 세팅
+    dmp_deptVo.set("pageIndex", idx);
+    // 서버통신 - 사원목록 조회
+    $c.sbm.execute($p, sbm_selectDeptVoList);
+};
+
+
+]]></script>
+	</head>
+	<body ev:onpageload="scwin.onpageload">
+		<xf:group class="sub_contents " id="" style="">
+			<xf:group class="pgtbox" id="" style="">
+				<w2:textbox class="pgt_tit" id="" label="부서 정보" style="" tagname="" />
+			</xf:group>
+			<xf:group class="schbox" id="search_box" style="">
+				<xf:group class="schbox_inner" id="" style="">
+					<xf:group adaptive="layout" adaptiveThreshold="1200" class="w2tb tbl" id="" style="width:Infinity%;" tagname="table">
+						<w2:attributes>
+							<w2:summary />
+						</w2:attributes>
+						<xf:group tagname="colgroup">
+							<xf:group id="searchComp_1" style="width:100px;" tagname="col" />
+                            <xf:group id="searchComp_2" style="" tagname="col" />
+                            <xf:group id="searchComp_3" style="width:100px;" tagname="col" />
+                            <xf:group id="searchComp_4" style="" tagname="col" />
+                           
+						</xf:group>
+						<xf:group tagname="tr" style="" id="" class="">
+							<xf:group tagname="th" style="" class="w2tb_th">
+								<w2:textbox localeRef="Dept_SEARCH_00001" style="" id="" label="DEPTNO" class=""></w2:textbox>
+							</xf:group>
+							<xf:group tagname="td" style="" id="" class="w2tb_td">
+								<xf:input ref="data:dmp_deptVo.scDeptno" style="width:200px;" id="" placeholder="" class=""></xf:input>
+							</xf:group>
+							<xf:group tagname="th" style="" class="w2tb_th">
+								<w2:textbox localeRef="Dept_SEARCH_00002" style="" id="" label="DNAME" class=""></w2:textbox>
+							</xf:group>
+							<xf:group tagname="td" style="" id="" class="w2tb_td">
+								<xf:input ref="data:dmp_deptVo.scDname" style="width:200px;" id="" placeholder="" class=""></xf:input>
+							</xf:group>
+						</xf:group>
+					</xf:group>
+				</xf:group>
+				<xf:group class="btn_schbox" id="" style="">
+					<xf:trigger class="btn_cm sch" disabled="" escape="false" id="btn_search" style="" type="button" ev:onclick="scwin.btn_search_onclick" localeRef="COMMON_BUTTON_00001">
+						<xf:label><![CDATA[조회]]></xf:label>
+					</xf:trigger>
+				</xf:group>
+			</xf:group>
+			<xf:group class="titbox" id="" style="">
+				<xf:group class="count rt" id="">
+					<w2:span id="" label="총" localeRef="COMMON_LABEL_00002" style=""></w2:span>
+    				<w2:span class="num" id="spn_listCnt" label="0" ref="" style=""></w2:span>
+    				<w2:span id="" label="건" localeRef="COMMON_LABEL_00003" style=""></w2:span>
+    			</xf:group>
+			</xf:group>
+			<xf:group adaptiveThreshold="" class="gvwbox" id="" style="">
+				<w2:gridView autoFit="allColumn" checkReadOnlyOnPasteEnable="" class="gvw" dataList="data:dlt_deptVoList"
+					defaultCellHeight="26" focusMode="row" id="grd_list" scrollByColumn="false" scrollByColumnAdaptive="false" style="height: 150px;"
+					visibleRowNum="10" ev:oncellclick="scwin.grd_list_oncellclick" readOnly="true">
+					<w2:caption style="" id="caption2" value="this is a grid caption."></w2:caption>
+					<w2:header style="" id="header2">
+						<w2:row style="" id="row3">
+							<w2:column width="70" inputType="text" style="" id="column1" value="DEPTNO" displayMode="label" localeRef="Dept_COLNAME_00001"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="column2" value="DNAME" displayMode="label" localeRef="Dept_COLNAME_00002"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="column3" value="LOC" displayMode="label" localeRef="Dept_COLNAME_00003"></w2:column>
+                           
+						</w2:row>
+					</w2:header>
+					<w2:gBody style="" id="gBody2">
+						<w2:row style="" id="row4">
+							<w2:column width="70" inputType="text" style="" id="deptno" value="" displayMode="label"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="dname" value="" displayMode="label"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="loc" value="" displayMode="label"></w2:column>
+                           
+						</w2:row>
+					</w2:gBody>
+				</w2:gridView>
+			</xf:group>
+			<xf:group class="pglbox" id="" style="">
+				<w2:pageList class="pgl" displayButtonType="display" displayFormat="#" id="pgl_deptList" pageSize="5" pagingType="0"
+					style="" ev:onclick="scwin.pgl_deptList_onclick">
+				</w2:pageList>	
+				<xf:group class="pgl_count" id="" style="display: none;">
+    				<w2:span class="num" id="spn_pageIndex" label="0" ref="data:dma_deptVo.pageIndex" style=""></w2:span>
+    				<w2:span id="span1" label="/" style=""></w2:span>
+    				<w2:span id="spn_totalPageCount" label="0" ref="data:dma_deptVo.totalPageCount" style=""></w2:span>
+    				<w2:span id="span2" label="페이지" localeRef="COMMON_LABEL_00005" style=""></w2:span>
+    			</xf:group>		
+			</xf:group>
+		</xf:group>
+	</body>
+</html>

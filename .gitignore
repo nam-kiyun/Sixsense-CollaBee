@@ -1,0 +1,14 @@
+#환경변수
+.env
+
+#wpack
+_wpack_/
+
+#target
+target/
+
+#settings
+.settings/
+
+#license
+.elLicense

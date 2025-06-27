@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_vertical_guides="-45" meta_horizontal_guides="">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+	
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="top_box" id="" style="" tagname="">
+    		<w2:textbox class="con_tit" id="" label="Overview" style=""></w2:textbox>
+    		<w2:textbox class="con_txt" escape="false" id=""
+    			label="WDS (WebSquare Design System)&lt;br/&gt;Websquare SP5 DesignSystem은 &amp;nbsp;애플리케이션을 개발하는데 도움을 주기 위한 웹스퀘어 스튜디오 SP5의 추가된 기능입니다. &lt;br/&gt;"
+    			style="">
+    		</w2:textbox>
+    		<xf:group class="" id="primary" style=""></xf:group>
+    		<xf:group class="tab_anchor" id="" style="" tagname="ul">
+    			<xf:group class="on" id="" tagname="li">
+    				<w2:anchor class="" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Examples]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Snippet]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Dark Theme]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    	<xf:group class="contbox" id="" style="">
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="WDS &amp;nbsp;(WebSquare Design System)" style="" escape="false"></w2:textbox>
+    		</xf:group>
+    		<xf:group class="titbox" id="" style="" tagname="">
+    			<w2:textbox class="subtxt" escape="false" id="" label="이전버전의 스니핏 사용법과 동일하지만, WDS는 썸네일로 제공되는 스니핏이라서 쉽게 사용할 수 있습니다." style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group id="" class="font_script_box"><xf:group tagname="" style="" id="" class="titbox">
+    			<w2:textbox style="" id="" label=": &amp;nbsp;v 1.0 (2022.11) - 최초 작성" class="  " escape="false"></w2:textbox>
+    		</xf:group></xf:group>
+    	</xf:group>
+    </body>
+</html>

@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="speech" meta_screenName="speech" meta_desc="말하기/읽기 기능을 모아놓은 플러그인으로 이벤트 및 API를 제공한다. \n제공되는 API로는 speakTTS, stopTTS, startSpeechToText, stopSpeechToText를 제공합니다." meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_vertical_guides="" meta_horizontal_guides="1640">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.speakTTS,scwin.stopTTS,scwin.startSpeechToText,scwin.stopSpeechToText"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_speech
+ * @pluginName
+ * @company
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser
+ * @version
+ * @htmlRender
+ * @icon
+ * @disableIcon
+ * @description 앱에 읽기/말하기 기능을 제공하는 플러그인으로 API를 제공한다. 제공되는 API로는 speakTTS, stopTTS, startSpeechToText, stopSpeechToText 기능들이 있다.
+ * @variableClone true
+ * @width
+ * @height
+ * @license
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */
+
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name speakTTS
+ * @description message를 음성으로 읽어준다.
+ * @param {JSON} options TTS 언어 설정, 음성으로 읽을 메시지 내용과 속도 옵션
+ * @param {String} options.language 언어코드 [default:한국어|ko, 영어|en, 일본어|ja, 중국어 간체|zh_cn, 중국어 번체|zh_tw]
+ * @param {String} options.message 음성으로 말할 메시지 내용
+ * @param {Float} options.speechSpeed 음성으로 말하는 속도 [default: 1.0]
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.language = "ko";
+ *      options.message = "hello, world!";
+ *      options.speechSpeed = 0.9;
+ *      const data = await $c.speech.speakTTS(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.speakTTS = function(options) {
+    try {
+        if (typeof $h.speech === "object") {
+            return new Promise(resolve => {
+                $h.speech.speakTTS(resolve, options);
+            });
+        } else {
+            console.log("Not found Speech Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name stopTTS
+ * @description TTS가 실행중이면 중단시킨다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.speech.stopTTS();
+ *      console.log(data);
+ *  })();
+ */
+scwin.stopTTS = function() {
+    try {
+        if (typeof $h.speech === "object") {
+            return new Promise(resolve => {
+                $h.speech.stopTTS(resolve);
+            });
+        } else {
+            console.log("Not found Speech Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+
+
+
+/**
+ * @method
+ * @name startSpeechToText
+ * @description 음성 인식 후 인식된 텍스트를 반환한다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", data: "인식된텍스트"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.speech.startSpeechToText();
+ *      console.log(data);
+ *  })();
+ */
+scwin.startSpeechToText = function() {
+    try {
+        if (typeof $h.speech === "object") {
+            return new Promise(resolve => {
+                $h.speech.startSpeechToText(resolve);
+            });
+        } else {
+            console.log("Not found Speech Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name stopSpeechToText
+ * @description 음성 인식 엔진을 중지한다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", data: "인식된텍스트"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.speech.stopSpeechToText();
+ *      console.log(data);
+ *  })();
+ */
+scwin.stopSpeechToText = function() {
+    try {
+        if (typeof $h.speech === "object") {
+            return new Promise(resolve => {
+                $h.speech.stopSpeechToText(resolve);
+            });
+        } else {
+            console.log("Not found Speech Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+ 
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

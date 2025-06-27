@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_vertical_guides="" meta_horizontal_guides="529">
+        <w2:type palette="support">COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.show"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_toast
+ * @pluginName 
+ * @company Inswave
+ * @developer uapmobile
+ * @category /udc/matrix
+ * @variableClone true
+ * @notSupportBrowser 
+ * @version 2.0
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAArElEQVR42mNgGBSA+9DKBTyHVv0n
+ * BXMfWjUfbgBIgGH/egGibQSqBetBMQBCHwDi/TBXcR9cNQGMD63sB4pv4Dm4sgGEkfVgM+AAmH14
+ * tQP3odUFEANWF3AdWhkAY+M0gBSAywUbgM69AAogCL3yAshLMHEQG+QKnAZwH11lAMaHViUgs8He
+ * AbJB3gBh7AaQEgtYDNhAYjrYT064gQHH8eUK4IR3cNUHhlEABgBp9bxWfDAYVAAAAABJRU5ErkJg
+ * gg==
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAApklEQVR42mNgGBTA0cF5gZOjy3+S
+ * sIPzfLgBIAEHBwcBYi0EqQXpQTEA7BJHlwOODi774a5ycJ4AwS79QPENQLoBhJH1YBoAxBBbXByA
+ * igugBhQ4ODgHwNg4DSAFYHcB0JmOjs4XQAEEosEY6CWYOIgNcgVOAxwcXA1A2MnBKQGV7eIA4TsH
+ * gDBWA0iJBQwDwCFMQhoAe4WMcIOlAQVowvvAMArAAABq6oCoR4a/sAAAAABJRU5ErkJggg==
+ * @description toast UDC
+ * @width 100px
+ * @height 50px
+ * @license
+ */
+
+
+
+
+
+
+
+/**
+ * @property
+ * @name message
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default 
+ * @necessary Y
+ * @bindparent
+ * @description 팝업으로 보여줄 메세지
+ */
+
+/**
+ * @property
+ * @name time
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [short time, long time]
+ * @default short time
+ * @necessary Y
+ * @bindparent
+ * @description 팝업 실행 시간
+ */
+
+scwin.anchor_toast_onclick = function () {
+   try {
+        if(typeof $h == "object") {
+            let options = $p.getOptions();
+            options.time = options.time == "short time" ? 0 : 1; // short time:0, long time:1
+            console.log(options);
+            $h.view.toast(scwin.emit_toast,options);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+/**
+ * @event
+ * @name toast
+ * @description 팝업을 띄운다
+ * @param {Object} result message를 팝업으로 보여준다
+ * @example
+ */
+
+scwin.emit_toast = function (result) {
+	$p.emit("toast", result);
+};
+
+
+/**
+ * @method
+ * @name show
+ * @description toast show
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_toast.show();
+ * })();
+ * 
+ */
+scwin.show = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+            options.time = options.time == "short time" ? 0 : 1; // short time:0, long time:1
+            $h.view.toast(resolove,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<w2:anchor outerDiv="false" id="anchor_toast" style="width: 100px;height: 23px;" ev:onclick="scwin.anchor_toast_onclick">
+    		<xf:label><![CDATA[Toast]]></xf:label>
+    	</w2:anchor>
+    </body>
+</html>

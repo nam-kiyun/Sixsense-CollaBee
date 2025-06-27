@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+	
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload" class="">
+    	<xf:group class="login_wrap" id="" style="">
+    		<xf:group id="" tagname="h1" class="login_logo">
+    			<w2:anchor outerDiv="false" id="" style="" title="Inswave">
+    				<xf:label><![CDATA[]]></xf:label>
+    			</w2:anchor>
+    		</xf:group>
+    		<xf:group class="login_container" id="">
+    			<xf:group id="" class="login_header"><w2:textbox style="" id="" label="WELCOME"></w2:textbox><w2:textbox style="" id="" label="SIGN IN TO INSWAVE" class="login_info"></w2:textbox></xf:group><xf:group class="login_contents" id="" style="">
+    				<xf:group id="" tagname="ul">
+    					<xf:group id="" tagname="li">
+    						<w2:textbox for="user_id" id="" label="ID" style="" tagname="label" class="tit"></w2:textbox>
+    						<xf:input adjustMaxLength="false" id="" placeholder="아이디를 입력해주세요." style=""></xf:input>
+    					</xf:group>
+    					<xf:group id="" tagname="li">
+    						<w2:textbox for="user_pw" id="" label="Password" style="" tagname="label" class="tit"></w2:textbox>
+    						<xf:group id="" class="login_form">
+    							<xf:input adjustMaxLength="false" style="" id="" placeholder="비밀번호를 입력해주세요." type="password"></xf:input>
+    							<w2:anchor class="btn_login_password" id="" outerDiv="false" style="">
+    								<xf:label><![CDATA[비밀번호 보기]]></xf:label>
+    							</w2:anchor>
+    						</xf:group>
+    						<xf:group id="" class="grp_password"><xf:select ref="" appearance="full" style="" id="" selectedindex="-1" rows="" cols="">
+    							<xf:choices>
+    								<xf:item>
+    									<xf:label><![CDATA[Remember me]]></xf:label>
+    									<xf:value><![CDATA[]]></xf:value>
+    								</xf:item>
+    							</xf:choices>
+    						</xf:select><w2:anchor outerDiv="false" style="" id="" class="link_password">
+    							<xf:label><![CDATA[Forgot password?]]></xf:label>
+    						</w2:anchor></xf:group></xf:group>
+    				</xf:group>
+    				<xf:group id="" style="" class="login_btn">
+    					<xf:trigger class="btn_login" id="" style="" type="button">
+    						<xf:label><![CDATA[Login]]></xf:label>
+    					</xf:trigger>
+    				</xf:group>
+    				<xf:group class="login_account" id="" style="">
+    					<w2:textbox class="" id="" label="New user?" style=""></w2:textbox><w2:anchor id="" outerDiv="false" style="" class="link_account">
+    						<xf:label><![CDATA[Create an account]]></xf:label>
+    					</w2:anchor>
+    					
+    				</xf:group>
+</xf:group>
+
+
+
+    			
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>

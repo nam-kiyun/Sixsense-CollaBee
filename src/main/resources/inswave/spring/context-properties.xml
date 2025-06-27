@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
+	
+	<bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basenames">
+			<list>
+				<value>classpath:/inswave/message/message-common</value>
+			</list>
+		</property>
+		<property name="cacheSeconds">
+			<value>60</value>
+		</property>
+		<property name="defaultEncoding" value="UTF-8"></property>
+	</bean>
+	    
+    <bean id="propertyConfigurer"
+        class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:/inswave/properties/elfw.properties</value>  
+            </list>
+        </property>
+    </bean>
+    
+    <!-- JavaMailSender 빈 정의 추가 -->
+    <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="host" value="smtp.gmail.com" /> <!-- 메일 서버 호스트 (예: smtp.gmail.com) -->
+        <property name="port" value="587" /> <!-- 메일 서버 포트 (일반적으로 587 또는 465) -->
+        <property name="username" value="dorazi0423@gmail.com" /> <!-- 메일 발송 계정 (보통 spring.mail.username) -->
+        <property name="password" value="wwcv jkos ajau xfdp" /> <!-- 메일 발송 계정 비밀번호 (보통 spring.mail.password) -->
+        <property name="javaMailProperties">
+            <props>
+                <prop key="mail.smtp.auth">true</prop> <!-- SMTP 인증 사용 여부 -->
+                <prop key="mail.smtp.starttls.enable">true</prop> <!-- STARTTLS 사용 여부 (보안 연결) -->
+                <prop key="mail.smtp.starttls.required">true</prop> <!-- STARTTLS 필수 여부 -->
+
+            </props>
+        </property>
+    </bean>
+    
+	
+</beans>	

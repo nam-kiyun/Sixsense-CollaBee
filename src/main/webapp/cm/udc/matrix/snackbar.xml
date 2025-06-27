@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type palette="support">COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.show"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_snackbar
+ * @pluginName 
+ * @company inswave
+ * @developer uapmobile
+ * @category /udc/matrix
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAYUlEQVR42mNgQAJch1bu4Dm06j8u
+ * zH141X+QGgZcAKSAgQAAGYRb8vDq//hcAMZANeSZTpQLRg2gngGF9y58KLx/8T86Jt4ALJopNwDo
+ * KjqEAT2SMt4MB8qqIAX4XICenQE5VtS/hPNvkAAAAABJRU5ErkJggg==
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAT0lEQVR42mNgQAKOjs47nBxd/uPD
+ * IDUMuABIAQMBgFeNkwN+28HYAZ8BFLtg1ADqGbBx48YPmzZt+o+OiTYAm2aKDQC5ig5hMOBJmZzs
+ * DABBt6ev35Hc/QAAAABJRU5ErkJggg==
+ * @description snackbar UDC
+ * @width 100px
+ * @height 50px
+ * @license
+ * @imagePath
+ * @homepage
+ */
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name message
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description snackbar로 보여줄 메세지
+ */
+
+/**
+ * @property
+ * @name time
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [short time, long time]
+ * @default short time
+ * @necessary N
+ * @bindparent
+ * @description snackbar 가 호출되는 시간
+ * (action이 있는 경우 해당 옵션 무시)
+ */
+
+
+
+/**
+ * @property
+ * @name buttonText
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 상호작용 버튼에 보여질 텍스트
+ */
+
+/**
+ * @property
+ * @name onClickEvent
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 상호작용 버튼 클릭 시 실행 될 javascript
+ */
+
+/**
+ * @property
+ * @name actionOnClickEvent
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default console.log('onClick');
+ * @necessary N
+ * @bindparent
+ * @description 터치 시 실행 할 javascript 텍스트
+ * actionButtonText 사용 시 해당 속성 값 필수
+ */
+
+/**
+ * @property
+ * @name actionButtonText
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 버튼 텍스트
+ */
+
+scwin.onpageload = function() {
+	
+};
+
+/**
+ * @event
+ * @name show
+ * @description message를 snackbar로 보여준다
+ * @param {Object} result 실행결과
+ * @example
+ */
+scwin.emit_show = function (result) {
+	$p.emit("show", result);
+};
+
+scwin.anchor_snackbar_onclick = function () {
+    try {
+        if(typeof $h == "object") {
+            let options = $p.getOptions();
+            console.log(options);
+
+            options.time = options.time == "short time" ? 0 : 1; // short time:0, long time:1
+  
+            let action = {
+                "buttonText": options.actionButtonText,
+                "onClickEvent": options.actionOnClickEvent
+            };
+            options["action"] = action;
+            $h.view.snackBar(scwin.emit_show,options);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+/**
+ * @method
+ * @name show
+ * @description snackbar를 보여준다
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_snackbar.show();
+ * })();
+ * 
+ */
+scwin.show = function () {
+    return new Promise((resolve, reject) => {
+        try {
+            let options = $p.getOptions();
+            options.time = options.time == "short time" ? 0 : 1; // short time:0, long time:1
+
+            let action = {
+                "buttonText": options.actionButtonText,
+                "onClickEvent": options.actionOnClickEvent
+            };
+            options["action"] = action;
+            $h.view.snackBar(resolve,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+}]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<w2:anchor outerDiv="false" id="anchor_snackbar" style="width: 100px;height: 23px;" ev:onclick="scwin.anchor_snackbar_onclick">
+    		<xf:label><![CDATA[SnackBar]]></xf:label>
+    	</w2:anchor>
+    </body>
+</html>

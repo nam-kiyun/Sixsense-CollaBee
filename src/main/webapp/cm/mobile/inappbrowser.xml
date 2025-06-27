@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="inappbrowser" meta_screenName="inappbrowser" meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_desc="webpage를 별도의 webview로 호출하는 API를 제공한다.">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.open"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_inappbrowser
+ * @pluginName
+ * @company
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser
+ * @version
+ * @htmlRender
+ * @icon
+ * @disableIcon
+ * @description webpage를 별도 webview로 호출하는 API를 제공한다.
+ * @variableClone true
+ * @width
+ * @height
+ * @license
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */
+
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name open
+ * @description 별도 웹뷰를 붙여서 화면을 띄우거나 모바일 브라우저를 호출한다.
+ * @param {JSON} options inappbrowser params
+ * @param {String} options.URL 화면 URL
+ * @param {String} options.type 화면 타입 [default:웹뷰|"_blank", 모바일브라우저|"_system"]
+ * @param {String} options.option ("location=yes")
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.URL = "https://www.inswave.com";
+ *      options.type = "_system";
+ *      options.option = "location=yes";
+ *      const data = await $c.inappbrowser.open(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.open = function(options) {
+    try {
+        if (typeof $h.inappbrowser === "object") {
+            return new Promise(resolve => {
+                resolve($h.inappbrowser.open(options.URL, options.type, options.option));
+            });
+        } else {
+            console.log("Not found InAppBrowser Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

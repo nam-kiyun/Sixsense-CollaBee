@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+	
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload" style="">
+    	<xf:group class="top_box" id="" style="" tagname="">
+    		<w2:textbox class="con_tit" id="" label="Message" style=""></w2:textbox>
+    		<w2:textbox class="con_txt" escape="false" id="" label="사용자의 행동에 피드백이 필요하거나, 알림, 정보, 오류등을 전달할 때 사용됩니다."
+    			style="">
+    		</w2:textbox>
+    		<xf:group class="" id="primary" style=""></xf:group>
+    		<xf:group class="tab_anchor" id="" style="" tagname="ul">
+    			<xf:group class="on" id="" tagname="li">
+    				<w2:anchor class="" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Examples]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Snippet]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Dark Theme]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    	<xf:group class="contbox" id="" style="">
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="Alerts Popup" style=""></w2:textbox>
+    		</xf:group>
+    		<w2:textbox class="subtxt" escape="false" id="" label="· 단순 알림 창은 확인 버튼을 배치하고, 진행 여부를 확인하는 알림 창은 확인, 취소 버튼을 배치합니다.&lt;br/&gt;"
+    			style="">
+    		</w2:textbox>
+    		<xf:group class="lybox temp" id="" style="">
+    			<xf:group adaptiveThreshold="" class="ly_column col_6" id="" style="">
+    				<xf:group class="ly_popup temp" id="" style="">
+    					<xf:group class="ly_head" id="" style=""></xf:group>
+    					<xf:group class="ly_cont" id="" style="">
+    						<w2:textbox class="txt1" id="" label="처리중 오류가 발생했습니다. " style="" tagname="p"></w2:textbox>
+    						<w2:textbox class="txt2" escape="false" id="" label="처리중 오류가 발생했습니다.&lt;br/&gt;장애문의 : admin@admin.com" style=""
+    							tagname="p">
+    						</w2:textbox>
+    						<xf:group class="btnbox" id="" style="">
+    							<xf:trigger class="btn_cm pt btn_pop" id="trigger1" style="" type="button">
+    								<xf:label><![CDATA[확인]]></xf:label>
+    							</xf:trigger>
+    						</xf:group>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    			<xf:group class="ly_column col_4" id="" style="">
+    				<xf:group class="ly_popup temp" id="" style="position: relative;    left: 0;    top: 0;    margin: 0;">
+    					<xf:group class="ly_head" id="" style=""></xf:group>
+    					<xf:group class="ly_cont" id="" style="">
+    						<w2:textbox class="txt1" id="" label="저장하시겠습니까? " style="" tagname="p"></w2:textbox>
+    						<xf:group class="btnbox" id="" style="">
+    							<xf:trigger class="btn_cm pt btn_pop" id="trigger2" style="" type="button">
+    								<xf:label><![CDATA[확인]]></xf:label>
+    							</xf:trigger>
+    							<xf:trigger class="btn_cm" id="" style="" type="button">
+    								<xf:label><![CDATA[취소]]></xf:label>
+    							</xf:trigger>
+    						</xf:group>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="line_gray" id="group6" style="" tagname="hr"></xf:group>
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="Alerts Message" style=""></w2:textbox>
+    		</xf:group>
+    		<w2:textbox class="subtxt" escape="false" id="" label="· 상황에 따라 Info, Success, Warning, Error 의 네가지 종류를 적절히 사용합니다." style="">
+    		</w2:textbox>
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+
+    		</xf:group>
+    		<xf:group class="tblbox" id="" style="">
+    			<xf:group adaptive="layout" adaptiveThreshold="600" class="w2tb tbl" id="" style="" tagname="table">
+    				<w2:attributes>
+    					<w2:summary></w2:summary>
+    				</w2:attributes>
+    				<xf:group tagname="colgroup">
+    					<xf:group style="width:80px;" tagname="col"></xf:group>
+    					<xf:group style="" tagname="col"></xf:group>
+    				</xf:group>
+    				<xf:group style="" tagname="tr">
+    					<xf:group class="w2tb_th" style="" tagname="th">
+    						<w2:textbox class="req" id="" label="테이블헤더" ref="" style="" userData2=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="w2tb_td" style="" tagname="td">
+    						<xf:input class="" id="" placeholder="" style="width:148px;"></xf:input>
+    						<w2:textbox class="txt_error" dataType="" id="" label="Error Message" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr">
+    					<xf:group class="w2tb_th " tagname="th">
+    						<w2:attributes>
+    							<w2:scope>row</w2:scope>
+    						</w2:attributes>
+    						<w2:textbox class="" id="" label="테이블헤더" ref="" style="" userData2=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="w2tb_td" tagname="td">
+    						<w2:attributes>
+    							<w2:colspan>1</w2:colspan>
+    							<w2:rowspan>1</w2:rowspan>
+    						</w2:attributes>
+    						<xf:input class="" id="" placeholder="" style="width:148px;"></xf:input>
+    						<w2:textbox class="txt_success" dataType="" id="" label="Success Message" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr">
+    					<xf:group tagname="th" class="w2tb_th ">
+    						<w2:attributes>
+    							<w2:scope>row</w2:scope>
+    						</w2:attributes>
+    						<w2:textbox class="" id="" label="테이블헤더" ref="" style="" userData2=""></w2:textbox>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						<w2:attributes></w2:attributes>
+    						<xf:input class="" id="" placeholder="" style="width:148px;"></xf:input>
+    						<w2:textbox class="txt_info" dataType="" id="" label="Info Message" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr">
+    					<xf:group tagname="th" class="w2tb_th ">
+    						<w2:attributes>
+    							<w2:scope>row</w2:scope>
+    						</w2:attributes>
+    						<w2:textbox class="" id="" label="테이블헤더" ref="" style="" userData2=""></w2:textbox>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						<w2:attributes></w2:attributes>
+    						<xf:input class="" id="" placeholder="" style="width:148px;"></xf:input>
+    						<w2:textbox class="txt_warning" dataType="" id="" label="Warning Message" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+
+    		<xf:group class="msgbox success" id="" style="">
+    			<w2:textbox class="txt_success" for="" id="" label="Success Message" style="" tagname=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="msgbox error" id="" style="">
+    			<w2:textbox class="txt_error" for="" id="" label="Error Message" style="" tagname=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="msgbox info" id="" style="">
+    			<w2:textbox class="txt_info" for="" id="" label="Info Message" style="" tagname=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="msgbox warning" id="" style="">
+    			<w2:textbox class="txt_warning" for="" id="" label="Warning Message" style="" tagname=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="line_gray" id="group7" style="" tagname="hr"></xf:group>
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="Toasts" style=""></w2:textbox>
+    		</xf:group>
+    		<w2:textbox class="subtxt" escape="false" id="" label="· 토스트는 우측하단에 고정되어 나타나며 일정 시간이 지나면 사라집니다." style=""></w2:textbox>
+    		<xf:group class="msgbox toast" id="" style="margin-bottom:100px">
+    			<w2:textbox class="" for="" id="" label="Toast Message" style="" tagname="span"></w2:textbox>
+    		</xf:group>
+
+    	</xf:group>
+    </body>
+</html>

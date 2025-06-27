@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:p="http://www.springframework.org/schema/p" 
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	                       http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+				           http://www.springframework.org/schema/context 
+				           http://www.springframework.org/schema/context/spring-context-4.0.xsd 
+				           http://www.springframework.org/schema/aop
+				           http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+
+    <context:component-scan base-package="com.demo" use-default-filters="false">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+        <!-- context:exclude-filter type="annotation" expression="org.springframework.stereotype.Service"/>
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository"/ -->
+    </context:component-scan>
+   
+    <!-- EL Controller Interceptor -->
+    <bean id="controllerInterceptorAdvice" class="com.inswave.elfw.intercept.ElControllerInterceptor" />          
+    <aop:config>        
+ 		<aop:pointcut id="controllerInterceptorPointcut" expression="execution(* com.demo..*Controller.*(..))" /> 		
+        <aop:advisor advice-ref="controllerInterceptorAdvice"
+            pointcut-ref="controllerInterceptorPointcut" id="controllerInterceptorAdvisor" order="0"/>
+    </aop:config>        
+
+	<!-- EL Common Controller -->
+	<bean id="elCommController" class="com.inswave.elfw.web.ElCommController"/>
+ 
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">   
+    	<property name="useRegisteredSuffixPatternMatch" value="true"/>
+    </bean>
+     <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter" >           
+		<property name="customArgumentResolvers">
+			<list>
+				<bean class="com.inswave.elfw.resolver.ElModelAttributeMethodProcessor">		
+				</bean>	
+			</list>
+		</property>        
+    </bean>
+    
+    
+    <bean id="exceptionResolver" class="com.inswave.elfw.exception.ElExceptionResolver">
+        <property name="view" value="sampleError"/>
+    </bean>
+
+    <bean class="com.inswave.elfw.view.ElInternalResourceDefaultViewResolver"> 
+    	<property name="order"  value="3"/>    	
+        <property name="prefix" value="/WEB-INF/jsp/"/>
+        <property name="suffix" value=".jsp"/>        
+	<property name="defaultViewName"  value="sampleDefault"/>   
+    </bean>
+
+    <bean class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver">
+        <property name="order" value="1" />
+        
+        <property name="contentNegotiationManager">
+        	<bean class="org.springframework.web.accept.ContentNegotiationManager">
+        		<constructor-arg>
+        			<bean class="org.springframework.web.accept.PathExtensionContentNegotiationStrategy">
+        				<constructor-arg>
+        					<map>
+				            	<entry key="pwkjson"   value="application/json"/>
+				            	<entry key="fld"   value="application/fld"/>
+				            	<entry key="pwkxml"    value="application/xml"/>
+				            	<entry key="test"   value="application/test"/>
+        					</map>
+        				</constructor-arg>
+        			</bean>
+        		</constructor-arg>
+        	</bean>
+        </property>
+        
+        
+	    <property name="defaultViews">
+	      <list>	        
+	        <bean class="com.inswave.elfw.view.ElMappingJacksonJsonView">	
+	           <property name="contentType" value="application/json"/>        	
+	           <property name="objectMapper" ref="jsonMapper"/>	        	
+	        </bean>
+	        	        		        	
+			<bean class="com.inswave.elfw.view.ElMarshallingView">
+		        <property name="contentType" value="application/test"/>
+				<constructor-arg ref="xmlMarshaller">
+	            </constructor-arg>		           	            	            	       
+		    </bean>
+
+			<bean class="com.inswave.elfw.view.ElMarshalling2View">
+	           <property name="contentType" value="application/xml"/>        	     		                    	            	       
+		    </bean>
+		    		    
+	        <bean class="com.inswave.elfw.view.ElFldMarshallingView">	     
+	              <property name="contentType" value="application/fld"/>           		        	
+	        </bean>		   		    
+		    
+	      </list>
+	    </property>
+
+    </bean>
+    
+    <!-- JavaMailSender 빈 정의 추가 -->
+    <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="host" value="smtp.gmail.com" /> <!-- 메일 서버 호스트 (예: smtp.gmail.com) -->
+        <property name="port" value="587" /> <!-- 메일 서버 포트 (일반적으로 587 또는 465) -->
+        <property name="username" value="dorazi0423@gmail.com" /> <!-- 메일 발송 계정 (보통 spring.mail.username) -->
+        <property name="password" value="pfmb joxv suzv oxhq" /> <!-- 메일 발송 계정 비밀번호 (보통 spring.mail.password) -->
+        <property name="javaMailProperties">
+            <props>
+                <prop key="mail.smtp.auth">true</prop> <!-- SMTP 인증 사용 여부 -->
+                <prop key="mail.smtp.starttls.enable">true</prop> <!-- STARTTLS 사용 여부 (보안 연결) -->
+                <prop key="mail.smtp.starttls.required">true</prop> <!-- STARTTLS 필수 여부 -->
+
+            </props>
+        </property>
+    </bean>
+</beans>

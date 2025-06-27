@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="/InsWebApp/css/auth/base.css" type="text/css"?>
+<?xml-stylesheet href="/InsWebApp/css/auth/changePwdPage.css" type="text/css"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+    	<w2:type>COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:MSA />
+    	<xf:model>
+    		<w2:dataCollection baseNode="map" />
+    		<w2:workflowCollection />
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<w2:publicInfo method="" />
+    	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
+    scwin.onresize();
+};
+
+scwin.onresize = function (e) {
+    // resize 이벤트 정의
+    window.onresize = function () {
+        scwin.applyResponsiveWidth();
+    };
+
+    // 페이지 로딩 시에도 한 번 실행
+    scwin.applyResponsiveWidth();
+};
+
+//반응형 width 값 조절
+scwin.applyResponsiveWidth = function () {
+    let width = window.innerWidth;
+
+    if (width <= 650) {
+        signup_form.setStyle("width", "100%");
+        signup_group.setStyle("width", "80%");
+        signup_button.setStyle("width", "80%");
+    } else if (width <= 1300) {
+        signup_form.setStyle("width", "70%");
+        signup_group.setStyle("width", "75%");
+        signup_button.setStyle("width", "75%");
+    } else {
+        signup_form.setStyle("width", "40%");
+        signup_group.setStyle("width", "60%");
+        signup_button.setStyle("width", "60%");
+    }
+};
+
+//input border 스타일
+scwin.input_onblur = function (e) {
+    const currentInputId = e.target.id;
+    const targetGroupId = currentInputId.replace("_input", "_group");
+    const targetGroup = $p.getComponentById(targetGroupId);
+
+    if (targetGroup) {
+        targetGroup.setStyle("border-color", "#DAD3D3"); 
+    } 
+};
+
+//input border 스타일
+scwin.input_onfocus = function (e) {
+    const currentInput = e.target;
+    const currentInputId = currentInput.id; 
+    const targetGroupId = currentInputId.replace("_input", "_group");
+    const targetGroup = $p.getComponentById(targetGroupId); 
+
+    if (targetGroup) {
+        targetGroup.setStyle("border-color", "black");
+    } 
+};]]></script>
+    	<style type="text/css"><![CDATA[
+
+
+
+.signup-group {
+    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+]]></style>
+    </head>
+    <body ev:onpageload="scwin.onpageload" style="padding: 0;margin: 0;;">
+    	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+    		style="background-color: #FFF4D6;align-items: center;justify-content: center;display: flex;height: 100%;">
+    		<xf:group style="width:41.40%;height:450px;" id="signup_form" class="auth-form">
+
+    			<xf:group style="height:55px;display:flex;flex-direction:row;" id="">
+
+
+    				<xf:image src="/InsWebApp/images/collabee_icon.jpg" style="width:51px;height:48px;display:flex;" id=""></xf:image>
+    				<w2:textbox id="" label="COLLABEE" style="width:150px;height:37px;font-size:30px;font-weight: bold;display: flex;color:#FFB823;"></w2:textbox>
+    			</xf:group>
+
+
+    			<w2:textbox id="" label="새로운 비밀번호를 입력하세요" style="height: 23px;color: #DAD3D3;"></w2:textbox>
+    			<xf:group style="width:60%;height:198px;" id="signup_group" class="auth-group">
+    				<xf:group id="" style="height: 60px;">
+    					<w2:textbox id="" label="비밀번호" style="height: 23px;"></w2:textbox>
+    					<xf:group class="input-group" id="password_group"
+    						style="">
+    						<xf:output class="fa-solid fa-lock auth-icon" id="" label="" style="">
+    							<xf:label></xf:label>
+    						</xf:output>
+    						<xf:secret class="input-group-container" ev:onblur="scwin.input_onblur"
+    							ev:onfocus="scwin.input_onfocus" id="password_input" placeholder="비밀번호를 입력하세요"
+    							style="">
+    						</xf:secret>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group id="" style="height: 60px;">
+    					<w2:textbox id="" label="비밀번호 확인" style="height: 23px;"></w2:textbox>
+    					<xf:group class="input-group" id="passwordCheck_group"
+    						style="">
+    						<xf:output class="fa-solid fa-check auth-icon" id="" label="" style="">
+    							<xf:label></xf:label>
+    						</xf:output>
+    						<xf:secret class="input-group-container" ev:onblur="scwin.input_onblur"
+    							ev:onfocus="scwin.input_onfocus" id="passwordCheck_input" placeholder="비밀번호를 다시 입력하세요"
+    							style="">
+    						</xf:secret>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    			<xf:trigger type="button"
+    				style="" id="signup_button"
+    				class="signup-button auth-button">
+    				<xf:label><![CDATA[수정]]></xf:label>
+    			</xf:trigger>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="$c.app" meta_screenName="app" meta_screenDesc="App의 일반적인 기능을 모아놓은 플러그인으로 이벤트 및 API를 제공한다. \n제공되는 API로는 preference 추가/삭제, applog 관리, 앱 이벤트 감지, TTS, screenshot 같은 기능이 존재한다.">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.version,scwin.finish,scwin.checkAppInstalled"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName gcc_app
+ * @pluginName 
+ * @company 
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser 
+ * @version 
+ * @htmlRender 
+ * @icon 
+ * @disableIcon 
+ * @description 일반적인 기능을 모아놓은 플러그인으로 이벤트 및 API를 제공한다. 제공되는 API로는 앱종료, 앱설치여부확인, 앱버전확인 기능들이 있다.
+ * @variableClone true
+ * @width 
+ * @height 
+ * @license 
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */ 
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name version
+ * @description wmatrix app의 version 정보를 반환한다. 콜백 함수는 version 정보를 포함하는 JSON 객체를 인자로 받는다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "data": { "version": "1.0.0", "versionCode": 1}}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.app.version();
+ *      console.log(data);
+ *  })();
+ */
+scwin.version = function() {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.app === "object") {
+                $h.app.version(resolve);
+            } else {
+                reject("Not found App Plugin");
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+
+/**
+ * @method
+ * @name finish
+ * @description 사용자에게 팝업 메시지를 띄워 종료 메시지를 알리고 앱을 종료한다거나, startWebView로 띄운 webview 화면을 제거한다. 콜백 함수는 작업의 성공 여부를 알려주는 JSON 객체를 인자로 받는다.
+ * @param {JSON} options 앱 종료 또는 WebView 제거 옵션
+ * @param {Boolean} options.popup 종료 팝업 생성 여부 [default: false, true]
+ * @param {String} options.message 종료 팝업에 보여줄 메시지 [default: "앱을 종료합니다."]
+ * @param {Boolean} options.cancelButton 종료 팝업에 취소 버튼 보여줄지 여부 [default: true, false]
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "data": "데이터"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {"popup": true, "message": "앱을 종료하시겠습니까?", "cancelButton": true};
+ *      const data = await $c.app.finish(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.finish = function(options) {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.app === "object") {
+                $h.app.finish(resolve, options);
+            } else {
+                reject("Not found App Plugin");
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+/**
+ * @method
+ * @name checkAppInstalled
+ * @description AOS에서는 전달된 패키지명의 앱이 설치되어 있는지 확인하고, iOS에서는 URL 스킴을 이용해 앱이 설치되어 있는지 확인한다. 앱이 설치되어 있지 않은 경우, 선택적으로 사용자를 앱 스토어로 이동시킬 수 있다.
+ * @param {JSON} options 앱 확인 옵션
+ * @param {String} options.packageName (AOS Only) 확인할 앱의 패키지명
+ * @param {String} options.appName (AOS Only) 앱 이름
+ * @param {String} options.storeURL (AOS Only) 앱 스토어 주소
+ * @param {String} options.appScheme (iOS Only) URL 스킴명
+ * @param {String} options.storeScheme (iOS Only) 스토어 스킴
+ * @param {Boolean} options.gotoStore 스토어로 이동할지 여부 [default: false, true]
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "data": "데이터"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      // AOS
+ *      let options = {"packageName": "com.inswave.wtalk", "gotoStore": true, "storeURL": "market://details?id=com.inswave.wtalk", "appName": "W-Talk"};
+ *      // iOS
+ *      let options = {"appScheme": "twitter://", "storeScheme": "itms-apps://itunes.apple.com/app/id333903271", "gotoStore": true};
+ *      const data = await $c.app.checkAppInstalled(options);
+ *      console.log(data);
+ *  })();
+ *  */
+scwin.checkAppInstalled = function(options) {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.app === "object") {
+                $h.app.checkAppInstalled(resolve, options);
+            } else {
+                reject("Not found App Plugin");
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

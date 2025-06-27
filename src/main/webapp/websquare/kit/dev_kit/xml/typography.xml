@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+	
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="top_box" id="" style="" tagname="">
+    		<w2:textbox class="con_tit" id="" label="Typography" style=""></w2:textbox>
+    		<w2:textbox class="con_txt" escape="false" id=""
+    			label="기본적으로 고딕 형태의 정해진 폰트를 사용합니다.&lt;br/&gt;"
+    			style="">
+    		</w2:textbox>
+    		<xf:group class="" id="primary" style=""></xf:group>
+    		<xf:group class="tab_anchor" id="" style="" tagname="ul">
+    			<xf:group class="on" id="" tagname="li">
+    				<w2:anchor class="" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Examples]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Snippet]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Dark Theme]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    	<xf:group class="contbox" id="" style="">
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="Font" style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="titbox" id="" style="" tagname="">
+    			<w2:textbox class="subtxt" escape="false" id="" label="모든 컴포넌트 요소에 &amp;nbsp;'맑은 고딕'을 사용합니다. 기준 폰트 사이즈는 12px입니다. "
+    				style="">
+    			</w2:textbox>
+    		</xf:group>
+    		<xf:group id="" class="font_script_box">
+    			<xf:group class="lybox" id="" style="">
+    				<xf:group adaptiveThreshold="" class="ly_column col_5" id="" style="">
+    					<xf:group id="" style="" class="fonttype_box">
+    						<w2:textbox tagname="span" style="display: block;" id="" label="맑은 고딕" class="page_tit" escape="false"></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="ly_column col_5" id="" style="">
+    					<xf:group id="" style="" class="fonttype_box">
+    						<w2:textbox tagname="span" style="display: block;" id="" label="Malgun Gothic" class="page_tit"
+    							escape="false">
+    						</w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="Usage" style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="fontsize_txtbox mt20" id="" style="">
+    			<w2:textbox class="page_tit" escape="false" id="" label="화면타이틀" style="" tagname="span"></w2:textbox>
+    			<w2:textbox class="page_tit" escape="false" id="" label="PageTitle" style="" tagname="span"></w2:textbox>
+    			<w2:textbox class="" escape="false" id="" label="18px" style="" tagname="span"></w2:textbox>
+    			<w2:textbox class="" escape="false" id="" label="Bold" style="" tagname="span"></w2:textbox>
+    		</xf:group>
+    		<xf:group class="fontsize_txtbox" id="" style="">
+    			<w2:textbox class="sub_tit" escape="false" id="" label="서브타이틀 " style="" tagname="h3"></w2:textbox>
+    			<w2:textbox class="sub_tit" escape="false" id="" label="Subtitle" style="" tagname="h3"></w2:textbox>
+    			<w2:textbox class="" escape="false" id="" label="14px" style="" tagname="span"></w2:textbox>
+    			<w2:textbox class="" escape="false" id="" label="Bold " style="" tagname="span"></w2:textbox>
+    		</xf:group>
+    		<xf:group class="fontsize_txtbox" id="" style="">
+    			<w2:textbox class="sub_head" escape="false" id="" label="항목타이틀 / 버튼" style="" tagname="span"></w2:textbox>
+    			<w2:textbox class="sub_head" escape="false" id="" label="Subhead / Buttons" style="" tagname="span"></w2:textbox>
+    			<w2:textbox class="" escape="false" id="" label="12px" style="" tagname="span"></w2:textbox>
+    			<w2:textbox class="" escape="false" id="" label="Bold " style="" tagname="span"></w2:textbox>
+    		</xf:group>
+    		<xf:group class="fontsize_txtbox" id="" style="">
+    			<w2:textbox class="" escape="false" id="" label="본문 / 라벨" style="" tagname="span"></w2:textbox>
+    			<w2:textbox class="" escape="false" id="" label="Body / label" style="" tagname="span"></w2:textbox>
+    			<w2:textbox class="" escape="false" id="" label="12px" style="" tagname="span"></w2:textbox>
+    			<w2:textbox class="" escape="false" id="" label="Normal" style="" tagname="span"></w2:textbox>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>

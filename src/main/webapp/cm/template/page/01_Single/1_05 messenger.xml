@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="chat_wrap" id="" style="">
+    		<xf:group class="chat_close" id="">
+    			<xf:trigger class="btn_close" id="" style="" type="button">
+    				<xf:label></xf:label>
+    			</xf:trigger>
+    		</xf:group>
+    		<xf:group class="chat_contents" id="" style="">
+    			<xf:group class="chat_list" id="">
+    				<w2:textbox class="date" escape="false" id="" label="01. 25 &lt;span&gt;(목)&lt;/span&gt;" style=""></w2:textbox>
+    				<xf:group class="grp_message user" id="">
+    					<w2:textbox class="bubble" id="" label="WebSquare" style=""></w2:textbox>
+    					<w2:textbox class="bubble" id="" label="WebSquare를 소개해줘" style=""></w2:textbox>
+    					<w2:textbox class="time" id="" label="오전 11:30" style=""></w2:textbox>
+    				</xf:group>
+    				<xf:group class="grp_message bot" id="">
+    					<w2:textbox class="title" id="" label="WebSquare" style=""></w2:textbox><w2:textbox class="bubble" id="" label="WebSquare" style=""></w2:textbox>
+    					<w2:textbox class="bubble" id="" label="WebSquare를 소개해줘" style=""></w2:textbox>
+    					<w2:textbox class="time" id="" label="오전 11:30" style=""></w2:textbox>
+    					<xf:group style="" id="" class="bubble loading">
+    						<xf:group style="" id="" class="dot"></xf:group>
+    						<xf:group class="dot" id="" style=""></xf:group>
+    						<xf:group class="dot" id="" style=""></xf:group>
+    					</xf:group>
+    					
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="chat_footer" id="">
+    			<xf:group class="chat_input_group" id="">
+    				<xf:group class="chat_input" id="">
+    					<xf:textarea id="" placeholder="내용을 입력하세요." style="" title="내용을 입력하세요."></xf:textarea>
+    					<xf:trigger class="btn_file" id="" style="" type="button">
+    						<xf:label></xf:label>
+    					</xf:trigger>
+    				</xf:group>
+    				<xf:trigger class="btn_send" id="" style="" title="전송" type="button">
+    					<xf:label></xf:label>
+    				</xf:trigger>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>

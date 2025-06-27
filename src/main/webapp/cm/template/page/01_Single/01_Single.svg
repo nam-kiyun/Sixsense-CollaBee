@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="15.998" height="15.998" viewBox="0 0 15.998 15.998">
+  <g id="그룹_7706" data-name="그룹 7706" transform="translate(-1125.34 -256.001)">
+    <rect id="사각형_4558" data-name="사각형 4558" width="5" height="8" transform="translate(1128 261)" fill="#e8e8e8"/>
+    <rect id="사각형_4559" data-name="사각형 4559" width="5" height="8" transform="translate(1134 261)" fill="#e8e8e8"/>
+    <path id="사각형_3171_-_윤곽선" data-name="사각형 3171 - 윤곽선" d="M1,1V7H4V1H1M0,0H5V8H0Z" transform="translate(1128 261)" fill="#424144"/>
+    <path id="사각형_3171_-_윤곽선-2" data-name="사각형 3171 - 윤곽선" d="M1,1V7H4V1H1M0,0H5V8H0Z" transform="translate(1134 261)" fill="#424144"/>
+    <g id="그룹_7591" data-name="그룹 7591" transform="translate(0 -25.999)">
+      <rect id="사각형_4560" data-name="사각형 4560" width="11" height="8" transform="translate(1128 287)" fill="#e8e8e8"/>
+      <g id="그룹_7589" data-name="그룹 7589">
+        <path id="사각형_3171_-_윤곽선-3" data-name="사각형 3171 - 윤곽선" d="M1,1V7h9V1H1M0,0H11V8H0Z" transform="translate(1128 287)" fill="#424144"/>
+        <g id="그룹_7588" data-name="그룹 7588" transform="translate(125.867 -3.007)">
+          <path id="빼기_14" data-name="빼기 14" d="M14.641,16H1.358A1.311,1.311,0,0,1,.4,15.6,1.307,1.307,0,0,1,0,14.64V1.356A1.311,1.311,0,0,1,.4.4,1.314,1.314,0,0,1,1.358,0H14.641A1.314,1.314,0,0,1,15.6.4a1.311,1.311,0,0,1,.4.956V14.64A1.374,1.374,0,0,1,14.641,16ZM1.068,3.566V14.64a.277.277,0,0,0,.09.2.278.278,0,0,0,.2.091H14.641a.311.311,0,0,0,.29-.29V3.566ZM13.6,1.379a.462.462,0,1,0,.463.462A.462.462,0,0,0,13.6,1.379Zm-1.849,0a.462.462,0,1,0,.463.462A.463.463,0,0,0,11.75,1.379Zm-1.849,0a.462.462,0,1,0,.463.462A.462.462,0,0,0,9.9,1.379Z" transform="translate(999.472 285.008)" fill="#424144"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

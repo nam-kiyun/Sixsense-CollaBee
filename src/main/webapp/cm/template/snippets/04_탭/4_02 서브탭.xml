@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+	
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="tbcbox" id="" style="">
+    		<w2:tabControl alwaysDraw="false" class="tbc" id="" style="">
+    			<w2:tabs disabled="false" id="tabs1" label="TAB1" style=""></w2:tabs>
+    			<w2:tabs disabled="false" id="tabs2" label="TAB2" style=""></w2:tabs>
+    			<w2:tabs disabled="false" id="tabs3" label="TAB3" style=""></w2:tabs>
+    			<w2:content alwaysDraw="false" id="content1" style="">
+    				<w2:tabControl alwaysDraw="false" class="tbc_sub" id="" style="">
+    					<w2:tabs disabled="false" id="tabs1" label="TAB1" style=""></w2:tabs>
+    					<w2:tabs disabled="false" id="tabs2" label="TAB2" style=""></w2:tabs>
+    					<w2:content alwaysDraw="false" id="content1" style="">
+    						<w2:textbox id="" label="Content" style="line-height:28px;height: 30px;text-align:center;width: 100%;"></w2:textbox>
+    					</w2:content>
+    					<w2:content alwaysDraw="false" id="content2" style=""></w2:content>
+    				</w2:tabControl>
+    			</w2:content>
+    			<w2:content alwaysDraw="false" id="content2" style=""></w2:content>
+    			<w2:content alwaysDraw="false" id="content3" style=""></w2:content>
+    		</w2:tabControl>
+    	</xf:group>
+    </body>
+</html>

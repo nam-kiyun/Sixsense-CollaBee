@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="/InsWebApp/css/auth/base.css" type="text/css"?>
+<?xml-stylesheet href="/InsWebApp/css/auth/signupPage.css" type="text/css"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+    	<w2:type>COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:MSA />
+    	<xf:model>
+    		<w2:dataCollection baseNode="map">
+    			<w2:dataMap baseNode="map" id="dma_mailParam">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="이메일" id="email"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
+    		</w2:dataCollection>
+    		<w2:workflowCollection />
+    		<xf:submission id="sbm_email" action="/InsWebApp/SendEmail.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_mailParam","key":"elData"}' target=""
+    			encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
+    			ev:submitdone="scwin.sbm_email_submitdone" ev:submiterror="scwin.sbm_email_submiterror" abortTrigger="">
+    		</xf:submission>
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<w2:publicInfo method="" />
+    	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
+    scwin.onresize();
+};
+
+scwin.onresize = function (e) {
+    // resize 이벤트 정의
+    window.onresize = function () {
+        scwin.applyResponsiveWidth();
+    };
+
+    // 페이지 로딩 시에도 한 번 실행
+    scwin.applyResponsiveWidth();
+};
+
+//반응형 width 값 조절
+scwin.applyResponsiveWidth = function () {
+    let width = window.innerWidth;
+
+    if (width <= 650) {
+        signup_form.setStyle("width", "100%");
+        signup_group.setStyle("width", "80%");
+        signup_button.setStyle("width", "80%");
+    } else if (width <= 1300) {
+        signup_form.setStyle("width", "70%");
+        signup_group.setStyle("width", "75%");
+        signup_button.setStyle("width", "75%");
+    } else {
+        signup_form.setStyle("width", "40%");
+        signup_group.setStyle("width", "60%");
+        signup_button.setStyle("width", "60%");
+    }
+};
+
+//input border 스타일
+scwin.input_onblur = function (e) {
+    const currentInputId = e.target.id;
+    const targetGroupId = currentInputId.replace("_input", "_group");
+    const targetGroup = $p.getComponentById(targetGroupId);
+
+    if (targetGroup) {
+        targetGroup.setStyle("border-color", "#DAD3D3"); 
+    } 
+};
+
+//input border 스타일
+scwin.input_onfocus = function (e) {
+    const currentInput = e.target;
+    const currentInputId = currentInput.id; 
+    const targetGroupId = currentInputId.replace("_input", "_group");
+    const targetGroup = $p.getComponentById(targetGroupId); 
+
+    if (targetGroup) {
+        targetGroup.setStyle("border-color", "black");
+    } 
+};
+
+
+// 이메일
+scwin.signup_button_onclick = function (e) {
+    let result = $c.sbm.execute(sbm_email);
+};
+
+scwin.sbm_email_submitdone = function (e) {
+    const responseData = e.responseJSON; 
+    console.log(responseData);
+    // if (responseData) {
+    //     const encodedData = encodeURIComponent(JSON.stringify(responseData));
+    //     $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/changePwdPage.xml?data=" + encodedData); [3]
+    // } else {
+    //     console.error("응답 데이터가 없습니다.");
+    //     alert("데이터 오류");
+    // }
+};
+
+scwin.sbm_email_submiterror = function (e) {
+    console.error("이메일 전송 중 오류 발생:", e);
+    alert("이메일 전송 오류");
+};
+]]></script>
+    	<style type="text/css"><![CDATA[]]></style>
+    </head>
+    <body ev:onpageload="scwin.onpageload" style="padding: 0;margin: 0;;">
+    	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+    		style="background-color: #FFF4D6;align-items: center;justify-content: center;display: flex;height: 100%;">
+    		<xf:group style="width:41.40%;height:550px;" id="signup_form" class="auth-form">
+
+    			<xf:group style="height:55px;display:flex;flex-direction:row;" id="">
+
+
+    				<xf:image src="/InsWebApp/images/collabee_icon.jpg" style="width:51px;height:48px;display:flex;" id=""></xf:image>
+    				<w2:textbox id="" label="COLLABEE"
+    					style="width:150px;height:37px;font-size:30px;font-weight: bold;display: flex;color: #FFB823">
+    				</w2:textbox>
+    			</xf:group>
+
+
+    			<w2:textbox id="" label="회원가입 " style="height: 23px;color: #DAD3D3;"></w2:textbox>
+    			<xf:group style="width:60%;height:356px;" id="signup_group" class="signup-group">
+
+    				<xf:group style="height: 60px;" id="">
+    					<w2:textbox style="height:23px;" id="" label="이름"></w2:textbox>
+    					<xf:group style="height:35px;border: 1px solid #DAD3D3;border-radius: 6px;box-sizing: border-box;padding-left:10px;"
+    						id="name_group" class="input-group">
+    						<xf:output style="width:30px;height:100%;" label="" id="" class="fa-solid fa-circle-user auth-icon">
+    							<xf:label></xf:label>
+    						</xf:output>
+    						<xf:input ev:onfocus="scwin.input_onfocus" ev:onblur="scwin.input_onblur"
+    							style="height:35px;width:81.40%;background:transparent;outline:none;border:none;" id="name_input"
+    							showPlaceHolderOnReadOnly="true" placeholder="이름을 입력하세요" class="input-group-container" ref="">
+    						</xf:input>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group style="height: 60px;" id="">
+    					<w2:textbox style="height: 23px;" id="" label="이메일"></w2:textbox>
+    					<xf:group style="height:35px;" id="" class="email-group">
+    						<xf:trigger
+    							style=""
+    							id="" type="button" class="duplicateCheck-button auth-button">
+    							<xf:label><![CDATA[중복확인]]></xf:label>
+    						</xf:trigger>
+    						<xf:group
+    							style="height:35px;border: 1px solid #DAD3D3;border-radius: 6px;box-sizing: border-box;padding-left:10px;" id="email_group"
+    							class="input-group">
+    							<xf:output style="width:30px;height:100%;" id="" label="" class="fa-solid fa-envelope auth-icon">
+    								<xf:label></xf:label>
+    							</xf:output>
+    							<xf:input style="height:35px;width:80.25%;background:transparent;outline:none;border:none;" id="email_input"
+    								placeholder="이메일을 입력하세요" showPlaceHolderOnReadOnly="true" class="input-group-container" ev:onblur="scwin.input_onblur"
+    								ev:onfocus="scwin.input_onfocus" ref="data:dma_mailParam.email">
+    							</xf:input>
+    						</xf:group>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group style="height: 60px;" id="">
+    					<w2:textbox style="height: 23px;" id="" label="비밀번호"></w2:textbox>
+    					<xf:group style="height:35px;border: 1px solid #DAD3D3;border-radius: 6px;box-sizing: border-box;padding-left:10px;"
+    						id="password_group" class="input-group">
+    						<xf:output style="width:30px;height:100%;" id="" label="" class="fa-solid fa-lock auth-icon">
+    							<xf:label></xf:label>
+    						</xf:output>
+    						<xf:secret style="height:35px;width:89.68%;background:transparent;outline:none;border:none;" id="password_input" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus" class="input-group-container" placeholder="비밀번호를 입력하세요"></xf:secret>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group style="height: 60px;" id="">
+    					<w2:textbox style="height: 23px;" id="" label="비밀번호 확인"></w2:textbox>
+    					<xf:group style="height:35px;border: 1px solid #DAD3D3;border-radius: 6px;box-sizing: border-box;padding-left:10px;"
+    						id="passwordCheck_group" class="input-group">
+    						<xf:output style="width:30px;height:100%;" id="" label="" class="fa-solid fa-check auth-icon">
+    							<xf:label></xf:label>
+    						</xf:output>
+    						<xf:secret class="input-group-container" id="passwordCheck_input" placeholder="비밀번호를 다시 입력하세요"
+    							style="height:35px;width:89.68%;background:transparent;outline:none;border:none;" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus">
+    						</xf:secret>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    			<xf:trigger type="button"
+    				style="" id="signup_button"
+    				class="auth-button" ev:onclick="scwin.signup_button_onclick">
+    				<xf:label><![CDATA[가입하기]]></xf:label>
+    			</xf:trigger>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>

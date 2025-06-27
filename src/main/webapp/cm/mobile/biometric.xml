@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="biometric" meta_screenName="biometric" meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_desc="바이오 인증을 이용한 데이터 저장, 출력, 삭제 등의 API를 제공한다.">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.deleteData,scwin.checkData,scwin.encryptData,scwin.decryptData"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_biometric
+ * @pluginName 
+ * @company 
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser 
+ * @version 
+ * @htmlRender 
+ * @icon 
+ * @disableIcon 
+ * @description 바이오인증을 이용한 데이터 저장, 출력, 삭제 등 API을 제공한다.
+ * @variableClone true
+ * @width 
+ * @height 
+ * @license 
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */ 
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name deleteData
+ * @description 저장된 biometric data를 삭제한다.
+ * @param {JSON} options biometric 으로 저장한 data 삭제 옵션
+ * @param {String} options.key 삭제할 data의 key값
+ * @returns {JSON} {"statusCode": "코드", "msg": "메시지", "data": ""}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.key = "test";
+ *      const data = await $c.biometric.deleteData(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.deleteData = function(options) {
+    try {
+        if (typeof $h.biometric === "JSON") {
+            return new Promise(resolve => {
+                $h.biometric.deleteData(resolve, options);
+            });
+        } else {
+            console.log("Not found Biometric Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name checkData
+ * @description 주어진 key 값으로 저장된 biometric data가 있는지 확인한다. (keystore 포함)
+ * @param {JSON} options biometric 으로 저장한 data 존재 여부 확인 옵션
+ * @param {String} options.key 확인할 data의 key값
+ * @returns {JSON} {"statusCode": "코드", "msg": "메시지", "data": ""}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.key = "test";
+ *      const data = await $c.biometric.checkData(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.checkData = function(options) {
+    try {
+        if (typeof $h.biometric === "JSON") {
+            return new Promise(resolve => {
+                $h.biometric.checkData(resolve, options);
+            });
+        } else {
+            console.log("Not found Biometric Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name encryptData
+ * @description 주어진 key값과 data로 Bio 정보를 이용하여 암호화하고 keystore에 저장한다.
+ * @param {JSON} options biometric 으로 data 저장 옵션
+ * @param {String} options.key 암호화할 data의 key값 
+ * @param {String} options.data 암호화할 Data 
+ * @param {String} options.title Bio 인증 창에 표시할 title
+ * @param {String} options.subTitle Bio 인증 창에 표시할 subTitle 
+ * @param {String} options.description Bio 인증 창에 표시할 description 
+ * @param {String} options.negativeText Bio 인증 창에 표시할 취소 버튼 텍스트
+ * @returns {JSON} {"statusCode": "코드", "msg": "메시지", "data": ""}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.key = "test";
+ *      options.data = "1!2@3#4$5%";
+ *      options.title = "testDialog";
+ *      options.subTitle = "바이오인증";
+ *      options.description = "생체 인증을 해주세요.";
+ *      options.negativeText = "취소";
+ *      const data = await $c.biometric.encryptData(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.encryptData = function(options) {
+    try {
+        if (typeof $h.biometric === "JSON") {
+            return new Promise(resolve => {
+                $h.biometric.encryptData(resolve, options);
+            });
+        } else {
+            console.log("Not found Biometric Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name decryptData
+ * @description 주어진 key값으로 저장된 data를 복호화하여 전달한다.
+ * @param {JSON} options biometric 으로 저장한 데이터 반환 옵션
+ * @param {String} options.key 복호화할 data의 key값 
+ * @param {String} options.title Bio 인증 창에 표시할 title
+ * @param {String} options.subTitle Bio 인증 창에 표시할 subTitle 
+ * @param {String} options.description Bio 인증 창에 표시할 description 
+ * @param {String} options.negativeText Bio 인증 창에 표시할 취소 버튼 텍스트
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "data": ""}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.key = "test";
+ *      options.title = "testDialog";
+ *      options.subTitle = "바이오인증";
+ *      options.description = "생체 인증을 해주세요";
+ *      options.negativeText = "취소";
+ *      const data = await $c.biometric.decryptData(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.decryptData = function(options) {
+    try {
+        if (typeof $h.biometric === "JSON") {
+            return new Promise(resolve => {
+                $h.biometric.decryptData(resolve, options);
+            });
+        } else {
+            console.log("Not found Biometric Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

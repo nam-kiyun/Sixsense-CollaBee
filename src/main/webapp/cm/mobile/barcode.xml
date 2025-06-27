@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="$c.barcode" meta_screenName="barcode" meta_subsystem="common" meta_type="메인" meta_desc="다양한 종류의 barcode들을 스캔하여 데이터를 반환하는 API를 제공한다. " meta_author="인스웨이브">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.scan"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName gcc_barcode
+ * @pluginName 
+ * @company 인스웨이브
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser 
+ * @version 
+ * @htmlRender 
+ * @icon 
+ * @disableIcon 
+ * @description barcode들을 스캔하여 데이터를 반환하는 API를 제공한다. 지원되는 바코드 종류 AZTEC, CATBODY, CODE_128, CODE_39, CODE_39MOD43, CODE_93, UPC_E, QR_CODE, PDF_417, DATA_MATRIX, DOG_BODY, EAN_13, EAN_8, FACE, HUMAN_BODY, INTERLEAVED2OF5, ITF14 이다.
+ * @variableClone true
+ * @width 
+ * @height 
+ * @license 
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */ 
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name scan
+ * @description 바코드 스캐너를 실행하여 스캔 결과를 반환한다. 사용자는 스캐너의 여러 옵션을 설정할 수 있으며, 스캔 완료 후 콜백 함수를 통해 결과를 받는다.
+ * @param {JSON} options 바코드 스캐너 옵션
+ * @param {Boolean} options.disableSuccessBeep 스캔 성공 시 성공음 출력 여부 [default: false, true]
+ * @param {Boolean} options.preferFrontCamera 스캔 실행 시 전면 카메라 사용 여부 [default: false, true]
+ * @param {Boolean} options.showTouchBar 스캔 화면에 플래시 버튼 표시 여부 [default: false, true]
+ * @param {Boolean} options.showFlipCameraButton 스캔 화면에 카메라 전환 버튼 표시 여부 [default: false, true]
+ * @param {Boolean} options.torchOn 스캔 시작 시 플래시 사용 여부 [default: false, true]
+ * @param {String} options.formats 스캔할 바코드 포맷 설정, 지정하지 않을 경우 모든 포맷 자동 인식, 쉼표(,)로 다중 포맷 지정 가능
+ * @param {Boolean} options.saveHistory (AOS Only) 스캔 히스토리 저장 여부 [default: false, true]
+ * @param {Int} options.resultDisplayDuration (AOS Only) 스캔 결과 표시 시간(ms) [default: 0]
+ * @param {String} options.prompt (AOS Only) 스캔 화면에 표시할 사용자 안내 문구 [default: ""]
+ * @param {String} options.orientation (AOS Only) 스캔 화면의 방향 설정 [default: portrait|"portrait", landscape|"landscape"]
+ * @returns {Promise} rtn {"statusCode": "코드", "msg": "메시지", "data": {"text": "스캔된 데이터", "type": "바코드 타입", "cancelled": "스캔 취소 여부"} }
+ * @hidden N
+ * @exception  
+ * @example 
+ * const callback = function(result){ console.log(result);};
+ * let options = {};
+ * options.disableSuccessBeep = false;
+ * options.preferFrontCamera = false;
+ * options.showTorchButton = false;
+ * options.showFlipCameraButton = false;
+ * options.torchOn =false;
+ * options.formats = "";
+ * $c.barcode.scan(options).then(callback);
+ */ 
+scwin.scan = function(options) {
+	return new Promise((resolve, reject) => {
+        try {
+	        if (typeof $h.barcode === "object") {
+	            $h.barcode.scan(resolve, options);
+	        } else {
+	            console.log("Not found Barcode Plugin");
+	            reject("Not found Barcode Plugin");
+	        }
+	    } catch (e){
+	        reject(e);
+	    }
+    });
+}
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

@@ -1,0 +1,98 @@
+[2025-04-09 08:15:24] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-04-09 08:15:24] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.inswave.mobile
+[2025-04-09 08:15:24] [INFO] ::  MATRIX_MOBILE_HOME = C:\InswaveToolSP1\workspace\mobile_test\matrix_mobile_home
+[2025-04-09 08:15:24] [INFO] [RefreshUpdatePatchGenerator] queue wait.
+[2025-04-09 08:15:24] [INFO] ::  MATRIX_MOBILE_HOME Config Path = C:\InswaveToolSP1\workspace\mobile_test\matrix_mobile_home\config
+[2025-04-09 08:15:24] [INFO] #########################################
+[2025-04-09 08:15:25] [INFO] appID = matrix.inswave.mobile
+[2025-04-09 08:15:26] [INFO] YAMLParser new Instance!!!
+[2025-04-09 08:15:27] [INFO] [MatrixMobileServlet]method = license
+[2025-04-09 08:15:27] [SEVERE] [Matrix Mobile License] Loading License. PATH: /C:\InswaveToolSP1\workspace\mobile_test\matrix_mobile_home\license\license
+[2025-04-09 08:15:27] [SEVERE] [Matrix Mobile License] ############### MATRIX Mobile LICENSE File[1] ####################
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] ############### LICENSE INFO ####################
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] License ID : 1206
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] Customer ID: 2488
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] Name       : 2488
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] License Type: (Demo License)
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] HOST Name  : any
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] IP Address : 0.0.0.0
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] Product ID : 14
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] CPU Number : 256
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] Expiration : Sun Aug 31 00:00:00 KST 2025
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] appID[0] : inswave.wmatrix.template
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] appID[1] : inswave.wmatrix.template
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] #################################################
+
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] ############### SYSTEM INFO #####################
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] CPU Number : 8
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] HOST Name  : DESKTOP-D5JCSGO
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] IP[0]      : 127.0.0.1
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] IP[1]      : 0:0:0:0:0:0:0:1
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] IP[2]      : fe80:0:0:0:920a:210f:ccce:8168%wlan0
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] IP[3]      : fe80:0:0:0:4859:ffc6:778d:3747%wlan1
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] IP[4]      : 192.168.152.25
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] IP[5]      : fe80:0:0:0:5db3:ee12:bba8:fc3c%wlan2
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] IP[6]      : fe80:0:0:0:7292:83f7:5b43:6d0e%eth4
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] IP[7]      : 192.168.112.1
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] IP[8]      : fe80:0:0:0:37fc:4ff1:b8e8:47d7%eth9
+[2025-04-09 08:15:30] [SEVERE] [Matrix Mobile License] #################################################
+[2025-04-09 08:51:54] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-04-09 08:51:54] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.inswave.mobile
+[2025-04-09 08:51:54] [INFO] [MatrixMobileServlet]method = license
+[2025-04-09 08:54:12] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-04-09 08:54:12] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.inswave.mobile
+[2025-04-09 08:54:14] [INFO] [MatrixMobileServlet]method = license
+[2025-04-09 09:21:18] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-04-09 09:21:18] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.inswave.mobile
+[2025-04-09 09:21:19] [INFO] [MatrixMobileServlet]method = license
+[2025-04-09 09:30:56] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-04-09 09:30:56] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.inswave.mobile
+[2025-04-09 09:30:57] [INFO] [MatrixMobileServlet]method = license
+[2025-04-09 09:33:33] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-04-09 09:33:33] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.inswave.mobile
+[2025-04-09 09:33:33] [INFO] [MatrixMobileServlet]method = license
+[2025-04-09 09:34:26] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-04-09 09:34:26] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.inswave.mobile
+[2025-04-09 09:34:27] [INFO] [MatrixMobileServlet]method = license
+[2025-04-09 10:00:05] [INFO] [MatrixMobileServlet]destroy EXEC
+[2025-04-09 13:37:52] [INFO] [MatrixMobileServlet]method = license
+[2025-04-09 13:37:52] [SEVERE] [Matrix Mobile License] Loading License. PATH: /C:\InswaveToolSP1\workspace\mobile_test\matrix_mobile_home\license\license
+[2025-04-09 13:37:52] [SEVERE] [Matrix Mobile License] ############### MATRIX Mobile LICENSE File[1] ####################
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] ############### LICENSE INFO ####################
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] License ID : 1206
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] Customer ID: 2488
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] Name       : 2488
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] License Type: (Demo License)
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] HOST Name  : any
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] IP Address : 0.0.0.0
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] Product ID : 14
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] CPU Number : 256
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] Expiration : Sun Aug 31 00:00:00 KST 2025
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] appID[0] : inswave.wmatrix.template
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] appID[1] : inswave.wmatrix.template
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] #################################################
+
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] ############### SYSTEM INFO #####################
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] CPU Number : 8
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] HOST Name  : DESKTOP-D5JCSGO
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] IP[0]      : 127.0.0.1
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] IP[1]      : 0:0:0:0:0:0:0:1
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] IP[2]      : fe80:0:0:0:920a:210f:ccce:8168%wlan0
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] IP[3]      : fe80:0:0:0:4859:ffc6:778d:3747%wlan1
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] IP[4]      : 192.168.152.25
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] IP[5]      : fe80:0:0:0:5db3:ee12:bba8:fc3c%wlan2
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] IP[6]      : fe80:0:0:0:7292:83f7:5b43:6d0e%eth4
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] IP[7]      : 192.168.112.1
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] IP[8]      : fe80:0:0:0:37fc:4ff1:b8e8:47d7%eth9
+[2025-04-09 13:37:53] [SEVERE] [Matrix Mobile License] #################################################
+[2025-04-09 13:37:55] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-04-09 13:37:55] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.app
+[2025-04-09 13:37:55] [INFO] ::  MATRIX_MOBILE_HOME = C:\InswaveToolSP1\workspace\mobile_test\matrix_mobile_home
+[2025-04-09 13:37:55] [INFO] [RefreshUpdatePatchGenerator] queue wait.
+[2025-04-09 13:37:55] [INFO] ::  MATRIX_MOBILE_HOME Config Path = C:\InswaveToolSP1\workspace\mobile_test\matrix_mobile_home\config
+[2025-04-09 13:37:55] [INFO] #########################################
+[2025-04-09 13:37:56] [INFO] appID = matrix.inswave.mobile
+[2025-04-09 13:37:56] [INFO] YAMLParser new Instance!!!
+[2025-04-09 13:38:25] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-04-09 13:38:25] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.inswave.mobile
+[2025-04-09 13:57:50] [INFO] [MatrixMobileServlet]destroy EXEC

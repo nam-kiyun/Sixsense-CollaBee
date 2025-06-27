@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="fromToCalendar" meta_screenName="From To Calendar" meta_subsystem="공통" meta_author="인스웨이브"
+    	meta_desc="2개의 INPUTCALENDAR를 제어하는 UDC">
+    	<w2:type palette="support">COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:publicInfo method="scwin.setInitDate" />
+    	<w2:MSA />
+    	<xf:model>
+    		<w2:dataCollection baseNode="map">
+    			<w2:aliasDataMap scope="" id="aliasDataMap" userData1=""></w2:aliasDataMap>
+    		</w2:dataCollection>
+    		<w2:workflowCollection />
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<script lazy="false" type="text/javascript"><![CDATA[
+
+/**
+ * @component
+ * @company 
+ * @developer user
+ * @variableClone true
+ * @notSupportBrowser 
+ * @version 
+ * @htmlRender 
+ * @icon 
+ * @disableIcon 
+ * @width 100%
+ * @height 26px
+ * @description 
+ */ 
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option 
+ * @default udc_fromToCal
+ * @necessary Y
+ * @description 메인화면에서 사용할 UDC ID
+ */   
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option 
+ * @default 
+ * @necessary N
+ * @description Class ID
+ */  
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option 
+ * @default 
+ * @necessary N
+ * @description 메안화면의 style
+ */   
+
+/**
+ * @property
+ * @name refStDt
+ * @category 03.Data
+ * @type string
+ * @option 
+ * @default 
+ * @necessary Y
+ * @description bind 할 메인화면의  dataMap 컬럼 ID ( 시작날짜 )
+ */               
+
+ 
+
+/**
+ * @property
+ * @name refEdDt
+ * @category 03.Data
+ * @type string
+ * @option 
+ * @default 
+ * @necessary Y
+ * @description bind 할 메인화면의  dataMap 컬럼 ID ( 종료날짜 )
+ */            
+
+/**
+ * @property
+ * @name refDataMap
+ * @category 03.Data
+ * @type string
+ * @option 
+ * @default 
+ * @necessary Y
+ * @description bind 할 메인화면의 dataMap  ID (메인화면의 데이타 맵인 경우   예: ../dataMapid )
+ */       
+
+   
+
+
+
+
+/**
+ * @method
+ * @name setInit
+ * @description desc
+ * @return None|없음.
+ * @param 
+ * @hidden Y
+ * @exception 
+ * @sample 
+ */      
+	scwin.onpageload = function() {
+		scwin.setInit();
+		scwin.disFlag = true;
+	};
+	
+	scwin.setInit = function(){
+		
+		var bindData = $p.getOptions();
+		
+		var refDataMap = bindData.refDataMap;
+		
+		if ( !refDataMap ) return;
+		aliasDataMap.setScope(refDataMap);
+		ipt_from.setRef("data:aliasDataMap."+bindData.refStDt);
+		ipt_To.setRef("data:aliasDataMap."+bindData.refEdDt);
+		var refStDt = aliasDataMap.get(bindData.refStDt);
+		var refEdDt = aliasDataMap.get(bindData.refEdDt);
+		
+		scwin.setInitDate(refStDt,refEdDt);
+		
+	};
+	
+/**
+ * @method
+ * @name setInitDate
+ * @description desc
+ * @return None|없음
+ * @param <String>|fromDate|desc
+ * @param <String>|toDate|desc 
+ * @hidden N
+ * @exception 
+ * @sample 
+ */    
+	scwin.setInitDate = function(fromDate , toDate ){
+		gr_cal.setStyle( "display" , "none" );
+		scwin.disFlag = true;
+		
+		if ( fromDate.length == 8 ){
+			scwin.setInitFromDate(fromDate);
+		}
+		if ( toDate.length == 8 ){
+			scwin.setInitToDate(toDate);
+		}
+		
+		cal_fr.gotoCalendar(fromDate);	
+		cal_to.gotoCalendar(toDate);	
+		
+		scwin.disableBeforeDate(fromDate);
+		scwin.disableAfterDate(toDate);
+		
+	};
+/**
+ * @method
+ * @name setInitFromDate
+ * @description desc
+ * @return None|없음
+ * @param <String>|dateStr|desc 
+ * @hidden Y
+ * @exception 
+ * @sample 
+ */     
+	scwin.setInitFromDate = function(dateStr){
+		ipt_from.setValue(dateStr);
+		//scwin.setMainFromDate(dateStr);
+	};
+		
+/**
+ * @method
+ * @name setInitToDate
+ * @description desc
+ * @return None|없음
+ * @param <String>|dateStr|desc 
+ * @hidden Y
+ * @exception 
+ * @sample 
+ */   
+	scwin.setInitToDate = function(dateStr){
+		ipt_To.setValue(dateStr);
+		//scwin.setMainFromDate(dateStr);
+	};
+		
+	scwin.img_Cal_onclick = function(e) {
+		if (scwin.disFlag){
+			scwin.disFlag = false;
+			gr_cal.setStyle( "display" , "flex" );
+			
+		
+			if ( ipt_To.getValue()  && ipt_To.getValue().length == 8 ){
+				cal_to.gotoCalendar(ipt_To.getValue());
+			} else {
+				cal_to.gotoCalendar($p.getCurrentServerDate( "yyyyMMdd" ));
+			}
+			if ( ipt_from.getValue()  && ipt_from.getValue().length == 8 ){
+				cal_fr.gotoCalendar(ipt_from.getValue());
+			} else {
+				cal_fr.gotoCalendar($p.getCurrentServerDate( "yyyyMMdd" ));
+			}
+		} else {
+			scwin.disFlag = true;
+			gr_cal.setStyle( "display" , "none" );
+		}
+    				
+	};
+	
+	scwin.cal_fr_ondateselect = function(dateStr,dateObj) {
+		if ( dateStr >  ipt_To.getValue() && ipt_To.getValue() != "" ){
+ 			$c.popup.alert($p,"TO DATE 보다 미래일자 입니다.");
+ 			ipt_from.setValue("");
+ 		} else {
+ 			ipt_from.setValue( dateStr );
+ 			if ( dateStr ){
+ 				cal_fr.gotoCalendar(dateStr);
+ 			} else {
+ 				cal_fr.gotoCalendar($p.getCurrentServerDate( "yyyyMMdd" ));
+ 			}
+ 					//cal_to.options.disableBeforeDate = dateStr;
+  			if ( ipt_To.getValue() ){
+  				scwin.disFlag = true;
+  				gr_cal.setStyle( "display" , "none" );
+  			}
+ 		}
+ 				
+ 		scwin.disableBeforeDate( dateStr);		
+ 		
+		
+	};
+	
+
+	
+	scwin.cal_to_ondateselect = function(dateStr,dateObj) {
+		if ( dateStr < ipt_from.getValue() && ipt_from.getValue() != "" ){
+    		$c.popup.alert($p,"FROM DATE 보다 과거일자 입니다.");
+    					
+			ipt_To.setValue("");
+		} else {
+ 			ipt_To.setValue( dateStr );
+ 			cal_to.gotoCalendar(dateStr);
+ 				
+ 			if ( dateStr ){
+				cal_to.gotoCalendar(dateStr);
+			} else {
+				cal_to.gotoCalendar($p.getCurrentServerDate( "yyyyMMdd" ));
+			}
+ 			if ( ipt_from.getValue() ){
+ 				scwin.disFlag = true;
+ 				gr_cal.setStyle( "display" , "none" );
+ 			}
+		}
+				
+		scwin.disableAfterDate	( dateStr );	
+		
+	};
+	
+	scwin.disableBeforeDate = function( dateStr ){
+		if ( dateStr ){
+			var date1 = $p.dateAdd( dateStr , 0 );
+			cal_to.options.disableBeforeDate = date1;
+		} else {
+			cal_to.options.disableBeforeDate = false;
+		}
+	};
+	
+	scwin.disableAfterDate = function( dateStr ){
+		
+		;
+		if ( dateStr ){
+			var date1 = $p.dateAdd( dateStr , 0 );
+			
+			cal_fr.options.disableAfterDate = date1;
+		} else {
+			cal_fr.options.disableAfterDate = false;
+		}
+	};
+	
+	scwin.ipt_from_onviewchange = function(info) {
+		
+		var val = info.newValue;
+		
+		
+		scwin.cal_fr_ondateselect (val);
+	};
+	
+	scwin.ipt_To_onviewchange = function(info) {
+		var val = info.newValue;
+		scwin.cal_to_ondateselect (val);
+	};
+	]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload()"><xf:group id="" style="" class="dual_calendar"><xf:group id="">
+    		<xf:input ref="" rightAlign="false" dataType="date" ev:onviewchange="scwin.ipt_from_onviewchange" displayFormat="yyyy-MM-dd" adjustMaxLength="false" style="width:148px;" id="ipt_from" renderType="">
+    			</xf:input>
+    		<w2:span style="" id="" label="~"></w2:span>
+    		<xf:input rightAlign="false" dataType="date" ev:onviewchange="scwin.ipt_To_onviewchange" displayFormat="yyyy-MM-dd" adjustMaxLength="false" style="width:148px;" id="ipt_To" renderType="">
+    			</xf:input>
+    		<xf:trigger anchorWithGroupClass="" style="" id="img_Cal" type="button" class="btn_cm btn_calendar" ev:onclick="scwin.img_Cal_onclick">
+    			<xf:label><![CDATA[calendar]]></xf:label>
+    		</xf:trigger>
+    	</xf:group>
+	<xf:group style="z-index:2000;display: none;" id="gr_cal" class="gr_cal">
+		<xf:group class="lybox mb0" id="" style="width: 550px;">
+			<xf:group adaptiveThreshold="" class="ly_column col_5" id="" style="">
+			<w2:calendar ev:ondateselect="scwin.cal_fr_ondateselect" footerDiv="true" style="position:relative;" id="cal_fr"></w2:calendar></xf:group>
+			<xf:group class="ly_column col_5" id="" style="">
+			<w2:calendar ev:ondateselect="scwin.cal_to_ondateselect" footerDiv="true" style="position:relative;" id="cal_to"></w2:calendar></xf:group>
+		</xf:group>
+	</xf:group></xf:group></body>
+</html>

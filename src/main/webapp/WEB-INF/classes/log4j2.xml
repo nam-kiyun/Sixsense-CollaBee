@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration>
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%m%n" />
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Logger name="java.sql" level="OFF" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>
+        <!-- log SQL with timing information, post execution -->
+        <Logger name="jdbc.sqltiming" level="ERROR" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>
+        <Logger name="org.springframework" level="ERROR" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>
+        <Logger name="org.apache.commons.digester.Digester" level="OFF" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>  
+        <Logger name="org.apache.commons.validator.ValidatorAction" level="OFF" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>   
+ 
+         <Logger name="com.inswave.elfw.db.sql.CompleteQueryPostProcessor" level="DEBUG" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>   
+         <Logger name="com.inswave.elfw.db.sql.InjectionPatternPostProcessor" level="DEBUG" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>                 
+                      
+        <Logger name="elfw.appLogger" level="DEBUG" additivity="false">
+            <AppenderRef ref="console" />
+        </Logger>
+                
+        <Root level="ON">
+            <AppenderRef ref="console" />
+        </Root>
+    </Loggers>
+</Configuration>

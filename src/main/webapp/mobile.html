@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<title>	Matrix Mobile Test </title>
+		<style>
+	        #container {
+	            display: flex;
+	            flex-direction: column;
+	            justify-content: center;
+	            align-items: center;
+	        }
+	 
+	        #btnDiv {
+	            width: 40vw;
+	            display: flex;
+	            flex-direction: row;
+	            align-items: center;
+	            justify-content: space-between;
+	        }
+
+	        .item {
+	        	display: flex;
+	            flex-direction: row;
+	            align-items: left;
+	            flex-wrap: wrap;
+	        }
+	 
+	        .btn {
+	            cursor: pointer;
+	            background-color: #455360;
+				border: none;
+				color: white;
+				padding: 15px 32px;
+				text-align: center;
+				text-decoration: none;
+				font-size: 16px;
+				border-radius: 10px;
+	        }
+
+	        .input {
+	        	width: 40vw;
+				height: 32px;
+				font-size: 15px;
+				border: 0;
+				border-radius: 15px;
+				outline: none;
+				padding-left: 10px;
+				background-color: rgb(233, 233, 233);
+	        }
+
+	        span { 
+			    display:block;
+			    width:40vw;
+			    word-wrap:break-word;
+			}
+    	</style>
+	</head>
+<body>
+	<div id="container">
+		<h1>Matrix Mobile API Test</h1>
+        <input id="input_id" class="input" placeholder="appID를 입력하세요."/>
+        <p>
+        <div id="btnDiv">
+            <button class="btn" onclick="sendLicense()">
+                license
+            </button>
+             
+            <button class="btn" onclick="sendConfig()">
+                matrix-mobile-config
+            </button>
+
+            <button class="btn" onclick="configUpdate()">
+                matrix-mobile-config-update
+            </button>
+
+            <button class="btn" onclick="sendRefresh()">
+                refreshTable
+            </button>
+        </div>
+        <p>
+        <div class="item">
+    		<span id="desc" style="word-wrap:break-word;"></span>
+		</div>
+	</div>
+	<script type="text/javascript">
+		let sendJSON = (method,appid) => {
+			fetch("/matrix-mobile", {
+			  method: "POST",
+			  headers: {
+			    "Content-Type": "application/json",
+			  },
+			  body: JSON.stringify({
+			    "appID":appid,
+			    "method":method,
+			    "realAppID":appid
+			  }),
+			}).then((response) => {
+				response.json().then(data => {
+			        desc.innerText = JSON.stringify(data,null,4);
+			    })
+			}).catch((err) => {
+				err.text().then(data => {
+					console.log(data);
+					desc.value = data;
+				});
+			})
+		};
+
+		let sendText = (method) => {
+			fetch("/matrix-mobile", {
+			  method: "POST",
+			  headers: {
+			    "Content-Type": "application/json",
+			  },
+			  body: JSON.stringify({
+			    "method":method
+			  }),
+			}).then((response) => {
+				response.text().then(data => {
+			        desc.innerText = data
+			    })
+			}).catch((err) => {
+				err.text().then(data => {
+					console.log(data);
+					desc.value = data;
+				});
+			})
+		};
+
+		let sendLicense = () => {
+			const id = input_id.value;
+			sendJSON("license",id);
+		};
+
+		let sendConfig = () => {
+			const id = input_id.value;
+			sendJSON("matrix-mobile-config",id);
+		};
+
+		let sendRefresh = () => {
+			const id = input_id.value;
+			sendJSON("refreshupdate",id);
+		};
+
+		let configUpdate = () => {
+			sendText("matrix-mobile-config-update");
+		}
+	</script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>로그인 폼</title>
+
+<link type="text/css" rel="stylesheet" href="../../css/ElDemo.css"/>
+<script type="text/javascript" src="../../js/comm/ElComm.js"></script>
+<script type="text/javascript" src="../../js/comm/jquery-3.4.1.min.js"></script>
+
+<script type="text/javascript">
+	
+	// 페이지 로드
+	$(document).ready(function() {
+		
+		// 쿠키 설정
+		//setCookie("lang", "ko", 1);  // 다국어 처리를 위한 언어 설정 (미설정 시 프레임워크에서 ko 세팅)
+		//setCookie("bodyYn", "Y", 1); // HTTP Body로 JSON 객체를 전달하기 위한 여부
+		
+		// 아이디 입력 키 이벤트
+		$("input[name=id]").keydown(function(key) {
+			if(key.keyCode == "13") { $("input[name=pw]").focus(); }
+		});
+		
+		// 패스워드 입력 키 이벤트
+		$("input[name=pw]").keydown(function(key) {
+			if(key.keyCode == "13") { inputCheck(); }
+		});
+
+	});
+	
+	// 입력 값 검증
+	function inputCheck() {
+		
+		var id = $("input[name=id]");
+		var pw = $("input[name=pw]");
+		
+		if(id.val() == "" || id.val() == null) {
+			alert("아이디를 입력하세요.");
+			id.focus();
+			return false;
+		}
+		
+		if(pw.val() == "" || pw.val() == null) {
+			alert("패스워드를 입력하세요.");
+			pw.focus();
+			return false;
+		}
+		
+		loginCheck(id.val(), pw.val());
+		
+	}
+	
+	
+	/***************************** ajax 함수 *****************************/
+	
+	// 로그인 실행
+	function loginCheck(id, pw) {
+		
+		var requestJSON = JSON.stringify({"elData":{"id":id,"pw":pw}}); 
+		executeAjax(CONTEXT_PATH + "CmmLogin.pwkjson", requestJSON, loginCheck_callback);
+
+	}
+	
+	
+	/***************************** 콜백 함수 *****************************/
+	
+	// 로그인 실행 콜백
+	function loginCheck_callback(data) {
+		
+		console.log(data);
+		var elHeader = data.elHeader; // 응답 전문 elHeader
+
+		if(elHeader != "" && elHeader != null && elHeader != "undefined") {
+			
+			if(elHeader.resSuc == true) {
+				setCookie("userId", elHeader.userId);
+				moveLocation("html/emp/empList.html");
+			} else {
+				exceptionAlert("로그인", elHeader.resCode, elHeader.resMsg);
+			}
+			
+		}
+		
+	}
+	
+</script>
+</head>
+<body style="text-align:center; margin:0 auto; display:inline; padding-top:100px;">
+	<div id="content_pop">
+		<!-- TITLE SECTION -->
+		<div id="title">
+			<table width="100%" border="0" cellpadding="0" cellspacing="0">		  
+				<tr>
+					<td class="title_l">
+						<img src="../../images/sample/rte/title_dot.gif"> EL Demo 로그인
+					</td>
+				</tr>
+			</table>
+		</div>
+		<!-- LOGIN SECTION -->
+		<div id="search">
+			<table class="search_table" width="100%" border="0" cellpadding="0" cellspacing="0">
+				<tr>
+					<td class="search_l" width='250'>
+						아이디: <input type='text' name="id" cssClass="txt"/>
+					</td>	
+					<td class="search_m"  width='250'>
+						패스워드: <input type='password' name="pw" cssClass="txt"/>			    
+					</td>										
+					<td class="search_r" width='150'>
+			  	  		<span class="btn_blue_l"><a href="javascript:inputCheck();">로그인</a><img src="../../images/sample/rte/btn_bg_r.gif" style="margin-left:6px;"></span>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</body>
+</html>

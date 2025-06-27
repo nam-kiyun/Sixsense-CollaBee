@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_vertical_guides="" meta_horizontal_guides="183 61">
+        <w2:type palette="support">COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.openGallery"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_gallery
+ * @pluginName 
+ * @company Inswave
+ * @developer uapmobile
+ * @category /udc/matrix
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAnUlEQVR42mNgoAbQPLnlO8+hVf+J
+ * wdwHV53HMAAkce7bB6IwSC1OA8KuHflPrEu4Dq5qwTAAq+k4AIpauhkAlD8AxPspNeAA/bzAfWjl
+ * ArIN4D60ugCccIA0iM91aGUACBNlAMfx5Qo8B1e9B8c5kOY+usoAzAdihv3rBTAMADr1AiyBQCU3
+ * 4E5EK9djGIDVWaQEIgyAkidZSZkSAADZDCfYCcJa5wAAAABJRU5ErkJggg==
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAm0lEQVR42mNgoAaIior57uTo8p8Y
+ * 7Ojgch7DAJDE48ePicIgtTgNqK9v/E+sS5wcnFowDMBqOg6AopZuBjg6On9wdHB+T5kBQEw/LwCd
+ * u4BsA5wcXAog0eVSAOI7ODgHgDBRBjg4OCiAAguS8pzfOzi4GoBoCNtBAMMAYMBcgCUQiNNdNuBO
+ * QM7rMQzA6ixSAhHhb6cWspIyJQAArrrmRT0PacwAAAAASUVORK5CYII=
+ * @description gallery UDC
+ * @width 100px
+ * @height 50px
+ * @license
+ * @imagePath
+ * @homepage
+ */
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name quality
+ * @category 01.Basic & ETC
+ * @type number
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 저장될 이미지에 quality 값을 지정
+ * (default: 50, 최대 100까지 가능)
+ */
+
+/**
+ * @property
+ * @name sourceType
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default PhotoLibrary
+ * @necessary Y
+ * @bindparent
+ * @description 사진 소스 선택 유형
+ */
+
+/**
+ * @property
+ * @name allowedit
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary N
+ * @bindparent
+ * @description 사진 촬영 후 보정 유무
+ */
+
+/**
+ * @property
+ * @name encodingType
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [jpeg, png]
+ * @default jpeg
+ * @necessary Y
+ * @bindparent
+ * @description 리턴되는 이미지 타입
+ */
+
+/**
+ * @property
+ * @name destinationType
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [DATA_URL, FILE_URL]
+ * @default DATA_URL
+ * @necessary Y
+ * @bindparent
+ * @description 결과 콜백 함수에 리턴되는 타입
+ */
+
+/**
+ * @property
+ * @name mediaType
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [Picture, Video, All]
+ * @default Picture
+ * @necessary Y
+ * @bindparent
+ * @description 갤러리 타입
+ */
+
+scwin.onpageload = function() {
+	
+};
+
+/**
+ * @event
+ * @name openGallery
+ * @description 갤리러에서 사진을 가져온다.
+ * @param {Object} result 실행결과
+ * @example
+ */
+scwin.emit_openGallery = function (result) {
+	$p.emit("openGallery", result);
+};
+scwin.emit_openGallery = function (result) {
+	$p.emit("openGallery", result);
+};
+
+scwin.anchor_gallery_onclick = function (e) {
+    try {
+        if(typeof $h == "object") {
+            let options = $p.getOptions();
+            
+            // type 고정
+            options.sourceType = $h.camera.PictureSourceType.PHOTOLIBRARY;
+
+            options.destinationType = options.destinationType == "DATA_URL" ? 0 : 1; // DATA_URL:0, FILE_URL:1
+            options.encodingType = options.encodingType == "jpeg" ? 0 : 1; // jpeg:0, png:1
+            options.allowedit = options.allowedit == "true" ? true : false;
+            
+            options.mediaType = (options.mediaType == "Picture") ? 0 
+            : (options.mediaType == "Video") ? 1
+            : 2; // Picture:0, Video:1, All:2
+            
+            options.quality = Number(options.quality);
+            console.log(options);
+            $h.camera.capturePhoto(scwin.emit_openGallery,options);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+/**
+ * @method
+ * @name openGallery
+ * @description 갤러리 열기
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_gallery.openGallery();
+ * })();
+ */
+scwin.openGallery = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+            // type 고정
+            options.sourceType = $h.camera.PictureSourceType.PHOTOLIBRARY;
+            
+            options.destinationType = options.destinationType == "DATA_URL" ? 0 : 1; // DATA_URL:0, FILE_URL:1
+            options.encodingType = options.encodingType == "jpeg" ? 0 : 1; // jpeg:0, png:1
+            options.allowedit = options.allowedit == "true" ? true : false;
+            
+            options.mediaType = (options.mediaType == "Picture") ? 0
+            : (options.mediaType == "Video") ? 1
+            : 2; // Picture:0, Video:1, All:2
+
+            options.quality = Number(options.quality);
+            $h.camera.capturePhoto(resolove,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<w2:anchor outerDiv="false" id="anchor_gallery" style="width: 100px;height: 23px;" ev:onclick="scwin.anchor_gallery_onclick">
+    		<xf:label><![CDATA[갤러리 열기]]></xf:label>
+    	</w2:anchor>
+    </body>
+</html>

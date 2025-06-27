@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper      
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"      
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="EL_USER">
+
+	<select id="elUserDAO_selectElUser" parameterType="com.inswave.elfw.db.vo.ElUserVo" resultType="com.inswave.elfw.db.vo.ElUserVo">
+		<![CDATA[
+        SELECT   /* QueryID : elUserDAO_selectElUser */
+              USER_ID as userId, USER_NM as userNm, USER_GROUP_NO as userGroupNo , USED_YN as usedYn
+        FROM EL_USER
+        WHERE USER_ID = #{userId} AND USED_YN = 'Y'  AND APP_ID = #{appId}
+		]]>
+	</select>
+	
+	<select id="elUserDAO_selectElUserList" parameterType="com.inswave.elfw.db.vo.ElUserVo" resultType="com.inswave.elfw.db.vo.ElUserVo">
+	       SELECT   /* QueryID : elUserDAO_selectElUserList */
+				  USER_ID as userId, USER_NM as userNm, USER_GROUP_NO as userGroupNo , USED_YN as usedYn     
+	       FROM (
+		       SELECT  (@ROWNUM:=@ROWNUM+1) RNUM, S.*
+			   FROM (				
+			        SELECT 
+			              *  		                  
+			        FROM EL_USER
+			        WHERE APP_ID = #{appId}									
+					ORDER BY USER_NM ASC																		
+				) S, (SELECT @ROWNUM := 0) TMP
+			 ) A
+		<![CDATA[ WHERE RNUM <= #{recordCountPerPage} and RNUM > #{firstIndex} ]]>
+	</select>
+	
+	<select id="elUserDAO_selectElUserListTotCnt" parameterType="com.inswave.elfw.db.vo.ElUserVo" resultType="int">
+	        SELECT   /* QueryID : elUserDAO_selectElUserListTotCnt */
+	            COUNT(*) totcnt  		                  
+	        FROM EL_USER
+	        WHERE   APP_ID = #{appId}    						
+	</select>
+	
+	<insert id="elUserDAO_insertElUser" parameterType="com.inswave.elfw.db.vo.ElUserVo">
+        INSERT INTO EL_USER   /* QueryID : elUserDAO_insertElUser */
+        ( 
+        <if test="appId        != null">  APP_ID        </if> 
+        <if test="userId       != null"> , USER_ID        </if>   
+        <if test="userNm       != null"> , USER_NM        </if>     
+        <if test="userGroupNo != null"> , USER_GROUP_NO  </if>     
+        <if test="usedYn        != null"> , USED_YN         </if>     
+        )
+        VALUES  
+        ( 
+        #{appId}   
+        , #{userId}   
+        <if test="user_nm       != null"> , #{user_nm}       </if>   
+        <if test="userGroupNo != null"> , #{userGroupNo} </if>
+        <if test="usedYn        != null"> , #{usedYn}        </if>                
+        )          
+	</insert>	
+	
+	<update id="elUserDAO_updateElUser" parameterType="com.inswave.elfw.db.vo.ElUserVo">
+        UPDATE EL_USER     /* QueryID : elUserDAO_updateElUser */      
+      	  <trim prefix="SET" prefixOverrides=",">                       
+             <if test="user_nm        != null">, USER_NM       =  #{user_nm}       </if>   
+             <if test="userGroupNo  != null">, USER_GROUP_NO =  #{userGroupNo} </if>       
+             <if test="usedYn         != null">, USED_YN        =  #{usedYn}        </if>                
+         </trim>          
+        WHERE   USER_ID = #{userId} AND APP_ID = #{appId} 
+	</update>
+	
+	<delete id="elUserDAO_deleteElUser" parameterType="com.inswave.elfw.db.vo.ElUserVo">
+		<![CDATA[
+        DELETE FROM EL_USER    /* QueryID : elUserDAO_deleteElUser */
+        WHERE   USER_ID = #{userId}   AND APP_ID = #{appId}   
+		]]>
+	</delete>
+	
+
+
+</mapper>

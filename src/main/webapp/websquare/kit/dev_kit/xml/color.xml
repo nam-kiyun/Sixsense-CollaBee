@@ -1,0 +1,574 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+	
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="top_box" id="" style="" tagname="">
+    		<w2:textbox class="con_tit" id="" label="Color" style=""></w2:textbox>
+    		<w2:textbox class="con_txt" escape="false" id=""
+    			label="WebSquare에서 제공하는 템플릿페이지의 &amp;nbsp;전반적인 디자인 일관성을 위해, 각 컬러별 적용 규칙을 준수합니다."
+    			style="">
+    		</w2:textbox>
+    		<xf:group class="" id="primary" style=""></xf:group>
+    		<xf:group class="tab_anchor" id="" style="" tagname="ul">
+    			<xf:group class="on" id="" tagname="li">
+    				<w2:anchor class="" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[guide]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Snippet]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Dark Theme]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    	<xf:group class="contbox" id="" style="">
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="Primary Color" style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="colorbox primary" id="" style="" tagname="">
+    			<xf:group class="color_titbox" id="" style="">
+    				<w2:textbox class="subtxt" escape="false" id="" label="Primary | 600" style=""></w2:textbox>
+    				<w2:textbox class="subtxt tar" escape="false" id="" label="#348FE2" style=""></w2:textbox>
+    			</xf:group>
+    			<xf:group class="_flex" id="">
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group class="cm_colorbox box" id="">
+    						<w2:textbox class="" escape="false" id="" label="900" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#1d4d9e" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="800" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#276bbd" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="700" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#2d7ccf" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="req" escape="false" id="" label="600" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#348ee2" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="500" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#3a9cf0" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="400" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#51aaf2" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="300" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#6eb9f4" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#96cdf8" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#bee0fa" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="050" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#e4f3fd" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="line_gray" id="second" style="" tagname="hr"></xf:group>
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="Secondary Color" style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="colorbox secondary" id="" style="" tagname="">
+    			<xf:group class="color_titbox" id="" style="">
+    				<w2:textbox class="subtxt" escape="false" id="" label="Secondary | 900" style=""></w2:textbox>
+    				<w2:textbox class="subtxt tar" escape="false" id="" label="#e28834" style=""></w2:textbox>
+    			</xf:group>
+    			<xf:group class="_flex" id="">
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="">
+    						<w2:textbox class="req" escape="false" id="" label="900" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#e28834" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="800" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#eaac44" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="700" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#eec34d" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="600" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#f1d957" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="500" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#f0e85a" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="400" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#f3ec70" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="300" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#f6f188" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#f8f5a9" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#faf9cb" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="cm_colorbox box" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="050" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#fdfdea" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="line_gray" id="sub" style="" tagname="hr"></xf:group>
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="Sub Color" style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="colorbox" id="" style="" tagname="">
+    			<xf:group class="_flex" id="">
+    				<xf:group class="subcolor1" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="">
+    						<w2:textbox class="" escape="false" id="" label="50" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#d9f8f8" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#9bedec" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="req" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#34e2df" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="300" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#00d3ce" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="400" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#00c6be" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="500" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#00b8ad" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="600" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#00aa9e" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="700" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#00998b" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="800" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#00887a" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="900" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#006a59" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="subcolor2" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="">
+    						<w2:textbox class="" escape="false" id="" label=" 50" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#ede7fc" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#cfc5f7" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#ae9ff3" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="300" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#8a77f0" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="400" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#6b58ed" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="500" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#453be9" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="req" escape="false" id="" label="600" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#3437e2" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="700" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#0b2fd9" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="800" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#002ad3" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="900" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#001eca" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="subcolor3" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="">
+    						<w2:textbox class="" dataType="" escape="false" id="" label=" 50" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#f9e3ef" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#f1b9d8" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#ea8cbe" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="300" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#e55ca4" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="req" escape="false" id="" label="400" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#e2348e" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="500" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#e10078" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="600" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#d00073" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="700" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#b9006c" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="800" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#a30067" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="900" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#7d005b" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="line_gray" id="alert" style="" tagname="hr" toolTip=""></xf:group>
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="Alert Color" style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="colorbox alert" id="" style="" tagname="">
+    			<xf:group adaptive="" class="_flex" id="" style="" tagname="">
+    				<xf:group adaptive="" class="cm_colorbox" id="" style="" tagname="">
+    					<w2:textbox class="" escape="false" id="" label="#F94B50" style=""></w2:textbox>
+    				</xf:group>
+    				<xf:group adaptive="" class="example" id="" style="" tagname="">
+    					<xf:input class="error" id="" placeholder="" style="width:148px;"></xf:input>
+    					<w2:textbox class="txt_error" dataType="" id="" label="Error" style=""></w2:textbox>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="line_gray" id="legend" style="" tagname="hr" toolTip=""></xf:group>
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="Legend Color" style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="titbox" id="" style="" tagname="">
+    			<w2:textbox class="subtxt" escape="false" id="" label="범례 색 / 그리드, 테이블을 강조할 경우 헤더 및 셀의 배경에 사용합니다." style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="colorbox legend" id="" style="" tagname="">
+    			<xf:group class="_flex" id="">
+    				<xf:group class="legendcolor1" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#FFCDE0" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#FFE5EF" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="legendcolor2" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="">
+    						<w2:textbox class="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#E0F7FA" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#B2EBF2" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="legendcolor3" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="">
+    						<w2:textbox class="" dataType="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#E0F2F1" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#B2DFDB" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="legendcolor4" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="">
+    						<w2:textbox class="" dataType="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#E0F2F1" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#B2DFDB" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    			<xf:group class="_flex" id="" style="">
+    				<xf:group class="legendcolor5" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#FFF1A6" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#FFF9DA" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="legendcolor6" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="">
+    						<w2:textbox class="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#A6E9ED" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#CCF3F5" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="legendcolor7" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="">
+    						<w2:textbox class="" dataType="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#C3D2F8" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#D7E0F7" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="legendcolor8" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="">
+    						<w2:textbox class="" dataType="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#E5C6BF" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#ECE1DF" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="line_gray" id="grayscale" style="" tagname="hr" toolTip=""></xf:group>
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="Grayscale" style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="colorbox grayscale cool" id="">
+    			<xf:group class="color_titbox" id="" style="">
+    				<w2:textbox class="maintxt" dataType="" escape="false" id="" label="Grayscale" style=""></w2:textbox>
+    				<w2:textbox class="subtxt" escape="false" id="" label="Cool Gray" style=""></w2:textbox>
+    			</xf:group>
+    			<xf:group class="_flex" id="" style="">
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="900" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#2C3238" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="850" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#373D45" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="800" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#424952" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="700" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#56606B" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="600" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#6B7682" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="500" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#8996A3" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="400" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#A5B3C2" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="300" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#BEC9D4" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#DAE3ED" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#E8EFF5" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="50" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#F5F7FA" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="colorbox grayscale basic" id="" style="">
+    			<xf:group class="color_titbox" id="" style="">
+    				<w2:textbox class="maintxt" dataType="" escape="false" id="" label="Grayscale" style=""></w2:textbox>
+    				<w2:textbox class="subtxt" escape="false" id="" label="Basic Gray" style=""></w2:textbox>
+    			</xf:group>
+    			<xf:group class="_flex" id="" style="">
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="900" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#202020" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style=""></xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="800" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#333333" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="700" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#555555" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="600" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#888888" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="500" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#AAAAAA" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="400" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#CCCCCC" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="300" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#DDDDDD" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="200" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#EEEEEE" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="100" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#F6F6F6" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="">
+    					<xf:group adaptiveThreshold="" class="cm_colorbox" id="" style=""></xf:group>
+    					<xf:group adaptiveThreshold="" class="codebox" id="" style="">
+    						<w2:textbox class="" escape="false" id="" label="50" style=""></w2:textbox>
+    						<w2:textbox class="" escape="false" id="" label="#FAFAFA" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="network" meta_screenName="network" meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_desc="network 상태 변화 시 이벤트를 발생시킨다.">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.checkNetwork,scwin.addEventListener"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_network
+ * @pluginName
+ * @company
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser
+ * @version
+ * @htmlRender
+ * @icon
+ * @disableIcon
+ * @description Network 상태가 변경 되었을때 Event를 Web에 전달 한다.
+ * @variableClone true
+ * @width
+ * @height
+ * @license
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */
+
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name checkNetwork
+ * @description 네트워크를 체크하여 Promise("true|false") 반환
+ * @returns {Boolean} type 네트워크 체크 결과 [default: false, true]
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.network.checkNetwork();
+ *      console.log(data);
+ *  })();
+ */
+scwin.checkNetwork = function() {
+    try {   
+        if (typeof $h.network === "object") {
+            return new Promise(resolve => {
+                resolve($h.network.checkNetwork());
+            });
+        } else {
+            console.log("Not found Network Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name addEventListener
+ * @description 네트워크 타입변경 시 event를 감지하고 Promise 반환
+ * @param {JSON} options Network options
+ * @param {String} options.type 네트워크 타입 [default: online|"online", offline|"offline"]
+ * @returns {JSON} rtn 네트워크 감지 결과 {"isTrusted": false}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let type = "offline";
+ *      let options = {"type": type};
+ *      const data = await $c.network.addEventListener(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.addEventListener = function(options) {
+    try {   
+        if (typeof $h.network === "object") {
+            return new Promise(resolve => {
+                $h.network.addEventListener(options.type,resolve);
+            });
+        } else {
+            console.log("Not found Network Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

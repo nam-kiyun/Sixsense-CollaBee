@@ -1,0 +1,40 @@
+<svg id="푸터로고" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="114.682" height="32" viewBox="0 0 114.682 32">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="사각형_3" data-name="사각형 3" width="32" height="32" rx="5" fill="none"/>
+    </clipPath>
+    <linearGradient id="linear-gradient" x1="0.146" y1="0.854" x2="0.148" y2="0.854" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#0056b8"/>
+      <stop offset="0.977" stop-color="#107ceb"/>
+      <stop offset="1" stop-color="#0369d1"/>
+    </linearGradient>
+    <clipPath id="clip-path-2">
+      <rect id="사각형_4" data-name="사각형 4" width="32" height="32" fill="none"/>
+    </clipPath>
+  </defs>
+  <g id="그룹_11" data-name="그룹 11" transform="translate(0)">
+    <g id="그룹_13" data-name="그룹 13">
+      <g id="그룹_4" data-name="그룹 4">
+        <g id="그룹_3" data-name="그룹 3" clip-path="url(#clip-path)">
+          <rect id="사각형_2" data-name="사각형 2" width="45.068" height="45.068" transform="matrix(0.669, -0.744, 0.744, 0.669, -15.867, 17.644)" fill="url(#linear-gradient)"/>
+        </g>
+      </g>
+      <g id="그룹_9" data-name="그룹 9">
+        <g id="그룹_14" data-name="그룹 14">
+          <g id="그룹_7" data-name="그룹 7" opacity="0.1">
+            <g id="그룹_6" data-name="그룹 6">
+              <g id="그룹_5" data-name="그룹 5" clip-path="url(#clip-path-2)">
+                <path id="패스_10" data-name="패스 10" d="M8.431,9.175,7.6,0H5.147A5.147,5.147,0,0,0,0,5.147V20.518A27.549,27.549,0,0,1,8.431,9.175" fill="#f6cc5f"/>
+                <path id="패스_11" data-name="패스 11" d="M37.1,107.576c-.506-.087-.928-.526-1.256-1.248-.174-.8-.378-1.563-.614-2.3-1.624-5.073-4.678-8.625-8.644-9.3-.263-.045-.526-.075-.789-.094-7.041-.5-14.187,8.212-16.222,20.033a5.139,5.139,0,0,0,4.161,2.119H19.02c.022-.139.044-.277.068-.417,1.207-7.053,3.829-12.489,5.856-12.142.578.1,1.044.66,1.388,1.571q.183.78.406,1.52c1.462,4.856,4.207,8.388,7.8,9.468h.817a5.147,5.147,0,0,0,5.147-5.147v-7.712c-1.1,2.414-2.335,3.834-3.4,3.651" transform="translate(-8.591 -84.871)" fill="#f6cc5f"/>
+              </g>
+            </g>
+          </g>
+          <path id="패스_12" data-name="패스 12" d="M35.026,164.825l-.191-2.105H32.6l.446,4.825a6.388,6.388,0,0,1,1.984-2.72" transform="translate(-29.241 -145.969)" fill="#f6cc5f"/>
+          <path id="패스_13" data-name="패스 13" d="M48.793,162.781H46.657A7.11,7.11,0,0,1,46.6,165.2c-.277,1.618-.879,2.866-1.344,2.786-.116-.02-.213-.121-.288-.286-.04-.183-.087-.359-.141-.527a2.8,2.8,0,0,0-1.984-2.135c-.06-.01-.121-.017-.181-.022-1.617-.116-3.259,1.889-3.724,4.606q-.046.268-.074.532h2.234q.012-.075.025-.15c.277-1.618.879-2.866,1.344-2.786.133.023.24.152.319.361q.042.179.093.349a2.849,2.849,0,0,0,2.012,2.225l.012,0c1.67.274,3.411-1.775,3.893-4.586a7.933,7.933,0,0,0,0-2.785" transform="translate(-34.86 -146.024)" fill="#f6cc5f"/>
+        </g>
+      </g>
+      <path id="패스_15" data-name="패스 15" d="M18.232-141.681h6.133c3.536,0,6.351-1.484,6.351-4.8a3.684,3.684,0,0,0-2.881-3.819v-.087a3.792,3.792,0,0,0,2.117-3.514c0-3.121-2.684-4.037-6.045-4.037H18.232Zm3.907-9.8v-3.47h1.615c1.637,0,2.4.48,2.4,1.637,0,1.113-.742,1.833-2.4,1.833Zm0,6.809v-3.95h1.942c1.9,0,2.837.546,2.837,1.877,0,1.4-.96,2.073-2.837,2.073Z" transform="translate(-2.276 166.594)" fill="#fff"/>
+    </g>
+  </g>
+  <text id="W_-_Bank" data-name="W - Bank" transform="translate(38.682 23.208)" fill="#fff" font-size="19" font-family="NotoSansCJKkr-Black, Noto Sans CJK KR" font-weight="800" letter-spacing="-0.055em"><tspan x="0" y="0">W - Bank</tspan></text>
+</svg>

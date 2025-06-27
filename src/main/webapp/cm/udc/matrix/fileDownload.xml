@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type palette="support">COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.download"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_fileDownload
+ * @pluginName 
+ * @company Inswave
+ * @developer uapmobile
+ * @category /udc/matrix
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAg0lEQVR42mNgGNSA5+DKBhAekQbs
+ * Xy+AYQBUjLCth1c78Bxc9Z776CoDmAEQ9qr3IDmiDOE+tHIBWMOhlevBGGQgUIwkX4ANObTqPwgT
+ * pRnkVI7jyxXQDUHXDFID9Eo9pgEg24jwIziMgGqxGsB9cFU+kLbHh6Fq/uP1MyFMcoDSFAAAnuGD
+ * YlYNhAsAAAAASUVORK5CYII=
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAf0lEQVR42mNgGNTAycGlAYRHogEO
+ * Dg4C6AbAxIjQ7OLg6OD83sHB1QBmAIgNEXNxIMoQoOIFIA1ODs7rQRjEBomR5A2QBidHl/8gTJRm
+ * iFMdFLC4ZAFa+CgA1dZjGgC0iRg/gtSA1OIwwDnf0dHVHh8GqcFqALKfCWGSA5SmAADxUVb29Dbo
+ * LwAAAABJRU5ErkJggg==
+ * @description file download UDC
+ * @width 100px
+ * @height 50px
+ * @license
+ * @imagePath
+ * @homepage
+ */
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name url
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description 다운로드 url
+ */
+
+/**
+ * @property
+ * @name progress
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary Y
+ * @bindparent
+ * @description 다운로드 진행상황 상단 Notification Bar 표시 여부
+ */
+
+/**
+ * @property
+ * @name open
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary Y
+ * @bindparent
+ * @description 다운로드가 완료되면 해당 파일 open 여부
+ */
+
+/**
+ * @property
+ * @name notify
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary Y
+ * @bindparent
+ * @description 다운로드가 완료되면 toast로 다운로드 완료 여부 표시
+ */
+
+/**
+ * @property
+ * @name location
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description 다운로드가 될 위치 지정
+ * (default: Download)
+ */
+
+/**
+ * @property
+ * @name requestType
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [POST, GET]
+ * @default POST
+ * @necessary Y
+ * @bindparent
+ * @description 다운로드 request type
+ */
+
+/**
+ * @property
+ * @name fileName
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description 다운로드 후 저장될 파일 이름
+ * (request type: post 일 경우 필수 속성)
+ */
+
+/**
+ * @property
+ * @name saveName
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description 저장되는 파일 이름
+ */
+
+/**
+ * @property
+ * @name filePath
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description 저장되는 파일 경로
+ */
+
+/**
+ * @property
+ * @name dataType
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description ex) application/json
+ */
+
+scwin.onpageload = function() {
+	
+};
+
+/**
+ * @event
+ * @name download
+ * @description url에 파일을 다운로드한다
+ * @param {Object} result 실행결과
+ * @example
+ */
+scwin.emit_download = function (result) {
+	$p.emit("download", result);
+};
+
+scwin.anchor_fileDownload_onclick = function () {
+   try {
+        if(typeof $h == "object") {
+            let options = $p.getOptions();
+            console.log(options);
+
+            options.progress = options.progress == "true" ? true : false;
+            options.open = options.open == "true" ? true : false;
+            options.notify = options.notify == "true" ? true : false;
+
+            let data = {
+                "saveName": options.saveName,
+                "filePath": options.filePath
+            };
+            options["data"] = data;
+            console.log(options);
+            $h.contents.fileDownload(scwin.emit_download,options);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+/**
+ * @method
+ * @name download
+ * @description file download
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_fileDownload.download();
+ * })();
+ */
+scwin.download = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+            options.progress = options.progress == "true" ? true : false;
+            options.open = options.open == "true" ? true : false;
+            options.notify = options.notify == "true" ? true : false;
+
+            let data = {
+                "saveName": options.saveName,
+                "filePath": options.filePath
+            };
+            options["data"] = data;
+
+            $h.contents.fileDownload(resolove,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<w2:anchor outerDiv="false" id="anchor_fileDownload" style="width: 100px;height: 23px;" ev:onclick="scwin.anchor_fileDownload_onclick">
+    		<xf:label><![CDATA[File Download]]></xf:label>
+    	</w2:anchor>
+    </body>
+</html>

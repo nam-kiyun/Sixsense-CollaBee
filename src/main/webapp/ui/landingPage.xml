@@ -1,0 +1,722 @@
+    <?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="랜딩페이지">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+// 로그인 페이지로 이동
+scwin.goToLogin = function() {
+	window.location.href = "/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/login/login.xml";
+};
+
+// 회원가입 페이지로 이동  
+scwin.goToSignup = function() {
+	window.location.href = "/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/login/signup.xml";
+};
+
+scwin.onpageload = function() {
+	// JavaScript로 hover 효과 구현 (WebSquare 환경에서 확실한 방법)
+	
+	// 모든 요소 찾기 함수
+	function addHoverEffect(selector, hoverStyle, originalStyle) {
+		const elements = document.querySelectorAll(selector);
+		elements.forEach(function(element) {
+			element.addEventListener('mouseenter', function() {
+				Object.keys(hoverStyle).forEach(function(key) {
+					element.style[key] = hoverStyle[key];
+				});
+			});
+			element.addEventListener('mouseleave', function() {
+				Object.keys(originalStyle).forEach(function(key) {
+					element.style[key] = originalStyle[key];
+				});
+			});
+		});
+	}
+	
+	setTimeout(function() {
+		// 1. 첫번째 무료로 시작하기 버튼 (gradient)
+		addHoverEffect('#btn_start_free_1, *[id="btn_start_free_1"], *[style*="linear-gradient"]', {
+			transform: 'translateY(-3px)',
+			boxShadow: '0 12px 35px rgba(245, 158, 11, 0.6)',
+			transition: 'all 0.3s ease'
+		}, {
+			transform: 'translateY(0px)',
+			boxShadow: '0 8px 25px rgba(245, 158, 11, 0.4)',
+			transition: 'all 0.3s ease'
+		});
+		
+		// 2. 세번째 무료로 시작하기 버튼 (흰색)
+		addHoverEffect('#btn_start_free_2, *[id="btn_start_free_2"], *[style*="background: white"]', {
+			transform: 'translateY(-3px)',
+			boxShadow: '0 12px 35px rgba(0,0,0,0.3)',
+			background: '#f8f9fa',
+			transition: 'all 0.3s ease'
+		}, {
+			transform: 'translateY(0px)',
+			boxShadow: '0 8px 25px rgba(0,0,0,0.2)',
+			background: 'white',
+			transition: 'all 0.3s ease'
+		});
+		
+		// 3. 기능 카드들
+		for(let i = 1; i <= 6; i++) {
+			addHoverEffect('#feature_card' + i + ', *[id="feature_card' + i + '"]', {
+				transform: 'translateY(-10px)',
+				boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
+				transition: 'all 0.3s ease'
+			}, {
+				transform: 'translateY(0px)',
+				boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+				transition: 'all 0.3s ease'
+			});
+		}
+		
+		// 4. 헤더 버튼들
+		addHoverEffect('#btn_login, #btn_signup, *[id="btn_login"], *[id="btn_signup"]', {
+			transform: 'translateY(-2px)',
+			boxShadow: '0 4px 15px rgba(255, 184, 35, 0.4)',
+			transition: 'all 0.3s ease'
+		}, {
+			transform: 'translateY(0px)',
+			boxShadow: 'none',
+			transition: 'all 0.3s ease'
+		});
+		
+		// 5. 플로팅 카드들
+		for(let i = 1; i <= 3; i++) {
+			addHoverEffect('#Group_card' + i + ', *[id="Group_card' + i + '"]', {
+				transform: 'translateY(-20px) scale(1.05)',
+				boxShadow: '0 15px 40px rgba(245, 158, 11, 0.3)',
+				animationPlayState: 'paused',
+				transition: 'all 0.3s ease'
+			}, {
+				transform: '',
+				boxShadow: '0 10px 30px rgba(245, 158, 11, 0.2)',
+				animationPlayState: 'running',
+				transition: 'all 0.3s ease'
+			});
+		}
+		
+	}, 500); // 500ms 후 실행하여 DOM이 완전히 로드되도록
+};
+]]></script>
+		<!--<link rel="stylesheet" href="../css/landingPage.css" />-->
+		<style>
+			@keyframes cardFloat {
+				0%, 100% { 
+					transform: translateY(0px); 
+				}
+				50% { 
+					transform: translateY(-15px); 
+				}
+			}
+			
+			/* 데스크톱에서만 플로팅 카드 표시 */
+			@media (min-width: 1025px) {
+				#Group_card1, #Group_card2, #Group_card3, #hero_right {
+					display: block !important;
+					visibility: visible !important;
+					opacity: 1 !important;
+				}
+			}
+			
+			/* 기본 transition 모든 요소에 적용 */
+			* {
+				transition: all 0.3s ease !important;
+			}
+			
+			/* WebSquare 전용 강력한 hover 선택자들 */
+			
+			/* 첫번째 무료로 시작하기 버튼 (gradient) - 모든 가능한 선택자 */
+			#btn_start_free_1:hover,
+			*[id="btn_start_free_1"]:hover,
+			*[style*="linear-gradient"]:hover,
+			*[style*="gradient"]:hover,
+			button[style*="linear-gradient"]:hover,
+			input[style*="linear-gradient"]:hover,
+			div[style*="linear-gradient"]:hover,
+			span[style*="linear-gradient"]:hover {
+				transform: translateY(-3px) !important;
+				box-shadow: 0 12px 35px rgba(245, 158, 11, 0.6) !important;
+				background: linear-gradient(45deg, #FFB823, #f59e0b) !important;
+			}
+			
+			/* 세번째 무료로 시작하기 버튼 (흰색) - 모든 가능한 선택자 */
+			#btn_start_free_2:hover,
+			*[id="btn_start_free_2"]:hover,
+			*[style*="background: white"]:hover,
+			*[style*="background:white"]:hover,
+			button[style*="background: white"]:hover,
+			input[style*="background: white"]:hover,
+			div[style*="background: white"]:hover,
+			span[style*="background: white"]:hover {
+				transform: translateY(-3px) !important;
+				box-shadow: 0 12px 35px rgba(0,0,0,0.3) !important;
+				background: #f8f9fa !important;
+			}
+			
+			/* 기능 카드들 hover - ID와 속성 선택자 모두 */
+			*[id="feature_card1"]:hover,
+			*[id="feature_card2"]:hover,
+			*[id="feature_card3"]:hover,
+			*[id="feature_card4"]:hover,
+			*[id="feature_card5"]:hover,
+			*[id="feature_card6"]:hover,
+			div[id="feature_card1"]:hover,
+			div[id="feature_card2"]:hover,
+			div[id="feature_card3"]:hover,
+			div[id="feature_card4"]:hover,
+			div[id="feature_card5"]:hover,
+			div[id="feature_card6"]:hover {
+				transform: translateY(-10px) !important;
+				box-shadow: 0 20px 50px rgba(0,0,0,0.15) !important;
+				background: white !important;
+			}
+			
+			/* 기능 카드 아이콘 hover */
+			*[id="feature_card1"]:hover *[class*="fa-"],
+			*[id="feature_card2"]:hover *[class*="fa-"],
+			*[id="feature_card3"]:hover *[class*="fa-"],
+			*[id="feature_card4"]:hover *[class*="fa-"],
+			*[id="feature_card5"]:hover *[class*="fa-"],
+			*[id="feature_card6"]:hover *[class*="fa-"] {
+				transform: scale(1.1) !important;
+			}
+			
+			/* 헤더 버튼들 hover */
+			*[id="btn_login"]:hover,
+			*[id="btn_signup"]:hover,
+			button[id="btn_login"]:hover,
+			button[id="btn_signup"]:hover,
+			input[id="btn_login"]:hover,
+			input[id="btn_signup"]:hover {
+				transform: translateY(-2px) !important;
+				box-shadow: 0 4px 15px rgba(255, 184, 35, 0.4) !important;
+				background-color: #FFB823 !important;
+			}
+			
+			/* 플로팅 카드들 hover */
+			*[id="Group_card1"]:hover,
+			*[id="Group_card2"]:hover,
+			*[id="Group_card3"]:hover,
+			div[id="Group_card1"]:hover,
+			div[id="Group_card2"]:hover,
+			div[id="Group_card3"]:hover {
+				transform: translateY(-20px) scale(1.05) !important;
+				box-shadow: 0 15px 40px rgba(245, 158, 11, 0.3) !important;
+				animation-play-state: paused !important;
+			}
+			
+			/* 추가: 버튼 같은 요소들에 cursor pointer */
+			#btn_start_free_1,
+			#btn_start_free_2,
+			*[id="btn_start_free_1"],
+			*[id="btn_start_free_2"],
+			*[style*="cursor: pointer"],
+			*[style*="linear-gradient"],
+			*[style*="background: white"],
+			*[id*="btn_"],
+			*[id*="feature_card"],
+			*[id*="Group_card"] {
+				cursor: pointer !important;
+			}
+			
+			/* === 반응형 텍스트 처리 === */
+			
+			/* 히어로 섹션 텍스트 - 줄바꿈 방지하고 크기만 조절 */
+			.main-title,
+			*[class="main-title"],
+			*[class*="main-title"],
+			*[style*="color:#0000FF"],
+			*[style*="초급 개발자를"] {
+				white-space: nowrap !important;
+				font-size: clamp(3rem, 5vw, 3rem) !important;
+				word-break: keep-all !important;
+				overflow: hidden !important;
+				text-overflow: ellipsis !important;
+				margin-left: 140px !important;
+			}
+			
+			.sub-title,
+			*[class="sub-title"],
+			*[class*="sub-title"],
+			*[style*="color:#FFC107"],
+			*[style*="올인원 협업"] {
+				white-space: nowrap !important;
+				font-size: clamp(3rem, 5vw, 3rem) !important;
+				word-break: keep-all !important;
+				overflow: hidden !important;
+				text-overflow: ellipsis !important;
+				margin-left: 140px !important;
+			}
+			
+			/* 첫번째 버튼 오른쪽 이동 */
+			#btn_start_free_1,
+			*[id="btn_start_free_1"],
+			*[style*="linear-gradient"] {
+				margin-left: 245px !important;
+			}
+			
+			.description,
+			*[class="description"],
+			*[class*="description"],
+			*[style*="일정 관리부터"] {
+				white-space: nowrap !important;
+				font-size: clamp(1.2rem, 3vw, 1.5rem) !important;
+				word-break: keep-all !important;
+				overflow: hidden !important;
+				text-overflow: ellipsis !important;
+			}
+			
+			/* CTA 섹션 텍스트 - 줄바꿈 방지하고 크기만 조절 */
+			.cta-title,
+			*[class="cta-title"],
+			*[class*="cta-title"],
+			*[style*="지금 바로"],
+			*[style*="협업을 시작"] {
+				white-space: nowrap !important;
+				font-size: clamp(2rem, 5vw, 2.5rem) !important;
+				word-break: keep-all !important;
+				overflow: hidden !important;
+				text-overflow: ellipsis !important;
+			}
+			
+			.cta-description,
+			*[class="cta-description"],
+			*[class*="cta-description"],
+			*[style*="무료로 시작하고"] {
+				white-space: nowrap !important;
+				font-size: clamp(1.3rem, 3.5vw, 1.5rem) !important;
+				word-break: keep-all !important;
+				overflow: visible !important;
+				text-overflow: unset !important;
+				line-height: 1.4 !important;
+				width: auto !important;
+				max-width: none !important;
+			}
+			
+			/* === 모바일 반응형 처리 === */
+			
+			/* 태블릿 크기에서 플로팅 카드 숨기기 */
+			@media (max-width: 1024px) {
+				#Group_card1, 
+				#Group_card2, 
+				#Group_card3,
+				#hero_right,
+				*[id="Group_card1"],
+				*[id="Group_card2"],
+				*[id="Group_card3"],
+				*[id="hero_right"],
+				.floating-card,
+				*[class*="floating-card"] {
+					display: none !important;
+					visibility: hidden !important;
+					opacity: 0 !important;
+					height: 0 !important;
+					width: 0 !important;
+					overflow: hidden !important;
+					position: absolute !important;
+					left: -9999px !important;
+					top: -9999px !important;
+				}
+				
+				/* 히어로 섹션 레이아웃 조정 */
+				#group_hero,
+				*[id="group_hero"] {
+					flex-direction: column !important;
+					text-align: center !important;
+					padding: 40px 20px !important;
+					min-height: auto !important;
+					justify-content: center !important;
+					overflow: hidden !important;
+				}
+				
+				#hero_left,
+				*[id="hero_left"] {
+					padding-right: 0 !important;
+					padding-left: 0 !important;
+					width: 100% !important;
+					margin-bottom: 0 !important;
+					flex: none !important;
+					max-width: 100% !important;
+					text-align: center !important;
+					overflow: hidden !important;
+				}
+				
+				/* CTA 섹션 레이아웃 조정 */
+				#group_cta,
+				*[id="group_cta"] {
+					overflow: hidden !important;
+					padding: 60px 15px !important;
+				}
+			}
+			
+			/* 모바일 크기에서 추가 텍스트 크기 조정 */
+			@media (max-width: 768px) {
+				.main-title,
+				*[class*="main-title"],
+				*[style*="color:#0000FF"],
+				*[style*="초급 개발자를"] {
+					font-size: clamp(2.4rem, 5.5vw, 3rem) !important;
+					margin-left: 40px !important;
+				}
+				
+				.sub-title,
+				*[class*="sub-title"],
+				*[style*="color:#FFC107"],
+				*[style*="올인원 협업"] {
+					font-size: clamp(2.4rem, 5.5vw, 3rem) !important;
+					margin-left: 40px !important;
+				}
+				
+				/* 모바일에서 버튼 margin 조정 */
+				#btn_start_free_1,
+				*[id="btn_start_free_1"],
+				*[style*="linear-gradient"] {
+					margin-left: 85px !important;
+				}
+				
+				/* 모바일에서 설명 텍스트는 줄바꿈 허용 */
+				.description,
+				*[class*="description"],
+				*[style*="일정 관리부터"] {
+					white-space: normal !important;
+					font-size: clamp(1.1rem, 3vw, 1.4rem) !important;
+					line-height: 1.4 !important;
+					word-break: keep-all !important;
+					overflow: visible !important;
+					text-overflow: unset !important;
+				}
+				
+				/* 모바일에서 CTA 텍스트도 줄바꿈 허용 */
+				.cta-title,
+				*[class*="cta-title"],
+				*[style*="지금 바로"],
+				*[style*="협업을 시작"] {
+					white-space: normal !important;
+					font-size: clamp(1.8rem, 4.5vw, 2.2rem) !important;
+					line-height: 1.3 !important;
+					word-break: keep-all !important;
+					overflow: visible !important;
+					text-overflow: unset !important;
+				}
+				
+				.cta-description,
+				*[class*="cta-description"],
+				*[style*="무료로 시작하고"] {
+					white-space: normal !important;
+					font-size: clamp(1.1rem, 3vw, 1.3rem) !important;
+					line-height: 1.4 !important;
+					word-break: keep-all !important;
+					overflow: visible !important;
+					text-overflow: unset !important;
+					width: auto !important;
+					max-width: none !important;
+				}
+			}
+			
+			/* 아주 작은 모바일에서 최소 크기 보장 */
+			@media (max-width: 480px) {
+				/* 모든 요소 강제로 왼쪽 정렬 */
+				* {
+					margin-left: 0 !important;
+				}
+				
+				/* 특정 요소들만 타겟 */
+				xf\\:output[style*="margin-left"],
+				*[style*="margin-left"] {
+					margin-left: 0px !important;
+				}
+				/* 작은 모바일에서 컨테이너를 완전히 왼쪽으로 */
+				#group_hero,
+				*[id="group_hero"] {
+					padding-left: 10px !important;
+					padding-right: 10px !important;
+				}
+				
+				#hero_left,
+				*[id="hero_left"] {
+					padding-left: 0 !important;
+					padding-right: 0 !important;
+					margin-left: 0 !important;
+					text-align: left !important;
+				}
+				
+				/* 인라인 스타일 강제 오버라이드 */
+				*[style*="margin-left: 140px"][style*="color:#0000FF"],
+				*[style*="margin-left: 140px"][style*="color:#FFC107"],
+				*[style*="margin-left: 245px"][style*="linear-gradient"] {
+					margin-left: 0px !important;
+					margin-right: auto !important;
+					transform: translateX(0) !important;
+				}
+				.main-title,
+				*[class*="main-title"],
+				*[style*="color:#0000FF"],
+				*[style*="초급 개발자를"],
+				*[style*="margin-left: 140px"] {
+					font-size: clamp(2rem, 4.5vw, 2.5rem) !important;
+					margin-left: 0px !important;
+					margin-right: auto !important;
+					text-align: left !important;
+				}
+				
+				.sub-title,
+				*[class*="sub-title"],
+				*[style*="color:#FFC107"],
+				*[style*="올인원 협업"],
+				*[style*="margin-left: 140px"] {
+					font-size: clamp(2rem, 4.5vw, 2.5rem) !important;
+					margin-left: 0px !important;
+					margin-right: auto !important;
+					text-align: left !important;
+				}
+				
+				/* 작은 모바일에서 버튼 margin 조정 */
+				#btn_start_free_1,
+				*[id="btn_start_free_1"],
+				*[style*="linear-gradient"],
+				*[style*="margin-left: 245px"] {
+					margin-left: 0px !important;
+					margin-right: auto !important;
+					display: block !important;
+					width: fit-content !important;
+				}
+				
+				/* 작은 모바일에서도 설명 텍스트 줄바꿈 허용 */
+				.description,
+				*[class*="description"],
+				*[style*="일정 관리부터"] {
+					white-space: normal !important;
+					font-size: clamp(1rem, 2.5vw, 1.2rem) !important;
+					line-height: 1.4 !important;
+					word-break: keep-all !important;
+					overflow: visible !important;
+					text-overflow: unset !important;
+				}
+				
+				/* 작은 모바일에서도 CTA 텍스트 줄바꿈 허용 */
+				.cta-title,
+				*[class*="cta-title"],
+				*[style*="지금 바로"],
+				*[style*="협업을 시작"] {
+					white-space: normal !important;
+					font-size: clamp(1.5rem, 4vw, 1.8rem) !important;
+					line-height: 1.3 !important;
+					word-break: keep-all !important;
+					overflow: visible !important;
+					text-overflow: unset !important;
+				}
+				
+				.cta-description,
+				*[class*="cta-description"],
+				*[style*="무료로 시작하고"] {
+					white-space: normal !important;
+					font-size: clamp(1rem, 2.5vw, 1.1rem) !important;
+					line-height: 1.4 !important;
+					word-break: keep-all !important;
+					overflow: visible !important;
+					text-overflow: unset !important;
+				}
+			}
+		</style>
+    </head>
+    <body ev:onpageload="scwin.onpageload" style="background-color: #FFF4D6 !important;min-height: 100vh;margin: 0;padding: 0;overflow-x: hidden;width: 100%;">
+    	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+    		style="background-color:#4A3F35;display: flex;justify-content: space-between;align-items: center;height:60px;padding: 0 20px;width: 100%;position: fixed;top: 0;left: 0;z-index: 1000;">
+    		<xf:group style="width:200px;height:61px;display:flex;align-items:center;gap:10px;" id="">
+    			<xf:image src="/InsWebApp/images/collabee.png" style="width:66px;height:59px;" id=""></xf:image>
+    			<xf:output style="width: 150px;color:#FFB823;font-weight:bold;font-size:1.5em;" label="" id="">
+    				<xf:label><![CDATA[COLLABEE]]></xf:label>
+    			</xf:output>
+    		</xf:group>
+    		<xf:group style="display: flex;gap: 10px;align-items: center;margin-right: 30px;" id="" class="rt">
+    					<xf:trigger style=";background-color:#FFB823;" id="btn_login" type="button" class="btn_cm " ev:onclick="scwin.goToLogin">
+			<xf:label><![CDATA[로그인]]></xf:label>
+		</xf:trigger>
+    					<xf:trigger style=";background-color:#FFB823;" id="btn_signup" type="button" class="btn_cm " ev:onclick="scwin.goToSignup">
+			<xf:label><![CDATA[회원가입]]></xf:label>
+		</xf:trigger>
+    		</xf:group>
+
+    	</xf:group>
+    	<xf:group
+    		style="background:#FFF4D6;min-height: 80vh;display: flex;align-items: center;padding: 60px 20px;color: white;font-size:1em;margin-top: 60px;overflow: hidden;width: 100%;"
+    		id="group_hero" class="hero-container">
+    		<xf:group style="flex: 1;padding-right: 40px;padding-left: 10%;" id="hero_left" class="hero-left">
+    						<xf:output style="font-size: 3rem; font-weight: bold; margin-bottom: 10px;color:#0000FF;margin-left: 140px;" label="" id="" class="main-title">
+				<xf:label><![CDATA[초급 개발자를 위한]]></xf:label>
+			</xf:output>
+			<xf:output style="font-size: 3rem; font-weight: bold;color:#FFC107; margin-bottom: 20px;margin-left: 140px;" label="" id="" class="sub-title">
+				<xf:label><![CDATA[올인원 협업 플랫폼]]></xf:label>
+			</xf:output>
+    			<xf:output style="font-size: 1.2rem; margin-bottom: 40px; opacity: 0.95;color:#000000;font-weight:bold;" label="" id="" class="description">
+    				<xf:label><![CDATA[일정 관리부터 협업까지, 개발자가 필요한 모든 도구를 한 곳에서!]]></xf:label>
+    			</xf:output>
+    						<xf:trigger
+				style="background: linear-gradient(45deg, #FFB823, #f59e0b);color: white;border: none;border-radius: 50px;padding: 15px 35px;font-size: 1.1rem;font-weight: bold;box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);cursor: pointer;transition: all 0.3s ease;text-transform: none;margin-left: 245px;"
+				id="btn_start_free_1" type="button" ev:onclick="scwin.goToLogin">
+				<xf:label><![CDATA[무료로 시작하기]]></xf:label>
+			</xf:trigger>
+    		</xf:group>
+    		<xf:group style="flex:1;position: relative;height: 500px;overflow: hidden;padding-right: 5%;animation: cardFloat 4s ease-in-out infinite;" id="hero_right" class="hero-right">
+    			<xf:group
+    				style="position: absolute;top: 60px;left: 20px;background: rgba(255,255,255,0.95);border-radius: 20px;padding: 20px;width: 140px;box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);text-align: center;animation: cardFloat 4s ease-in-out infinite;"
+    				id="Group_card1" class="floating-card floating-card-1">
+    				<xf:output style="font-size: 4rem;color: #FFB823;margin-bottom: 15px;display: block;text-align: center;line-height: 1;"
+    					label="" id="" class="fa-solid fa-calendar">
+    					<xf:label></xf:label>
+    				</xf:output>
+    								<xf:output style="width: 150px;height: 23px;color:black;font-weight:bold;text-align: center;margin-left: -5px;" label="" id="">
+					<xf:label><![CDATA[일정관리]]></xf:label>
+				</xf:output>
+    			</xf:group>
+    			<xf:group
+    				style="position: absolute;top: 40px;left: 380px;background: rgba(255,255,255,0.95);border-radius: 20px;padding: 20px;width: 140px;box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);text-align: center;animation: cardFloat 4s ease-in-out infinite;"
+    				id="Group_card2" class="floating-card floating-card-2">
+    				<xf:output style="font-size: 4rem;color: #1f2937;margin-bottom: 15px;display: block;text-align: center;line-height: 1;"
+    					label="" id="" class="fa-brands fa-github">
+    					<xf:label></xf:label>
+    				</xf:output>
+    								<xf:output style="width: 150px;height: 23px;color:black;font-weight:bold;text-align: center;margin-left: -5px;" label="" id="">
+					<xf:label><![CDATA[Git연동]]></xf:label>
+				</xf:output>
+    			</xf:group>
+    			<xf:group
+    				style="position: absolute;top: 300px;left: 250px;background: rgba(255,255,255,0.95);border-radius: 20px;padding: 20px;width: 140px;box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);text-align: center;animation: cardFloat 4s ease-in-out infinite;"
+    				id="Group_card3" class="floating-card floating-card-3">
+    				<xf:output style="font-size: 4rem;color: #10b981;margin-bottom: 15px;display: block;text-align: center;line-height: 1;"
+    					label="" id="" class="fa-solid fa-video">
+    					<xf:label></xf:label>
+    				</xf:output>
+    								<xf:output style="width: 150px;height: 23px;color:black;font-weight:bold;text-align: center;margin-left: -8px;" label="" id="">
+					<xf:label><![CDATA[화상통화]]></xf:label>
+				</xf:output>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    	<xf:group style="background-color: #FFF4D6;padding: 80px 20px;text-align: center;" id="group_features">
+    		<xf:group style="margin-bottom: 60px;" id="features_header">
+    			<xf:output style="font-size: 2.5rem;font-weight: bold;color: #2563eb;margin-bottom: 15px;" label="" id="">
+    				<xf:label><![CDATA[강력한 협업 기능들]]></xf:label>
+    			</xf:output>
+    			<xf:output style="font-size: 1.2rem;color: #6b7280;" label="" id="">
+    				<xf:label><![CDATA[개발자가 필요한 모든 도구를 하나의 플랫폼에서]]></xf:label>
+    			</xf:output>
+    		</xf:group>
+    		<xf:group style="display: flex;flex-wrap: wrap;justify-content: center;gap: 30px;max-width: 1300px;margin: 0 auto;"
+    			id="features_grid">
+    			<xf:group
+    				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
+    				id="feature_card1">
+    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 55px;" label="" id=""
+    					class="fa-solid fa-clipboard-list">
+    					<xf:label></xf:label>
+    				</xf:output>
+    				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" label="" id="">
+    					<xf:label><![CDATA[일정관리 & 칸반보드]]></xf:label>
+    				</xf:output>
+    				<xf:output style="font-size: 1rem;color: #6b7280;line-height: 1.6;" label="" id="">
+    					<xf:label><![CDATA[직관적인 칸반보드와 간트차트로 프로젝트 진행 상황을 한눈에 파악하세요.]]></xf:label>
+    				</xf:output>
+    			</xf:group>
+    			<xf:group
+    				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
+    				id="feature_card2">
+    				<xf:output style="width: 150px;height: 23px;font-size: 4rem;color:black;margin-bottom: 45px;" label="" id=""
+    					class="fa-brands fa-github">
+    					<xf:label></xf:label>
+    				</xf:output>
+    				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" label="" id="">
+    					<xf:label><![CDATA[GitHub 연동]]></xf:label>
+    				</xf:output>
+    				<xf:output style="font-size: 1rem;color: #6b7280;line-height: 1.6;" label="" id="">
+    					<xf:label><![CDATA[label="GitHub API를 통한 완벽한 연동으로 코드 관리와 협업을 한 곳에서.]]></xf:label>
+    				</xf:output>
+    			</xf:group>
+    			<xf:group
+    				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
+    				id="feature_card3">
+    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 55px;" id="" label=""
+    					class="fa-solid fa-pencil">
+    					<xf:label></xf:label>
+    				</xf:output>
+    				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" id="" label="">
+    					<xf:label><![CDATA[실시간 동시편집]]></xf:label>
+    				</xf:output>
+    				<xf:output style="font-size: 1rem;color: #6b7280;line-height: 1.6;" id="" label="">
+    					<xf:label><![CDATA[WebSocket 기반 실시간 동시 편집과 채팅으로 효율적인 협업 경험.]]></xf:label>
+    				</xf:output>
+    			</xf:group>
+    			<xf:group
+    				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
+    				id="feature_card4">
+    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 45px;" id="" label=""
+    					class="fa-solid fa-video">
+    					<xf:label></xf:label>
+    				</xf:output>
+    				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" id="" label="">
+    					<xf:label><![CDATA[화상통화]]></xf:label>
+    				</xf:output>
+    				<xf:output style="font-size: 1rem;color: #6b7280;line-height: 1.6;" id="" label="">
+    					<xf:label><![CDATA[WebRTC 기술로 구현된 고품질 화상 회의 시스템.]]></xf:label>
+    				</xf:output>
+    			</xf:group>
+    			<xf:group
+    				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
+    				id="feature_card5">
+    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 45px;" id="" label=""
+    					class="fa-solid fa-envelope">
+    					<xf:label></xf:label>
+    				</xf:output>
+    				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" id="" label="">
+    					<xf:label><![CDATA[스마트 알림]]></xf:label>
+    				</xf:output>
+    				<xf:output style="font-size: 1rem;color: #6b7280;line-height: 1.6;" id="" label="">
+    					<xf:label><![CDATA[메일 알림과 사용자 초대 시스템으로 팀원들과 연결을 유지하세요.]]></xf:label>
+    				</xf:output>
+    			</xf:group>
+    			<xf:group
+    				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
+    				id="feature_card6">
+    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 55px;" id="" label=""
+    					class="fa-solid fa-calendar">
+    					<xf:label></xf:label>
+    				</xf:output>
+    				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" id="" label="">
+    					<xf:label><![CDATA[통합 캘린더]]></xf:label>
+    				</xf:output>
+    				<xf:output style="font-size: 1rem;color: #6b7280;line-height: 1.6;" id="" label="">
+    					<xf:label><![CDATA[FullCalendar 기반의 강력한 일정 관리와 프로젝트 타임라인 시각화.]]></xf:label>
+    				</xf:output>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    	<xf:group style="padding: 80px 20px;text-align: center;color: white;" id="group_cta">
+    		<xf:output label="" style="font-size: 2.5rem;font-weight: bold;margin-bottom: 10px;color: black;text-shadow: 0 2px 4px rgba(0,0,0,0.3);" id="" class="cta-title">
+    			<xf:label><![CDATA[지금 바로 CollaBee와 함께]]></xf:label>
+    		</xf:output>
+    		<xf:output label="" style="font-size: 2.5rem;font-weight: bold;margin-bottom: 25px;color: black;text-shadow: 0 2px 4px rgba(0,0,0,0.3);" id="" class="cta-title">
+    			<xf:label><![CDATA[협업을 시작하세요!]]></xf:label>
+    		</xf:output>
+    		<xf:output label=""
+    			style="font-size: 1.2rem;margin-bottom: 40px;color: rgba(255,255,255,0.9);max-width: 600px;margin-left: auto;margin-right: auto;color: black;"
+    			id="" class="cta-description">
+    			<xf:label><![CDATA[무료로 시작하고, 팀의 생산성을 한 단계 업그레이드하세요.]]></xf:label>
+    		</xf:output>
+    				<xf:trigger type="button" style="background: white;color: #FFB823;border: none;border-radius: 50px;padding: 18px 40px;font-size: 1.2rem;font-weight: bold;box-shadow: 0 8px 25px rgba(0,0,0,0.2);cursor: pointer;transition: all 0.3s ease;transform: translateY(0);" id="btn_start_free_2" ev:onclick="scwin.goToLogin">
+			<xf:label><![CDATA[무료로 시작하기]]></xf:label>
+		</xf:trigger>
+    	</xf:group>
+    </body>
+</html>

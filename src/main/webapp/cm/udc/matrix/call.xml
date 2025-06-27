@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type palette="support">COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.sendCall"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_misc_call
+ * @pluginName 
+ * @company inswave
+ * @developer uapmobile
+ * @category /udc/matrix
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAzElEQVR42mNgGDSA59CqDUC8H4wP
+ * rmxAEv/Pc2jleu6DK+MJGfAfhoGK78Ml9q8X4D60KoH70MoLIINAfFwGHEA2BKaQ4/hyBYRBKxeA
+ * DcEGuA+umgA34OCqDzADgLY/AHkLzIe45gHP4dUOmAYcXWUAdj7QqSA2ihzY5lUbIOzVBSA+bm8g
+ * BSByOIDkYF7CaQBIEuR8dBeQBEAhTn1DQIF3cNV5WBRj9SZWQ0Axcnh1PUwzEj5AlEvAYYKWPkgy
+ * ADmKoekEZtiGwZMJAXtSrz9NfI8rAAAAAElFTkSuQmCC
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAzUlEQVR42s2SYRHCMAyFJ2ESkICE
+ * lyboAAk4AAlImANwAA7AAUjAASTtwrXQwe2OH8tdb0vbfXt5SdNMJghy0HW0FSBb3w8kjwDeA7z8
+ * CogX+0Xgq+8DaAPCiogvCYS2roDklEP8oj5nDlJwZ5C6AvAuA9wdEIhvVpblUY3mgOADACzmUb5K
+ * tffSH+7Mo/QjWVs+XEZmYO6DnXlJgwA7TPJLBaPCHP87JHVAzt7iWplDEB0i2fjHrznp/fgZ0bC3
+ * +RgFKFqsc+Iwb+k04gl9jXT1H6G1BwAAAABJRU5ErkJggg==
+ * @description misc sendCall UDC
+ * @width 100
+ * @height 50
+ * @license
+ * @imagePath
+ * @homepage
+ */
+
+
+
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name number
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 전화번호 ( '-' 빼고 입력 가능)
+ */
+
+scwin.onpageload = function() {
+	
+};
+
+/**
+ * @event
+ * @name sendCall
+ * @description 전화를 건다
+ * @param {Object} result 실행결과
+ * @example
+ */
+scwin.emit_sendCall = function (result) {
+	$p.emit("sendCall", result);
+};
+
+scwin.anchor_misc_call_onclick = function (e) {
+    try {
+        if(typeof $h == "object") {
+            let options = $p.getOptions();
+            console.log(options);
+            $h.misc.sendCall(scwin.emit_sendCall,options);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+/**
+ * @method
+ * @name sendCall
+ * @description 전화를 건다
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_misc_call.sendCall();
+ * })();
+ * 
+ */
+scwin.sendCall = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+            $h.misc.sendCall(resolove,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<w2:anchor outerDiv="false" id="anchor_misc_call" style="width: 100px;height: 23px;" ev:onclick="scwin.anchor_misc_call_onclick">
+    		<xf:label><![CDATA[전화 걸기]]></xf:label>
+    	</w2:anchor>
+    </body>
+</html>

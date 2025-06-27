@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>사원정보 List</title>
+
+<link type="text/css" rel="stylesheet" href="../../css/ElDemo.css"/>
+<script type="text/javascript" src="../../js/comm/ElComm.js"></script>
+<script type="text/javascript" src="../../js/comm/jquery-3.4.1.min.js"></script>
+
+<script type="text/javascript">
+	
+	// 전역변수 선언
+	var initLoadStatus = "";
+	var selectPageIdx = 1;
+	
+	// 페이지 로드
+	$(document).ready(function() {
+		
+		initLoadStatus = "Y";
+		
+		selectEmpList(); // 초기 데이터 조회
+		
+	});
+		
+	// 테이블 데이터 초기화
+	function initTableRow() {
+		
+		$('#tbl_empList > tbody:last').empty();
+		
+	}
+	
+	// 부서 SelectBox 옵션 초기화
+	function initSbxOpt() {
+		
+		$('select[name=scDeptno] option').each(function() { 
+			if(this.value != '') { this.remove(); }
+		});
+
+		// $("select[name=scDeptno] option").remove();
+		
+	}
+	
+	// 전체건수, 페이지 정보 초기화
+	function initSpnCount() {
+		
+		$("#spn_listCnt").text(""); 
+		$("#spn_pageIdx").text(""); 
+		$("#spn_pageCnt").text("");
+		
+	}
+	
+	// 페이지 리스트 초기화
+	function initPageList() {
+		
+		if($("div[id=innerPaging]") != null) { $("div[id=innerPaging]").remove(); }
+		
+	}
+	
+	// 페이징 처리
+	function setPageList(selectPageIdx, pageCnt) {
+		
+		//---------------------------------------------------
+		// first    : 시작 페이지
+		// backward : 뒤로
+		// start    : 첫 페이지 (현재 보이는 시작 페이지)
+		// end      : 끝 페이지 (현재 보이는 마지막 페이지)
+		// forward  : 앞으로
+		// last     : 마지막 페이지
+		//---------------------------------------------------
+		var first    = 1;
+		var backward = 0;
+		var start    = ((Math.floor((selectPageIdx - 1) / 10))) * 10 + 1;
+		var end      = ((Math.floor((selectPageIdx-1) / 10)) + 1) * 10;
+		var forward  = 0;
+		var last     = pageCnt;
+		
+		if(end > last) { end = last; }
+		
+		if(selectPageIdx > first) { backward = selectPageIdx - 1 } else { backward = first; }
+		if(selectPageIdx < pageCnt) { forward = selectPageIdx + 1; } else { forward = last; }
+		
+		var list = "";
+		list += "	<div id='innerPaging''>"
+		list += "	 	 <a href='javascript:pageList_click(" + first + ");'><img src='../../images/sample/el/btn_page_pre10.gif' border='0'/></a>&nbsp;";
+		list += "	 	 <a href='javascript:pageList_click(" + backward + ");'><img src='../../images/sample/el/btn_page_pre1.gif' border='0'/></a>&nbsp;";
+		for(var i=start; i<=end; i++) {
+			if(selectPageIdx == i ) {
+				list += "&nbsp;<strong>" + i + "</strong>&nbsp;";
+			} else {
+				list += "&nbsp;<a href='javascript:pageList_click(" + i + ");'>" + i + "</a>&nbsp;";			
+			}
+		}
+		list += "	 	 <a href='javascript:pageList_click(" + forward + ");'><img src='../../images/sample/el/btn_page_next1.gif'  border='0'/></a>&nbsp;";
+		list += "	 	 <a href='javascript:pageList_click(" + end + ");'><img src='../../images/sample/el/btn_page_next10.gif' border='0'/></a>";
+		list += "	</div>";
+		$("div[id=paging]").append(list);
+				
+	}
+	
+	
+	/****************************** 이벤트 함수 ******************************/	
+	
+	// 로그아웃 버튼 클릭 이벤트
+	function logoutBtn_click() {
+		
+		var userId = getCookie("userId");
+		logout(userId);
+		
+	}
+	
+	// 검색 버튼 클릭 이벤트
+	function searchBtn_click() {
+		
+		initLoadStatus = "N";
+		selectPageIdx = 1;
+		
+		var scEname = $("input[name=scEname]").val();
+		var scDname = $("input[name=scDname]").val();
+		var scDeptno = parseInt($("select[name=scDeptno]").val());
+		var pageSize = parseInt($("select[name=pageSize]").val());
+		
+		selectEmpList(scEname, scDname, scDeptno, pageSize, selectPageIdx);
+		
+	}
+	
+	// 사원번호 클릭 이벤트
+	function empno_click(empno) {
+		
+		// form 생성
+		var form = $('<form></form>');
+		form.attr('action', "empRegister.html");
+		form.attr('method', 'get');
+		form.appendTo('body');
+		
+		var paramType  = $("<input type='hidden' name='type' value='select'>");
+		var paramEmpno = $("<input type='hidden' name='empno' value='" + empno + "'>");
+		
+		form.append(paramType).append(paramEmpno);
+		form.submit();
+		
+	}
+
+	// 사원번호 클릭 이벤트
+	function empno_do_click(empno) {
+		
+		// form 생성
+		var form = $('<form></form>');
+		form.attr('action', "../../DmoEmpUpdViewJsp.do");
+		form.attr('method', 'get');
+		form.appendTo('body');
+		
+		var paramEmpno = $("<input type='hidden' name='empno' value='" + empno + "'>");
+		
+		form.append(paramEmpno);
+		form.submit();
+		
+	}
+	
+	// 페이지 리스트 번호 클릭 이벤트
+	function pageList_click(pageIndex) {
+		
+		initLoadStatus = "N";
+		selectPageIdx = pageIndex;
+		
+		var scEname = $("input[name=scEname]").val();
+		var scDname = $("input[name=scDname]").val();
+		var scDeptno = parseInt($("select[name=scDeptno]").val());
+		var pageSize = parseInt($("select[name=pageSize]").val());
+		
+		selectEmpList(scEname, scDname, scDeptno, pageSize, pageIndex);
+		
+	}
+	
+	// 등록 버튼 클릭 이벤트
+	function registerBtn_click() {
+		
+		moveLocation("html/emp/empRegister.html");
+		
+	}
+	
+	/****************************** ajax 함수 ******************************/
+	
+	// 사원 리스트 조회
+	function selectEmpList(scEname, scDname, scDeptno, pageSize, pageIndex) {
+		
+		if(initLoadStatus != "N") { initSbxOpt(); }
+		initTableRow();
+		initSpnCount();
+		initPageList();
+		
+		var requestJSON = JSON.stringify({"elData":{"scEname":scEname,"scDname":scDname,"scDeptno":scDeptno,"pageSize":pageSize,"pageIndex":pageIndex}});
+		executeAjax(CONTEXT_PATH + "DmoEmpList.pwkjson", requestJSON, selectEmpList_callback);
+		
+	}
+	
+	// 로그아웃
+	function logout(userId) {
+		
+		var requestJSON = JSON.stringify({"elData":{"id":userId}});
+		executeAjax(CONTEXT_PATH + "CmmLoginFrm.pwkjson", requestJSON, logout_callback);
+		
+	}
+	
+	
+	/****************************** 콜백 함수 ******************************/
+	
+	//사원 리스트 조회 콜백
+	function selectEmpList_callback(data) {
+		
+		console.log(data);
+		var elHeader = data.elHeader; // 응답 전문 elHeader
+		var elData = data.elData;
+		
+		if(elHeader != "" && elHeader != null && elHeader != "undefined") {
+			
+			if(elHeader.resSuc == true) {
+				
+				var rowIdx  = 1;
+				var listCnt = elData.totalCount;         // 전체 건수
+				var pageCnt = elData.totalPageCount;     // 전체 페이지
+				
+				//------------------------------------------
+				// 부서 SelectBox 옵션 세팅
+				//------------------------------------------
+				if(initLoadStatus != "N") {
+					var deptList = elData.deptVoList;
+					for(var idx in deptList) {
+						$("select[name=scDeptno]").append("<option value='" + deptList[idx].deptno + "'>" + deptList[idx].dname + "</option>");
+					}
+				}
+				
+				//------------------------------------------
+				// 전체 건수, 페이지 정보 세팅
+				//------------------------------------------
+				$("#spn_listCnt").text(listCnt); 
+				$("#spn_pageIdx").text(selectPageIdx); 
+				$("#spn_pageCnt").text(pageCnt);
+				
+				//------------------------------------------
+				// 동적 테이블 그리기
+				//------------------------------------------
+				var empList = elData.empVoList;
+				for(var idx in empList) {
+					var row = "";
+					row =  "<tr>";
+					row += "	<td align='center' class='listtd'><a href='javascript:empno_do_click(" + empList[idx].empno + ");'>" + rowIdx + "</a></td>";
+					row += "	<td align='center' class='listtd'><a href='javascript:empno_click(" + empList[idx].empno + ");'>" + empList[idx].empno + "</a></td>";
+					row += "	<td align='left'   class='listtd'>" + empList[idx].ename + "</td>";
+					row += "	<td align='center' class='listtd'>" + empList[idx].job + "</td>";
+					row += "	<td align='center' class='listtd'>" + empList[idx].hiredate + "</td>";
+					row += "	<td align='center' class='listtd'>" + empList[idx].dname + "</td>";
+					row += "</tr>";
+					$('#tbl_empList > tbody:last').append(row);
+					rowIdx += 1;
+				}
+				
+				//------------------------------------------
+				// 페이징 처리
+				//------------------------------------------
+				setPageList(selectPageIdx, pageCnt);
+				
+			} else {
+				
+				exceptionAlert("리스트 조회", elHeader.resCode, elHeader.resMsg);
+				
+			}
+			
+		}
+		
+	}
+	
+	// 로그아웃 콜백
+	function logout_callback(data) {
+		
+		setCookie("userId", "", -1);
+		moveLocation("html/cmmn/loginFrm.html");
+		
+	}
+	
+	function tcpClientTest(){
+		//var requestJSON = JSON.stringify({"elData":{}});
+		
+		var scDname = $("input[name=scDname]").val();
+		
+		var requestJSON = JSON.stringify({"elData":{"deptno": scDname }});
+		executeAjax(CONTEXT_PATH + "DmoTcpSendTest.pwkjson", requestJSON, tcpClientTest_callback);
+	}
+
+	function tcpClientTest_callback(data) {
+		alert(JSON.stringify(data));
+	}
+
+</script>
+</head>
+<body style="text-align:center; margin:0 auto; display:inline; padding-top:100px;">
+	<div id="content_pop">
+		<!-- TITLE_SECTION -->	
+		<div id="title">					
+			<table width="100%" border="0" cellpadding="0" cellspacing="0">		  
+				<tr>
+					<td class="title_l">
+						<img src="../../images/sample/rte/title_dot.gif"> 사원 List
+					</td>							
+					<td class="title_r">
+						<a href="javascript:logoutBtn_click();">로그아웃</a>
+					</td>
+				</tr>
+			</table>
+		</div>
+		
+		<!-- SEARCH SECTION -->
+		<div id="search">
+			<table class="search_table" width="100%" border="0" cellpadding="0" cellspacing="0">  
+				<tr>
+					<td class="search_l" width='485'>
+						성명: <input type="text" name="scEname" class="txt" size='10'/>
+						부서명: <input type="text" name="scDname" class="txt" size='10'/>
+						부서 : 
+						<select name="scDeptno" class="use">
+							<option value="" selected>-전체-</option>
+						</select>
+				  
+					</td>	
+					<td class="search_m" width='150'>
+						페이지크기 : 
+						<select name="pageSize"> 							   
+					    	<option value="5">5</option>
+							<option value="10" selected>10</option>
+							<option value="15">15</option>
+							<option value="20">20</option>
+							<option value="30">30</option>
+							<option value="50">50</option>
+							<option value="100">100</option>				
+					</select>				    
+					</td>	
+					<td class="search_r" width='45'>
+				    	<span class="btn_blue_l"><a href="javascript:searchBtn_click();">검색</a><img src="../../images/sample/rte/btn_bg_r.gif" style="margin-left:6px;"></span>
+					</td>
+				</tr>
+			</table>	
+		</div>
+		
+		<!-- PAGEINFO SECTION -->
+		<div id="pageInfo">
+			<table width="100%" border="0" cellpadding="0" cellspacing="0">	  
+				<tr>
+					<td align="left" class="listtd">
+						■ 총 <span id="spn_listCnt"></span> 건
+					</td>			
+					<td align="right" class="listtd">
+						■ <span id="spn_pageIdx"></span> / <span id="spn_pageCnt"></span>페이지
+					</td>
+				</tr>
+			</table>
+		</div>	
+			 	
+		<!-- TABLE SECTION -->
+		<div id="table">
+			<table id="tbl_empList" width="100%" border="0" cellpadding="0" cellspacing="0">
+				<colgroup>
+					<col width="40">				
+					<col width="100">
+					<col width="150">
+					<col width="80">
+					<col width="">
+					<col width="60">
+				</colgroup>		  
+				<tr>
+					<th align="center">No</th>
+					<th align="center">사번</th>
+					<th align="center">성명</th>
+					<th align="center">직업</th>
+					<th align="center">입사일</th>
+					<th align="center">부서</th>
+				</tr>
+				<tbody></tbody>
+			</table>
+		</div>
+		
+		<!-- LIST SECTION -->
+		<div id="paging">
+
+		</div>
+	
+	<div id="sysbtn1">
+		<ul>
+		<div id="sysbtn"><ul>
+		<li><span class="btn_blue_l"><a href="javascript:registerBtn_click();">등록</a><img src="../../images/sample/rte/btn_bg_r.gif" style="margin-left:6px;"></span></li></ul>
+		
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<a href="javascript:tcpClientTest();">TCP Client Test</a>
+		
+		</div>
+		</ul>
+	</div>
+	</div>
+	
+</body>
+</html>

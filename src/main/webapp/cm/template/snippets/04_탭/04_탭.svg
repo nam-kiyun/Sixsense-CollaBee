@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="14.001" viewBox="0 0 16 14.001">
+  <g id="TAB" transform="translate(-475 -453)">
+    <path id="사각형_3196_-_윤곽선" data-name="사각형 3196 - 윤곽선" d="M1,1V3H7V1H1M1,0H7A1,1,0,0,1,8,1V3A1,1,0,0,1,7,4H1A1,1,0,0,1,0,3V1A1,1,0,0,1,1,0Z" transform="translate(483 453)" fill="#b7b7b7"/>
+    <path id="합치기_19" data-name="합치기 19" d="M3641-2389h6a1,1,0,0,1,1,1v2a1,1,0,0,1-1,1h-6a1,1,0,0,1-1-1v-2A1,1,0,0,1,3641-2389Z" transform="translate(-3165 2842)" fill="rgba(255,255,255,0)"/>
+    <path id="합치기_19_-_윤곽선" data-name="합치기 19 - 윤곽선" d="M3655-2376v-9h-8v-3h-6v12h14m1,1h-16v-13a1,1,0,0,1,1-1h6a1,1,0,0,1,1,1v2h8Z" transform="translate(-3165 2842)" fill="#424144"/>
+    <rect id="사각형_3197" data-name="사각형 3197" width="6" height="3" transform="translate(476 454)" fill="#b7b7b7"/>
+  </g>
+</svg>

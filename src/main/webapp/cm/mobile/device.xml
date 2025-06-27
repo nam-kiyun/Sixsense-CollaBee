@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="device" meta_screenName="device" meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_desc="디바이스의 모델, 플랫폼, os 버전 등의 데이터를 반환하는 API 제공한다.">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.getDeviceInfo"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_device
+ * @pluginName
+ * @company
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser
+ * @version
+ * @htmlRender
+ * @icon
+ * @disableIcon
+ * @description 디바이스 모델, 플랫폼, OS버전 등 데이터를 반환하는 API제공한다.
+ * @variableClone true
+ * @width
+ * @height
+ * @license
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */
+
+
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name getDeviceInfo
+ * @description device 데이터를 리턴한다.
+ * @param 
+ * @returns {JSON} data device 정보 객체 {model:"", platform:"", uuid: "", version: "", manufacturer: "", isVirtual: "", serial: "", type: ""}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const deviceInfo = await $c.device.getDeviceInfo();
+*       console.log("model:"+ deviceInfo.model);
+ *      console.log("platform:"+ deviceInfo.platform);
+ *      console.log("uuid:"+ deviceInfo.uuid);
+ *      console.log("version:"+ deviceInfo.version);
+ *      console.log("manufacturer:"+ deviceInfo.manufacturer);
+ *      console.log("isVirtual:"+ deviceInfo.isVirtual);
+ *      console.log("serial:"+ deviceInfo.serial);
+ *      console.log("type:"+ deviceInfo.type);
+ *  })();
+ */ 
+scwin.getDeviceInfo = function() {
+    try {
+        if (typeof $h.device === "object") {
+            return new Promise(resolve => {
+                resolve($h.device.getDeviceInfo());
+            });
+        } else {
+            console.log("Not found Device Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

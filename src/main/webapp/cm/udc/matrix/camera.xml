@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+	<head meta_screenId="wmatrixCamera" meta_screenName="카메라 UDC" meta_screenDesc="카메라 UDC">
+		<w2:type palette="support">COMPONENT</w2:type>
+		<w2:buildDate />
+		<w2:publicInfo method="scwin.capturePhoto" component="" ></w2:publicInfo>
+		<xf:model>
+			<xf:instance>
+				<data xmlns="" />
+			</xf:instance>
+			<w2:dataCollection baseNode="map">
+			</w2:dataCollection>
+			<w2:workflowCollection />
+		</xf:model>
+		<script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_camera
+ * @pluginName 
+ * @company Inswave
+ * @developer uapmobile
+ * @category /udc/matrix
+ * @variableClone true
+ * @notSupportBrowser 
+ * @version 2.0
+ * @htmlRender 
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAApklEQVR4XmNgGJSA59CqA0D8HxWv
+ * XI+uDivgObzagfvQqgfo4iAxkBy6OBhwH1p5Adk2oOIETDWrElDUHFx1Hi4JEkBSCxE7vDIPKH4V
+ * jIFsDHlkPegGgDUfXLWO7eAKTRAGstcCbcxHUYPXAKCtII0wPtgQoBiaGloaAPLC4VVr4V44tGoN
+ * SV4AAZAGcAACMbpmECBoACGAogc9HRCDQXqQzBvKAAAgrqjpgHHNewAAAABJRU5ErkJggg==
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAoElEQVR4XtVSwQ3CQAzrOl2iii8Z
+ * hAlgMQorsEH74c8mEFeqegmI0gcSWIp059iOcm3T/CQAuxTYPZToOeteQsSkQG+ZJ8de5icAOsZp
+ * ZZc15GoNxIal6USlneChe596ZfGc+8GTA2gQ0VPXWcsCSu/3Q615G8CpNM53nslFzTcDuIJ/yn5Z
+ * QY+bViBomB8xm4nVgDUEz9N/8EHRU+X9Mx5NmnQ8rBsfCQAAAABJRU5ErkJggg==
+ * @width 100px
+ * @height 20px
+ * @description 카메라UDC
+ */
+
+/**
+ * @property
+ * @name quality
+ * @category 01.Basic & ETC
+ * @type number
+ * @option
+ * @default 100
+ * @necessary Y
+ * @bindparent
+ * @description 사진 퀄리티
+ */
+
+/**
+ * @property
+ * @name destinationType
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [DATA_URL, FILE_URL]
+ * @default DATA_URL
+ * @necessary Y
+ * @bindparent
+ * @description 리턴되는 결과 타입
+ */
+
+/**
+ * @property
+ * @name sourceType
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default CAMERA
+ * @necessary Y
+ * @bindparent
+ * @description 카메라 옵션
+ */
+
+/**
+ * @property
+ * @name allowedit
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary N
+ * @bindparent
+ * @description 사진촬영 후 수정여부
+ */
+
+/**
+ * @property
+ * @name encodingType
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [jpeg, png]
+ * @default jpeg
+ * @necessary Y
+ * @bindparent
+ * @description jpeg, png 이미지 타입
+ */
+
+
+
+/**
+ * @property
+ * @name mediaType
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [Picture, Video]
+ * @default Picture
+ * @necessary Y
+ * @bindparent
+ * @description 사진, 비디오 타입
+ */
+
+/**
+ * @property
+ * @name correctOrientation
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary N
+ * @bindparent
+ * @description 사진방향
+ */
+
+/**
+ * @property
+ * @name saveToPhotoAlbum
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary N
+ * @bindparent
+ * @description 앨범 저장 여부
+ */
+
+/**
+ * @property
+ * @name cameraDirection
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [Back, Front]
+ * @default Back
+ * @necessary N
+ * @bindparent
+ * @description 카메라 방향
+ */
+
+/**
+ * @property
+ * @name popoverOptions
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary N
+ * @bindparent
+ * @description 팝업 카메라 사용여부
+ */
+
+/**
+ * @property
+ * @name targetWidth
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 이미지의 가로 크기 설정(pixel)
+ * targetHeight 와 같이 사용
+ */
+
+/**
+ * @property
+ * @name targetHeight
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 이미지의 세로 크기 설정(pixel)
+ * targetWidth와 같이 사용
+ */
+
+scwin.anchor1_onclick = function () {
+    if(typeof $h == "object") {
+        let options = $p.getOptions();
+    
+        options.sourceType = $h.camera.PictureSourceType.CAMERA;
+        options.destinationType = options.destinationType == "DATA_URL" ? 0 : 1; // DATA_URL:0, FILE_URL:1
+        options.encodingType = options.encodingType == "jpeg" ? 0 : 1; // jpeg:0, png:1
+        options.mediaType = options.mediaType == "Picture" ? 0 : 1; // Picture:0, Video:1
+        options.cameraDirection = options.cameraDirection == "Back" ? false : true; // Back:0, Fron:1
+
+        options.allowedit = options.allowedit == "true" ? true : false;
+        options.correctOrientation = options.allowEdit == "true" ? true : false;
+        options.saveToPhotoAlbum = options.allowEdit == "true" ? true : false;
+        options.popoverOptions = options.popoverOptions == "false" ? 0 : 1;
+        options.quality = Number(options.quality);
+        console.log(options);
+        
+        $h.camera.capturePhoto(scwin.emit_onCapture, options);
+    }
+};
+
+/**
+ * @event
+ * @name onCapture
+ * @description 카메라 플러그인이 동작하고 결과값을 반환받는 이벤트
+ * @param {Object} result 카메라 촬영 후 결과를 받는다.
+ * @example
+ */
+scwin.emit_onCapture = function (result) {
+	$p.emit("onCapture", result);
+};
+
+/**
+ * @method
+ * @name capturePhoto
+ * @description 사진을 찍는다.
+ * @param 
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_camera.capturePhoto();
+ * })();
+ * 
+ */
+scwin.capturePhoto = function () {
+    return new Promise((resolve, reject) => {
+        try {
+            let options = $p.getOptions();
+
+            options.sourceType = $h.camera.PictureSourceType.CAMERA;
+            options.destinationType = options.destinationType == "DATA_URL" ? 0 : 1; // DATA_URL:0, FILE_URL:1
+            options.encodingType = options.encodingType == "jpeg" ? 0 : 1; // jpeg:0, png:1
+            options.mediaType = options.mediaType == "Picture" ? 0 : 1; // Picture:0, Video:1
+            options.cameraDirection = options.cameraDirection == "Back" ? false : true; // Back:0, Fron:1
+
+            options.allowedit = options.allowedit == "true" ? true : false;
+            options.correctOrientation = options.allowEdit == "true" ? true : false;
+            options.saveToPhotoAlbum = options.allowEdit == "true" ? true : false;
+            options.popoverOptions = options.popoverOptions == "false" ? 0 : 1;
+            options.quality = Number(options.quality);
+
+            console.log(options);
+
+            $h.camera.capturePhoto(resolve,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+}]]></script>
+	</head>
+	<body ev:onpageload="scwin.onpageload">
+		<w2:anchor outerDiv="false" id="anchor1" style="width: 100px;height: 23px;" ev:onclick="scwin.anchor1_onclick">
+			<xf:label><![CDATA[Camera 버튼]]></xf:label>
+		</w2:anchor>
+	</body>
+</html>

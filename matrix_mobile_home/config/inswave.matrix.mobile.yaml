@@ -1,0 +1,25 @@
+appID: inswave.matrix.mobile
+matrixMobile:
+  startPage: /InsWebApp/main/logIn.xml
+  frameworkType: WebSquare
+  storageType: I
+  localUpdatePolicy: false
+  refreshUpdatePolicy: false
+  customUpdatePolicy: false
+  customUpdateURL_Android: /hybridEngine/websquare_config.zip
+  customUpdateURL_iOS: /hybridEngine/websquare_config.zip
+  serviceFilter: .do,.wq,.jsp,.pwkjson
+refreshUpdate:
+  cachePeriod: '1000'
+  resourcePath: /opt/tomcat/webapps/ROOT
+  zipResourcePath: /opt/tomcat/webapps/ROOT/refreshZip
+  resourceRuleTable:
+    - location: /_wpack_
+      type: accept
+    - location: accept
+      type: ''
+  listFilter: html,js,css,png,jpg,gif
+  fileCheckAlgorithm: SHA1
+websquare:
+  engineBase: remote
+  engineResourceLocation: /InsWebApp/hybridEngine

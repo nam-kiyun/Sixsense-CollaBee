@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare"
+	xmlns:xf="http://www.w3.org/2002/xforms">
+	<head>
+		<w2:type>DEFAULT</w2:type>
+		<w2:buildDate />
+		<xf:model>
+			<xf:instance>
+				<data xmlns="" />
+			</xf:instance>
+			<w2:dataCollection baseNode="map">
+				<w2:dataList baseNode="list" repeatNode="map" id="dlt_elMenuGroupVoList" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column id="idx" name="name1" dataType="text"></w2:column>
+						<w2:column id="menuGroupNo" name="name2" dataType="text"></w2:column>
+						<w2:column id="menuGroupNm" name="name3" dataType="text"></w2:column>
+						<w2:column id="sortSeq" name="name4" dataType="text"></w2:column>
+						<w2:column id="level" name="name5" dataType="text"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+			</w2:dataCollection>
+			<w2:workflowCollection></w2:workflowCollection>
+		</xf:model>
+		<script lazy="false" type="javascript"><![CDATA[/**
+ * 메시지 박스 화면 초기화 작업을 수행한다.
+ */
+scwin.onpageload = function () {
+	try {
+		var messageType = scwin.getMessageType();
+		var message = $c.data.getParameter("message") || "메시지 없음";
+		txb_message.setValue(message);
+
+		if (messageType === "alert") {
+			btn_cancel.hide();
+
+			btn_confirm.setLabel(WebSquare.WebSquareLang.COMMON_BUTTON_00009);
+		} else if (messageType === "confirm") {
+			btn_cancel.show("");
+		}
+
+		btn_confirm.focus();
+	} catch (ex) {
+		console.error(ex);
+	}
+};
+
+scwin.btn_confirm_onclick = function (e) {
+	try {
+		scwin.callBackParam = $c.data.getParameter("callBackParam");
+		if (scwin.getMessageType() == "confirm") {
+			scwin.callBackParam.clickValue = true;
+		}
+		$c.win.closePopup(scwin.callBackParam);
+	} catch (ex) {
+		console.error(ex);
+	}
+};
+
+scwin.btn_cancel_onclick = function (e) {
+	try {
+		scwin.callBackParam = $c.data.getParameter("callBackParam");
+		if (scwin.getMessageType() == "confirm") {
+			scwin.callBackParam.clickValue = false;
+		}
+		$c.win.closePopup(scwin.callBackParam);
+	} catch (ex) {
+		console.error(ex);
+	}
+};
+
+scwin.getMessageType = function () {
+	var messageType = $c.data.getParameter("messageType") || "alert";
+	return messageType;
+}
+]]></script>
+		<style type="text/css"><![CDATA[
+		 ]]></style>
+	</head>
+	<body ev:onpageload="scwin.onpageload" ev:onpageunload="scwin.onpageunload">
+		<xf:group id="" class="sub_contents">
+			<xf:group id="" class="poptxt">
+				<xf:group style="" id="">
+					<w2:textbox style="" label="MESSAGE" id="txb_message" class="tit"></w2:textbox>
+				</xf:group>
+			</xf:group>
+			<xf:group class="btnbox" id="" style="text-align: right;">
+				<xf:trigger class="btn_cm active" ev:onclick="scwin.btn_confirm_onclick" id="btn_confirm" localeRef="COMMON_BUTTON_00007"
+					style="margin-right: 5px;" type="button">
+					<xf:label><![CDATA[확인]]></xf:label>
+				</xf:trigger>
+				<xf:trigger class="btn_cm active" ev:onclick="scwin.btn_cancel_onclick" id="btn_cancel" localeRef="COMMON_BUTTON_00008"
+					style="" type="button">
+					<xf:label><![CDATA[취소]]></xf:label>
+				</xf:trigger>
+			</xf:group>
+		</xf:group>
+	</body>
+</html>

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type palette="support">COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.recordScreen,scwin.recordFinish"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_screenrecorder
+ * @pluginName 
+ * @company Inswave
+ * @developer uapmobile
+ * @category /udc/matrix
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAlElEQVR42mNgoAbgObjqA8+hVf9h
+ * mPvoKgN0NSAxFDUHV95HGAASOLS6gOfwagcQxmkRVB6sFqgHxQB8GrEaRFUDsPmZEMCpBz1Agfz3
+ * DPvXC3AfWtmPYitO5yFrRgpxGJs8Aw6tekC8AZhe+AD2wsFVE3AaQHEgDnw6gIT0qnwgbQ/CBDTa
+ * Q9X+pywzHVp5gSo5GQA/acCZm5XwEAAAAABJRU5ErkJggg==
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAlUlEQVR42mNgoAZwcnT5AMT/YdjB
+ * wdUAXQ1IDFmNo4PzfWQD/js5uBQ4OLg4gDAui2DyILUgPSgG4NOIzSDqGoDNz4QNwaEHPUCBgfUe
+ * 6HEBoL/7UWzFEyP/0TEoxGFssgxwcnR+QIoBH9AM+ADxgvMEnAZQHIgDnw4gBjjnOzq62oMwPo0g
+ * eZBadANIz0yOzheokpMB6P6DZIZ5Pi8AAAAASUVORK5CYII=
+ * @description screenrecorder UDC
+ * @width 100px
+ * @height 50px
+ * @license
+ * @imagePath
+ * @homepage
+ */
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name fileName
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description 파일 이름
+ * (입력 값이 없을 경우 생성된 날짜로 지정됨)
+ */
+
+/**
+ * @property
+ * @name audio
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary Y
+ * @bindparent
+ * @description 오디오 녹음 여부
+ */
+
+/**
+ * @property
+ * @name inInternal
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description 녹음 파일을 내부/외부 저장소 중 저장할 곳 설정
+ * true: 내부 저장소 (default)
+ * false: 외부 저장소
+ */
+
+/**
+ * @property
+ * @name saveToGallery
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default true
+ * @necessary Y
+ * @bindparent
+ * @description 녹음 파일 앨범에 저장 유무
+ */
+
+scwin.onpageload = function() {
+	
+};
+
+/**
+ * @event
+ * @name recordScreen
+ * @description 화면 녹화를 시작한다.
+ * @param {Object} result 실행결과
+ * @example
+ */
+scwin.emit_recordScreen = function (result) {
+	$p.emit("recordScreen", result);
+};
+
+/**
+ * @event
+ * @name recordFinish
+ * @description 화면 녹화를 종료 및 저장한다
+ * @param {Object} result 실행결과
+ * (파일경로, 녹화 시간 etc..)
+ * @example
+ */
+scwin.emit_recordFinish = function (result) {
+    alert(JSON.stringify(result));
+	$p.emit("recordFinish", result);
+};
+
+scwin.toggle_screenrecorder_ontogglechange = function () {
+   let options = $p.getOptions();
+    console.log(toggle_screenrecorder.getValue());
+    console.log(options);
+    if(toggle_screenrecorder.getValue() == "On") {
+        $h.screenRecorder.recordScreen(scwin.emit_recordScreen,options);
+    } else {
+        $h.screenRecorder.recordFinish(scwin.emit_recordFinish,options);   
+    }
+};
+
+/**
+ * @method
+ * @name recordScreen
+ * @description 녹화를 시작한다
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_screenrecorder.recordScreen();
+ * })();
+ */
+scwin.recordScreen = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+            $h.screenRecorder.recordScreen(resolove,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};
+/**
+ * @method
+ * @name recordFinish
+ * @description 녹화를 저장 및 종료한다
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_screenrecorder.recordFinish();
+ * })();
+ */
+scwin.recordFinish = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+            $h.screenRecorder.recordFinish(resolove,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<w2:anchor outerDiv="false" id="" style="width: 100px;height: 23px;">
+    		<xf:label><![CDATA[화면 녹화]]></xf:label>
+    	</w2:anchor>
+    <xf:group id=""><w2:fliptoggle style="position: relative;width: 100px;height: 30px;" id="toggle_screenrecorder" ev:ontogglechange="scwin.toggle_screenrecorder_ontogglechange">
+    		<w2:on label="On" value="On"></w2:on>
+    		<w2:off label="Off" value="Off"></w2:off>
+    	</w2:fliptoggle></xf:group></body>
+</html>

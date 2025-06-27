@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_vertical_guides="" meta_horizontal_guides="22 18 19" meta_screenName="Quit">
+    	<w2:type palette="support">COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:MSA />
+    	<xf:model>
+    		<w2:dataCollection baseNode="map" />
+    		<w2:workflowCollection />
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<w2:publicInfo method="scwin.quit" />
+    	<script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_quit
+ * @pluginName 
+ * @company Inswave
+ * @developer uapmobile
+ * @category /cm/udc/matrix
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAApklEQVR42s1SwQ3CMAzsCN2Isx3+
+ * jNANYAQ2YaSyAWwCueRBqc6iEg+wdFISX85nJ8Pw1+EoJ+IbgTOx+YJZXIE4ZALMGcqc27W4Axhz
+ * AYzkOHyS1df9qhbIkS7cygMo+CRADrmbBLhXZ1JAtZDNilydQNyWQ1wHc+TIIb5cxEWJtBeoOVn9
+ * rUIldCdxNNvviLauZ/2f5A4X7fjU3NRhEd1ZYvvn8QTmZ1hp80IStwAAAABJRU5ErkJggg==
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAArklEQVR42mNgGNSA+9DqAhAm2wCe
+ * gysbQJgEG1de4Dq0MgCXASA57oOrzuNx7qoHDPvXC+B0AVAOpAaIE7Daju5fbF4AW4TNFTyHVv3n
+ * ObzagZABIDUgtcQZAFKMTQybAdi8gDusVl7ALnFw5X3kQMQAoEAEqsEaiAhXrJqP1RBIDMzHajuq
+ * IqAhIFsOrsoH+tUehEFsiM1AzfhciHDJqgSQYnDAAjHUZQmDM8MBALerh4G+xt6fAAAAAElFTkSu
+ * QmCC
+ * @description 앱 종료
+ * @width 30px
+ * @height 30px
+ * @license
+ * @imagePath
+ * @homepage
+ */
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name message
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 팝업 메세지에 들어갈 메세지
+ */
+
+/**
+ * @property
+ * @name popup
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default true
+ * @necessary Y
+ * @bindparent
+ * @description 팝업사용여부
+ */
+
+/**
+ * @property
+ * @name cancelButton
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default true
+ * @necessary Y
+ * @bindparent
+ * @description 취소버튼여부
+ */
+
+scwin.onpageload = function() {
+	
+};
+
+/**
+ * @event
+ * @name onResult
+ * @description 팝업 메세지를 띄워 종료 메시지를 알리고 결과값을 반환받는 이벤트
+ * @param {Object} result 종료 팝업 메시지를 띄운 후 앱을 종료한다.
+ * @example
+ */
+scwin.emit_onResult = function (result) {
+	$p.emit("onResult", result);
+};
+
+scwin.btnQuit_onclick = function (e) {
+    try {
+        if(typeof $h == "object") {
+            let options = $p.getOptions();
+            options.popup == (options.popup == "true") ? true : false;
+            options.cancelButton == (options.cancelButton == "true") ? true : false;
+            $h.app.finish(scwin.emit_onResult,options);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+        <xf:group id="btnQuit" style="width: 30px;height: 30px; background-image:url('data:image/svg;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAApklEQVR42s1SwQ3CMAzsCN2Isx3+jNANYAQ2YaSyAWwCueRBqc6iEg+wdFISX85nJ8Pw1+EoJ+IbgTOx+YJZXIE4ZALMGcqc27W4AxhzAYzkOHyS1df9qhbIkS7cygMo+CRADrmbBLhXZ1JAtZDNilydQNyWQ1wHc+TIIb5cxEWJtBeoOVn9rUIldCdxNNvviLauZ/2f5A4X7fjU3NRhEd1ZYvvn8QTmZ1hp80IStwAAAABJRU5ErkJggg=='); background-repeat: no-repeat; background-position: center center;" ev:onclick="scwin.btnQuit_onclick"></xf:group>
+    </body>
+</html>

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper      
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"      
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+	@subject     : 부서 정보 관련 처리를 담당하는 Sql Mapper
+	@description : 부서 정보 관련 처리를 담당하는 Sql Mapper
+	@author      : 남기윤
+	@since       : 2025/06/10
+	@modification
+	===========================================================
+	DATE              AUTHOR             DESC
+	===========================================================
+	2025/06/10              남기윤             최초 생성
+ -->
+<mapper namespace="com.demo.proworks.dept">
+    <insert id="insertDept" parameterType="com.demo.proworks.dept.vo.DeptVo">
+    	<!-- 부서 정보를 등록한다. -->	
+    		
+        INSERT INTO DEPT   /* QueryID : com.demo.proworks.dept.insertDept */
+        ( 
+            DEPTNO
+            <if test="dname != null"> , DNAME  </if>
+            <if test="loc   != null"> , LOC    </if>
+        )
+        VALUES  
+        ( 
+            #{deptno}
+            <if test="dname != null"> , #{dname}  </if>
+            <if test="loc   != null"> , #{loc}    </if> 
+        )          
+    </insert>	
+	
+    <update id="updateDept" parameterType="com.demo.proworks.dept.vo.DeptVo">
+    	<!-- 부서 정보를 갱신한다. -->
+    	
+        UPDATE DEPT    /* QueryID : com.demo.proworks.dept.updateDept */      
+      	  SET  
+                DEPTNO = #{deptno}        	                       
+            <if test="dname != null"> , DNAME  = #{dname}  </if>
+            <if test="loc   != null"> , LOC    = #{loc}    </if>                 
+        WHERE   
+                DEPTNO = #{deptno}
+    </update>
+	
+    <delete id="deleteDept" parameterType="com.demo.proworks.dept.vo.DeptVo">
+    	<!-- 부서 정보를 삭제한다. -->
+    	
+        DELETE FROM DEPT   /* QueryID : com.demo.proworks.dept.deleteDept */ 
+        WHERE   
+                DEPTNO = #{deptno}        
+    </delete>
+	
+    <select id="selectDept" parameterType="com.demo.proworks.dept.vo.DeptVo" resultType="com.demo.proworks.dept.vo.DeptVo">
+    	<!-- 부서 정보를 상세 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.dept.selectDept */
+            DEPTNO as deptno, DNAME as dname, LOC as loc
+        FROM DEPT 
+        WHERE 
+                DEPTNO = #{deptno}			
+    </select>
+	
+    <select id="selectListDept" parameterType="com.demo.proworks.dept.vo.DeptVo" resultType="com.demo.proworks.dept.vo.DeptVo">
+    	<!-- 부서 정보 목록을 조회한다. -->
+           SELECT    /* QueryID : com.demo.proworks.dept.selectListDept */
+               DEPTNO as deptno, DNAME as dname, LOC as loc		       
+           FROM (
+               SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
+               FROM (				
+                   SELECT 
+                       *  		                  
+                   FROM DEPT
+                   WHERE  1=1    		
+                        <if test="scDeptno != null and scDeptno != ''">
+                             AND DEPTNO like '%${scDeptno}%'
+                        </if>
+                        <if test="scDname != null and scDname != ''">
+                             AND DNAME like '%${scDname}%'
+                        </if>	     																														
+               ) S, (SELECT @ROWNUM := 0) TMP
+           ) A
+            WHERE PAGE = #{pageIndex}
+    </select>
+	
+    <select id="selectListCountDept" parameterType="com.demo.proworks.dept.vo.DeptVo" resultType="long">
+    <!-- 부서 정보 목록의 카운트를 조회한다. -->
+    
+         SELECT    /* QueryID : com.demo.proworks.dept.selectListCountDept */
+             COUNT(*) totcnt  		                  
+         FROM DEPT
+         WHERE  1=1    		
+            <if test="scDeptno != null and scDeptno != ''">
+                 AND DEPTNO like '%${scDeptno}%'
+            </if>
+            <if test="scDname != null and scDname != ''">
+                 AND DNAME like '%${scDname}%'
+            </if>
+    </select>
+
+</mapper>

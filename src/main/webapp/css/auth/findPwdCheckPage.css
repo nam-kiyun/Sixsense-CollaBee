@@ -1,0 +1,10 @@
+@charset "UTF-8";
+
+
+
+.signup-group {
+    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}

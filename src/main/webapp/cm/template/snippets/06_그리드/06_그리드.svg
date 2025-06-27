@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="13" viewBox="0 0 16 13">
+  <g id="그리드" transform="translate(-1042 -176)">
+    <rect id="사각형_3069" data-name="사각형 3069" width="15" height="3" transform="translate(1042 177)" fill="#b7b7b7"/>
+    <rect id="사각형_4553" data-name="사각형 4553" width="15" height="3" transform="translate(1042 186)" fill="#e8e8e8"/>
+    <path id="사각형_3069_-_윤곽선" data-name="사각형 3069 - 윤곽선" d="M1,1V3H15V1H1M0,0H16V4H0Z" transform="translate(1042 176)" fill="#424144"/>
+    <path id="사각형_3069_-_윤곽선-2" data-name="사각형 3069 - 윤곽선" d="M1,1V3H15V1H1M0,0H16V4H0Z" transform="translate(1042 179)" fill="#424144"/>
+    <path id="사각형_3069_-_윤곽선-3" data-name="사각형 3069 - 윤곽선" d="M1,1V3H15V1H1M0,0H16V4H0Z" transform="translate(1042 182)" fill="#424144"/>
+    <path id="사각형_3069_-_윤곽선-4" data-name="사각형 3069 - 윤곽선" d="M1,1V3H15V1H1M0,0H16V4H0Z" transform="translate(1042 185)" fill="#424144"/>
+    <rect id="사각형_4551" data-name="사각형 4551" width="1" height="8" transform="translate(1047 180)" fill="#424144"/>
+    <rect id="사각형_4552" data-name="사각형 4552" width="1" height="8" transform="translate(1052 180)" fill="#424144"/>
+  </g>
+</svg>

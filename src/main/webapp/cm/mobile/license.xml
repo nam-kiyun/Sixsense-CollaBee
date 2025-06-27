@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="license" meta_screenName="license" meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_desc="open source  license를 출력하는 API를 제공한다.">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.showView"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_license
+ * @pluginName
+ * @company
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser
+ * @version
+ * @htmlRender
+ * @icon
+ * @disableIcon
+ * @description open source license를 출력하는 API를 제공한다.
+ * @variableClone true
+ * @width
+ * @height
+ * @license
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */
+
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name showView
+ * @description wmatrix에서 사용된 open source license를 출력한다. license 파일에 내용을 추가하여 출력이 가능하다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.license.showView();
+ *      console.log(data);
+ *  })();
+ */
+scwin.showView = function() {
+    try {
+        if (typeof $h.license === "object") {
+            return new Promise(resolve => {
+                $h.license.showView(resolve);
+            });
+        } else {
+            console.log("Not found License Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

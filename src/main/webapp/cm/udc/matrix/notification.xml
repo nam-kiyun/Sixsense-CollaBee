@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type palette="support">COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.sendPush"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_notification
+ * @pluginName 
+ * @company inswave
+ * @developer uapmobile
+ * @category /cm/udc/matrix
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAArElEQVR42mNgGBSA+9DKBTyHVv0n
+ * BXMfWjUfbgBIgGH/egGibQSqBetBMQBCHwDi/TBXcR9cNQGMD63sB4pv4Dm4sgGEkfVgM+AAmH14
+ * tQP3odUFEANWF3AdWhkAY+M0gBSAywUbgM69AAogCL3yAshLMHEQG+QKnAZwH11lAMaHViUgs8He
+ * AbJB3gBh7AaQEgtYDNhAYjrYT064gQHH8eUK4IR3cNUHhlEABgBp9bxWfDAYVAAAAABJRU5ErkJg
+ * gg==
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAApklEQVR42mNgGBTA0cF5gZOjy3+S
+ * sIPzfLgBIAEHBwcBYi0EqQXpQTEA7BJHlwOODi774a5ycJ4AwS79QPENQLoBhJH1YBoAxBBbXByA
+ * igugBhQ4ODgHwNg4DSAFYHcB0JmOjs4XQAEEosEY6CWYOIgNcgVOAxwcXA1A2MnBKQGV7eIA4TsH
+ * gDBWA0iJBQwDwCFMQhoAe4WMcIOlAQVowvvAMArAAABq6oCoR4a/sAAAAABJRU5ErkJggg==
+ * @description notification UDC
+ * @width 30px
+ * @height 30px
+ * @license
+ * @imagePath
+ * @homepage
+ */
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name title
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description Notification에 보여줄 Title 문구
+ */
+
+/**
+ * @property
+ * @name message
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description Notification 에 보여줄 message 문구
+ */
+
+/**
+ * @property
+ * @name icon
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default 
+ * @necessary N
+ * @bindparent
+ * @description Notification 에 보여줄 Icon Image
+ * (Base64 형태의 string 값)
+ */
+
+/**
+ * @property
+ * @name action
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 실행 할 javascript 함수
+ */
+
+scwin.onpageload = function() {
+	
+};
+
+/**
+ * @event
+ * @name sendPush
+ * @description message 를 notification 으로 보여준다
+ * @param {Object} result 실행결과
+ * @example
+ */
+
+scwin.emit_sendPush = function (result) {
+	$p.emit("sendPush", result);
+};
+
+scwin.anchor_notification_onclick = function (e) {
+    try {
+        if(typeof $h == "object") {
+            let options = $p.getOptions();
+            console.log(options);
+            $h.view.notification(scwin.emit_sendPush,options);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+
+/**
+ * @method
+ * @name sendPush
+ * @description 알림을 보낸다
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_notification.sendPush();
+ * })();
+ * 
+ */
+
+scwin.sendPush = function () {
+    return new Promise((resolve, reject) => {
+        try {
+            let options = $p.getOptions();
+            console.log(options);
+            $h.view.notification(resolve,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+}]]></script>
+    </head>
+     <body ev:onpageload="scwin.onpageload">
+    	<xf:group id="anchor_notification" style="position:relative;width:30px;height:30px;font-size:0;background:url(/InsWebApp/cm/images/mobile/m_ico_alarm.svg) no-repeat center center;" ev:onclick="scwin.anchor_notification_onclick"></xf:group>
+    </body>
+</html>

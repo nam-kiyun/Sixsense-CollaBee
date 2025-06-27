@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+	http://www.springframework.org/schema/tx 
+	http://www.springframework.org/schema/tx/spring-tx-4.0.xsd 
+	http://www.springframework.org/schema/util 
+	http://www.springframework.org/schema/util/spring-util-4.0.xsd			
+	http://www.springframework.org/schema/aop 
+	http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+
+    <!-- lob Handler -->
+    <!--  bean id="lobHandler" class="org.springframework.jdbc.support.lob.DefaultLobHandler" lazy-init="true" /  -->
+
+
+	<!-- bean id="db1SqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean" -->
+    <bean id="db1SqlSessionFactory" class="com.inswave.elfw.mybatis.RefreshableSqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSourceXA" />				
+		<property name="mapperLocations" value="classpath:/inswave/sqlmap/com/demo/**/*_${Globals.DbType}_MyBatis.xml" /> 	
+		
+	    <property name="checkInterval" value="1000" />      
+	    
+	    <property name="configLocation" value="classpath:/inswave/spring/mybatis-config.xml"></property>
+		<property name="plugins">
+	    	<array>
+				<bean class="com.inswave.elfw.intercept.ElMybatisInterceptor"/>
+				<bean class="com.inswave.elfw.intercept.ElMybatisUpdInterceptor"/>
+	    	</array>
+	    </property>	           	
+	</bean>	
+			
+</beans>	

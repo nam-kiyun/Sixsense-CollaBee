@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE form-validation PUBLIC "-//Apache Software Foundation//DTD Commons Validator Rules Configuration 1.1//EN" 
+"http://jakarta.apache.org/commons/dtds/validator_1_1.dtd">
+<form-validation>
+  <formset>
+    <form name="DmoEmpIns_com.demo.proworks.emp.vo.EmpVo">
+      <field depends="required" property="empno">
+        <arg0 key="사번" resource="false"/>
+      </field>
+      <field depends="required" property="ename">
+        <arg0 key="성명" resource="false"/>
+      </field>
+      <field depends="required" property="job">
+        <arg0 key="직업" resource="false"/>
+      </field>
+      <field depends="required" property="mgr">
+        <arg0 key="직속상관" resource="false"/>
+      </field>
+      <field depends="required" property="sal">
+        <arg0 key="급여" resource="false"/>
+      </field>
+      <field depends="required" property="deptno">
+        <arg0 key="부서" resource="false"/>
+      </field>
+    </form>
+    <form name="DmoEmpUpd_com.demo.proworks.emp.vo.EmpVo">
+      <field depends="required" property="empno">
+        <arg0 key="사번" resource="false"/>
+      </field>
+      <field depends="required" property="ename">
+        <arg0 key="성명" resource="false"/>
+      </field>
+      <field depends="required" property="job">
+        <arg0 key="직업" resource="false"/>
+      </field>
+      <field depends="required" property="mgr">
+        <arg0 key="직속상관" resource="false"/>
+      </field>
+      <field depends="required" property="sal">
+        <arg0 key="급여" resource="false"/>
+      </field>
+      <field depends="required" property="deptno">
+        <arg0 key="부서" resource="false"/>
+      </field>
+    </form>
+  </formset>
+</form-validation>

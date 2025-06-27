@@ -1,0 +1,506 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map">
+            	<w2:dataList baseNode="list" repeatNode="map" id="dataList3" saveRemovedData="true">
+            		<w2:columnInfo>
+            			<w2:column id="col1" name="name1" dataType="text"></w2:column>
+            			<w2:column id="col2" name="name2" dataType="text"></w2:column>
+            			<w2:column id="col3" name="name3" dataType="text"></w2:column>
+            		</w2:columnInfo>
+            		<w2:data use="true">
+            			<w2:row></w2:row>
+            			<w2:row></w2:row>
+            			<w2:row></w2:row>
+            		</w2:data>
+            	</w2:dataList>
+            </w2:dataCollection>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+	
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="top_box" id="" style="" tagname="">
+    		<w2:textbox class="con_tit" id="" label="Forms" style=""></w2:textbox>
+    		<w2:textbox class="con_txt" escape="false" id="" label="사용자가 데이터를 직접 입력할 수 있는 입력폼들입니다. "
+    			style="">
+    		</w2:textbox>
+    		<xf:group class="" id="primary" style=""></xf:group>
+    		<xf:group class="tab_anchor" id="" style="" tagname="ul">
+    			<xf:group class="on" id="" tagname="li">
+    				<w2:anchor class="" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Examples]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Snippet]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Dark Theme]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    	<xf:group class="contbox" id="" style="">
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="Basic Form" style=""></w2:textbox>
+    		</xf:group>
+    		<w2:textbox class="subtxt" escape="false" id=""
+    			label="모든 입력창에 공통적으로 적용되는 기본적인 스타일입니다. 상태에 맞게 적절한 스타일을 적용해, 사용자가 현재 상태를 파악하기 쉽도록 합니다." style="">
+    		</w2:textbox>
+    		<xf:group class="lybox col4" id="" style="">
+    			<xf:group class="ly_column" id="" style="">
+    				<xf:group class="titbox" id="" style="">
+    					<w2:textbox class="" id="" label="Normal form" style="" tagname="h3"></w2:textbox>
+    					<xf:group class="rt" id="" style=""></xf:group>
+    				</xf:group>
+    				<xf:input class="" id="" style="width:148px;" initValue="value"></xf:input>
+    			</xf:group>
+    			<xf:group class="ly_column" id="" style="">
+    				<xf:group class="titbox" id="" style="">
+    					<w2:textbox class="" id="" label="Focused form" style="" tagname="h3"></w2:textbox>
+    					<xf:group class="rt" id="" style=""></xf:group>
+    				</xf:group>
+    				<xf:input class="w2input_focus" id="" style="width:148px;" initValue="value"></xf:input>
+    			</xf:group>
+    			<xf:group class="ly_column" id="" style="">
+    				<xf:group class="titbox" id="" style="">
+    					<w2:textbox class="" id="" label="Disabled form" style="" tagname="h3"></w2:textbox>
+    					<xf:group class="rt" id="" style=""></xf:group>
+    				</xf:group>
+    				<xf:input class="" id="" style="width:148px;" disabled="true" initValue="value"></xf:input>
+    			</xf:group>
+    			<xf:group class="ly_column" id="" style="">
+    				<xf:group class="titbox" id="" style="">
+    					<w2:textbox class="" id="" label="Readonly form" style="" tagname="h3"></w2:textbox>
+    					<xf:group class="rt" id="" style=""></xf:group>
+    				</xf:group>
+    				<xf:input class="" id="" initValue="value" style='width:148px;' readOnly="true"></xf:input>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="line_gray" id="second" style="" tagname="hr"></xf:group>
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="필수입력" style=""></w2:textbox>
+    		</xf:group>
+    		<w2:textbox class="subtxt" escape="false" id=""
+    			label='필수로 입력해야 하는 입력폼의 경우 , 레이블의 좌측에 &lt;span class="req"&gt;&lt;/span&gt;를 &amp;nbsp;추가하고, 폼요소에는 &amp;nbsp;Background color 를 적용해 줍니다.'
+    			style="">
+    		</w2:textbox>
+    		<xf:group class="tblbox" id="" style="">
+    			<xf:group adaptive="layout" adaptiveThreshold="600" class="w2tb tbl" id="" style="" tagname="table">
+    				<w2:attributes>
+    					<w2:summary></w2:summary>
+    				</w2:attributes>
+    				<xf:group tagname="colgroup">
+    					<xf:group style="width:150px;" tagname="col"></xf:group>
+    					<xf:group style="" tagname="col"></xf:group>
+    				</xf:group>
+    				<xf:group style="" tagname="tr">
+    					<xf:group class="w2tb_th" style="" tagname="th">
+    						<w2:textbox class="req" id="" label="필수입력" ref="" style="" userData2=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="w2tb_td" style="" tagname="td">
+    						<xf:input class="req" id="" initValue="value" style="width:148px;"></xf:input>
+    						<xf:select1 allOption="true" appearance="minimal" chooseOption="" class="req" direction="auto" disabled="false"
+    							disabledClass="w2selectbox_disabled" id="" ref="" renderType="" style="width: 148px;" submenuSize="auto">
+    							<xf:choices>
+    								<xf:item>
+    									<xf:label><![CDATA[new row]]></xf:label>
+    									<xf:value></xf:value>
+    								</xf:item>
+    								<xf:item>
+    									<xf:label><![CDATA[new row]]></xf:label>
+    									<xf:value></xf:value>
+    								</xf:item>
+    							</xf:choices>
+    						</xf:select1>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr">
+    					<xf:group class="w2tb_th " tagname="th">
+    						<w2:attributes>
+    							<w2:scope>row</w2:scope>
+    						</w2:attributes>
+    						<w2:textbox class="req" id="" label="필수입력" ref="" style="" userData2=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="w2tb_td" tagname="td">
+    						<w2:attributes>
+    							<w2:colspan>1</w2:colspan>
+    							<w2:rowspan>1</w2:rowspan>
+    						</w2:attributes>
+    						<w2:inputCalendar calendarValueType="yearMonthDate" class="req" focusOnDateSelect="false" footerDiv="true" id=""
+    							renderDiv="true" renderType="" rightAlign="false" style="width: 120px;">
+    						</w2:inputCalendar>
+    						<w2:span id="" label="~" style=""></w2:span>
+    						<w2:inputCalendar calendarValueType="yearMonthDate" class="req" focusOnDateSelect="false" footerDiv="true" id=""
+    							renderDiv="true" renderType="" rightAlign="false" style="width: 120px;">
+    						</w2:inputCalendar>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="subtitbox" id="" style="" tagname=""></xf:group>
+    		<xf:group adaptiveThreshold="" class="gvwbox" id="" style=""></xf:group>
+    		<xf:group class="line_gray" id="group7" style="" tagname="hr"></xf:group>
+    		<xf:group class="titbox" id="" style="">
+    			<w2:textbox class="" id="" label="Invalid Form" style="" tagname="h3"></w2:textbox>
+    		</xf:group>
+    		<w2:textbox class="subtxt" escape="false" id="" label="입력폼에 유효성검사를 제공하여 , 잘못 입력 시 오류메시지를 출력합니다." style=""></w2:textbox>
+    		<xf:group class="lybox col3" id="" style="">
+    			<xf:group class="ly_column" id="" style="">
+    				<xf:group class="titbox" id="" style="">
+    					<w2:textbox class="" id="" label="Invalid form" style="" tagname="h3"></w2:textbox>
+    				</xf:group>
+    				<xf:input class="w2input_error" fireEventOnInvalid="true" id="" initValue="Invalid value" style="width:148px;"></xf:input>
+    			</xf:group>
+    			<xf:group class="ly_column" id="" style="">
+    				<xf:group class="titbox" id="" style="">
+    					<w2:textbox class="" id="" label="Invalid form with description" style="" tagname="h3"></w2:textbox>
+    				</xf:group>
+    				<xf:group id="">
+    					<xf:input class="w2input_error" id="" initValue="Invalid value" style="width:148px;"></xf:input>
+    				</xf:group>
+    				<w2:textbox class="w2input_errormessage" dataType="" id="" label="일회용 로그인 번호를 입력하세요." style=""></w2:textbox>
+    			</xf:group>
+    			<xf:group class="ly_column" id="" style="">
+    				<xf:group class="titbox" id="" style="">
+    					<xf:group class="rt" id="" style=""></xf:group>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="line_gray" id="group4" style="" tagname="hr"></xf:group>
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="기본 입력폼" style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="tblbox" id="" style="">
+    			<xf:group adaptive="layout" adaptiveThreshold="600" class="w2tb tbl" id="" style="" tagname="table">
+    				<w2:attributes>
+    					<w2:summary></w2:summary>
+    				</w2:attributes>
+    				<xf:group tagname="colgroup">
+    					<xf:group tagname="col" style="width:120px;"></xf:group>
+    					<xf:group tagname="col" style="width:20%;"></xf:group>
+    					<xf:group style="" tagname="col"></xf:group>
+    				</xf:group>
+    				<xf:group style="" tagname="tr">
+    					<xf:group class="w2tb_th tac" style="" tagname="th">
+    						<w2:textbox class="" id="" label="유형" ref="" style="" userData2=""></w2:textbox>
+    					</xf:group>
+    					<xf:group tagname="th" class="w2tb_th tac" style="">
+    						<w2:attributes>
+    							<w2:scope>row</w2:scope>
+    						</w2:attributes>
+    						<w2:textbox class="" id="" label="형태" ref="" style="" userData2=""></w2:textbox>
+    					</xf:group>
+    					<xf:group tagname="th" class="w2tb_th tac" style="">
+    						<w2:attributes>
+    							<w2:scope>row</w2:scope>
+    						</w2:attributes>
+    						<w2:textbox class="" id="" label="설명" ref="" style="" userData2=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr" style="">
+    					<xf:group class="w2tb_td tac" tagname="td" style="">
+    						Inputbox
+    						<w2:attributes>
+    							<w2:colspan>1</w2:colspan>
+    							<w2:rowspan>1</w2:rowspan>
+    						</w2:attributes>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						<w2:attributes>
+    							<w2:scope>row</w2:scope>
+    						</w2:attributes>
+    						<xf:input class="" id="" placeholder="" style="width:100%"></xf:input>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						-&amp;nbsp;한&amp;nbsp;줄&amp;nbsp;텍스트를&amp;nbsp;입력하는&amp;nbsp;경우에&amp;nbsp;사용합니다.&amp;nbsp;
+    						<br></br>
+    						-&amp;nbsp;테이블&amp;nbsp;컬럼&amp;nbsp;안의&amp;nbsp;Inputbox의&amp;nbsp;width값은&amp;nbsp;100%로&amp;nbsp;작성하나,&amp;nbsp;필요한&amp;nbsp;경우&amp;nbsp;일정사이즈로&amp;nbsp;고정시킵니다.&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;
+    						<br></br>
+    						<w2:attributes>
+    							<w2:scope>row</w2:scope>
+    							<w2:colspan>1</w2:colspan>
+    							<w2:rowspan>1</w2:rowspan>
+    						</w2:attributes>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr" style="">
+    					<xf:group tagname="td" class="w2tb_td tac">
+    						Textarea
+    						<w2:attributes>
+    							<w2:colspan>1</w2:colspan>
+    							<w2:rowspan>1</w2:rowspan>
+    						</w2:attributes>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						<w2:attributes></w2:attributes>
+    						<xf:textarea class="" id="" placeholder="" style="width:100%"></xf:textarea>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						-&amp;nbsp;여러&amp;nbsp;줄&amp;nbsp;텍스트를&amp;nbsp;입력하는&amp;nbsp;경우&amp;nbsp;사용합니다.&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;
+    						<br></br>
+    						-&amp;nbsp;필수&amp;nbsp;입력폼은&amp;nbsp;배경컬러로&amp;nbsp;구분시킵니다.&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;
+    						<br></br>
+    						-&amp;nbsp;입력&amp;nbsp;불가폼(비활성)은&amp;nbsp;배경컬러로&amp;nbsp;구분시킵니다.
+    						<w2:attributes>
+    							<w2:colspan>1</w2:colspan>
+    							<w2:rowspan>1</w2:rowspan>
+    						</w2:attributes>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr" style="">
+    					<xf:group tagname="td" class="w2tb_td tac">
+    						Radio
+    						<w2:attributes></w2:attributes>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td tac">
+    						<w2:attributes></w2:attributes>
+    						<xf:select1 appearance="full" cols="" disabled="" id="" ref="" renderType="radiogroup" rows="" selectedIndex="0"
+    							style="">
+    							<xf:choices>
+    								<xf:item>
+    									<xf:label><![CDATA[Atype]]></xf:label>
+    									<xf:value><![CDATA[]]></xf:value>
+    								</xf:item>
+    								<xf:item>
+    									<xf:label><![CDATA[Btype]]></xf:label>
+    									<xf:value><![CDATA[]]></xf:value>
+    								</xf:item>
+    							</xf:choices>
+    						</xf:select1>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						-&amp;nbsp;여러&amp;nbsp;개의&amp;nbsp;항목&amp;nbsp;중&amp;nbsp;한&amp;nbsp;항목만&amp;nbsp;선택해야&amp;nbsp;하는&amp;nbsp;경우&amp;nbsp;사용합니다.
+    						<br></br>
+    						-&amp;nbsp;상황에&amp;nbsp;맞게&amp;nbsp;세로&amp;nbsp;정렬과&amp;nbsp;가로&amp;nbsp;정렬을&amp;nbsp;혼용해&amp;nbsp;사용합니다.&amp;nbsp;&amp;nbsp;&amp;nbsp;
+    						<br></br>
+    						-&amp;nbsp;디폴트&amp;nbsp;항목은&amp;nbsp;가장&amp;nbsp;중요한&amp;nbsp;항목으로&amp;nbsp;지정합니다.&amp;nbsp;
+    						<w2:attributes></w2:attributes>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr" style="">
+    					<xf:group tagname="td" class="w2tb_td tac">
+    						Checkbox
+    						<w2:attributes></w2:attributes>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td tac">
+    						<w2:attributes></w2:attributes>
+    						<xf:select appearance="full" cols="" disabled="" id="" ref="" renderType="checkboxgroup" rows=""
+    							selectedindex="1" style="">
+    							<xf:choices>
+    								<xf:item>
+    									<xf:label><![CDATA[Atype]]></xf:label>
+    									<xf:value><![CDATA[]]></xf:value>
+    								</xf:item>
+    								<xf:item>
+    									<xf:label><![CDATA[Btype]]></xf:label>
+    									<xf:value><![CDATA[]]></xf:value>
+    								</xf:item>
+    							</xf:choices>
+    						</xf:select>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						-&amp;nbsp;다중으로&amp;nbsp;선택하는&amp;nbsp;경우&amp;nbsp;사용합니다.
+    						<br></br>
+    						-&amp;nbsp;상황에&amp;nbsp;맞게&amp;nbsp;세로&amp;nbsp;정렬과&amp;nbsp;가로&amp;nbsp;정렬을&amp;nbsp;혼용해&amp;nbsp;사용합니다.
+    						<w2:attributes></w2:attributes>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr" style="">
+    					<xf:group tagname="td" class="w2tb_td tac">
+    						Selectbox
+    						<w2:attributes>
+    							<w2:colspan>1</w2:colspan>
+    							<w2:rowspan>1</w2:rowspan>
+    						</w2:attributes>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						<w2:attributes></w2:attributes>
+    						<xf:select1 allOption="true" appearance="minimal" chooseOption="" class="" direction="auto" disabled="false"
+    							disabledClass="w2selectbox_disabled" id="" ref="" renderType="" style="width:100%" submenuSize="auto">
+    							<xf:choices>
+    								<xf:item>
+    									<xf:label><![CDATA[A TYPE]]></xf:label>
+    									<xf:value><![CDATA[]]></xf:value>
+    								</xf:item>
+    								<xf:item>
+    									<xf:label><![CDATA[B TYPE]]></xf:label>
+    									<xf:value><![CDATA[]]></xf:value>
+    								</xf:item>
+    								<xf:item>
+    									<xf:label><![CDATA[C TYPE]]></xf:label>
+    									<xf:value><![CDATA[]]></xf:value>
+    								</xf:item>
+    								<xf:item>
+    									<xf:label><![CDATA[D TYPE]]></xf:label>
+    									<xf:value><![CDATA[]]></xf:value>
+    								</xf:item>
+    							</xf:choices>
+    						</xf:select1>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						-&amp;nbsp;선택&amp;nbsp;옵션이&amp;nbsp;4개&amp;nbsp;이상인&amp;nbsp;경우&amp;nbsp;사용을&amp;nbsp;권장합니다.&amp;nbsp;&amp;nbsp;&amp;nbsp;
+    						<w2:attributes>
+    							<w2:colspan>1</w2:colspan>
+    							<w2:rowspan>1</w2:rowspan>
+    						</w2:attributes>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr" style="">
+    					<xf:group tagname="td" class="w2tb_td tac">
+    						AutoComplete
+    						<w2:attributes></w2:attributes>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						<w2:attributes></w2:attributes>
+    						<w2:autoComplete allOption="" chooseOption="" editType="select" id="" ref="" search="start" style="width: 100%"
+    							submenuSize="auto" useKeywordHighlight="false">
+    							<w2:choices>
+    								<w2:item>
+    									<w2:label><![CDATA[A]]></w2:label>
+    									<w2:value></w2:value>
+    								</w2:item>
+    								<w2:item>
+    									<w2:label><![CDATA[AB]]></w2:label>
+    									<w2:value></w2:value>
+    								</w2:item>
+    								<w2:item>
+    									<w2:label><![CDATA[ABC]]></w2:label>
+    									<w2:value></w2:value>
+    								</w2:item>
+    								<w2:item>
+    									<w2:label><![CDATA[ABCD]]></w2:label>
+    									<w2:value></w2:value>
+    								</w2:item>
+    							</w2:choices>
+    						</w2:autoComplete>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						-&amp;nbsp;Select&amp;nbsp;Box의&amp;nbsp;확장&amp;nbsp;컴포넌트로&amp;nbsp;특정&amp;nbsp;문자열에&amp;nbsp;대한&amp;nbsp;자동완성&amp;nbsp;및&amp;nbsp;검색기능이&amp;nbsp;있습니다.
+    						<w2:attributes></w2:attributes>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="line_gray" id="group6" style="" tagname="hr"></xf:group>
+    		<xf:group class="titbox" id="" style="">
+    			<w2:textbox class="" id="" label="Group of Form" style="" tagname="h3"></w2:textbox>
+    			<w2:textbox class="con_txt" escape="false" id=""
+    				label="경우에 따라 폼은 input, select, Trigger(버튼) 등과 함께 &amp;nbsp;그룹으로 묶여 사용됩니다. " style="">
+    			</w2:textbox>
+    		</xf:group>
+    		<xf:group class="tblbox" id="" style="">
+    			<xf:group adaptive="layout" adaptiveThreshold="600" class="w2tb tbl" id="" style="" tagname="table">
+    				<w2:attributes>
+    					<w2:summary></w2:summary>
+    				</w2:attributes>
+    				<xf:group tagname="colgroup">
+    					<xf:group style="width:120px;" tagname="col"></xf:group>
+    					<xf:group style="" tagname="col"></xf:group>
+    				</xf:group>
+    				<xf:group style="" tagname="tr">
+    					<xf:group class="w2tb_th tac" style="" tagname="th">
+    						<w2:textbox class="" id="" label="유형" ref="" style="" userData2=""></w2:textbox>
+    					</xf:group>
+    					<xf:group class="w2tb_th tac" style="" tagname="th">
+    						<w2:attributes>
+    							<w2:scope>row</w2:scope>
+    						</w2:attributes>
+    						<w2:textbox class="" id="" label="입력형식" ref="" style="" userData2=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr" style="">
+    					<xf:group tagname="td" class="w2tb_td tac">
+    						조회
+    						<w2:attributes></w2:attributes>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						<w2:attributes></w2:attributes>
+    						<xf:group id="">
+    							<xf:input style="width:148px;" id="" placeholder="" class=""></xf:input>
+    							<xf:trigger style="" id="" type="button" class="btn_cm btn_search ">
+    								<xf:label><![CDATA[Search]]></xf:label>
+    							</xf:trigger>
+    						</xf:group>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr" style="">
+    					<xf:group tagname="td" class="w2tb_td tac">
+    						기간
+    						<w2:attributes></w2:attributes>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						<w2:attributes></w2:attributes>
+    						<xf:group id="">
+    							<w2:inputCalendar footerDiv="true" rightAlign="false" focusOnDateSelect="false" style="width: 120px;" id=""
+    								renderType="" renderDiv="true" calendarValueType="yearMonthDate">
+    							</w2:inputCalendar>
+    							<w2:span style="" id="" label="~"></w2:span>
+    							<w2:inputCalendar footerDiv="true" rightAlign="false" focusOnDateSelect="false" style="width: 120px;" id=""
+    								renderType="" renderDiv="true" calendarValueType="yearMonthDate">
+    							</w2:inputCalendar>
+    						</xf:group>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr" style="">
+    					<xf:group tagname="td" class="w2tb_td tac">
+    						금액
+    						<w2:attributes></w2:attributes>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						<w2:attributes></w2:attributes>
+    						<xf:group id="">
+    							<xf:input dataType="number" editType="" style="width:148px;" id="" placeholder="" type="" class="tar"></xf:input>
+    							<w2:span style="" id="" label="원"></w2:span>
+    						</xf:group>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group tagname="tr" style="">
+    					<xf:group tagname="td" class="w2tb_td tac">
+    						이메일
+    						<w2:attributes></w2:attributes>
+    					</xf:group>
+    					<xf:group tagname="td" class="w2tb_td">
+    						<w2:attributes></w2:attributes>
+    						<xf:group id="">
+    							<xf:input style="width:148px;" id="" placeholder="" class=""></xf:input>
+    							<w2:span style="" id="" label="@"></w2:span>
+    							<xf:input style="width:148px;" id="" placeholder="" class=""></xf:input>
+    							<xf:select1 ref="" submenuSize="auto" appearance="minimal" disabledClass="w2selectbox_disabled"
+    								chooseOption="" disabled="false" style="width: 148px;" allOption="true" id="" renderType="" class="" direction="auto">
+    								<xf:choices>
+    									<xf:item>
+    										<xf:label><![CDATA[직접입력]]></xf:label>
+    										<xf:value></xf:value>
+    									</xf:item>
+    								</xf:choices>
+    							</xf:select1>
+    						</xf:group>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+
+    		<w2:textbox class="subtxt" escape="false" id=""
+    			label="· Data의 정렬기준에 따릅니다. &lt;br/&gt; &amp;nbsp; &amp;nbsp; &amp;nbsp;- 우측정렬 : 금액, 숫자 등 자릿수 구분되는 Data&lt;br/&gt; &amp;nbsp; &amp;nbsp; &amp;nbsp;- 좌측정렬 : 주소, 전화번호 등 글자수가 일정치 않은 Data&lt;br/&gt; &amp;nbsp; &amp;nbsp; &amp;nbsp;- 중앙정렬 : 날짜 등 Data 글자수가 일정한 경우"
+    			style="">
+    		</w2:textbox>
+    	</xf:group>
+    </body>
+</html>

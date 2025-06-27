@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="30" height="30" viewBox="0 0 30 30">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="사각형_2137" data-name="사각형 2137" width="26.005" height="25.872" transform="translate(0 0)" fill="#0369d1" stroke="#0369d1" stroke-width="1"/>
+    </clipPath>
+  </defs>
+  <g id="계좌조회아이콘" transform="translate(-216 -397)">
+    <rect id="사각형_3249" data-name="사각형 3249" width="30" height="30" transform="translate(216 397)" fill="rgba(255,255,255,0)"/>
+    <g id="계좌조회아이콘-2" data-name="계좌조회아이콘" transform="translate(217.765 398.765)" clip-path="url(#clip-path)">
+      <path id="패스_38" data-name="패스 38" d="M23.006,9.475H9.871a.537.537,0,0,1,0-1.075H23.006a.537.537,0,0,1,0,1.075" transform="translate(-3.436 -3.004)" fill="#0369d1" stroke="#0369d1" stroke-width="1"/>
+      <path id="패스_39" data-name="패스 39" d="M14.409,15.364H9.871a.537.537,0,0,1,0-1.075h4.537a.537.537,0,0,1,0,1.075" transform="translate(-3.436 -5.728)" fill="#0369d1" stroke="#0369d1" stroke-width="1"/>
+      <path id="패스_40" data-name="패스 40" d="M24.225,21.656l-1.831-8.012a.589.589,0,0,0-.037-.089V2.116A2.119,2.119,0,0,0,20.24,0H3.994a2.112,2.112,0,0,0-2.11,2.109V13.555a.65.65,0,0,0-.037.089L.016,21.656A.62.62,0,0,0,0,21.8a2.309,2.309,0,0,0,2.307,2.307H21.933A2.31,2.31,0,0,0,24.241,21.8a.65.65,0,0,0-.016-.144m-2.291,1.157H2.307A1.014,1.014,0,0,1,1.3,21.865L2.951,14.62H9.515a3.8,3.8,0,0,1-.48-1.479H3.071V2.109a.924.924,0,0,1,.923-.923H20.24a.931.931,0,0,1,.93.93V13.141H16.656a3.787,3.787,0,0,1-.484,1.479h5.117l1.656,7.244a1.015,1.015,0,0,1-1.011.949" transform="translate(0.882 0.882)" fill="#0369d1" stroke="#0369d1" stroke-width="1"/>
+      <path id="패스_41" data-name="패스 41" d="M27.315,27.552l-3.14-3.14a4.222,4.222,0,1,0-.986.8l3.231,3.232a.633.633,0,1,0,.895-.895m-9.206-5.97a2.951,2.951,0,1,1,2.951,2.951,2.955,2.955,0,0,1-2.951-2.951" transform="translate(-7.393 -6.78)" fill="#f6cc5f" stroke="#f6cc5f" stroke-width="1"/>
+    </g>
+  </g>
+</svg>

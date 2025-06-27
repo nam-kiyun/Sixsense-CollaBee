@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="app" meta_screenName="app" meta_desc="W-Matrix for Mobile에서 제공하는 Event들이다. \n제공되는 Event는 foreground, background, webViewTouch, backKeyPress 이벤트를 제공한다." meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_vertical_guides="" meta_horizontal_guides="1640">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.removeWebviewTouchListener,scwin.removeBackKeyPressedListener,scwin.removeBackgroundListener,scwin.removeForegroundListener,scwin.foregroundListener,scwin.backgroundListener,scwin.backKeyPressedListener,scwin.webviewTouchListener"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_event
+ * @pluginName
+ * @company
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser
+ * @version
+ * @htmlRender
+ * @icon
+ * @disableIcon
+ * @description
+ * @variableClone true
+ * @width
+ * @height
+ * @license
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */
+
+
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name foregroundListener
+ * @description app이 background에서 foreground로 올라올 때 이벤트 리스너를 등록한다.
+ * @param {String} callback 콜백 함수명
+ * @returns {JSON} {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example 
+ * let listener = function(e){ console.log(e);};
+ * $c.app.foregroundListener(listener);
+ */ 
+scwin.foregroundListener = function(listener) {
+    try {
+        if (typeof $h.app === "object") {
+            $h.foregroundListener(listener);
+        } else {
+            console.log("Not found App Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name removeForegroundListener
+ * @description app이 background에서 foreground로 올라올때 이벤트리스너를 삭제한다. addEventListener에 인자로 받은 callback함수를 인자로 받는다.
+ * @param {String} callback 콜백 함수명
+ * @returns {JSON} {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example 
+ * let listener = function(e){ console.log(e);};
+ * $c.app.removeForegroundListener(listener);
+ */ 
+scwin.removeForegroundListener = function(listener) {
+    try {
+        if (typeof $h.app === "object") {
+            $h.removeForegroundListener(listener);
+        } else {
+            console.log("Not found App Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name backgroundListener
+ * @description app이 foreground에서 background로 내려갈 때 이벤트 리스너를 등록한다.
+ * @param {String} callback 콜백 함수명
+ * @returns {JSON} {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * let listener = function(e){ console.log(e);};
+ * $c.app.backgroundListener(listener); 
+ */ 
+scwin.backgroundListener = function(listener) {
+    try {
+        if (typeof $h.app === "object") {
+            $h.backgroundListener(listener);
+        } else {
+            console.log("Not found App Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name removeBackgroundListener
+ * @description app이 foreground에서 background로 내려갈 때 이벤트 리스너를 등록한다.
+ * @param {String} callback 콜백 함수명
+ * @returns {JSON} {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * let listener = function(e){ console.log(e);};
+ * $c.app.removeBackgroundListener(listener); 
+ */ 
+scwin.removeBackgroundListener = function(listener) {
+    try {
+        if (typeof $h.app === "object") {
+            $h.removeBackgroundListener(listener);
+        } else {
+            console.log("Not found App Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+
+/**
+ * @method
+ * @name backKeyPressedListener
+ * @description (Android Only) 뒤로가기 키를 눌렀을 때 Web에 전달되는 이벤트 리스너를 등록한다.
+ * @param {String} callback 콜백 함수명
+ * @returns {JSON} {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example 
+ * let listener = function(e){ console.log(e);};
+ * $c.app.backKeyPressedListener(listener);
+ */ 
+scwin.backKeyPressedListener = function(listener) {
+    try {
+        if (typeof $h.app === "object") {
+            $h.backKeyPressedListener(listener);
+        } else {
+            console.log("Not found App Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name removeBackKeyPressedListener
+ * @description (Android Only) 뒤로가기 키를 눌렀을 때 Web에 전달되는 이벤트 리스너를 등록한다.
+ * @param {String} callback 콜백 함수명
+ * @returns {JSON} {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example 
+ * let listener = function(e){ console.log(e);};
+ * $c.app.backKeyPressedListener(listener);
+ */ 
+scwin.removeBackKeyPressedListener = function(listener) {
+    try {
+        if (typeof $h.app === "object") {
+            $h.removeBackKeyPressedListener(listener);
+        } else {
+            console.log("Not found App Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name webviewTouchListener
+ * @description webview에서 touch event (ACTION_UP)이 발생했을 때 Web에 전달되는 이벤트 리스너를 등록한다.
+ * @param {String} callback 콜백 함수명
+ * @returns {JSON} {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example 
+ * let listener = function(e){ console.log(e);};
+ * $c.app.webviewTouchListener(listener);
+ */ 
+scwin.webviewTouchListener = function(listener) {
+    try {
+        if (typeof $h.app === "object") {
+            $h.webviewTouchListener(listener);
+        } else {
+            console.log("Not found App Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name removeWebviewTouchListener
+ * @description webview에서 touch event (ACTION_UP)이 발생했을 때 Web에 전달되는 이벤트 리스너를 등록한다.
+ * @param {String} callback 콜백 함수명
+ * @returns {JSON} {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example 
+ * let listener = function(e){ console.log(e);};
+ * $c.app.removeWebviewTouchListener(listener);
+ */ 
+scwin.removeWebviewTouchListener = function(listener) {
+    try {
+        if (typeof $h.app === "object") {
+            $h.removeWebviewTouchListener(listener);
+        } else {
+            console.log("Not found App Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @event
+ * @name onWebviewTouched
+ * @description webview에서 touch event (action_up)이 발생 시
+ * @param {String} listener 이벤트 발생 시 실행할 함수명
+ * @example 
+ */ 
+scwin.emit_onWebviewTouched = function(listener) {
+	$p.emit("onWebviewTouched", listener);
+}
+
+/**
+ * @event
+ * @name resume
+ * @description app이 background에서 foreground로 올라올 때
+ * @param {String} listener 이벤트 발생 시 실행할 함수
+ * @example 
+ */ 
+scwin.emit_resume = function(listener) {
+	$p.emit("resume", listener);
+}
+
+/**
+ * @event
+ * @name pause
+ * @description app이 foreground에서 background로 올라올 때
+ * @param {String} listener 이벤트 발생 시 실행할 함수명
+ * @example 
+ */ 
+scwin.emit_pause = function(listener) {
+	$p.emit("pause", listener);
+}
+
+/**
+ * @event
+ * @name onBackKeyPressed
+ * @description 뒤로가기 키를 눌렀을 때
+ * @param {String} listener 이벤트 발생 시 실행할 함수명
+ * @example 
+ */ 
+scwin.emit_onBackKeyPressed = function(listener) {
+	$p.emit("onBackKeyPressed", listener);
+}
+
+/**
+ * @event
+ * @name onSpeechToTextEventChanged
+ * @description app의 오디오 엔진의 상태 변화가 발생 했을 때
+ * @param {String} listener 이벤트 발생 시 실행할 함수명
+ * @example 
+ */ 
+scwin.emit_onSpeechToTextEventChanged = function(listener) {
+	$p.emit("onSpeechToTextEventChanged", listener);
+}
+ 
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

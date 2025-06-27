@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:buildDate/>
+        <w2:userPalette defaultIcon="i_group.png" desc=""/>
+        <xf:model>
+            <xf:instance>
+                <data xmlns=""/>
+            </xf:instance>
+        </xf:model>
+        <script type="text/javascript"><![CDATA[ ]]></script>
+    </head>
+    <body><xf:group class="acdbox" id="">
+	<w2:accordion class="acd" id="" style="">
+		<w2:panels class="" id="panels1" style="">
+			<w2:panelTitle class="" id="panelTitle1" label="타이틀" style=""></w2:panelTitle>
+			<w2:panelContent class="" id="panelContent1" style="">
+				<w2:textbox id="" label="내용" style="" tagname="span"></w2:textbox>
+			</w2:panelContent>
+		</w2:panels>
+		<w2:panels class="" id="panels2" style="">
+			<w2:panelTitle id="panelTitle2" label="타이틀" style=""></w2:panelTitle>
+			<w2:panelContent id="panelContent2" style="">
+				<w2:textbox id="" label="내용" style="" tagname="span"></w2:textbox>
+			</w2:panelContent>
+		</w2:panels>
+		<w2:panels style="" id="panels3" class="">
+			<w2:panelTitle style="" id="panelTitle3" label="타이틀"></w2:panelTitle>
+			<w2:panelContent style="" id="panelContent3">
+				<w2:textbox id="" label="내용" style="" tagname="span"></w2:textbox>
+			</w2:panelContent>
+		</w2:panels>
+	</w2:accordion>
+</xf:group>
+</body>
+</html>

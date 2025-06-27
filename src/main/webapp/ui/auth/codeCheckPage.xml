@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="/InsWebApp/css/auth/base.css" type="text/css"?>
+<?xml-stylesheet href="/InsWebApp/css/auth/codeCheckPage.css" type="text/css"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+    	<w2:type>COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:MSA />
+    	<xf:model>
+    		<w2:dataCollection baseNode="map" />
+    		<w2:workflowCollection />
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<w2:publicInfo method="" />
+    	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
+    scwin.onresize();
+
+    // 현재 페이지의 URL에서 쿼리 파라미터를 가져옵니다.
+    const urlParams = new URLSearchParams(window.location.search);
+    const encodedData = urlParams.get('data');
+
+    if (encodedData) {
+        try {
+            // URL 디코딩 후 JSON 문자열을 객체로 파싱합니다.
+            const receivedData = JSON.parse(decodeURIComponent(encodedData));
+            console.log("다음 페이지에서 받은 데이터:", receivedData);
+            // 받은 데이터를 사용하여 UI를 업데이트하거나 추가 로직을 수행합니다.
+        } catch (error) {
+            console.error("받은 데이터를 파싱하는 중 오류 발생:", error);
+        }
+    }
+};
+
+scwin.onresize = function (e) {
+    // resize 이벤트 정의
+    window.onresize = function () {
+        scwin.applyResponsiveWidth();
+    };
+
+    // 페이지 로딩 시에도 한 번 실행
+    scwin.applyResponsiveWidth();
+};
+
+//반응형 width 값 조절
+scwin.applyResponsiveWidth = function () {
+    let width = window.innerWidth;
+
+    if (width <= 650) {
+        signup_form.setStyle("width", "100%");
+        signup_button.setStyle("width", "80%");
+    } else if (width <= 1300) {
+        signup_form.setStyle("width", "70%");
+        signup_button.setStyle("width", "75%");
+    } else {
+        signup_form.setStyle("width", "50%");
+        signup_button.setStyle("width", "40%");
+    }
+};
+
+//input 박스 입력시에 다음으로 넘어가는 기능
+scwin.onInputChar = function (e) {
+    const currentInput = e.target;
+    const currentInputId = currentInput.id;
+    const currentWsComponent = $p.getComponentById(currentInputId); // WebSquare 컴포넌트 객체 가져오기
+    const currentNumber = parseInt(currentInputId.replace('mf_code_input', '')); // ID에서 숫자 부분 추출
+    const length = currentWsComponent.getValue().length;
+
+    // 일반 문자 입력 시 다음 InputBox로 포커스 이동
+    if (e.key !== "Backspace" && length === 1) {
+        const nextNumber = currentNumber + 1;
+        const nextInputId = 'mf_code_input' + nextNumber;
+        console.log(currentWsComponent.getValue().length);
+
+        if (nextNumber <= 5) {
+            const nextWsComponent = $p.getComponentById(nextInputId);
+            if (nextWsComponent) {
+                nextWsComponent.focus(); // 다음 InputBox로 포커스 이동
+            }
+        }
+    }
+    // backspace 누른 경우
+    else if (e.key === "Backspace" && length === 0) {
+        const prevNumber = currentNumber - 1;
+        const prevInputId = 'mf_code_input' + prevNumber;
+        console.log(currentWsComponent.getValue().length)
+
+        if (prevNumber >= 1) {
+            const prevWsComponent = $p.getComponentById(prevInputId);
+            if (prevWsComponent) {
+                // prevWsComponent.setValue(''); 
+                prevWsComponent.focus();     
+            }
+        }
+    }
+
+};
+
+scwin.handleCodeInputKeyup = function(e){
+     scwin.onInputChar(e);
+}
+
+]]></script>
+    	<style type="text/css"><![CDATA[]]></style>
+    </head>
+    <body ev:onpageload="scwin.onpageload" style="padding: 0;margin: 0;;">
+    	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+    		style="background-color: #FFF4D6;align-items: center;justify-content: center;display: flex;height: 100%;">
+    		<xf:group style="width:60%;height:450px;" id="signup_form" class="auth-form" ev:onclick="scwin.signup_form_onclick">
+
+    			<xf:group style="height:55px;display:flex;flex-direction:row;" id="">
+
+
+    				<xf:image src="/InsWebApp/images/collabee_icon.jpg" style="width:51px;height:48px;display:flex;" id=""></xf:image>
+    				<w2:textbox id="" label="COLLABEE"
+    					style="width:150px;height:37px;color: #FFB823;font-size:30px;font-weight: bold;display: flex;">
+    				</w2:textbox>
+    			</xf:group>
+
+
+    			<w2:textbox id="" label="쉽고 편하게 사용가능한 COLLABEE 사용하기" style="height: 23px;color: #DAD3D3;"></w2:textbox>
+    			<xf:group style="" id="signup_group" class="code-input-group">
+    				<xf:input id="code_input1" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"></xf:input>
+    				<xf:input id="code_input2" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"></xf:input>
+    				<xf:input id="code_input3" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"></xf:input>
+    				<xf:input id="code_input4" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"></xf:input>
+    				<xf:input id="code_input5" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"></xf:input>
+    			</xf:group>
+    			<xf:trigger type="button"
+    				style="width: 60%;height: 35px;border-radius: 6px;background-color: #FFB823;outline: none;border: none;" id="signup_button"
+    				class="auth-button">
+    				<xf:label><![CDATA[확인]]></xf:label>
+    			</xf:trigger>
+    			<xf:group style="height:54px;" id="" class="button-group">
+    				<xf:trigger style="width: 80px;height: 23px;" id="" type="button" class="login-button">
+    					<xf:label><![CDATA[메일 재전송]]></xf:label>
+    				</xf:trigger>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>

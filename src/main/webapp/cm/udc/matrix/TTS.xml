@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_vertical_guides="" meta_horizontal_guides="88">
+        <w2:type palette="support">COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.startTTS,scwin.stopTTS"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_TTS
+ * @pluginName 
+ * @company Inswave
+ * @developer uapmobile
+ * @category /udc/matrix
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA00lEQVR42mNgoCfgPrS6gOfw6nos
+ * Eisv8Bxa9R8DH1z1gfvoKgPuQ6sSgBodGPavFwCKbwDy56MYAFKM21agZpBhUAOg6g+AxHEaALIV
+ * KLYfiv/DDOA5uLIBRHMdWhkAMgSnAWDF6N6BGgD07gIMPSQZcHDVBHBYAMMHdxiAFMCcClQIMwAU
+ * CxzHlytAw2UDcYEICg+QIaBAhBl+cNV7OB/ZAHRnIxsCNgjkioMr76PEACEXIAOwl5BtJuQCZJdg
+ * 2EqqC/CqodgAnHkBCYPU0CSHAgAghebevtVEwgAAAABJRU5ErkJggg==
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAzUlEQVR42r2TYRHCMAyFJ2ESkICE
+ * 1zT8n4RJmAOQgAOQgAOQgAMkgANI1suuXVnHjoPe5Ufb9HsvybWq/rkI3Elsswvn/JUcP9/EA9is
+ * CdQCDFm1A58I/pCSJXlalVq9N0AQ5IueTwJUVZTOGuZGAWJ/F0C+UUgBIMmjcgzg4I/ZmyUAqX+v
+ * pWh/CgDUZlUTI0AnhyutX5v5URP7KfTTYBhcyrjbPgGMbceQEAx5fEsmMOcgdeObRHnOQewkU13q
+ * oJjzNaDwF4bQnJ/80BdTkJx49K22pAAAAABJRU5ErkJggg==
+ * @description speakTTS(Text To Speech) UDC
+ * @width 150px
+ * @height 50px
+ * @license
+ * @imagePath
+ * @homepage
+ */
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name language
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [한국어, 영어]
+ * @default 한국어
+ * @necessary Y
+ * @bindparent
+ * @description 언어코드
+ */
+
+/**
+ * @property
+ * @name message
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description 음성으로 출력되는 메세지 내용
+ */
+
+/**
+ * @property
+ * @name speechSpeed
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default 1.0
+ * @necessary Y
+ * @bindparent
+ * @description 출력되는 음성의 속도
+ * (default: 1.0)
+ */
+
+scwin.onpageload = function() {
+	
+};
+
+/**
+ * @event
+ * @name startTTS
+ * @description message를 음성으로 읽어준다
+ * @param {Object} result 실행결과
+ * @example
+ */
+scwin.emit_startTTS = function (result) {
+	$p.emit("startTTS", result);
+};
+scwin.anchor_startTTS_onclick = function () {
+    try {
+        if(typeof $h == "object") {
+            let options = $p.getOptions();
+
+            options.language = (options.language == "영어") ? "en"
+            //: (options.language == "일본어") ? "ja"
+            //: (options.language == "중국어 간체") ? "zh_ch"
+            //: (options.language == "중국어 번체") ? "zh_tw"
+            : "ko" ; // 한국어
+
+            options.speechSpeed = parseFloat(options.speechSpeed);
+            console.log(options);
+            $h.speech.speakTTS(scwin.emit_startTTS,options);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+/**
+ * @event
+ * @name stopTTS
+ * @description 실행중인 TTS 중지
+ * @param {Object} result 실행결과
+ * @example
+ */
+scwin.emit_stopTTS = function (result) {
+	$p.emit("stopTTS", result);
+};
+scwin.anchor_stopTTS_onclick = function () {
+    try {
+        if(typeof $h == "object") {
+            let options = $p.getOptions();
+            console.log(options);
+            $h.speech.stopTTS(scwin.emit_stopTTS,options);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+/**
+ * @method
+ * @name startTTS
+ * @description start text to speech
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example
+ */
+scwin.startTTS = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+            options.language = (options.language == "영어") ? "en"
+            //: (options.language == "일본어") ? "ja"
+            //: (options.language == "중국어 간체") ? "zh_ch"
+            //: (options.language == "중국어 번체") ? "zh_tw"
+            : "ko" ; // 한국어
+
+            options.speechSpeed = parseFloat(options.speechSpeed);
+            $h.speech.speakTTS(resolove,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};
+/**
+ * @method
+ * @name stopTTS
+ * @description stop text to speech
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example
+ */
+scwin.stopTTS = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+            $h.speech.stopTTS(resolove,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<w2:anchor outerDiv="false" id="anchor_startTTS" style="width: 100px;height: 23px;" ev:onclick="scwin.anchor_startTTS_onclick">
+    		<xf:label><![CDATA[startTTS]]></xf:label>
+    	</w2:anchor>
+    	<w2:anchor outerDiv="false" id="anchor_stopTTS" style="width: 100px;height: 23px;" ev:onclick="scwin.anchor_stopTTS_onclick">
+    		<xf:label><![CDATA[stopTTS]]></xf:label>
+    	</w2:anchor>
+    </body>
+</html>

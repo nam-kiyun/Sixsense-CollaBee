@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_vertical_guides="" meta_horizontal_guides="63 9">
+        <w2:type palette="support">COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.getCurrentPosition"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_geolocation
+ * @pluginName 
+ * @company inswave
+ * @developer uapmobile
+ * @category /udc/matrix
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA40lEQVR42q1SwQ3CMAzsEyl5MAIj
+ * MAKbkFEYgQ3ghxIedIOSIMQTNoANYIPiM6mURk1CEZEq1218d7avqv59JpfdTDizkdY8pTMtInJ8
+ * LxbL037hC2u8i7OZc3R6CzACUllmz6aS4FBEcRDAs9Q5hcKadfIOMT966M1hKqxeIsYqhvtHj9Rz
+ * kNcsOWJMAsQKvNwWMZ5FcgZ44sGO2j8Yc0X0/yitXpWm3PwMwJN3+gbnRfNRbCoPwHnSVARChnqF
+ * IOwRmMzqO6m8Fl0JNt4KtdNtobNzsbinhCSH3vhs6pviEecNGMGySMuWy+8AAAAASUVORK5CYII=
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA3ElEQVR42q2SaxXCMAyFJwEJSKiE
+ * PDodTAoS5oBJmAPmAByAA3AAuXvAurN2G4f+SdvTfLm5TZb9exHRXkhPTPoQ9q822hn3K5I9IYHJ
+ * 19gT5a6/qwATkiJZuas2/wggQBBnAaiCyimF1koZfSOs9zHdFO2I9IA4VREBQF7uvop83ZkYVkwA
+ * QgWQ2xmn5dSLhAdaTY3d9v9tG/EkZt8I+eOSy+efAXCcWa+YvBAsBQweADhHhwoQa+U5hvT+2ITq
+ * zRReVkxl7vAraGf4hc84LyWH7fgmnA2DrEnest6oiHTs2ORFhQAAAABJRU5ErkJggg==
+ * @description geolocation UDC
+ * @width 100px
+ * @height 20
+ * @license
+ * @imagePath
+ * @homepage
+ */
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name timestamp
+ * @category 01.Basic & ETC
+ * @type number
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 타임스탬프
+ */
+
+/**
+ * @property
+ * @name velocity
+ * @category 01.Basic & ETC
+ * @type number
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 속도
+ */
+
+/**
+ * @property
+ * @name altitudeAccuracy
+ * @category 01.Basic & ETC
+ * @type number
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 고도정확도
+ */
+
+/**
+ * @property
+ * @name accuracy
+ * @category 01.Basic & ETC
+ * @type number
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 정확도
+ */
+
+/**
+ * @property
+ * @name heading
+ * @category 01.Basic & ETC
+ * @type number
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 헤딩
+ */
+
+/**
+ * @property
+ * @name altitude
+ * @category 01.Basic & ETC
+ * @type number
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 고도
+ */
+
+/**
+ * @property
+ * @name latitude
+ * @category 01.Basic & ETC
+ * @type number
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 위도
+ */
+
+/**
+ * @property
+ * @name longitude
+ * @category 01.Basic & ETC
+ * @type number
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description 경도
+ */
+
+scwin.onpageload = function() {
+	
+};
+
+/**
+ * @event
+ * @name getCurrentPosition
+ * @description 현재 위치 정보 가져오기
+ * @param {Object} result 현재 위치에 위도, 경도 등을 가져온다
+ * @example
+ */
+scwin.emit_getCurrentPosition = function (result) {
+	$p.emit("getCurrentPosition", result);
+};
+
+scwin.anchor_geolocation_onclick = function () {
+    try {
+        if(typeof $h == "object") {
+            let options = $p.getOptions();
+            console.log(options);
+            $h.geolocation.getCurrentPosition(scwin.emit_getCurrentPosition,options);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+/**
+ * @method
+ * @name getCurrentPosition
+ * @description geolocation getCurrentPosition
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_geolocation.getCurrentPosition();
+ * })();
+ * 
+ */
+scwin.getCurrentPosition = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+            $h.geolocation.getCurrentPosition(resolove,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<w2:anchor outerDiv="false" id="anchor_geolocation" style="width: 100px;height: 23px;" ev:onclick="scwin.anchor_geolocation_onclick">
+    		<xf:label><![CDATA[GPS 정보 가져오기]]></xf:label>
+    	</w2:anchor>
+    </body>
+</html>

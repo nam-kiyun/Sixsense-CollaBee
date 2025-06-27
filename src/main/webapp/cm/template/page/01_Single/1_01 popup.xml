@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+   <head>
+    	<w2:type>COMPONENT</w2:type>
+       <w2:buildDate/>
+       <w2:MSA/>
+       <xf:model>
+           <w2:dataCollection baseNode="map">
+           	<w2:dataList baseNode="list" id="dataList1" repeatNode="map" saveRemovedData="true" style="">
+           		<w2:columnInfo>
+           			<w2:column dataType="text" id="col1" name="name1"></w2:column>
+           			<w2:column dataType="text" id="col2" name="name2"></w2:column>
+           			<w2:column dataType="text" id="col3" name="name3"></w2:column>
+           			<w2:column dataType="text" id="col4" name="name4"></w2:column>
+           			<w2:column dataType="text" id="col5" name="name5"></w2:column>
+           			<w2:column dataType="text" id="col6" name="name6"></w2:column>
+           			<w2:column dataType="text" id="col7" name="name7"></w2:column>
+           			<w2:column dataType="text" id="col8" name="name8"></w2:column>
+           			<w2:column dataType="text" id="col9" name="name9"></w2:column>
+           			<w2:column dataType="text" id="col10" name="name10"></w2:column>
+           		</w2:columnInfo>
+           		<w2:data use="true">
+           			<w2:row></w2:row>
+           			<w2:row></w2:row>
+           			<w2:row></w2:row>
+           			<w2:row></w2:row>
+           			<w2:row></w2:row>
+           			<w2:row></w2:row>
+           			<w2:row></w2:row>
+           			<w2:row></w2:row>
+           			<w2:row></w2:row>
+           			<w2:row></w2:row>
+           		</w2:data>
+           	</w2:dataList>
+           </w2:dataCollection>
+           <w2:workflowCollection>
+           </w2:workflowCollection>
+       </xf:model>
+       <w2:layoutInfo>
+       </w2:layoutInfo>
+       <w2:publicInfo method=""/>
+       <script type="text/javascript" lazy="false"><![CDATA[
+			scwin.onpageload = function() {
+
+		  	};
+		
+			scwin.openPopup_onclick = function(e) {
+				requires("uiplugin.popup"); 
+				var winWid = $(window).width();
+				var winHei = $(window).height();
+				var popWid = 1000;
+				var popHei = 580;
+				var sumLeft = (winWid - popWid) / 2;
+				var sumTop = (winHei - popHei) / 2;
+				
+				var opts = {
+				"id" : "popup_window_wframe",
+				"type" : "litewindow",
+				"width" : popWid + "px",
+				"height" : popHei + "px",
+				"top" : sumTop, 
+				"left" : sumLeft,
+				"popupName" : "팝업타이틀",
+				"modal" : true, 
+				"useIFrame" : false,
+				"title" : "focusTest",
+				"useATagBtn" : true,
+				"frameMode" : "wframe"
+				};
+				$p.openPopup("/cm/template/page/02_Multi/2_01 search_grid.xml", opts);
+			};
+		]]></script>
+   </head>
+   <body ev:onpageload="scwin.onpageload">
+    	<xf:group id="" style="" class="sub_contents">
+
+    		<xf:group class="titbox" id="" style="">
+    			<w2:textbox class="" id="" label="팝업" style="" tagname="h3"></w2:textbox>
+    		<xf:group id="" class="rt"><xf:trigger ev:onclick="scwin.openPopup_onclick" style="" id="" type="button" class="btn_cm ">
+    				<xf:label><![CDATA[팝업]]></xf:label>
+    			</xf:trigger></xf:group></xf:group></xf:group>
+   </body>
+</html>

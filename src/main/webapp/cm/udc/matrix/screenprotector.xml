@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type palette="support">COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.start,scwin.stop"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_screenprotector
+ * @pluginName 
+ * @company inswave
+ * @developer uapmobile
+ * @category /udc/matrix
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAx0lEQVR42rVS0Q0CIQy9fxjGDXQj
+ * 3UDXAT50AzgufusIbqAbKA/KBTkCR6JNGkjb91oeHYZfGB/li1v5js6uchNzuKc5V/tcEgBk1YFP
+ * agdf5Cnua1xtkaAELBL9hSB9c8t6aklgcWKjvHmdcE7quBrMrLg7oIld6QkXEDXHQmcPtvKR5xFH
+ * vioiugPoPSOhSUyVIFW7SJL+Bgm0d+cWnk5QIqHtNNVVDhqIc64VSFyN/tKg8Qt6nip01oh37YFX
+ * PUxnVnXusQ/afsStHOTvlAAAAABJRU5ErkJggg==
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwUlEQVR42rVSgQ3CMAzbCZzCByRr
+ * 9gcfwAdwCqfwwTiBD+CDEasKzbpqayWoFG1qYseN03W/OD3LW2OyIBr2lsO/zzGFV4lg6knOREKI
+ * PG/3qEFtkaAELBH9h8C/eZukvjaqI7kyyRgHqF+SSzWYOTy8A8kJGTdloXMJ/A3Nrw4xdQ9PtwM3
+ * s5JZ7qsEaangf38EWJdhZ/OYuRELw4l5OCC8AmwenpiDcwWLVfYzAIkHL2bQ7ILet+2ByjXZVZ1b
+ * zgeQlKgfVy4U/wAAAABJRU5ErkJggg==
+ * @description screenprotector UDC
+ * @width 100px
+ * @height 50px
+ * @license
+ * @imagePath
+ * @homepage
+ */
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+scwin.onpageload = function() {
+	
+};
+
+/**
+ * @event
+ * @name start
+ * @description 화면 캡쳐 방지 시작
+ * @param {Object} result 실행결과
+ * @example
+ */
+scwin.emit_start = function (result) {
+	$p.emit("start", result);
+};
+
+/**
+ * @event
+ * @name stop
+ * @description 화면 캡쳐 방지 중지
+ * @param {Object} result 실행결과
+ * @example
+ */
+scwin.emit_stop = function (result) {
+	$p.emit("stop", result);
+};
+
+scwin.toggle_screenprotector_ontogglechange = function (e) {
+    let options = $p.getOptions();
+    console.log(toggle_screenprotector.getValue());
+    if(toggle_screenprotector.getValue() == "On") {
+        $h.screenprotector.start(scwin.emit_start,options);
+    } else {
+        $h.screenprotector.stop(scwin.emit_stop,options);   
+    }
+};
+
+/**
+ * @method
+ * @name start
+ * @description 화면 캡쳐 방지 시작
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_screenprotector.start();
+ * })();
+ */
+scwin.start = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+            $h.screenprotector.start(resolove,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};
+/**
+ * @method
+ * @name stop
+ * @description 화면 캡쳐 방지 중지
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_screenprotector.stop();
+ * })();
+ */
+scwin.stop = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+            $h.screenprotector.stop(resolove,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<w2:anchor outerDiv="false" id="" style="width: 100px;height: 23px;">
+    		<xf:label><![CDATA[화면 캡쳐 방지]]></xf:label>
+    	</w2:anchor>
+    <xf:group id=""><w2:fliptoggle style="position: relative;width: 100px;height: 30px;" id="toggle_screenprotector" ev:ontogglechange="scwin.toggle_screenprotector_ontogglechange">
+    		<w2:on label="On" value="On"></w2:on>
+    		<w2:off label="Off" value="Off"></w2:off>
+    	</w2:fliptoggle></xf:group></body>
+</html>

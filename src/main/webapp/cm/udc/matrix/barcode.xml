@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type palette="support">COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.scan"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_barcode
+ * @pluginName 
+ * @company inswave
+ * @developer uapmobile
+ * @category /cm/udc/matrix
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAl0lEQVR42mNgGJSA59CqA0D8HxWv
+ * XE+c5sOrHbgPrXqALg4SA8lh1cR9aOUFZNuAihOwGJCAoubgqvPITv6P6ZKVeUDxq2AMZGPx5n+c
+ * BoA1H1y1ju3gCk0QBrLXAm3MJ94AoK0gjTA+2BCgGB0NAHnh8Kq1cC8cWrWGJC+AQx2oARaI6JqJ
+ * MoCIxPYfZzogBoP0MAwPAAAgrqjpqzuE0gAAAABJRU5ErkJggg==
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAmElEQVR42mNgGJTA0dHlgJOjy38U
+ * 7OC8nijNDg4uDk6Ozg/QxUFiIDkcNjpfQLXNKQHDAKAYshpHB5fzSKa7/MdiaB7Q1qsgDGJjughJ
+ * D7oBIA0ODs7r7OxcNEHY0dFpLZCfT7QBIFtBGmF8EBskRj8DQF4ARuVahBec15DkBUh0OufDAhFd
+ * M1EGEAIoejDSAREYpIdheAAATZp0POGNog0AAAAASUVORK5CYII=
+ * @description barcodescanner UDC
+ * @width 30px
+ * @height 30px
+ * @license
+ * @imagePath
+ * @homepage
+ */
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name type
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [All, QRCODE, EAN_8, CODE_128, CODE_39, EAN_13]
+ * @default All
+ * @necessary Y
+ * @bindparent
+ * @description barcode type: qrcode, etc...
+ */
+
+/**
+ * @property
+ * @name disableSuccessBeep
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary N
+ * @bindparent
+ * @description Barcode Scanner 성공 시 성공음 출력 여부
+ */
+
+/**
+ * @property
+ * @name preferFrontCamera
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary N
+ * @bindparent
+ * @description Barcode Scanner 실행 시 전면 카메라 사용 여부
+ */
+
+/**
+ * @property
+ * @name showTorchButton
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary N
+ * @bindparent
+ * @description Barcode Scanner 화면에 Flash 버튼 표시 여부
+ */
+
+/**
+ * @property
+ * @name showFlipCameraButton
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary N
+ * @bindparent
+ * @description Barcode Scanner 화면에 전면, 후면 카메라 전환 버튼표시 여부
+ */
+
+/**
+ * @property
+ * @name torchOn
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [true, false]
+ * @default false
+ * @necessary N
+ * @bindparent
+ * @description Barcode Scanner 실행 시 Flash 사용여부
+ */
+
+
+scwin.onpageload = function() {
+	
+};
+
+/**
+ * @event
+ * @name onScan
+ * @description barcode 스캔정보 반환
+ * @param {Object} result 실행결과
+ * @example
+ */
+scwin.emit_onScan = function (result) {
+	$p.emit("onScan", result);
+};
+
+scwin.anchor_barcode_onclick = function (e) {
+    try {
+        if(typeof $h == "object") {
+            let options = $p.getOptions();
+
+            options.formats = (options.formats == "All") ? "" : options.formats;
+            options.disableSuccessBeep = (options.disableSuccessBeep == "true") ? true : false;
+            options.preferFrontCamera = (options.preferFrontCamera == "true") ?  true : false;
+            options.showTorchButton = (options.showTorchButton == "true") ?  true : false;
+            options.showFlipCameraButton = (options.showFlipCameraButton == "true") ?  true : false;
+            options.torchOn = (options.torchOn == "true") ?  true : false;
+            // type이 string으로만 되어있어 숫자나 배열같은건 변환해서 플러그인에 전달.
+
+            console.log(options);
+            $h.barcode.scan(scwin.emit_onScan,options);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+/**
+ * @method
+ * @name scan
+ * @description barcode scan
+ * @param 
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_barcode.scan();
+ * })();
+ * 
+ */
+scwin.scan = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+
+            options.formats = (options.formats == "All") ? "" : options.formats;
+            options.disableSuccessBeep = (options.disableSuccessBeep == "true") ? true : false;
+            options.preferFrontCamera = (options.preferFrontCamera == "true") ?  true : false;
+            options.showTorchButton = (options.showTorchButton == "true") ?  true : false;
+            options.showFlipCameraButton = (options.showFlipCameraButton == "true") ?  true : false;
+            options.torchOn = (options.torchOn == "true") ?  true : false;
+
+            $h.barcode.scan(resolove,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group id="anchor_barcode" style="position:relative;width:30px;height:30px;font-size:0;background:url(/cm/images/mobile/m_ico_qr02.svg) no-repeat center center;" ev:onclick="scwin.anchor_barcode_onclick"></xf:group>
+    </body>
+</html>

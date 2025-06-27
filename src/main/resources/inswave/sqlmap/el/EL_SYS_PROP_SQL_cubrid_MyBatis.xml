@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper      
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"      
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="EL_SYS_PROP">
+
+	<insert id="elSysPropDAO_insertElSysProp" parameterType="com.inswave.elfw.db.vo.ElSysPropVo">
+        INSERT INTO EL_SYS_PROP    /* QueryID : elSysPropDAO_insertElSysProp */
+        ( 
+        APP_ID
+        ,SYS_GROUP_ID 
+        ,SYS_KEY  
+        <if test="sysKey  != null"> , SYS_SUB    </if>   
+        <if test="sysVal  != null"> , SYS_VAL    </if>     
+        <if test="sysDesc != null"> , SYS_DESC   </if>
+        <if test="sortSeq != null"> , SORT_SEQ   </if>        
+        )
+        VALUES  
+        (
+         #{appId}  
+         ,#{sysGroupId}
+         ,#{sysKey}   
+        <if test="sysSub   != null"> , #{sysSub}     </if>   
+        <if test="sysVal   != null"> , #{sysVal}     </if>
+        <if test="sysDesc  != null"> , #{sysDesc}    </if>
+        <if test="sortSeq  != null"> , #{sortSeq}    </if>            
+        )          
+	</insert>	
+	
+	<update id="elSysPropDAO_updateElSysProp" parameterType="com.inswave.elfw.db.vo.ElSysPropVo">
+        UPDATE EL_SYS_PROP     /* QueryID : elSysPropDAO_updateElSysProp */     
+      	  <trim prefix="SET" prefixOverrides=",">   
+      	     <if test="sysSub   != null">, SYS_SUB  =  #{sysSub}  </if>                       
+             <if test="sysVal   != null">, SYS_VAL  =  #{sysVal}  </if>   
+             <if test="sysDesc  != null">, SYS_DESC =  #{sysDesc} </if>
+             <if test="sortSeq  != null">, SORT_SEQ =  #{sortSeq} </if>                  
+         </trim>          
+        WHERE  SYS_GROUP_ID = #{sysGroupId}
+           AND SYS_KEY      = #{sysKey}
+            AND APP_ID      = #{appId}
+	</update>
+	
+	<delete id="elSysPropDAO_deleteElSysProp" parameterType="com.inswave.elfw.db.vo.ElSysPropVo">
+		<![CDATA[
+        DELETE FROM EL_SYS_PROP    /* QueryID : elSysPropDAO_deleteElSysProp */
+        WHERE  SYS_GROUP_ID = #{sysGroupId}
+           AND SYS_KEY      = #{sysKey}    
+            AND APP_ID      = #{appId}
+		]]>
+	</delete>
+	
+	<select id="elSysPropDAO_selectElSysProp" parameterType="com.inswave.elfw.db.vo.ElSysPropVo" resultType="com.inswave.elfw.db.vo.ElSysPropVo">
+		<![CDATA[
+        SELECT     /* QueryID : elSysPropDAO_selectElSysProp */
+              SYS_GROUP_ID as sysGroupId, SYS_KEY as sysKey, SYS_SUB as sysSub, SYS_VAL as sysVal, SYS_DESC as sysDesc, SORT_SEQ as sortSeq
+        FROM EL_SYS_PROP
+        WHERE  SYS_GROUP_ID = #{sysGroupId}
+           AND SYS_KEY      = #{sysKey}  
+           AND APP_ID      = #{appId}
+		]]>
+	</select>
+	
+	<select id="elSysPropDAO_selectElSysPropList" parameterType="com.inswave.elfw.db.vo.ElSysPropVo" resultType="com.inswave.elfw.db.vo.ElSysPropVo">
+	       SELECT     /* QueryID : elSysPropDAO_selectElSysPropList */
+				  SYS_GROUP_ID as sysGroupId, SYS_KEY as sysKey, SYS_SUB as sysSub, SYS_VAL as sysVal, SYS_DESC as sysDesc, SORT_SEQ as sortSeq
+	       FROM (
+		       SELECT  ROWNUM RNUM, S.*
+			   FROM (				
+			        SELECT 
+			              *  		                  
+			        FROM EL_SYS_PROP
+			        WHERE APP_ID      = #{appId}   	
+			        <if test="sysGroupId   != null"> AND SYS_GROUP_ID  =  #{sysGroupId}  </if>      
+					ORDER BY SYS_KEY ASC																		
+				) S
+			 ) A
+		<![CDATA[ WHERE ROWNUM <= #{recordCountPerPage} and RNUM > #{firstIndex} ]]>
+	</select>
+	
+	<select id="elSysPropDAO_selectElSysPropListTotCnt" parameterType="com.inswave.elfw.db.vo.ElSysPropVo" resultType="int">
+
+	        SELECT    /* QueryID : elSysPropDAO_selectElSysPropListTotCnt */
+	            COUNT(*) totcnt  		                  
+	        FROM EL_SYS_PROP
+	        WHERE  APP_ID      = #{appId}   		
+	        <if test="sysGroupId   != null"> AND SYS_GROUP_ID  =  #{sysGroupId}  </if>				
+	</select>
+
+</mapper>

@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="log" meta_screenName="log" meta_desc="log 기능을 모아놓은 플러그인으로 이벤트 및 API를 제공한다. \n제공되는 API로는 getLog, getLogUpdate, getLogEmail 같은 기능이 존재한다." meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_vertical_guides="" meta_horizontal_guides="1640">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.getLog,scwin.clearLog,scwin.getLogUpload,scwin.getLogMail,scwin.logPath"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_log
+ * @pluginName
+ * @company
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser
+ * @version
+ * @htmlRender
+ * @icon
+ * @disableIcon
+ * @description  앱 로그 기능을 제공하는 플러그인으로 API를 제공한다. 제공되는 API로는 getLog, getLogUpload, getLogMail, logPath, clearLog 기능들이 있다.
+ * @variableClone true
+ * @width
+ * @height
+ * @license
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */
+
+
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name getLog
+ * @description 앱 로그를 가져온다.
+ * @param {JSON} options 앱 로드 가져오기 옵션
+ * @param {Int} options.type 로그 타입 [default: 전체 로그|0, 웹 콘솔 로그|1, 웹스퀘어 로그|2]
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "data":{"log":""}}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.type = 0;
+ *      const data = await $c.log.getLog(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.getLog = function(options) {
+    try {
+        if (typeof $h.app === "object") {
+            return new Promise(resolve => {
+                $h.log.getLog(resolve, options);
+            });
+        } else {
+            console.log("Not found App Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name clearLog
+ * @description 기록되어 있는 앱 로그를 초기화한다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.log.clearLog();
+ *      console.log(data);
+ *  })();
+ */
+scwin.clearLog = function() {
+    try {
+        if (typeof $h.app === "object") {
+            return new Promise(resolve => {
+                $h.log.clearLog(resolve);
+            });
+        } else {
+            console.log("Not found App Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name getLogUpload
+ * @description 앱 로그를 가져온 후 특정 URL로 로그 파일을 업로드한다.
+ * @param {JSON} options 로그 파일 업로드 옵션
+ * @param {Int} options.type 로그 타입 [default: 전체 로그|0, 웹 콘솔 로그|1, 웹스퀘어 로그|2]
+ * @param {String} options.fileName 로그 파일 명 (필수)
+ * @param {String} options.uploadUrl 업로드 할 서버 URL (필수/POST/Content-Type:multipart/form-data)
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.type = 0
+ *      options.fileName = "logFile.log";
+ *      options.uploadUrl = "http://test.server.com/fileUpload";
+ *      const data = await $c.log.getLogUpload(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.getLogUpload = function(options) {
+    try {
+        if (typeof $h.app === "object") {
+            return new Promise(resolve => {
+                $h.log.getLogUpload(resolve, options);
+            });
+        } else {
+            console.log("Not found App Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name getLogMail
+ * @description 앱 로그를 가져온 후 메일로 로그를 전달한다.
+ * @param {JSON} options app params 
+ * @param {Int} options.type 로그 타입 [default: 전체 로그|0, 웹 콘솔 로그|1, 웹스퀘어 로그|2]
+ * @param {String} options.fileName 로그 파일 명 (isAttachFile이 true인 경우 필수)
+ * @param {Boolean} options.isAttachFile 메일 전송 시 파일 첨부 여부 {true: 파일 첨부, false: 메일 내용에 로그 내용 작성} [default: false, true]
+ * @param {String} options.subject 메일 전송 시 제목 [default: ""] 
+ * @param {String[]} options.to 메일 수신인 
+ * @param {String[]} options.cc 참조 
+ * @param {String[]} options.bcc 숨은 참조
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.type = 0
+ *      options.isAttachFile = false;
+ *      options.fileName = "logFile.log";
+ *      options.subject = "appReport";
+ *      options.to = ["to@test.com"];
+ *      options.cc = ["cc@test.com"];
+ *      options.bcc = ["bcc@test.com","bcc2@test.com"];
+ *      const data = await $c.log.getLogMail(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.getLogMail = function(options) {
+    try {
+        if (typeof $h.app === "object") {
+            return new Promise(resolve => {
+                $h.log.getLogMail(resolve, options);
+            });
+        } else {
+            console.log("Not found App Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name logPath
+ * @description 앱 로그 파일을 생성한 후 경로를 반환한다.
+ * @param {JSON} options app params 
+ * @param {Int} options.type 로그 타입 [default: 전체 로그|0, 웹 콘솔 로그|1, 웹스퀘어 로그|2]
+ * @param {String} options.fileName 로그 파일 명 (필수)
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "data":{logPath: "/logpath"}}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.type = 0;
+ *      options.fileName = "test.log";
+ *      const data = await $c.log.logPath(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.logPath = function(options) {
+    try {
+        if (typeof $h.app === "object") {
+            return new Promise(resolve => {
+                $h.log.logPath(resolve, options);
+            });
+        } else {
+            console.log("Not found App Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

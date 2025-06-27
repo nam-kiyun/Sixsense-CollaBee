@@ -1,0 +1,18 @@
+@charset "UTF-8";
+.duplicateCheck-button {
+    width: 27%;
+    height: 100%;
+    background-color: #FFB823;
+    float: right;
+    clear: none;
+    border-radius: 6px;
+    outline: none;
+    border: none;
+}
+
+.signup-group {
+    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}

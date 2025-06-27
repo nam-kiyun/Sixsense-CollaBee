@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="paint" meta_screenName="paint" meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_desc="웹뷰 위에 레이어를 띄워 펜 기능을 제공한다.">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.openPaint"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_paint
+ * @pluginName
+ * @company
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser
+ * @version
+ * @htmlRender
+ * @icon
+ * @disableIcon
+ * @description 웹뷰 위에 레이어를 띄워 펜기능을 제공한다.
+ * @variableClone true
+ * @width
+ * @height
+ * @license
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */
+
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name openPaint
+ * @description 메모가 가능한 그림판을 출력한다.
+ * @param {JSON} options 메모 펜 색상 옵션
+ * @param {String[]} options.color 펜 색상값 배열
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.color = ["#000000", "#FF0000", "#00FF00", "#0000FF"]
+ *      const data = await $c.paint.openPaint(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.openPaint = function(options) {
+    try {   
+        if (typeof $h.paint === "object") {
+            return new Promise(resolve => {
+                $h.paint.openPaint(resolve, options);
+            });
+        } else {
+            console.log("Not found Paint Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

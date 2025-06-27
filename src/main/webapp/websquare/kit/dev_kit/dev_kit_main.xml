@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="/cm/css/base.css" type="text/css"?>
+<?xml-stylesheet href="/websquare/kit/dev_kit/dev_kit.css" type="text/css"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+    	<w2:type>COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:MSA />
+    	<xf:model>
+    		<w2:dataCollection baseNode="map" />
+    		<w2:workflowCollection />
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<w2:publicInfo method="" />
+    	<script lazy="false" type="text/javascript"><![CDATA[scwin.btnDsSlide_onclick = function () {
+    $(".designKit_layout").toggleClass("hide_menu");
+};
+
+scwin.onpageload = function() {
+};
+
+scwin.btn_components_onclick = function() {
+    var parentComp = this.getParent();
+    if (!parentComp.hasClass("on")){
+        parentComp.toggleClass("on");
+        btn_guid.getParent().removeClass("on");
+        btn_template.getParent().removeClass("on");
+        wf_main.setSrc("/websquare/kit/dev_kit/dev_kit.xml");
+    }
+};
+
+scwin.btn_guide_onclick = function() {
+    var parentComp = this.getParent();
+    if (!parentComp.hasClass("on")){
+        parentComp.toggleClass("on");
+        btn_components.getParent().removeClass("on");
+        btn_template.getParent().removeClass("on");
+        wf_main.setSrc("/websquare/kit/dev_kit/dev_kit_guide.xml");
+    }
+};
+
+scwin.btn_template_onclick = function() {
+    var parentComp = this.getParent();
+    if (!parentComp.hasClass("on")){
+        parentComp.toggleClass("on");
+        btn_guid.getParent().removeClass("on");
+        btn_components.getParent().removeClass("on");
+        wf_main.setSrc("/websquare/kit/dev_kit/dev_kit_template.xml");
+    }
+};
+]]></script>    	
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="dswrap" id="" style="">
+    		<xf:group class="dsheader" id="dsheaderGrp" style="">
+    			<xf:group class="logo" id="">
+    				<w2:anchor class="btn_designKit_slide" ev:onclick="scwin.btnDsSlide_onclick" id="btnDsSlide" outerDiv="false"
+    					style="">
+    					<xf:label><![CDATA[메뉴]]></xf:label>
+    				</w2:anchor>
+    				<w2:textbox id="" label="" style=""></w2:textbox>
+    				<w2:textbox id="" label="DevKit" style=""></w2:textbox>
+    			</xf:group>
+    			<xf:group class="gnb_menu" id="" style="" tagname="ul">
+    				<xf:group id="" style="" tagname="li"></xf:group>
+    				<xf:group id="" style="" tagname="li"></xf:group><xf:group class="on" id="" style="" tagname="li">
+    					<w2:anchor ev:onclick="scwin.btn_components_onclick" id="btn_components" outerDiv="false" style="">
+    						<xf:label><![CDATA[Components]]></xf:label>
+    					</w2:anchor>
+    				</xf:group>
+    				<xf:group class="" id="" style="" tagname="li">
+    					<w2:anchor id="btn_template" outerDiv="false" style="" ev:onclick="scwin.btn_template_onclick">
+    						<xf:label><![CDATA[Template]]></xf:label>
+    					</w2:anchor>
+    				</xf:group>
+    				
+    				<xf:group id="" style="" tagname="li" class="">
+    					<w2:anchor id="btn_guid" outerDiv="false" style="" ev:onclick="scwin.btn_guide_onclick">
+    						<xf:label><![CDATA[]]></xf:label>
+    					</w2:anchor>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="dscontainer" id="">
+    			<w2:wframe style="" id="wf_main" src="/websquare/kit/dev_kit/dev_kit.xml"></w2:wframe>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>

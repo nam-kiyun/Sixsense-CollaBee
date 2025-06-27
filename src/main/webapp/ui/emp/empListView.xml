@@ -1,0 +1,1267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+    	<w2:type>DEFAULT</w2:type>
+        <w2:buildDate/>
+        <xf:model ev:submitdone="scwin.sbm_updateEmpVo_submitdone">
+        	<xf:instance>
+        		<data xmlns="" />
+        	</xf:instance>
+        	<w2:dataCollection baseNode="map">
+        		<w2:dataMap baseNode="map" id="dmp_empVo">
+        			<w2:keyInfo>
+        				<w2:key id="scEmpno" name="검색_사원번호" dataType="text"></w2:key>
+        				<w2:key id="scEname" name="검색_성명" dataType="text"></w2:key>
+        				<w2:key id="scJob" name="검색_직책" dataType="text"></w2:key>
+        				<w2:key id="scDeptno" name="검색_부서번호" dataType="text"></w2:key>
+        				<w2:key id="pageIndex" name="페이지_번호" dataType="text"></w2:key>
+        				<w2:key id="pageSize" name="페이지_건수" dataType="text"></w2:key>
+        			</w2:keyInfo>
+        			<w2:data use="false"></w2:data>
+        		</w2:dataMap>
+        		<w2:dataList baseNode="list" repeatNode="map" id="dlt_empVoList" saveRemovedData="true">
+        			<w2:columnInfo>
+        				<w2:column id="empno" name="사원번호" dataType="text"></w2:column>
+        				<w2:column id="ename" name="성명" dataType="text"></w2:column>
+        				<w2:column id="job" name="직책" dataType="text"></w2:column>
+
+        				<w2:column id="mgr" name="관리자" dataType="text"></w2:column>
+        				<w2:column id="mgrname" name="관리자명" dataType="text"></w2:column>
+        				<w2:column id="hiredate" name="입사일자" dataType="text"></w2:column>
+        				<w2:column id="sal" name="급여" dataType="text"></w2:column>
+
+
+
+        				<w2:column id="comm" name="커미션" dataType="text"></w2:column>
+        				<w2:column id="deptno" name="부서번호" dataType="text"></w2:column>
+        				<w2:column id="dname" name="부서명" dataType="text"></w2:column>
+
+        				<w2:column id="account" name="설명" dataType="text"></w2:column>
+        			</w2:columnInfo>
+        		</w2:dataList>
+        		<w2:dataMap baseNode="map" id="dmp_empVoDetail">
+        			<w2:keyInfo>
+        				<w2:key id="empno" name="사원번호" dataType="text"></w2:key>
+        				<w2:key id="ename" name="성명" dataType="text"></w2:key>
+        				<w2:key id="job" name="직책" dataType="text"></w2:key>
+        				<w2:key id="mgr" name="관리자 사번" dataType="text"></w2:key>
+        				<w2:key id="mgrname" name="관리자 성명" dataType="text"></w2:key>
+        				<w2:key id="hiredate" name="입사일자" dataType="text"></w2:key>
+        				<w2:key id="sal" name="급여" dataType="text"></w2:key>
+        				<w2:key id="comm" name="커미션" dataType="text"></w2:key>
+        				<w2:key id="deptno" name="부서번호" dataType="text"></w2:key>
+
+        				<w2:key id="dname" name="부서명" dataType="text"></w2:key>
+
+        				<w2:key id="account" name="설명" dataType="text"></w2:key>
+        				<w2:key id="fileName" name="파일명" dataType="text"></w2:key>
+        			</w2:keyInfo>
+        		</w2:dataMap>
+        		<w2:dataMap baseNode="map" id="dmp_empFileVo">
+        			<w2:keyInfo>
+        				<w2:key id="empno" name="사원번호" dataType="text"></w2:key>
+        				<w2:key id="fileName" name="파일명" dataType="text"></w2:key>
+        				<w2:key id="fileData" name="파일데이터" dataType="text"></w2:key>
+        			</w2:keyInfo>
+        		</w2:dataMap>
+        	</w2:dataCollection>
+        	<w2:workflowCollection></w2:workflowCollection>
+            <xf:submission id="sbm_logout" ref="" target="" action="/InsWebApp/CmmLoginFrm.pwkjson" method="post"
+        		mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+        		processMsg="" ev:submit="" ev:submitdone="scwin.sbm_logout_submitdone" ev:submiterror="" abortTrigger="">
+        	</xf:submission>
+        	<xf:submission id="sbm_selectEmpVoList" ref='data:json,{"id":"dmp_empVo","key":"empVo"}' target="" action="/InsWebApp/DmoEmpList.pwkjson" method="post"
+        		mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+        		processMsg="사원 리스트를 조회 중입니다." ev:submit="" ev:submitdone="scwin.sbm_empList_submitdone" ev:submiterror="" abortTrigger="">
+        	</xf:submission>
+            <xf:submission id="sbm_selectEmpVo" ref="" target="" action="/InsWebApp/DmoEmpUpdView.pwkjson" method="post"
+        		mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+        		processMsg="사원 정보를 조회 중입니다." ev:submit="" ev:submitdone="scwin.sbm_selectEmpVo_submitdone" ev:submiterror="" abortTrigger="">
+        	</xf:submission>
+            <xf:submission id="sbm_insertEmpVo" ref='data:json,{"id":"dmp_empVoDetail","key":"empVo"}' target="" action="/InsWebApp/DmoEmpIns.pwkjson" method="post"
+        		mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+        		processMsg="" ev:submit="" ev:submitdone="scwin.sbm_insertEmpVo_submitdone" ev:submiterror="" abortTrigger="">
+        	</xf:submission>
+            <xf:submission id="sbm_updateEmpVo" ref='data:json,{"id":"dmp_empVoDetail","key":"empVo"}' target="" action="/InsWebApp/DmoEmpUpd.pwkjson" method="post"
+        		mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+        		processMsg="" ev:submit="" ev:submitdone="scwin.sbm_updateEmpVo_submitdone" ev:submiterror="" abortTrigger="">
+        	</xf:submission>
+        	<xf:submission id="sbm_deleteEmpVo" ref='data:json,{"id":"dmp_empVoDetail","key":"empVo"}' target="" action="/InsWebApp/DmoEmpDel.pwkjson" method="post"
+        		mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+        		processMsg="" ev:submit="" ev:submitdone="scwin.sbm_deleteEmpVo_submitdone" ev:submiterror="" abortTrigger="">
+        	</xf:submission>
+        	<xf:submission id="sbm_deleteFile" ref='data:json,{"id":"dmp_empVoDetail","key":"elData"}' target="" action="/DemoWebApp/DmoEmpDeleteUploadEmpFile.pwkjson" method="post"
+        		mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+        		processMsg="" ev:submit="" ev:submitdone="scwin.sbm_deleteFile_submitdone" ev:submiterror="" abortTrigger="">
+        	</xf:submission>
+        </xf:model>
+        <script type="text/javascript" lazy="false"><![CDATA[
+
+	/**
+	 * 전역변수 선언
+	 * @date 2019.05.30
+	 * @author
+	 * @example
+	 */
+	//---------------------------------------------------
+	// Context Path
+	//---------------------------------------------------
+	scwin.WEBSQUARE_PROJECT_NAME = "InsWebApp";
+	scwin.PROWORKS_PROJECT_NAME  = "InsWebApp";
+	
+	//---------------------------------------------------
+	// Request URL
+	//---------------------------------------------------
+	scwin.EMP_LOGIN_VIEW_PATH    = "/" + scwin.WEBSQUARE_PROJECT_NAME + "/ui/cmmn/login_new.xml";
+	scwin.EMP_FILE_SAVE_PATH     = "/" + scwin.PROWORKS_PROJECT_NAME  + "/DmoEmpUploadEmpFile.do";
+	scwin.EMP_FILE_EDIT_PATH     = "/" + scwin.PROWORKS_PROJECT_NAME  + "/DmoEmpUpdateUploadEmpFile.do";
+	scwin.EMP_FILE_DOWNLOAD_PATH = "/" + scwin.PROWORKS_PROJECT_NAME  + "/DmoEmpDown.do";
+	
+	scwin.SERVER_TIME = "";
+	scwin.LOGIN_USER  = "";
+	
+	scwin.pageIndexTF = true; // 페이지 번호 유지 옵션
+	
+	/**
+	 * onpageload 함수
+	 * @date 2019.05.30
+	 * @memberOf
+	 * @param 
+	 * @returns
+	 * @author 
+	 * @example
+	 */	
+	scwin.onpageload = function(e) {
+		scwin.SERVER_TIME = $c.date.getServerDateTime("yyyy-MM-dd hh:mm:ss");
+		spn_serverTime.setValue(scwin.SERVER_TIME);
+		
+		scwin.LOGIN_USER = $p.getParameter("userId");
+		spn_user.setValue(scwin.LOGIN_USER);
+		
+        dmp_empVo.set( "pageIndex" , 1 ); // 페이지 번호
+		dmp_empVo.set( "pageSize" , 10 ); // 조회건수
+
+		scwin.execSelectEmpVoList();      // 사원 리스트 조회
+						
+	};
+
+	/**
+	 * onpageunload 함수
+	 * @date 2019.05.30
+	 * @memberOf
+	 * @param 
+	 * @returns
+	 * @author 
+	 * @example
+	 */
+	scwin.onpageunload = function() {
+		
+	};
+	
+	/**
+	 * 웹스퀘어 페이지 이동
+	 * @date 2019.05.30
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.redirectPage = function(w2xPath, jsonObj) {
+			
+		var optObj = {"spa" : false, "replaceHistory" : false, "param" : jsonObj};
+		$p.url(w2xPath, optObj);
+		
+	};
+
+	
+	/************************** 이벤트 함수 *************************/
+	
+	/**
+	 * 로그아웃 버튼 클릭 이벤트
+	 * @date
+	 * @memberOf
+	 * @param 
+	 * @returns
+	 * @author 
+	 * @example
+	 */	
+	scwin.ach_logout_onclick = function() {
+		
+		scwin.execLogout();
+		
+	};
+	
+	/**
+	 * 검색 버튼 클릭 이벤트
+	 * @date 2019.05.31
+	 * @memberOf
+	 * @param 
+	 * @returns
+	 * @author 
+	 * @example
+	 */	
+	scwin.btn_search_onclick = function(e) {
+		
+		scwin.btn_reset_onclick(); // 상세조회 폼 초기화
+		pgl_empList.setSelectedIndex( 1 );
+		
+		//------------------------------------------------------------------------
+		// [DataCollection] 검색을 위한 데이터를 세팅한다.
+		//------------------------------------------------------------------------
+		// 페이지, 조회건수
+		dmp_empVo.set( "pageIndex" , 1 ); // 페이지 번호
+		
+		scwin.execSelectEmpVoList();
+		
+	};
+	
+	/**
+	 * 초기화 버튼 클릭 이벤트
+	 * @date 2019.05.30
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */	
+	scwin.btn_reset_onclick = function(e) {
+		
+		btn_save.setStyle( "display", "" );       // 저장 버튼 생성
+		btn_edit.setStyle( "display", "none" );   // 수정 버튼 제거
+		btn_delete.setStyle( "display", "none" ); // 삭제 버튼 제거
+		ibx_empno.setReadOnly( false );           // 사원번호 readOnly 해제
+		grd_empList.removeFocusedCell();          // 셀 포커스 제거
+		
+		//------------------------------------------------------------------------
+		// [DataCollection] 초기화 버튼 클릭 시 세팅된 값을 공백으로 처리한다.
+		//------------------------------------------------------------------------
+		// 사원 상세 정보
+		dmp_empVoDetail.setEmptyValue();
+/*		
+		dmp_empVoDetail.set( "empno"   , "" );
+		dmp_empVoDetail.set( "ename"   , "" );
+		dmp_empVoDetail.set( "job"     , "" );
+		dmp_empVoDetail.set( "mgr"     , "" );
+		dmp_empVoDetail.set( "mgrname" , "" );
+		dmp_empVoDetail.set( "hiredate", "" );
+		dmp_empVoDetail.set( "sal"     , "" );
+		dmp_empVoDetail.set( "comm"    , "" );
+		dmp_empVoDetail.set( "deptno"  , "" );
+		dmp_empVoDetail.set( "dname"   , "" );
+		dmp_empVoDetail.set( "account" , "" );
+		
+		// 첨부파일 정보
+		dmp_empVoDetail.set( "empno"   , "" );
+		dmp_empVoDetail.set( "fileName", "" );
+		dmp_empVoDetail.set( "fileData", "" );
+*/		
+		// 업로드 컴포넌트 초기화
+		uld_file.reset();
+		
+		// 첨부파일 파일명 삭제
+		spn_fileName.setValue( "" );
+		
+		// 첨부파일 영역 숨김
+		grp_download.setStyle( "display", "none" );
+		
+	};
+	
+	/**
+	 * 저장 버튼 클릭 이벤트
+	 * @date
+	 * @memberOf
+	 * @param 
+	 * @returns
+	 * @author 
+	 * @example
+	 */	
+	scwin.btn_save_onclick = function(e) {
+		var valInfo = [{
+			id : "empno",
+			mandatory : true,
+			label : "사원번호"
+			//label :cmw.data.getLangpackMessage("CRUD_TEMPLATE_VIEW_LABEL_00009") // 패키지명
+		}, {
+			id : "ename",
+			mandatory : true,
+			label :"성명"
+		}, {
+			id : "job",
+			mandatory : true,
+			label :"직책"
+		},{
+			id : "hiredate",
+			mandatory : true,
+			label :"입사일자"
+		}, {
+			id : "deptno",
+			mandatory : true,
+			label :"부서"
+		}, {
+			id : "sal",
+			mandatory : true,
+			label :"급여"
+		}];
+
+		if ($c.data.validateGroup(grp_info, valInfo)) {
+			// 사용자그룹 정보 을(를) 저장하시겠습니까?
+			//var promise = $c.win.confirm(cmw.data.getLangpackMessage("COMMON_MESSAGE_00003", ["USER_GROUP_MNG_LABEL_00006"]));
+			var promise = $c.win.confirm("사원정보를 저장하시겠습니까?");
+			promise.then(function(isYes) {
+				if(isYes) {
+					//-------------------------------------------------------------------------
+					// [파일 업로드] 파일업로드 실행 시 보낼 파라미터를 세팅한다.
+					//-------------------------------------------------------------------------
+					uld_file.addParam("empno"   , dmp_empVoDetail.get( "empno"    ) );
+					uld_file.addParam("ename"   , dmp_empVoDetail.get( "ename"    ) );
+					uld_file.addParam("job"     , dmp_empVoDetail.get( "job"      ) );
+					uld_file.addParam("mgr"     , dmp_empVoDetail.get( "mgr"      ) );
+					uld_file.addParam("hiredate", dmp_empVoDetail.get( "hiredate" ) );
+					uld_file.addParam("sal"     , dmp_empVoDetail.get( "sal"      ) );
+					uld_file.addParam("comm"    , dmp_empVoDetail.get( "comm"     ) );
+					uld_file.addParam("deptno"  , dmp_empVoDetail.get( "deptno"   ) );
+					uld_file.addParam("account" , dmp_empVoDetail.get( "account"  ) );
+					
+					uld_file.changeFormAction(scwin.EMP_FILE_SAVE_PATH);
+					uld_file.submit();
+					uld_file.setCallback(scwin.execInsertEmpVo());
+				}
+			});
+		}
+	};
+
+	/**
+	 * 수정 버튼 클릭 이벤트
+	 * @date 2019.05.30
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */		
+	scwin.btn_edit_onclick = function(e) {
+		var promise = $c.win.confirm(dmp_empVoDetail.get("empno") + " 사원 정보를 수정하시겠습니까?");
+		promise.then(function(isYes) {
+			if(isYes) {
+				//-------------------------------------------------------------------------
+				// [파일 업로드] 파일업로드 실행 시 보낼 파라미터를 세팅한다.
+				//-------------------------------------------------------------------------
+				uld_file.addParam( "empno"    , dmp_empVoDetail.get( "empno"    ) );
+				uld_file.addParam( "ename"    , dmp_empVoDetail.get( "ename"    ) );
+				uld_file.addParam( "job"      , dmp_empVoDetail.get( "job"      ) );
+				uld_file.addParam( "mgr"      , dmp_empVoDetail.get( "mgr"      ) );
+				uld_file.addParam( "hiredate" , dmp_empVoDetail.get( "hiredate" ) );
+				uld_file.addParam( "sal"      , dmp_empVoDetail.get( "sal"      ) );
+				uld_file.addParam( "comm"     , dmp_empVoDetail.get( "comm"     ) );
+				uld_file.addParam( "deptno"   , dmp_empVoDetail.get( "deptno"   ) );
+				uld_file.addParam( "account"  , dmp_empVoDetail.get( "account"  ) );
+				uld_file.addParam( "fileName" , dmp_empFileVo.get("fileName") );
+				
+				uld_file.changeFormAction(scwin.EMP_FILE_EDIT_PATH);
+				uld_file.submit();
+				uld_file.setCallback(scwin.sbm_updateEmpVo_submitdone());
+			}
+		});		
+	};
+	
+	/**
+	 * 삭제 버튼 클릭 이벤트
+	 * @date 2019.05.30
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */	
+	scwin.btn_delete_onclick = function(e) {
+		var empno = dmp_empVoDetail.get( "empno" );
+		
+		if( $c.util.isEmpty(empno) ) {
+			$c.win.alert("삭제할 대상이 없습니다. 사원을 선택하세요.");
+			return false;
+		}
+
+		var promise = $c.win.confirm(empno + " 사원 정보를 삭제하시겠습니까?");
+		promise.then(function(isYes) {
+			if(isYes) {
+				scwin.execDeleteEmpVo();
+			}
+		});			
+	};
+	
+	/**
+	 * 캘린터 날짜 선택 이벤트
+	 * @date 2019.05.31
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.ipc_hiredate_ondateselect = function(dateStr,dateObj) {
+		
+		dmp_empVoDetail.set( "hiredate" , dateStr );
+		
+	};
+
+	/**
+	 * 그리드 셀 클릭 이벤트
+	 * @date 2019.05.30
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.grd_empList_oncellclick = function(row, col) {
+
+		btn_save.setStyle( "display", "none" ); // 저장 버튼 제거
+		btn_edit.setStyle( "display", "" );     // 수정 버튼 생성
+		btn_delete.setStyle( "display", "" );   // 삭제 버튼 생성
+		ibx_empno.setReadOnly( true );          // 사번 readOnly 처리
+		uld_file.reset();                       // 첨부파일 폼 초기화
+				
+		// 파일정보 초기화
+		dmp_empFileVo.setEmptyValue();
+		
+		scwin.execSelectEmpVo( row, col ); // 상세조회 함수 실행
+		
+	};
+
+	/**
+	 * 다운로드 버튼 클릭 이벤트
+	 * @date 2019.06.04
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.btn_downloadFile_onclick = function() {
+		
+		// 파일 다운로드
+		$p.download(scwin.EMP_FILE_DOWNLOAD_PATH + "?empno="+dmp_empVoDetail.get("empno"), "", "post");
+		
+	};
+
+	/**
+	 * 파일 삭제 버튼 클릭 이벤트
+	 * @date 2019.06.04
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.btn_deleteFile_onclick = function() {
+		
+		dmp_empVoDetail.set("fileName" , "");
+		dmp_empFileVo.set("fileName" , "");
+		grp_download.setStyle("display", "none");
+		
+	};
+	
+	/**
+	 * 페이지 번호 클릭 이벤트
+	 * @date 2019.05.31
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.pgl_empList_onclick = function(idx) {
+		
+		dmp_empVo.set( "pageIndex" , idx ); // 페이지 번호 세팅
+		
+		scwin.execSelectEmpVoList();
+		
+	};
+	
+	
+	/************************** 트랜잭션 함수 *************************/
+	
+	/**
+	 * 사원 리스트 조회
+	 * @date 2019.05.30
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.execSelectEmpVoList = function() {
+		
+		// 그리드 초기화
+		dlt_empVoList.removeAll();
+		dlt_empVoList.reform();
+		/*
+		var reqData = {"elData":dmp_empVo.getJSON()};
+		$p.executeSubmission("sbm_selectEmpVoList", reqData);
+		*/
+		$c.sbm.execute(sbm_selectEmpVoList);
+	};
+	
+	/**
+	 * 사원 정보 조회
+	 * @date 2019.06.04
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.execSelectEmpVo = function(row, col) {
+		/*
+		var reqData = {"empVo":dlt_empVoList.getRowJSON(row)};
+		$p.executeSubmission("sbm_selectEmpVo", reqData);
+		*/
+
+		var param = {
+			"empVo" : dlt_empVoList.getRowJSON(row)
+		};
+
+		$c.sbm.execute(sbm_selectEmpVo, param);
+	}; 
+
+	/**
+	 * 사원 정보 등록
+	 * @date 2019.05.31
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.execInsertEmpVo = function() {
+		/*
+		var reqData = {"empVo":dmp_empVoDetail.getJSON()};
+		$p.executeSubmission("sbm_insertEmpVo", reqData);
+		*/
+		
+		$c.sbm.execute(sbm_insertEmpVo);
+		
+	};
+
+	/**
+	 * 사원 정보 수정
+	 * @date
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.execUpdateEmpVo = function() {
+		/*
+		var reqData = {"empVo":dmp_empVoDetail.getJSON()};
+		$p.executeSubmission("sbm_updateEmpVo", reqData);
+		*/
+		$c.sbm.execute(sbm_updateEmpVo);
+	};
+	
+	/**
+	 * 사원 정보 삭제
+	 * @date 2019.05.31
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.execDeleteEmpVo = function() {
+		/*
+		var reqData = {"elData":dmp_empVoDetail.getJSON()};
+		$p.executeSubmission("sbm_deleteEmpVo", reqData);
+		*/
+		$c.sbm.execute(sbm_deleteEmpVo);
+	}
+	
+	/**
+	 * 첨부파일 삭제
+	 * @date 2019.06.05
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	 scwin.execDeleteFile = function() {
+	 	/*
+	 	var reqData = {"elData":dmp_empVoDetail.getJSON()};
+		$w.executeSubmission("sbm_deleteFile", reqData);
+	 	*/
+		 $c.sbm.execute(sbm_deleteFile);
+	 };
+
+	/**
+	 * 로그아웃
+	 * @date
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.execLogout = function() {
+		/*
+		var reqData = {"elData":{"id":scwin.LOGIN_USER}};
+		$p.executeSubmission("sbm_logout", reqData);
+		*/
+
+		var param = {
+			"elData": {
+				"id": scwin.LOGIN_USER
+			}
+		}
+
+		$c.sbm.execute(sbm_logout, param);
+	};
+	
+	
+	/************************** 콜백 함수 *************************/
+	
+	/**
+	 * 사원 리스트 조회 콜백
+	 * @date 2019.05.30
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.sbm_empList_submitdone = function(e) {
+        // debugger;
+		
+		console.log("-------------------- scwin.sbm_empList_submitdone --------------------");
+		console.log( e.responseJSON);
+		console.log("----------------------------------------------------------------------");
+		
+		var elHeader  = e.responseJSON.elHeader;
+		//var empVo     = e.responseJSON.empVo;
+		var empVoList = e.responseJSON.elData.empVoList;
+		
+		if(elHeader == null || elHeader == "" || elHeader == "undefiend" || elHeader.resSuc == false) {
+			alert("- 에러 코드 : " + elHeader.resCode + "\n- 에러 메시지 : " + elHeader.resMsg);
+			return false;
+		}
+		
+        dlt_empVoList.removeAll();
+        dlt_empVoList.reform();
+		dlt_empVoList.setJSON(empVoList); // 데이터를 그리드에 세팅한다.
+		pgl_empList.setCount(e.responseJSON.elData.totalPageCount, true); // 페이지 리스트에 인덱스를 세팅한다.
+		pgl_empList.setSelectedIndex(dmp_empVo.get( "pageIndex"), true); // 페이지 리스트에 인덱스를 세팅한다.
+
+		var pageSize = dmp_empVo.get("pageSize");
+		var pageIndex = dmp_empVo.get("pageIndex");
+		grd_empList.setStartRowNumber(pageSize * pageIndex - pageSize);
+		
+	};
+	
+	/**
+	 * 사원 정보 조회 콜백
+	 * @date 2019.06.03
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.sbm_selectEmpVo_submitdone = function(e) {
+		
+		console.log("------------------ scwin.sbm_selectEmpVo_submitdone ------------------");
+		console.log(e.responseJSON);
+		console.log("----------------------------------------------------------------------");
+		
+		var elHeader  = e.responseJSON.elHeader;
+		
+		if(elHeader == null || elHeader == "" || elHeader == "undefiend" || elHeader.resSuc == false) {
+			alert("- 에러 코드 : " + elHeader.resCode + "\n- 에러 메시지 : " + elHeader.resMsg);
+			return false;
+		}
+		
+		dmp_empVoDetail.setJSON(e.responseJSON.elData.empVo);   // 사원정보 매핑
+		dmp_empFileVo.setJSON(e.responseJSON.elData.empFileVo); // 파일정보 매핑
+				
+		var tmpFileName = spn_fileName.getValue();
+		if(tmpFileName != "" && tmpFileName != null) {
+			grp_download.setStyle("display", "");
+		} else {
+			grp_download.setStyle("display", "none");
+		}
+		
+	};
+	
+	/**
+	 * 사원 정보 등록 콜백
+	 * @date 2019.05.31
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.sbm_insertEmpVo_submitdone = function(e) {
+		
+		console.log("------------------ scwin.sbm_insertEmpVo_submitdone ------------------");
+		console.log(e.responseJSON);
+		console.log("----------------------------------------------------------------------");
+		
+		var elHeader  = e.responseJSON.elHeader;
+		
+		if(elHeader == null || elHeader == "" || elHeader == "undefiend" || elHeader.resSuc == false) {
+			alert("- 에러 코드 : " + elHeader.resCode + "\n- 에러 메시지 : " + elHeader.resMsg);
+			return false;
+		}
+
+		alert("사원정보가 등록되었습니다.");
+		scwin.btn_reset_onclick();
+		$c.util.setTimeout(function() { scwin.execSelectEmpVoList(); }, 500); // 0.5초 경과 후 실행
+			
+	};
+	
+	/**
+	 * 사원 정보 수정 콜백
+	 * @date
+	 * @memberOf
+	 * @param 
+	 * @returns
+	 * @author 
+	 * @example
+	 */
+	scwin.sbm_updateEmpVo_submitdone = function(e) {
+		
+//		console.log("------------------ scwin.sbm_updateEmpVo_submitdone ------------------");
+//		console.log(e.responseJSON);
+//		console.log("----------------------------------------------------------------------");
+		
+		alert("사원정보가 수정되었습니다.");
+		scwin.btn_reset_onclick(); // 입력 폼 초기화
+		
+		$c.util.setTimeout(function() { scwin.execSelectEmpVoList(); }, 500); // 0.5초 경과 후 실행
+		
+	};
+	
+	/**
+	 * 사원 정보 삭제 콜백
+	 * @date 2019.05.31
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.sbm_deleteEmpVo_submitdone = function(e) {
+		
+		console.log("------------------ scwin.sbm_deleteEmpVo_submitdone ------------------");
+		console.log(e.responseJSON);
+		console.log("----------------------------------------------------------------------");
+		
+		var submission = $p.getSubmission("sbm_deleteEmpVo");
+		
+		if(e.id == submission.id) {
+			alert("사원정보가 삭제되었습니다.");
+			scwin.btn_reset_onclick();   // 입력 폼 초기화
+			$c.util.setTimeout(function() { scwin.execSelectEmpVoList(); }, 500); // 0.5초 경과 후 실행
+		}
+		
+	};
+
+	/**
+	 * 로그아웃 콜백
+	 * @date 2019.06.03
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.sbm_logout_submitdone = function(e) {
+		
+//		console.log("-------------------- scwin.sbm_logout_submitdone ---------------------");
+//		console.log(e.responseJSON);
+//		console.log("----------------------------------------------------------------------");
+		
+		var elHeader = e.responseJSON.elHeader;
+		
+		if(elHeader == null || elHeader == "" || elHeader == "undefiend" || elHeader.resSuc == false) {
+			alert("- 에러 코드 : " + elHeader.resCode + "\n- 에러 메시지 : " + elHeader.resMsg);
+			return false;
+		}
+
+		scwin.redirectPage(scwin.EMP_LOGIN_VIEW_PATH);
+		
+	};
+	]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload" ev:onpageunload="scwin.onpageunload">
+    <xf:group style="" id="">
+    	<xf:group style="padding-top: 30px;padding-left: 70px;padding-right: 70px;padding-bottom: 50px;" id="" class="">
+    		<xf:group style="" id="" class="">
+    			<xf:image src="/InsWebApp/images/ws5/logo/logo_proworks.png" style="height: 50px;width: 220px;margin-right: 20px;" id="">
+    			</xf:image>
+    			<w2:span label="프로웍스/웹스퀘어 연계 샘플"
+    				style="font-weight: bold;font-family: Malgun Gothic, 맑은 고딕, arial, mgw, Verdana, dotum, Sans-serif;font-size:16pt;vertical-align: middle;"
+    				id="">
+    			</w2:span>
+    			<xf:group id="" style="height:28px;">
+    				<w2:anchor ev:onclick="scwin.ach_logout_onclick" id="anchor2" outerDiv="false"
+    					style="background-color: #FFFFFF;display: inline-block;font-weight: bold;border-radius: 5px;outline: none;text-align: center;vertical-align: middle;color: #747474;border: 1px solid rgb(42, 100, 177);height: 10px;padding-top: 8px;padding-bottom: 8px;width: 70px;line-height: 12px;text-decoration: none;float: right;margin-left: 10px;">
+    					<xf:label><![CDATA[로그아웃]]></xf:label>
+    				</w2:anchor>
+    				
+    				<w2:span id="span6" label="접속시간 : " style="color:#000000;float: left;margin-left: 15px;margin-top: 15px;margin-right: 10px;font-weight:bold;font-family: Malgun Gothic, 맑은 고딕, arial, mgw, Verdana, dotum, Sans-serif;">
+    				</w2:span><w2:span id="spn_serverTime" label="#SERVER_TIME#" style="color:#000000;float: left;margin-top: 15px;margin-right: 20px;font-family: Malgun Gothic, 맑은 고딕, arial, mgw, Verdana, dotum, Sans-serif;">
+    				</w2:span><w2:span id="span9" label="접속자명 : " style="color:#000000;float: left;margin-top: 15px;margin-right: 10px;font-weight:bold;font-family: Malgun Gothic, 맑은 고딕, arial, mgw, Verdana, dotum, Sans-serif;">
+    				</w2:span><w2:span id="spn_user" label="#USER_NAME#"
+    					style="color:#000000;float: left;margin-top: 15px;margin-right: 10px;font-family: Malgun Gothic, 맑은 고딕, arial, mgw, Verdana, dotum, Sans-serif;">
+    				</w2:span>
+    				
+    				
+    			</xf:group>
+    		</xf:group>
+    		<xf:group id="" style="">
+    			<xf:group class="" id="" style="margin-bottom: 15px;">
+    			</xf:group>
+    			<xf:group class="" id=""
+    				style="border: 1px solid #d7d7d8;border-spacing: 0;border-top: 2px solid #737272;border-left: 1px hidden #fff;border-right: 1px hidden #fff;border-bottom: 1px solid #858585;background: #f1f1f1;padding: 10px;overflow: hidden;margin-bottom: 28px;">
+    				<xf:group id="" style="display: inline;margin-right: 20px;"></xf:group>
+    				<xf:group id="" style="display: inline;margin-right: 20px;">
+    					<w2:span id="" label="성명: &amp;nbsp;" style="font-weight:bold;background: #f1f1f1;" escape="false"></w2:span>
+    					<xf:input adjustMaxLength="false" id="ibx_scEname" style="width: 80px;height: 21px;" ref="data:dmp_empVo.scEname"></xf:input>
+    				</xf:group>
+    				<xf:group id="" style="display: inline;margin-right: 20px;">
+    					<w2:span id="" label="직책: &amp;nbsp;" style="font-weight:bold;background: #f1f1f1;" escape="false"></w2:span>
+    					<xf:select1 allOption="" appearance="minimal" chooseOption="" direction="auto" disabled="false"
+    						disabledClass="w2selectbox_disabled" displayMode="label" id="sbx_scJob" ref="data:dmp_empVo.scJob"
+    						style="width: 100px;height: 21px;" submenuSize="auto">
+    						<xf:choices>
+    							<xf:item>
+    								<xf:label><![CDATA[COMMON_SELECT_00001]]></xf:label>
+    								<xf:value><![CDATA[]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00001]]></xf:label>
+    								<xf:value><![CDATA[ANALYST]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00002]]></xf:label>
+    								<xf:value><![CDATA[CLERK]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00003]]></xf:label>
+    								<xf:value><![CDATA[MANAGER]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00004]]></xf:label>
+    								<xf:value><![CDATA[PRESIDENT]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00005]]></xf:label>
+    								<xf:value><![CDATA[SALESMAN]]></xf:value>
+    							</xf:item>
+    						</xf:choices>
+    					</xf:select1>
+    				</xf:group>
+    				<xf:group id="" style="display: inline;margin-right: 20px;">
+    					<w2:span id="" label="부서: &amp;nbsp;" style="font-weight:bold;background: #f1f1f1;" escape="false"></w2:span>
+    					<xf:select1 allOption="" appearance="minimal" chooseOption="" chooseOptionLabel="" direction="auto" disabled="false"
+    						disabledClass="w2selectbox_disabled" displayMode="label" id="sbx_scDeptno" ref="data:dmp_empVo.scDeptno"
+    						style="width: 100px;height: 21px;" submenuSize="auto">
+    						<xf:choices>
+    							<xf:item>
+    								<xf:label><![CDATA[COMMON_SELECT_00001]]></xf:label>
+    								<xf:value><![CDATA[]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00006]]></xf:label>
+    								<xf:value><![CDATA[10]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00007]]></xf:label>
+    								<xf:value><![CDATA[20]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00008]]></xf:label>
+    								<xf:value><![CDATA[30]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00009]]></xf:label>
+    								<xf:value><![CDATA[40]]></xf:value>
+    							</xf:item>
+    						</xf:choices>
+    					</xf:select1>
+    				</xf:group>
+    				<xf:group id="" style="float: right;">
+    					<xf:trigger ev:onclick="scwin.btn_search_onclick" id="btn_search"
+    						style="width: 70px;height: 24px;color: #FFFFFF;display: inline-block;padding: 0 14px 0px;line-height: 22px;font-size: 13px;font-weight: bold;color: #fff;border: 1px solid #000001;background: #3b4b62;vertical-align: middle;box-sizing: border-box;"
+    						type="button">
+    						<xf:label><![CDATA[검색]]></xf:label>
+    					</xf:trigger>
+    				</xf:group>
+    			</xf:group>
+    			<xf:group id="" style="margin-bottom: 5px;overflow: hidden;margin-bottom: 28px;">
+    				<xf:group class="" id="" style="margin-bottom: 5px;overflow: hidden;padding-top">
+    					<w2:span id="" label="■ 사원정보 상세조회" style="font-size:9pt;font-weight:bold;color:#383d41;"></w2:span>
+    					<xf:group id="" style="float: right;">
+    						<xf:trigger ev:onclick="scwin.btn_reset_onclick" id="btn_reset"
+    							style="width: 70px;height: 24px;display: inline-block;padding: 0 14px 0px;line-height: 22px;font-size: 13px;color: #747474;font-weight: bold;border: 1px solid #ccd3d5;background: #fff;vertical-align: middle;box-sizing: border-box;"
+    							type="button">
+    							<xf:label><![CDATA[초기화]]></xf:label>
+    						</xf:trigger>
+    						<xf:trigger ev:onclick="scwin.btn_save_onclick" id="btn_save"
+    							style="width: 60px;height: 24px;margin-left: 3px;display: inline-block;padding: 0 14px 0px;line-height: 22px;font-size: 13px;color: #747474;font-weight: bold;border: 1px solid #ccd3d5;background: #fff;vertical-align: middle;box-sizing: border-box;"
+    							type="button">
+    							<xf:label><![CDATA[저장]]></xf:label>
+    						</xf:trigger>
+    						<xf:trigger ev:onclick="scwin.btn_edit_onclick" id="btn_edit"
+    							style="width: 60px;height: 24px;margin-left: 3px;display: inline-block;padding: 0 14px 0px;line-height: 22px;font-size: 13px;color: #747474;font-weight: bold;border: 1px solid #ccd3d5;background: #fff;vertical-align: middle;box-sizing: border-box;display: none;"
+    							type="button">
+    							<xf:label><![CDATA[수정]]></xf:label>
+    						</xf:trigger>
+    						<xf:trigger ev:onclick="scwin.btn_delete_onclick" id="btn_delete"
+    							style="width: 60px;height: 24px;margin-left: 3px;display: inline-block;padding: 0 14px 0px;line-height: 22px;font-size: 13px;color: #747474;font-weight: bold;border: 1px solid #ccd3d5;background: #fff;vertical-align: middle;box-sizing: border-box;display: none;"
+    							type="button">
+    							<xf:label><![CDATA[삭제]]></xf:label>
+    						</xf:trigger>
+    					</xf:group>
+    				</xf:group>
+    				<xf:group class="" id="grp_info" style="">
+    					<xf:group class="w2tb" id=""
+    						style="width:100%;border-spacing: 0;border-top: 2px solid #1997c0;border-left: 1px hidden #fff;border-right: 1px hidden #fff;    border-bottom: 1px solid #858585;"
+    						tagname="table">
+    						<w2:attributes>
+    							<w2:summary></w2:summary>
+    						</w2:attributes>
+    						<xf:group tagname="caption"></xf:group>
+    						<xf:group tagname="colgroup">
+    							<xf:group style="width:15.00%;" tagname="col"></xf:group>
+    							<xf:group style="width:35.00%;" tagname="col"></xf:group>
+    							<xf:group style="width:15.00%;" tagname="col"></xf:group>
+    							<xf:group style="width:35.00%;" tagname="col"></xf:group>
+    						</xf:group>
+    						<xf:group style="" tagname="tr">
+    							<xf:group class="w2tb_th" style="text-align:left;" tagname="th">
+    								사원번호
+    								<w2:attributes>
+    									<w2:scope>row</w2:scope>
+    								</w2:attributes>
+    							</xf:group>
+    							<xf:group class="w2tb_td" style="" tagname="td">
+    								<xf:input adjustMaxLength="false" dataType="text" id="ibx_empno" maxlength="4" readOnly=""
+    									ref="data:dmp_empVoDetail.empno" style="width: 148px;height: 21px;">
+    								</xf:input>
+    							</xf:group>
+    							<xf:group class="w2tb_th" style="text-align:left;" tagname="th">
+    								성명
+    								<w2:attributes>
+    									<w2:scope>row</w2:scope>
+    								</w2:attributes>
+    							</xf:group>
+    							<xf:group class="w2tb_td" style="" tagname="td">
+    								<xf:input adjustMaxLength="false" id="ibx_ename" ref="data:dmp_empVoDetail.ename"
+    									style="width: 148px;height: 21px;">
+    								</xf:input>
+    							</xf:group>
+    						</xf:group>
+    						<xf:group style="" tagname="tr">
+    							<xf:group class="w2tb_th" style="text-align:left;" tagname="th">
+    								직책
+    								<w2:attributes>
+    									<w2:scope>row</w2:scope>
+    								</w2:attributes>
+    							</xf:group>
+    							<xf:group class="w2tb_td" style="" tagname="td">
+    								<xf:select1 allOption="" appearance="minimal" chooseOption="" chooseOptionLabel="-선택-" direction="auto"
+    									disabled="false" disabledClass="w2selectbox_disabled" displayMode="label" id="sbx_job" ref="data:dmp_empVoDetail.job"
+    									style="width: 152px;height: 21px;" submenuSize="auto" textAlign="left">
+    									<xf:choices>
+    										<xf:item>
+    											<xf:label><![CDATA[COMMON_SELECT_00002]]></xf:label>
+    											<xf:value><![CDATA[]]></xf:value>
+    										</xf:item>
+    										<xf:item>
+    											<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00001]]></xf:label>
+    											<xf:value><![CDATA[ANALYST]]></xf:value>
+    										</xf:item>
+    										<xf:item>
+    											<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00002]]></xf:label>
+    											<xf:value><![CDATA[CLERK]]></xf:value>
+    										</xf:item>
+    										<xf:item>
+    											<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00003]]></xf:label>
+    											<xf:value><![CDATA[MANAGER]]></xf:value>
+    										</xf:item>
+    										<xf:item>
+    											<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00004]]></xf:label>
+    											<xf:value><![CDATA[PRESIDENT]]></xf:value>
+    										</xf:item>
+    										<xf:item>
+    											<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00005]]></xf:label>
+    											<xf:value><![CDATA[SALESMAN]]></xf:value>
+    										</xf:item>
+    									</xf:choices>
+    								</xf:select1>
+    							</xf:group>
+    							<xf:group class="w2tb_th" style="text-align:left;" tagname="th">
+    								관리자
+    								<w2:attributes>
+    									<w2:scope>row</w2:scope>
+    								</w2:attributes>
+    							</xf:group>
+    							<xf:group class="w2tb_td" style="" tagname="td">
+    								<xf:input adjustMaxLength="false" id="ibx_mgr" maxlength="4" ref="data:dmp_empVoDetail.mgr"
+    									style="width: 148px; height: 21px;">
+    								</xf:input>
+    							</xf:group>
+    						</xf:group>
+    						<xf:group style="" tagname="tr">
+    							<xf:group class="w2tb_th" style="text-align:left;" tagname="th">
+    								입사일자
+    								<w2:attributes>
+    									<w2:scope>row</w2:scope>
+    								</w2:attributes>
+    							</xf:group>
+    							<xf:group class="w2tb_td" tagname="td">
+    								<w2:attributes></w2:attributes>
+    								<w2:inputCalendar calendarValueType="yearMonthDate" dateValidSet="true"
+    									ev:onblur="scwin.ipc_hiredate_onblur" ev:ondateselect="scwin.ipc_hiredate_ondateselect" fixedDate="today"
+    									focusOnDateSelect="false" footerDiv="false" id="ipc_hiredate" ref="data:dlt_empVoList.hiredate" renderDiv="true"
+    									renderType="component" rightAlign="false" style="width: 177px;height: 23px;">
+    								</w2:inputCalendar>
+    							</xf:group>
+    							<xf:group class="w2tb_th" style="text-align:left;" tagname="th">
+    								부서
+    								<w2:attributes>
+    									<w2:scope>row</w2:scope>
+    								</w2:attributes>
+    							</xf:group>
+    							<xf:group class="w2tb_td" tagname="td">
+    								<w2:attributes></w2:attributes>
+    								<xf:select1 allOption="" appearance="minimal" chooseOption="" chooseOptionLabel="-선택-" direction="auto"
+    									disabled="false" disabledClass="w2selectbox_disabled" displayMode="label" id="sbx_deptno" ref="data:dmp_empVoDetail.deptno"
+    									style="width: 152px;height: 21px;" submenuSize="auto" textAlign="left">
+    									<xf:choices>
+    										<xf:item>
+    											<xf:label><![CDATA[COMMON_SELECT_00002]]></xf:label>
+    											<xf:value><![CDATA[]]></xf:value>
+    										</xf:item>
+    										<xf:item>
+    											<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00006]]></xf:label>
+    											<xf:value><![CDATA[10]]></xf:value>
+    										</xf:item>
+    										<xf:item>
+    											<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00007]]></xf:label>
+    											<xf:value><![CDATA[20]]></xf:value>
+    										</xf:item>
+    										<xf:item>
+    											<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00008]]></xf:label>
+    											<xf:value><![CDATA[30]]></xf:value>
+    										</xf:item>
+    										<xf:item>
+    											<xf:label><![CDATA[EMP_LIST_VIEW_SELECT_00009]]></xf:label>
+    											<xf:value><![CDATA[40]]></xf:value>
+    										</xf:item>
+    									</xf:choices>
+    								</xf:select1>
+    							</xf:group>
+    						</xf:group>
+    						<xf:group style="" tagname="tr">
+    							<xf:group class="w2tb_th" style="text-align:left;" tagname="th">
+    								급여
+    								<w2:attributes>
+    									<w2:scope>row</w2:scope>
+    								</w2:attributes>
+    							</xf:group>
+    							<xf:group class="w2tb_td" style="" tagname="td">
+    								<xf:input adjustMaxLength="false" dataType="number" displayFormat="###,###,###,###" id="ibx_sal"
+    									ref="data:dmp_empVoDetail.sal" style="width: 148px;height: 21px;">
+    								</xf:input>
+    							</xf:group>
+    							<xf:group class="w2tb_th" style="text-align:left;" tagname="th">
+    								커미션
+    								<w2:attributes>
+    									<w2:scope>row</w2:scope>
+    								</w2:attributes>
+    							</xf:group>
+    							<xf:group class="w2tb_td" style="" tagname="td">
+    								<xf:input adjustMaxLength="false" dataType="float" displayFormat="###,###,###,###" id="ibx_comm"
+    									ref="data:dmp_empVoDetail.comm" style="width: 148px;height: 21px;">
+    								</xf:input>
+    							</xf:group>
+    						</xf:group>
+    						<xf:group style="" tagname="tr">
+    							<xf:group class="w2tb_th" style="text-align:left;" tagname="th">
+    								설명
+    								<w2:attributes>
+    									<w2:scope>row</w2:scope>
+    								</w2:attributes>
+    							</xf:group>
+    							<xf:group class="w2tb_td" tagname="td">
+    								<xf:textarea id="account10" ref="data:dmp_empVoDetail.account" style="width:99%;height: 100px;"></xf:textarea>
+    								<w2:attributes>
+    									<w2:colspan>3</w2:colspan>
+    									<w2:rowspan>1</w2:rowspan>
+    								</w2:attributes>
+    							</xf:group>
+    						</xf:group>
+    						<xf:group style="" tagname="tr">
+    							<xf:group class="w2tb_th" style="text-align:left;" tagname="th">
+    								첨부파일
+    								<w2:attributes>
+    									<w2:scope>row</w2:scope>
+    								</w2:attributes>
+    							</xf:group>
+    							<xf:group class="w2tb_td" tagname="td">
+    								<w2:attributes>
+    									<w2:colspan>3</w2:colspan>
+    									<w2:rowspan>1</w2:rowspan>
+    								</w2:attributes>
+    								<w2:upload action="" disabled="" id="uld_file"
+    									imageStyle="position:absolute;vertical-align:middle;word-wrap:break-word"
+    									inputStyle="position:absolute;vertical-align:middle;word-wrap:break-word" style="width: 250px;height: 23px;" type="">
+    								</w2:upload>
+    								<xf:group id="grp_download" style="float: right;margin-top: 5px;margin-right: 10px;display: none;">
+    									<w2:span id="" label="파일명 : " style="font-weight:bold;"></w2:span>
+    									<w2:span id="spn_fileName" label="#FILENAME#" ref="data:dmp_empFileVo.fileName"
+    										style="font-weight:bold;margin-right: 10px;">
+    									</w2:span>
+    									<w2:anchor ev:onclick="scwin.btn_downloadFile_onclick" href="" id="btn_downloadFile"
+    										outerDiv="false" ref=""
+    										style="width: 100px;height: 23px;padding: 3px;border: 1px solid #ccd3d5;background: #fff;margin-right: 5px;color: #747474;text-decoration: none;font-weight:bold;"
+    										userData1="">
+    										<xf:label><![CDATA[다운로드]]></xf:label>
+    									</w2:anchor>
+    									<w2:anchor ev:onclick="scwin.btn_deleteFile_onclick" href="" id="btn_deleteFile" outerDiv="false"
+    										style="width: 100px;height: 23px;padding: 3px;border: 1px solid #ccd3d5;background: #fff;margin-right: 5px;color: #747474;text-decoration: none;font-weight:bold;">
+    										<xf:label><![CDATA[삭제]]></xf:label>
+    									</w2:anchor>
+    								</xf:group>
+    							</xf:group>
+    						</xf:group>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    			<xf:group id="" style="margin-bottom:">
+    				<xf:group class="" id="" style="margin-bottom: 15px;overflow: hidden;">
+    					<w2:span id="" label="■ 사원정보 리스트" style="font-size:9pt;font-weight:bold;color:#383d41;"></w2:span>
+    				</xf:group>
+    				<xf:group class="" id="" style="margin-bottom: 10px;">
+    					<w2:gridView autoFit="allColumn" columnMove="false" contextMenu="" dataList="data:dlt_empVoList"
+    						defaultCellHeight="23" ev:oncellclick="scwin.grd_empList_oncellclick" ev:onscrollend="scwin.grd_empList_onscrollend"
+    						focusMode="row" groupbyFilterBox="" id="grd_empList" readOnly="true" rowNumHeaderValue="순번" rowNumVisible="true" rowNumWidth="30"
+    						scrollByColumn="false" scrollByColumnAdaptive="false"
+    						style="height: 265px;border-top: 2px solid #1997c0;border-bottom: 1px solid #d8dfe6;left:1px;" syncScroll="false"
+    						visibleRowNum="">
+    						<w2:caption id="caption1" style="" value="this is a grid caption."></w2:caption>
+    						<w2:header id="header1" style="">
+    							<w2:row id="row1" style="border-right:1px hidden #fff;border-left:1px hidden #fff;">
+    								<w2:column blockSelect="false" displayMode="label" id="column15" inputType="text"
+    									removeBorderStyle="false" style="height:20px;" value="사원번호" width="60">
+    								</w2:column>
+    								<w2:column blockSelect="false" displayMode="label" id="column13" inputType="text"
+    									removeBorderStyle="false" style="height:20px;" value="성명" width="70">
+    								</w2:column>
+    								<w2:column blockSelect="false" displayMode="label" id="column11" inputType="text"
+    									removeBorderStyle="false" style="height:20px;" value="직책" width="70">
+    								</w2:column>
+    								<w2:column blockSelect="false" displayMode="label" id="column9" inputType="text"
+    									removeBorderStyle="false" style="height:20px;" value="관리자 사번" width="90">
+    								</w2:column>
+    								<w2:column blockSelect="false" displayMode="label" id="column7" inputType="text"
+    									removeBorderStyle="false" style="height:20px;" value="입사일자" width="100">
+    								</w2:column>
+    								<w2:column blockSelect="false" displayMode="label" id="column5" inputType="text"
+    									removeBorderStyle="false" style="height:20px;" value="급여" width="70">
+    								</w2:column>
+    								<w2:column blockSelect="false" displayMode="label" id="column3" inputType="text"
+    									removeBorderStyle="false" style="height:20px;" value="커미션" width="70">
+    								</w2:column>
+    								<w2:column blockSelect="false" displayMode="label" id="column1" inputType="text"
+    									removeBorderStyle="false" style="height:20px;" value="부서명" width="70" >
+    								</w2:column>
+    							</w2:row>
+    						</w2:header>
+    						<w2:gBody id="gBody1" style="">
+    							<w2:row id="row2" style="border-right:1px hidden #fff;border-left:1px hidden #fff;">
+    								<w2:column blockSelect="false" dataType="number" displayMode="label" id="empno" inputType="text"
+    									removeBorderStyle="false" style="" value="" width="60">
+    								</w2:column>
+    								<w2:column blockSelect="false" dataType="text" displayMode="label" id="ename" inputType="text"
+    									removeBorderStyle="false" style="" value="" width="70">
+    								</w2:column>
+    								<w2:column allOption="" blockSelect="false" chooseOption="" dataType="text" displayMode="label" id="job"
+    									inputType="select" ref="" removeBorderStyle="false" style="" value="" width="70" localeRef="">
+    									<w2:choices>
+    										<w2:item>
+    											<w2:label><![CDATA[EMP_LIST_VIEW_SELECT_00001]]></w2:label>
+    											<w2:value><![CDATA[ANALYST]]></w2:value>
+    										</w2:item>
+    										<w2:item>
+    											<w2:label><![CDATA[EMP_LIST_VIEW_SELECT_00002]]></w2:label>
+    											<w2:value><![CDATA[CLERK]]></w2:value>
+    										</w2:item>
+    										<w2:item>
+    											<w2:label><![CDATA[EMP_LIST_VIEW_SELECT_00003]]></w2:label>
+    											<w2:value><![CDATA[MANAGER]]></w2:value>
+    										</w2:item>
+    										<w2:item>
+    											<w2:label><![CDATA[EMP_LIST_VIEW_SELECT_00004]]></w2:label>
+    											<w2:value><![CDATA[PRESIDENT]]></w2:value>
+    										</w2:item>
+    										<w2:item>
+    											<w2:label><![CDATA[EMP_LIST_VIEW_SELECT_00005]]></w2:label>
+    											<w2:value><![CDATA[SALESMAN]]></w2:value>
+    										</w2:item>
+    									</w2:choices>
+    								</w2:column>
+    								<w2:column blockSelect="false" dataType="text" displayMode="label" id="mgr" inputType="text"
+    									removeBorderStyle="false" style="" value="" width="90">
+    								</w2:column>
+    								<w2:column blockSelect="false" dataType="date" displayMode="label" id="hiredate" inputType="text"
+    									removeBorderStyle="false" style="" value="" width="100">
+    								</w2:column>
+    								<w2:column blockSelect="false" dataType="number" displayFormat="###,###,###,###" displayMode="label"
+    									id="sal" inputType="text" removeBorderStyle="false" style="" textAlign="right" value="" width="70">
+    								</w2:column>
+    								<w2:column blockSelect="false" dataType="number" displayFormat="###,###,###,###" displayMode="label"
+    									id="comm" inputType="text" removeBorderStyle="false" style="" textAlign="right" value="" width="70">
+    								</w2:column>
+    								<w2:column allOption="" blockSelect="false" chooseOption="" dataType="text" displayMode="label"
+    									id="deptno" inputType="select" removeBorderStyle="false" style="" value="" width="70">
+    									<w2:choices>
+    										<w2:item>
+    											<w2:label><![CDATA[EMP_LIST_VIEW_SELECT_00006]]></w2:label>
+    											<w2:value><![CDATA[10]]></w2:value>
+    										</w2:item>
+    										<w2:item>
+    											<w2:label><![CDATA[EMP_LIST_VIEW_SELECT_00007]]></w2:label>
+    											<w2:value><![CDATA[20]]></w2:value>
+    										</w2:item>
+    										<w2:item>
+    											<w2:label><![CDATA[EMP_LIST_VIEW_SELECT_00008]]></w2:label>
+    											<w2:value><![CDATA[30]]></w2:value>
+    										</w2:item>
+    										<w2:item>
+    											<w2:label><![CDATA[EMP_LIST_VIEW_SELECT_00009]]></w2:label>
+    											<w2:value><![CDATA[40]]></w2:value>
+    										</w2:item>
+    									</w2:choices>
+    								</w2:column>
+    							</w2:row>
+    						</w2:gBody>
+    					</w2:gridView>
+    				</xf:group>
+    				<xf:group class="" id="" style="">
+    					<w2:pageList displayButtonType="display" displayFormat="#" ev:onclick="scwin.pgl_empList_onclick" id="pgl_empList"
+    						pageSize="10" style="height: 21px;">
+    					</w2:pageList>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    </xf:group></body>
+</html>

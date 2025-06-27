@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="screenRecorder" meta_screenName="screenRecorder" meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_desc="디바이스 (폰, 태블릿)에 화면 녹화, 녹음에 필요한 녹화, 저장, 취소, 일시정지 등의 API를 제공한다.">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.recordScreen,scwin.recordFinish,scwin.recordCancel,scwin.recordResume,scwin.recordPause,scwin.recordStatus,scwin.deleteFile,scwin.deleteAllFile"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_screenRecorder
+ * @pluginName
+ * @company
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser
+ * @version
+ * @htmlRender
+ * @icon
+ * @disableIcon
+ * @description 디바이스(폰,테블릿)에 화면 녹화/녹음에 필요한 녹화, 저장, 취소, 일시정지 등에 API를 제공한다.
+ * @variableClone true
+ * @width
+ * @height
+ * @license
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */
+
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name recordScreen
+ * @description options 설정에 따라 화면 녹화를 시작한다.
+ * @param {JSON} options 화면 녹화 파일 이름, 저장 위치, 오디오 녹음 옵션
+ * @param {String} options.fileName 파일 이름 
+ * @param {String} options.audio 오디오 녹음 여부 [default: false|"false", true|"true"]
+ * @param {String} options.isInternal (Android Only) 내부/외부 저장소 중 녹음 파일을 저장할 곳을 설정 [default:내부저장소|"true", 외부저장소|"false"]
+ * @param {String} options.saveToGallery 녹음 파일 앨범 저장 여부 [default: true|"true", false|"false"]
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.fileName = "screenRecorderExample";
+ *      options.isInternal = "true";
+ *      options.audio = "false";
+ *      options.saveToGallery = "true";
+ *      const data = await $c.screenRecorder.recordScreen(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.recordScreen = function(options) {
+    try {
+        if (typeof $h.screenRecorder === "object") {
+            return new Promise(resolve => {
+                $h.screenRecorder.recordScreen(resolve, options);
+            });
+        } else {
+            console.log("Not found ScreenRecorder Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name recordFinish
+ * @description 화면 녹화를 종료 및 저장한다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "data":{"filePath":"파일저장경로","url":"파일url","recordingTime":""}}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.screenRecorder.recordFinish();
+ *      console.log(data);
+ *  })();
+ */
+scwin.recordFinish = function() {
+    try {
+        if (typeof $h.screenRecorder === "object") {
+            return new Promise(resolve => {
+                $h.screenRecorder.recordFinish(resolve);
+            });
+        } else {
+            console.log("Not found ScreenRecorder Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name recordCancel
+ * @description 화면 녹화를 취소하고 파일은 생성하지 않는다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.screenRecorder.recordCancel();
+ *      console.log(data);
+ *  })();
+ */
+scwin.recordCancel = function() {
+    try {
+        if (typeof $h.screenRecorder === "object") {
+            return new Promise(resolve => {
+                $h.screenRecorder.recordCancel(resolve);
+            });
+        } else {
+            console.log("Not found ScreenRecorder Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name recordResume
+ * @description 일시 정지된 녹화를 다시 시작한다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.screenRecorder.recordResume();
+ *      console.log(data);
+ *  })();
+ */
+scwin.recordResume = function() {
+    try {
+        if (typeof $h.screenRecorder === "object") {
+            return new Promise(resolve => {
+                $h.screenRecorder.recordResume(resolve);
+            });
+        } else {
+            console.log("Not found ScreenRecorder Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name recordPause
+ * @description 화면 녹화를 일시 정지한다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.screenRecorder.recordPause();
+ *      console.log(data);
+ *  })();
+ */
+scwin.recordPause = function() {
+    try {
+        if (typeof $h.screenRecorder === "object") {
+            return new Promise(resolve => {
+                $h.screenRecorder.recordPause(resolve);
+            });
+        } else {
+            console.log("Not found ScreenRecorder Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name recordStatus
+ * @description 녹화가 진행 중인지 아닌지 상태를 나타낸다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", data: "0" (0: record, 1: stop, 2: pause)}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.screenRecorder.recordStatus();
+ *      console.log(data);
+ *  })();
+ */
+scwin.recordStatus = function() {
+    try {
+        if (typeof $h.screenRecorder === "object") {
+            return new Promise(resolve => {
+                $h.screenRecorder.recordStatus(resolve);
+            });
+        } else {
+            console.log("Not found ScreenRecorder Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name deleteFile
+ * @description 녹화 파일을 삭제한다.
+ * @param {JSON} options 화면 녹화 파일 삭제 옵션
+ * @param {String[]} options.deletefilePath 삭제할 파일 경로
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.deletefilePath = ["$filePath", "$filePath", "$filePath"];
+ *      const data = await $c.screenRecorder.deleteFile(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.deleteFile = function(options) {
+    try {
+        if (typeof $h.screenRecorder === "object") {
+            return new Promise(resolve => {
+                $h.screenRecorder.deleteFile(resolve, options);
+            });
+        } else {
+            console.log("Not found ScreenRecorder Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name deleteAllFile
+ * @description 녹화된 파일 및 폴더를 전부 삭제한다.
+ * @param {JSON} options 화면 녹화 전체 파일 삭제 옵션
+ * @param {String} options.isInternal (Android Only) 삭제할 파일 저장소 중 내부/외부 저장소 여부 [default:내부저장소|"true", 외부저장소|"false"]
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.isInternal = "true"
+ *      const data = await $c.screenRecorder.deleteAllFile(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.deleteAllFile = function(options) {
+    try {
+        if (typeof $h.screenRecorder === "object") {
+            return new Promise(resolve => {
+                $h.screenRecorder.deleteAllFile(resolve, options);
+            });
+        } else {
+            console.log("Not found ScreenRecorder Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+ 
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

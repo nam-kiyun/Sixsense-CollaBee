@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+
+};
+
+scwin.setScreen = function(idx) {
+
+    if (idx == 1) {
+        step1.addClass("on");
+        step2.removeClass("on");
+        step3.removeClass("on");
+        step4.removeClass("on");
+        step5.removeClass("on");
+    } else if (idx == 2) {
+        step1.removeClass("on");
+        step2.addClass("on");
+        step3.removeClass("on");
+        step4.removeClass("on");
+        step5.removeClass("on");
+    } else if (idx == 3) {
+        step1.removeClass("on");
+        step2.removeClass("on");
+        step3.addClass("on");
+        step4.removeClass("on");
+        step5.removeClass("on");
+    } else if (idx == 4) {
+        step1.removeClass("on");
+        step2.removeClass("on");
+        step3.removeClass("on");
+        step4.addClass("on");
+        step5.removeClass("on");
+    } else if (idx == 5) {
+        step1.removeClass("on");
+        step2.removeClass("on");
+        step3.removeClass("on");
+        step4.removeClass("on");
+        step5.addClass("on");
+    }
+};
+
+// progress 클릭
+scwin.step1_onclick = function(e) {
+    scwin.setScreen(1);
+};
+
+scwin.step2_onclick = function(e) {
+    scwin.setScreen(2);
+};
+
+scwin.step3_onclick = function(e) {
+    scwin.setScreen(3);
+};
+
+scwin.step4_onclick = function(e) {
+    scwin.setScreen(4);
+};
+
+scwin.step5_onclick = function(e) {
+    scwin.setScreen(5);
+};
+
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="sub_contents" id="" style="">
+    		<xf:group class="pgtbox" id="" style="">
+    			<w2:textbox class="pgt_tit" id="" label="화면타이틀" style="" tagname=""></w2:textbox>
+    			<xf:group class="breadcrumb" id="" style="">
+    				<xf:group id="" style="" tagname="ul">
+    					<xf:group class="home" id="" style="" tagname="li">
+    						<w2:anchor id="" outerDiv="false" style="">
+    							<xf:label><![CDATA[Home]]></xf:label>
+    						</w2:anchor>
+    					</xf:group>
+    					<xf:group id="" style="" tagname="li">
+    						<w2:anchor id="" outerDiv="false" style="">
+    							<xf:label><![CDATA[1Depth Menu]]></xf:label>
+    						</w2:anchor>
+    					</xf:group>
+    					<xf:group id="" style="" tagname="li">
+    						<w2:anchor id="" outerDiv="false" style="">
+    							<xf:label><![CDATA[2Depth Menu]]></xf:label>
+    						</w2:anchor>
+    					</xf:group>
+    					<xf:group id="" style="" tagname="li">
+    						<w2:span id="" label="3Depth Menu" style=""></w2:span>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    			<xf:trigger class="btn_fav" id="" style="" type="button">
+    				<xf:label></xf:label>
+    			</xf:trigger>
+    		</xf:group>
+    		<xf:group class="processbar" id="" style="" tagname="ul">
+    			<xf:group class="on" ev:onclick="scwin.step1_onclick" id="step1" tagname="li">
+    				<w2:span class="num" id="" label="1" style=""></w2:span>
+    				<xf:group class="dot_wrap" id="" style="">
+    					<w2:span class="dot on" id="" label="" style=""></w2:span>
+    					<w2:span class="dot" id="" label="" style=""></w2:span>
+    					<w2:span class="dot" id="" label="" style=""></w2:span>
+    					<w2:span class="dot" id="" label="" style=""></w2:span>
+    					<w2:span class="dot" id="" label="" style=""></w2:span>
+    				</xf:group>
+    				<w2:textbox id="" label="Step1" style=""></w2:textbox>
+    			</xf:group>
+    			<xf:group ev:onclick="scwin.step2_onclick" id="step2" style="" tagname="li">
+    				<w2:span class="num" id="" label="2" style=""></w2:span>
+    				<xf:group class="dot_wrap" id="" style="">
+    					<w2:span class="dot on" id="" label="" style=""></w2:span>
+    					<w2:span class="dot on" id="" label="" style=""></w2:span>
+    					<w2:span class="dot" id="" label="" style=""></w2:span>
+    					<w2:span class="dot" id="" label="" style=""></w2:span>
+    					<w2:span class="dot" id="" label="" style=""></w2:span>
+    				</xf:group>
+    				<w2:textbox id="" label="Step2" style=""></w2:textbox>
+    			</xf:group>
+    			<xf:group ev:onclick="scwin.step3_onclick" id="step3" style="" tagname="li">
+    				<w2:span class="num" id="" label="3" style=""></w2:span>
+    				<xf:group class="dot_wrap" id="" style="">
+    					<w2:span class="dot on" id="" label="" style=""></w2:span>
+    					<w2:span class="dot on" id="" label="" style=""></w2:span>
+    					<w2:span class="dot on" id="" label="" style=""></w2:span>
+    					<w2:span class="dot" id="" label="" style=""></w2:span>
+    					<w2:span class="dot" id="" label="" style=""></w2:span>
+    				</xf:group>
+    				<w2:textbox id="" label="Step3" style=""></w2:textbox>
+    			</xf:group>
+    			<xf:group ev:onclick="scwin.step4_onclick" id="step4" style="" tagname="li">
+    				<w2:span class="num" id="" label="4" style=""></w2:span>
+    				<xf:group class="dot_wrap" id="" style="">
+    					<w2:span class="dot on" id="" label="" style=""></w2:span>
+    					<w2:span class="dot on" id="" label="" style=""></w2:span>
+    					<w2:span class="dot on" id="" label="" style=""></w2:span>
+    					<w2:span class="dot on" id="" label="" style=""></w2:span>
+    					<w2:span class="dot" id="" label="" style=""></w2:span>
+    				</xf:group>
+    				<w2:textbox id="" label="Step4" style=""></w2:textbox>
+    			</xf:group>
+    			<xf:group ev:onclick="scwin.step5_onclick" id="step5" style="" tagname="li">
+    				<w2:span class="num" id="" label="5" style=""></w2:span>
+    				<xf:group class="dot_wrap" id="" style="">
+    					<w2:span class="dot on" id="" label="" style=""></w2:span>
+    					<w2:span class="dot on" id="" label="" style=""></w2:span>
+    					<w2:span class="dot on " id="" label="" style=""></w2:span>
+    					<w2:span class="dot on " id="" label="" style=""></w2:span>
+    					<w2:span class="dot on " id="" label="" style=""></w2:span>
+    				</xf:group>
+    				<w2:textbox id="" label="Step5" style=""></w2:textbox>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>

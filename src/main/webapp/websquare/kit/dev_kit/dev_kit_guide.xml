@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="/cm/css/base.css" type="text/css"?>
+<?xml-stylesheet href="/websquare/kit/dev_kit/dev_kit.css" type="text/css"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_vertical_guides="" meta_horizontal_guides="">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+	
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="designKit_layout" id="" style="">
+    		<xf:group class="dscontainer" id="">
+    			<xf:group class="designKit_side" id="">
+    				
+    			<w2:wframe class="dsside" id="" scope="true" src="/websquare/kit/dev_kit/xml/side.xml" style=""></w2:wframe></xf:group>
+    			<xf:group class="designKit_cont" id="">
+    			<xf:group id="" class="dscontents"><w2:wframe src="/websquare/kit/dev_kit/xml/color.xml" style="" id="content1" class=""></w2:wframe></xf:group></xf:group>
+    		</xf:group>
+    		<xf:group class="r_contents" id="" style="display:none" tagname="ul">
+    			<w2:textbox id="" label="CONTENTS" style=""></w2:textbox>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor href="#mf_color" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Color]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" style="" tagname="li">
+    				<w2:anchor href="#mf_primary" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Primary Color]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" style="" tagname="li">
+    				<w2:anchor href="#mf_second" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Second Color]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" style="" tagname="li">
+    				<w2:anchor href="#mf_sub" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Sub Color]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" style="" tagname="li">
+    				<w2:anchor href="#mf_alert" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Alert Color]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" style="" tagname="li">
+    				<w2:anchor href="#mf_legend" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Legend Color]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" style="" tagname="li">
+    				<w2:anchor href="#mf_grayscale" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Gray Scale]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>

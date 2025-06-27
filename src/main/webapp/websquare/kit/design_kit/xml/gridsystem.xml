@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+	
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="top_box" id="" style="" tagname="">
+    		<w2:textbox class="con_tit" id="" label="Grid System" style=""></w2:textbox>
+    		<w2:textbox class="con_txt" escape="false" id=""
+    			label="일관성을 유지할 수 있도록 그리드 규칙을 정의합니다. &amp;nbsp;"
+    			style="">
+    		</w2:textbox>
+    		<xf:group class="" id="primary" style=""></xf:group>
+    		<xf:group class="tab_anchor" id="" style="" tagname="ul">
+    			<xf:group class="on" id="" tagname="li">
+    				<w2:anchor class="" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[guide]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Snippet]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Dark Theme]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    	<xf:group class="contbox" id="" style="">
+    		<w2:textbox class="subtxt" escape="false" id="" label="Column은 최대 12개,로 구성되며, &amp;nbsp;각 column의 너비는 상위 요소에 비례해 유동적으로 변화합니다. "
+    			style="">
+    		</w2:textbox>
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="1280" style=""></w2:textbox>
+    			<w2:textbox class="con_txt" escape="false" id="" label="12단 40마진 16거터" style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="titbox" id="" style="" tagname="">
+    			<xf:image src="/cm/images/base/Grid.png" style="border:1px solid #eee;" id=""></xf:image>
+    		</xf:group>
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="그리드 활용" style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="titbox" id="" style="" tagname="">
+    			<xf:image id="" src="/cm/images/base/Grid_ex.png" style="border:1px solid #eee;"></xf:image>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>

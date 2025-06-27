@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="misc" meta_screenName="misc" meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_desc="여러가지 잡다한 기능들을 모아놓은 플러그인으로 브라우저 열기, 전화, 주소록, SMS 같은 기능들을 제공한다.">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.getServerIp,scwin.openBrowser,scwin.settingStatus,scwin.sendCall,scwin.sendSMS,scwin.getContacts,scwin.networkChangeListener,scwin.startTimer,scwin.stopTimer,scwin.stopTimerAll"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_misc
+ * @pluginName
+ * @company
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser
+ * @version
+ * @htmlRender
+ * @icon
+ * @disableIcon
+ * @description 여러가지 잡다한 기능들을 모아놓은 플러그인으로 브라우저열기, 전화, 주소록, SMS 같은 기능들을 제공한다.
+ * @variableClone true
+ * @width
+ * @height
+ * @license
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */
+
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name openBrowser
+ * @description 외부 브라우저를 호출한다.
+ * @param {JSON} options 브라우저 호출 옵션
+ * @param {String} options.url 오픈할 페이지의 url
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.url = "http://www.inswave.com";
+ *      const data = await $c.misc.openBrowser(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.openBrowser = function(options) {
+    try {
+        if (typeof $h.misc === "object") {
+            return new Promise(resolve => {
+                $h.misc.openBrowser(resolve, options);
+            });
+        } else {
+            console.log("Not found Misc Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name settingStatus
+ * @description 현재 setting 값을 반환한다.
+ * @param {JSON} options 반환받을 앱의 권한 옵션
+ * @param {String} options.type 설정 값 종류 [default: wifi|"wifi", data|"data", gps|"gps"]
+ * @param {String} options.message 출력 메시지 
+ * @param {Boolean} options.open 권한 요청 여부 [default: false, true]
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "data":"Location services are enabled"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.type = "gps";
+ *      options.message = "GPS가 켜져 있지 않습니다. Setting으로 이동하시겠습니까?";
+ *      options.open = true;
+ *      const data = await $c.misc.settingStatus(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.settingStatus = function(options) {
+    try {   
+        if (typeof $h.misc === "object") {
+            return new Promise(resolve => {
+                $h.misc.settingStatus(resolve, options);
+            });
+        } else {
+            console.log("Not found Misc Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+ 
+/**
+ * @method
+ * @name sendCall
+ * @description 플러그인을 사용하여 전화를 건다.
+ * @param {JSON} options 전화걸기 설정 옵션
+ * @param {String} options.number 전화번호
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.number = "01011112222";
+ *      const data = await $c.misc.sendCall(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.sendCall = function(options) {
+    try {   
+        if (typeof $h.misc === "object") {
+            return new Promise(resolve => {
+                $h.misc.sendCall(resolve, options);
+            });
+        } else {
+            console.log("Not found Misc Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name sendSMS
+ * @description 플러그인을 사용하여 문자를 보낸다
+ * @param {JSON} options 문자 보내기 설정 옵션
+ * @param {String} options.number 전화번호 
+ * @param {String} options.message 메시지
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.number = "01011112222";
+ *      options.message = "sample message";
+ *      const data = await $c.misc.sendSMS(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.sendSMS = function(options) {
+    try {   
+        if (typeof $h.misc === "object") {
+            return new Promise(resolve => {
+                $h.misc.sendSMS(resolve, options);
+            });
+        } else {
+            console.log("Not found Misc Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name getContacts
+ * @description 주소록에 접근하여 선택된 전화번호를 반환한다
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "data":{name:"", phoneNumber:""}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.misc.getContacts();
+ *      console.log(data.phoneNumber);
+ *  })();
+ */
+scwin.getContacts = function() {
+    try {   
+        if (typeof $h.misc === "object") {
+            return new Promise(resolve => {
+                $h.misc.getContacts(resolve);
+            });
+        } else {
+            console.log("Not found Misc Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name networkChangeListener
+ * @description Network 상태가 변경되었을 때 event를 Web에 전달하는 리스너를 등록한다.
+ * @returns {JSON} rtn {"isConnect":"false", "type": "none"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.misc.networkChangeListener();
+ *      console.log(data.phoneNumber);
+ *  })();
+ */
+scwin.networkChangeListener = function() {
+    try {   
+        if (typeof $h.misc === "object") {
+            return new Promise(resolve => {
+                $h.misc.networkChangeListener(resolve);
+            });
+        } else {
+            console.log("Not found Misc Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name startTimer
+ * @description (Android Only) Timer를 start 한다.
+ * @param {JSON} options 타이머 시작 옵션
+ * @param {String} options.id Timer의 unique ID 
+ * @param {Int} options.period Timer의 주기 밀리 세컨드 (1000 = 1초) 
+ * @param {String} options.mode [default: period 후 호출|"once", period 마다 호출|"repeat"]
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "data": {Timer id:"", Timer Mode: ""}}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.id = "testTimer";
+ *      options.period = 2000;
+ *      options.mode = "once"
+ *      const data = await $c.misc.startTimer(options);
+ *      console.log(data.phoneNumber);
+ *  })();
+ */
+scwin.startTimer = function(options) {
+    try {   
+        if (typeof $h.misc === "object") {
+            return new Promise(resolve => {
+                $h.misc.startTimer(resolve, options);
+            });
+        } else {
+            console.log("Not found Misc Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name stopTimer
+ * @description (Android Only) Timer를 stop 한다.
+ * @param {JSON} options 타이머 중단 옵션
+ * @param {String} options.id Timer의 unique ID
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "data": {Timer id:""}}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {};
+ *      options.id = "testTimer";
+ *      const data = await $c.misc.stopTimer(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.stopTimer = function(options) {
+    try {   
+        if (typeof $h.misc === "object") {
+            return new Promise(resolve => {
+                $h.misc.stopTimer(resolve, options);
+            });
+        } else {
+            console.log("Not found Misc Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name stopTimerAll
+ * @description (Android Only) 현재 실행되고 있는 모든 Timer를 stop 한다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.misc.stopTimerAll();
+ *      console.log(data);
+ *  })();
+ */
+scwin.stopTimerAll = function() {
+    try {   
+        if (typeof $h.misc === "object") {
+            return new Promise(resolve => {
+                $h.misc.openBrowser(resolve);
+            });
+        } else {
+            console.log("Not found Misc Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name getServerIp
+ * @description 현재 설정된 Server Ip 반환 (iOS Only)
+ * @returns {String} 서버 주소
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.misc.getServerIp();
+ *      console.log(data);
+ *  })();
+ */
+scwin.getServerIp = function(options) {
+    try {   
+        if (typeof $h.misc === "object") {
+            return new Promise(resolve => {
+                $h.misc.getServerIp(resolve, options);
+            });
+        } else {
+            console.log("Not found Misc Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+
+/**
+ * @event
+ * @name onNetworkChanged
+ * @description Network 상태가 변경 되었을 때
+ * @param {String} listener 이벤트 발생 시 실행할 함수
+ * @example 
+ */ 
+scwin.emit_onNetworkChanged = function(listener) {
+	$p.emit("onNetworkChanged", listener);
+}
+ 
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

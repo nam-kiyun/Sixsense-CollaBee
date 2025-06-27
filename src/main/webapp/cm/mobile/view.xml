@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="$c.view" meta_screenName="view" meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_desc="toast, snacker, notification 같은 네이티브 뷰를 호출하는 API를 제공한다.">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.toast,scwin.snackBar,scwin.notification"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_view
+ * @pluginName 
+ * @company 
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon
+ * @disableIcon
+ * @description toast, snacker, notification 같은 네이티브 뷰를 호출하는 API를 제공한다.
+ * @variableClone true
+ * @width
+ * @height
+ * @license
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */
+
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name toast
+ * @description 메시지를 팝업 toast 로 보여준다.
+ * @param {JSON} options toast의 메시지, 지속 시간 옵션
+ * @param {String} options.message 팝업으로 보여줄 메시지 
+ * @param {Int} options.time 팝업 지속 시간 {0: short time, 1: long time} [default: 0]
+ * @returns {Promise} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example const callback = (r)=>{ console.log(r); };
+ * let options = {};
+ * options.message = "showing toast message";
+ * options.time = 0
+ * $c.view.toast(options).then(callback);
+ * 
+ * 
+ */
+scwin.toast = function(options) {
+    try {
+        if (typeof $h.view === "object") {
+            return new Promise(resolve => {
+                $h.view.toast(resolve, options);
+            });
+        } else {
+            console.log("Not found View Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name snackBar
+ * @description 메시지를 팝업 snack bar로 보여준다.
+ * @param {JSON} options snack bar의 메시지, 지속 시간, 버튼 텍스트와 실행할 핸들러 옵션
+ * @param {String} options.message 팝업으로 보여줄 메시지
+ * @param {Int} options.time 팝업 지속 시간 [default:short time|0, long time|1]
+ * @param {JSON} options.action
+ * @param {String} options.action.buttonText snack bar 상호작용 버튼에 보여질 텍스트
+ * @param {String} options.action.onClickEvent 상호작용 버튼 클릭 시 실행될 javascript
+ * @returns {Promise} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example const callback = (r)=>{ console.log(r); };
+ * let options = {};
+ * options.message = "showing snack message";
+ * options.time = 0;
+ * options.action = {"buttonText": "종료", "onClickEvent": "alert("종료")"};
+ * $c.view.snackBar(options).then(callback);
+ *      
+ */
+scwin.snackBar = function(options) {
+    try {
+        if (typeof $h.view === "object") {
+            return new Promise(resolve => {
+                $h.view.snackBar(resolve, options);
+            });
+        } else {
+            console.log("Not found View Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name notification
+ * @description 메시지를 notification으로 보여준다.
+ * @param {JSON} options notification의 문구, 이미지 옵션
+ * @param {String} options.title notification에 보여줄 title 문구 
+ * @param {String} options.message notification에 보여줄 message 문구 
+ * @param {String} options.icon (Android Only) notification에 보여줄 icon image (base64 String 값) 
+ * - ldpi: 48x48 px * 0.75
+ * - mdpi: 64x64 px * 1.00
+ * - hdpi: 96x96 px * 1.50
+ * - xhdpi: 128x128 px * 2.00
+ * - xxhdpi: 192x192 px * 3.00
+ * @param {String} options.action 실행할 javascript
+ * @returns {Promise} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example const callback = (r)=>{console.log(r);};
+ * let options = {};
+ * options.title = "Notification Title";
+ * options.message = "Showing notification message";
+ * options.icon = "";
+ * options.action = "alert('test');";
+ * $c.view.notification(options).then(callback);
+ */
+scwin.notification = function(options) {
+    try {
+        if (typeof $h.view === "object") {
+            return new Promise(resolve => {
+                $h.view.notification(resolve, options);
+            });
+        } else {
+            console.log("Not found View Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

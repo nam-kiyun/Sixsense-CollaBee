@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type palette="support">COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.openPaint"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_paint
+ * @pluginName 
+ * @company inswave
+ * @developer uapmobile
+ * @category /udc/matrix
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABBklEQVR42rVSwQ3CMAzsE5E8GIER
+ * 2ABGYAQ2oBvACGwAPxT30W5QEoR4wgZ0A9ig+EJTNS2lRQJLVWPHPvucC4J/mDjRRGhaymO0wudi
+ * fJ51FkpDqTCUCaN2Uqv10Kg5+wsb07T53NUWRiH8ajcGPQzO+zHugzQeNas5KDXdXRH+XJQ7H9OA
+ * ktDqBqAGCEZFkjcRj10m2gYvOgBg8MQf36grumHExqUDMDQFzeKc+xMUAXRFl3p9SYl3Uc1vALRZ
+ * J4Cj0AegONd3EIXSqLjOmyltoYsqgH1u7OJNcmY374FSgp3UKbSrUNOjlC4DuKftBQBzbwxRsXAu
+ * XwN4QFhqRXHwrQp/bU+Sh9qMKrHO1AAAAABJRU5ErkJggg==
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA/ElEQVR42rWT4RGCMAyFGYERGIEN
+ * TNrynxHYQDfQEdxAN9ANdAPdQDfQDTTP0KOlCnin3HGhafMlLw1Z9o+HqCqJ7NyQW+LtfI5GA5nc
+ * wbC9MtmtBK8EVBsyDXyG7HowWA+5ha67bMzuSEQF9sXmb4Ipl4w3HwRr2D38GtVAktgLQAkEpeJQ
+ * 7DONPwjr5QAgMvcRgNmeNSu09zZ9hVzNtJECk+riClqHZrV1ClBJ6EV4PgF8bvAIwEuYAsB3IhNX
+ * J3e86+sW3wZzEQPQh6pMmqQzYJoQikza+VjCwCC5ux9dBejVTgK0lbzuGEMl9vQ1IAQhKJy4dl38
+ * /M99AqNPjR6AfBx7AAAAAElFTkSuQmCC
+ * @description paint UDC
+ * @width 100
+ * @height 50
+ * @license
+ * @imagePath
+ * @homepage
+ */
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name color
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default #000000,#FF0000,#00FF00,#0000FF
+ * @necessary Y
+ * @bindparent
+ * @description 펜 색상 값 배열
+ */
+
+scwin.onpageload = function() {
+	
+};
+
+/**
+ * @event
+ * @name openPaint
+ * @description 웹뷰 위에 레이어를 띄워 펜기능을 제공
+ * @param {Object} result 실행결과
+ * @example
+ */
+scwin.emit_openPaint = function (result) {
+	$p.emit("openPaint", result);
+};
+
+scwin.anchor_paint_onclick = function (e) {
+   try {
+        if(typeof $h == "object") {
+            let options = $p.getOptions();
+            console.log(options);
+            options.color = options.color.replace(/\s+/g, '');
+            options.color = options.color.split(',');
+            console.log(options.color);
+            $h.paint.openPaint(scwin.emit_openPaint,options);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+
+/**
+ * @method
+ * @name openPaint
+ * @description paint open
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_paint.openPaint();
+ * })();
+ * 
+ */
+scwin.openPaint = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+            options.color = options.color.replace(/\s+/g, '');
+            options.color = options.color.split(',');
+            $h.paint.openPaint(resolove,options);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<w2:anchor outerDiv="false" id="anchor_paint" style="width: 100px;height: 23px;" ev:onclick="scwin.anchor_paint_onclick">
+    		<xf:label><![CDATA[그림판 열기]]></xf:label>
+    	</w2:anchor>
+    </body>
+</html>

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="$c.contents" meta_screenName="contents" meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_desc="content 관련 API를 제공하는 플러그인으로 image picker, file picker, file download 기능을 제공한다.">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.imagePicker,scwin.filePicker,scwin.fileDownload"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName gcc_contents
+ * @pluginName 
+ * @company 인스웨이브
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon
+ * @disableIcon
+ * @description Content 관련 API를 제공하는 플러그인으로 image picker, file picker, fileDownload 기능을 제공한다.
+ * @variableClone true
+ * @width
+ * @height
+ * @license
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name imagePicker
+ * @description 이미지 선택 창을 띄운다.
+ * @param {JSON} options 이미지 선택 창 띄우기 옵션
+ * @param {Boolean} options.multiselect 여러 파일 선택 가능 여부 (true일 경우 여러 개의 파일 선택) [default: false, true]
+ * @param {Int} options.maxcount 선택 가능한 파일의 수 
+ * @param {Boolean} options.camera 카메라 사용 여부 [default: false, true]
+ * @param {Object} options.cameraoption 카메라 플러그인 옵션 
+ * @param {Int} options.type 반환 타입 [default: base64|0, file URL|1]
+ * @param {Int} options.galleryFolder (Android Only) 갤러리 폴더 [default: DCIM|0, PICTURES|1, DOWNLOADS|2]
+ * @returns {Promise} rtn {"statusCode": "코드", "msg": "메시지", "data": {image: imgPath or ["imgPath1", "imgPath2",...]}}
+ * @hidden N
+ * @exception 
+ * @example const callback = function(result){console.log(result);};
+ * let options = {};
+ * options.multiselect = true;
+ * options.maxcount = 2;
+ * options.camera = false;
+ * options.cameraoption = {};
+ * options.type = 0;
+ * options.galleryFolder = 0;
+ * $c.contents.imagePicker(options).then(callback);
+ */ 
+scwin.imagePicker = function(options) {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.contents === "object") {
+                $h.contents.imagePicker(resolve, options);
+            } else {
+                reject("Not found Contents Plugin");
+            }
+        } catch (e){
+            reject(e);
+        }
+    });
+}
+
+/**
+ * @method
+ * @name filePicker
+ * @description 파일 선택 창을 띄운다.
+ * @param {JSON} options contents params 
+ * @param {Boolean} options.multiselect 여러 파일 선택 가능 여부 (true일 경우 여러 개의 파일 선택) [default: false, true]
+ * @param {String} options.extension 허용 된 확장자 
+ * @param {String} options.start SD Card 내의 시작 경로 
+ * @param {Int} options.maxcount 선택 가능한 파일의 수 
+ * @returns {Promise} rtn {"statusCode": "코드", "msg": "메시지", "data": {fileUri: filePath or ["filePath1", "filePath2",...]}}
+ * @hidden N
+ * @exception 
+ * @example 
+ * const callback = function(result){ console.log(result);};
+ * let options = {};
+ * options.multiselect = true;
+ * options.extension = "pdf,docx,jpg,png,pptx,xlsx,zip";
+ * options.start = "";
+ * options.maxcount = 2;
+ * $c.contents.filePicker(options).then(callback);
+ */ 
+scwin.filePicker = function(options) {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.contents === "object") {
+                $h.contents.filePicker(resolve, options);
+            } else {
+                reject("Not found Contents Plugin");
+            }
+        } catch (e){
+            reject(e);
+        }
+    });
+}
+
+/**
+ * @method
+ * @name fileDownload
+ * @description URL의 파일을 다운로드 한다.
+ * @param {JSON} options 파일 다운로드 옵션
+ * @param {String} options.url 다운로드 URL
+ * @param {Boolean} options.progress 다운로드 진행 상황을 상단 Notification bar 표시 여부 [default: false, true]
+ * @param {Boolean} options.open 다운로드가 완료되면 해당 파일을 open할지 여부 [default: false, true]
+ * @param {Boolean} options.notify 다운로드가 완료되면 toast로 다운로드 여부를 알려줄지 여부 [default: false, true]
+ * @param {String} options.location 다운로드가 될 위치 지정 [default: "Download"]
+ * @param {String} options.requestType 다운로드 request method type [default: GET|"get", POST|"post"]
+ * @param {String} options.fileName 다운로드 후 저장 될 파일 이름 (post의 경우 필수)
+ * @param {String} options.dataType 요청 데이터 형식 application/json
+ * @param {Object} options.data.saveName request Body 다운로드 후 저장 될 파일 이름
+ * @param {Object} options.data.filePath request Body 다운로드 할 파일이 위치한 경로
+ * @returns {Promise} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example 
+ * const callback = function(result){ console.log(result);};
+ * let options = {};
+ * options.url = "http://localhost:8080/download/test.pdf";
+ * options.progress = true;
+ * options.open = true;
+ * options.notify = true;
+ * options.location = "Download";
+ * options.requestType = "get";
+ * options.fileName = "test.pdf";
+ * $c.contents.fileDownload(options).then(callback);
+ */ 
+scwin.fileDownload = function(options) {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.contents === "object") {
+                $h.contents.fileDownload(resolve, options);
+            } else {
+                reject("Not found Contents Plugin");
+            }
+        } catch (e){
+            reject(e);
+        }
+    });
+    
+}
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

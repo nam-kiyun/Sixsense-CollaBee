@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_vertical_guides="2" meta_horizontal_guides="32">
+        <w2:type palette="support">COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.open"/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_inappbrowser_in
+ * @pluginName 
+ * @company inswave
+ * @developer uapmobile
+ * @category /udc/matrix
+ * @notSupportBrowser 
+ * @version
+ * @htmlRender
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAkklEQVR42mNgoAbgObiygefQqv8k
+ * YaAehAGkaoZiKhtweLUD0V4Gqh0iBnAfXWUAwmQZANLIc3DVexBGN4SgAXDN8DhHNYSwAYdWPeA+
+ * tPIC98FVE8AYxAaKkeQChv3rBcApFJTigGySXICSxJGTLD4DgE7NB9L2IMxxfLkCugEgMZg8VO1/
+ * 3JkJqgnZAFxqKAYA6B4XMIQXVOcAAAAASUVORK5CYII=
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAkUlEQVR42mNgoAZwcnBpcHJ0+U8S
+ * BupBGECqZiimrgEODi4OxHoZpHaIGODg4GoAwmQZANLo6OD8HoTRDSFoAEwzLLTRDSFogJOj8wNH
+ * R+cLTg7OE0AYzAaKkeQCBwcHAXAKBWIQmyQXoCRx5CSL3wDnfEdHV3sQBtqogG4ASAwh75yPagB6
+ * ZoJqQjYAlxqKAQDiNb4lgTZJxgAAAABJRU5ErkJggg==
+ * @description inappbrowser inner UDC
+ * @width 100
+ * @height 50
+ * @license
+ * @imagePath
+ * @homepage
+ */
+
+
+
+
+/**
+ * @property
+ * @name id
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name class
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name style
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary N
+ * @bindparent
+ * @description desc
+ */
+
+/**
+ * @property
+ * @name type
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [내부 브라우저, 외부 브라우저]
+ * @default 내부 브라우저
+ * @necessary Y
+ * @bindparent
+ * @description 브라우저 호출 타입
+ */
+
+/**
+ * @property
+ * @name url
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description 내부(웹뷰) 브라우저 화면 URL
+ */
+
+scwin.onpageload = function() {
+	
+};
+
+/**
+ * @event
+ * @name open
+ * @description 별도 웹뷰를 붙여서 화면을 띄움
+ * @param {Object} result 실행결과
+ * @example
+ */
+scwin.emit_open = function (result) {
+	$p.emit("open", result);
+};
+
+scwin.anchor_innerbrowser_onclick = function (e) {
+  try {
+        if(typeof $h == "object") {
+            let options = $p.getOptions();
+      
+            options.type = options.type == "내부 브라우저" ? "_blank" : "_system";
+            console.log(options);
+            $h.inappbrowser.open(options.url, options.type);
+        }
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+/**
+ * @method
+ * @name open
+ * @description inappbrowser inner open
+ * @param
+ * @returns
+ * @hidden N
+ * @exception
+ * @example ex)
+ * (async()=>{
+ *     const result = await udc_inappbrowser.open();
+ * })();
+ * 
+ */
+scwin.open = function () {
+	return new Promise((resolove,reject) => {
+        try {
+            let options = $p.getOptions();
+            options.type = options.type == "내부 브라우저" ? "_blank" : "_system"; 
+            console.log(options);
+            $h.inappbrowser.open(options.url, options.type);
+        } catch(err){
+            reject(err);
+        } 
+    });
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<w2:anchor outerDiv="false" id="anchor_innerbrowser" style="width: 100px;height: 23px;" ev:onclick="scwin.anchor_innerbrowser_onclick">
+    		<xf:label><![CDATA[인앱브라우저 호출]]></xf:label>
+    	</w2:anchor>
+    </body>
+</html>

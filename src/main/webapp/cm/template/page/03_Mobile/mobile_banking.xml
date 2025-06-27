@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+	scwin.initpub();  //퍼블리스트에서 링크받아서 파일을 test container에 연결
+};
+
+scwin.initpub = function() {
+    var link = WebSquare.net.getParameter( "link" );
+    m_container.setSrc(link);
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload" class="mobile">
+    	<xf:group style="" id="m_wrap" class="m_wrap">
+    		<w2:wframe style="" id="" src="/mrm/cm/main/inc/m_header.xml" class="wfm_m_header"></w2:wframe>
+    		<w2:wframe style="" id="m_container" class="m_container" src="/mrm/cm/main/main.xml"></w2:wframe>
+
+    		<w2:wframe style="" id="" class="wfm_m_footer" src="/mrm/cm/main/inc/m_footer.xml"></w2:wframe>
+    	</xf:group>
+    </body>
+</html>

@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper      
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"      
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+	@subject	 : 사원정보 관련 처리를 하는 SQL Mapper
+	@description : 사원정보 관련 처리를 하는 SQL Mapper
+	@author		 : 개발팀
+	@since 		 : 2025/05/19
+	@modification
+	===========================================================
+	DATE              AUTHOR             NOTE
+	===========================================================
+	2025/05/19		샘플개발팀			최초 생성
+ -->
+<mapper namespace="com.demo.proworks.emp">
+
+	<insert id="insertEmp" parameterType="com.demo.proworks.emp.vo.EmpVo">
+		<!-- 사원 정보를 등록 처리한다. -->
+        INSERT INTO EMP /* QueryID : com.demo.proworks.emp.insertEmp */
+        ( 
+        EMPNO
+        <if test="ename    != null"> , ENAME    </if>   
+        <if test="job      != null"> , JOB      </if>     
+        <if test="mgr      != null"> , MGR      </if>     
+        <if test="hiredate != null"> , HIREDATE </if>
+        <if test="sal      != null"> , SAL      </if>     
+        <if test="comm     != null"> , COMM     </if>    
+        <if test="deptno   != null"> , DEPTNO   </if>  
+        <if test="account   != null"> , ACCOUNT   </if>  
+        )
+        VALUES  
+        ( 
+         #{empno}   
+        <if test="ename    != null"> , #{ename}    </if>   
+        <if test="job      != null"> , #{job}      </if>     
+        <if test="mgr      != null"> , #{mgr}      </if>     
+        <if test="hiredate != null"> , STR_TO_DATE( #{hiredate} , '%Y-%m-%d %H:%i:%s') </if>
+        <if test="sal      != null"> , #{sal}      </if>     
+        <if test="comm     != null"> , #{comm}     </if>    
+        <if test="deptno   != null"> , #{deptno}   </if>  
+        <if test="account  != null"> , #{account,jdbcType=CLOB}   </if>  
+        )          
+	</insert>	
+	
+	<update id="updateEmp" parameterType="com.demo.proworks.emp.vo.EmpVo">
+		<!-- 사원 정보를 갱신 처리한다. -->
+        UPDATE EMP    /* QueryID : com.demo.proworks.emp.updateEmp */      
+      	  <trim prefix="SET" prefixOverrides=",">             
+             <if test="empno    != null">, EMPNO    =  #{empno}    </if>
+             <if test="ename    != null">, ENAME    =  #{ename}    </if>   
+             <if test="job      != null">, JOB      =  #{job}      </if>     
+             <if test="mgr      != null">, MGR      =  #{mgr}      </if>     
+             <if test="hiredate != null">, HIREDATE =  STR_TO_DATE( #{hiredate} , '%Y-%m-%d %H:%i:%s') </if>
+             <if test="sal      != null">, SAL      =  #{sal}      </if>     
+             <if test="comm     != null">, COMM     =  #{comm}     </if>    
+             <if test="deptno   != null">, DEPTNO   =  #{deptno}   </if>
+             <if test="account   != null">, ACCOUNT   =  #{account,jdbcType=CLOB}   </if>
+         </trim>          
+        WHERE   EMPNO = #{empno}
+	</update>
+	
+	<delete id="deleteEmp" parameterType="com.demo.proworks.emp.vo.EmpVo">
+		<!-- 사원 정보를 삭제 처리한다. -->
+		<![CDATA[
+        DELETE FROM EMP   /* QueryID : com.demo.proworks.emp.deleteEmp */  
+        WHERE   EMPNO = #{empno}    
+		]]>
+	</delete>
+	
+	<select id="selectEmp" parameterType="com.demo.proworks.emp.vo.EmpVo" resultType="com.demo.proworks.emp.vo.EmpVo">
+		<!-- 사원 정보를 상세 조회한다. -->
+		<![CDATA[
+        SELECT   /* QueryID : com.demo.proworks.emp.selectEmp */  
+              EMPNO, ENAME , JOB, MGR, DATE_FORMAT( HIREDATE , '%Y-%m-%d') HIREDATE
+            , SAL, COMM, DEPTNO, ACCOUNT
+            , (SELECT DNAME FROM DEPT WHERE DEPTNO = E.DEPTNO) DNAME
+            , (SELECT ENAME FROM EMP WHERE EMPNO=E.MGR) MGRNAME
+        FROM EMP E
+        WHERE EMPNO = #{empno}  
+		]]>
+	</select>
+		
+	<select id="selectListEmp" parameterType="com.demo.proworks.emp.vo.EmpVo" resultType="com.demo.proworks.emp.vo.EmpVo">
+		<!-- 사원 정보 목록을 조회한다. -->
+	       SELECT    /* QueryID : com.demo.proworks.emp.selectListEmp */  
+				  EMPNO, ENAME AS ENAME, JOB, MGR, DATE_FORMAT( HIREDATE , '%Y-%m-%d') HIREDATE
+	            , SAL, COMM, DEPTNO, ACCOUNT
+	            , (SELECT DNAME FROM DEPT WHERE DEPTNO = A.DEPTNO) DNAME
+	            , (SELECT ENAME FROM EMP WHERE EMPNO=A.MGR) MGRNAME      			       
+	       FROM (
+		       SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
+			   FROM (				
+			        SELECT 
+			              *  		                  
+			        FROM EMP
+			        WHERE  1=1    		
+						<if test="!( scEname == null  or scEname == ''  )">
+							AND ENAME LIKE CONCAT('%',#{scEname},'%')
+						</if>		     
+						<if test="!( scDname == null  or scDname == '' )">
+							AND DEPTNO IN (SELECT DEPTNO FROM DEPT WHERE DNAME LIKE CONCAT('%',#{scDname},'%'))      
+						</if>					
+						<if test="!( scDeptno == null or scDeptno == ''  or scDeptno == 'all' )">
+							AND DEPTNO = #{scDeptno}      
+						</if>	
+						<if test="!( scJob == null or scJob == '' or scJob == 'all' )">
+							AND JOB = #{scJob}      
+						</if>					
+					ORDER BY EMPNO ASC																		
+				) S, (SELECT @ROWNUM := 0) TMP
+			 ) A
+		  WHERE PAGE = #{pageIndex}
+	</select>	
+	
+	<select id="selectListCountEmp" parameterType="com.demo.proworks.emp.vo.EmpVo" resultType="long">
+		<!-- 사원 정보 목록 건수를 조회한다. -->
+	        SELECT    /* QueryID : com.demo.proworks.emp.selectListCountEmp */
+	            COUNT(*) totcnt  		                  
+	        FROM EMP
+	        WHERE  1=1    		
+				<if test="!( scEname == null  or scEname == ''  )">
+					AND ENAME LIKE CONCAT('%',#{scEname},'%')
+				</if>		     
+				<if test="!( scDname == null  or scDname == '' )">
+					AND DEPTNO IN (SELECT DEPTNO FROM DEPT WHERE DNAME LIKE CONCAT('%',#{scDname},'%'))      
+				</if>					
+				<if test="!( scDeptno == null or scDeptno == ''  or scDeptno == 'all' )">
+					AND DEPTNO = #{scDeptno}      
+				</if>	
+				<if test="!( scJob == null or scJob == '' or scJob == 'all' )">
+					AND JOB = #{scJob}      
+				</if>						
+	</select>
+
+	<select id="selectListDept" parameterType="java.util.HashMap" resultType="com.demo.proworks.emp.vo.DeptVo">
+		<!-- 부서 정보 목록을 조회한다. -->
+		   SELECT   /* QueryID : com.demo.proworks.emp.selectListDept */
+		      DEPTNO AS deptno , DNAME AS dname
+	       FROM DEPT 
+	       ORDER BY DNAME ASC
+	</select>
+	
+	<insert id="insertEmpFile" parameterType="com.demo.proworks.emp.vo.EmpVo">
+		<!-- 사원 첨부파일 정보를 등록 처리한다. -->
+        INSERT INTO EMP_FILE  /* QueryID : insertEmpFile */
+        ( 
+         	EMPNO          	       
+	        <if test="fileName    != null"> , FILE_NAME </if>
+	        <if test="fileData    != null"> , FILE_DATA </if>
+        )
+        VALUES  
+        ( 
+	         #{empno}  	        
+	        <if test="fileName    != null"> , #{fileName}             </if>
+	        <if test="fileData    != null"> , #{fileData,jdbcType=BLOB} </if>
+        )          
+	</insert>	
+	
+	<update id="updateEmpFile" parameterType="com.demo.proworks.emp.vo.EmpVo">
+		<!-- 사원 첨부파일 정보를 갱신 처리한다. -->
+		UPDATE EMP       /* QueryID : com.demo.proworks.emp.updateEmpFile */    
+      	  SET    
+      	       EMPNO = #{empno}
+             <if test="fileName    != null">, FILE_NAME=  #{fileName}       </if>
+             <if test="fileData    != null">, FILE_DATA=  #{fileData,jdbcType=BLOB} </if>
+        WHERE   EMPNO = #{empno}
+	</update>
+		
+	<delete id="deleteEmpFile" parameterType="com.demo.proworks.emp.vo.EmpVo">
+		<!-- 사원 첨부파일 정보를 삭제 처리한다. -->
+		<![CDATA[
+        DELETE FROM EMP_FILE  /* QueryID : com.demo.proworks.emp.deleteEmpFile */    
+        WHERE   EMPNO = #{empno}   
+		]]>
+	</delete>
+	
+	<select id="selectEmpFile" parameterType="com.demo.proworks.emp.vo.EmpVo" resultType="com.demo.proworks.emp.vo.EmpVo">
+		<!-- 사원 첨부파일 정보를 상세 조회한다. -->
+		<![CDATA[
+        SELECT   /* QueryID : com.demo.proworks.emp.selectEmpFile */ 
+            EMPNO, FILE_NAME AS fileName , FILE_DATA AS fileData
+        FROM EMP_FILE
+        WHERE   EMPNO = #{empno}   
+		]]>
+	</select>
+	
+</mapper>

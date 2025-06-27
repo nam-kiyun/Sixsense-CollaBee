@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" viewBox="0 0 16 15">
+  <g id="입력폼" transform="translate(-923 -377)">
+    <path id="사각형_3070" data-name="사각형 3070" d="M1,1V4H13V1H1M0,0H14V5H0Z" transform="translate(923 383)" fill="#b7b7b7"/>
+    <path id="사각형_3070-2" data-name="사각형 3070" d="M1,1V4H13V1H1M0,0H14V5H0Z" transform="translate(923 387)" fill="#b7b7b7"/>
+    <circle id="타원_27" data-name="타원 27" cx="0.5" cy="0.5" r="0.5" transform="translate(925 385)" fill="#b7b7b7"/>
+    <circle id="타원_28" data-name="타원 28" cx="0.5" cy="0.5" r="0.5" transform="translate(925 389)" fill="#b7b7b7"/>
+    <path id="move_selection_left_FILL0_wght300_GRAD0_opsz20" d="M117.54-691.46v-7h16v7Zm1.1-1.19h13.793v-4.62H118.643Z" transform="translate(805.46 1075.46)" fill="#424144"/>
+    <path id="play_circle_FILL0_wght300_GRAD0_opsz20" d="M122.092-836.3l2.363-1.5-2.363-1.5ZM122.954-837.8Z" transform="translate(97.023 257.408) rotate(90)" fill="#424144"/>
+  </g>
+</svg>

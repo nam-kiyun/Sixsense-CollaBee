@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+	<head meta_screenId="matrixBioDecrypt" meta_screenName="BioDecrypt" meta_screenDesc="Biometric UDC">
+		<w2:type palette="support">COMPONENT</w2:type>
+		<w2:buildDate />
+		<w2:publicInfo method="scwin.decryptData" component="" ></w2:publicInfo>
+		<xf:model>
+			<xf:instance>
+				<data xmlns="" />
+			</xf:instance>
+			<w2:dataCollection baseNode="map">
+			</w2:dataCollection>
+			<w2:workflowCollection />
+		</xf:model>
+		<script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * @component
+ * @componentName udc_biometric
+ * @pluginName 
+ * @company Inswave
+ * @developer uapmobile
+ * @category /cm/udc/matrix
+ * @variableClone true
+ * @notSupportBrowser 
+ * @version 2.0
+ * @htmlRender 
+ * @icon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAmElEQVR42mNgGJTA0dHlgJOjy38U
+ * 7OC8nijNDg4uDk6Ozg/QxUFiIDkcNjpfQLXNKQHDAKAYshpHB5fzSKa7/MdiaB7Q1qsgDGJjughJ
+ * D7oBIA0ODs7r7OxcNEHY0dFpLZCfT7QBIFtBGmF8EBskRj8DQF4ARuVahBec15DkBUh0OufDAhFd
+ * M1EGEAIoejDSAREYpIdheAAATZp0POGNog0AAAAASUVORK5CYII=
+ * @disableIcon iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAl0lEQVR42mNgGJSA59CqA0D8HxWv
+ * XE+c5sOrHbgPrXqALg4SA8lh1cR9aOUFZNuAihOwGJCAoubgqvPITv6P6ZKVeUDxq2AMZGPx5n+c
+ * BoA1H1y1ju3gCk0QBrLXAm3MJ94AoK0gjTA+2BCgGB0NAHnh8Kq1cC8cWrWGJC+AQx2oARaI6JqJ
+ * MoCIxPYfZzogBoP0MAwPAAAgrqjpqzuE0gAAAABJRU5ErkJggg==
+ * @width 30px
+ * @height 30px
+ * @description Biometric decrypt
+ */
+
+/**
+ * @property
+ * @name Key
+ * @category 01.Basic & ETC
+ * @type string
+ * @option
+ * @default
+ * @necessary Y
+ * @bindparent
+ * @description 복호화활 데이터에 키 값
+ */
+
+/**
+ * @event
+ * @name onResult
+ * @description 암호화 결과값을 반환받는 이벤트
+ * @param {Object} result 복호화된 결과값을 받는다.
+ * @example
+ */
+scwin.emit_onResult = function (result) {
+	$p.emit("onResult", result);
+};
+
+scwin.btnBioDecrypt_onclick = function () {
+    if(typeof $h == "object") {
+        let options = $p.getOptions();
+        $h.biometric.decryptData(scwin.emit_onResult, options);
+    }
+}
+]]></script>
+	</head>
+	<body ev:onpageload="scwin.onpageload">
+		<xf:group id="btnBioDecrypt" style="width: 30px;height: 30px;background-image:url('')" ev:onclick="scwin.btnBioDecrypt_onclick"></xf:group>
+	</body>
+</html>

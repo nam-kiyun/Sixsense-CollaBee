@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:mvc="http://www.springframework.org/schema/mvc"   	   
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	                       http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+				           http://www.springframework.org/schema/context 
+				           http://www.springframework.org/schema/context/spring-context-4.0.xsd
+				           http://www.springframework.org/schema/aop 
+						   http://www.springframework.org/schema/aop/spring-aop-4.0.xsd 
+	                       http://www.springframework.org/schema/mvc 
+                           http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd">
+		  		
+    <mvc:interceptors>    	     
+	    <mvc:interceptor>
+		    <mvc:mapping path="/**" />
+		    <bean class="com.inswave.elfw.intercept.ElHandlerInterceptorAdapter" />
+	    </mvc:interceptor>
+	</mvc:interceptors> 	      	
+    		    	   
+	<bean id="jdbcInterceptor" class="com.inswave.elfw.db.sql.ElJdbcInterceptor">
+	    <property name="sqlInjectionPatternInterceptor" ref="sqlInjectionPatternInterceptor" />
+	    <property name="sqlHandlerInterceptor" ref="sqlHandlerInterceptor" />
+	</bean>    	
+    	   
+	<aop:config>
+	    <aop:pointcut id="jdbcPointcut" expression="execution(* *..*DataSource.*(..))" />
+	    <aop:advisor advice-ref="jdbcInterceptor" pointcut-ref="jdbcPointcut" />
+	</aop:config>
+    
+	<bean id="sqlInjectionPatternInterceptor"
+		class="com.inswave.elfw.db.sql.impl.ElSqlInjectionPatternInterceptorImpl" />
+    	
+	<bean id="sqlHandlerInterceptor" class="com.inswave.elfw.db.sql.impl.ElSqlHandlerInterceptorImpl" />    	   
+
+      <!-- sqlSessionFactory setup for MYBATIS Database Layer -->
+	<bean id="elSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="datasourceElCoreXA" />				
+		<property name="mapperLocations" value="classpath:/inswave/sqlmap/el/*_${Globals.DbType}_MyBatis.xml" /> 		
+	</bean>	    
+    	
+    <bean id="datasourceElCoreXA" class="org.springframework.jndi.JndiObjectFactoryBean" primary="true">
+		<property name="jndiName" value="${EL_DATASOURCE_NAME}"/>  
+		<property name="resourceRef" value="true" />		
+    </bean>
+    
+     
+    <bean name="loginProcess"	class="com.inswave.elfw.login.LoginProcessor"/>		
+    <bean name="elUserService"	class="com.inswave.elfw.service.impl.ElUserServiceImpl"/>	
+    <bean name="elUserDAO"	    class="com.inswave.elfw.service.impl.ElUserDAO"/>
+               
+	<bean id="serviceInterceptor" class="com.inswave.elfw.intercept.ElServiceInterceptor">
+	</bean>    	
+    	   
+	<aop:config>
+	    <aop:pointcut id="servicePointcut" expression="execution(* com.demo..impl.*Impl.*(..))" />
+	    <aop:advisor advice-ref="serviceInterceptor" pointcut-ref="servicePointcut" />
+	</aop:config>  
+
+   <bean id="jsonMapper" class="com.inswave.elfw.view.ElMappingJacksonObjectMapper">
+    	<property name="excludeNullYn" value="Y"/>  
+        <property name="excludeNames">
+            <map>
+            	<!--  entry key="totalCount" value="totalCount"/ -->
+            	<entry key="startRowIndex" value="startRowIndex"/>
+                <entry key="pageUnit" value="pageUnit"/> 
+                <entry key="pageSize" value="pageSize"/>
+            	<entry key="pageIndex" value="pageIndex"/>                
+            </map>
+        </property>                             	
+    </bean>
+    
+    <bean id="xmlMarshaller" class="org.springframework.oxm.xstream.XStreamMarshaller">
+		<property name="autodetectAnnotations" value="true"/>	
+		<property name="streamDriver">
+	        <bean class="com.thoughtworks.xstream.io.xml.XppDriver">
+	              <constructor-arg>
+	                  <!-- bean class="com.thoughtworks.xstream.io.xml.XmlFriendlyReplacer" -->
+	                  <bean class="com.thoughtworks.xstream.io.xml.XmlFriendlyNameCoder">
+	                      <constructor-arg index="0" value="__"/>
+	                      <constructor-arg index="1" value="_"/>
+	                  </bean>
+	              </constructor-arg>
+	         </bean>
+         </property>
+ 	</bean>  
+
+ 
+    <!--  Custom Json Mapper Mast -->
+    <bean id="customJsonMapper" class="com.inswave.elfw.databind.DefaultCustomJsonObjectMapper">
+    	<property name="elFilter">
+    		<bean class="com.inswave.elfw.databind.ElCommVoJsonFilter"/>
+    	</property> 
+     	<property name="propertyNamingStrategy">
+    		<bean class="com.inswave.elfw.databind.DefaultPropertyNamingStrategy"/>
+    	</property>    	  	
+	 	<property name="serializationInclusion">
+			<value type="com.fasterxml.jackson.annotation.JsonInclude.Include">NON_EMPTY</value>
+			<!--  
+            // ALWAYS (기본값) : 모든 값을 출력한다.
+            // NON_NULL : null은 제외한다.
+            // NON_ABSENT :	null은 제외한다. 참조 유형 (Java 8 'Optional'또는 {link java.utl.concurrent.atomic.AtomicReference})의 "absent"값; 즉, null이 아닌 값은 제외한다.
+            // NON_EMPTY : null은 제외한다. absent는 제외한다. ( 3. NON_ABSENT 참고 ) Collection, Map의 isEmpty()가 true 이면 제외한다.Array의 length가 0이면 제외한다.String의 length()가 0이면 제외한다
+            // NON_DEFAULT : empty는 제외된다. ( 4. NON_EMPTY 참고 )  primitive 타입이 디폴트 값이면 제외한다. (int / Integer : 0 , boolean / Boolean : false 등)  Date의 timestamp가 0L이면 제외한다.			
+			-->
+		</property>   	                             	
+    </bean>
+	 <!--  Custom Json Mapper Option -->
+	<bean
+		class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		<property name="targetObject" ref="customJsonMapper" />
+		<property name="targetMethod" value="configure" />
+		<property name="arguments">
+			<list>
+				<!-- Json의 항목을 VO에 없는 경우 에러를 무시 -->
+				<value type="com.fasterxml.jackson.databind.DeserializationFeature">FAIL_ON_UNKNOWN_PROPERTIES</value>
+				<value>false</value>
+			</list>
+		</property>
+	</bean>
+
+ 		        	   
+</beans>
+
+

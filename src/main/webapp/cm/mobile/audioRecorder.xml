@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="audioRecorder" meta_screenName="audioRecorder" meta_subsystem="common" meta_type="메인" meta_desc="음성녹음에 관련된 녹음, 저장, 일시중지, 재개, 취소 등의 API를 제공한다." meta_author="인스웨이브">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.recordAudio,scwin.recordFinish,scwin.recordCancel,scwin.recordPause,scwin.recordStatus,scwin.deleteAudioFile,scwin.recordResume,scwin.deleteAllFile"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_audioRecorder
+ * @pluginName 
+ * @company 
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser 
+ * @version 
+ * @htmlRender 
+ * @icon 
+ * @disableIcon 
+ * @description 음성녹음에 관련된 녹음,저장,일시중지,재개,취소 등 API를 제공한다.
+ * @variableClone true
+ * @width 
+ * @height 
+ * @license 
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */ 
+
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name recordAudio
+ * @description options의 설정에 따라 오디오 녹음을 시작하며, 녹음된 오디오 파일 정보를 콜백 함수에 반환한다. 콜백 함수는 녹음의 성공 여부와 관련 데이터를 포함하는 JSON 객체를 인자로 받는다.
+ * @param {JSON} options 녹음 설정 옵션
+ * @param {Int} options.quality 녹음 품질 [default: 32768]
+ * @param {String} options.fileName 파일 이름 [default: "audio"]
+ * @param {Boolean} options.isInternal 내부 저장소에 저장할지 여부 [default: true, false]
+ * @param {Int} options.codec 코덱 설정 [default: 0 (AAC)]
+ * @param {Int} options.outputFormat 녹음 파일 형식 [default: 0 (MPEG_4)]
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "data": {"fileName": "파일 이름", "filePath": "파일 경로", "duration": "녹음 시간", "size": "파일 크기"}}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = { "quality": 32768, "fileName": "audio", "isInternal": true, "codec": 0, "outputFormat": 0 };
+ *      const data = await $c.audioRecorder.recordAudio(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.recordAudio = function(options) {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.audioRecorder === "object") {
+                $h.audioRecorder.recordAudio(resolve, options);
+            } else {
+                reject("Not found AudioRecorder Plugin");
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+/**
+ * @method
+ * @name recordFinish
+ * @description 녹음을 종료하고, 녹음된 오디오 파일 정보를 콜백 함수에 반환한다. 콜백 함수는 녹음 종료 후 오디오 파일의 정보를 포함하는 JSON 객체를 인자로 받는다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "data": { "audio": "base64String 오디오 데이터", "recordTime": "녹음 시간", "filePath": "오디오 파일 경로"}}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.audioRecorder.recordFinish();
+ *      console.log(data);
+ *  })();
+ */
+scwin.recordFinish = function() {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.audioRecorder === "object") {
+                $h.audioRecorder.recordFinish(resolve);
+            } else {
+                reject("Not found AudioRecorder Plugin");
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+/**
+ * @method
+ * @name recordCancel
+ * @description 진행 중인 녹음을 취소하고, 취소되었음을 콜백 함수를 통해 알린다. 콜백 함수는 녹음 취소의 성공 여부를 포함하는 JSON 객체를 인자로 받는다.
+ * @returns {JSON} rtn {"statusCode": "상태 코드", "msg": "성공 또는 실패 메시지", "data":""}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.audioRecorder.recordCancel();
+ *      console.log(data);
+ *  })();
+ */
+scwin.recordCancel = function() {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.audioRecorder === "object") {
+                $h.audioRecorder.recordCancel(resolve);
+            } else {
+                reject("Not found AudioRecorder Plugin");
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+/**
+ * @method
+ * @name recordPause
+ * @description 진행 중인 녹음을 일시 정지하며, 일시 정지의 성공 여부를 콜백 함수를 통해 알린다. 콜백 함수는 녹음 일시 정지의 성공 여부를 포함하는 JSON 객체를 인자로 받는다.
+ * @returns {JSON} rtn {"statusCode": "상태 코드", "msg": "성공 또는 실패 메시지", "data":""}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.audioRecorder.recordPause();
+ *      console.log(data);
+ *  })();
+ */
+scwin.recordPause = function() {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.audioRecorder === "object") {
+                $h.audioRecorder.recordPause(resolve);
+            } else {
+                reject("Not found AudioRecorder Plugin");
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+/**
+ * @method
+ * @name recordStatus
+ * @description 현재 녹음의 상태를 조회하며, 조회된 상태 정보를 콜백 함수에 반환한다. 콜백 함수는 녹음 상태 정보를 포함하는 JSON 객체를 인자로 받는다.
+ * @returns {JSON} rtn {"statusCode": "상태 코드", "msg": "성공 또는 실패 메시지", "data": { "recordStatus": "녹음 상태"}} 여기서 recordStatus는 {0: 녹음중, 1: 정지, 2: 일시 중지} 중 하나의 값을 가진다.
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.audioRecorder.recordStatus();
+ *      console.log(data);
+ *  })();
+ */
+scwin.recordStatus = function() {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.audioRecorder === "object") {
+                $h.audioRecorder.recordStatus(resolve);
+            } else {
+                reject("Not found AudioRecorder Plugin");
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+/**
+ * @method
+ * @name deleteAudioFile
+ * @description 지정된 경로에 있는 녹음된 오디오 파일들을 삭제한다. 삭제 결과는 콜백 함수를 통해 반환된다.
+ * @param {JSON} options 함수에 전달되는 옵션
+ * @param {String[]} options.deleteFilePath 삭제할 오디오 파일의 경로 목록
+ * @returns {JSON} rtn {"statusCode": "상태 코드", "msg": "성공 또는 실패 메시지", "data": ""}
+ * @hidden N
+ * @exception
+ * @example
+ * (async () => {
+ *      let options = { "deleteFilePath": ["$filePath1", "$filePath2", "$filePath3"] };
+ *      const data = await $c.audioRecorder.deleteAudioFile(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.deleteAudioFile = function(options) {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.audioRecorder === "object") {
+                $h.audioRecorder.deleteAudioFile(resolve, options);
+            } else {
+                reject("Not found AudioRecorder Plugin");
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+/**
+ * @method
+ * @name recordResume
+ * @description 일시 정지된 녹음을 다시 시작한다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.audioRecorder.recordResume();
+ *      console.log(data);
+ *  })();
+ */
+scwin.recordResume = function() {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.audioRecorder === "object") {
+                $h.audioRecorder.recordResume(resolve);
+            } else {
+                reject("Not found AudioRecorder Plugin");
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+/**
+ * @method
+ * @name deleteAllFile
+ * @description 녹음된 모든 파일 및 폴더를 삭제한다. 이 작업은 녹음 파일을 저장한 폴더 내의 모든 내용을 제거하며, 작업의 성공 여부는 콜백 함수를 통해 반환된다.
+ * @returns {JSON} rtn {"statusCode": "상태 코드", "msg": "성공 또는 실패 메시지"}
+ * @hidden N
+ * @exception
+ * @example
+ * (async () => {
+ *      const data = await $c.audioRecorder.deleteAllFile();
+ *      console.log(data);
+ *  })();
+ */
+scwin.deleteAllFile = function() {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.audioRecorder === "object") {
+                $h.audioRecorder.deleteAllFile(resolve);
+            } else {
+                reject("Not found AudioRecorder Plugin");
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

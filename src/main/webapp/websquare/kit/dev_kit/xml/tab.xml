@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+	
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="top_box" id="" style="" tagname="">
+    		<w2:textbox class="con_tit" id="" label="Tab" style=""></w2:textbox>
+    		<w2:textbox class="con_txt" escape="false" id="" label="다건의 탭과 콘텐츠를 생성할 수 있으며 동적으로 탭을 생성하거나 삭제할 수 있습니다. "
+    			style="">
+    		</w2:textbox>
+    		<xf:group class="" id="primary" style=""></xf:group>
+    		<xf:group class="tab_anchor" id="" style="" tagname="ul">
+    			<xf:group class="on" id="" tagname="li">
+    				<w2:anchor class="" id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Examples]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Snippet]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    			<xf:group id="" tagname="li">
+    				<w2:anchor id="" outerDiv="false" style="">
+    					<xf:label><![CDATA[Dark Theme]]></xf:label>
+    				</w2:anchor>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    	<xf:group class="contbox" id="" style="">
+    		<xf:group class="subtitbox" id="" style="" tagname="">
+    			<w2:textbox class="subtit" id="" label="Basic Tab" style=""></w2:textbox>
+    		</xf:group>
+    		<xf:group class="titbox" id="" style="" tagname="">
+    			<w2:textbox class="subtxt" escape="false" id=""
+    				label="· 각각의 탭은 선택 빈도순이나 업무 순서로 배치시키며, 첫 번째 탭은 활성화 시킵니다. &lt;br/&gt;· 각각의 탭 버튼은 width값을 고정시키지 않고 레이블 길이에 따라 달라집니다.&lt;br/&gt;· 레이블은 다른 탭과 구분이 될 수 있도록 명확하게 지정합니다.&lt;br/&gt;· 일반적으로 한두 단어로 짧고 스캔 가능한 레이블을 사용합니다. &amp;nbsp;&lt;br/&gt;· 선택된 탭과 비선택된 탭을 배경색으로 구분시켜 줍니다.&lt;br/&gt;"
+    				style="">
+    			</w2:textbox>
+    		</xf:group>
+
+    		<xf:group class="tbcbox" id="" style="">
+    			<w2:tabControl alwaysDraw="false" class="tbc" confirmFalseAction="new" confirmTrueAction="exist" id="" style=""
+    				tabScroll="" useConfirmMessage="false" useMoveNextTabFocus="false" useTabKeyOnly="true">
+    				<w2:tabs disabled="false" id="tabs1" label="탭1" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs2" label="탭2" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs3" label="탭3" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs4" label="탭4" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs5" label="탭5" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs6" label="탭6" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs7" label="탭7" style=""></w2:tabs>
+    				<w2:content alwaysDraw="false" id="content1" style="">
+    					<w2:textbox id="" label="" style="line-height:28px;height: 50px;text-align:center;width: 100%;"></w2:textbox>
+    				</w2:content>
+    				<w2:content alwaysDraw="false" id="content2" style=""></w2:content>
+    				<w2:content alwaysDraw="false" id="content3" style="height:0px"></w2:content>
+    				<w2:content alwaysDraw="false" id="content4" style="height:0px"></w2:content>
+    				<w2:content alwaysDraw="false" id="content5" style="height:0px"></w2:content>
+    				<w2:content alwaysDraw="false" id="content6" style="height:0px"></w2:content>
+    				<w2:content alwaysDraw="false" id="content7" style="height:0px"></w2:content>
+    			</w2:tabControl>
+    		</xf:group>
+    		<xf:group class="tbcbox" id="" style="">
+    			<w2:tabControl alwaysDraw="false" class="tbc" confirmFalseAction="new" confirmTrueAction="exist" id="" style=""
+    				tabScroll="" useConfirmMessage="false" useMoveNextTabFocus="false" useTabKeyOnly="true">
+    				<w2:tabs disabled="false" id="tabs1" label="선택된 탭" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs2" label="탭2" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs3" label="탭3" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs4" label="탭4" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs5" label="탭5" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs6" label="탭6" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs7" label="탭7" style=""></w2:tabs>
+    				<w2:content alwaysDraw="false" id="content1" style="">
+    					<w2:textbox id="" label="" style="line-height:28px;height:50px;text-align:center;width: 100%;"></w2:textbox>
+    				</w2:content>
+    				<w2:content alwaysDraw="false" id="content2" style=""></w2:content>
+    				<w2:content alwaysDraw="false" id="content3" style="height:0px"></w2:content>
+    				<w2:content alwaysDraw="false" id="content4" style="height:0px"></w2:content>
+    				<w2:content alwaysDraw="false" id="content5" style="height:0px"></w2:content>
+    				<w2:content alwaysDraw="false" id="content6" style="height:0px"></w2:content>
+    				<w2:content alwaysDraw="false" id="content7" style="height:0px"></w2:content>
+    			</w2:tabControl>
+    		</xf:group>
+    		<xf:group class="line_gray" id="group3" style="" tagname="hr"></xf:group>
+    		<xf:group class="titbox" id="" style="" tagname="">
+    			<w2:textbox class="subtxt" escape="false" id=""
+    				label="· 서브탭(Tab in tab)을 사용할 경우, 두개의 탭이 구분될 수 있도록 합니다. &lt;br/&gt;· 탭의 개수가 한 줄을 넘어갈 경우, 탭 스크롤을 사용합니다." style="">
+    			</w2:textbox>
+    		</xf:group>
+    		<xf:group class="lybox" id="" style="">
+    			<xf:group adaptiveThreshold="" class="ly_column col_5" id="" style="">
+    				<xf:group class="tbcbox" id="" style="">
+    					<w2:tabControl alwaysDraw="false" class="tbc" confirmFalseAction="new" confirmTrueAction="exist" id="" style=""
+    						tabScroll="" useConfirmMessage="false" useMoveNextTabFocus="false" useTabKeyOnly="true">
+    						<w2:tabs disabled="false" id="tabs1" label="탭1" style=""></w2:tabs>
+    						<w2:tabs disabled="false" id="tabs2" label="탭2" style=""></w2:tabs>
+    						<w2:tabs disabled="false" id="tabs3" label="탭3" style=""></w2:tabs>
+    						<w2:tabs disabled="false" id="tabs4" label="탭4" style=""></w2:tabs>
+    						<w2:tabs disabled="false" id="tabs5" label="탭5" style=""></w2:tabs>
+    						<w2:tabs disabled="false" id="tabs6" label="탭6" style=""></w2:tabs>
+    						<w2:tabs disabled="false" id="tabs7" label="탭7" style=""></w2:tabs>
+    						<w2:content alwaysDraw="false" id="content1" style="">
+    							<w2:tabControl alwaysDraw="false" class="tbc_sub" confirmFalseAction="new" confirmTrueAction="exist"
+    								id="" style="" tabScroll="" useConfirmMessage="false" useMoveNextTabFocus="false" useTabKeyOnly="true">
+    								<w2:tabs disabled="false" id="tabs1" label="서브탭1" style=""></w2:tabs>
+    								<w2:tabs disabled="false" id="tabs2" label="서브탭2" style=""></w2:tabs>
+    								<w2:content alwaysDraw="false" id="content1" style="">
+    									<w2:textbox id="" label="" style="line-height:28px;height: 30px;text-align:center;width: 100%;">
+    									</w2:textbox>
+    								</w2:content>
+    								<w2:content alwaysDraw="false" id="content2" style=""></w2:content>
+    							</w2:tabControl>
+    						</w2:content>
+    						<w2:content alwaysDraw="false" id="content2" style=""></w2:content>
+    						<w2:content alwaysDraw="false" id="content3" style="height:0px"></w2:content>
+    						<w2:content alwaysDraw="false" id="content4" style="height:0px"></w2:content>
+    						<w2:content alwaysDraw="false" id="content5" style="height:0px"></w2:content>
+    						<w2:content alwaysDraw="false" id="content6" style="height:0px"></w2:content>
+    						<w2:content alwaysDraw="false" id="content7" style="height:0px"></w2:content>
+    					</w2:tabControl>
+    				</xf:group>
+    			</xf:group>
+    			<xf:group class="ly_column col_5" id="" style="">
+    				<xf:group class="tbcbox" id="" style="">
+    					<w2:tabControl alwaysDraw="false" class="tbc" confirmFalseAction="new" confirmTrueAction="exist" id="" style=""
+    						tabScroll="true" useConfirmMessage="false" useMoveNextTabFocus="false" useTabKeyOnly="true">
+    						<w2:tabs disabled="false" id="tabs1" label="선택된 탭" style=""></w2:tabs>
+    						<w2:tabs disabled="false" id="tabs2" label="탭2" style=""></w2:tabs>
+    						<w2:tabs disabled="false" id="tabs3" label="탭3" style=""></w2:tabs>
+    						<w2:tabs disabled="false" id="tabs4" label="탭4" style=""></w2:tabs>
+    						<w2:tabs disabled="false" id="tabs5" label="탭5" style=""></w2:tabs>
+    						<w2:tabs disabled="false" id="tabs6" label="탭6" style=""></w2:tabs>
+    						<w2:tabs disabled="false" id="tabs7" label="탭8" style=""></w2:tabs>
+    						<w2:tabs disabled="false" style="" id="tabs9" label="탭9"></w2:tabs>
+    						<w2:tabs disabled="false" style="" id="tabs10" label="탭10"></w2:tabs>
+    						<w2:tabs disabled="false" style="" id="tabs11" label="탭11"></w2:tabs>
+    						<w2:tabs disabled="false" style="" id="tabs12" label="탭12"></w2:tabs>
+    						<w2:tabs disabled="false" style="" id="tabs13" label="탭13"></w2:tabs>
+    						<w2:tabs disabled="false" style="" id="tabs8" label="탭14"></w2:tabs>
+    						<w2:content alwaysDraw="false" id="content1" style="">
+    							<w2:textbox id="" label="" style="line-height:28px;height: 30px;text-align:center;width: 100%;"></w2:textbox>
+    						</w2:content>
+    						<w2:content alwaysDraw="false" id="content2" style=""></w2:content>
+    						<w2:content alwaysDraw="false" id="content3" style="height:0px"></w2:content>
+    						<w2:content alwaysDraw="false" id="content4" style="height:0px"></w2:content>
+    						<w2:content alwaysDraw="false" id="content5" style="height:0px"></w2:content>
+    						<w2:content alwaysDraw="false" id="content6" style="height:0px"></w2:content>
+    						<w2:content alwaysDraw="false" id="content7" style="height:0px"></w2:content>
+    						<w2:content alwaysDraw="false" style="height:0px" id="content9"></w2:content>
+    						<w2:content alwaysDraw="false" style="height:0px" id="content10"></w2:content>
+    						<w2:content alwaysDraw="false" style="height:0px" id="content11"></w2:content>
+    						<w2:content alwaysDraw="false" style="height:0px" id="content12"></w2:content>
+    						<w2:content alwaysDraw="false" style="height:0px" id="content13"></w2:content>
+    						<w2:content alwaysDraw="false" style="height:0px" id="content8"></w2:content>
+    					</w2:tabControl>
+    				</xf:group>
+    			</xf:group>
+    		</xf:group>
+    		<xf:group class="titbox" id="" style="" tagname="">
+    			<w2:textbox class="subtxt" escape="false" id="" label="· 경우에 따라 탭버튼의 위치를 left, right, bottom 에 위치 시킬 수 있습니다. " style="">
+    			</w2:textbox>
+    		</xf:group>
+    		<xf:group class="tbcbox" id="" style="">
+    			<w2:tabControl alwaysDraw="false" class="tbc" confirmFalseAction="new" confirmTrueAction="exist" id=""
+    				style="height: 96px;" tabScroll="" useConfirmMessage="false" useMoveNextTabFocus="false" useTabKeyOnly="true" tabPosition="left">
+    				<w2:tabs disabled="false" id="tabs1" label="탭1" style="width:100px;"></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs2" label="탭2" style="width:100px;"></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs3" label="탭3" style="width:100px;"></w2:tabs>
+    				<w2:content alwaysDraw="false" id="content1" style="">
+    					<w2:textbox id="" label="Content" style="line-height:28px;height: 30px;text-align:center;width: 100%;"></w2:textbox>
+    				</w2:content>
+    				<w2:content alwaysDraw="false" id="content2" style=""></w2:content>
+    				<w2:content alwaysDraw="false" id="content3" style="height:0px"></w2:content>
+    			</w2:tabControl>
+    		</xf:group>
+    		<xf:group class="tbcbox" id="" style="">
+    			<w2:tabControl alwaysDraw="false" class="tbc" confirmFalseAction="new" confirmTrueAction="exist" id=""
+    				style="height: 96px;" tabPosition="right" tabScroll="" useConfirmMessage="false" useMoveNextTabFocus="false"
+    				useTabKeyOnly="true">
+    				<w2:tabs disabled="false" id="tabs1" label="탭1" style="width:100px;"></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs2" label="탭2" style="width:100px;"></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs3" label="탭3" style="width:100px;"></w2:tabs>
+    				<w2:content alwaysDraw="false" id="content1" style="">
+    					<w2:textbox id="" label="Content" style="line-height:28px;height: 30px;text-align:center;width: 100%;"></w2:textbox>
+    				</w2:content>
+    				<w2:content alwaysDraw="false" id="content2" style=""></w2:content>
+    				<w2:content alwaysDraw="false" id="content3" style="height:0px"></w2:content>
+    			</w2:tabControl>
+    		</xf:group>
+    		<xf:group class="tbcbox" id="" style="">
+    			<w2:tabControl alwaysDraw="false" class="tbc" confirmFalseAction="new" confirmTrueAction="exist" id=""
+    				style="height: 150px" tabPosition="bottom" tabScroll="" useConfirmMessage="false" useMoveNextTabFocus="false"
+    				useTabKeyOnly="true">
+    				<w2:tabs disabled="false" id="tabs1" label="탭1" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs2" label="탭2" style=""></w2:tabs>
+    				<w2:tabs disabled="false" id="tabs3" label="탭3" style=""></w2:tabs>
+    				<w2:content alwaysDraw="false" id="content1" style="">
+    					<w2:textbox id="" label="Content" style="line-height:28px;height: 30px;text-align:center;width: 100%;"></w2:textbox>
+    				</w2:content>
+    				<w2:content alwaysDraw="false" id="content2" style="height:100px"></w2:content>
+    				<w2:content alwaysDraw="false" id="content3" style="height:0px"></w2:content>
+    			</w2:tabControl>
+    		</xf:group>
+
+    	</xf:group>
+    </body>
+</html>

@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="camera" meta_screenId="camera" meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_desc="사진 촬영 및 갤러리 (포토라이브러리) API를 제공한다.">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"></w2:dataCollection>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.capturePhoto,scwin.cleanup"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_camera
+ * @pluginName 
+ * @company 
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser 
+ * @version 
+ * @htmlRender 
+ * @icon 
+ * @disableIcon 
+ * @description 사진 촬영 및 갤러리(포토라이브러리) API를 제공한다.
+ * @variableClone true
+ * @width 
+ * @height 
+ * @license 
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */ 
+
+/**
+ * @property
+ * @name quality
+ * @category /cm/gcc/mobile
+ * @type number
+ * @option 
+ * @default 50
+ * @necessary N
+ * @bindparent 
+ * @description 저장 될 이미지의 퀄리티 값을 지정한다. default 값은 50이며 최대는 100이고 100을 사용하면 해상도 손실이 없다.
+ */ 
+
+/**
+ * @property
+ * @name DestinationType
+ * @category /cm/gcc/mobile
+ * @type combobox
+ * @option [0,1,2]
+ * @default 0
+ * @necessary N
+ * @bindparent 
+ * @description 사진 촬영 후 반환 타입 {DATA_URL:0, FILE_URI:1, NATIVE_URI:2}
+ */ 
+
+/**
+ * @property
+ * @name Direction
+ * @category /cm/gcc/mobile
+ * @type combobox
+ * @option [0,1]
+ * @default 0
+ * @necessary N
+ * @bindparent 
+ * @description 카메라 방향 {BACK:0, FRONT:1}
+ */ 
+
+/**
+ * @property
+ * @name EncodingType
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [0,1]
+ * @default 0
+ * @necessary N
+ * @bindparent 
+ * @description 파일 타입 {PICTURE:0, VIDEO:1, ALLMEDIA:2}
+ */ 
+
+/**
+ * @property
+ * @name PictureSourceType
+ * @category /cm/gcc/mobile
+ * @type combobox
+ * @option [0,1,2]
+ * @default 0
+ * @necessary N
+ * @bindparent 
+ * @description 사진 소스 타입 {PHOTOLIBRARY:0, CAMERA:1, SAVEDPHOTOALBUM:2}
+ */ 
+
+/**
+ * @property
+ * @name PopoverArrowDirection
+ * @category 01.Basic & ETC
+ * @type combobox
+ * @option [1,2,4,8,15]
+ * @default 0
+ * @necessary N
+ * @bindparent 
+ * @description (iOS only) popover 카메라 모드 사용 시 카메라 위치 {ARROW_UP:1, ARROW_DOWN:2, ARROW_LEFT:4, ARROW_RIGHT:8, ARROW_ANY:15}
+ */ 
+ 
+ 
+scwin.DestinationType = {
+    DATA_URL: 0,
+    FILE_URI: 1,
+    NATIVE_URI: 2,
+    ENCRYPT_DATA_URL: 3
+};
+
+scwin.EncodingType = {
+    JPEG: 0,
+    PNG: 1
+};
+
+scwin.MediaType = {
+    PICTURE: 0,
+    VIDEO: 1,
+    ALLMEDIA: 2
+};
+
+scwin.PictureSourceType = {
+    PHOTOLIBRARY: 0,
+    CAMERA: 1,
+    SAVEPHOTOALBUM: 2
+};
+
+scwin.PopoverArrowDirection = {
+    ARROW_UP: 1,
+    ARROW_DOWN: 2,
+}
+
+scwin.Direction = {
+    BACK: 0,
+    FRONT: 1
+}
+ 
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name capturePhoto
+ * @description 사진을 촬영하여 저장하고 사진 경로나 base64string을 콜백 함수에 인자로 리턴한다.
+ * @param {JSON} options camera params
+ * @param {Int} options.quality [default:50] 저장될 이미지에 퀄리티 값을 지정 max 100, 100을 사용하면 해상도 손실 없음)
+ * @param {Int} options.destinationType [default:DATA_URL|0, FILE_URL|1] success callback 함수에 리턴되는 타입
+ * @param {Boolean} options.allowEdit [default:false, true] 사진 촬영 후 보정 유무
+ * @param {Int} options.encodingType [default:JPEG|0, PNG|1] 리턴되는 이미지 타입
+ * @param {Int} options.targetWidth 이미지 가로 크기 설정 (pixel) targetHeight와 같이 사용
+ * @param {Int} options.targetHeight 이미지 세로 크기 설정 (pixel) targetWidth와 같이 사용 
+ * @param {Int} options.mediaType [default:PICTURE|0, VIDEO|1, ALLMEDIA|2] 촬영 타입
+ * @param {Int} options.sourceType [default:PHOTOLIBRARY|0, CAMERA|1, SAVEPHOTOALBUM|2]
+ * @param {Boolean} options.correctOrientation [default:false, true] 장비 방향에 맞게 이미지 회전 유무
+ * @param {Boolean} options.saveToPhotoAlbum [default:false, true] 앨범 저장 유무
+ * @param {Int} options.cameraDirection [default:BACK|0, FRONT|1] 카메라 방향
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let options = {"quality":100, "sourceType": $c.camera.PictureSourceType.CAMERA, "allowEdit":false, "encodingType":$c.camera.EncodingType.JPEG};
+ *      const data = await $c.camera.capturePhoto(options);
+ *      console.log(data);
+ *  })();
+ */
+scwin.capturePhoto = function(options){
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.camera === "object") {
+                $h.camera.capturePhoto(resolve, options);
+            } else {
+                reject("Not found Camera Plugin");
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+/**
+ * @method
+ * @name cleanup
+ * @description tmp 폴더에 저장된 사진 파일을 삭제한다.
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      const data = await $c.camera.cleanup();
+ *      console.log(data);
+ *  })();
+ */
+scwin.cleanup = function() {
+    return new Promise((resolve, reject) => {
+        try {
+            if (typeof $h.camera === "object") {
+                $h.camera.cleanup(resolve);
+            } else {
+                reject("Not found Camera Plugin");
+            }
+        } catch (e) {
+            reject(e);
+        }
+    });
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="로그인 화면">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+        	<w2:dataCollection baseNode="map">
+        		<w2:dataMap baseNode="map" id="dma_login">
+        			<w2:keyInfo>
+        				<w2:key dataType="text" name="아이디" id="id"></w2:key>
+        				<w2:key dataType="text" name="비밀번호" id="pw"></w2:key>
+        			</w2:keyInfo>
+        		</w2:dataMap>
+        	</w2:dataCollection>
+        	<w2:workflowCollection />
+        	<xf:submission id="sbm_login" action="/InsWebApp/CmmLogin.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_login","key":"elData"}' target="" encoding="UTF-8" instance=""
+        		replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="로그인 처리중 ..." ev:submit="" ev:submitdone="scwin.sbm_login_submitdone" ev:submiterror=""
+        		abortTrigger="">
+        	</xf:submission>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function () {
+
+};
+
+
+//로그인 버튼 클릭시 로그인 처리
+scwin.btn_login_onclick = function (e) {
+    $c.sbm.execute(sbm_login);
+};
+
+//로그인 처리 후에 dept.xml 이동처리
+scwin.sbm_login_submitdone = function (e) {
+    var elHeader = e.responseJSON.elHeader; // 응답 전문 elHeader
+
+    if (elHeader != "" && elHeader != null && elHeader != "undefined") {
+
+        if (elHeader.resSuc == true) {
+            //$p.url("/ui/dept/Dept.xml");
+            // $c.win.moveUrl("/InsWebApp/src/main/webapp/ui/dept/Dept.xml");
+            // setCookie("userId", elHeader.userId);
+            // moveLocation("html/emp/empList.html");
+           
+            //location.href = "/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/dept/Dept.xml";
+            location.href = "/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/main/mainWrapper.xml";
+        } else {
+            alert(elHeader.resMsg);
+        }
+
+    }
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+    		style="">
+    		<xf:group class="pgtbox" id="" meta_snippetCategory="02_타이틀" meta_snippetKeyComponent="true" meta_snippetName="2_01 페이지타이틀"
+    			style="">
+    			<w2:textbox class="pgt_tit" id="" label="Login" style="" tagname=""></w2:textbox>
+    			<xf:group class="breadcrumb" id="" style="">
+    				<xf:group id="" style="" tagname="ul">
+    					<xf:group class="home" id="" style="" tagname="li">
+    						<w2:anchor id="" outerDiv="false" style="">
+    							<xf:label><![CDATA[Home]]></xf:label>
+    						</w2:anchor>
+    					</xf:group>
+    					<xf:group id="" style="" tagname="li">
+    						<w2:anchor id="" outerDiv="false" style="">
+    							<xf:label><![CDATA[1Depth Menu]]></xf:label>
+    						</w2:anchor>
+    					</xf:group>
+    					<xf:group id="" style="" tagname="li">
+    						<w2:anchor id="" outerDiv="false" style="">
+    							<xf:label><![CDATA[2Depth Menu]]></xf:label>
+    						</w2:anchor>
+    					</xf:group>
+    					<xf:group id="" style="" tagname="li">
+    						<w2:span id="" label="3Depth Menu" style=""></w2:span>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    			<xf:trigger class="btn_fav" id="" style="" type="button">
+    				<xf:label></xf:label>
+    			</xf:trigger>
+    		</xf:group>
+    		<xf:group class="schbox" id="" meta_snippetCategory="03_조회영역" meta_snippetKeyComponent="true" meta_snippetName="3_01 조회조건1행"
+    			style="">
+    			<xf:group class="schbox_inner" id="" style="">
+    				<xf:group adaptive="layout" adaptiveThreshold="768" class="w2tb tbl " id="" style="" tagname="table">
+    					<w2:attributes>
+    						<w2:summary></w2:summary>
+    					</w2:attributes>
+    					<xf:group tagname="colgroup">
+    						<xf:group style="width:100px;" tagname="col"></xf:group>
+    						<xf:group style="" tagname="col"></xf:group>
+    						<xf:group style="width:100px;" tagname="col"></xf:group>
+    						<xf:group style="" tagname="col"></xf:group>
+    					</xf:group>
+    					<xf:group class="" id="" style="" tagname="tr">
+    						<xf:group class="w2tb_th" style="" tagname="th">
+    							<w2:textbox class="" id="" label="아이디" style=""></w2:textbox>
+    						</xf:group>
+    						<xf:group class="w2tb_td" style="" tagname="td">
+    							<xf:input id="ui_id" style="width: 144px;height: 21px;" ref="data:dma_login.id"></xf:input>
+    						</xf:group>
+    						<xf:group class="w2tb_th" style="" tagname="th">
+    							<w2:textbox class="" id="" label="비밀번호" style=""></w2:textbox>
+    						</xf:group>
+    						<xf:group class="w2tb_td" id="" style="" tagname="td">
+    							<xf:secret id="ui_password" style="width: 144px;height: 21px;" ref="data:dma_login.pw"></xf:secret>
+    						</xf:group>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
+    			<xf:group class="btn_schbox" id="" style="">
+    				<xf:trigger class="btn_cm sch" disabled="" escape="false" id="btn_login" style="" type="button" ev:onclick="scwin.btn_login_onclick">
+    					<xf:label><![CDATA[로그인]]></xf:label>
+    				</xf:trigger>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenId="geolocation" meta_screenName="geolocation" meta_subsystem="common" meta_author="인스웨이브" meta_type="메인" meta_desc="위도, 경도 등에 현재 위치 정보를 반환하거나 일정 간격으로 위치 정보를 반환하는 API를 제공한다.">
+        <w2:type palette="support">COMMON</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method="scwin.getCurrentPosition,scwin.watchPosition,scwin.clearWatch"/>
+        <script lazy="false" type="text/javascript"><![CDATA[ 
+/**
+ * @component
+ * @componentName gcc_geolocation
+ * @pluginName
+ * @company
+ * @developer uapmobile
+ * @category /cm/gcc/mobile
+ * @notSupportBrowser
+ * @version
+ * @htmlRender
+ * @icon
+ * @disableIcon
+ * @description 위도,경도 등 현재 위치정보를 반환하거나 일정간격으로 위치정보를 반환하는 API를 제공한다.
+ * @variableClone true
+ * @width
+ * @height
+ * @license
+ * @homepage http://
+ * @imagePath ./sampleImages
+ */
+
+scwin.onpageload = function() {
+};
+
+/**
+ * @method
+ * @name getCurrentPosition
+ * @description 현재 위치의 위도, 경도 등을 가져온다.
+ * @param {JSON} options 지리 정보 가져오기 옵션
+ * @param {Int} options.maximumAge 허용 가능한 최대 시간 길이
+ * @param {Boolean} options.enableHighAccuracy 정확도를 높일지 여부 [default: false, true]
+ * @param {Int} options.timeout 타임아웃 [default: Infinity]
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "coords":{"timestamp":"타임스탬프","velocity":"속도","altitudeAccuracy":"고도정확도","accuracy":"정확도","heading":"헤딩","altitude":"고도","latitude":"위도","longitude":"경도"}}
+ * @hidden N
+ * @exception 
+ * @example
+ * let options = {};
+ * options.timeout = 120;
+ * options.enableHighAccuracy = true;
+ * (async () => {
+ *      const data = await $c.geolocation.getCurrentPosition();
+ *      console.log("lat:"+data.coords.latitude+", long:"+data.coords.longitude);
+ *  })();
+ */
+scwin.getCurrentPosition = function(options) {
+    try {
+        if (typeof $h.geolocation === "object") {
+            return new Promise(resolve => {
+                $h.geolocation.getCurrentPosition(resolve, options);
+            });
+        } else {
+            console.log("Not found Geolocation Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name watchPosition
+ * @description 위치가 변경될 때마다 callback 함수를 통해서 위치의 위도, 경도를 전달한다.
+ * @param {JSON} options 지리 정보 가져오기 옵션
+ * @param {Int} options.maximumAge 허용 가능한 최대 시간 길이
+ * @param {Boolean} options.enableHighAccuracy 정확도를 높일지 여부 [default: false, true]
+ * @param {Int} options.timeout 타임아웃 [default: Infinity]
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지", "coords":{"timestamp":"타임스탬프","velocity":"속도","altitudeAccuracy":"고도정확도","accuracy":"정확도","heading":"헤딩","altitude":"고도","latitude":"위도","longitude":"경도"}}
+ * @hidden N
+ * @exception 
+ * @example
+ * let callback = (r)=>{ console.log(r);};
+ * let options = {};
+ * options.timeout = 120;
+ * options.enableHighAccuracy = true;
+ * let watchID =  $c.geolocation.watchPosition(callback, options);
+ */
+scwin.watchPosition = function(callback,options) {
+    try {
+        if (typeof $h.geolocation === "object") {
+            return $h.geolocation.watchPosition(callback, options);
+        } else {
+            console.log("Not found Geolocation Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+
+/**
+ * @method
+ * @name clearWatch
+ * @description watchPosition 이벤트를 제거한다.
+ * @param {String} watchID 제거 할 Watch 리스너의 ID
+ * @returns {JSON} rtn {"statusCode": "코드", "msg": "메시지"}
+ * @hidden N
+ * @exception 
+ * @example
+ * (async () => {
+ *      let callback = function(result) {console.log("lat:"+result.coords.latitude+", long:"+result.coords.longitude)}
+ *      let watchID = $c.geolocation.watchPosition(callback);
+ *      let data = $c.geolocation.clearWatch(watchID)
+ *      console.log("lat:"+data.coords.latitude+", long:"+data.coords.longitude);
+ *  })();
+ */
+scwin.clearWatch = function(watchID) {
+    try {
+        if (typeof $h.geolocation === "object") {
+            return new Promise(resolve => {
+                resolve($h.geolocation.clearWatch(watchID));
+            });
+        } else {
+            console.log("Not found Geolocation Plugin");
+        }
+    } catch (e){
+        console.log(e);
+    }
+}
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload"/>
+</html>

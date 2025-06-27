@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>사원정보 등록</title>
+
+<link type="text/css" rel="stylesheet" href="../../css/ElDemo.css"/>
+<script type="text/javascript" src="../../js/comm/ElComm.js"></script>
+<script type="text/javascript" src="../../js/comm/jquery-3.4.1.min.js"></script>
+<script type="text/javascript" src="../../js/comm/jquery.form.min.js"></script>
+
+<script type="text/javascript">
+	
+	var loadType = 0; // 페이지 타입 (등록 : 0, 수정 : 1)
+	
+	// 페이지 로드
+	$(document).ready(function () {
+		
+		$("#spn_title").text("등록");
+		
+		if(getParameterByName('type') != "" || getParameterByName('type') == "select") {
+			
+			loadType = 1;
+			$("#spn_title").text("조회");
+			$("#li_delete").css("display", "");
+			
+			selectEmpInfo(getParameterByName('empno')); // 사원 정보 데이터 조회
+			
+		} else {
+			
+			getDeptList();
+			
+		}
+		
+	});
+	
+	// 파라미터 획득
+	function getParameterByName(name) {
+		
+	    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+	    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+	        results = regex.exec(location.search);
+	    return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+	    
+	}
+	
+	// 파일 다운로드
+	function download(url, empno) {
+		
+		var form = $('<form></form>');
+		form.attr('action', url);
+		form.attr('method', 'post');
+		form.appendTo('body');
+		
+		var value = $("<input type='hidden' name='empno' value='" + empno + "'>");
+		form.append(value);
+		form.submit();
+		
+	}
+	
+	
+	/****************************** 이벤트 함수 ******************************/	
+	
+	// 파일 다운로드 클릭 이벤트
+	function downloadBtn_click() {
+		
+		var empno = $("input[name=empno]").val();
+		download(CONTEXT_PATH + "DmoEmpDown.do", empno);
+		
+	}
+	
+	// 파일 삭제 버튼 클릭 이벤트
+	function deleteFile_click() {
+		
+		var deleteFileYN = confirm("파일을 삭제하시겠습니까?\n확인 후 저장 버튼을 눌러야 적용됩니다.");
+		if(deleteFileYN == false) { return false; }
+		
+		$("#btn_deleteFile").css("display", "none");
+		$("span[id=spn_fileName]").text("");
+		$("input[name=fileName]").val("");
+		
+	}
+	
+	// 목록 버튼 클릭 이벤트
+	function listBtn_click() {
+		
+		moveLocation("html/emp/empList.html");
+		
+	}
+	
+	// 저장 버튼 클릭 이벤트
+	function saveBtn_click() {
+		
+		//---------------------------------------------------------
+		// 입력 검증
+		//---------------------------------------------------------
+		if($("input[name=empno]").val().length == 0) {
+			alert("사번이 입력되지 않았습니다. 사번을 입력하세요.");
+			$("input[name=empno]").focus();
+			return false;
+		}
+		
+		if($("input[name=ename]").val().length == 0) {
+			alert("성명이 입력되지 않았습니다. 성명을 입력하세요.");
+			$("input[name=ename]").focus();
+			return false;
+		}
+		
+		if($("input[name=job]").val().length == 0) {
+			alert("직업이 입력되지 않았습니다. 직업을 입력하세요.");
+			$("input[name=job]").focus();
+			return false;
+		}
+		
+		if($("input[name=mgr]").val().length == 0) {
+			alert("직속상관이 입력되지 않았습니다. 직속상관을 입력하세요.");
+			$("input[name=mgr]").focus();
+			return false;
+		}
+		
+		var datePattern = /^(19|20)\d{2}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[0-1])$/;
+		var dateValidation = datePattern.test($("input[name=hiredate]").val());
+		if($("input[name=hiredate]").val().length > 0 && dateValidation == false) {
+			alert("입사일은 yyyy-dd-mm 형식으로 입력하세요.");
+			return false;
+		}
+		
+		if($("input[name=sal]").val().length == 0) {
+			alert("급여가 입력되지 않았습니다. 급여를 입력하세요.");
+			$("input[name=sal]").focus();
+			return false;
+		}
+		
+		if($("input[name=comm]").val().length == 0) {
+			alert("상여가 입력되지 않았습니다. 상여를 입력하세요.");
+			$("input[name=comm]").focus();
+			return false;
+		}
+		
+		if($("select[name=deptno]").val().length == 0) {
+			alert("부서코드가 선택되지 않았습니다. 부서코드를 선택하세요.");
+			return false;
+		}
+		
+		//---------------------------------------------------------
+		// 저장 처리
+		//---------------------------------------------------------
+		var insertYN = confirm("사원 정보를 저장하시겠습니까?");
+		if(insertYN == false) { return false; }
+		
+		if(loadType == 0) { // 등록 후 저장
+			
+			// JSON 데이터 생성
+			var empVo = { "elData" : { 
+										"empno"    : $("input[name=empno]"     ).val(),
+									 	"ename"    : $("input[name=ename]"     ).val(),
+									 	"job"      : $("input[name=job]"       ).val(),
+									 	"mgr"      : $("input[name=mgr]"       ).val(),
+									 	"hiredate" : $("input[name=hiredate]"  ).val(),
+									 	"sal"      : $("input[name=sal]"       ).val(),
+									 	"comm"     : $("input[name=comm]"      ).val(),
+									 	"deptno"   : $("select[name=deptno]"   ).val(),
+									 	"account"  : $("textarea[name=account]").val() 
+									 }
+						};
+			
+			// 첨부파일이 등록되었는지 체크
+			var uploadFile = $("input[type=file]").val();
+			if( uploadFile != "" && uploadFile != null && uploadFile != "undefined" ) { // 첨부파일이 등록된 경우
+				
+				$("form[name=detailForm]").ajaxForm({
+		            url      : CONTEXT_PATH + "DmoEmpUploadEmpFile.do",
+		            method   : "post",
+		            enctype  : "multipart/form-data",
+		            // dataType : "json",
+		            success  : function(data) {
+		            	
+						if( data.trim() == "" ) {
+							insertEmpInfo(empVo);
+						} else {
+							alert(data);
+						}		            	
+		            	
+		            	
+		            },
+		            error    : function() {
+		            	alert("등록 처리 중 에러가 발생했습니다.");
+		            }
+		        });
+
+		        $("form[name=detailForm]").submit(); // 실행
+				
+			} else { // 첨부파일이 등록되지 않은 경우
+				insertEmpInfo(empVo);
+			}
+
+		}
+		
+		if(loadType == 1) { // 수정 후 저장
+		
+			var form = $('form')[0];
+			var formData = new FormData(form);
+			$.ajax({
+				url         : CONTEXT_PATH + 'DmoEmpUpdateUploadEmpFile.do',
+				processData : false,
+				contentType : false,
+				data        : formData,
+				type        : 'POST',
+				success     : function(result) {
+					if( result.trim() == "" ) {
+						alert("사원정보가 수정되었습니다.");
+					} else {
+						alert(result);
+					}
+					
+					moveLocation("html/emp/empRegister.html?type=select&empno=" + $("input[name=empno]").val());
+				},
+				error       : function() {
+					alert("수정 처리 중 에러가 발생했습니다.");
+				}
+			});
+		
+		}
+		
+	}
+	
+	// 삭제 버튼 클릭 이벤트
+	function deleteBtn_click() {
+		
+		var empno = $("input[name=empno]").val();
+		
+		var deleteYN = confirm(empno + " 사원 정보를 삭제하시겠습니까?");
+		if(deleteYN == false) { return false; }
+		
+		deleteEmpInfo(empno);
+		
+	}
+	
+	// 초기화 버튼 클릭 이벤트
+	function restoreBtn_click() {
+		
+		if(loadType == 0) { // 등록
+			
+			$("input[name=empno]").val("");
+			$("input[name=ename]").val("");
+			$("input[name=job]").val("");
+			$("input[name=mgr]").val("");
+			$("input[name=hiredate]").val("");
+			$("input[name=sal]").val("");
+			$("input[name=comm]").val("");
+			$("select[name=deptno]").val("");
+			$("textarea[name=account]").val("");
+			$("input[type=file]").val("");
+			
+		}
+		
+		if(loadType == 1) { // 수정
+			
+			$("input[name=ename]").val( $("input[name=tmpEname]").val() );
+			$("input[name=job]").val( $("input[name=tmpJob]").val() );
+			$("input[name=mgr]").val( $("input[name=tmpMgr]").val() );
+			$("input[name=hiredate]").val( $("input[name=tmpHiredate]").val() );
+			$("input[name=sal]").val( $("input[name=tmpSal]").val() );
+			$("input[name=comm]").val( $("input[name=tmpComm]").val() );
+			$("select[name=deptno]").val($( "input[name=tmpDeptno]").val() );
+			$("textarea[name=account]").val( $("textarea[name=tmpAccount]").val() );
+			$("input[type=file]").val("");
+			
+		}
+		
+	}
+	
+	
+	/****************************** ajax 함수 ******************************/	
+	
+	// 사원 상세정보 조회
+	function selectEmpInfo(empno) {
+		
+		var requestJSON = JSON.stringify({"elData":{"empno":empno}});
+		executeAjax(CONTEXT_PATH + "DmoEmpUpdView.pwkjson", requestJSON, selectEmpInfo_callback);
+		
+	}
+	
+	// 부서 리스트 조회
+	function getDeptList() {
+		
+		var requestJSON = JSON.stringify({"elData":{}});
+		executeAjax(CONTEXT_PATH + "DmoEmpView.pwkjson", requestJSON, getDeptList_callback);
+		
+	}
+	
+	// 사원 정보 저장
+	function insertEmpInfo(empVo) {
+		
+		console.log("- mode : " + loadType);
+		console.log(empVo);
+		var requestJSON = JSON.stringify(empVo);
+		executeAjax(CONTEXT_PATH + "DmoEmpIns.pwkjson", requestJSON, insertEmpInfo_callback);
+	
+	}
+	
+	// 사원 정보 삭제
+	function deleteEmpInfo(empno) {
+		
+		var requestJSON = JSON.stringify({"elData":{"empno":empno}});
+		executeAjax(CONTEXT_PATH + "DmoEmpDel.pwkjson", requestJSON, deleteEmpInfo_callback);
+		
+	}
+	
+	// 파일 삭제
+	function deleteFile(empno) {
+		
+		var requestJSON = JSON.stringify({"elData":{"empno":empno}});
+		executeAjax(CONTEXT_PATH + "DmoEmpDeleteUploadEmpFile.pwkjson", requestJSON, deleteFile_callback);
+		
+	}
+	
+	
+	/****************************** 콜백 함수 ******************************/
+	
+	// 사원 상세정보 콜백
+	function selectEmpInfo_callback(data) {
+		
+		console.log(data);
+		var elHeader  = data.elHeader;  // 응답 전문 elHeader
+		//var empFileVo = data.empFileVo; // 첨부파일 정보
+		
+		if(elHeader.resSuc == true) {
+			
+			//-------------------------------------------------
+			// 사원정보를 테이블에 세팅
+			//-------------------------------------------------
+			var empVo = data.elData.empVo;
+			$("input[name=empno]").val(empVo.empno);
+			$("input[name=ename]").val(empVo.ename);
+			$("input[name=job]").val(empVo.job);
+			$("input[name=mgr]").val(empVo.mgr);
+			$("input[name=hiredate]").val(empVo.hiredate);
+			$("input[name=sal]").val(empVo.sal);
+			$("input[name=comm]").val(empVo.comm);
+			$("textarea[name=account]").val(empVo.account);
+			if(empVo.fileName != "" && empVo.fileName != undefined ) {
+				$("input[name=fileName]").val(empVo.fileName);			
+			}
+			
+			var deptList = data.elData.deptVoList;
+			for(var idx in deptList) {
+				$("select[name=deptno]").append("<option value='" + deptList[idx].deptno + "'>" + deptList[idx].dname + "</option>");
+			}
+			$("select[name=deptno]").val(empVo.deptno);
+			
+			//-------------------------------------------------
+			// 컴포넌트 옵션 변경
+			//-------------------------------------------------
+			$("input[name=empno]").attr("readonly", true);
+			$("input[name=empno]").attr("class", "essentiality");
+			
+			//-------------------------------------------------
+			// 검색조건 유지
+			//-------------------------------------------------
+			$("input[name=tmpEname]").val(empVo.ename);
+			$("input[name=tmpJob]").val(empVo.job);
+			$("input[name=tmpMgr]").val(empVo.mgr);
+			$("input[name=tmpHiredate]").val(empVo.hiredate);
+			$("input[name=tmpSal]").val(empVo.sal);
+			$("input[name=tmpComm]").val(empVo.comm);
+			$("input[name=tmpDeptno]").val(empVo.deptno);
+			$("textarea[name=tmpAccount]").val(empVo.account);
+			
+			//-------------------------------------------------
+			// 첨부파일 정보
+			//-------------------------------------------------
+			if(empVo.fileName != "" && empVo.fileName != undefined ) {
+				$("#btn_deleteFile").css("display", "");
+				$("span[id=spn_fileName]").html("&nbsp;&nbsp;&nbsp;" + empVo.fileName);
+			}
+			
+			
+		} else {
+			
+			exceptionAlert("사원 상세정보 조회", elHeader.resCode, elHeader.resMsg);
+			
+		}
+	}
+	
+	// 부서 리스트 조회 콜백
+	function getDeptList_callback(data) {
+		
+		console.log(data);
+		var elHeader = data.elHeader; // 응답 전문 elHeader
+		
+		if(elHeader.resSuc == true) {
+			
+			var deptList = data.elData.deptVoList;
+			for(var idx in deptList) {
+				$("select[name=deptno]").append("<option value='" + deptList[idx].deptno + "'>" + deptList[idx].dname + "</option>");
+			}
+			
+		} else {
+			
+			exceptionAlert("부서 리스트 조회", elHeader.resCode, elHeader.resMsg);
+			
+		}
+
+	}
+	
+	// 사원 정보 등록 콜백
+	function insertEmpInfo_callback(data) {
+		// console.log(data);
+		var elHeader = data.elHeader; // 응답 전문 elHeader
+		
+		if(elHeader != null && elHeader != "" && elHeader != "undefined") {
+			
+			if(elHeader.resSuc == true) {
+				// 하단에서 처리
+			} else {
+				exceptionAlert("등록", elHeader.resCode, elHeader.resMsg);
+				return false;
+			}
+			
+		}		
+		alert("사원 정보가 등록되었습니다.");
+		moveLocation("html/emp/empRegister.html?type=select&empno=" + $("input[name=empno]").val());
+		
+	}
+	
+	// 사원 정보 삭제 콜백
+	function deleteEmpInfo_callback(data) {
+		
+		// console.log(data);
+		var elHeader = data.elHeader; // 응답 전문 elHeader
+		
+		if(elHeader != null && elHeader != "" && elHeader != "undefined") {
+			
+			if(elHeader.resSuc == true) {
+				// 하단에서 처리
+			} else {
+				exceptionAlert("삭제", elHeader.resCode, elHeader.resMsg);
+				return false;
+			}
+			
+		}
+		
+		alert("사원 정보가 삭제되었습니다.");
+		moveLocation("html/emp/empList.html");
+		
+	}
+	
+	// 파일 삭제 콜백
+	function deleteFile_callback(data) {
+		
+		console.log(data);
+		
+	}
+	
+</script>
+
+</head>
+<body style="text-align:center; margin:0 auto; display:inline; padding-top:100px;">
+
+	<form name="detailForm" enctype="multipart/form-data">
+	<div id="content_pop">
+		<!-- TITLE SECTION -->
+		<div id="title">
+			<ul>
+				<li><img src="../../images/sample/rte/title_dot.gif"> 사원정보 <span id="spn_title"></span></li>
+			</ul>
+		</div>
+
+		<!-- TABLE SECTION -->
+		<div id="table">	
+			<table width="100%" border="1" cellpadding="0" cellspacing="0" bordercolor="#D3E2EC" bordercolordark="#FFFFFF" style="BORDER-TOP:#C2D0DB 2px solid; BORDER-LEFT:#ffffff 1px solid; BORDER-RIGHT:#ffffff 1px solid; BORDER-BOTTOM:#C2D0DB 1px solid; border-collapse: collapse;">
+				<colgroup>
+					<col width="150">
+					<col width="">
+				</colgroup>
+				<tr>
+					<td class="tbtd_caption">* 사번</td>
+					<td class="tbtd_content" colspan='2'>
+						<input type='text' name="empno" maxlength="4" class="txt" value=""/>	
+					</td>			
+				</tr>
+				<tr>
+					<td class="tbtd_caption">* 성명</td>
+						<td class="tbtd_content" colspan='2'>
+							<input type='text' name="ename" maxlength="10" class="txt" value=""/>
+						</td>
+						
+				</tr>
+				<tr>
+					<td class="tbtd_caption">* 직업</td>
+					<td class="tbtd_content" colspan='2'>
+						<input type='text' name="job" maxlength="10" class="txt" value=""/>
+					</td>
+				</tr>	
+				<tr>
+					<td class="tbtd_caption">* 직속상관</td>
+					<td class="tbtd_content" colspan='2'>
+						<input type='text' name="mgr" maxlength="4" class="txt" value=""/>			
+					</td>
+				</tr>	
+				<tr>
+					<td class="tbtd_caption">입사일</td>
+					<td class="tbtd_content" colspan='2'>
+						<input type='text' name="hiredate" maxlength="20" class="txt" value=""/>	
+							
+					</td>
+				</tr>
+				<tr>
+					<td class="tbtd_caption">* 급여</td>
+					<td class="tbtd_content" colspan='2'>
+						<input type='text' name="sal" maxlength="10" class="txt" value=""/>
+					</td>
+				</tr>	
+				<tr>
+					<td class="tbtd_caption">* 상여</td>
+					<td class="tbtd_content" colspan='2'>
+						<input type='text' name="comm" maxlength="10" class="txt" value=""/>				
+					</td>
+				</tr>						
+				<tr>
+					<td class="tbtd_caption">* 부서코드</td>
+					<td class="tbtd_content" colspan='2'>
+						<select name="deptno" class="use">
+							<option value="" selected>-전체-</option>
+						</select>		
+					</td>
+				</tr>	
+				<tr>
+					<td class="tbtd_caption">설명</td>
+					<td class="tbtd_content" colspan='2'>
+						<textarea name="account" class="txt" cols="65" rows="5"></textarea>								
+					</td>
+				</tr>
+				<tr>
+					<td class="tbtd_caption">첨부파일</td>
+					<td class="tbtd_content">
+						<input type="file" size="25" name="inputFileData">												
+					</td>
+					<td class="tbtd_content" width ='300'>
+						<a href='javascript:downloadBtn_click();'><span id='spn_fileName'></span></a> 	
+						<input type="hidden" name="fileName">
+						<span id="btn_deleteFile" class="btn_blue_l" style="display:none;"><a href="javascript:deleteFile_click();">파일삭제</a><img src="../../images/sample/rte/btn_bg_r.gif" style="margin-left:6px;"></span>				
+					</td>
+				</tr>	
+			</table>
+    	</div>
+		
+		<!-- BUTTON SECTION -->
+		<div id="sysbtn">
+		<ul>
+			<li><span class="btn_blue_l"><a href="javascript:listBtn_click();">목록</a><img src="../../images/sample/rte/btn_bg_r.gif" style="margin-left:6px;"></span></li>
+			<li><span class="btn_blue_l"><a href="javascript:saveBtn_click();">저장</a><img src="../../images/sample/rte/btn_bg_r.gif" style="margin-left:6px;"></span></li>
+			<li id="li_delete" style="display:none;"><span class="btn_blue_l"><a href="javascript:deleteBtn_click();">삭제</a><img src="../../images/sample/rte/btn_bg_r.gif" style="margin-left:6px;"></span></li>
+			<li><span class="btn_blue_l"><a href="javascript:restoreBtn_click();">초기화</a><img src="../../images/sample/rte/btn_bg_r.gif" style="margin-left:6px;"></span></li></ul>
+		</div>
+	</div>
+	</form>	
+	
+	<input type="hidden" name="tmpEname" value=""/>
+	<input type="hidden" name="tmpJob" value=""/>
+	<input type="hidden" name="tmpMgr" value=""/>
+	<input type="hidden" name="tmpHiredate" value=""/>
+	<input type="hidden" name="tmpSal" value=""/>
+	<input type="hidden" name="tmpComm" value=""/>
+	<input type="hidden" name="tmpDeptno" value=""/>
+	<textarea style="display:none;" name="tmpAccount"></textarea>
+	
+	<!-- 검색조건 유지 -->
+	<input type="hidden" name="scEname" value=""/>
+	<input type="hidden" name="scDname" value=""/>
+	<input type="hidden" name="scDeptno" value=""/>
+	<input type="hidden" name="pageIndex" value=""/>
+
+</body>
+</html>

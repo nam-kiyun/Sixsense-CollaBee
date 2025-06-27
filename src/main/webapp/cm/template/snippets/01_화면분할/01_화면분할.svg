@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <g id="화면분할" transform="translate(-475 -916)">
+    <path id="사각형_3136_-_윤곽선" data-name="사각형 3136 - 윤곽선" d="M1,1V15H15V1H1M1,0H15a1,1,0,0,1,1,1V15a1,1,0,0,1-1,1H1a1,1,0,0,1-1-1V1A1,1,0,0,1,1,0Z" transform="translate(475 916)" fill="#424144"/>
+    <rect id="사각형_3281" data-name="사각형 3281" width="4" height="12" transform="translate(477 918)" fill="#d4d4d4"/>
+    <path id="사각형_3281_-_윤곽선" data-name="사각형 3281 - 윤곽선" d="M1,1V11H3V1H1M0,0H4V12H0Z" transform="translate(477 918)" fill="#707070"/>
+    <rect id="사각형_3282" data-name="사각형 3282" width="7" height="6" transform="translate(482 918)" fill="#d4d4d4"/>
+    <path id="사각형_3282_-_윤곽선" data-name="사각형 3282 - 윤곽선" d="M1,1V5H6V1H1M0,0H7V6H0Z" transform="translate(482 918)" fill="#707070"/>
+    <rect id="사각형_3283" data-name="사각형 3283" width="7" height="5" transform="translate(482 925)" fill="#d4d4d4"/>
+    <path id="사각형_3283_-_윤곽선" data-name="사각형 3283 - 윤곽선" d="M1,1V4H6V1H1M0,0H7V5H0Z" transform="translate(482 925)" fill="#707070"/>
+  </g>
+</svg>

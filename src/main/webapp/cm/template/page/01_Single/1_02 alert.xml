@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+   <head>
+       <w2:type>COMPONENT</w2:type>
+       <w2:buildDate/>
+       <w2:MSA/>
+       <xf:model>
+           <w2:dataCollection baseNode="map">
+           </w2:dataCollection>
+           <w2:workflowCollection>
+           </w2:workflowCollection>
+       </xf:model>
+       <w2:layoutInfo>
+       </w2:layoutInfo>
+       <w2:publicInfo method=""/>
+       <script lazy="false" type="text/javascript"><![CDATA[
+    scwin.onpageload = function() {
+        grpLyPopup.show();
+    };
+
+    scwin.btnOpenLayer_onclick = function() {
+        grpLyPopup.show();
+    };
+    scwin.btnCloseLayer_onclick = function(e) {
+        grpLyPopup.hide();
+    };
+	
+]]></script>
+   </head>
+   <body ev:onpageload="scwin.onpageload">
+
+    <xf:group id="" style="min-height: 310px;" class="sub_contents">
+    	<xf:group class="titbox" id="" style="">
+    		<w2:textbox class="" id="" label="서브타이틀" style="" tagname="h3"></w2:textbox>
+    		<xf:group class="rt" id="" style="">
+    			<xf:trigger class="btn_cm " id="btnOpenLayer" style="" type="button" ev:onclick="scwin.btnOpenLayer_onclick">
+    				<xf:label><![CDATA[Alert ]]></xf:label>
+    			</xf:trigger>
+    		</xf:group>
+    	</xf:group>
+    </xf:group>
+    <xf:group id="grpLyPopup" style="display:none;" class="ly_popup">
+    		<xf:group id="" style="" class="ly_head">
+    		</xf:group>
+    		<xf:group id="" style="" class="ly_cont">
+    			<w2:textbox id="" style="" class="txt1" label="처리중 오류가 발생했습니다. " tagname="p"></w2:textbox>
+    			<w2:textbox id="" style="" class="txt2" label="처리중 오류가 발생했습니다.&lt;br/&gt;장애문의 : admin@admin.com" tagname="p" escape="false"></w2:textbox>
+    			<xf:group class="btnbox" id="" style="">
+    				<xf:trigger class="btn_cm" id="btnCloseLayer" style="" type="button" ev:onclick="scwin.btnCloseLayer_onclick">
+    						<xf:label><![CDATA[닫기]]></xf:label>
+    					</xf:trigger>
+    			</xf:group>
+    		</xf:group>
+
+    </xf:group></body>
+</html>

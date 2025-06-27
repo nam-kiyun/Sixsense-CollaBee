@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+    	<w2:type>COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:MSA />
+    	<xf:model>
+    		<w2:dataCollection baseNode="map">
+    			<w2:dataList baseNode="list" repeatNode="map" id="dlt_menu" saveRemovedData="true">
+    				<w2:columnInfo>
+    					<w2:column id="MENU_CD" name="메뉴코드" dataType="text"></w2:column>
+    					<w2:column id="MENU_NM" name="메뉴명" dataType="text"></w2:column>
+    					<w2:column id="IS_USE" name="사용유무" dataType="text"></w2:column>
+    					<w2:column id="SRC_PATH" name="메뉴경로" dataType="text"></w2:column>
+    					<w2:column id="PARENT_MENU_CD" name="부모메뉴코드" dataType="text"></w2:column>
+    					<w2:column id="MENU_LEVEL" name="메뉴레벨" dataType="text"></w2:column>
+    					<w2:column id="SORT_ORDER" name="정렬순서" dataType="text"></w2:column>
+    					<w2:column id="PROGRAM_CD" name="프로그램코드" dataType="text"></w2:column>
+    				</w2:columnInfo>
+    				<w2:data use="true">
+    					<w2:row>
+    						<MENU_CD><![CDATA[001000000]]></MENU_CD>
+    						<MENU_LEVEL><![CDATA[1]]></MENU_LEVEL>
+    						<MENU_NM><![CDATA[Overview]]></MENU_NM>
+    						<SRC_PATH><![CDATA[/cm/template/design_system/xml/overview.xml]]></SRC_PATH>
+    					</w2:row>
+    					<w2:row>
+    						<MENU_CD><![CDATA[002000000]]></MENU_CD>
+    						<MENU_LEVEL><![CDATA[1]]></MENU_LEVEL>
+    						<MENU_NM><![CDATA[Color]]></MENU_NM>
+    						<SRC_PATH><![CDATA[/cm/template/design_system/xml/color.xml]]></SRC_PATH>
+    					</w2:row>
+    					<w2:row>
+    						<MENU_CD><![CDATA[003000000]]></MENU_CD>
+
+    						<MENU_NM><![CDATA[Typography]]></MENU_NM>
+    						<MENU_LEVEL><![CDATA[1]]></MENU_LEVEL>
+    						<SRC_PATH><![CDATA[/cm/template/design_system/xml/typography.xml]]></SRC_PATH>
+    						<PARENT_MENU_CD><![CDATA[]]></PARENT_MENU_CD>
+    					</w2:row>
+    					<w2:row>
+    						<MENU_CD><![CDATA[004000000]]></MENU_CD>
+    						<MENU_LEVEL><![CDATA[1]]></MENU_LEVEL>
+    						<MENU_NM><![CDATA[Grid System]]></MENU_NM>
+    						<SRC_PATH><![CDATA[/cm/template/design_system/xml/gridsystem.xml]]></SRC_PATH>
+    					</w2:row>    					    					
+    					<w2:row>
+    						<MENU_CD><![CDATA[007000000]]></MENU_CD>
+
+
+    						<MENU_NM><![CDATA[Components]]></MENU_NM>
+    						<MENU_LEVEL><![CDATA[1]]></MENU_LEVEL>
+    						<SRC_PATH><![CDATA[]]></SRC_PATH>
+    						<PARENT_MENU_CD><![CDATA[]]></PARENT_MENU_CD>
+    					</w2:row>
+    					<w2:row>
+    						<MENU_CD><![CDATA[007001000]]></MENU_CD>
+    						<MENU_NM><![CDATA[타이틀]]></MENU_NM>
+    						<MENU_LEVEL><![CDATA[2]]></MENU_LEVEL>
+    						<SRC_PATH><![CDATA[/cm/template/design_system/xml/title.xml]]></SRC_PATH>
+    						<PARENT_MENU_CD><![CDATA[007000000]]></PARENT_MENU_CD>
+    					</w2:row>
+    					<w2:row>
+    						<MENU_CD><![CDATA[007002000]]></MENU_CD>
+    						<MENU_NM><![CDATA[조회영역]]></MENU_NM>
+    						<MENU_LEVEL><![CDATA[2]]></MENU_LEVEL>
+    						<SRC_PATH><![CDATA[/cm/template/design_system/xml/searcharea.xml]]></SRC_PATH>
+    						<PARENT_MENU_CD><![CDATA[007000000]]></PARENT_MENU_CD>
+    					</w2:row>
+    					<w2:row>
+    						<MENU_CD><![CDATA[007003000]]></MENU_CD>
+    						<MENU_NM><![CDATA[입력폼]]></MENU_NM>
+    						<MENU_LEVEL><![CDATA[2]]></MENU_LEVEL>
+    						<SRC_PATH><![CDATA[/cm/template/design_system/xml/input.xml]]></SRC_PATH>
+    						<PARENT_MENU_CD><![CDATA[007000000]]></PARENT_MENU_CD>
+    					</w2:row>
+    					<w2:row>
+    						<MENU_CD><![CDATA[007006000]]></MENU_CD>
+    						<MENU_NM><![CDATA[입출력테이블]]></MENU_NM>
+    						<MENU_LEVEL><![CDATA[2]]></MENU_LEVEL>
+    						<SRC_PATH><![CDATA[/cm/template/design_system/xml/table.xml]]></SRC_PATH>
+    						<PARENT_MENU_CD><![CDATA[007000000]]></PARENT_MENU_CD>				
+    					</w2:row>
+    					<w2:row>
+    						<MENU_CD><![CDATA[007007000]]></MENU_CD>
+    						<MENU_NM><![CDATA[그리드]]></MENU_NM>
+    						<MENU_LEVEL><![CDATA[2]]></MENU_LEVEL>
+    						<SRC_PATH><![CDATA[/cm/template/design_system/xml/grid.xml]]></SRC_PATH>
+    						<PARENT_MENU_CD><![CDATA[007000000]]></PARENT_MENU_CD>
+    					</w2:row>
+    					<w2:row>
+
+    						<MENU_CD><![CDATA[007008000]]></MENU_CD>
+
+    						<MENU_NM><![CDATA[탭]]></MENU_NM>
+    						<MENU_LEVEL><![CDATA[2]]></MENU_LEVEL>
+    						<SRC_PATH><![CDATA[/cm/template/design_system/xml/tab.xml]]></SRC_PATH>
+    						<PARENT_MENU_CD><![CDATA[007000000]]></PARENT_MENU_CD>
+    					</w2:row>
+    					
+    					<w2:row>
+
+    						<MENU_CD><![CDATA[007010000]]></MENU_CD>
+
+    						<MENU_NM><![CDATA[트리]]></MENU_NM>
+    						<MENU_LEVEL><![CDATA[2]]></MENU_LEVEL>
+    						<SRC_PATH><![CDATA[/cm/template/design_system/xml/tree.xml]]></SRC_PATH>
+    						<PARENT_MENU_CD><![CDATA[007000000]]></PARENT_MENU_CD>
+    					</w2:row>    				
+    					<w2:row>
+
+    						<MENU_CD><![CDATA[007012000]]></MENU_CD>
+
+    						<MENU_NM><![CDATA[버튼]]></MENU_NM>
+    						<MENU_LEVEL><![CDATA[2]]></MENU_LEVEL>
+    						<SRC_PATH><![CDATA[/cm/template/design_system/xml/button.xml]]></SRC_PATH>
+    						<PARENT_MENU_CD><![CDATA[007000000]]></PARENT_MENU_CD>
+    					</w2:row>
+    					<w2:row>
+    						<MENU_CD><![CDATA[007013000]]></MENU_CD>
+
+
+    						<MENU_NM><![CDATA[메시지]]></MENU_NM>
+    						<MENU_LEVEL><![CDATA[2]]></MENU_LEVEL>
+    						<SRC_PATH><![CDATA[/cm/template/design_system/xml/message.xml]]></SRC_PATH>
+    						<PARENT_MENU_CD><![CDATA[007000000]]></PARENT_MENU_CD>
+    					</w2:row>				
+
+    					<w2:row></w2:row>
+    					<w2:row></w2:row>
+    					<w2:row></w2:row>
+    					<w2:row></w2:row>
+    					<w2:row></w2:row>
+    				</w2:data>
+    			</w2:dataList>
+    		</w2:dataCollection>
+    		<w2:workflowCollection />
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<w2:publicInfo method="" />
+    	<script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+	
+};
+
+scwin.tw_menu_onlabelclick = function(value,nodeElement,index) {
+    var selectedMenu = dlt_menu.getMatchedJSON("MENU_CD", value);
+    var tValue = selectedMenu[0].SRC_PATH;  //var tValue = value.replaceAll("/", "");
+
+    $p.parent().content1.setSrc(tValue);
+};]]></script>
+<style type="text/css">
+.tw_menuCustom {
+	background: #EFF1F3;
+	border: 1px solid #EFF1F3;
+	color: #20252A;
+}
+</style>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="grp_tab" id="" style="bottom:0">
+    		<xf:group class="tab_con" id="" style="">
+    			<w2:treeview class="tw_menu" dataType="listed" ev:onlabelclick="scwin.tw_menu_onlabelclick" id="tw_menu" lineShow="false"
+    				style="" tooltipGroupClass="false" toggleEvent="onclick" renderType="table">
+    				<w2:itemset nodeset="data:dlt_menu">
+    					<w2:label ref="MENU_NM"></w2:label>
+    					<w2:value ref="MENU_CD"></w2:value>
+    					<w2:depth ref="MENU_LEVEL"></w2:depth>
+    					<w2:folder ref=""></w2:folder>
+    					<w2:checkbox ref=""></w2:checkbox>
+    					<w2:checkboxDisabled ref=""></w2:checkboxDisabled>
+    					<w2:image ref=""></w2:image>
+    					<w2:iconImage ref=""></w2:iconImage>
+    					<w2:selectedImage ref=""></w2:selectedImage>
+    					<w2:expandedImage ref=""></w2:expandedImage>
+    					<w2:leafImage ref=""></w2:leafImage>
+    				</w2:itemset>
+    			</w2:treeview>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>
