@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Security>
+    <CryptoSet id="defaultCrypto">
+        <Key>MySecretKey1234</Key>  <!-- 🔥 암호화 키 (원하는 값으로 변경 가능) -->
+        <Algorithm>AES</Algorithm>   <!-- 알고리즘 (일반적으로 AES) -->
+        <KeySize>128</KeySize>       <!-- 키 사이즈 (128 또는 256) -->
+    </CryptoSet>
+</Security>

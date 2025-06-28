@@ -580,6 +580,15 @@
 		    <artifactId>activation</artifactId>
 		    <version>1.1.1</version> 
 		</dependency>
+		
+		<!--암호화-->
+		<dependency>
+		    <groupId>org.springframework.security</groupId>
+		    <artifactId>spring-security-core</artifactId>
+		    <version>5.8.0</version>
+		</dependency>
+
+		
 		<dependency>
 			<groupId>com.sun.xml.bind</groupId>
 			<artifactId>jaxb-core</artifactId>

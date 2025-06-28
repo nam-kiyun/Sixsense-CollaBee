@@ -15,17 +15,34 @@
     					<w2:key dataType="text" name="이메일" id="email"></w2:key>
     				</w2:keyInfo>
     			</w2:dataMap>
+    			<w2:dataMap baseNode="map" id="dma_emailCheck">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="아이디" id="userId"></w2:key>
+    					<w2:key defaultValue="" dataType="text" name="이름" id="userName"></w2:key>
+    					<w2:key defaultValue="" dataType="text" name="비밀번호" id="password"></w2:key>
+    					<w2:key defaultValue="" dataType="text" name="이미지 URL" id="profileImageUrl"></w2:key>
+    					<w2:key defaultValue="" dataType="text" name="상태" id="isActive"></w2:key>
+    					<w2:key dataType="text" name="가입일" id="createdAt"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
     		</w2:dataCollection>
     		<w2:workflowCollection />
-    		<xf:submission id="sbm_email" action="/InsWebApp/SendEmail.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_mailParam","key":"elData"}' target=""
-    			encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
-    			ev:submitdone="scwin.sbm_email_submitdone" ev:submiterror="scwin.sbm_email_submiterror" abortTrigger="">
+    		<xf:submission id="sbm_email" action="/InsWebApp/SendEmail.pwkjson" method="post" mediatype="application/json"
+    			ref='data:json,{"id":"dma_mailParam","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
+    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_email_submitdone"
+    			ev:submiterror="scwin.sbm_email_submiterror" abortTrigger="">
+    		</xf:submission>
+    		<xf:submission id="sbm_checkEmail" action="/InsWebApp/UserEmailCheck.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_emailCheck","key":"elData"}' target="" encoding="UTF-8"
+    			instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_checkEmail_submitdone"
+    			ev:submiterror="scwin.sbm_checkEmail_submiterror" abortTrigger="">
     		</xf:submission>
     	</xf:model>
     	<w2:layoutInfo />
     	<w2:publicInfo method="" />
     	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
     scwin.onresize();
+    scwin.checkEmail = false;
+    scwin.checkTry = false;
 };
 
 scwin.onresize = function (e) {
@@ -64,44 +81,165 @@ scwin.input_onblur = function (e) {
     const targetGroup = $p.getComponentById(targetGroupId);
 
     if (targetGroup) {
-        targetGroup.setStyle("border-color", "#DAD3D3"); 
-    } 
+        targetGroup.setStyle("border-color", "#DAD3D3");
+    }
 };
 
 //input border 스타일
 scwin.input_onfocus = function (e) {
     const currentInput = e.target;
-    const currentInputId = currentInput.id; 
+    const currentInputId = currentInput.id;
     const targetGroupId = currentInputId.replace("_input", "_group");
-    const targetGroup = $p.getComponentById(targetGroupId); 
+    const targetGroup = $p.getComponentById(targetGroupId);
 
     if (targetGroup) {
         targetGroup.setStyle("border-color", "black");
-    } 
+    }
 };
 
 
-// 이메일
+// 가입하기(이메일 전송)
 scwin.signup_button_onclick = function (e) {
-    let result = $c.sbm.execute(sbm_email);
+    var email = email_input.getValue();
+    var password = password_input.getValue();
+    var passwordCheck = passwordCheck_input.getValue();
+    var name = name_input.getValue();
+
+    var isValid = true;
+    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // 1. 이름
+    if (!name) {
+        name_error_text.setValue("*이름을 입력해주세요.");
+        isValid = false;
+    } else {
+        name_error_text.setValue("");
+    }
+
+    // 2. 이메일
+    if (!email) {
+        email_error_text.setValue("*이메일을 입력해주세요.");
+        isValid = false;
+    } else if (!emailRegex.test(email)) {
+        email_error_text.setValue("*올바른 이메일 형식을 입력해주세요.");
+        isValid = false;
+    } else if (!scwin.checkTry) {
+        email_error_text.setValue("*이메일 중복확인이 필요합니다.");
+        isValid = false;
+    } else if (!scwin.checkEmail) {
+        isValid = false;
+    } else {
+        email_error_text.setValue(""); // 통과 시 에러 초기화
+    }
+
+
+    // 3. 비밀번호
+    if (!password) {
+        password_error_text.setValue("*비밀번호를 입력해주세요.");
+        isValid = false;
+    } else {
+        password_error_text.setValue("");
+    }
+
+    // 4. 비밀번호 확인
+    if (!passwordCheck) {
+        passwordCheck_error_text.setValue("*비밀번호 확인을 입력해주세요.");
+        isValid = false;
+    }
+    else {
+        passwordCheck_error_text.setValue("");
+
+    }
+
+    let pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+={}\[\]:;"'<>,.?/-]).{8,}$/;
+
+    if (password && !pwRegex.test(password)) {
+        password_error_text.setValue("*비밀번호는 8자 이상이며, 영문자·숫자·특수문자를 포함해야 합니다.");
+        isValid = false;
+    }
+
+    // 비밀번호 일치 검사
+    if (password && passwordCheck && password !== passwordCheck) {
+        passwordCheck_error_text.setValue("*비밀번호가 일치하지 않습니다.");
+        isValid = false;
+    }
+
+
+
+    if (!isValid) return;
+
+    console.log(scwin.checkTry);
+    console.log(scwin.checkEmail);
+    // 모든 검사 통과 시 실행
+    $c.sbm.execute(sbm_email);
 };
+
 
 scwin.sbm_email_submitdone = function (e) {
-    const responseData = e.responseJSON; 
-    console.log(responseData);
-    // if (responseData) {
-    //     const encodedData = encodeURIComponent(JSON.stringify(responseData));
-    //     $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/changePwdPage.xml?data=" + encodedData); [3]
-    // } else {
-    //     console.error("응답 데이터가 없습니다.");
-    //     alert("데이터 오류");
-    // }
+    const responseData = e.responseJSON;
+
+    if (responseData.success) {
+        let info = {
+            name: name_input.getValue(),
+            email: email_input.getValue(),
+            password: password_input.getValue(),
+            passwordCheck: passwordCheck_input.getValue()
+        }
+        sessionStorage.setItem("code", responseData.code); //인증코드
+        sessionStorage.setItem("info", JSON.stringify(info)); //내용
+        sessionStorage.setItem("sentTime", new Date().getTime()); //이메일 전송 시간
+
+        $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/codeCheckPage.xml");
+    } else {
+        alert("잘못된 이메일 주소입니다");
+    }
 };
 
 scwin.sbm_email_submiterror = function (e) {
     console.error("이메일 전송 중 오류 발생:", e);
     alert("이메일 전송 오류");
 };
+
+scwin.emailCheck_button_onclick = function (e) {
+    let param = {
+        userId: email_input.getValue(),
+        userName: "",
+        password: "",
+        profileImageUrl: "",
+        isActive: "",
+        createdAt: ""
+    }
+    
+    dma_emailCheck.setJSON(param);
+    console.log(dma_emailCheck.getJSON());
+    $c.sbm.execute(sbm_checkEmail);
+};
+
+scwin.sbm_checkEmail_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    scwin.checkTry = true;
+    console.log(responseData);
+    if (!responseData.isDup) {
+        scwin.checkEmail = true;
+        emailCheck_button.setDisabled(true);
+        email_error_text.setValue("*사용가능한 이메일입니다");
+        email_error_text.setStyle("color", "green");
+    } else{
+        email_error_text.setValue("*이미 가입된 이메일입니다.");
+    }
+};
+
+scwin.sbm_checkEmail_submiterror = function (e) {
+    alert("실패");
+};
+
+
+scwin.email_input_onkeyup = function (e) {
+    scwin.checkTry = false;
+    scwin.checkEmail = false;
+    emailCheck_button.setDisabled(false)
+};
+
 ]]></script>
     	<style type="text/css"><![CDATA[]]></style>
     </head>
@@ -135,13 +273,12 @@ scwin.sbm_email_submiterror = function (e) {
     							showPlaceHolderOnReadOnly="true" placeholder="이름을 입력하세요" class="input-group-container" ref="">
     						</xf:input>
     					</xf:group>
+    					<w2:textbox id="name_error_text" label="" style="" class="error-text"></w2:textbox>
     				</xf:group>
     				<xf:group style="height: 60px;" id="">
     					<w2:textbox style="height: 23px;" id="" label="이메일"></w2:textbox>
     					<xf:group style="height:35px;" id="" class="email-group">
-    						<xf:trigger
-    							style=""
-    							id="" type="button" class="duplicateCheck-button auth-button">
+    						<xf:trigger style="" id="emailCheck_button" type="button" class="duplicateCheck-button auth-button" ev:onclick="scwin.emailCheck_button_onclick">
     							<xf:label><![CDATA[중복확인]]></xf:label>
     						</xf:trigger>
     						<xf:group
@@ -152,10 +289,11 @@ scwin.sbm_email_submiterror = function (e) {
     							</xf:output>
     							<xf:input style="height:35px;width:80.25%;background:transparent;outline:none;border:none;" id="email_input"
     								placeholder="이메일을 입력하세요" showPlaceHolderOnReadOnly="true" class="input-group-container" ev:onblur="scwin.input_onblur"
-    								ev:onfocus="scwin.input_onfocus" ref="data:dma_mailParam.email">
+    								ev:onfocus="scwin.input_onfocus" ref="data:dma_mailParam.email" ev:onkeyup="scwin.email_input_onkeyup">
     							</xf:input>
     						</xf:group>
     					</xf:group>
+    					<w2:textbox id="email_error_text" label="" style="" class="error-text"></w2:textbox>
     				</xf:group>
     				<xf:group style="height: 60px;" id="">
     					<w2:textbox style="height: 23px;" id="" label="비밀번호"></w2:textbox>
@@ -164,8 +302,11 @@ scwin.sbm_email_submiterror = function (e) {
     						<xf:output style="width:30px;height:100%;" id="" label="" class="fa-solid fa-lock auth-icon">
     							<xf:label></xf:label>
     						</xf:output>
-    						<xf:secret style="height:35px;width:89.68%;background:transparent;outline:none;border:none;" id="password_input" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus" class="input-group-container" placeholder="비밀번호를 입력하세요"></xf:secret>
+    						<xf:secret style="height:35px;width:89.68%;background:transparent;outline:none;border:none;" id="password_input"
+    							ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus" class="input-group-container" placeholder="비밀번호를 입력하세요">
+    						</xf:secret>
     					</xf:group>
+    					<w2:textbox id="password_error_text" label="" style="" class="error-text"></w2:textbox>
     				</xf:group>
     				<xf:group style="height: 60px;" id="">
     					<w2:textbox style="height: 23px;" id="" label="비밀번호 확인"></w2:textbox>
@@ -175,9 +316,11 @@ scwin.sbm_email_submiterror = function (e) {
     							<xf:label></xf:label>
     						</xf:output>
     						<xf:secret class="input-group-container" id="passwordCheck_input" placeholder="비밀번호를 다시 입력하세요"
-    							style="height:35px;width:89.68%;background:transparent;outline:none;border:none;" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus">
+    							style="height:35px;width:89.68%;background:transparent;outline:none;border:none;" ev:onblur="scwin.input_onblur"
+    							ev:onfocus="scwin.input_onfocus">
     						</xf:secret>
     					</xf:group>
+    					<w2:textbox id="passwordCheck_error_text" label="" style="" class="error-text"></w2:textbox>
     				</xf:group>
     			</xf:group>
     			<xf:trigger type="button"

@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare"
+	xmlns:xf="http://www.w3.org/2002/xforms">
+	<head>
+		<w2:type>COMPONENT</w2:type>
+		<w2:buildDate />
+		<w2:MSA />
+		<xf:model>
+			<w2:dataCollection baseNode="map">
+				<w2:dataMap baseNode="map" id="dmp_userVo" style="">
+					<w2:keyInfo>
+						
+						<w2:key dataType="text" id="pageIndex" name="페이지_번호" defaultValue="1"></w2:key>
+						<w2:key dataType="text" id="pageSize" name="페이지_건수" defaultValue="10"></w2:key>
+					</w2:keyInfo>
+					<w2:data use="false"></w2:data>
+				</w2:dataMap>
+				<w2:dataList baseNode="list" id="dlt_userVoList" repeatNode="map" saveRemovedData="true" style="">
+					<w2:columnInfo>
+						<w2:column dataType="text" id="userId" name="user_id"></w2:column>
+                        <w2:column dataType="text" id="userName" name="user_name"></w2:column>
+                        <w2:column dataType="text" id="password" name="password"></w2:column>
+                        <w2:column dataType="text" id="profileImageUrl" name="profile_image_url"></w2:column>
+                        <w2:column dataType="text" id="isActive" name="is_active"></w2:column>
+                        <w2:column dataType="text" id="createdAt" name="created_at"></w2:column>
+                       
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataMap baseNode="map" id="dmp_userVoDetail" style="">
+					<w2:keyInfo>
+						
+					</w2:keyInfo>
+				</w2:dataMap>
+			</w2:dataCollection>
+			<w2:workflowCollection></w2:workflowCollection>
+
+			<xf:submission id="sbm_selectUserVoList" ref='data:json,{"id":"dmp_userVo","key":"userVo"}'
+				target='data:json,{"id":"dlt_userVoList","key":"elData.userVoList"}' action="/InsWebApp/UserList.pwkjson" method="post"
+				mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+				processMsg="사용자 정보 리스트를 조회 중입니다." ev:submit="" ev:submitdone="scwin.sbm_userList_submitdone" ev:submiterror="" abortTrigger="">
+			</xf:submission>
+		</xf:model>
+		<w2:layoutInfo></w2:layoutInfo>
+		<w2:publicInfo method="" />
+		<script lazy="false" type="text/javascript"><![CDATA[
+	scwin.onpageload = function() {		
+		//search_box
+        var cptIbxName = $p.getComponentById("searchComp_1");
+        if(cptIbxName == undefined){
+			search_box.hide();
+        }
+		
+		// 사용자 정보 조회
+		scwin.btn_search_onclick();
+	};
+
+	/************************** 이벤트 함수 *************************/
+	
+	/**
+	 * 조회 버튼 클릭 이벤트
+	 * @date
+	 * @memberOf
+	 * @param 
+	 * @returns
+	 * @author 
+	 * @example
+	 */		   
+	scwin.btn_search_onclick = function(e) {
+	
+		// PGAE번호 초기화
+		dmp_userVo.set("pageIndex","1");
+		pgl_userList.setSelectedIndex(1);
+
+		// 서버통신 - 사용자 정보 조회
+		$c.sbm.execute($p, sbm_selectUserVoList);
+	};
+	
+	scwin.sbm_userList_submitdone = function(e) {
+
+		// error 수신시
+		var elData = e.responseJSON.elData;
+		var elHeader  = e.responseJSON.elHeader;
+		if(elHeader == null || elHeader == "" || elHeader == "undefiend" || elHeader.resSuc == false) {
+			$c.win.alert(`에러코드 : ${elHeader.resCode}\n에러메시지 : ${elHeader.resMsg}`);
+			return false;
+		}
+
+		// 사용자 정보 dataMap 초기화
+		dmp_userVoDetail.setEmptyValue();
+
+		// 총 레코드 수 업데이트
+        spn_listCnt.setLabel(elData.totalCount);
+        
+        // 데이터를 그리드에 셋팅
+        dlt_userVoList.setJSON(elData.userVoList);
+        
+        // 페이지 네비게이터 업데이트
+        var totalPageCount = Math.ceil(elData.totalCount / dmp_userVo.get("pageSize"));
+        pgl_userList.setCount(totalPageCount);
+        
+		// 페이징 정보 업데이트
+        spn_totalPageCount.setValue(totalPageCount);
+        spn_pageIndex.setValue(dmp_userVo.get("pageIndex"));
+        pgl_userList.setSelectedIndex(dmp_userVo.get("pageIndex"));
+	};		
+
+	/**
+	 * 페이지 번호 클릭 이벤트
+	 * @date
+	 * @memberOf
+	 * @param 
+	 * @returns 
+	 * @author 
+	 * @example
+	 */
+	scwin.pgl_userList_onclick = function(idx) {
+	
+		// 페이지 번호 세팅
+		dmp_userVo.set( "pageIndex" , idx ); 
+		// 서버통신 - 사원목록 조회
+		$c.sbm.execute($p, sbm_selectUserVoList);
+	};
+
+]]></script>
+	</head>
+	<body ev:onpageload="scwin.onpageload">
+		<xf:group class="sub_contents " id="" style="">
+			<xf:group class="pgtbox" id="" style="">
+				<w2:textbox class="pgt_tit" id="" label="사용자 정보" style="" tagname="" />
+			</xf:group>
+			<xf:group class="schbox" id="search_box" style="">
+				<xf:group class="schbox_inner" id="" style="">
+					<xf:group adaptive="layout" adaptiveThreshold="1200" class="w2tb tbl" id="" style="width:Infinity%;" tagname="table">
+						<w2:attributes>
+							<w2:summary />
+						</w2:attributes>
+						<xf:group tagname="colgroup">
+							
+						</xf:group>
+						<xf:group class="" id="" style="" tagname="tr">
+							<xf:group class="" id="" style="" tagname="tr">
+								
+							</xf:group>
+						</xf:group>
+					</xf:group>
+				</xf:group>
+				<xf:group class="btn_schbox" id="" style="">
+					<xf:trigger class="btn_cm sch" disabled="" escape="false" id="btn_search" style="" type="button" ev:onclick="scwin.btn_search_onclick" localeRef="COMMON_BUTTON_00001">
+						<xf:label><![CDATA[조회]]></xf:label>
+					</xf:trigger>
+				</xf:group>
+			</xf:group>
+			<xf:group class="titbox" id="" style="">
+				<xf:group class="count" id="">
+					<w2:span id="" label="총" localeRef="COMMON_LABEL_00002" style=""></w2:span>
+    				<w2:span class="num" id="spn_listCnt" label="0" ref="" style=""></w2:span>
+    				<w2:span id="" label="건" localeRef="COMMON_LABEL_00003" style=""></w2:span>
+    			</xf:group>
+			</xf:group>
+			<xf:group adaptiveThreshold="" class="gvwbox" id="" style="">
+				<w2:gridView autoFit="allColumn" checkReadOnlyOnPasteEnable="" class="gvw" dataList="data:dlt_userVoList"
+					defaultCellHeight="26" focusMode="row" id="grd_list" scrollByColumn="false" scrollByColumnAdaptive="false" style="height: 150px;"
+					visibleRowNum="10" ev:oncellclick="scwin.grd_list_oncellclick" readOnly="true">
+					<w2:caption style="" id="caption2" value="this is a grid caption."></w2:caption>
+					<w2:header style="" id="header2">
+						<w2:row style="" id="row3">
+							<w2:column width="70" inputType="text" style="" id="column1" value="user_id" displayMode="label" localeRef="User_COLNAME_00001"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="column2" value="user_name" displayMode="label" localeRef="User_COLNAME_00002"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="column3" value="password" displayMode="label" localeRef="User_COLNAME_00003"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="column4" value="profile_image_url" displayMode="label" localeRef="User_COLNAME_00004"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="column5" value="is_active" displayMode="label" localeRef="User_COLNAME_00005"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="column6" value="created_at" displayMode="label" localeRef="User_COLNAME_00006"></w2:column>
+                           
+						</w2:row>
+					</w2:header>
+					<w2:gBody style="" id="gBody2">
+						<w2:row style="" id="row4">
+							<w2:column width="70" inputType="text" style="" id="userId" value="" displayMode="label"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="userName" value="" displayMode="label"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="password" value="" displayMode="label"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="profileImageUrl" value="" displayMode="label"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="isActive" value="" displayMode="label"></w2:column>
+                            <w2:column width="70" inputType="text" style="" id="createdAt" value="" displayMode="label"></w2:column>
+                           
+						</w2:row>
+					</w2:gBody>
+				</w2:gridView>
+			</xf:group>
+			<xf:group class="pglbox" id="" style="">
+				<w2:pageList class="pgl" displayButtonType="display" displayFormat="#" id="pgl_userList" pageSize="5" pagingType="0"
+					style="" ev:onclick="scwin.pgl_userList_onclick">
+				</w2:pageList>	
+				<xf:group class="pgl_count" id="" style="display: none;">
+    				<w2:span class="num" id="spn_pageIndex" label="0" ref="data:dma_userVo.pageIndex" style=""></w2:span>
+    				<w2:span id="span1" label="/" style=""></w2:span>
+    				<w2:span id="spn_totalPageCount" label="0" ref="data:dma_userVo.totalPageCount" style=""></w2:span>
+    				<w2:span id="span2" label="페이지" localeRef="COMMON_LABEL_00005" style=""></w2:span>
+    			</xf:group>		
+			</xf:group>
+		</xf:group>
+	</body>
+</html>

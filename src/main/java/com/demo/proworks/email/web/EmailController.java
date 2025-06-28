@@ -8,6 +8,7 @@ import javax.annotation.Resource;
 import javax.mail.internet.MimeMessage;
 
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,6 +50,7 @@ public class EmailController {
         Map<String, Object> result = new HashMap<>();
 
         String email = emailVo.getEmail();
+ 
         //제목
         String subject = "[COLLABEE] 인증메일 발송";
 
@@ -89,6 +91,16 @@ public class EmailController {
                 + "</html>";
 
         System.out.println("발송할 이메일: " + email);
+        JavaMailSenderImpl impl = (JavaMailSenderImpl) mailSender;
+		System.out.println("📨 SMTP Host: " + impl.getHost());
+		System.out.println("📨 SMTP Port: " + impl.getPort());
+		System.out.println("📨 Username: " + impl.getUsername());
+		System.out.println("📨 Properties: " + impl.getJavaMailProperties());
+		System.out.println("📨 Password: " + impl.getPassword());
+		
+		impl.setUsername("collabee2025@gmail.com");
+		impl.setPassword("wpek wzaw bpjk zvuc");;
+        
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -104,6 +116,7 @@ public class EmailController {
             result.put("message", "메일 발송 성공");
             result.put("code", code);
         } catch (Exception e) {
+        	System.out.println(e);
             result.put("success", false);
             result.put("message", "메일 발송 실패: " + e.getMessage());
         }
@@ -112,14 +125,14 @@ public class EmailController {
     }
 
     /**
-     * 무작위 6자리 인증 코드 생성
+     * 무작위 5자리 인증 코드 생성
      * 
-     * @return 6자리 인증 코드 String
+     * @return 5자리 인증 코드 String
      */
     public String generateVerificationCode() {
         Random random = new Random();
         StringBuilder code = new StringBuilder();
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 5; i++) {
             code.append(random.nextInt(10));  // 0-9까지의 숫자
         }
         return code.toString();
