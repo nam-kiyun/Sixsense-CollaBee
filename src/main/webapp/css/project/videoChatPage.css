@@ -212,6 +212,8 @@ body {
     flex-direction: column;
     min-width: 350px;
     max-width: 400px;
+    height: 100vh; /* 전체 화면 높이로 고정 */
+    overflow: hidden; /* 전체 영역에서 overflow 제어 */
 }
 
 /* 채팅 헤더 */
@@ -239,15 +241,23 @@ body {
 .chat-message-container {
     flex: 1;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* flex 아이템이 축소될 수 있도록 */
+    height: calc(100vh - 140px); /* 헤더와 입력창 제외한 높이 */
 }
 
 .chat-messages {
-    height: 100%;
-    overflow-y: auto;
+    flex: 1;
+    overflow-y: scroll !important; /* 강제로 스크롤 활성화 */
+    overflow-x: hidden;
     padding: 15px;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    min-height: 0; /* flex 아이템이 축소될 수 있도록 */
+    max-height: 100%;
+    height: 100%; /* 명시적 높이 설정 */
 }
 
 .chat-message {
@@ -392,23 +402,43 @@ body {
     margin-top: 20px;
 }
 
-/* 스크롤바 스타일 */
+/* 스크롤바 스타일 - 강제로 표시 */
+.chat-messages {
+    scrollbar-width: auto !important; /* Firefox - 항상 표시 */
+    scrollbar-color: #FFB823 #f1f1f1 !important; /* Firefox */
+}
+
 .chat-messages::-webkit-scrollbar {
-    width: 6px;
+    width: 12px !important; /* 더 넓게 */
+    display: block !important; /* 강제 표시 */
 }
 
 .chat-messages::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
+    background: #f1f1f1 !important;
+    border-radius: 6px;
+    margin: 2px 0;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
 }
 
 .chat-messages::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 10px;
+    background: #FFB823 !important;
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
 }
 
 .chat-messages::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    background: #e6a41a !important;
+}
+
+.chat-messages::-webkit-scrollbar-corner {
+    background: #f1f1f1;
+}
+
+/* 모든 브라우저에서 스크롤바 강제 표시 */
+.chat-messages {
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
 }
 
 /* 반응형 디자인 */

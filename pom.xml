@@ -485,21 +485,18 @@
 
 
 		<!-- Jedis for Redis -->
-		<!--  
 		<dependency>
 		    <groupId>redis.clients</groupId>
 		    <artifactId>jedis</artifactId>
-		    <version>2.9.3</version>
+		    <version>3.9.0</version>
 		</dependency>
-		-->
-		<!-- Lettuce for Redis -->
-		<!-- 
+		
+		<!-- Spring Data Redis -->
 		<dependency>
 		    <groupId>org.springframework.data</groupId>
 		    <artifactId>spring-data-redis</artifactId>
-		    <version>1.8.22.RELEASE</version>
+		    <version>2.7.18</version>
 		</dependency>
-		-->
 
 		<!--  local jar -->
 		<dependency>

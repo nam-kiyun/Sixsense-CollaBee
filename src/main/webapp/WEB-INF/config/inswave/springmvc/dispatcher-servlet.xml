@@ -31,6 +31,9 @@
 	<!-- Chat Controller -->
 	<bean id="chatController" class="com.demo.proworks.collabee.web.ChatController"/>
  
+	<!-- Redis Configuration -->
+	<bean id="redisConfig" class="com.demo.proworks.collabee.config.RedisConfig"/>
+ 
     <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">   
     	<property name="useRegisteredSuffixPatternMatch" value="true"/>
     </bean>

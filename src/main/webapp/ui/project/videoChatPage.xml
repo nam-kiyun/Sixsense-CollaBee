@@ -125,6 +125,59 @@
                 min-width: 350px;
                 max-width: 400px;
             }
+            
+            /* 채팅 메시지 컨테이너 스크롤 스타일 */
+            #chatMessages {
+                overflow-y: scroll !important;
+                overflow-x: hidden !important;
+                height: 100% !important;
+                scrollbar-width: thin;
+                scrollbar-color: #FFB823 #f1f1f1;
+            }
+            
+            /* WebKit 브라우저용 스크롤바 스타일 */
+            #chatMessages::-webkit-scrollbar {
+                width: 12px;
+            }
+            
+            #chatMessages::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 6px;
+            }
+            
+            #chatMessages::-webkit-scrollbar-thumb {
+                background: #FFB823;
+                border-radius: 6px;
+                border: 2px solid #f1f1f1;
+            }
+            
+            #chatMessages::-webkit-scrollbar-thumb:hover {
+                background: #e6a625;
+            }
+            
+            /* 채팅 메시지 스타일 강화 */
+            .chat-message {
+                margin-bottom: 10px !important;
+                padding: 8px 12px !important;
+                border-radius: 8px !important;
+                max-width: 80% !important;
+                word-wrap: break-word !important;
+                display: block !important;
+            }
+            
+            .chat-message.own {
+                background: #007bff !important;
+                color: white !important;
+                margin-left: auto !important;
+                text-align: right !important;
+            }
+            
+            .chat-message.other {
+                background: #f1f1f1 !important;
+                color: black !important;
+                margin-right: auto !important;
+                text-align: left !important;
+            }
         </style>
         
         <script type="text/javascript"><![CDATA[
@@ -177,8 +230,10 @@ scwin.onpageload = function() {
         
         // 환영 메시지 추가
         scwin.addChatMessage("시스템", "화상통화 채팅방에 오신 것을 환영합니다!", false);
-        scwin.addChatMessage("시스템", "현재 채널: " + currentUser.channelName, false);
-        scwin.addChatMessage("시스템", "프로젝트 ID: " + getProjectIdFromUrl(), false);
+        scwin.addChatMessage("시스템", " 채널: " + currentUser.channelName, false);
+        scwin.addChatMessage("시스템", " 프로젝트 ID: " + getProjectIdFromUrl(), false);
+        scwin.addChatMessage("시스템", " 사용자 ID: " + currentUser.userId, false);
+        scwin.addChatMessage("시스템", " 메시지 폴링: 1초마다 확인", false);
         
         console.log("화상통화 페이지 초기화 완료");
     }).catch(error => {
@@ -534,14 +589,45 @@ scwin.createGuestSession = async function() {
 let lastMessageTimestamp = 0;
 let chatPollingInterval;
 
+// 타임스탬프 관리 함수들
+function getLastMessageTimestamp() {
+    const channelKey = `lastTimestamp_${currentUser.channelName}`;
+    const stored = localStorage.getItem(channelKey);
+    return stored ? parseInt(stored) : 0;
+}
+
+function setLastMessageTimestamp(timestamp) {
+    const channelKey = `lastTimestamp_${currentUser.channelName}`;
+    lastMessageTimestamp = timestamp;
+    localStorage.setItem(channelKey, timestamp.toString());
+    console.log("타임스탬프 업데이트:", timestamp);
+}
+
 scwin.initializeChatWebSocket = function() {
+    // 저장된 타임스탬프 로드
+    lastMessageTimestamp = getLastMessageTimestamp();
+    console.log("초기 타임스탬프:", lastMessageTimestamp);
+    
     // 기존 메시지 로드
     scwin.loadChatMessages();
     
-    // 주기적으로 새 메시지 확인 (2초마다)
+    // 스크롤 강제 활성화 (초기화 시) - 여러 번 시도
+    setTimeout(() => {
+        scwin.forceScrollEnable();
+    }, 500);
+    
+    setTimeout(() => {
+        scwin.forceScrollEnable();
+    }, 1000);
+    
+    setTimeout(() => {
+        scwin.forceScrollEnable();
+    }, 2000);
+    
+    // 주기적으로 새 메시지 확인 (1초마다 - 더 실시간처럼)
     chatPollingInterval = setInterval(() => {
         scwin.checkNewMessages();
-    }, 2000);
+    }, 1000);
     
     console.log("실시간 채팅 시스템 초기화 완료");
 };
@@ -570,21 +656,36 @@ scwin.sendChatMessage = async function() {
             })
         });
         
-        console.log("HTTP 상태:", response.status, response.ok); // 디버깅용
+        console.log("=== 채팅 메시지 전송 ===");
+        console.log("HTTP 상태:", response.status, response.ok);
+        console.log("전송한 데이터:", {
+            channelName: currentUser.channelName,
+            userId: currentUser.userId,
+            userName: currentUser.userName,
+            message: message
+        });
         
         const result = await response.json();
-        console.log("서버 응답:", result); // 디버깅용
+        console.log("=== 메시지 전송 응답 분석 ===");
+        console.log("서버 응답:", result);
+        console.log("서버 응답 타입:", typeof result);
+        console.log("서버 응답 키들:", Object.keys(result || {}));
+        console.log("success 여부:", result.success);
+        console.log("resCode:", result.resCode);
+        console.log("응답 전체:", JSON.stringify(result, null, 2));
         
         // HTTP 200이고 WebSquare 성공 응답인 경우
-        if (response.ok && (!result.resCode || result.resCode === "SUCC.SVR.001" || result.resCode.startsWith("SUCC"))) {
+        if (response.ok && (!result.resCode || result.resCode === "SUCC.SVR.001" || result.resCode.startsWith("SUCC") || result.success === true)) {
             // 입력창 초기화
             messageInput.value = "";
             
-            // 즉시 새 메시지 확인
-            scwin.checkNewMessages();
-            
             console.log("메시지 전송 성공:", message);
-            scwin.addChatMessage("시스템", "✅ 메시지 전송 완료", false);
+            
+            // 짧은 지연 후 새 메시지 확인 (서버 처리 시간 고려)
+            setTimeout(() => {
+                scwin.checkNewMessages();
+            }, 500);
+            
         } else {
             console.error("메시지 전송 실패:", result);
             scwin.addChatMessage("시스템", "❌ 메시지 전송 실패: " + (result.resMsg || "알 수 없는 오류"), false);
@@ -612,10 +713,31 @@ scwin.loadChatMessages = async function() {
         });
         
         const result = await response.json();
+        console.log("=== 전체 메시지 로드 응답 ===");
+        console.log("응답 전체:", result);
         
-        // WebSquare 응답 처리
-        if (result && (Array.isArray(result) || result.resCode === "SUCC.SVR.001" || !result.resCode)) {
-            const messages = Array.isArray(result) ? result : [];
+        // WebSquare 응답 처리 - 여러 가능한 구조 대응
+        let messages = [];
+        
+        if (Array.isArray(result)) {
+            messages = result;
+        } else if (result && Array.isArray(result.chatVo)) {
+            messages = result.chatVo;
+        } else if (result && result.data && Array.isArray(result.data)) {
+            messages = result.data;
+        } else if (result && typeof result === 'object') {
+            // 객체의 값들 중에서 배열 찾기
+            for (const key in result) {
+                if (Array.isArray(result[key])) {
+                    messages = result[key];
+                    break;
+                }
+            }
+        }
+        
+        console.log("파싱된 전체 메시지들:", messages);
+        
+        if (messages && messages.length > 0) {
             // 기존 메시지 클리어
             dlt_chatMessages.removeAll();
             
@@ -625,13 +747,16 @@ scwin.loadChatMessages = async function() {
                 scwin.addChatMessageToList(msg.userName, msg.message, isOwn, msg.messageId);
                 
                 // 마지막 메시지 타임스탬프 업데이트
-                if (parseInt(msg.messageId) > lastMessageTimestamp) {
-                    lastMessageTimestamp = parseInt(msg.messageId);
+                const msgTimestamp = parseInt(msg.timestamp || msg.messageId);
+                if (msgTimestamp > lastMessageTimestamp) {
+                    setLastMessageTimestamp(msgTimestamp);
                 }
             });
             
             scwin.updateChatMessages();
             console.log(`채팅 메시지 로드 완료: ${messages.length}개`);
+        } else {
+            console.log("메시지가 없거나 응답 구조를 파싱할 수 없습니다.");
         }
         
     } catch (error) {
@@ -657,24 +782,80 @@ scwin.checkNewMessages = async function() {
         });
         
         const result = await response.json();
+        console.log("=== 새 메시지 확인 응답 ===");
+        console.log("응답 전체:", result);
+        console.log("응답 타입:", typeof result);
         
-        // WebSquare 응답 처리
-        const messages = Array.isArray(result) ? result : [];
+        // WebSquare 응답 구조 상세 분석
+        console.log("=== 응답 구조 상세 분석 ===");
+        console.log("typeof result:", typeof result);
+        console.log("result 키들:", Object.keys(result || {}));
+        console.log("result 전체:", JSON.stringify(result, null, 2));
+        
+        // WebSquare 응답 처리 - 여러 가능한 구조 대응
+        let messages = [];
+        
+        if (Array.isArray(result)) {
+            console.log("직접 배열 형태");
+            messages = result;
+        } else if (result && Array.isArray(result.chatVo)) {
+            console.log("result.chatVo 형태");
+            messages = result.chatVo;
+        } else if (result && result.data && Array.isArray(result.data.chatVo)) {
+            console.log("result.data.chatVo 형태");
+            messages = result.data.chatVo;
+        } else if (result && result.data && Array.isArray(result.data)) {
+            console.log("result.data 형태");
+            messages = result.data;
+        } else if (result && typeof result === 'object') {
+            console.log("객체 탐색 시작");
+            // 객체의 모든 값들을 재귀적으로 찾기
+            function findArrayInObject(obj, path = '') {
+                for (const key in obj) {
+                    const currentPath = path ? `${path}.${key}` : key;
+                    console.log(`탐색중: ${currentPath}`, typeof obj[key]);
+                    
+                    if (Array.isArray(obj[key])) {
+                        console.log(`배열 발견: ${currentPath}, 길이: ${obj[key].length}`);
+                        return obj[key];
+                    } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                        const found = findArrayInObject(obj[key], currentPath);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            }
+            
+            const foundArray = findArrayInObject(result);
+            if (foundArray) {
+                messages = foundArray;
+            }
+        }
+        
+        console.log("파싱된 메시지들:", messages);
+        console.log("파싱된 메시지 개수:", messages.length);
         
         if (messages && messages.length > 0) {
+            console.log("=== 새 메시지 수신 ===");
+            console.log(`새 메시지 ${messages.length}개:`, messages);
+            
             // 새 메시지들 추가
             messages.forEach(msg => {
                 const isOwn = msg.userId === currentUser.userId;
+                console.log(`메시지 추가: ${msg.userName}: ${msg.message} (본인: ${isOwn})`);
                 scwin.addChatMessageToList(msg.userName, msg.message, isOwn, msg.messageId);
                 
                 // 마지막 메시지 타임스탬프 업데이트
-                if (parseInt(msg.messageId) > lastMessageTimestamp) {
-                    lastMessageTimestamp = parseInt(msg.messageId);
+                const msgTimestamp = parseInt(msg.timestamp || msg.messageId);
+                if (msgTimestamp > lastMessageTimestamp) {
+                    setLastMessageTimestamp(msgTimestamp);
                 }
             });
             
             scwin.updateChatMessages();
-            console.log(`새 메시지 ${messages.length}개 수신`);
+            console.log(`새 메시지 ${messages.length}개 UI에 추가 완료`);
+        } else {
+            console.log("새 메시지 없음");
         }
         
     } catch (error) {
@@ -707,9 +888,14 @@ scwin.addChatMessage = function(userName, message, isOwn) {
     scwin.updateChatMessages();
 };
 
-// 채팅 메시지 UI 업데이트
+// 채팅 메시지 UI 업데이트 - 강화된 스크롤 버전
 scwin.updateChatMessages = function() {
     const chatContainer = document.getElementById("chatMessages");
+    if (!chatContainer) {
+        console.error("채팅 컨테이너를 찾을 수 없습니다!");
+        return;
+    }
+    
     const messages = dlt_chatMessages.getAllJSON();
     
     chatContainer.innerHTML = "";
@@ -717,17 +903,30 @@ scwin.updateChatMessages = function() {
     messages.forEach(msg => {
         const messageDiv = document.createElement("div");
         messageDiv.className = `chat-message ${msg.isOwn === 'true' ? 'own' : 'other'}`;
+        messageDiv.style.cssText = `
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+            ${msg.isOwn === 'true' ? 
+                'background: #007bff; color: white; margin-left: auto; text-align: right;' : 
+                'background: #f1f1f1; color: black; margin-right: auto; text-align: left;'
+            }
+        `;
         
         const headerDiv = document.createElement("div");
         headerDiv.className = "message-header";
+        headerDiv.style.cssText = "font-size: 12px; margin-bottom: 4px; opacity: 0.7;";
         
         const userNameSpan = document.createElement("span");
         userNameSpan.className = "user-name";
         userNameSpan.textContent = msg.userName;
+        userNameSpan.style.fontWeight = "bold";
         
         const timeSpan = document.createElement("span");
         timeSpan.className = "message-time";
-        timeSpan.textContent = msg.timestamp;
+        timeSpan.textContent = " " + msg.timestamp;
         
         headerDiv.appendChild(userNameSpan);
         headerDiv.appendChild(timeSpan);
@@ -735,6 +934,7 @@ scwin.updateChatMessages = function() {
         const contentDiv = document.createElement("div");
         contentDiv.className = "message-content";
         contentDiv.textContent = msg.message;
+        contentDiv.style.cssText = "font-size: 14px; line-height: 1.4;";
         
         messageDiv.appendChild(headerDiv);
         messageDiv.appendChild(contentDiv);
@@ -742,8 +942,42 @@ scwin.updateChatMessages = function() {
         chatContainer.appendChild(messageDiv);
     });
     
-    // 스크롤을 맨 아래로
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    console.log(`채팅 메시지 ${messages.length}개 업데이트 완료`);
+    
+    // 먼저 스크롤 강제 활성화
+    scwin.forceScrollEnable();
+    
+    // 그 다음 여러 방법으로 스크롤을 아래로
+    setTimeout(() => {
+        // 방법 1: 직접 scrollTop 설정
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        
+        // 방법 2: scrollIntoView 사용
+        if (chatContainer.lastElementChild) {
+            chatContainer.lastElementChild.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'end' 
+            });
+        }
+        
+        // 방법 3: smooth scroll 시도
+        try {
+            chatContainer.scrollTo({
+                top: chatContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        } catch (e) {
+            console.log("smooth scroll 미지원");
+        }
+        
+        console.log("스크롤 위치 업데이트:", chatContainer.scrollTop, "/", chatContainer.scrollHeight);
+    }, 100);
+    
+    // 한 번 더 확실하게
+    setTimeout(() => {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        console.log("최종 스크롤 위치:", chatContainer.scrollTop);
+    }, 200);
 };
 
 // Enter 키 처리
@@ -752,6 +986,131 @@ scwin.handleChatKeyPress = function(event) {
         scwin.sendChatMessage();
     }
 };
+
+// 디버깅용 함수들
+scwin.sendTestMessage = function() {
+    const testMessage = "테스트 메시지 " + new Date().toLocaleTimeString();
+    const chatInput = document.getElementById("chatInput");
+    chatInput.value = testMessage;
+    scwin.sendChatMessage();
+};
+
+scwin.clearTimestamp = function() {
+    const channelKey = `lastTimestamp_${currentUser.channelName}`;
+    localStorage.removeItem(channelKey);
+    lastMessageTimestamp = 0;
+    console.log("타임스탬프 초기화됨");
+    scwin.addChatMessage("시스템", "타임스탬프가 초기화되었습니다.", false);
+};
+
+scwin.forceRefresh = function() {
+    console.log("강제 새로고침 실행");
+    scwin.loadChatMessages();
+    scwin.checkNewMessages();
+};
+
+// 스크롤 테스트용 - 여러 메시지 생성
+scwin.addTestMessages = function() {
+    for (let i = 1; i <= 10; i++) {
+        scwin.addChatMessage("테스트사용자" + i, `테스트 메시지 ${i} - 스크롤 테스트용 긴 메시지입니다. 여러 줄에 걸쳐서 표시될 수 있도록 내용을 길게 작성했습니다.`, i % 2 === 0);
+        
+        // 약간의 지연을 두어 자연스럽게 추가
+        if (i < 10) {
+            setTimeout(() => {}, 100 * i);
+        }
+    }
+    console.log("10개의 테스트 메시지가 추가되었습니다.");
+    
+    // 스크롤 강제 적용
+    scwin.forceScrollEnable();
+};
+
+// 스크롤 강제 활성화 함수 - 강화된 버전
+scwin.forceScrollEnable = function() {
+    const chatContainer = document.getElementById("chatMessages");
+    if (chatContainer) {
+        console.log("=== 스크롤 디버깅 정보 ===");
+        console.log("현재 스크롤 높이:", chatContainer.scrollHeight);
+        console.log("현재 클라이언트 높이:", chatContainer.clientHeight);
+        console.log("현재 스크롤 위치:", chatContainer.scrollTop);
+        console.log("현재 overflow-y:", window.getComputedStyle(chatContainer).overflowY);
+        
+        // 스크롤 속성 강제 적용 - 더 강력하게
+        chatContainer.style.setProperty("overflow-y", "scroll", "important");
+        chatContainer.style.setProperty("overflow-x", "hidden", "important");
+        chatContainer.style.setProperty("height", "100%", "important");
+        chatContainer.style.setProperty("max-height", "100%", "important");
+        chatContainer.style.setProperty("min-height", "300px", "important");
+        chatContainer.style.setProperty("display", "block", "important");
+        chatContainer.style.setProperty("position", "relative", "important");
+        
+        // 부모 컨테이너들 모두 수정
+        let parent = chatContainer.parentElement;
+        while (parent && parent.className) {
+            if (parent.className.includes("chat-message-container")) {
+                parent.style.setProperty("overflow", "hidden", "important");
+                parent.style.setProperty("height", "calc(100vh - 140px)", "important");
+                parent.style.setProperty("flex", "1", "important");
+            } else if (parent.className.includes("chat-section")) {
+                parent.style.setProperty("height", "100vh", "important");
+                parent.style.setProperty("display", "flex", "important");
+                parent.style.setProperty("flex-direction", "column", "important");
+                parent.style.setProperty("overflow", "hidden", "important");
+            }
+            parent = parent.parentElement;
+        }
+        
+        // 여러번 시도해서 확실하게 스크롤 적용
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                console.log(`스크롤 시도 ${i + 1}: 위치 ${chatContainer.scrollTop}`);
+                
+                // 강제로 스크롤 이벤트 발생
+                chatContainer.dispatchEvent(new Event('scroll'));
+            }, i * 100);
+        }
+        
+        // 최종 디버깅 정보
+        setTimeout(() => {
+            console.log("=== 최종 스크롤 상태 ===");
+            console.log("스크롤 높이:", chatContainer.scrollHeight);
+            console.log("클라이언트 높이:", chatContainer.clientHeight);
+            console.log("스크롤 가능 여부:", chatContainer.scrollHeight > chatContainer.clientHeight);
+            console.log("현재 스크롤 위치:", chatContainer.scrollTop);
+            console.log("최대 스크롤 위치:", chatContainer.scrollHeight - chatContainer.clientHeight);
+            console.log("overflow-y:", window.getComputedStyle(chatContainer).overflowY);
+            
+            if (chatContainer.scrollHeight > chatContainer.clientHeight) {
+                console.log("✅ 스크롤이 가능한 상태입니다!");
+                console.log("✅ 스크롤바가 표시되어야 합니다!");
+            } else {
+                console.log("❌ 스크롤이 불가능한 상태입니다.");
+                console.log("❌ 더 많은 메시지를 추가해보세요.");
+            }
+        }, 500);
+    } else {
+        console.error("채팅 컨테이너를 찾을 수 없습니다!");
+        
+        // 모든 가능한 요소를 찾아보기
+        console.log("=== 요소 찾기 시도 ===");
+        const possibleElements = [
+            document.querySelector("#chatMessages"),
+            document.querySelector("[id*='chatMessages']"),
+            document.querySelector(".chat-messages"),
+            document.querySelector("[class*='chat-messages']")
+        ];
+        
+        possibleElements.forEach((el, index) => {
+            if (el) {
+                console.log(`가능한 요소 ${index + 1}:`, el);
+            }
+        });
+    }
+};
+
+// 브라우저 콘솔용 글로벌 함수
+window.debugScroll = scwin.forceScrollEnable;
 
 // 로딩 표시
 scwin.showLoading = function(message) {
@@ -807,7 +1166,7 @@ window.addEventListener("beforeunload", function() {
             <xf:group class="video-section">
                 <!-- 로컬 비디오 -->
                 <xf:group class="local-video-container">
-                    <video id="localVideo" class="local-video" autoplay muted playsinline></video>
+                    <video id="localVideo" class="local-video" autoplay="true" muted="true" playsinline="true"></video>
                     <xf:output class="local-video-label" id="localUserName">나</xf:output>
                 </xf:group>
                 
@@ -839,25 +1198,44 @@ window.addEventListener("beforeunload", function() {
             </xf:group>
             
             <!-- 채팅 영역 -->
-            <xf:group class="chat-section">
+            <xf:group class="chat-section" style="height: 100vh; display: flex; flex-direction: column; overflow: hidden;">
                 <!-- 채팅 헤더 -->
-                <xf:group class="chat-header">
+                <xf:group class="chat-header" style="height: 60px; flex-shrink: 0;">
                     <xf:output class="chat-title">팀 채팅</xf:output>
                     <xf:output class="chat-subtitle" id="chatRoomInfo">실시간 채팅방</xf:output>
                 </xf:group>
                 
                 <!-- 채팅 메시지 컨테이너 -->
-                <xf:group class="chat-message-container">
-                    <div id="chatMessages" class="chat-messages">
+                <xf:group class="chat-message-container" style="flex: 1; overflow: hidden; height: calc(100vh - 140px); padding: 10px;">
+                    <div id="chatMessages" class="chat-messages" style="height: 100%; overflow-y: scroll !important; overflow-x: hidden !important; border: 2px solid #FFB823; padding: 10px; background: white; max-height: 100%; min-height: 300px; scrollbar-width: thin; scrollbar-color: #FFB823 #f1f1f1;">
                         <!-- 채팅 메시지들이 동적으로 추가됩니다 -->
                     </div>
                 </xf:group>
                 
                 <!-- 채팅 입력 -->
-                <xf:group class="chat-input-container">
+                <xf:group class="chat-input-container" style="height: 60px; flex-shrink: 0;">
                     <input type="text" id="chatInput" class="chat-input" placeholder="메시지를 입력하세요..." onkeydown="scwin.handleChatKeyPress(event)" />
                     <xf:trigger class="send-btn" ev:onclick="scwin.sendChatMessage">
                         <xf:label>전송</xf:label>
+                    </xf:trigger>
+                </xf:group>
+                
+                <!-- 디버깅용 버튼들 -->
+                <xf:group class="debug-buttons" style="padding: 10px; background: #f0f0f0; border-top: 1px solid #ddd; height: 80px; flex-shrink: 0;">
+                    <xf:trigger ev:onclick="scwin.sendTestMessage" style="margin: 5px; padding: 5px 10px; font-size: 12px;">
+                        <xf:label>테스트 메시지 전송</xf:label>
+                    </xf:trigger>
+                    <xf:trigger ev:onclick="scwin.addTestMessages" style="margin: 5px; padding: 5px 10px; font-size: 12px; background: #007bff; color: white;">
+                        <xf:label>스크롤 테스트 (10개 메시지)</xf:label>
+                    </xf:trigger>
+                    <xf:trigger ev:onclick="scwin.clearTimestamp" style="margin: 5px; padding: 5px 10px; font-size: 12px;">
+                        <xf:label>타임스탬프 초기화</xf:label>
+                    </xf:trigger>
+                    <xf:trigger ev:onclick="scwin.forceRefresh" style="margin: 5px; padding: 5px 10px; font-size: 12px;">
+                        <xf:label>강제 새로고침</xf:label>
+                    </xf:trigger>
+                    <xf:trigger ev:onclick="scwin.forceScrollEnable" style="margin: 5px; padding: 5px 10px; font-size: 12px; background: #28a745; color: white;">
+                        <xf:label>스크롤 강제 활성화</xf:label>
                     </xf:trigger>
                 </xf:group>
             </xf:group>
