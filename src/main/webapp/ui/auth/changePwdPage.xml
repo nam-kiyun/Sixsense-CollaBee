@@ -9,13 +9,30 @@
     	<w2:buildDate />
     	<w2:MSA />
     	<xf:model>
-    		<w2:dataCollection baseNode="map" />
+    		<w2:dataCollection baseNode="map">
+    			<w2:dataMap baseNode="map" id="dma_Param">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="아이디" id="userId"></w2:key>
+    					<w2:key dataType="text" name="이름" id="userName"></w2:key>
+    					<w2:key dataType="text" name="비밀번호" id="password"></w2:key>
+    					<w2:key dataType="text" name="이미지 URL" id="profileImageUrl"></w2:key>
+    					<w2:key dataType="text" name="상태" id="isActive"></w2:key>
+    					<w2:key dataType="text" name="가입일" id="createdAt"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
+    		</w2:dataCollection>
     		<w2:workflowCollection />
+    		<xf:submission id="sbm_updatePassword" action="/InsWebApp/UserUpd.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_Param","key":"elData"}' target=""
+    			encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
+    			ev:submitdone="scwin.sbm_updatePassword_submitdone" ev:submiterror="" abortTrigger="">
+    		</xf:submission>
     	</xf:model>
     	<w2:layoutInfo />
     	<w2:publicInfo method="" />
     	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
     scwin.onresize();
+    scwin.email = sessionStorage.getItem("email");
+
 };
 
 scwin.onresize = function (e) {
@@ -54,32 +71,80 @@ scwin.input_onblur = function (e) {
     const targetGroup = $p.getComponentById(targetGroupId);
 
     if (targetGroup) {
-        targetGroup.setStyle("border-color", "#DAD3D3"); 
-    } 
+        targetGroup.setStyle("border-color", "#DAD3D3");
+    }
 };
 
 //input border 스타일
 scwin.input_onfocus = function (e) {
     const currentInput = e.target;
-    const currentInputId = currentInput.id; 
+    const currentInputId = currentInput.id;
     const targetGroupId = currentInputId.replace("_input", "_group");
-    const targetGroup = $p.getComponentById(targetGroupId); 
+    const targetGroup = $p.getComponentById(targetGroupId);
 
     if (targetGroup) {
         targetGroup.setStyle("border-color", "black");
-    } 
-};]]></script>
+    }
+};
+
+scwin.signup_button_onclick = function (e) {
+    var password = password_input.getValue();
+    var passwordCheck = passwordCheck_input.getValue();
+
+    var isValid = true;
+    // 3. 비밀번호
+    if (!password) {
+        password_error_text.setValue("*비밀번호를 입력해주세요.");
+        isValid = false;
+    } else {
+        password_error_text.setValue("");
+    }
+
+    // 4. 비밀번호 확인
+    if (!passwordCheck) {
+        passwordCheck_error_text.setValue("*비밀번호 확인을 입력해주세요.");
+        isValid = false;
+    }
+    else {
+        passwordCheck_error_text.setValue("");
+
+    }
+
+    let pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+={}\[\]:;"'<>,.?/-]).{8,}$/;
+
+    if (password && !pwRegex.test(password)) {
+        password_error_text.setValue("*비밀번호는 8자 이상이며, 영문자·숫자·특수문자를 포함해야 합니다.");
+        isValid = false;
+    }
+
+    // 비밀번호 일치 검사
+    if (password && passwordCheck && password !== passwordCheck) {
+        passwordCheck_error_text.setValue("*비밀번호가 일치하지 않습니다.");
+        isValid = false;
+    }
+
+    if (!isValid) return;
+
+    //비밀번호 서브미션
+    let param = {
+        userId: scwin.email,
+        userName: "",
+        password: password_input.getValue(),
+        profileImageUrl: "",
+        isActive: "",
+        createdAt: ""
+    }
+    dma_Param.setJSON(param);
+    $c.sbm.execute(sbm_updatePassword);
+};
+
+scwin.sbm_updatePassword_submitdone = function (e) {
+    $c.win.alert("비밀번호가 변경되었습니다.", function () {
+        $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/loginPage.xml");
+    });
+};
+]]></script>
     	<style type="text/css"><![CDATA[
-
-
-
-.signup-group {
-    gap: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
 ]]></style>
     </head>
     <body ev:onpageload="scwin.onpageload" style="padding: 0;margin: 0;;">
@@ -99,34 +164,32 @@ scwin.input_onfocus = function (e) {
     			<xf:group style="width:60%;height:198px;" id="signup_group" class="auth-group">
     				<xf:group id="" style="height: 60px;">
     					<w2:textbox id="" label="비밀번호" style="height: 23px;"></w2:textbox>
-    					<xf:group class="input-group" id="password_group"
-    						style="">
+    					<xf:group class="input-group" id="password_group" style="">
     						<xf:output class="fa-solid fa-lock auth-icon" id="" label="" style="">
     							<xf:label></xf:label>
     						</xf:output>
-    						<xf:secret class="input-group-container" ev:onblur="scwin.input_onblur"
-    							ev:onfocus="scwin.input_onfocus" id="password_input" placeholder="비밀번호를 입력하세요"
-    							style="">
+    						<xf:secret class="input-group-container" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus"
+    							id="password_input" placeholder="비밀번호를 입력하세요" style="">
     						</xf:secret>
     					</xf:group>
+    					<w2:textbox id="password_error_text" label="" style="" class="error-text"></w2:textbox>
     				</xf:group>
     				<xf:group id="" style="height: 60px;">
     					<w2:textbox id="" label="비밀번호 확인" style="height: 23px;"></w2:textbox>
-    					<xf:group class="input-group" id="passwordCheck_group"
-    						style="">
+    					<xf:group class="input-group" id="passwordCheck_group" style="">
     						<xf:output class="fa-solid fa-check auth-icon" id="" label="" style="">
     							<xf:label></xf:label>
     						</xf:output>
-    						<xf:secret class="input-group-container" ev:onblur="scwin.input_onblur"
-    							ev:onfocus="scwin.input_onfocus" id="passwordCheck_input" placeholder="비밀번호를 다시 입력하세요"
-    							style="">
+    						<xf:secret class="input-group-container" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus"
+    							id="passwordCheck_input" placeholder="비밀번호를 다시 입력하세요" style="">
     						</xf:secret>
     					</xf:group>
+    					<w2:textbox id="passwordCheck_error_text" label="" style="" class="error-text"></w2:textbox>
     				</xf:group>
     			</xf:group>
     			<xf:trigger type="button"
     				style="" id="signup_button"
-    				class="signup-button auth-button">
+    				class="signup-button auth-button" ev:onclick="scwin.signup_button_onclick">
     				<xf:label><![CDATA[수정]]></xf:label>
     			</xf:trigger>
     		</xf:group>

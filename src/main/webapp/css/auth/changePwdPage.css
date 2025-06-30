@@ -6,3 +6,11 @@
     flex-direction: column;
     justify-content: center;
 }
+
+.error-text{
+	height:23px;
+	font-size: 11px;
+	text-align: left;
+	color: red;
+	margin-top: 5px;
+}
