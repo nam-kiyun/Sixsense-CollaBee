@@ -9,13 +9,39 @@
     	<w2:buildDate />
     	<w2:MSA />
     	<xf:model>
-    		<w2:dataCollection baseNode="map" />
+    		<w2:dataCollection baseNode="map">
+    			<w2:dataMap baseNode="map" id="dma_mailParam">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="이메일" id="email"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
+    			<w2:dataMap baseNode="map" id="dma_emailCheck">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="아이디" id="userId"></w2:key>
+    					<w2:key dataType="text" name="이름" id="userName"></w2:key>
+    					<w2:key dataType="text" name="비밀번호" id="password"></w2:key>
+    					<w2:key dataType="text" name="이미지 URL" id="profileImageUrl"></w2:key>
+    					<w2:key dataType="text" name="상태" id="isActive"></w2:key>
+    					<w2:key dataType="text" name="가입일" id="createdAt"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
+    		</w2:dataCollection>
     		<w2:workflowCollection />
+    		<xf:submission id="sbm_email" action="/InsWebApp/SendEmail.pwkjson" method="post" mediatype="application/json"
+    			ref='data:json,{"id":"dma_mailParam","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
+    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_email_submitdone" ev:submiterror="" abortTrigger="">
+    		</xf:submission>
+    		<xf:submission id="sbm_checkEmail" action="/InsWebApp/UserEmailCheck.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_emailCheck","key":"elData"}'
+    			target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
+    			ev:submitdone="scwin.sbm_checkEmail_submitdone" ev:submiterror="" abortTrigger="">
+    		</xf:submission>
     	</xf:model>
     	<w2:layoutInfo />
     	<w2:publicInfo method="" />
     	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
     scwin.onresize();
+    scwin.code = "";
+    scwin.time = 0;
 };
 
 scwin.onresize = function (e) {
@@ -35,15 +61,15 @@ scwin.applyResponsiveWidth = function () {
     if (width <= 650) {
         signup_form.setStyle("width", "100%");
         signup_group.setStyle("width", "80%");
-        signup_button.setStyle("width", "80%");
+        findPwd_button.setStyle("width", "80%");
     } else if (width <= 1300) {
         signup_form.setStyle("width", "70%");
         signup_group.setStyle("width", "75%");
-        signup_button.setStyle("width", "75%");
+        findPwd_button.setStyle("width", "75%");
     } else {
         signup_form.setStyle("width", "40%");
         signup_group.setStyle("width", "60%");
-        signup_button.setStyle("width", "60%");
+        findPwd_button.setStyle("width", "60%");
     }
 };
 
@@ -54,21 +80,88 @@ scwin.input_onblur = function (e) {
     const targetGroup = $p.getComponentById(targetGroupId);
 
     if (targetGroup) {
-        targetGroup.setStyle("border-color", "#DAD3D3"); 
-    } 
+        targetGroup.setStyle("border-color", "#DAD3D3");
+    }
 };
 
 //input border 스타일
 scwin.input_onfocus = function (e) {
     const currentInput = e.target;
-    const currentInputId = currentInput.id; 
+    const currentInputId = currentInput.id;
     const targetGroupId = currentInputId.replace("_input", "_group");
-    const targetGroup = $p.getComponentById(targetGroupId); 
+    const targetGroup = $p.getComponentById(targetGroupId);
 
     if (targetGroup) {
         targetGroup.setStyle("border-color", "black");
-    } 
-};]]></script>
+    }
+};
+
+//메일전송 or 확인 버튼
+scwin.findPwd_button_onclick = function (e) {
+    if (findPwd_button.getValue() === "메일전송") {
+        let param = {
+            userId: email_input.getValue(),
+            userName: "",
+            password: "",
+            profileImageUrl: "",
+            isActive: "",
+            createdAt: ""
+        }
+        dma_emailCheck.setJSON(param);
+
+        $c.sbm.execute(sbm_checkEmail); //이메일 존재 여부 확인
+
+    } else {
+        if (code_input.getValue() === scwin.code) {
+            sessionStorage.setItem("email", email_input.getValue()); //인증코드
+            $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/changePwdPage.xml");
+        } else {
+            $c.win.alert("인증 코드가 일치하지 않습니다.");
+        }
+    }
+};
+
+
+scwin.sbm_checkEmail_submitdone = function (e) {
+    const responseData = e.responseJSON;
+
+    if (responseData.isDup) {
+        code_box.addClass("show"); //인증코드 input 나타나게
+        findPwd_button.setValue("확인"); //버튼 text를 메일전송 -> 확인
+        $c.sbm.execute(sbm_email); //인증코드 이메일 보내기
+        scwin.time = new Date().getTime();
+        scwin.startCountdown(); //시간 측정
+        email_error_text.setValue("");
+    } else {
+        email_error_text.setValue("존재하지 않는 이메일 입니다");
+    }
+};
+
+scwin.sbm_email_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    scwin.code = responseData.code;
+};
+
+
+//인증시간 만료 측정(10분)
+scwin.startCountdown = function () {
+    const timer = setInterval(function () {
+        const now = new Date().getTime();
+        const remaining = 600000 - (now - scwin.time); // 10분 = 600,000ms
+
+        if (remaining <= 0) {
+            timeCheck_text.setValue("인증 시간이 만료되었습니다.");
+            clearInterval(timer);
+            return;
+        }
+
+        const min = Math.floor(remaining / (60 * 1000));
+        const sec = Math.floor((remaining % (60 * 1000)) / 1000);
+        timeCheck_text.setValue(`남은 시간: ${min}분 ${sec < 10 ? "0" : ""}${sec}초`);
+    }, 1000);
+};
+
+]]></script>
     	<style type="text/css"><![CDATA[]]></style>
     </head>
     <body ev:onpageload="scwin.onpageload" style="padding: 0;margin: 0;;">
@@ -80,31 +173,49 @@ scwin.input_onfocus = function (e) {
 
 
     				<xf:image src="/InsWebApp/images/collabee_icon.jpg" style="width:51px;height:48px;display:flex;" id=""></xf:image>
-    				<w2:textbox id="" label="COLLABEE" style="width:150px;height:37px;font-size:30px;font-weight: bold;display: flex;color: #FFB823"></w2:textbox>
+    				<w2:textbox id="" label="COLLABEE"
+    					style="width:150px;height:37px;font-size:30px;font-weight: bold;display: flex;color: #FFB823">
+    				</w2:textbox>
     			</xf:group>
 
 
     			<w2:textbox id="" label="인증번호를 입력하세요" style="height: 23px;color: #DAD3D3;"></w2:textbox>
-    			<xf:group style="width:60%;height:116px;"
-    				id="signup_group" class="signup-group">
+
+    			<xf:group style="width:60%;height:177px;" id="signup_group" class="signup-group">
     				<xf:group style="height: 60px;" id="">
-    					<w2:textbox style="height: 23px;" id="" label="인증번호"></w2:textbox>
-    					<xf:group style=""
-    						id="code_group" class="input-group">
+    					<w2:textbox style="height: 23px;" id="" label="이메일"></w2:textbox>
+    					<xf:group style="" id="email_group" class="input-group">
     						<xf:output style="" id="" label="" class="fa-solid fa-lock auth-icon">
     							<xf:label></xf:label>
     						</xf:output>
-    						<xf:input style="" id="code_input" placeholder="인증번호를 입력하세요"
-    							showPlaceHolderOnReadOnly="true" class="input-group-container" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus">
+    						<xf:input style="" id="email_input" placeholder="이메일을 입력하세요" showPlaceHolderOnReadOnly="true"
+    							class="input-group-container" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus" ref="data:dma_mailParam.email">
+    						</xf:input>
+    					</xf:group>
+    					<w2:textbox id="email_error_text" label="" style="" class="error-text"></w2:textbox>
+    				</xf:group>
+    				<xf:group id="code_box" style="height: 60px;" class="code-box">
+    					<w2:textbox id="" label="인증번호" style="height: 23px;"></w2:textbox>
+    					<xf:group class="input-group" id="code_group" style="">
+    						<xf:output class="fa-solid fa-lock auth-icon" id="" label="" style="">
+    							<xf:label></xf:label>
+    						</xf:output>
+    						<xf:input class="input-group-container" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus"
+    							id="code_input" placeholder="인증번호를 입력하세요" showPlaceHolderOnReadOnly="true" style="">
     						</xf:input>
     					</xf:group>
     				</xf:group>
     			</xf:group>
-    			<xf:trigger type="button"
-    				style="" id="signup_button"
-    				class="auth-button">
-    				<xf:label><![CDATA[확인]]></xf:label>
+    			<xf:trigger type="button" style="" id="findPwd_button" class="auth-button" ev:onclick="scwin.findPwd_button_onclick">
+    				<xf:label><![CDATA[메일전송]]></xf:label>
     			</xf:trigger>
+    			<w2:textbox class="timeCheck-text" id="timeCheck_text" label="" style=""></w2:textbox>
+    			<xf:group class="button-group" id="" style="height:54px;">
+    				<xf:trigger class="login-button" ev:onclick="scwin.resend_button_onclick" id="resend_button"
+    					style="width: 80px;height: 23px;" type="button">
+    					<xf:label><![CDATA[메일 재전송]]></xf:label>
+    				</xf:trigger>
+    			</xf:group>
     		</xf:group>
     	</xf:group>
     </body>
