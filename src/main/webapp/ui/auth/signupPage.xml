@@ -168,8 +168,6 @@ scwin.signup_button_onclick = function (e) {
 
     if (!isValid) return;
 
-    console.log(scwin.checkTry);
-    console.log(scwin.checkEmail);
     // 모든 검사 통과 시 실행
     $c.sbm.execute(sbm_email);
 };
