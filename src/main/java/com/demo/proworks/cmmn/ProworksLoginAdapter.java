@@ -4,6 +4,8 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import com.inswave.elfw.exception.ElException;
 import com.inswave.elfw.log.AppLog;
 import com.inswave.elfw.login.LoginAdapter;
@@ -13,6 +15,8 @@ import com.inswave.elfw.util.ElBeanUtils;
 
 import com.demo.proworks.emp.service.EmpService;
 import com.demo.proworks.emp.vo.EmpVo;
+import com.demo.proworks.user.service.UserService;
+import com.demo.proworks.user.vo.UserVo;
 
 /**
  * @subject		: ProworksLoginAdapter.java 
@@ -51,6 +55,24 @@ public class ProworksLoginAdapter extends LoginAdapter {
 
 		// 로그인 체크를 수행  (샘플 예제)
 		try{
+			String inputPassword = (String) params[0];
+	
+	        UserService userService = (UserService) ElBeanUtils.getBean("userServiceImpl");
+	        UserVo userVo = new UserVo();
+	        userVo.setUserId(id); // 또는 setEmail() 등 아이디 기준
+	
+	        UserVo savedUser = userService.selectUser(userVo);
+	        if (savedUser == null) {
+	            throw new LoginException("EL.ERROR.LOGIN.0001"); // 사용자 없음
+	        }
+	
+	        PasswordEncoder passwordEncoder = (PasswordEncoder) ElBeanUtils.getBean("passwordEncoder");
+	        String storedPassword = savedUser.getPassword();
+	
+	        if (!passwordEncoder.matches(inputPassword, storedPassword)) {
+	            throw new LoginException("EL.ERROR.LOGIN.0002"); // 비밀번호 불일치
+	        }
+		/*
 			String pw = (String)params[0];
 			EmpService empService = (EmpService)ElBeanUtils.getBean("empServiceImpl");
 			EmpVo empVo = new EmpVo();
@@ -66,6 +88,7 @@ public class ProworksLoginAdapter extends LoginAdapter {
 			if(pw == null || !pw.equals(resPw)){
 				throw new LoginException("EL.ERROR.LOGIN.0002");
 			}
+		 */
 		}catch(NumberFormatException e){
 			AppLog.error("login Error1",e);
 			throw new LoginException("EL.ERROR.LOGIN.0001");

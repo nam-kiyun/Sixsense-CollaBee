@@ -4,102 +4,104 @@
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <!--
-	@subject     : 사용자 정보 관련 처리를 담당하는 Sql Mapper
+	@subject : 사용자 정보 관련 처리를 담당하는 Sql Mapper
 	@description : 사용자 정보 관련 처리를 담당하는 Sql Mapper
-	@author      : 국다인
-	@since       : 2025/06/27
+	@author : 국다인
+	@since : 2025/06/27
 	@modification
 	===========================================================
-	DATE              AUTHOR             DESC
+	DATE AUTHOR DESC
 	===========================================================
-	2025/06/27              국다인             최초 생성
- -->
+	2025/06/27 국다인 최초 생성
+-->
 <mapper namespace="com.demo.proworks.user">
-    <insert id="insertUser" parameterType="com.demo.proworks.user.vo.UserVo">
-    	<!-- 사용자 정보를 등록한다. -->	
-    	<!-- QueryID : com.demo.proworks.user.insertUser -->
-        INSERT INTO collabee.user   /* QueryID : com.demo.proworks.user.insertUser */
-        ( 
-            USER_ID
-            <if test="userName        != null"> , USER_NAME         </if>
-            <if test="password         != null"> , PASSWORD          </if>
-            <if test="profileImageUrl!= null"> , PROFILE_IMAGE_URL </if>
-            <if test="isActive        != null"> , IS_ACTIVE         </if>
-            <if test="createdAt       != null and createdAt != ''"> , CREATED_AT        </if>
-        )
-        VALUES  
-        ( 
-            #{userId}
-            <if test="userName        != null"> , #{userName}         </if>
-            <if test="password         != null"> , #{password}          </if>
-            <if test="profileImageUrl!= null"> , #{profileImageUrl} </if>
-            <if test="isActive        != null"> , #{isActive}         </if>
-            <if test="createdAt       != null and createdAt != ''"> , #{createdAt}        </if>
- 
-        )          
-    </insert>	
-	
-    <update id="updateUser" parameterType="com.demo.proworks.user.vo.UserVo">
-    	<!-- 사용자 정보를 갱신한다. -->
-    	
-        UPDATE collabee.user    /* QueryID : com.demo.proworks.user.updateUser */      
-      	  SET  
-                USER_ID           = #{userId}          
-        	                       
-            <if test="userName        != null"> , USER_NAME         = #{userName}         </if>
-            <if test="password         != null"> , PASSWORD          = #{password}          </if>
-            <if test="profileImageUrl!= null"> , PROFILE_IMAGE_URL = #{profileImageUrl} </if>
-            <if test="isActive        != null"> , IS_ACTIVE         = #{isActive}         </if>
-            <if test="createdAt       != null"> , CREATED_AT        = #{createdAt}        </if>
-                 
-        WHERE   
-                USER_ID           = #{userId}          
-    </update>
-	
-    <delete id="deleteUser" parameterType="com.demo.proworks.user.vo.UserVo">
-    	<!-- 사용자 정보를 삭제한다. -->
-    	
-        DELETE FROM collabee.user   /* QueryID : com.demo.proworks.user.deleteUser */ 
-        WHERE   
-                USER_ID           = #{userId}          
-        
-    </delete>
-	
-    <select id="selectUser" parameterType="com.demo.proworks.user.vo.UserVo" resultType="com.demo.proworks.user.vo.UserVo">
-    	<!-- 사용자 정보를 상세 조회한다. -->	
-        SELECT     /* QueryID : com.demo.proworks.user.selectUser */
-            USER_ID as userId, USER_NAME as userName, PASSWORD as password, PROFILE_IMAGE_URL as profileImageUrl, IS_ACTIVE as isActive, CREATED_AT as createdAt
-        FROM collabee.user 
-        WHERE 
-                USER_ID           = #{userId}          
-			
-    </select>
-	
-    <select id="selectListUser" parameterType="com.demo.proworks.user.vo.UserVo" resultType="com.demo.proworks.user.vo.UserVo">
-    	<!-- 사용자 정보 목록을 조회한다. -->
-           SELECT    /* QueryID : com.demo.proworks.user.selectListUser */
-               USER_ID as userId, USER_NAME as userName, PASSWORD as password, PROFILE_IMAGE_URL as profileImageUrl, IS_ACTIVE as isActive, CREATED_AT as createdAt		       
-           FROM (
-               SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
-               FROM (				
-                   SELECT 
-                       *  		                  
-                   FROM collabee.user
-                   WHERE  1=1    		
-	     																														
-               ) S, (SELECT @ROWNUM := 0) TMP
-           ) A
-            WHERE PAGE = #{pageIndex}
-    </select>
-	
-    <select id="selectListCountUser" parameterType="com.demo.proworks.user.vo.UserVo" resultType="long">
-    <!-- 사용자 정보 목록의 카운트를 조회한다. -->
-    
-         SELECT    /* QueryID : com.demo.proworks.user.selectListCountUser */
-             COUNT(*) totcnt  		                  
-         FROM collabee.user
-         WHERE  1=1    		
+	<insert id="insertUser" parameterType="com.demo.proworks.user.vo.UserVo">
+		<!-- 사용자 정보를 등록한다. -->
+		<!-- QueryID : com.demo.proworks.user.insertUser -->
+		INSERT INTO collabee.user /* QueryID : com.demo.proworks.user.insertUser */
+		(
+		USER_ID
+		<if test="userName        != null"> , USER_NAME         </if>
+		<if test="password         != null"> , PASSWORD          </if>
+		<if test="profileImageUrl!= null"> , PROFILE_IMAGE_URL </if>
+		<if test="isActive        != null"> , IS_ACTIVE         </if>
+		<if test="createdAt       != null and createdAt != ''"> , CREATED_AT        </if>
+		)
+		VALUES
+		(
+		#{userId}
+		<if test="userName        != null"> , #{userName}         </if>
+		<if test="password         != null"> , #{password}          </if>
+		<if test="profileImageUrl!= null"> , #{profileImageUrl} </if>
+		<if test="isActive        != null"> , #{isActive}         </if>
+		<if test="createdAt       != null and createdAt != ''"> , #{createdAt}        </if>
 
-    </select>
+		)
+	</insert>
+
+	<update id="updateUser" parameterType="com.demo.proworks.user.vo.UserVo">
+		<!-- 사용자 정보를 갱신한다. -->
+
+		UPDATE collabee.user /* QueryID : com.demo.proworks.user.updateUser */
+		SET
+		USER_ID = #{userId}
+
+		<if test="userName != null and userName !=''"> , USER_NAME = #{userName}         </if>
+		<if test="password != null and password !=''"> , PASSWORD = #{password}          </if>
+		<if test="profileImageUrl != null and profileImageUrl !=''"> , PROFILE_IMAGE_URL = #{profileImageUrl} </if>
+		<if test="isActive != null and isActive !=''"> , IS_ACTIVE = #{isActive}         </if>
+		<if test="createdAt != null and createdAt !=''"> , CREATED_AT = #{createdAt}        </if>
+
+		WHERE
+		USER_ID = #{userId}
+	</update>
+
+	<delete id="deleteUser" parameterType="com.demo.proworks.user.vo.UserVo">
+		<!-- 사용자 정보를 삭제한다. -->
+
+		DELETE FROM collabee.user /* QueryID : com.demo.proworks.user.deleteUser */
+		WHERE
+		USER_ID = #{userId}
+
+	</delete>
+
+	<select id="selectUser" parameterType="com.demo.proworks.user.vo.UserVo" resultType="com.demo.proworks.user.vo.UserVo">
+		<!-- 사용자 정보를 상세 조회한다. -->
+		SELECT /* QueryID : com.demo.proworks.user.selectUser */
+		USER_ID as userId, USER_NAME as userName, PASSWORD as password, PROFILE_IMAGE_URL as profileImageUrl, IS_ACTIVE as isActive, CREATED_AT as
+		createdAt
+		FROM collabee.user
+		WHERE
+		USER_ID = #{userId}
+
+	</select>
+
+	<select id="selectListUser" parameterType="com.demo.proworks.user.vo.UserVo" resultType="com.demo.proworks.user.vo.UserVo">
+		<!-- 사용자 정보 목록을 조회한다. -->
+		SELECT /* QueryID : com.demo.proworks.user.selectListUser */
+		USER_ID as userId, USER_NAME as userName, PASSWORD as password, PROFILE_IMAGE_URL as profileImageUrl, IS_ACTIVE as isActive, CREATED_AT as
+		createdAt
+		FROM (
+		SELECT S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
+		FROM (
+		SELECT
+		*
+		FROM collabee.user
+		WHERE 1=1
+
+		) S, (SELECT @ROWNUM := 0) TMP
+		) A
+		WHERE PAGE = #{pageIndex}
+	</select>
+
+	<select id="selectListCountUser" parameterType="com.demo.proworks.user.vo.UserVo" resultType="long">
+		<!-- 사용자 정보 목록의 카운트를 조회한다. -->
+
+		SELECT /* QueryID : com.demo.proworks.user.selectListCountUser */
+		COUNT(*) totcnt
+		FROM collabee.user
+		WHERE 1=1
+
+	</select>
 
 </mapper>
