@@ -27,6 +27,9 @@
 
 	<!-- EL Common Controller -->
 	<bean id="elCommController" class="com.inswave.elfw.web.ElCommController"/>
+	
+	<!-- Chat Controller -->
+	<bean id="chatController" class="com.demo.proworks.collabee.web.ChatController"/>
  
     <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">   
     	<property name="useRegisteredSuffixPatternMatch" value="true"/>
