@@ -646,12 +646,14 @@ scwin.initializeChatWebSocket = function() {
         `ws://localhost:9093/InsWebApp/chat`
     ];
     
-    console.log('������ 웹소켓 연결 시도할 URL들:', wsUrls);
-    console.log("������ 웹소켓 연결 시도:", wsUrl);
-    
-    // 웹소켓 핸들러 설정 함수
+    // 첫 번째 URL로 시작
+    let wsUrl = wsUrls[0];
     let currentUrlIndex = 0;
     
+    console.log('������ 웹소켓 연결 시도할 URL들:', wsUrls);
+    console.log("������ 첫 번째 웹소켓 연결 시도:", wsUrl);
+    
+    // 웹소켓 핸들러 설정 함수
     function setupWebSocketHandlers() {
         // 연결 성공
         chatSocket.onopen = function() {
@@ -780,20 +782,17 @@ scwin.initializeChatWebSocket = function() {
                     }
                 }, 1000);
             } else {
-                                 scwin.addChatMessage("시스템", "❌ 모든 웹소켓 서버 연결 실패. 서버를 확인해주세요.", false);
-             }
-         };
-     }
-     
-     // 첫 번째 URL로 연결 시도
-     let wsUrl = wsUrls[0];
-     console.log("������ 웹소켓 연결 시도:", wsUrl);
-     
-     try {
-         chatSocket = new WebSocket(wsUrl);
-         setupWebSocketHandlers();
-         
-     } catch (error) {
+                scwin.addChatMessage("시스템", "❌ 모든 웹소켓 서버 연결 실패. 서버를 확인해주세요.", false);
+            }
+        };
+    }
+    
+    // 웹소켓 연결 시도
+    try {
+        chatSocket = new WebSocket(wsUrl);
+        setupWebSocketHandlers();
+        
+    } catch (error) {
         console.error("❌ 웹소켓 초기화 실패:", error);
         scwin.addChatMessage("시스템", "❌ 웹소켓 초기화 실패. 서버를 확인해주세요.", false);
     }
@@ -830,7 +829,6 @@ scwin.initializeChatWebSocket = function() {
                     scwin.sendChatMessage();
                 }
             });
-            
         }
     }, 1000);
 };
@@ -863,13 +861,15 @@ scwin.sendChatMessage = function() {
         messageInput.focus();
         
     } else {
-        // 웹소켓 연결이 안 된 경우
-        scwin.addChatMessage("시스템", "❌ 웹소켓 연결이 필요합니다. 연결 중...", false);
+        // 웹소켓 연결이 안 된 경우 - 사용자에게 메시지만 표시
+        scwin.addChatMessage("시스템", "❌ 웹소켓 연결이 필요합니다. 잠시 후 다시 시도해주세요.", false);
         
-        // 웹소켓 재연결 시도
-        if (!chatSocket || chatSocket.readyState === WebSocket.CLOSED) {
-            scwin.initializeChatWebSocket();
-        }
+        // 메시지를 임시로 로컬에 표시
+        scwin.addChatMessage(currentUser.userName, message + " (전송 대기중)", true);
+        
+        // 입력창 초기화
+        messageInput.value = "";
+        messageInput.focus();
     }
 };
 

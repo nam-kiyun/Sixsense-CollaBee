@@ -18,6 +18,8 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import com.demo.proworks.collabee.service.ChatService;
 import com.demo.proworks.collabee.vo.ChatMessageVo;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 
 @Component
 public class ChatWebSocketHandler extends TextWebSocketHandler {
@@ -28,6 +30,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     
     public ChatWebSocketHandler() {
         System.out.println("🔥 ChatWebSocketHandler 생성자 호출됨!");
+        // WebSocket용 ObjectMapper 설정
+        initializeObjectMapper();
     }
 
     private static final Logger logger = LoggerFactory.getLogger(ChatWebSocketHandler.class);
@@ -35,7 +39,20 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     @Autowired
     private ChatService chatService;
     
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper;
+    
+    private void initializeObjectMapper() {
+        this.objectMapper = new ObjectMapper();
+        
+        // WebSquare의 elExcludeFilter 문제 해결
+        SimpleFilterProvider filterProvider = new SimpleFilterProvider();
+        filterProvider.addFilter("elExcludeFilter", SimpleBeanPropertyFilter.serializeAll());
+        filterProvider.setFailOnUnknownId(false); // 알 수 없는 필터 ID에 대해 실패하지 않음
+        
+        this.objectMapper.setFilterProvider(filterProvider);
+        
+        System.out.println("🔧 WebSocket ObjectMapper 초기화 완료 (elExcludeFilter 설정됨)");
+    }
     
     // 세션 관리: 채널별로 세션들을 그룹화
     private final Map<String, List<WebSocketSession>> channelSessions = new ConcurrentHashMap<>();
