@@ -33,7 +33,6 @@ public class ChatService {
         filterProvider.addFilter("elExcludeFilter", SimpleBeanPropertyFilter.serializeAll());
         this.objectMapper.setFilterProvider(filterProvider);
         
-        System.out.println("✅ ChatService ObjectMapper 설정 완료 - elExcludeFilter 및 알 수 없는 필드 처리");
     }
     
     private static final String CHAT_MESSAGES_KEY = "chat:messages:";
@@ -55,13 +54,13 @@ public class ChatService {
             // 채널 목록에 채널명 추가 (Set으로 중복 방지)
             redisTemplate.opsForSet().add(CHANNEL_LIST_KEY, message.getChannelName());
             
-            System.out.println("💾 Redis에 메시지 저장: " + message.getChannelName() + " - " + message.getMessage());
+            
             
         } catch (JsonProcessingException e) {
-            System.err.println("❌ JSON 직렬화 실패: " + e.getMessage());
+            
             e.printStackTrace();
         } catch (Exception e) {
-            System.err.println("❌ Redis 메시지 저장 실패: " + e.getMessage());
+            
             e.printStackTrace();
         }
     }
@@ -77,7 +76,7 @@ public class ChatService {
             List<String> rawMessages = redisTemplate.opsForList().range(channelKey, 0, -1);
             
             if (rawMessages == null || rawMessages.isEmpty()) {
-                System.out.println("📭 Redis에서 조회된 메시지 없음: " + channelName);
+                //System.out.println("📭 Redis에서 조회된 메시지 없음: " + channelName);
                 return new ArrayList<>();
             }
             
@@ -90,16 +89,16 @@ public class ChatService {
                         messages.add(message);
                     }
                 } catch (Exception e) {
-                    System.err.println("⚠️ JSON 파싱 실패 (무시): " + jsonMessage + " - " + e.getMessage());
+                    //System.err.println("⚠️ JSON 파싱 실패 (무시): " + jsonMessage + " - " + e.getMessage());
                     // 기존 데이터가 호환되지 않는 경우 무시하고 계속 진행
                 }
             }
                 
-            System.out.println("📬 Redis에서 메시지 조회: " + channelName + " (" + messages.size() + "개)");
+            //System.out.println("📬 Redis에서 메시지 조회: " + channelName + " (" + messages.size() + "개)");
             return messages;
             
         } catch (Exception e) {
-            System.err.println("❌ Redis 메시지 조회 실패: " + e.getMessage());
+            //System.err.println("❌ Redis 메시지 조회 실패: " + e.getMessage());
             e.printStackTrace();
             return new ArrayList<>();
         }
@@ -117,11 +116,11 @@ public class ChatService {
                 .filter(msg -> msg.getTimestamp() > timestamp)
                 .collect(Collectors.toList());
                 
-            System.out.println("⏰ 시간 필터링 메시지: " + channelName + " (" + filteredMessages.size() + "개)");
+            //System.out.println("⏰ 시간 필터링 메시지: " + channelName + " (" + filteredMessages.size() + "개)");
             return filteredMessages;
             
         } catch (Exception e) {
-            System.err.println("❌ Redis 시간 필터링 실패: " + e.getMessage());
+            //System.err.println("❌ Redis 시간 필터링 실패: " + e.getMessage());
             e.printStackTrace();
             return new ArrayList<>();
         }
@@ -152,16 +151,16 @@ public class ChatService {
                         messages.add(message);
                     }
                 } catch (Exception e) {
-                    System.err.println("⚠️ JSON 파싱 실패 (무시): " + jsonMessage + " - " + e.getMessage());
+                    //System.err.println("⚠️ JSON 파싱 실패 (무시): " + jsonMessage + " - " + e.getMessage());
                     // 기존 데이터가 호환되지 않는 경우 무시하고 계속 진행
                 }
             }
                 
-            System.out.println("📱 Redis에서 최신 메시지 조회: " + channelName + " (최대 " + limit + "개, 실제 " + messages.size() + "개)");
+           // System.out.println("📱 Redis에서 최신 메시지 조회: " + channelName + " (최대 " + limit + "개, 실제 " + messages.size() + "개)");
             return messages;
             
         } catch (Exception e) {
-            System.err.println("❌ Redis 최신 메시지 조회 실패: " + e.getMessage());
+            //System.err.println("❌ Redis 최신 메시지 조회 실패: " + e.getMessage());
             e.printStackTrace();
             return new ArrayList<>();
         }
@@ -176,7 +175,7 @@ public class ChatService {
             return new ArrayList<>(redisTemplate.opsForSet().members(CHANNEL_LIST_KEY));
                 
         } catch (Exception e) {
-            System.err.println("❌ Redis 채널 목록 조회 실패: " + e.getMessage());
+            //System.err.println("❌ Redis 채널 목록 조회 실패: " + e.getMessage());
             e.printStackTrace();
             return new ArrayList<>();
         }
@@ -195,10 +194,10 @@ public class ChatService {
             // 채널 목록에서 제거
             redisTemplate.opsForSet().remove(CHANNEL_LIST_KEY, channelName);
             
-            System.out.println("🗑️ Redis에서 채널 삭제: " + channelName);
+            //System.out.println("🗑️ Redis에서 채널 삭제: " + channelName);
             
         } catch (Exception e) {
-            System.err.println("❌ Redis 채널 삭제 실패: " + e.getMessage());
+            //System.err.println("❌ Redis 채널 삭제 실패: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -213,11 +212,11 @@ public class ChatService {
             redisTemplate.delete("test:connection");
             
             boolean connected = "OK".equals(result);
-            System.out.println("🔍 Redis 연결 상태: " + (connected ? "정상" : "실패"));
+            //System.out.println("🔍 Redis 연결 상태: " + (connected ? "정상" : "실패"));
             return connected;
             
         } catch (Exception e) {
-            System.err.println("❌ Redis 연결 확인 실패: " + e.getMessage());
+            //System.err.println("❌ Redis 연결 확인 실패: " + e.getMessage());
             return false;
         }
     }
