@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper      
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"      
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+	@subject     : 깃허브 웹훅 관련 처리를 담당하는 Sql Mapper
+	@description : 깃허브 웹훅 관련 처리를 담당하는 Sql Mapper
+	@author      : 남기윤
+	@since       : 2025/07/01
+	@modification
+	===========================================================
+	DATE              AUTHOR             DESC
+	===========================================================
+	2025/07/01              남기윤             최초 생성
+ -->
+<mapper namespace="com.demo.proworks.collabee">
+    <insert id="insertGithubWebhook" parameterType="com.demo.proworks.collabee.vo.GithubWebhookVo">
+    	<!-- 깃허브 웹훅를 등록한다. -->	
+    		
+        INSERT INTO GITHUB_WEBHOOK   /* QueryID : com.demo.proworks.collabee.insertGithubWebhook */
+        ( 
+            GITHUB_WEBHOOK_ID
+            <if test="projectRepoId  != null"> , PROJECT_REPO_ID   </if>
+            <if test="hookId          != null"> , HOOK_ID           </if>
+            <if test="events           != null"> , EVENTS            </if>
+            <if test="configUrl       != null"> , CONFIG_URL        </if>
+            <if test="createdAt       != null"> , CREATED_AT        </if>
+        )
+        VALUES  
+        ( 
+            #{githubWebhookId}
+            <if test="projectRepoId  != null"> , #{projectRepoId}   </if>
+            <if test="hookId          != null"> , #{hookId}           </if>
+            <if test="events           != null"> , #{events}            </if>
+            <if test="configUrl       != null"> , #{configUrl}        </if>
+            <if test="createdAt       != null"> , #{createdAt}        </if> 
+        )          
+    </insert>	
+	
+    <update id="updateGithubWebhook" parameterType="com.demo.proworks.collabee.vo.GithubWebhookVo">
+    	<!-- 깃허브 웹훅를 갱신한다. -->
+    	
+        UPDATE GITHUB_WEBHOOK    /* QueryID : com.demo.proworks.collabee.updateGithubWebhook */      
+      	  SET  
+                GITHUB_WEBHOOK_ID = #{githubWebhookId}        	                       
+            <if test="projectRepoId  != null"> , PROJECT_REPO_ID   = #{projectRepoId}   </if>
+            <if test="hookId          != null"> , HOOK_ID           = #{hookId}           </if>
+            <if test="events           != null"> , EVENTS            = #{events}            </if>
+            <if test="configUrl       != null"> , CONFIG_URL        = #{configUrl}        </if>
+            <if test="createdAt       != null"> , CREATED_AT        = #{createdAt}        </if>                 
+        WHERE   
+                GITHUB_WEBHOOK_ID = #{githubWebhookId}
+    </update>
+	
+    <delete id="deleteGithubWebhook" parameterType="com.demo.proworks.collabee.vo.GithubWebhookVo">
+    	<!-- 깃허브 웹훅를 삭제한다. -->
+    	
+        DELETE FROM GITHUB_WEBHOOK   /* QueryID : com.demo.proworks.collabee.deleteGithubWebhook */ 
+        WHERE   
+                GITHUB_WEBHOOK_ID = #{githubWebhookId}        
+    </delete>
+	
+    <select id="selectGithubWebhook" parameterType="com.demo.proworks.collabee.vo.GithubWebhookVo" resultType="com.demo.proworks.collabee.vo.GithubWebhookVo">
+    	<!-- 깃허브 웹훅를 상세 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.collabee.selectGithubWebhook */
+            GITHUB_WEBHOOK_ID as githubWebhookId, PROJECT_REPO_ID as projectRepoId, HOOK_ID as hookId, EVENTS as events, CONFIG_URL as configUrl, CREATED_AT as createdAt
+        FROM GITHUB_WEBHOOK 
+        WHERE 
+                GITHUB_WEBHOOK_ID = #{githubWebhookId}			
+    </select>
+	
+    <select id="selectListGithubWebhook" parameterType="com.demo.proworks.collabee.vo.GithubWebhookVo" resultType="com.demo.proworks.collabee.vo.GithubWebhookVo">
+    	<!-- 깃허브 웹훅 목록을 조회한다. -->
+           SELECT    /* QueryID : com.demo.proworks.collabee.selectListGithubWebhook */
+               GITHUB_WEBHOOK_ID as githubWebhookId, PROJECT_REPO_ID as projectRepoId, HOOK_ID as hookId, EVENTS as events, CONFIG_URL as configUrl, CREATED_AT as createdAt		       
+           FROM (
+               SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
+               FROM (				
+                   SELECT 
+                       *  		                  
+                   FROM GITHUB_WEBHOOK
+                   WHERE  1=1    		
+	     																														
+               ) S, (SELECT @ROWNUM := 0) TMP
+           ) A
+            WHERE PAGE = #{pageIndex}
+    </select>
+	
+    <select id="selectListCountGithubWebhook" parameterType="com.demo.proworks.collabee.vo.GithubWebhookVo" resultType="long">
+    <!-- 깃허브 웹훅 목록의 카운트를 조회한다. -->
+    
+         SELECT    /* QueryID : com.demo.proworks.collabee.selectListCountGithubWebhook */
+             COUNT(*) totcnt  		                  
+         FROM GITHUB_WEBHOOK
+         WHERE  1=1    		
+
+    </select>
+
+</mapper>
