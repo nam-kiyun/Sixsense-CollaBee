@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper      
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"      
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+	@subject     : 깃허브 개인 처리를 위한 PAT토큰 관련 처리를 담당하는 Sql Mapper
+	@description : 깃허브 개인 처리를 위한 PAT토큰 관련 처리를 담당하는 Sql Mapper
+	@author      : 남기윤
+	@since       : 2025/07/01
+	@modification
+	===========================================================
+	DATE              AUTHOR             DESC
+	===========================================================
+	2025/07/01              남기윤             최초 생성
+ -->
+<mapper namespace="com.demo.proworks.userpersonaltoken">
+    <insert id="insertUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
+    	<!-- 깃허브 개인 처리를 위한 PAT토큰를 등록한다. -->	
+    		
+        INSERT INTO USER_PERSONAL_TOKENS   /* QueryID : com.demo.proworks.userpersonaltoken.insertUserPersonalToken */
+        ( 
+            USER_PERSONAL_TOKEN_ID
+            <if test="userId               != null"> , USER_ID                </if>
+            <if test="accessToken          != null"> , ACCESS_TOKEN           </if>
+            <if test="scope                 != null"> , SCOPE                  </if>
+            <if test="createdAt            != null"> , CREATED_AT             </if>
+            <if test="expiredAt            != null"> , EXPIRED_AT             </if>
+        )
+        VALUES  
+        ( 
+            #{userPersonalTokenId}
+            <if test="userId               != null"> , #{userId}                </if>
+            <if test="accessToken          != null"> , #{accessToken}           </if>
+            <if test="scope                 != null"> , #{scope}                  </if>
+            <if test="createdAt            != null"> , #{createdAt}             </if>
+            <if test="expiredAt            != null"> , #{expiredAt}             </if> 
+        )          
+    </insert>	
+	
+    <update id="updateUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
+    	<!-- 깃허브 개인 처리를 위한 PAT토큰를 갱신한다. -->
+    	
+        UPDATE USER_PERSONAL_TOKENS    /* QueryID : com.demo.proworks.userpersonaltoken.updateUserPersonalToken */      
+      	  SET  
+                USER_PERSONAL_TOKEN_ID = #{userPersonalTokenId}        	                       
+            <if test="userId               != null"> , USER_ID                = #{userId}                </if>
+            <if test="accessToken          != null"> , ACCESS_TOKEN           = #{accessToken}           </if>
+            <if test="scope                 != null"> , SCOPE                  = #{scope}                  </if>
+            <if test="createdAt            != null"> , CREATED_AT             = #{createdAt}             </if>
+            <if test="expiredAt            != null"> , EXPIRED_AT             = #{expiredAt}             </if>                 
+        WHERE   
+                USER_PERSONAL_TOKEN_ID = #{userPersonalTokenId}
+    </update>
+	
+    <delete id="deleteUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
+    	<!-- 깃허브 개인 처리를 위한 PAT토큰를 삭제한다. -->
+    	
+        DELETE FROM USER_PERSONAL_TOKENS   /* QueryID : com.demo.proworks.userpersonaltoken.deleteUserPersonalToken */ 
+        WHERE   
+                USER_PERSONAL_TOKEN_ID = #{userPersonalTokenId}        
+    </delete>
+	
+    <select id="selectUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo" resultType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
+    	<!-- 깃허브 개인 처리를 위한 PAT토큰를 상세 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.userpersonaltoken.selectUserPersonalToken */
+            USER_PERSONAL_TOKEN_ID as userPersonalTokenId, USER_ID as userId, ACCESS_TOKEN as accessToken, SCOPE as scope, CREATED_AT as createdAt, EXPIRED_AT as expiredAt
+        FROM USER_PERSONAL_TOKENS 
+        WHERE 
+                USER_PERSONAL_TOKEN_ID = #{userPersonalTokenId}			
+    </select>
+	
+    <select id="selectListUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo" resultType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
+    	<!-- 깃허브 개인 처리를 위한 PAT토큰 목록을 조회한다. -->
+           SELECT    /* QueryID : com.demo.proworks.userpersonaltoken.selectListUserPersonalToken */
+               USER_PERSONAL_TOKEN_ID as userPersonalTokenId, USER_ID as userId, ACCESS_TOKEN as accessToken, SCOPE as scope, CREATED_AT as createdAt, EXPIRED_AT as expiredAt		       
+           FROM (
+               SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
+               FROM (				
+                   SELECT 
+                       *  		                  
+                   FROM USER_PERSONAL_TOKENS
+                   WHERE  1=1    		
+	     																														
+               ) S, (SELECT @ROWNUM := 0) TMP
+           ) A
+            WHERE PAGE = #{pageIndex}
+    </select>
+	
+    <select id="selectListCountUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo" resultType="long">
+    <!-- 깃허브 개인 처리를 위한 PAT토큰 목록의 카운트를 조회한다. -->
+    
+         SELECT    /* QueryID : com.demo.proworks.userpersonaltoken.selectListCountUserPersonalToken */
+             COUNT(*) totcnt  		                  
+         FROM USER_PERSONAL_TOKENS
+         WHERE  1=1    		
+
+    </select>
+
+</mapper>
