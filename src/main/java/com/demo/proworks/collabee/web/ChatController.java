@@ -90,7 +90,7 @@ public class ChatController {
             chatMessage.setMessageId(String.valueOf(chatMessage.getTimestamp()));
             
             // 메시지 저장
-            chatService.saveChatMessage(chatMessage);
+            chatService.saveMessage(chatMessage);
             
             response.put("resCode", "SUCC.SVR.001");
             response.put("resMsg", "메시지 전송 성공");
@@ -128,7 +128,7 @@ public class ChatController {
             }
             
             String channelName = (String) chatVoMap.get("channelName");
-            List<ChatMessageVo> messages = chatService.getAllChatMessages(channelName);
+            List<ChatMessageVo> messages = chatService.getChannelMessages(channelName);
             
             Map<String, Object> elData = new HashMap<>();
             elData.put("chatVo", messages);
@@ -180,7 +180,7 @@ public class ChatController {
                 }
             }
             
-            List<ChatMessageVo> messages = chatService.getChatHistory(channelName, afterTimestamp);
+            List<ChatMessageVo> messages = chatService.getMessagesAfterTimestamp(channelName, afterTimestamp);
             
             Map<String, Object> elData = new HashMap<>();
             elData.put("chatVo", messages);
