@@ -1,4 +1,4 @@
-package com.demo.proworks.collabee.config;
+package com.demo.proworks.config;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import javax.servlet.ServletContextEvent;
