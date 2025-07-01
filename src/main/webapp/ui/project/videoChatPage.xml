@@ -280,7 +280,7 @@ scwin.onpageload = function() {
         scwin.addChatMessage("시스템", " 채널: " + currentUser.channelName, false);
         scwin.addChatMessage("시스템", " 프로젝트 ID: " + getProjectIdFromUrl(), false);
         scwin.addChatMessage("시스템", " 사용자 ID: " + currentUser.userId, false);
-        scwin.addChatMessage("시스템", " 메시지 폴링: 1초마다 확인", false);
+        scwin.addChatMessage("시스템", " 실시간 웹소켓 채팅 시스템", false);
         
         
     }).catch(error => {
@@ -288,7 +288,7 @@ scwin.onpageload = function() {
         
         // 세션 없이도 기본 기능은 작동하도록
         scwin.initializeVideoChat();
-        scwin.addChatMessage("시스템", "⚠️ 세션 생성 실패. 채팅 기능이 제한될 수 있습니다.", false);
+        scwin.addChatMessage("시스템", "세션 생성 실패. 채팅 기능이 제한될 수 있습니다.", false);
         scwin.addChatMessage("시스템", "화상통화는 여전히 사용 가능합니다.", false);
     });
 };
@@ -298,7 +298,7 @@ scwin.initializeVideoChat = function() {
     try {
         // AgoraRTC SDK 로드 체크
         if (typeof AgoraRTC === 'undefined') {
-            scwin.addChatMessage("시스템", "❌ Agora.io SDK 로드 실패. 인터넷 연결을 확인해주세요.", false);
+            scwin.addChatMessage("시스템", "Agora.io SDK 로드 실패. 인터넷 연결을 확인해주세요.", false);
             return;
         }
         
@@ -313,9 +313,9 @@ scwin.initializeVideoChat = function() {
         client.on("user-unpublished", scwin.handleUserUnpublished);
         client.on("user-left", scwin.handleUserLeft);
         
-        scwin.addChatMessage("시스템", "✅ 화상통화 시스템 초기화 완료", false);
+        scwin.addChatMessage("시스템", "화상통화 시스템 초기화 완료", false);
     } catch (error) {
-        scwin.addChatMessage("시스템", "❌ 화상통화 초기화 실패: " + error.message, false);
+        scwin.addChatMessage("시스템", "화상통화 초기화 실패: " + error.message, false);
     }
 };
 
@@ -364,7 +364,7 @@ scwin.joinCall = async function() {
         scwin.updateControlButtons();
         scwin.hideLoading();
         
-        scwin.addChatMessage("시스템", "✅ 로컬 카메라 연결 성공! (데모 모드)", false);
+        scwin.addChatMessage("시스템", "로컬 카메라 연결 성공! (데모 모드)", false);
         scwin.addChatMessage("시스템", "실제 화상통화를 위해서는 Agora.io APP_ID가 필요합니다.", false);
         
         
@@ -382,7 +382,7 @@ scwin.joinCall = async function() {
         }
         
         scwin.showError(errorMessage);
-        scwin.addChatMessage("시스템", "❌ " + errorMessage, false);
+        scwin.addChatMessage("시스템", errorMessage, false);
     }
 };
 
@@ -598,7 +598,7 @@ scwin.createGuestSession = async function() {
         });
         
         if (response.ok) {
-            scwin.addChatMessage("시스템", "✅ 게스트 세션 생성 완료", false);
+            scwin.addChatMessage("시스템", "게스트 세션 생성 완료", false);
             return true;
         } else {
             return true; // 로그인 실패여도 세션은 생성될 수 있음
@@ -609,9 +609,11 @@ scwin.createGuestSession = async function() {
     }
 };
 
-// 실시간 채팅 초기화
+// 웹소켓 채팅 시스템 (폴링 제거 - 웹소켓 전용)
+let chatSocket;
 let lastMessageTimestamp = 0;
-let chatPollingInterval;
+let reconnectAttempts = 0;
+let maxReconnectAttempts = 10; // 재시도 횟수 증가
 
 // 타임스탬프 관리 함수들
 function getLastMessageTimestamp() {
@@ -627,11 +629,174 @@ function setLastMessageTimestamp(timestamp) {
 }
 
 scwin.initializeChatWebSocket = function() {
+    console.log("������ 웹소켓 전용 모드로 채팅 시스템 초기화 시작...");
+    
     // 저장된 타임스탬프 로드
     lastMessageTimestamp = getLastMessageTimestamp();
     
-    // 기존 메시지 로드
-    scwin.loadChatMessages();
+    // 웹소켓 서버 URL - 동적으로 프로토콜과 포트 결정
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.hostname;
+    const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
+    
+    // 여러 URL 시도 (fallback)
+    const wsUrls = [
+        `${protocol}//${host}:${port}/InsWebApp/chat`,
+        `ws://${host}:9093/InsWebApp/chat`,
+        `ws://localhost:9093/InsWebApp/chat`
+    ];
+    
+    console.log('������ 웹소켓 연결 시도할 URL들:', wsUrls);
+    console.log("������ 웹소켓 연결 시도:", wsUrl);
+    
+    // 웹소켓 핸들러 설정 함수
+    let currentUrlIndex = 0;
+    
+    function setupWebSocketHandlers() {
+        // 연결 성공
+        chatSocket.onopen = function() {
+            console.log("✅ 웹소켓 연결 성공!");
+            scwin.addChatMessage("시스템", "������ 웹소켓 채팅 연결 성공 (폴링 없음)", false);
+            reconnectAttempts = 0;
+            
+            // 채널 참가 요청
+            const joinMessage = {
+                type: 'join',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName,
+                timestamp: Date.now()
+            };
+            
+            console.log("������ 채널 참가 메시지 전송:", joinMessage);
+            chatSocket.send(JSON.stringify(joinMessage));
+            
+            // 기존 메시지 히스토리 요청
+            const historyMessage = {
+                type: 'history',
+                channelName: currentUser.channelName,
+                afterTimestamp: lastMessageTimestamp
+            };
+            
+            console.log("������ 히스토리 요청:", historyMessage);
+            chatSocket.send(JSON.stringify(historyMessage));
+        };
+        
+        // 메시지 수신 (웹소켓 전용)
+        chatSocket.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log("������ 웹소켓 메시지 수신:", data);
+                
+                switch(data.type) {
+                    case 'message':
+                        const isOwn = data.userId === currentUser.userId;
+                        scwin.addChatMessageToList(data.userName, data.message, isOwn, data.messageId, data.timestamp);
+                        
+                        // 타임스탬프 업데이트
+                        const msgTimestamp = parseInt(data.timestamp || data.messageId);
+                        if (msgTimestamp > lastMessageTimestamp) {
+                            setLastMessageTimestamp(msgTimestamp);
+                        }
+                        
+                        scwin.updateChatMessages();
+                        break;
+                        
+                    case 'history':
+                        if (data.messages && data.messages.length > 0) {
+                            console.log("������ 히스토리 메시지 수신:", data.messages.length + "개");
+                            // 기존 메시지 클리어
+                            dlt_chatMessages.removeAll();
+                            
+                            // 히스토리 메시지들 추가
+                            data.messages.forEach(msg => {
+                                const isOwn = msg.userId === currentUser.userId;
+                                scwin.addChatMessageToList(msg.userName, msg.message, isOwn, msg.messageId, msg.timestamp);
+                                
+                                // 마지막 메시지 타임스탬프 업데이트
+                                const msgTimestamp = parseInt(msg.timestamp || msg.messageId);
+                                if (msgTimestamp > lastMessageTimestamp) {
+                                    setLastMessageTimestamp(msgTimestamp);
+                                }
+                            });
+                            
+                            scwin.updateChatMessages();
+                        }
+                        break;
+                        
+                    case 'user_joined':
+                        scwin.addChatMessage("시스템", `������ ${data.userName}님이 참가했습니다.`, false);
+                        break;
+                        
+                    case 'user_left':
+                        scwin.addChatMessage("시스템", `������ ${data.userName}님이 나갔습니다.`, false);
+                        break;
+                        
+                    case 'error':
+                        scwin.addChatMessage("시스템", `❌ 오류: ${data.message}`, false);
+                        break;
+                }
+            } catch (error) {
+                console.error('❌ 웹소켓 메시지 처리 오류:', error);
+            }
+        };
+        
+        // 연결 끊김 - 웹소켓 전용 모드
+        chatSocket.onclose = function(event) {
+            console.log("❌ 웹소켓 연결이 끊어졌습니다. 코드:", event.code, "이유:", event.reason);
+            scwin.addChatMessage("시스템", "❌ 웹소켓 연결이 끊어졌습니다.", false);
+            
+            // 자동 재연결 시도 (웹소켓만)
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                scwin.addChatMessage("시스템", `������ 웹소켓 재연결 시도 중... (${reconnectAttempts}/${maxReconnectAttempts})`, false);
+                
+                setTimeout(() => {
+                    scwin.initializeChatWebSocket();
+                }, 2000 + (reconnectAttempts * 1000)); // 점진적 지연
+            } else {
+                scwin.addChatMessage("시스템", "❌ 웹소켓 재연결 실패. 페이지를 새로고침해주세요.", false);
+                console.error("❌ 웹소켓 재연결 횟수 초과. 폴백 모드 사용 안 함.");
+            }
+        };
+        
+        // 연결 오류 - 다음 URL 시도
+        chatSocket.onerror = function(error) {
+            console.error(`❌ 웹소켓 연결 오류 [${currentUrlIndex + 1}/${wsUrls.length}]:`, error);
+            console.log("❌ 현재 시도한 URL:", wsUrl);
+            
+            // 다음 URL 시도
+            currentUrlIndex++;
+            if (currentUrlIndex < wsUrls.length) {
+                console.log(`������ 다음 URL로 재시도 중... [${currentUrlIndex + 1}/${wsUrls.length}]`);
+                setTimeout(() => {
+                    wsUrl = wsUrls[currentUrlIndex];
+                    try {
+                        chatSocket = new WebSocket(wsUrl);
+                        setupWebSocketHandlers();
+                    } catch (retryError) {
+                        console.error("❌ 재시도 중 오류:", retryError);
+                        chatSocket.onerror(retryError);
+                    }
+                }, 1000);
+            } else {
+                                 scwin.addChatMessage("시스템", "❌ 모든 웹소켓 서버 연결 실패. 서버를 확인해주세요.", false);
+             }
+         };
+     }
+     
+     // 첫 번째 URL로 연결 시도
+     let wsUrl = wsUrls[0];
+     console.log("������ 웹소켓 연결 시도:", wsUrl);
+     
+     try {
+         chatSocket = new WebSocket(wsUrl);
+         setupWebSocketHandlers();
+         
+     } catch (error) {
+        console.error("❌ 웹소켓 초기화 실패:", error);
+        scwin.addChatMessage("시스템", "❌ 웹소켓 초기화 실패. 서버를 확인해주세요.", false);
+    }
     
     // 스크롤 강제 활성화 (초기화 시) - 여러 번 시도
     setTimeout(() => {
@@ -645,11 +810,6 @@ scwin.initializeChatWebSocket = function() {
     setTimeout(() => {
         scwin.forceScrollEnable();
     }, 2000);
-    
-    // 주기적으로 새 메시지 확인 (1초마다 - 더 실시간처럼)
-    chatPollingInterval = setInterval(() => {
-        scwin.checkNewMessages();
-    }, 1000);
     
     // 채팅 입력창에 포커스 설정
     setTimeout(() => {
@@ -675,190 +835,45 @@ scwin.initializeChatWebSocket = function() {
     }, 1000);
 };
 
-// 채팅 메시지 전송
-scwin.sendChatMessage = async function() {
+// HTTP 폴백 모드 제거됨 - 웹소켓 전용
+
+// 채팅 메시지 전송 (웹소켓 전용)
+scwin.sendChatMessage = function() {
     const messageInput = document.getElementById("chatInput");
     const message = messageInput.value.trim();
     
     if (!message) return;
     
-    try {
-        // 서버로 메시지 전송 (WebSquare 방식)
-        const response = await fetch('/InsWebApp/ChatSend.pwkjson', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "chatVo": {
-                    "channelName": currentUser.channelName,
-                    "userId": currentUser.userId,
-                    "userName": currentUser.userName,
-                    "message": message
-                }
-            })
-        });
+    // 웹소켓 연결 확인
+    if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+        const messageData = {
+            type: 'message',
+            channelName: currentUser.channelName,
+            userId: currentUser.userId,
+            userName: currentUser.userName,
+            message: message,
+            timestamp: Date.now()
+        };
         
-        const result = await response.json();
+        console.log("������ 웹소켓으로 메시지 전송:", messageData);
+        chatSocket.send(JSON.stringify(messageData));
         
-        // HTTP 200이고 WebSquare 성공 응답인 경우
-        if (response.ok && (!result.resCode || result.resCode === "SUCC.SVR.001" || result.resCode.startsWith("SUCC") || result.success === true)) {
-            // 입력창 초기화 및 포커스 유지
-            messageInput.value = "";
-            messageInput.focus(); // 포커스 다시 설정
-            
-            // 짧은 지연 후 새 메시지 확인 (서버 처리 시간 고려)
-            setTimeout(() => {
-                scwin.checkNewMessages();
-            }, 500);
-            
-        } else {
-            scwin.addChatMessage("시스템", "❌ 메시지 전송 실패: " + (result.resMsg || "알 수 없는 오류"), false);
+        // 입력창 초기화 및 포커스 유지
+        messageInput.value = "";
+        messageInput.focus();
+        
+    } else {
+        // 웹소켓 연결이 안 된 경우
+        scwin.addChatMessage("시스템", "❌ 웹소켓 연결이 필요합니다. 연결 중...", false);
+        
+        // 웹소켓 재연결 시도
+        if (!chatSocket || chatSocket.readyState === WebSocket.CLOSED) {
+            scwin.initializeChatWebSocket();
         }
-        
-    } catch (error) {
-        scwin.addChatMessage("시스템", "❌ 서버 연결 오류. 메시지 전송에 실패했습니다.", false);
     }
 };
 
-// 서버에서 채팅 메시지 로드
-scwin.loadChatMessages = async function() {
-    try {
-        const response = await fetch('/InsWebApp/ChatAll.pwkjson', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "chatVo": {
-                    "channelName": currentUser.channelName
-                }
-            })
-        });
-        
-        const result = await response.json();
-        
-        // WebSquare 응답 처리 - 여러 가능한 구조 대응
-        let messages = [];
-        
-        if (Array.isArray(result)) {
-            messages = result;
-        } else if (result && result.elData && Array.isArray(result.elData.chatVo)) {
-            // 주요 케이스: elData.chatVo 구조
-            messages = result.elData.chatVo;
-        } else if (result && Array.isArray(result.chatVo)) {
-            messages = result.chatVo;
-        } else if (result && result.data && Array.isArray(result.data.chatVo)) {
-            messages = result.data.chatVo;
-        } else if (result && result.data && Array.isArray(result.data)) {
-            messages = result.data;
-        } else if (result && typeof result === 'object') {
-            // 객체의 값들 중에서 배열 찾기
-            for (const key in result) {
-                if (Array.isArray(result[key])) {
-                    messages = result[key];
-                    break;
-                }
-            }
-        }
-        
-        if (messages && messages.length > 0) {
-            // 기존 메시지 클리어
-            dlt_chatMessages.removeAll();
-            
-            // 서버에서 받은 메시지들 추가
-            messages.forEach(msg => {
-                const isOwn = msg.userId === currentUser.userId;
-                // 서버 timestamp 전달
-                scwin.addChatMessageToList(msg.userName, msg.message, isOwn, msg.messageId, msg.timestamp);
-                
-                // 마지막 메시지 타임스탬프 업데이트
-                const msgTimestamp = parseInt(msg.timestamp || msg.messageId);
-                if (msgTimestamp > lastMessageTimestamp) {
-                    setLastMessageTimestamp(msgTimestamp);
-                }
-            });
-            
-            scwin.updateChatMessages();
-        }
-        
-    } catch (error) {
-        scwin.addChatMessage("시스템", "❌ 채팅 기록을 불러오는데 실패했습니다.", false);
-    }
-};
-
-// 새 메시지 확인
-scwin.checkNewMessages = async function() {
-    try {
-        const response = await fetch('/InsWebApp/ChatMessages.pwkjson', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "chatVo": {
-                    "channelName": currentUser.channelName,
-                    "afterTimestamp": lastMessageTimestamp.toString()
-                }
-            })
-        });
-        
-        const result = await response.json();
-        
-        // WebSquare 응답 처리 - 여러 가능한 구조 대응
-        let messages = [];
-        
-        if (Array.isArray(result)) {
-            messages = result;
-        } else if (result && result.elData && Array.isArray(result.elData.chatVo)) {
-            // 주요 케이스: elData.chatVo 구조
-            messages = result.elData.chatVo;
-        } else if (result && Array.isArray(result.chatVo)) {
-            messages = result.chatVo;
-        } else if (result && result.data && Array.isArray(result.data.chatVo)) {
-            messages = result.data.chatVo;
-        } else if (result && result.data && Array.isArray(result.data)) {
-            messages = result.data;
-        } else if (result && typeof result === 'object') {
-            // 객체의 모든 값들을 재귀적으로 찾기
-            function findArrayInObject(obj, path = '') {
-                for (const key in obj) {
-                    if (Array.isArray(obj[key])) {
-                        return obj[key];
-                    } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-                        const found = findArrayInObject(obj[key], path ? `${path}.${key}` : key);
-                        if (found) return found;
-                    }
-                }
-                return null;
-            }
-            
-            const foundArray = findArrayInObject(result);
-            if (foundArray) {
-                messages = foundArray;
-            }
-        }
-        
-        if (messages && messages.length > 0) {
-            // 새 메시지들 추가
-            messages.forEach(msg => {
-                const isOwn = msg.userId === currentUser.userId;
-                // 서버 timestamp 전달
-                scwin.addChatMessageToList(msg.userName, msg.message, isOwn, msg.messageId, msg.timestamp);
-                
-                // 마지막 메시지 타임스탬프 업데이트
-                const msgTimestamp = parseInt(msg.timestamp || msg.messageId);
-                if (msgTimestamp > lastMessageTimestamp) {
-                    setLastMessageTimestamp(msgTimestamp);
-                }
-            });
-            
-            scwin.updateChatMessages();
-        }
-        
-    } catch (error) {
-    }
-};
+// HTTP 관련 함수들 제거됨 - 웹소켓 전용 모드
 
 // 데이터리스트에 메시지 추가 (내부 함수)
 scwin.addChatMessageToList = function(userName, message, isOwn, messageId, serverTimestamp) {
@@ -1085,9 +1100,17 @@ window.addEventListener("beforeunload", function() {
         scwin.leaveCall();
     }
     
-    // 채팅 폴링 정리
-    if (chatPollingInterval) {
-        clearInterval(chatPollingInterval);
+    // 웹소켓 연결 종료
+    if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+        // 채널 나가기 메시지 전송
+        const leaveMessage = {
+            type: 'leave',
+            channelName: currentUser.channelName,
+            userId: currentUser.userId,
+            userName: currentUser.userName
+        };
+        chatSocket.send(JSON.stringify(leaveMessage));
+        chatSocket.close();
     }
 });
 ]]></script>

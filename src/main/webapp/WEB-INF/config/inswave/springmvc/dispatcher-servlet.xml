@@ -4,15 +4,22 @@
 	   xmlns:p="http://www.springframework.org/schema/p" 
 	   xmlns:context="http://www.springframework.org/schema/context"
 	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:websocket="http://www.springframework.org/schema/websocket"
 	   xsi:schemaLocation="http://www.springframework.org/schema/beans 
 	                       http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
 				           http://www.springframework.org/schema/context 
 				           http://www.springframework.org/schema/context/spring-context-4.0.xsd 
 				           http://www.springframework.org/schema/aop
-				           http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+				           http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+				           http://www.springframework.org/schema/websocket
+				           http://www.springframework.org/schema/websocket/spring-websocket-4.0.xsd">
 
     <context:component-scan base-package="com.demo" use-default-filters="false">
         <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+        <context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.RestController"/>
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Service"/>
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Component"/>
+        <!-- Configuration 제거 - XML로 대체 -->
         <!-- context:exclude-filter type="annotation" expression="org.springframework.stereotype.Service"/>
         <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository"/ -->
     </context:component-scan>
@@ -33,6 +40,12 @@
  
 	<!-- Redis Configuration -->
 	<bean id="redisConfig" class="com.demo.proworks.collabee.config.RedisConfig"/>
+	
+		<!-- WebSocket Configuration - @Configuration 방식으로 변경됨 -->
+	<bean id="chatService" class="com.demo.proworks.collabee.service.ChatService"/>
+ 
+	<!-- WebSocket을 위한 올바른 HandlerAdapter 추가 -->
+	<bean class="org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter"/>
  
     <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">   
     	<property name="useRegisteredSuffixPatternMatch" value="true"/>
