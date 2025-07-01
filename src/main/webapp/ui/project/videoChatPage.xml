@@ -769,7 +769,8 @@ scwin.loadChatMessages = async function() {
             // 서버에서 받은 메시지들 추가
             messages.forEach(msg => {
                 const isOwn = msg.userId === currentUser.userId;
-                scwin.addChatMessageToList(msg.userName, msg.message, isOwn, msg.messageId);
+                // 서버 timestamp 전달
+                scwin.addChatMessageToList(msg.userName, msg.message, isOwn, msg.messageId, msg.timestamp);
                 
                 // 마지막 메시지 타임스탬프 업데이트
                 const msgTimestamp = parseInt(msg.timestamp || msg.messageId);
@@ -842,7 +843,8 @@ scwin.checkNewMessages = async function() {
             // 새 메시지들 추가
             messages.forEach(msg => {
                 const isOwn = msg.userId === currentUser.userId;
-                scwin.addChatMessageToList(msg.userName, msg.message, isOwn, msg.messageId);
+                // 서버 timestamp 전달
+                scwin.addChatMessageToList(msg.userName, msg.message, isOwn, msg.messageId, msg.timestamp);
                 
                 // 마지막 메시지 타임스탬프 업데이트
                 const msgTimestamp = parseInt(msg.timestamp || msg.messageId);
@@ -859,8 +861,17 @@ scwin.checkNewMessages = async function() {
 };
 
 // 데이터리스트에 메시지 추가 (내부 함수)
-scwin.addChatMessageToList = function(userName, message, isOwn, messageId) {
-    const timestamp = new Date().toLocaleTimeString();
+scwin.addChatMessageToList = function(userName, message, isOwn, messageId, serverTimestamp) {
+    // 서버에서 받은 timestamp 사용, 없으면 현재 시간 사용
+    let timestamp;
+    if (serverTimestamp) {
+        // 서버 timestamp가 있으면 그것을 사용 (밀리초를 시간 형식으로 변환)
+        const date = new Date(parseInt(serverTimestamp));
+        timestamp = date.toLocaleTimeString();
+    } else {
+        // 로컬 메시지(시스템 메시지 등)인 경우만 현재 시간 사용
+        timestamp = new Date().toLocaleTimeString();
+    }
     
     // 데이터 추가
     const rowIndex = dlt_chatMessages.insertRow();
