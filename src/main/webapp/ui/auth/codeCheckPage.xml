@@ -196,6 +196,29 @@ scwin.startCountdown = function () {
     }, 1000);
 };
 
+// 전역(혹은 scwin 스코프)으로 이전 값 기억
+scwin._inputBeforeMap = {};
+
+scwin.onFocusInput = function (e) {
+    const id = e.target.id;
+    const comp = $p.getComponentById(id);
+    scwin._inputBeforeMap[id] = comp.getValue(); // 포커스 되었을 당시 값 저장
+};
+
+scwin.onKeydownInput = function (e) {
+    const id = e.target.id;
+    const comp = $p.getComponentById(id);
+    const key = e.key;
+    const beforeValue = scwin._inputBeforeMap[id] || '';
+
+    if (key === 'Backspace') {
+        if (beforeValue === '') {
+            // 이전 input으로 이동
+        } else {
+            // 그대로 유지 (글자만 지워짐)
+        }
+    }
+};
 ]]></script>
     	<style type="text/css"><![CDATA[]]></style>
     </head>
@@ -217,13 +240,13 @@ scwin.startCountdown = function () {
     			<w2:textbox id="" label="쉽고 편하게 사용가능한 COLLABEE 사용하기" style="height: 23px;color: #DAD3D3;"></w2:textbox>
     			<xf:group style="" id="signup_group" class="code-input-group">
     				<xf:input id="code_input1" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"
-    					dataType="number">
+    					dataType="number" ev:onfocus="scwin.onFocusInput" ev:onkeydown="scwin.onKeydownInput">
     				</xf:input>
     				<xf:input id="code_input2" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"
-    					dataType="number">
+    					dataType="number" ev:onkeydown="scwin.onKeydownInput" ev:onfocus="scwin.onFocusInput">
     				</xf:input>
     				<xf:input id="code_input3" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"
-    					dataType="number">
+    					dataType="number" ev:onkeydown="scwin.onKeydownInput" ev:onfocus="scwin.onFocusInput">
     				</xf:input>
     				<xf:input id="code_input4" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"
     					dataType="number">
