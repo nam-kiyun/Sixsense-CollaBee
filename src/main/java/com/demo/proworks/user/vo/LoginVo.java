@@ -1,4 +1,4 @@
-package com.demo.proworks.emp.vo;
+package com.demo.proworks.user.vo;
 
 import com.inswave.elfw.annotation.ElDto;
 import com.inswave.elfw.annotation.ElDtoField;
