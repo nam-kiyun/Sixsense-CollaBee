@@ -142,45 +142,46 @@ scwin.findPwd_button_onclick = function (e) {
 
 //로그인 버튼 클릭
 scwin.login_button_onclick = function (e) {
-    let email = email_input.getValue();
-    let password = password_input.getValue();
-    let isValid = true;
+    // let email = email_input.getValue();
+    // let password = password_input.getValue();
+    // let isValid = true;
 
-    // 1. 입력값 체크
-    if (!email) {
-        email_error_text.setValue("*이메일을 입력해주세요.");
-        isValid = false;
-    } else {
-        email_error_text.setValue("");
-    }
+    // // 1. 입력값 체크
+    // if (!email) {
+    //     email_error_text.setValue("*이메일을 입력해주세요.");
+    //     isValid = false;
+    // } else {
+    //     email_error_text.setValue("");
+    // }
 
-    if (!password) {
-        password_error_text.setValue("*비밀번호를 입력해주세요.");
-        isValid = false;
-    } else {
-        password_error_text.setValue("");
-    }
+    // if (!password) {
+    //     password_error_text.setValue("*비밀번호를 입력해주세요.");
+    //     isValid = false;
+    // } else {
+    //     password_error_text.setValue("");
+    // }
 
-    if (!isValid) return;
+    // if (!isValid) return;
 
-    // // 2. reCAPTCHA 완료 여부
-    const token = grecaptcha.getResponse();
-    if (!token) {
-        alert("reCAPTCHA를 먼저 완료해주세요!");
-        return;
-    }
+    // // // 2. reCAPTCHA 완료 여부
+    // const token = grecaptcha.getResponse();
+    // if (!token) {
+    //     alert("reCAPTCHA를 먼저 완료해주세요!");
+    //     return;
+    // }
 
-    // 3. 리캡챠 서브미션 실행
-    const param = {
-        secretKey: "6LdornErAAAAAB1vfQLQZu14z0wBg3g2mr-tLJAy",
-        token: token
-    };
+    // // 3. 리캡챠 서브미션 실행
+    // const param = {
+    //     secretKey: "6LdornErAAAAAB1vfQLQZu14z0wBg3g2mr-tLJAy",
+    //     token: token
+    // };
 
-    dma_recaptcha.setJSON(param);
-    $c.sbm.execute(sbm_recaptcha);
+    // dma_recaptcha.setJSON(param);
+    // $c.sbm.execute(sbm_recaptcha);
 
-    grecaptcha.reset();
-    $c.sbm.execute(sbm_login);
+    // grecaptcha.reset();
+    // $c.sbm.execute(sbm_login);
+    $p.alert("안녕");
 };
 
 

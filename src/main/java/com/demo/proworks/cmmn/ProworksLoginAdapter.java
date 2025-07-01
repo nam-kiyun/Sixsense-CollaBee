@@ -110,7 +110,7 @@ public class ProworksLoginAdapter extends LoginAdapter {
 			resetFailInfo.setUserId(id);
 			resetFailInfo.setLoginFailCount(1);
 			resetFailInfo.setAccountLocked("N");
-			resetFailInfo.setUserName("ddd");
+			resetFailInfo.setUserName("");
 			resetFailInfo.setPassword("");
 			resetFailInfo.setProfileImageUrl("");
 			resetFailInfo.setIsActive("");
