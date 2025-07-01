@@ -1040,28 +1040,42 @@ scwin.updateChatMessages = function() {
 
 // Enter 키 처리 (모든 키 이벤트용)
 scwin.handleChatKeyPress = function(event) {
-
-    // Enter 키 확인 (여러 방법으로)
-    const isEnter = (
-        event.key === 'Enter' || 
-        event.keyCode === 13 || 
-        event.which === 13 ||
-        event.code === 'Enter'
-    );
-    
-    if (isEnter && event.type === 'keydown') { // keydown에서만 실행
-        
-        event.preventDefault(); // 기본 동작 방지
-        event.stopPropagation(); // 이벤트 전파 중지
-
-        // 메시지 전송
-        try {
-            scwin.sendChatMessage();
-        } catch (error) {
+    try {
+        // 이벤트가 없으면 종료
+        if (!event) {
+            return true;
         }
-        return false; // 추가 안전장치
+
+        // Enter 키 확인 (여러 방법으로)
+        const isEnter = (
+            event.key === 'Enter' || 
+            event.keyCode === 13 || 
+            event.which === 13 ||
+            event.code === 'Enter'
+        );
+        
+        // Enter 키이고 keydown 이벤트에서만 실행 (중복 방지)
+        if (isEnter && event.type === 'keydown') {
+            event.preventDefault(); // 기본 동작 방지
+            event.stopPropagation(); // 이벤트 전파 중지
+
+            // 메시지 전송
+            scwin.sendChatMessage();
+            return false; // 추가 안전장치
+        }
+        
+        // Enter 키이지만 다른 이벤트 타입인 경우 (keyup, keypress)
+        if (isEnter && (event.type === 'keyup' || event.type === 'keypress')) {
+            event.preventDefault(); // 기본 동작만 방지
+            return false;
+        }
+        
+        return true;
+        
+    } catch (error) {
+        console.error('키 이벤트 처리 오류:', error);
+        return true; // 오류 시에도 기본 동작 허용
     }
-    return true;
 };
 
 
@@ -1219,7 +1233,7 @@ window.addEventListener("beforeunload", function() {
                 
                 <!-- 채팅 입력 -->
                 <xf:group class="chat-input-container" style="height: 60px; flex-shrink: 0; display: flex; padding: 10px; background: #f8f9fa; border-top: 1px solid #dee2e6; align-items: center; gap: 10px;">
-                    <input type="text" id="chatInput" class="chat-input" placeholder="메시지를 입력하세요..." onkeydown="scwin.handleChatKeyPress(event)" onkeypress="scwin.handleChatKeyPress(event)" onkeyup="scwin.handleChatKeyPress(event)" style="flex: 1; padding: 10px 15px; border: 1px solid #ced4da; border-radius: 25px; font-size: 14px; outline: none; background: white;" />
+                    <input type="text" id="chatInput" class="chat-input" placeholder="메시지를 입력하세요..." style="flex: 1; padding: 10px 15px; border: 1px solid #ced4da; border-radius: 25px; font-size: 14px; outline: none; background: white;" />
                     <xf:trigger class="send-btn" ev:onclick="scwin.sendChatMessage" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; min-width: 60px;">
                         <xf:label>전송</xf:label>
                     </xf:trigger>
