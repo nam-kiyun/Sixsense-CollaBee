@@ -31,6 +31,15 @@ public class UserVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "created_at", physicalName = "createdAt", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String createdAt;
 
+    @ElDtoField(logicalName = "login_fail_count", physicalName = "loginFailCount", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int loginFailCount;
+
+    @ElDtoField(logicalName = "last_fail_time", physicalName = "lastFailTime", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String lastFailTime;
+
+    @ElDtoField(logicalName = "account_locked", physicalName = "accountLocked", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String accountLocked;
+
     @ElVoField(physicalName = "userId")
     public String getUserId(){
         String ret = this.userId;
@@ -98,6 +107,38 @@ public class UserVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.createdAt = createdAt;
     }
 
+    @ElVoField(physicalName = "loginFailCount")
+    public int getLoginFailCount(){
+        return loginFailCount;
+    }
+
+    @ElVoField(physicalName = "loginFailCount")
+    public void setLoginFailCount(int loginFailCount){
+        this.loginFailCount = loginFailCount;
+    }
+
+    @ElVoField(physicalName = "lastFailTime")
+    public String getLastFailTime(){
+        String ret = this.lastFailTime;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "lastFailTime")
+    public void setLastFailTime(String lastFailTime){
+        this.lastFailTime = lastFailTime;
+    }
+
+    @ElVoField(physicalName = "accountLocked")
+    public String getAccountLocked(){
+        String ret = this.accountLocked;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "accountLocked")
+    public void setAccountLocked(String accountLocked){
+        this.accountLocked = accountLocked;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -107,7 +148,10 @@ public class UserVo extends com.demo.proworks.cmmn.ProworksCommVO {
         sb.append("password").append("=").append(this.getPassword()).append(",");
         sb.append("profileImageUrl").append("=").append(profileImageUrl).append(",");
         sb.append("isActive").append("=").append(isActive).append(",");
-        sb.append("createdAt").append("=").append(createdAt);
+        sb.append("createdAt").append("=").append(createdAt).append(",");
+        sb.append("loginFailCount").append("=").append(loginFailCount).append(",");
+        sb.append("lastFailTime").append("=").append(lastFailTime).append(",");
+        sb.append("accountLocked").append("=").append(accountLocked);
         sb.append("]");
         return sb.toString();
 

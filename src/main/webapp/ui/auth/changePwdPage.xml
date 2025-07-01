@@ -18,6 +18,9 @@
     					<w2:key dataType="text" name="이미지 URL" id="profileImageUrl"></w2:key>
     					<w2:key dataType="text" name="상태" id="isActive"></w2:key>
     					<w2:key dataType="text" name="가입일" id="createdAt"></w2:key>
+    					<w2:key dataType="text" name="로그인 실패 횟수" id="loginFailCount"></w2:key>
+    					<w2:key dataType="text" name="로그인 실패 시간" id="lastFailTime"></w2:key>
+    					<w2:key dataType="text" name="계정 잠금 여부" id="accountLocked"></w2:key>
     				</w2:keyInfo>
     			</w2:dataMap>
     		</w2:dataCollection>
@@ -132,7 +135,10 @@ scwin.signup_button_onclick = function (e) {
         password: password_input.getValue(),
         profileImageUrl: "",
         isActive: "",
-        createdAt: ""
+        createdAt: "",
+        loginFailCount: "",
+        lastFailTime: "",
+        accountLocked: ""
     }
     dma_Param.setJSON(param);
     $c.sbm.execute(sbm_updatePassword);

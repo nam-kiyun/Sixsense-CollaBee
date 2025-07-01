@@ -73,6 +73,9 @@ public class ProworksUserHeader extends com.inswave.elfw.core.UserHeader {
     @ElDtoField(logicalName = "이름", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userName;
 
+    @ElDtoField(logicalName = "결과", physicalName = "isReulst", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String isReulst;
+
     @ElVoField(physicalName = "fldLen")
     public int getFldLen(){
         return fldLen;
@@ -246,6 +249,17 @@ public class ProworksUserHeader extends com.inswave.elfw.core.UserHeader {
         this.userName = userName;
     }
 
+    @ElVoField(physicalName = "isReulst")
+    public String getIsReulst(){
+        String ret = this.isReulst;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "isReulst")
+    public void setIsReulst(String isReulst){
+        this.isReulst = isReulst;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -265,7 +279,8 @@ public class ProworksUserHeader extends com.inswave.elfw.core.UserHeader {
         sb.append("testUserName").append("=").append(testUserName).append(",");
         sb.append("testDeptName").append("=").append(testDeptName).append(",");
         sb.append("testDeptNo").append("=").append(testDeptNo).append(",");
-        sb.append("userName").append("=").append(userName);
+        sb.append("userName").append("=").append(userName).append(",");
+        sb.append("isReulst").append("=").append(isReulst);
         sb.append("]");
         return sb.toString();
 

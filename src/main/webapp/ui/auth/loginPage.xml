@@ -47,8 +47,10 @@
     	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
     scwin.onresize();
 
+    //리캡챠 컴포넌트
     let recaptchaComponent = $p.getComponentById("recaptcha-container");
 
+    //리캡챠 존재하면 불러오기
     if (recaptchaComponent !== null && typeof grecaptcha !== "undefined") {
 
         let actualDomId = recaptchaComponent.id;
@@ -57,15 +59,15 @@
             grecaptcha.render(actualDomId, {
                 sitekey: "6LdornErAAAAAD-oky4HtvcskvmYnoLi_i4Dc2f3",
             });
-            $p.log("reCAPTCHA 렌더링 요청 완료: " + actualDomId); // 로그 추가 [190, 16.1.1]
+            $p.log("reCAPTCHA 렌더링 요청 완료: " + actualDomId);
         });
 
     } else {
         if (recaptchaComponent === null) {
-            $p.log("Error: 'recaptcha-container' 컴포넌트를 찾을 수 없습니다. ID를 확인하세요."); // 로그 추가 [190, 16.1.1]
+            $p.log("Error: 'recaptcha-container' 컴포넌트를 찾을 수 없습니다. ID를 확인하세요.");
         }
         if (typeof grecaptcha === "undefined") {
-            $p.log("Error: grecaptcha API를 찾을 수 없거나 준비되지 않았습니다. reCAPTCHA 스크립트 로딩을 확인하세요."); // 로그 추가 [190, 16.1.1]
+            $p.log("Error: grecaptcha API를 찾을 수 없거나 준비되지 않았습니다. reCAPTCHA 스크립트 로딩을 확인하세요.");
         }
     }
 };
@@ -127,55 +129,99 @@ scwin.input_onfocus = function (e) {
     }
 };
 
-//회원가입
+//회원가입 버튼 클릭
 scwin.signup_button_onclick = function (e) {
     $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/signupPage.xml");
 };
 
-//비밀번호 찾기
+//비밀번호 찾기 버튼 클릭
 scwin.findPwd_button_onclick = function (e) {
     $c.sbm.execute(sbm_email);
     $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/findPwdCheckPage.xml");
 };
 
-//로그인
+//로그인 버튼 클릭
 scwin.login_button_onclick = function (e) {
-    const token = grecaptcha.getResponse();
+    let email = email_input.getValue();
+    let password = password_input.getValue();
+    let isValid = true;
 
+    // 1. 입력값 체크
+    if (!email) {
+        email_error_text.setValue("*이메일을 입력해주세요.");
+        isValid = false;
+    } else {
+        email_error_text.setValue("");
+    }
+
+    if (!password) {
+        password_error_text.setValue("*비밀번호를 입력해주세요.");
+        isValid = false;
+    } else {
+        password_error_text.setValue("");
+    }
+
+    if (!isValid) return;
+
+    // // 2. reCAPTCHA 완료 여부
+    const token = grecaptcha.getResponse();
     if (!token) {
         alert("reCAPTCHA를 먼저 완료해주세요!");
         return;
     }
 
+    // 3. 리캡챠 서브미션 실행
     const param = {
         secretKey: "6LdornErAAAAAB1vfQLQZu14z0wBg3g2mr-tLJAy",
         token: token
     };
+
     dma_recaptcha.setJSON(param);
     $c.sbm.execute(sbm_recaptcha);
+
+    grecaptcha.reset();
+    $c.sbm.execute(sbm_login);
 };
 
-scwin.sbm_login_submitdone = function (e) {
-    $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/user/UserList.xml");
-};
 
-
+//리캡챠 완료 실행
 scwin.sbm_rechapcher_submitdone = function (e) {
     const responseData = e.responseJSON;
 
-    if(responseData.verified){
-        $c.sbm.execute(sbm_login);
-    }else{
+    if (responseData.verified) {
+        $c.sbm.execute(sbm_login); //로그인 서브미션
+    } else {
         $c.win.alert("reCAPTCHA 인증에 실패했습니다. 다시 시도해주세요.");
     }
 };
 
-
+//리캡챠 오류 실행
 scwin.sbm_recaptcha_submiterror = function (e) {
-   const responseData = e.responseJSON;
+    const responseData = e.responseJSON;
     console.log(responseData);
 };
-]]></script>
+
+
+//로그인 완료 실행
+scwin.sbm_login_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    console.log(responseData);
+
+    if (responseData.elHeader.resMsg === "EL.ERROR.LOGIN.0002") {
+        $c.win.alert("로그인 정보가 올바르지 않습니다.");
+    } else if (responseData.elHeader.resMsg === "EL.ERROR.LOGIN.0001") {
+        $c.win.alert("존재하지 않는 ID 입니다.");
+    } else if (responseData.elHeader.resMsg === "EL.ERROR.LOGIN.LOCKED") {
+        $c.win.alert("5회이상 로그인에 실패하여 비밀번호 변경 페이지로 이동합니다.", function () {
+            $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/findPwdCheckPage.xml");
+        });
+    } else if (responseData.elHeader.validateSuc) {
+        $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/user/UserList.xml");
+    } else {
+        $c.win.alert("아이디 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.");
+    }
+
+};]]></script>
     	<style type="text/css"><![CDATA[]]></style>
     </head>
     <body ev:onpageload="scwin.onpageload" style="padding: 0;margin: 0;;">
@@ -207,6 +253,7 @@ scwin.sbm_recaptcha_submiterror = function (e) {
     							ref="data:dma_login.id">
     						</xf:input>
     					</xf:group>
+    					<w2:textbox id="email_error_text" label="" style="" class="error-text"></w2:textbox>
     				</xf:group>
     				<xf:group id="" style="height: 60px;">
     					<w2:textbox id="" label="비밀번호" style="height: 23px;"></w2:textbox>
@@ -218,8 +265,9 @@ scwin.sbm_recaptcha_submiterror = function (e) {
     							id="password_input" placeholder="비밀번호를 입력하세요" style="" ref="data:dma_login.password">
     						</xf:secret>
     					</xf:group>
+    					<w2:textbox id="password_error_text" label="" style="" class="error-text"></w2:textbox>
     				</xf:group>
-    				<w2:span label="Insert Text" style="" id="recaptcha-container"></w2:span>
+    				<w2:span label="" style="" id="recaptcha-container" class="recaptcha-span"></w2:span>
     			</xf:group>
     			<xf:trigger type="button" style="" id="login_button" class="auth-button" ev:onclick="scwin.login_button_onclick">
     				<xf:label><![CDATA[로그인]]></xf:label>

@@ -23,6 +23,9 @@
     					<w2:key defaultValue="" dataType="text" name="이미지 URL" id="profileImageUrl"></w2:key>
     					<w2:key defaultValue="" dataType="text" name="상태" id="isActive"></w2:key>
     					<w2:key dataType="text" name="가입일" id="createdAt"></w2:key>
+    					<w2:key dataType="text" name="로그인 실패 횟수" id="loginFailCount"></w2:key>
+    					<w2:key dataType="text" name="로그인 실패 시간" id="lastFailTime"></w2:key>
+    					<w2:key dataType="text" name="계정 잠금 여부" id="accountLocked"></w2:key>
     				</w2:keyInfo>
     			</w2:dataMap>
     		</w2:dataCollection>
@@ -98,15 +101,15 @@ scwin.input_onfocus = function (e) {
 };
 
 
-// 가입하기(이메일 전송)
+// 회원가입 버튼 (이메일 전송)
 scwin.signup_button_onclick = function (e) {
-    var email = email_input.getValue();
-    var password = password_input.getValue();
-    var passwordCheck = passwordCheck_input.getValue();
-    var name = name_input.getValue();
+    let email = email_input.getValue();
+    let password = password_input.getValue();
+    let passwordCheck = passwordCheck_input.getValue();
+    let name = name_input.getValue();
 
-    var isValid = true;
-    var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    let isValid = true;
+    let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     // 1. 이름
     if (!name) {
@@ -164,15 +167,13 @@ scwin.signup_button_onclick = function (e) {
         isValid = false;
     }
 
-
-
     if (!isValid) return;
 
     // 모든 검사 통과 시 실행
     $c.sbm.execute(sbm_email);
 };
 
-
+//이메일 전송 완료
 scwin.sbm_email_submitdone = function (e) {
     const responseData = e.responseJSON;
 
@@ -193,11 +194,13 @@ scwin.sbm_email_submitdone = function (e) {
     }
 };
 
+//이메일 전송 오류
 scwin.sbm_email_submiterror = function (e) {
     console.error("이메일 전송 중 오류 발생:", e);
     alert("이메일 전송 오류");
 };
 
+//중복확인 버튼
 scwin.emailCheck_button_onclick = function (e) {
     let param = {
         userId: email_input.getValue(),
@@ -205,33 +208,38 @@ scwin.emailCheck_button_onclick = function (e) {
         password: "",
         profileImageUrl: "",
         isActive: "",
-        createdAt: ""
+        createdAt: "",
+        loginFailCount: "",
+        lastFailTime: "",
+        accountLocked: ""
     }
-    
+
     dma_emailCheck.setJSON(param);
     console.log(dma_emailCheck.getJSON());
     $c.sbm.execute(sbm_checkEmail);
 };
 
+//이메일 중복확인 완료
 scwin.sbm_checkEmail_submitdone = function (e) {
     const responseData = e.responseJSON;
     scwin.checkTry = true;
-    console.log(responseData);
+
     if (!responseData.isDup) {
         scwin.checkEmail = true;
         emailCheck_button.setDisabled(true);
         email_error_text.setValue("*사용가능한 이메일입니다");
         email_error_text.setStyle("color", "green");
-    } else{
+    } else {
         email_error_text.setValue("*이미 가입된 이메일입니다.");
     }
 };
 
+//이메일 중복확인 실패
 scwin.sbm_checkEmail_submiterror = function (e) {
-    alert("실패");
+    alert("이메일 중복 확인 실패");
 };
 
-
+//이메일 입력시 중복확인 무효화
 scwin.email_input_onkeyup = function (e) {
     scwin.checkTry = false;
     scwin.checkEmail = false;

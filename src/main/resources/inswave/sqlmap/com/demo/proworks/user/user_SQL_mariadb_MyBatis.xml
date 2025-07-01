@@ -21,11 +21,11 @@
 		INSERT INTO collabee.user /* QueryID : com.demo.proworks.user.insertUser */
 		(
 		USER_ID
-		<if test="userName        != null"> , USER_NAME         </if>
-		<if test="password         != null"> , PASSWORD          </if>
-		<if test="profileImageUrl!= null"> , PROFILE_IMAGE_URL </if>
-		<if test="isActive        != null"> , IS_ACTIVE         </if>
-		<if test="createdAt       != null and createdAt != ''"> , CREATED_AT        </if>
+		<if test="userName  != null"> , USER_NAME         </if>
+		<if test="password  != null"> , PASSWORD          </if>
+		<if test="profileImageUrl != null "> , PROFILE_IMAGE_URL </if>
+		<if test="isActive  != null"> , IS_ACTIVE         </if>
+		<if test="createdAt != null and createdAt != ''"> , CREATED_AT        </if>
 		)
 		VALUES
 		(
@@ -51,6 +51,9 @@
 		<if test="profileImageUrl != null and profileImageUrl !=''"> , PROFILE_IMAGE_URL = #{profileImageUrl} </if>
 		<if test="isActive != null and isActive !=''"> , IS_ACTIVE = #{isActive}         </if>
 		<if test="createdAt != null and createdAt !=''"> , CREATED_AT = #{createdAt}        </if>
+		<if test="loginFailCount != null and loginFailCount !=''"> , LOGIN_FAIL_COUNT = #{loginFailCount}        </if>
+		<if test="lastFailTime != null and lastFailTime !=''"> , LAST_FAIL_TIME = #{lastFailTime}        </if>
+		<if test="accountLocked != null and accountLocked !=''"> , ACCOUNT_LOCKED = #{accountLocked}        </if>
 
 		WHERE
 		USER_ID = #{userId}
@@ -69,18 +72,17 @@
 		<!-- 사용자 정보를 상세 조회한다. -->
 		SELECT /* QueryID : com.demo.proworks.user.selectUser */
 		USER_ID as userId, USER_NAME as userName, PASSWORD as password, PROFILE_IMAGE_URL as profileImageUrl, IS_ACTIVE as isActive, CREATED_AT as
-		createdAt
+		createdAt, LOGIN_FAIL_COUNT as loginFailCount, LAST_FAIL_TIME as lastFailTime, ACCOUNT_LOCKED as accountLocked
 		FROM collabee.user
 		WHERE
 		USER_ID = #{userId}
-
 	</select>
 
 	<select id="selectListUser" parameterType="com.demo.proworks.user.vo.UserVo" resultType="com.demo.proworks.user.vo.UserVo">
 		<!-- 사용자 정보 목록을 조회한다. -->
 		SELECT /* QueryID : com.demo.proworks.user.selectListUser */
 		USER_ID as userId, USER_NAME as userName, PASSWORD as password, PROFILE_IMAGE_URL as profileImageUrl, IS_ACTIVE as isActive, CREATED_AT as
-		createdAt
+		createdAt, LOGIN_FAIL_COUNT as loginFailCount, LAST_FAIL_TIME as lastFailTime, ACCOUNT_LOCKED as accountLocked
 		FROM (
 		SELECT S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
 		FROM (
@@ -103,5 +105,7 @@
 		WHERE 1=1
 
 	</select>
+	
+	
 
 </mapper>

@@ -23,6 +23,9 @@
     					<w2:key dataType="text" name="이미지 URL" id="profileImageUrl"></w2:key>
     					<w2:key dataType="text" name="상태" id="isActive"></w2:key>
     					<w2:key dataType="text" name="가입일" id="createdAt"></w2:key>
+    					<w2:key dataType="text" name="로그인 실패 횟수" id="loginFailCount"></w2:key>
+    					<w2:key dataType="text" name="로그인 실패 시간" id="lastFailTime"></w2:key>
+    					<w2:key dataType="text" name="계정 잠금 여부" id="accountLocked"></w2:key>
     				</w2:keyInfo>
     			</w2:dataMap>
     		</w2:dataCollection>
@@ -32,7 +35,7 @@
     			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="" ev:submiterror="" abortTrigger="">
     		</xf:submission>
     		<xf:submission id="sbm_signup" action="/InsWebApp/UserIns.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_signupParam","key":"elData"}' target="" encoding="UTF-8"
-    			instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone=""
+    			instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_signup_submitdone"
     			ev:submiterror="" abortTrigger="">
     		</xf:submission>
     	</xf:model>
@@ -80,7 +83,7 @@ scwin.onInputChar = function (e) {
     const currentWsComponent = $p.getComponentById(currentInputId); // WebSquare 컴포넌트 객체 가져오기
     const currentNumber = parseInt(currentInputId.replace('mf_code_input', '')); // ID에서 숫자 부분 추출
     const length = currentWsComponent.getValue().length;
-    
+
 
     // 일반 문자 입력 시 다음 InputBox로 포커스 이동
     if (e.key !== "Backspace" && length === 1) {
@@ -104,28 +107,31 @@ scwin.onInputChar = function (e) {
         if (prevNumber >= 1) {
             const prevWsComponent = $p.getComponentById(prevInputId);
             if (prevWsComponent) {
-                prevWsComponent.focus();     
+                prevWsComponent.focus();
             }
         }
     }
 
 };
 
-scwin.handleCodeInputKeyup = function(e){
-     scwin.onInputChar(e);
+scwin.handleCodeInputKeyup = function (e) {
+    scwin.onInputChar(e);
 }
 
-scwin.codeCheck = function(e){
+//사용자 입력 코드와 인증코드 비교 함수
+scwin.codeCheck = function (e) {
     const code = scwin.code;
     console.log(code);
 
-	for(let i=0; i<5; i++){
+    for (let i = 0; i < 5; i++) {
         if (code_input1.getValue().toString() !== code.charAt(i)) {
             return false;
-		}
+        }
         return true;
     }
 }
+
+//회원가입 버튼가입 버튼
 scwin.signup_button_onclick = function (e) {
     const now = new Date().getTime();
     const diffMinutes = (now - scwin.time) / (1000 * 60);
@@ -135,32 +141,44 @@ scwin.signup_button_onclick = function (e) {
         return;
     }
 
-    if(scwin.codeCheck()){
+    if (scwin.codeCheck()) {
         let param = {
-            userId : scwin.info.email,
-            userName : scwin.info.name,
-            password : scwin.info.password,
-            profileImageUrl : "",
-            isActive : "Y",
-            createdAt : ""
+            userId: scwin.info.email,
+            userName: scwin.info.name,
+            password: scwin.info.password,
+            profileImageUrl: "",
+            isActive: "Y",
+            createdAt: "",
+            loginFailCount: "",
+            lastFailTime: "",
+            accountLocked: ""
         }
         dma_signupParam.setJSON(param);
         $c.win.alert("인증 코드가 일치");
-        
+
         $c.sbm.execute(sbm_signup);
-    }else{
+    } else {
         $c.win.alert("인증 코드가 일치하지 않습니다.");
     }
 };
 
+//회원가입 완료
+scwin.sbm_signup_submitdone = function (e) {
+    $c.win.alert("회원가입이 완료되었습니다.", function () {
+        $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/loginPage.xml");
+    });
+};
+
+//이메일 재전송 버튼
 scwin.resend_button_onclick = function (e) {
-    let param ={
-        email : scwin.info.email
+    let param = {
+        email: scwin.info.email
     }
     dma_mailParam.setJSON(param);
     $c.sbm.execute(sbm_email);
 };
 
+//인증코드 10분 시간체크
 scwin.startCountdown = function () {
     const timer = setInterval(function () {
         const now = new Date().getTime();
@@ -177,6 +195,7 @@ scwin.startCountdown = function () {
         timeCheck_text.setValue(`남은 시간: ${min}분 ${sec < 10 ? "0" : ""}${sec}초`);
     }, 1000);
 };
+
 ]]></script>
     	<style type="text/css"><![CDATA[]]></style>
     </head>

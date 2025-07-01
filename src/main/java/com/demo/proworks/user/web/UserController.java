@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.http.HttpStatus;
 
+import com.demo.proworks.cmmn.EnvUtil;
 import com.demo.proworks.user.service.UserService;
 import com.demo.proworks.user.vo.UserVo;
 import com.demo.proworks.user.vo.LoginVo;
@@ -34,6 +36,7 @@ import com.inswave.elfw.login.LoginProcessor;
 
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.client.RestTemplate;
+import io.github.cdimascio.dotenv.Dotenv;
 
 /**
  * @subject : 사용자 정보 관련 처리를 담당하는 컨트롤러
@@ -59,6 +62,9 @@ public class UserController {
 	@Resource(name = "loginProcess")
 	protected LoginProcessor loginProcess;
 
+	@Value("${recaptcha.secret}")
+	private String secretKey;
+
 	private static final String VERIFY_URL = "https://www.google.com/recaptcha/api/siteverify";
 
 	/**
@@ -76,6 +82,7 @@ public class UserController {
 		String password = loginVo.getPassword();
 
 		LoginInfo info = loginProcess.processLogin(request, id, password);
+		System.out.println(info);
 
 		if (info != null) {
 			AppLog.debug("- Login 정보 : " + info.toString());
@@ -105,8 +112,8 @@ public class UserController {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
 		params.add("secret", secret);
 		params.add("response", token);
-		System.out.println(secret);
-		System.out.println("값 ++++++" + token);
+		System.out.println("비밀 : " + secret);
+		System.out.println("토큰 : " + token);
 
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -119,8 +126,8 @@ public class UserController {
 
 			Map<String, Object> result = new HashMap<>();
 			result.put("verified", success);
-			
-			System.out.println("결과값:     "+success);
+
+			System.out.println("결과값:     " + success);
 
 			return result;
 

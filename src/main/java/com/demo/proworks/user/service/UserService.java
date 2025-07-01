@@ -72,4 +72,7 @@ public interface UserService {
      */
 	public int deleteUser(UserVo userVo) throws Exception;
 	
+
+	
+	
 }
