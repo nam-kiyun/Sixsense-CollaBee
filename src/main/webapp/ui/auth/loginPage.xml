@@ -181,6 +181,7 @@ scwin.login_button_onclick = function (e) {
 
     grecaptcha.reset();
     $c.sbm.execute(sbm_login);
+    //$c.win.alert("안녕");
 };
 
 
@@ -220,7 +221,6 @@ scwin.sbm_login_submitdone = function (e) {
     } else {
         $c.win.alert("아이디 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.");
     }
-
 };]]></script>
     	<style type="text/css"><![CDATA[]]></style>
     </head>

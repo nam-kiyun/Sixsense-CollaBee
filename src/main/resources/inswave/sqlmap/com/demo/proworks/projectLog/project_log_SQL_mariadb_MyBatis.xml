@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper      
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"      
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+	@subject     : 프로젝트 로그 관련 처리를 담당하는 Sql Mapper
+	@description : 프로젝트 로그 관련 처리를 담당하는 Sql Mapper
+	@author      : 국다인
+	@since       : 2025/07/01
+	@modification
+	===========================================================
+	DATE              AUTHOR             DESC
+	===========================================================
+	2025/07/01              국다인             최초 생성
+ -->
+<mapper namespace="com.demo.proworks.projectLog">
+    <insert id="insertProjectLog" parameterType="com.demo.proworks.projectLog.vo.ProjectLogVo">
+    	<!-- 프로젝트 로그를 등록한다. -->	
+    		
+        INSERT INTO PROJECT_LOG   /* QueryID : com.demo.proworks.projectLog.insertProjectLog */
+        ( 
+            PROJECT_LOG_ID
+            <if test="projectUserId!= null"> , PROJECT_USER_ID </if>
+            <if test="taskId        != null"> , TASK_ID         </if>
+            <if test="logType       != null"> , LOG_TYPE        </if>
+            <if test="logDescription!= null"> , LOG_DESCRIPTION </if>
+            <if test="logDecription != null"> , LOG_DECRIPTION  </if>
+        )
+        VALUES  
+        ( 
+            #{projectLogId}
+            <if test="projectUserId!= null"> , #{projectUserId} </if>
+            <if test="taskId        != null"> , #{taskId}         </if>
+            <if test="logType       != null"> , #{logType}        </if>
+            <if test="logDescription!= null"> , #{logDescription} </if>
+            <if test="logDecription != null"> , #{logDecription}  </if> 
+        )          
+    </insert>	
+	
+    <update id="updateProjectLog" parameterType="com.demo.proworks.projectLog.vo.ProjectLogVo">
+    	<!-- 프로젝트 로그를 갱신한다. -->
+    	
+        UPDATE PROJECT_LOG    /* QueryID : com.demo.proworks.projectLog.updateProjectLog */      
+      	  SET  
+                PROJECT_LOG_ID  = #{projectLogId}         	                       
+            <if test="projectUserId!= null"> , PROJECT_USER_ID = #{projectUserId} </if>
+            <if test="taskId        != null"> , TASK_ID         = #{taskId}         </if>
+            <if test="logType       != null"> , LOG_TYPE        = #{logType}        </if>
+            <if test="logDescription!= null"> , LOG_DESCRIPTION = #{logDescription} </if>
+            <if test="logDecription != null"> , LOG_DECRIPTION  = #{logDecription}  </if>                 
+        WHERE   
+                PROJECT_LOG_ID  = #{projectLogId} 
+    </update>
+	
+    <delete id="deleteProjectLog" parameterType="com.demo.proworks.projectLog.vo.ProjectLogVo">
+    	<!-- 프로젝트 로그를 삭제한다. -->
+    	
+        DELETE FROM PROJECT_LOG   /* QueryID : com.demo.proworks.projectLog.deleteProjectLog */ 
+        WHERE   
+                PROJECT_LOG_ID  = #{projectLogId}         
+    </delete>
+	
+    <select id="selectProjectLog" parameterType="com.demo.proworks.projectLog.vo.ProjectLogVo" resultType="com.demo.proworks.projectLog.vo.ProjectLogVo">
+    	<!-- 프로젝트 로그를 상세 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.projectLog.selectProjectLog */
+            PROJECT_LOG_ID as projectLogId, PROJECT_USER_ID as projectUserId, TASK_ID as taskId, LOG_TYPE as logType, LOG_DESCRIPTION as logDescription, LOG_DECRIPTION as logDecription
+        FROM PROJECT_LOG 
+        WHERE 
+                PROJECT_LOG_ID  = #{projectLogId} 			
+    </select>
+	
+    <select id="selectListProjectLog" parameterType="com.demo.proworks.projectLog.vo.ProjectLogVo" resultType="com.demo.proworks.projectLog.vo.ProjectLogVo">
+    	<!-- 프로젝트 로그 목록을 조회한다. -->
+           SELECT    /* QueryID : com.demo.proworks.projectLog.selectListProjectLog */
+               PROJECT_LOG_ID as projectLogId, PROJECT_USER_ID as projectUserId, TASK_ID as taskId, LOG_TYPE as logType, LOG_DESCRIPTION as logDescription, LOG_DECRIPTION as logDecription		       
+           FROM (
+               SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
+               FROM (				
+                   SELECT 
+                       *  		                  
+                   FROM PROJECT_LOG
+                   WHERE  1=1    		
+	     																														
+               ) S, (SELECT @ROWNUM := 0) TMP
+           ) A
+            WHERE PAGE = #{pageIndex}
+    </select>
+	
+    <select id="selectListCountProjectLog" parameterType="com.demo.proworks.projectLog.vo.ProjectLogVo" resultType="long">
+    <!-- 프로젝트 로그 목록의 카운트를 조회한다. -->
+    
+         SELECT    /* QueryID : com.demo.proworks.projectLog.selectListCountProjectLog */
+             COUNT(*) totcnt  		                  
+         FROM PROJECT_LOG
+         WHERE  1=1    		
+
+    </select>
+
+</mapper>
