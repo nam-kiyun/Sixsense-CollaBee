@@ -706,32 +706,26 @@ scwin.initializeChatWebSocket = function() {
                         
                     case 'history':
                         if (data.messages && data.messages.length > 0) {
-                            console.log("������ 히스토리 메시지 수신:", data.messages.length + "개");
-                            // 기존 메시지 클리어
-                            dlt_chatMessages.removeAll();
-                            
-                            // 히스토리 메시지들 추가
-                            data.messages.forEach(msg => {
-                                const isOwn = msg.userId === currentUser.userId;
-                                scwin.addChatMessageToList(msg.userName, msg.message, isOwn, msg.messageId, msg.timestamp);
-                                
-                                // 마지막 메시지 타임스탬프 업데이트
-                                const msgTimestamp = parseInt(msg.timestamp || msg.messageId);
-                                if (msgTimestamp > lastMessageTimestamp) {
-                                    setLastMessageTimestamp(msgTimestamp);
-                                }
-                            });
-                            
-                            scwin.updateChatMessages();
+                            console.log("������ 채팅 히스토리 수신:", data.messages.length + "개 메시지");
+                            // ������ 채팅 히스토리 로드 (기존 메시지 클리어 후 히스토리 추가)
+                            scwin.loadChatHistory(data.messages);
+                        } else {
+                            console.log("������ 채팅 히스토리 없음");
+                            scwin.addChatMessage("시스템", "������ 이전 채팅 기록이 없습니다. 첫 메시지를 보내보세요!", false);
                         }
                         break;
                         
+                    case 'notification':
+                        // 시스템 알림 메시지 (참가/퇴장 등)
+                        scwin.addChatMessage("시스템", data.message, false, data.timestamp);
+                        break;
+                        
                     case 'user_joined':
-                        scwin.addChatMessage("시스템", `������ ${data.userName}님이 참가했습니다.`, false);
+                        scwin.addChatMessage("시스템", `������ ${data.userName}님이 참가했습니다.`, false, data.timestamp);
                         break;
                         
                     case 'user_left':
-                        scwin.addChatMessage("시스템", `������ ${data.userName}님이 나갔습니다.`, false);
+                        scwin.addChatMessage("시스템", `������ ${data.userName}님이 나갔습니다.`, false, data.timestamp);
                         break;
                         
                     case 'error':
@@ -875,17 +869,35 @@ scwin.sendChatMessage = function() {
 
 // HTTP 관련 함수들 제거됨 - 웹소켓 전용 모드
 
-// 데이터리스트에 메시지 추가 (내부 함수)
+// ������ 데이터리스트에 메시지 추가 (실제 입력 시간 표시)
 scwin.addChatMessageToList = function(userName, message, isOwn, messageId, serverTimestamp) {
-    // 서버에서 받은 timestamp 사용, 없으면 현재 시간 사용
+    // 실제 메시지 입력 시간 표시 (강력새로고침 후에도 유지)
     let timestamp;
     if (serverTimestamp) {
-        // 서버 timestamp가 있으면 그것을 사용 (밀리초를 시간 형식으로 변환)
+        // 서버 timestamp가 있으면 실제 입력 시간으로 표시
         const date = new Date(parseInt(serverTimestamp));
-        timestamp = date.toLocaleTimeString();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        
+        // 오늘 날짜면 시간만, 다른 날짜면 날짜+시간 표시
+        const today = new Date();
+        const isToday = (year == today.getFullYear() && 
+                        month == String(today.getMonth() + 1).padStart(2, '0') && 
+                        day == String(today.getDate()).padStart(2, '0'));
+        
+        if (isToday) {
+            timestamp = `${hours}:${minutes}:${seconds}`;
+        } else {
+            timestamp = `${month}/${day} ${hours}:${minutes}`;
+        }
     } else {
         // 로컬 메시지(시스템 메시지 등)인 경우만 현재 시간 사용
-        timestamp = new Date().toLocaleTimeString();
+        const now = new Date();
+        timestamp = now.toLocaleTimeString();
     }
     
     // 데이터 추가
@@ -896,14 +908,45 @@ scwin.addChatMessageToList = function(userName, message, isOwn, messageId, serve
     dlt_chatMessages.setCellData(rowIndex, "message", message);
     dlt_chatMessages.setCellData(rowIndex, "timestamp", timestamp);
     dlt_chatMessages.setCellData(rowIndex, "isOwn", isOwn.toString());
+    dlt_chatMessages.setCellData(rowIndex, "serverTimestamp", serverTimestamp || Date.now()); // 원본 서버 시간 저장
+};
+
+// ������ 채팅 히스토리 로드 (Redis에서 가져온 이전 메시지들)
+scwin.loadChatHistory = function(messages) {
+    console.log("������ 채팅 히스토리 로드:", messages.length + "개 메시지");
+    
+    // 기존 메시지 클리어
+    dlt_chatMessages.removeAll();
+    
+    // 히스토리 메시지들을 시간 순으로 정렬 후 추가
+    const sortedMessages = messages.sort((a, b) => parseInt(a.timestamp) - parseInt(b.timestamp));
+    
+    sortedMessages.forEach(msg => {
+        const isOwn = msg.userId === currentUser.userId;
+        scwin.addChatMessageToList(msg.userName, msg.message, isOwn, msg.messageId, msg.timestamp);
+        
+        // 마지막 메시지 타임스탬프 업데이트
+        const msgTimestamp = parseInt(msg.timestamp || msg.messageId);
+        if (msgTimestamp > lastMessageTimestamp) {
+            setLastMessageTimestamp(msgTimestamp);
+        }
+    });
+    
+    // UI 업데이트
+    scwin.updateChatMessages();
+    
+    // 히스토리 로드 완료 메시지
+    if (sortedMessages.length > 0) {
+        scwin.addChatMessage("시스템", `������ 이전 채팅 ${sortedMessages.length}개를 불러왔습니다.`, false);
+    }
 };
 
 // 채팅 메시지 추가 (로컬용 - 시스템 메시지 등)
-scwin.addChatMessage = function(userName, message, isOwn) {
+scwin.addChatMessage = function(userName, message, isOwn, serverTimestamp) {
     const messageId = Date.now().toString();
     
-    // 내부 함수 사용
-    scwin.addChatMessageToList(userName, message, isOwn, messageId);
+    // 내부 함수 사용 (서버 타임스탬프 전달)
+    scwin.addChatMessageToList(userName, message, isOwn, messageId, serverTimestamp);
     
     // UI 업데이트
     scwin.updateChatMessages();

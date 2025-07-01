@@ -18,6 +18,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
+import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
 import com.demo.proworks.collabee.vo.ChatVo;
@@ -32,10 +39,25 @@ public class ChatController {
     private static final Logger logger = LoggerFactory.getLogger(ChatController.class);
     
     @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
+    private RedisTemplate<String, String> redisTemplate;
     
     @Autowired
     private ChatService chatService;
+    
+    private final ObjectMapper objectMapper;
+    
+    public ChatController() {
+        this.objectMapper = new ObjectMapper();
+        // 알 수 없는 필드 무시 (@class 등)
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        
+        // elExcludeFilter 설정 - 모든 속성 허용
+        SimpleFilterProvider filterProvider = new SimpleFilterProvider();
+        filterProvider.addFilter("elExcludeFilter", SimpleBeanPropertyFilter.serializeAll());
+        this.objectMapper.setFilterProvider(filterProvider);
+        
+        System.out.println("✅ ChatController ObjectMapper 설정 완료 - elExcludeFilter 및 알 수 없는 필드 처리");
+    }
     
     // Redis에서 사용할 키 접두사
     private static final String REDIS_CHAT_PREFIX = "chat:messages:";
@@ -215,7 +237,9 @@ public class ChatController {
             System.out.println("Redis 키: " + redisKey);
             System.out.println("저장할 메시지: " + message);
             
-            redisTemplate.opsForList().rightPush(redisKey, message);
+            // Map을 JSON 문자열로 변환해서 저장
+            String jsonMessage = objectMapper.writeValueAsString(message);
+            redisTemplate.opsForList().rightPush(redisKey, jsonMessage);
             System.out.println("Redis에 메시지 저장 완료");
             
             // 메시지 개수 제한 (최대 1000개)
@@ -236,6 +260,12 @@ public class ChatController {
             System.out.println("메시지 전송 성공!");
             System.out.println("=== 메시지 전송 완료 ===");
             
+        } catch (JsonProcessingException e) {
+            System.out.println("❌ JSON 직렬화 오류: " + e.getMessage());
+            e.printStackTrace();
+            result.setSuccess(false);
+            result.setResultMessage("메시지 JSON 변환 중 오류가 발생했습니다: " + e.getMessage());
+            result.setCount(0);
         } catch (Exception e) {
             System.out.println("❌ 메시지 전송 오류: " + e.getMessage());
             e.printStackTrace();
@@ -266,7 +296,7 @@ public class ChatController {
             System.out.println("조회할 Redis 키: " + redisKey);
             
             // Redis에서 메시지 목록 조회
-            List<Object> redisMessages = redisTemplate.opsForList().range(redisKey, 0, -1);
+            List<String> redisMessages = redisTemplate.opsForList().range(redisKey, 0, -1);
             System.out.println("Redis에서 조회된 전체 메시지 개수: " + (redisMessages != null ? redisMessages.size() : 0));
             
             List<ChatVo> chatVoList = new ArrayList<>();
@@ -282,10 +312,11 @@ public class ChatController {
                     afterTimestamp = 0;
                 }
                 
-                for (Object obj : redisMessages) {
-                    if (obj instanceof Map) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> msgMap = (Map<String, Object>) obj;
+                for (String jsonMessage : redisMessages) {
+                    try {
+                        // JSON 문자열을 Map으로 변환
+                        Map<String, Object> msgMap = objectMapper.readValue(jsonMessage, 
+                            new TypeReference<Map<String, Object>>() {});
                         
                         // afterTimestamp 이후의 메시지만 필터링
                         String timestampStr = (String) msgMap.get("timestamp");
@@ -310,6 +341,9 @@ public class ChatController {
                             
                             chatVoList.add(msgVo);
                         }
+                    } catch (Exception e) {
+                        System.err.println("⚠️ JSON 파싱 실패 (무시): " + jsonMessage + " - " + e.getMessage());
+                        // 파싱 실패한 메시지는 무시하고 계속 진행
                     }
                 }
             }
@@ -347,15 +381,16 @@ public class ChatController {
             String redisKey = REDIS_CHAT_PREFIX + chatVo.getChannelName();
             
             // Redis에서 모든 메시지 조회
-            List<Object> redisMessages = redisTemplate.opsForList().range(redisKey, 0, -1);
+            List<String> redisMessages = redisTemplate.opsForList().range(redisKey, 0, -1);
             
             List<ChatVo> chatVoList = new ArrayList<>();
             
             if (redisMessages != null) {
-                for (Object obj : redisMessages) {
-                    if (obj instanceof Map) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> msgMap = (Map<String, Object>) obj;
+                for (String jsonMessage : redisMessages) {
+                    try {
+                        // JSON 문자열을 Map으로 변환
+                        Map<String, Object> msgMap = objectMapper.readValue(jsonMessage, 
+                            new TypeReference<Map<String, Object>>() {});
                         
                         // Map을 ChatVo 객체로 변환
                         ChatVo msgVo = new ChatVo();
@@ -367,6 +402,9 @@ public class ChatController {
                         msgVo.setTimestamp((String) msgMap.get("timestamp"));
                         
                         chatVoList.add(msgVo);
+                    } catch (Exception e) {
+                        System.err.println("⚠️ JSON 파싱 실패 (무시): " + jsonMessage + " - " + e.getMessage());
+                        // 파싱 실패한 메시지는 무시하고 계속 진행
                     }
                 }
             }
