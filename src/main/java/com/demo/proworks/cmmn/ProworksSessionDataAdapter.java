@@ -3,6 +3,7 @@ package com.demo.proworks.cmmn;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import com.inswave.elfw.adapter.AdapterException;
 import com.inswave.elfw.exception.ElException;
@@ -12,6 +13,8 @@ import com.inswave.elfw.util.ElBeanUtils;
 
 import com.demo.proworks.emp.service.EmpService;
 import com.demo.proworks.emp.vo.EmpVo;
+import com.demo.proworks.user.service.UserService;
+import com.demo.proworks.user.vo.UserVo;
 
 /**  
  * @Class Name : ProworksSessionDataAdapter.java
@@ -60,6 +63,18 @@ public class ProworksSessionDataAdapter extends SessionDataAdapter {
 
 		// 사용자 세션을 UserHeader 에 설정 (샘플 예제)
 		try{
+			UserService userService = (UserService) ElBeanUtils.getBean("userServiceImpl");
+	        UserVo userVo = new UserVo();
+	        userVo.setUserId(id); // 또는 userVo.setEmail(id); ID 의미에 따라
+	
+	        UserVo resultUser = userService.selectUser(userVo); // ID 기반 사용자 조회
+	        if (resultUser == null) {
+	            throw new AdapterException("EL.ERROR.LOGIN.0004", new String[]{id});
+	        }
+
+	        // 필요에 따라 추가 정보 세팅
+	        userHeader.setUserName(resultUser.getUserName());
+		/*
 			EmpService empService = (EmpService)ElBeanUtils.getBean("empServiceImpl");
 			EmpVo empVo = new EmpVo();
 
@@ -73,6 +88,9 @@ public class ProworksSessionDataAdapter extends SessionDataAdapter {
 			// 사용자 세션 설정
 			userHeader.setTestDeptNo(resEmpVo.getDeptno());
 			userHeader.setTestDeptName(resEmpVo.getDname());
+		 */
+//		  HttpSession session = request.getSession();
+//        session.setAttribute("userHeader", userHeader);
 		}catch(ElException e){
 			AppLog.error("setSessionData Error1",e);
 			throw e;

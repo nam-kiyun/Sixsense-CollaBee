@@ -99,6 +99,14 @@
 
     </bean>
     
+<!--      암호화 설정
+    EL MyBatis Select Interceptor 
+	<bean id="elMybatisSelInterceptor" class="com.inswave.elfw.intercept.ElMybatisSelInterceptor"/>
+	
+	EL MyBatis Update/Insert/Delete Interceptor 
+	<bean id="elMybatisUpdInterceptor" class="com.inswave.elfw.intercept.ElMybatisUpdInterceptor"/> -->
+	    
+	    
     <!-- JavaMailSender 빈 정의 추가 -->
     <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
         <property name="host" value="smtp.gmail.com" /> <!-- 메일 서버 호스트 (예: smtp.gmail.com) -->

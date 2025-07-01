@@ -69,7 +69,7 @@ public class EmpController {
     @ElDescription(sub = "로그인", desc = "로그인을 처리한다.")
     public void login(com.demo.proworks.emp.vo.LoginVo loginVo, HttpServletRequest request) throws Exception {
     	String id = loginVo.getId();
-    	String pw = loginVo.getPw();
+    	String pw = loginVo.getPassword();
     	
     	LoginInfo info = loginProcess.processLogin(request, id, pw);
     	
