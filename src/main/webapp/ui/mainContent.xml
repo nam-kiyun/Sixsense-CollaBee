@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="메인 콘텐츠">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map">
+                <w2:dataMap baseNode="map" id="dm_userInfo">
+                    <w2:keyInfo>
+                        <w2:key id="userName" name="사용자명" dataType="text"/>
+                        <w2:key id="userId" name="사용자ID" dataType="text"/>
+                    </w2:keyInfo>
+                    <w2:data use="true">
+                        <userName>식스센스</userName>
+                        <userId>user01</userId>
+                    </w2:data>
+                </w2:dataMap>
+            </w2:dataCollection>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+    // 메인 콘텐츠 초기화
+    scwin.loadUserInfo();
+};
+
+// 사용자 정보 로드
+scwin.loadUserInfo = function() {
+    try {
+        // 부모 창에서 사용자 정보 가져오기
+        if (parent && parent.dm_userInfo) {
+            const userName = parent.dm_userInfo.get("userName") || "식스센스";
+            dm_userInfo.set("userName", userName);
+            scwin.updateWelcomeMessage();
+        } else {
+            // 기본값 사용
+            dm_userInfo.set("userName", "식스센스");
+            scwin.updateWelcomeMessage();
+        }
+    } catch(e) {
+        console.log("사용자 정보 로드 오류:", e);
+        dm_userInfo.set("userName", "식스센스");
+        scwin.updateWelcomeMessage();
+    }
+};
+
+// 환영 메시지 업데이트
+scwin.updateWelcomeMessage = function() {
+    try {
+        var userName = dm_userInfo.get("userName") || "식스센스";
+        var welcomeText = userName + "님 안녕하세요";
+        output_welcomeText.setValue(welcomeText);
+        console.log("환영 메시지 업데이트:", welcomeText);
+    } catch(e) {
+        console.log("환영 메시지 업데이트 오류:", e);
+    }
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+        <!-- 메인 콘텐츠 -->
+        <xf:group style="width:100%;height:100%;background-color:#fff4d6;padding:40px;" id="grp_mainContent">
+            
+            <!-- 환영 메시지 -->
+            <xf:group style="text-align:center;margin-bottom:60px;" id="grp_welcomeMessage">
+                <xf:output style="font-size:60px;font-weight:bold;color:#000000;font-family:'Andada Pro',serif;" id="output_welcomeText">
+                    <xf:label><![CDATA[식스센스님 안녕하세요]]></xf:label>
+                </xf:output>
+            </xf:group>
+            
+            <!-- 진행중인 프로젝트 섹션 -->
+            <xf:group style="display:flex;align-items:center;margin-bottom:30px;" id="grp_projectsTitle">
+                <xf:output style="font-size:24px;font-weight:400;color:#000000;font-family:Inter,sans-serif;" id="output_projectsTitle">
+                    <xf:label><![CDATA[진행중인 프로젝트]]></xf:label>
+                </xf:output>
+                <!-- 프로젝트 추가 아이콘 -->
+                <xf:image src="/InsWebApp/assets/images/add_circle.svg" style="width:32px;height:32px;margin-left:12px;cursor:pointer;" id="img_addProject"/>
+            </xf:group>
+            
+            <!-- 프로젝트 카드들 -->
+            <xf:group style="display:flex;gap:40px;flex-wrap:wrap;" id="grp_projectCards">
+                
+                <!-- 프로젝트1 카드 -->
+                <xf:group style="width:400px;height:200px;background-color:#ffffff;border:1px solid #000000;border-radius:16px;padding:30px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;" id="grp_project1Card">
+                    
+                    <!-- 상단 영역 (프로젝트명만) -->
+                    <xf:group style="display:flex;flex-direction:column;" id="grp_project1Top">
+                        <!-- 프로젝트명 -->
+                        <xf:output style="font-size:28px;font-weight:600;color:#000000;font-family:Inter,sans-serif;" id="output_project1Name">
+                            <xf:label><![CDATA[프로젝트1]]></xf:label>
+                        </xf:output>
+                    </xf:group>
+                    
+                    <!-- 하단 영역 (팀정보 + 구분선 + 업데이트정보) -->
+                    <xf:group style="display:flex;flex-direction:column;gap:15px;" id="grp_project1Bottom">
+                        <!-- 팀 정보 -->
+                        <xf:group id="grp_teamInfo1">
+                            <xf:output style="font-size:11px;color:rgba(0,0,0,0.5);font-family:Inter,sans-serif;margin-bottom:6px;font-weight:500;" id="output_teamLabel1">
+                                <xf:label><![CDATA[TEAM]]></xf:label>
+                            </xf:output>
+                            <!-- 팀 멤버 아바타들 -->
+                            <xf:group style="display:flex;gap:3px;align-items:center;" id="grp_teamAvatars1">
+                                <xf:group style="width:26px;height:26px;background-color:#3B82F6;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_avatar1_1">
+                                    <xf:output style="color:white;font-size:10px;font-weight:600;" id="output_avatar1_1">
+                                        <xf:label><![CDATA[EM]]></xf:label>
+                                    </xf:output>
+                                </xf:group>
+                                <xf:group style="width:26px;height:26px;background-color:#10B981;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_avatar1_2">
+                                    <xf:output style="color:white;font-size:10px;font-weight:600;" id="output_avatar1_2">
+                                        <xf:label><![CDATA[JC]]></xf:label>
+                                    </xf:output>
+                                </xf:group>
+                                <xf:group style="width:26px;height:26px;background-color:#8B5CF6;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_avatar1_3">
+                                    <xf:output style="color:white;font-size:10px;font-weight:600;" id="output_avatar1_3">
+                                        <xf:label><![CDATA[AK]]></xf:label>
+                                    </xf:output>
+                                </xf:group>
+                                <xf:group style="width:26px;height:26px;background-color:#EC4899;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_avatar1_4">
+                                    <xf:output style="color:white;font-size:10px;font-weight:600;" id="output_avatar1_4">
+                                        <xf:label><![CDATA[LW]]></xf:label>
+                                    </xf:output>
+                                </xf:group>
+                                <xf:group style="width:26px;height:26px;background-color:#F59E0B;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_avatar1_5">
+                                    <xf:output style="color:white;font-size:10px;font-weight:600;" id="output_avatar1_5">
+                                        <xf:label><![CDATA[RB]]></xf:label>
+                                    </xf:output>
+                                </xf:group>
+                                <xf:group style="width:26px;height:26px;background-color:#6B7280;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_avatar1_6">
+                                    <xf:output style="color:white;font-size:10px;font-weight:600;" id="output_avatar1_6">
+                                        <xf:label><![CDATA[+7]]></xf:label>
+                                    </xf:output>
+                                </xf:group>
+                            </xf:group>
+                        </xf:group>
+                        
+                        <!-- 구분선 -->
+                        <xf:group style="width:100%;height:1px;background-color:rgba(0,0,0,0.2);" id="grp_divider1"/>
+                        
+                        <!-- 타이머와 업데이트 정보 -->
+                        <xf:group style="display:flex;align-items:center;gap:8px;" id="grp_updateInfo1">
+                            <xf:image src="/InsWebApp/assets/images/timer.svg" style="width:18px;height:18px;" id="img_timer1"/>
+                            <xf:output style="font-size:14px;color:rgba(0,0,0,0.6);font-family:Inter,sans-serif;" id="output_lastUpdate1">
+                                <xf:label><![CDATA[Last Update 5 minutes ago ...]]></xf:label>
+                            </xf:output>
+                        </xf:group>
+                    </xf:group>
+                </xf:group>
+                
+                <!-- 프로젝트2 카드 -->
+                <xf:group style="width:400px;height:200px;background-color:#ffffff;border:1px solid #000000;border-radius:16px;padding:30px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;" id="grp_project2Card">
+                    
+                    <!-- 상단 영역 (프로젝트명만) -->
+                    <xf:group style="display:flex;flex-direction:column;" id="grp_project2Top">
+                        <!-- 프로젝트명 -->
+                        <xf:output style="font-size:28px;font-weight:600;color:#000000;font-family:Inter,sans-serif;" id="output_project2Name">
+                            <xf:label><![CDATA[프로젝트2]]></xf:label>
+                        </xf:output>
+                    </xf:group>
+                    
+                    <!-- 하단 영역 (팀정보 + 구분선 + 업데이트정보) -->
+                    <xf:group style="display:flex;flex-direction:column;gap:15px;" id="grp_project2Bottom">
+                        <!-- 팀 정보 -->
+                        <xf:group id="grp_teamInfo">
+                            <xf:output style="font-size:11px;color:rgba(0,0,0,0.5);font-family:Inter,sans-serif;margin-bottom:6px;font-weight:500;" id="output_teamLabel">
+                                <xf:label><![CDATA[TEAM]]></xf:label>
+                            </xf:output>
+                            <!-- 팀 멤버 아바타들 -->
+                            <xf:group style="display:flex;gap:3px;align-items:center;" id="grp_teamAvatars">
+                                <xf:group style="width:26px;height:26px;background-color:#3B82F6;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_avatar1">
+                                    <xf:output style="color:white;font-size:10px;font-weight:600;" id="output_avatar1">
+                                        <xf:label><![CDATA[EM]]></xf:label>
+                                    </xf:output>
+                                </xf:group>
+                                <xf:group style="width:26px;height:26px;background-color:#10B981;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_avatar2">
+                                    <xf:output style="color:white;font-size:10px;font-weight:600;" id="output_avatar2">
+                                        <xf:label><![CDATA[JC]]></xf:label>
+                                    </xf:output>
+                                </xf:group>
+                                <xf:group style="width:26px;height:26px;background-color:#8B5CF6;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_avatar3">
+                                    <xf:output style="color:white;font-size:10px;font-weight:600;" id="output_avatar3">
+                                        <xf:label><![CDATA[AK]]></xf:label>
+                                    </xf:output>
+                                </xf:group>
+                                <xf:group style="width:26px;height:26px;background-color:#EC4899;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_avatar4">
+                                    <xf:output style="color:white;font-size:10px;font-weight:600;" id="output_avatar4">
+                                        <xf:label><![CDATA[LW]]></xf:label>
+                                    </xf:output>
+                                </xf:group>
+                                <xf:group style="width:26px;height:26px;background-color:#F59E0B;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_avatar5">
+                                    <xf:output style="color:white;font-size:10px;font-weight:600;" id="output_avatar5">
+                                        <xf:label><![CDATA[RB]]></xf:label>
+                                    </xf:output>
+                                </xf:group>
+                                <xf:group style="width:26px;height:26px;background-color:#6B7280;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_avatar6">
+                                    <xf:output style="color:white;font-size:10px;font-weight:600;" id="output_avatar6">
+                                        <xf:label><![CDATA[+7]]></xf:label>
+                                    </xf:output>
+                                </xf:group>
+                            </xf:group>
+                        </xf:group>
+                        
+                        <!-- 구분선 -->
+                        <xf:group style="width:100%;height:1px;background-color:rgba(0,0,0,0.2);" id="grp_divider2"/>
+                        
+                        <!-- 타이머와 업데이트 정보 -->
+                        <xf:group style="display:flex;align-items:center;gap:8px;" id="grp_updateInfo2">
+                            <xf:image src="/InsWebApp/assets/images/timer.svg" style="width:18px;height:18px;" id="img_timer2"/>
+                            <xf:output style="font-size:14px;color:rgba(0,0,0,0.6);font-family:Inter,sans-serif;" id="output_lastUpdate2">
+                                <xf:label><![CDATA[Last Update 5 minutes ago ...]]></xf:label>
+                            </xf:output>
+                        </xf:group>
+                    </xf:group>
+                </xf:group>
+                
+            </xf:group>
+            
+        </xf:group>
+    </body>
+</html>
