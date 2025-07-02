@@ -30,11 +30,11 @@
     			</w2:dataMap>
     		</w2:dataCollection>
     		<w2:workflowCollection />
-    		<xf:submission id="sbm_email" action="/InsWebApp/SendEmail.pwkjson" method="post" mediatype="application/json"
+    		<xf:submission id="sbm_email" action="/InsWebApp/send/SendEmail.pwkjson" method="post" mediatype="application/json"
     			ref='data:json,{"id":"dma_mailParam","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
     			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="" ev:submiterror="" abortTrigger="">
     		</xf:submission>
-    		<xf:submission id="sbm_signup" action="/InsWebApp/UserIns.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_signupParam","key":"elData"}' target="" encoding="UTF-8"
+    		<xf:submission id="sbm_signup" action="/InsWebApp/user/singup.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_signupParam","key":"elData"}' target="" encoding="UTF-8"
     			instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_signup_submitdone"
     			ev:submiterror="" abortTrigger="">
     		</xf:submission>
@@ -44,9 +44,9 @@
     	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
     scwin.onresize();
 
-    scwin.code = sessionStorage.getItem("code");
-    scwin.info = JSON.parse(sessionStorage.getItem("info"));
-    scwin.time = parseInt(sessionStorage.getItem("sentTime"), 10);
+    scwin.code = $p.getParameter("code");
+    scwin.info = JSON.parse($p.getParameter("info"));
+    scwin.time = parseInt($p.getParameter("sendTime"), 10);
     scwin.startCountdown();
 };
 
@@ -154,7 +154,6 @@ scwin.signup_button_onclick = function (e) {
             accountLocked: ""
         }
         dma_signupParam.setJSON(param);
-        $c.win.alert("인증 코드가 일치");
 
         $c.sbm.execute(sbm_signup);
     } else {

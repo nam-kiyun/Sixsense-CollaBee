@@ -25,7 +25,7 @@
     			</w2:dataMap>
     		</w2:dataCollection>
     		<w2:workflowCollection />
-    		<xf:submission id="sbm_updatePassword" action="/InsWebApp/UserUpd.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_Param","key":"elData"}' target=""
+    		<xf:submission id="sbm_updatePassword" action="/InsWebApp/user/update.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_Param","key":"elData"}' target=""
     			encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
     			ev:submitdone="scwin.sbm_updatePassword_submitdone" ev:submiterror="" abortTrigger="">
     		</xf:submission>
@@ -34,8 +34,7 @@
     	<w2:publicInfo method="" />
     	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
     scwin.onresize();
-    scwin.email = sessionStorage.getItem("email");
-
+    scwin.email = $p.getParameter("email");
 };
 
 scwin.onresize = function (e) {
@@ -116,7 +115,7 @@ scwin.signup_button_onclick = function (e) {
     let pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+={}\[\]:;"'<>,.?/-]).{8,}$/;
 
     if (password && !pwRegex.test(password)) {
-        password_error_text.setValue("*비밀번호는 8자 이상이며, 영문자·숫자·특수문자를 포함해야 합니다.");
+        password_error_text.setValue("*비밀번호는 8자 이상이며<br/> 영문자·숫자·특수문자를 포함해야 합니다.");
         isValid = false;
     }
 

@@ -7,8 +7,6 @@ import java.util.Map;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -16,27 +14,23 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.http.HttpStatus;
+import org.springframework.web.client.RestTemplate;
 
-import com.demo.proworks.cmmn.EnvUtil;
 import com.demo.proworks.user.service.UserService;
-import com.demo.proworks.user.vo.UserVo;
 import com.demo.proworks.user.vo.LoginVo;
 import com.demo.proworks.user.vo.RecaptchaVo;
 import com.demo.proworks.user.vo.UserListVo;
-
+import com.demo.proworks.user.vo.UserVo;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
-import com.inswave.elfw.annotation.ElValidator;
 import com.inswave.elfw.log.AppLog;
 import com.inswave.elfw.login.LoginInfo;
 import com.inswave.elfw.login.LoginProcessor;
-
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.client.RestTemplate;
-import io.github.cdimascio.dotenv.Dotenv;
+import com.inswave.elfw.annotation.ElValidator;
 
 /**
  * @subject : 사용자 정보 관련 처리를 담당하는 컨트롤러
@@ -74,8 +68,8 @@ public class UserController {
 	 * @param request 요청 정보 HttpServletRequest
 	 * @throws Exception
 	 */
-	@ElService(key = "UserLogin")
-	@RequestMapping(value = "UserLogin")
+	@ElService(key = "user/login")
+	@RequestMapping(value = "user/login")
 	@ElDescription(sub = "로그인", desc = "로그인을 처리한다.")
 	public void login(LoginVo loginVo, HttpServletRequest request) throws Exception {
 		String id = loginVo.getId();
@@ -99,10 +93,10 @@ public class UserController {
 	 * @param request 요청 정보 HttpServletRequest
 	 * @throws Exception
 	 */
-	@ElService(key = "verifyRecaptcha")
-	@RequestMapping(value = "verifyRecaptcha")
+	@ElService(key = "user/recaptcha")
+	@RequestMapping(value = "user/recaptcha")
 	@ElDescription(sub = "리캡챠", desc = "로그인시 봇인지 사림인지에 대해 파악한다")
-	public Map<String, Object> verifyRecaptcha(RecaptchaVo recaptchaVo) {
+	public Map<String, Object> recaptcha(RecaptchaVo recaptchaVo) {
 
 		String token = recaptchaVo.getToken();
 		String secret = recaptchaVo.getSecretKey();
@@ -110,9 +104,9 @@ public class UserController {
 		RestTemplate restTemplate = new RestTemplate();
 
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-		params.add("secret", secret);
+		params.add("secret", secretKey);
 		params.add("response", token);
-		System.out.println("비밀 : " + secret);
+		System.out.println("비밀 : " + secretKey);
 		System.out.println("토큰 : " + token);
 
 		HttpHeaders headers = new HttpHeaders();
@@ -146,8 +140,8 @@ public class UserController {
 	 * @return 목록조회 결과
 	 * @throws Exception
 	 */
-	@ElService(key = "UserList")
-	@RequestMapping(value = "UserList")
+	@ElService(key = "user/userList")
+	@RequestMapping(value = "user/userList")
 	@ElDescription(sub = "사용자 정보 목록조회", desc = "페이징을 처리하여 사용자 정보 목록 조회를 한다.")
 	public UserListVo selectListUser(UserVo userVo) throws Exception {
 
@@ -170,8 +164,8 @@ public class UserController {
 	 * @return 단건 조회 결과
 	 * @throws Exception
 	 */
-	@ElService(key = "UserUpdView")
-	@RequestMapping(value = "UserUpdView")
+	@ElService(key = "user/{userId}")
+	@RequestMapping(value = "user/{userId}")
 	@ElDescription(sub = "사용자 정보 갱신 폼을 위한 조회", desc = "사용자 정보 갱신 폼을 위한 조회를 한다.")
 	public UserVo selectUser(UserVo userVo) throws Exception {
 		UserVo selectUserVo = userService.selectUser(userVo);
@@ -186,8 +180,8 @@ public class UserController {
 	 * @return 사용자 존재 여부 확인
 	 * @throws Exception
 	 */
-	@ElService(key = "UserEmailCheck")
-	@RequestMapping(value = "UserEmailCheck")
+	@ElService(key = "user/checkid")
+	@RequestMapping(value = "user/checkid")
 	@ElDescription(sub = "사용자 이메일 중복 체크", desc = "사용자 회원가입시 이메일 중복 체크")
 	public Map<String, Boolean> checkUser(UserVo userVo) throws Exception {
 		UserVo selectUserVo = userService.selectUser(userVo);
@@ -203,8 +197,8 @@ public class UserController {
 	 * @param userVo 사용자 정보
 	 * @throws Exception
 	 */
-	@ElService(key = "UserIns")
-	@RequestMapping(value = "UserIns")
+	@ElService(key = "user/singup")
+	@RequestMapping(value = "user/singup")
 	@ElDescription(sub = "사용자 정보 등록처리", desc = "사용자 정보를 등록 처리 한다.")
 	public void insertUser(UserVo userVo) throws Exception {
 		String rawPassword = userVo.getPassword();
@@ -219,9 +213,8 @@ public class UserController {
 	 * @param userVo 사용자 정보
 	 * @throws Exception
 	 */
-	@ElService(key = "UserUpd")
-	@RequestMapping(value = "UserUpd")
-	@ElValidator(errUrl = "/user/userRegister", errContinue = true)
+	@ElService(key = "user/update")
+	@RequestMapping(value = "user/update")
 	@ElDescription(sub = "사용자 정보 갱신처리", desc = "사용자 정보를 갱신 처리 한다.")
 	public void updateUser(UserVo userVo) throws Exception {
 		String rawPassword = userVo.getPassword();
@@ -236,8 +229,8 @@ public class UserController {
 	 * @param userVo 사용자 정보
 	 * @throws Exception
 	 */
-	@ElService(key = "UserDel")
-	@RequestMapping(value = "UserDel")
+	@ElService(key = "user/delete")
+	@RequestMapping(value = "user/delete")
 	@ElDescription(sub = "사용자 정보 삭제처리", desc = "사용자 정보를 삭제 처리한다.")
 	public void deleteUser(UserVo userVo) throws Exception {
 		userService.deleteUser(userVo);

@@ -29,15 +29,15 @@
     			</w2:dataMap>
     		</w2:dataCollection>
     		<w2:workflowCollection />
-    		<xf:submission id="sbm_login" action="/InsWebApp/UserLogin.pwkjson" method="post" mediatype="application/json"
+    		<xf:submission id="sbm_login" action="/InsWebApp/user/login.pwkjson" method="post" mediatype="application/json"
     			ref='data:json,{"id":"dma_login","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
     			mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_login_submitdone" ev:submiterror="" abortTrigger="">
     		</xf:submission>
-    		<xf:submission id="sbm_email" action="/InsWebApp/SendEmail.pwkjson" method="post" mediatype="application/json" ref="" target=""
+    		<xf:submission id="sbm_email" action="/InsWebApp/send/SendEmail.pwkjson" method="post" mediatype="application/json" ref="" target=""
     			encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
     			ev:submitdone="" ev:submiterror="" abortTrigger="">
     		</xf:submission>
-    		<xf:submission id="sbm_recaptcha" action="/InsWebApp/verifyRecaptcha.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_recaptcha","key":"elData"}' target="" encoding="UTF-8"
+    		<xf:submission id="sbm_recaptcha" action="/InsWebApp/user/recaptcha.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_recaptcha","key":"elData"}' target="" encoding="UTF-8"
     			instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_rechapcher_submitdone"
     			ev:submiterror="scwin.sbm_recaptcha_submiterror" abortTrigger="">
     		</xf:submission>
@@ -163,7 +163,7 @@ scwin.login_button_onclick = function (e) {
 
     if (!isValid) return;
 
-    // // 2. reCAPTCHA 완료 여부
+    // 2. reCAPTCHA 완료 여부
     const token = grecaptcha.getResponse();
     if (!token) {
         alert("reCAPTCHA를 먼저 완료해주세요!");
@@ -172,7 +172,7 @@ scwin.login_button_onclick = function (e) {
 
     // 3. 리캡챠 서브미션 실행
     const param = {
-        secretKey: "6LdornErAAAAAB1vfQLQZu14z0wBg3g2mr-tLJAy",
+        secretKey: "",
         token: token
     };
 
@@ -181,7 +181,6 @@ scwin.login_button_onclick = function (e) {
 
     grecaptcha.reset();
     $c.sbm.execute(sbm_login);
-    //$c.win.alert("안녕");
 };
 
 
@@ -207,19 +206,27 @@ scwin.sbm_recaptcha_submiterror = function (e) {
 scwin.sbm_login_submitdone = function (e) {
     const responseData = e.responseJSON;
     console.log(responseData);
-
     if (responseData.elHeader.resMsg === "EL.ERROR.LOGIN.0002") {
         $c.win.alert("로그인 정보가 올바르지 않습니다.");
     } else if (responseData.elHeader.resMsg === "EL.ERROR.LOGIN.0001") {
         $c.win.alert("존재하지 않는 ID 입니다.");
     } else if (responseData.elHeader.resMsg === "EL.ERROR.LOGIN.LOCKED") {
-        $c.win.alert("5회이상 로그인에 실패하여 비밀번호 변경 페이지로 이동합니다.", function () {
+        $c.win.alert("5회이상 로그인에 실패하여 <br/> 비밀번호 변경 페이지로 이동합니다.", function () {
             $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/findPwdCheckPage.xml");
         });
     } else if (responseData.elHeader.validateSuc) {
-        $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/user/UserList.xml");
+        let param = {
+           "userId": responseData.userHeader.userId,
+           "userName": responseData.userHeader.userName
+        }
+        let option = {
+            "spa": true,
+            "param": param
+        }
+
+        $p.url("/InsWebApp/ui/user/UserList.xml", option);
     } else {
-        $c.win.alert("아이디 또는 비밀번호가 잘못 되었습니다. 아이디와 비밀번호를 정확히 입력해 주세요.");
+        $c.win.alert("아이디 또는 비밀번호가 잘못 되었습니다.<br/> 아이디와 비밀번호를 정확히 입력해 주세요.");
     }
 };]]></script>
     	<style type="text/css"><![CDATA[]]></style>

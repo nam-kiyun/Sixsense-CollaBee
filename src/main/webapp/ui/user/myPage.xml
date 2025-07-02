@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function () {
+
+};
+
+
+scwin.profile_image_onclick = function (e) {
+    scwin.fileUploader.openFileDialog();
+    image_upload.show();
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+    		style="">
+    		<xf:group style="" id="">
+    			<xf:group style="" id="">
+    				<xf:image
+    					src="https://i.namu.wiki/i/GH-5VpyNOgQrFIDgxwcWPVc5sJo-IFuoJwrPf9gmctPwRd7Vjv8S-F2JpPQ8P5-ezgPfAQLsdA3JiLlJBkwVHg.webp"
+    					style="width: 100px;height: 100px;" id="profile_image" ev:onclick="scwin.profile_image_onclick">
+    				</xf:image>
+    				<w2:textbox id="" label="식스센스" style="width: 150px;height: 23px;"></w2:textbox>
+    				<w2:upload imageStyle="position:absolute;vertical-align:middle;word-wrap:break-word"
+    					inputStyle="vertical-align:middle;word-wrap:break-word" style="width: 250px;height: 23px;" id="image_upload" clickOpenFileDialog="true">
+    				</w2:upload>
+    			</xf:group>
+    			<xf:group style="" id="">
+    				<w2:textbox id="" label="아이디" style=""></w2:textbox>
+    				<xf:input id="" style=""></xf:input>
+    			</xf:group>
+    			<xf:group style="" id="">
+    				<w2:textbox id="" label="비밀번호" style=""></w2:textbox>
+    				<xf:input id="" style=""></xf:input>
+    			</xf:group>
+    			<xf:group style="" id="">
+    				<w2:textbox id="" label="비밀번호 확인" style=""></w2:textbox>
+    				<xf:input id="" style=""></xf:input>
+    			</xf:group>
+    			<xf:trigger type="button" style="" id="">
+    				<xf:label><![CDATA[수정]]></xf:label>
+    			</xf:trigger>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>
