@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
     xmlns:ev="http://www.w3.org/2001/xml-events"
     xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
-    <head>
+    <head meta_screenName="화상통화 + 채팅 페이지">
         <w2:type>COMPONENT</w2:type>
         <w2:buildDate/>
         <w2:MSA/>
@@ -157,8 +157,8 @@
             
             /* 채팅 메시지 스타일 강화 */
             .chat-message {
-                margin-bottom: 10px !important;
-                padding: 8px 12px !important;
+                margin-bottom: 8px !important;
+                padding: 6px 10px !important;
                 border-radius: 8px !important;
                 max-width: 80% !important;
                 word-wrap: break-word !important;
@@ -967,8 +967,8 @@ scwin.updateChatMessages = function() {
         const messageDiv = document.createElement("div");
         messageDiv.className = `chat-message ${msg.isOwn === 'true' ? 'own' : 'other'}`;
         messageDiv.style.cssText = `
-            margin-bottom: 10px;
-            padding: 8px 12px;
+            margin-bottom: 8px;
+            padding: 6px 10px;
             border-radius: 8px;
             max-width: 80%;
             word-wrap: break-word;
@@ -980,7 +980,7 @@ scwin.updateChatMessages = function() {
         
         const headerDiv = document.createElement("div");
         headerDiv.className = "message-header";
-        headerDiv.style.cssText = "font-size: 12px; margin-bottom: 4px; opacity: 0.7;";
+        headerDiv.style.cssText = "font-size: 11px; margin-bottom: 2px; opacity: 0.7;";
         
         const userNameSpan = document.createElement("span");
         userNameSpan.className = "user-name";
@@ -1099,7 +1099,7 @@ scwin.forceScrollEnable = function() {
         while (parent && parent.className) {
             if (parent.className.includes("chat-message-container")) {
                 parent.style.setProperty("overflow", "hidden", "important");
-                parent.style.setProperty("height", "calc(100vh - 140px)", "important");
+                parent.style.setProperty("height", "calc(100vh - 100px)", "important");
                 parent.style.setProperty("flex", "1", "important");
             } else if (parent.className.includes("chat-section")) {
                 parent.style.setProperty("height", "100vh", "important");
@@ -1219,14 +1219,14 @@ window.addEventListener("beforeunload", function() {
             <!-- 채팅 영역 -->
             <xf:group class="chat-section" style="height: 100vh; display: flex; flex-direction: column; overflow: hidden;">
                 <!-- 채팅 헤더 -->
-                <xf:group class="chat-header" style="height: 60px; flex-shrink: 0;">
-                    <xf:output class="chat-title">팀 채팅</xf:output>
-                    <xf:output class="chat-subtitle" id="chatRoomInfo">실시간 채팅방</xf:output>
+                <xf:group class="chat-header" style="height: 40px; flex-shrink: 0; padding: 8px 10px; background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+                    <xf:output class="chat-title" style="font-size: 16px; font-weight: bold; color: #333;">팀 채팅</xf:output>
+                    <xf:output class="chat-subtitle" id="chatRoomInfo" style="font-size: 12px; color: #666;">실시간 채팅방</xf:output>
                 </xf:group>
                 
                 <!-- 채팅 메시지 컨테이너 -->
-                <xf:group class="chat-message-container" style="flex: 1; overflow: hidden; height: calc(100vh - 120px); padding: 10px;">
-                    <div id="chatMessages" class="chat-messages" style="height: 100%; overflow-y: scroll !important; overflow-x: hidden !important; border: 2px solid #FFB823; padding: 10px; background: white; max-height: 100%; min-height: 300px; scrollbar-width: thin; scrollbar-color: #FFB823 #f1f1f1;">
+                <xf:group class="chat-message-container" style="flex: 1; overflow: hidden; height: calc(100vh - 100px); padding: 5px;">
+                    <div id="chatMessages" class="chat-messages" style="height: 100%; overflow-y: scroll !important; overflow-x: hidden !important; border: 2px solid #FFB823; padding: 8px; background: white; max-height: 100%; min-height: 300px; scrollbar-width: thin; scrollbar-color: #FFB823 #f1f1f1;">
                         <!-- 채팅 메시지들이 동적으로 추가됩니다 -->
                     </div>
                 </xf:group>
