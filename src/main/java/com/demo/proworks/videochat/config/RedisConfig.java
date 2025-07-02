@@ -1,4 +1,4 @@
-package com.demo.proworks.collabee.config;
+package com.demo.proworks.videochat.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

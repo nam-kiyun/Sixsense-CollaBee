@@ -1,4 +1,4 @@
-package com.demo.proworks.collabee.vo;
+package com.demo.proworks.videochat.vo;
 
 import com.inswave.elfw.annotation.ElDto;
 import com.inswave.elfw.annotation.ElDtoField;

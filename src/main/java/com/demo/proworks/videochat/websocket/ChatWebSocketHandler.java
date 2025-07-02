@@ -1,4 +1,4 @@
-package com.demo.proworks.collabee.websocket;
+package com.demo.proworks.videochat.websocket;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,8 +16,8 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.demo.proworks.collabee.service.ChatService;
-import com.demo.proworks.collabee.vo.ChatMessageVo;
+import com.demo.proworks.videochat.service.ChatService;
+import com.demo.proworks.videochat.vo.ChatMessageVo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;

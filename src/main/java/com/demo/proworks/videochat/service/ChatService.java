@@ -1,4 +1,4 @@
-package com.demo.proworks.collabee.service;
+package com.demo.proworks.videochat.service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import com.demo.proworks.collabee.vo.ChatMessageVo;
+import com.demo.proworks.videochat.vo.ChatMessageVo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.DeserializationFeature;

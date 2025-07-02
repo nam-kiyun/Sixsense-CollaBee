@@ -37,19 +37,19 @@
 	<bean id="elCommController" class="com.inswave.elfw.web.ElCommController"/>
 	
 	<!-- Chat Controller -->
-	<bean id="chatController" class="com.demo.proworks.collabee.web.ChatController"/>
+	<bean id="chatController" class="com.demo.proworks.videochat.web.ChatController"/>
  
 	<!-- Redis Configuration -->
-	<bean id="redisConfig" class="com.demo.proworks.collabee.config.RedisConfig"/>
+	<bean id="redisConfig" class="com.demo.proworks.videochat.config.RedisConfig"/>
 	
 	<!-- WebSocket Configuration - @Configuration 방식으로 변경됨 -->
-	<bean id="webSocketConfig" class="com.demo.proworks.collabee.config.WebSocketConfig"/>
+	<bean id="webSocketConfig" class="com.demo.proworks.videochat.config.WebSocketConfig"/>
 	
 	<!-- Chat Service -->
-	<bean id="chatService" class="com.demo.proworks.collabee.service.ChatService"/>
+	<bean id="chatService" class="com.demo.proworks.videochat.service.ChatService"/>
  
 	<!-- Chat WebSocket Handler -->
-	<bean id="chatWebSocketHandler" class="com.demo.proworks.collabee.websocket.ChatWebSocketHandler"/>
+	<bean id="chatWebSocketHandler" class="com.demo.proworks.videochat.websocket.ChatWebSocketHandler"/>
  
 	<!-- WebSocket을 위한 올바른 HandlerAdapter 추가 -->
 	<bean class="org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter"/>

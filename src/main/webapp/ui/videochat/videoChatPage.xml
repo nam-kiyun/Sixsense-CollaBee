@@ -36,7 +36,7 @@
         
         <!-- Agora.io SDK 로드 -->
         <script src="https://cdn.agora.io/sdk/release/AgoraRTC_N-4.19.0.js"></script>
-        <link rel="stylesheet" href="/InsWebApp/css/project/videoChatPage.css" />
+        <link rel="stylesheet" href="/InsWebApp/css/videochat/videoChatPage.css" />
         
         <!-- 임시 인라인 CSS (테스트용) -->
         <style>

@@ -1,4 +1,4 @@
-package com.demo.proworks.collabee.vo;
+package com.demo.proworks.videochat.vo;
 
 import com.inswave.elfw.annotation.ElDto;
 import com.inswave.elfw.annotation.ElDtoField;
@@ -14,7 +14,7 @@ public class ChatListVo extends com.inswave.elfw.core.CommVO {
     }
 
     @ElDtoField(logicalName = "채팅목록", physicalName = "chatVo", type = "", typeKind = "List", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private java.util.List<com.demo.proworks.collabee.vo.ChatVo> chatVo;
+    private java.util.List<com.demo.proworks.videochat.vo.ChatVo> chatVo;
 
     @ElDtoField(logicalName = "개수", physicalName = "count", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private int count;
@@ -26,12 +26,12 @@ public class ChatListVo extends com.inswave.elfw.core.CommVO {
     private String resultMessage;
 
     @ElVoField(physicalName = "chatVo")
-    public java.util.List<com.demo.proworks.collabee.vo.ChatVo> getChatVo(){
+    public java.util.List<com.demo.proworks.videochat.vo.ChatVo> getChatVo(){
         return chatVo;
     }
 
     @ElVoField(physicalName = "chatVo")
-    public void setChatVo(java.util.List<com.demo.proworks.collabee.vo.ChatVo> chatVo){
+    public void setChatVo(java.util.List<com.demo.proworks.videochat.vo.ChatVo> chatVo){
         this.chatVo = chatVo;
     }
 
@@ -86,7 +86,7 @@ public class ChatListVo extends com.inswave.elfw.core.CommVO {
     @Override
     public void _xStreamEnc() {
         for( int i=0 ; chatVo != null && i < chatVo.size() ; i++ ) {
-            com.demo.proworks.collabee.vo.ChatVo vo = (com.demo.proworks.collabee.vo.ChatVo)chatVo.get(i);
+            com.demo.proworks.videochat.vo.ChatVo vo = (com.demo.proworks.videochat.vo.ChatVo)chatVo.get(i);
             vo._xStreamEnc();	 
         }
     }
@@ -95,7 +95,7 @@ public class ChatListVo extends com.inswave.elfw.core.CommVO {
     @Override
     public void _xStreamDec() {
         for( int i=0 ; chatVo != null && i < chatVo.size() ; i++ ) {
-            com.demo.proworks.collabee.vo.ChatVo vo = (com.demo.proworks.collabee.vo.ChatVo)chatVo.get(i);
+            com.demo.proworks.videochat.vo.ChatVo vo = (com.demo.proworks.videochat.vo.ChatVo)chatVo.get(i);
             vo._xStreamDec();	 
         }
     }

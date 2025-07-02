@@ -1,4 +1,4 @@
-package com.demo.proworks.collabee.config;
+package com.demo.proworks.videochat.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -6,7 +6,7 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-import com.demo.proworks.collabee.websocket.ChatWebSocketHandler;
+import com.demo.proworks.videochat.websocket.ChatWebSocketHandler;
 
 @Configuration
 @EnableWebSocket

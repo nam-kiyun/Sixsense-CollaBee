@@ -1,4 +1,4 @@
-package com.demo.proworks.collabee.web;
+package com.demo.proworks.videochat.web;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -27,10 +27,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
-import com.demo.proworks.collabee.vo.ChatVo;
-import com.demo.proworks.collabee.vo.ChatListVo;
-import com.demo.proworks.collabee.service.ChatService;
-import com.demo.proworks.collabee.vo.ChatMessageVo;
+import com.demo.proworks.videochat.vo.ChatVo;
+import com.demo.proworks.videochat.vo.ChatListVo;
+import com.demo.proworks.videochat.service.ChatService;
+import com.demo.proworks.videochat.vo.ChatMessageVo;
 
 @RestController
 @RequestMapping("/InsWebApp")
