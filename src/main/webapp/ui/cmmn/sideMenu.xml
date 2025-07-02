@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="사이드 메뉴">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map">
+                <w2:dataMap baseNode="map" id="dm_sideMenu">
+                    <w2:keyInfo>
+                        <w2:key id="selectedMenu" name="선택된메뉴" dataType="text"/>
+                    </w2:keyInfo>
+                    <w2:data use="true">
+                        <selectedMenu>dashboard</selectedMenu>
+                    </w2:data>
+                </w2:dataMap>
+            </w2:dataCollection>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+    
+};
+
+// 메뉴 클릭 이벤트
+scwin.menu_dashboard_onclick = function(e) {
+    dm_sideMenu.set("selectedMenu", "dashboard");
+    // 대시보드 페이지로 이동 로직
+};
+
+scwin.menu_project1_onclick = function(e) {
+    dm_sideMenu.set("selectedMenu", "project1");
+    // 프로젝트1 페이지로 이동 로직
+};
+
+scwin.menu_project2_onclick = function(e) {
+    dm_sideMenu.set("selectedMenu", "project2");
+    // 프로젝트2 페이지로 이동 로직
+};
+
+scwin.btn_addProject_onclick = function(e) {
+    alert("프로젝트 추가 기능");
+    // 프로젝트 추가 로직
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+        <!-- 사이드메뉴 전체 컨테이너 -->
+        <xf:group 
+            style="width:303px;height:924px;background-color:#ffffff;border-right:1px solid #000000;position:relative;padding:20px 0;"
+            id="grp_sideMenu">
+            
+            <!-- 메인 섹션 -->
+            <xf:group style="margin-bottom:20px;" id="grp_mainSection">
+                
+                <!-- 메인 섹션 제목 -->
+                <xf:group style="margin-bottom:16px;padding:0 24px;" id="grp_mainTitle">
+                    <xf:output style="color:#000000;font-size:16px;font-family:Inter,sans-serif;font-weight:400;" id="output_mainTitle">
+                        <xf:label><![CDATA[메인]]></xf:label>
+                    </xf:output>
+                </xf:group>
+                
+                <!-- 대시보드 메뉴 -->
+                <xf:group 
+                    style="padding:12px 24px;margin-bottom:8px;cursor:pointer;background-color:transparent;margin:0 16px 8px 16px;"
+                    id="grp_dashboard"
+                    ev:onclick="scwin.menu_dashboard_onclick">
+                    <xf:output style="color:#000000;font-size:24px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;" id="output_dashboard">
+                        <xf:label><![CDATA[대시보드]]></xf:label>
+                    </xf:output>
+                </xf:group>
+                
+            </xf:group>
+            
+            <!-- 프로젝트 섹션 -->
+            <xf:group style="margin-bottom:20px;" id="grp_projectSection">
+                
+                <!-- 프로젝트 섹션 제목 -->
+                <xf:group style="margin-bottom:16px;padding:0 24px;" id="grp_projectTitle">
+                    <xf:output style="color:#000000;font-size:16px;font-family:Inter,sans-serif;font-weight:400;" id="output_projectTitle">
+                        <xf:label><![CDATA[프로젝트]]></xf:label>
+                    </xf:output>
+                </xf:group>
+                
+                <!-- 프로젝트 리스트 -->
+                <xf:group id="grp_projectList">
+                    
+                    <!-- 프로젝트1 - 선택된 상태 -->
+                    <xf:group 
+                        style="padding:12px 24px;margin-bottom:8px;cursor:pointer;background-color:rgba(255,184,35,0.2);border-radius:10px;margin:0 16px 8px 16px;position:relative;"
+                        id="grp_project1"
+                        ev:onclick="scwin.menu_project1_onclick">
+                        
+                        <!-- 선택 표시 바 -->
+                        <xf:group 
+                            style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:24px;background-color:#ffb823;"
+                            id="grp_activeBar1"/>
+                        
+                        <xf:output style="color:#000000;font-size:24px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;" id="output_project1">
+                            <xf:label><![CDATA[프로젝트1]]></xf:label>
+                        </xf:output>
+                    </xf:group>
+                    
+                    <!-- 프로젝트2 -->
+                    <xf:group 
+                        style="padding:12px 24px;margin-bottom:8px;cursor:pointer;background-color:transparent;margin:0 16px 8px 16px;"
+                        id="grp_project2"
+                        ev:onclick="scwin.menu_project2_onclick">
+                        <xf:output style="color:#000000;font-size:24px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;" id="output_project2">
+                            <xf:label><![CDATA[프로젝트2]]></xf:label>
+                        </xf:output>
+                    </xf:group>
+                    
+                </xf:group>
+                
+                <!-- 프로젝트 추가 버튼 -->
+                <xf:group 
+                    style="padding:12px 24px;margin-top:16px;cursor:pointer;display:flex;align-items:center;gap:8px;margin:16px 16px 8px 16px;"
+                    id="grp_addProject"
+                    ev:onclick="scwin.btn_addProject_onclick">
+                    
+                    <!-- Plus 아이콘 -->
+                    <xf:image src="/InsWebApp/assets/images/add_2.svg" style="width:20px;height:20px;margin-left:8px;" id="img_plusIcon"/>
+                    
+                    <xf:output style="color:#000000;font-size:18px;font-family:Inter,sans-serif;font-weight:400;" id="output_addProject">
+                        <xf:label><![CDATA[프로젝트 추가]]></xf:label>
+                    </xf:output>
+                </xf:group>
+                
+            </xf:group>
+            
+        </xf:group>
+    </body>
+</html>
