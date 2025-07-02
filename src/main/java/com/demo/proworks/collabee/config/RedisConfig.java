@@ -13,7 +13,7 @@ import redis.clients.jedis.JedisPoolConfig;
 public class RedisConfig {
     
     public RedisConfig() {
-        System.out.println("🔧 RedisConfig 클래스 생성됨!");
+        //System.out.println("🔧 RedisConfig 클래스 생성됨!");
     }
 
     /**
@@ -21,7 +21,7 @@ public class RedisConfig {
      */
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        System.out.println("🔧 Redis 연결 설정: localhost:6379");
+        //System.out.println("🔧 Redis 연결 설정: localhost:6379");
         
         JedisConnectionFactory factory = new JedisConnectionFactory();
         factory.setHostName("localhost");  // Redis 서버 호스트
@@ -39,7 +39,7 @@ public class RedisConfig {
         poolConfig.setTestOnReturn(true);  // 연결 반환 시 검증
         factory.setPoolConfig(poolConfig);
         
-        System.out.println("🔧 Redis 연결 팩토리 설정 완료");
+        //System.out.println("🔧 Redis 연결 팩토리 설정 완료");
         return factory;
     }
     
@@ -48,7 +48,7 @@ public class RedisConfig {
      */
     @Bean
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
-        System.out.println("🔧 RedisTemplate 설정 시작...");
+        //System.out.println("🔧 RedisTemplate 설정 시작...");
         
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -63,7 +63,7 @@ public class RedisConfig {
         
         template.afterPropertiesSet();
         
-        System.out.println("🔧 RedisTemplate 설정 완료 (StringRedisSerializer 사용)");
+        //System.out.println("🔧 RedisTemplate 설정 완료 (StringRedisSerializer 사용)");
         
         // Redis 연결 테스트
         try {
@@ -72,12 +72,12 @@ public class RedisConfig {
             template.delete("test:connection");
             
             if ("OK".equals(result)) {
-                System.out.println("🔍 Redis 연결 상태: 정상 ✅");
+                //System.out.println("🔍 Redis 연결 상태: 정상 ✅");
             } else {
-                System.err.println("🔍 Redis 연결 상태: 비정상 ❌");
+                //System.err.println("🔍 Redis 연결 상태: 비정상 ❌");
             }
         } catch (Exception e) {
-            System.err.println("🔍 Redis 연결 상태: 오류 ❌ - " + e.getMessage());
+            //System.err.println("🔍 Redis 연결 상태: 오류 ❌ - " + e.getMessage());
         }
         
         return template;

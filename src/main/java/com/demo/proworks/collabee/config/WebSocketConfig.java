@@ -17,11 +17,11 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        System.out.println("🔧 WebSocket 핸들러 등록 시작...");
+        //System.out.println("🔧 WebSocket 핸들러 등록 시작...");
         
         registry.addHandler(chatWebSocketHandler, "/chat")
                 .setAllowedOriginPatterns("*"); // SockJS 제거하고 순수 웹소켓만 사용
         
-        System.out.println("🔧 WebSocket 핸들러 등록 완료: /chat (순수 웹소켓)");
+        //System.out.println("🔧 WebSocket 핸들러 등록 완료: /chat (순수 웹소켓)");
     }
 } 

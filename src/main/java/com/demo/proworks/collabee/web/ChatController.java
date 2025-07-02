@@ -56,7 +56,7 @@ public class ChatController {
         filterProvider.addFilter("elExcludeFilter", SimpleBeanPropertyFilter.serializeAll());
         this.objectMapper.setFilterProvider(filterProvider);
         
-        System.out.println("✅ ChatController ObjectMapper 설정 완료 - elExcludeFilter 및 알 수 없는 필드 처리");
+        //System.out.println("✅ ChatController ObjectMapper 설정 완료 - elExcludeFilter 및 알 수 없는 필드 처리");
     }
     
     // Redis에서 사용할 키 접두사
