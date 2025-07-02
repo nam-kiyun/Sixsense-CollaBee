@@ -30,11 +30,11 @@
     			</w2:dataMap>
     		</w2:dataCollection>
     		<w2:workflowCollection />
-    		<xf:submission id="sbm_email" action="/InsWebApp/SendEmail.pwkjson" method="post" mediatype="application/json"
+    		<xf:submission id="sbm_email" action="/InsWebApp/send/SendEmail.pwkjson" method="post" mediatype="application/json"
     			ref='data:json,{"id":"dma_mailParam","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
     			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_email_submitdone" ev:submiterror="" abortTrigger="">
     		</xf:submission>
-    		<xf:submission id="sbm_checkEmail" action="/InsWebApp/UserEmailCheck.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_emailCheck","key":"elData"}'
+    		<xf:submission id="sbm_checkEmail" action="/InsWebApp/user/checkid.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_emailCheck","key":"elData"}'
     			target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
     			ev:submitdone="scwin.sbm_checkEmail_submitdone" ev:submiterror="" abortTrigger="">
     		</xf:submission>
@@ -119,8 +119,15 @@ scwin.findPwd_button_onclick = function (e) {
 
     } else {
         if (code_input.getValue() === scwin.code) {
-            sessionStorage.setItem("email", email_input.getValue()); //인증코드
-            $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/changePwdPage.xml");
+            let param = {
+                "email": email_input.getValue(),
+            }
+            let option = {
+                "spa": true,
+                "param": param
+            }
+ 
+            $p.url("/InsWebApp/ui/auth/changePwdPage.xml", option);
         } else {
             $c.win.alert("인증 코드가 일치하지 않습니다.");
         }

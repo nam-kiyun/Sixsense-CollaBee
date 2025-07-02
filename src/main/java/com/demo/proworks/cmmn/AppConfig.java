@@ -1,32 +1,11 @@
 package com.demo.proworks.cmmn;
-import io.github.cdimascio.dotenv.Dotenv;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
-import java.io.IOException;
-import java.util.Properties;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 
 @Configuration
+@PropertySource("classpath:inswave/properties/elfw.properties")
 public class AppConfig {
-
-    @Bean
-    public static PropertySourcesPlaceholderConfigurer recaptchaPropertyConfigurer() throws IOException {
-        // 1. .env 로드
-        Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
-
-        // 2. 필요한 키만 추출 (전체 항목 불필요 시)
-        Properties props = new Properties();
-        String recaptchaSecret = dotenv.get("RECAPTCHA_SECRET_KEY");
-        if (recaptchaSecret != null) {
-            props.setProperty("recaptcha.secret", recaptchaSecret);
-        }
-
-        // 3. Spring Property Placeholder에 주입
-        PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
-        configurer.setProperties(props);
-
-        return configurer;
-    }
+    // 이 클래스는 Spring 컨테이너에 프로퍼티 파일의 위치를 알려주는 역할을 합니다.
+    // 특별한 Bean을 등록할 필요가 없다면 비어있어도 괜찮습니다.
 }
-

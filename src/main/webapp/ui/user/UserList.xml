@@ -35,91 +35,96 @@
 			<w2:workflowCollection></w2:workflowCollection>
 
 			<xf:submission id="sbm_selectUserVoList" ref='data:json,{"id":"dmp_userVo","key":"userVo"}'
-				target='data:json,{"id":"dlt_userVoList","key":"elData.userVoList"}' action="/InsWebApp/UserList.pwkjson" method="post"
+				target='data:json,{"id":"dlt_userVoList","key":"elData.userVoList"}' action="/InsWebApp/user/userList.pwkjson" method="post"
 				mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
 				processMsg="사용자 정보 리스트를 조회 중입니다." ev:submit="" ev:submitdone="scwin.sbm_userList_submitdone" ev:submiterror="" abortTrigger="">
 			</xf:submission>
 		</xf:model>
 		<w2:layoutInfo></w2:layoutInfo>
 		<w2:publicInfo method="" />
-		<script lazy="false" type="text/javascript"><![CDATA[
-	scwin.onpageload = function() {		
-		//search_box
-        var cptIbxName = $p.getComponentById("searchComp_1");
-        if(cptIbxName == undefined){
-			search_box.hide();
-        }
-		
-		// 사용자 정보 조회
-		scwin.btn_search_onclick();
-	};
+		<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
+    //search_box
+    var cptIbxName = $p.getComponentById("searchComp_1");
+    if (cptIbxName == undefined) {
+        search_box.hide();
+    }
 
-	/************************** 이벤트 함수 *************************/
-	
-	/**
-	 * 조회 버튼 클릭 이벤트
-	 * @date
-	 * @memberOf
-	 * @param 
-	 * @returns
-	 * @author 
-	 * @example
-	 */		   
-	scwin.btn_search_onclick = function(e) {
-	
-		// PGAE번호 초기화
-		dmp_userVo.set("pageIndex","1");
-		pgl_userList.setSelectedIndex(1);
 
-		// 서버통신 - 사용자 정보 조회
-		$c.sbm.execute($p, sbm_selectUserVoList);
-	};
-	
-	scwin.sbm_userList_submitdone = function(e) {
+    // 사용자 정보 조회
+    scwin.btn_search_onclick();
 
-		// error 수신시
-		var elData = e.responseJSON.elData;
-		var elHeader  = e.responseJSON.elHeader;
-		if(elHeader == null || elHeader == "" || elHeader == "undefiend" || elHeader.resSuc == false) {
-			$c.win.alert(`에러코드 : ${elHeader.resCode}\n에러메시지 : ${elHeader.resMsg}`);
-			return false;
-		}
+    scwin.userId = $p.getParameter("userId");
+    scwin.userName = $p.getParameter("userName");
+    console.log("userId: " + scwin.userId);
+    console.log("userName: " + scwin.userName);
+};
 
-		// 사용자 정보 dataMap 초기화
-		dmp_userVoDetail.setEmptyValue();
+/************************** 이벤트 함수 *************************/
 
-		// 총 레코드 수 업데이트
-        spn_listCnt.setLabel(elData.totalCount);
-        
-        // 데이터를 그리드에 셋팅
-        dlt_userVoList.setJSON(elData.userVoList);
-        
-        // 페이지 네비게이터 업데이트
-        var totalPageCount = Math.ceil(elData.totalCount / dmp_userVo.get("pageSize"));
-        pgl_userList.setCount(totalPageCount);
-        
-		// 페이징 정보 업데이트
-        spn_totalPageCount.setValue(totalPageCount);
-        spn_pageIndex.setValue(dmp_userVo.get("pageIndex"));
-        pgl_userList.setSelectedIndex(dmp_userVo.get("pageIndex"));
-	};		
+/**
+ * 조회 버튼 클릭 이벤트
+ * @date
+ * @memberOf
+ * @param 
+ * @returns
+ * @author 
+ * @example
+ */
+scwin.btn_search_onclick = function (e) {
 
-	/**
-	 * 페이지 번호 클릭 이벤트
-	 * @date
-	 * @memberOf
-	 * @param 
-	 * @returns 
-	 * @author 
-	 * @example
-	 */
-	scwin.pgl_userList_onclick = function(idx) {
-	
-		// 페이지 번호 세팅
-		dmp_userVo.set( "pageIndex" , idx ); 
-		// 서버통신 - 사원목록 조회
-		$c.sbm.execute($p, sbm_selectUserVoList);
-	};
+    // PGAE번호 초기화
+    dmp_userVo.set("pageIndex", "1");
+    pgl_userList.setSelectedIndex(1);
+
+    // 서버통신 - 사용자 정보 조회
+    $c.sbm.execute($p, sbm_selectUserVoList);
+};
+
+scwin.sbm_userList_submitdone = function (e) {
+
+    // error 수신시
+    var elData = e.responseJSON.elData;
+    var elHeader = e.responseJSON.elHeader;
+    if (elHeader == null || elHeader == "" || elHeader == "undefiend" || elHeader.resSuc == false) {
+        $c.win.alert(`에러코드 : ${elHeader.resCode}\n에러메시지 : ${elHeader.resMsg}`);
+        return false;
+    }
+
+    // 사용자 정보 dataMap 초기화
+    dmp_userVoDetail.setEmptyValue();
+
+    // 총 레코드 수 업데이트
+    spn_listCnt.setLabel(elData.totalCount);
+
+    // 데이터를 그리드에 셋팅
+    dlt_userVoList.setJSON(elData.userVoList);
+
+    // 페이지 네비게이터 업데이트
+    var totalPageCount = Math.ceil(elData.totalCount / dmp_userVo.get("pageSize"));
+    pgl_userList.setCount(totalPageCount);
+
+    // 페이징 정보 업데이트
+    spn_totalPageCount.setValue(totalPageCount);
+    spn_pageIndex.setValue(dmp_userVo.get("pageIndex"));
+    pgl_userList.setSelectedIndex(dmp_userVo.get("pageIndex"));
+};
+
+/**
+ * 페이지 번호 클릭 이벤트
+ * @date
+ * @memberOf
+ * @param 
+ * @returns 
+ * @author 
+ * @example
+ */
+scwin.pgl_userList_onclick = function (idx) {
+
+    // 페이지 번호 세팅
+    dmp_userVo.set("pageIndex", idx);
+    // 서버통신 - 사원목록 조회
+    $c.sbm.execute($p, sbm_selectUserVoList);
+};
 
 ]]></script>
 	</head>

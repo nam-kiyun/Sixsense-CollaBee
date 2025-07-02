@@ -7,6 +7,7 @@ import java.util.Random;
 import javax.annotation.Resource;
 import javax.mail.internet.MimeMessage;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -32,10 +33,17 @@ import com.inswave.elfw.annotation.ElValidator;
  * 
  */
 @Controller
+@RequestMapping(value = "/send")
 public class EmailController {
 
     @Resource(name = "mailSender")
     protected JavaMailSender mailSender;
+	
+	@Value("${spring.mail.username}")
+	private String username;
+	
+	@Value("${spring.mail.password}")
+	private String password;
 
     /**
      * 이메일을 발송한다
@@ -98,8 +106,8 @@ public class EmailController {
 		System.out.println("📨 Properties: " + impl.getJavaMailProperties());
 		System.out.println("📨 Password: " + impl.getPassword());
 		
-		impl.setUsername("collabee2025@gmail.com");
-		impl.setPassword("wpek wzaw bpjk zvuc");;
+		impl.setUsername(username);
+		impl.setPassword(password);
         
 
         try {
