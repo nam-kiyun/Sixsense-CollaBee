@@ -17,7 +17,7 @@
                         <w2:key id="userName" name="사용자명" dataType="text"/>
                     </w2:keyInfo>
                     <w2:data use="true">
-                        <userName>남기윤</userName>
+                        <userName>게스트</userName>
                     </w2:data>
                 </w2:dataMap>
             </w2:dataCollection>
@@ -58,9 +58,7 @@ scwin.btn_logout_onclick = function(e) {
                 
                 <!-- 사용자 정보 -->
                 <xf:group style="display:flex;align-items:center;gap:4px;" id="grp_userInfo">
-                    <xf:output style="width:45px;height:46px;font-size:45px;color:#ffffff;font-weight:200;font-variation-settings:'FILL' 0,'wght' 100,'GRAD' 0,'opsz' 48;" id="output_userIcon" class="material-symbols-outlined">
-                        <xf:label><![CDATA[account_circle]]></xf:label>
-                    </xf:output>
+                    <xf:image src="/InsWebApp/assets/images/account_circle.svg" style="width:45px;height:46px;" id="img_userIcon"/>
                     <xf:output style="color:#ffffff;font-size:20px;font-family:Inter,sans-serif;" 
                                ref="dm_header.userName" id="output_userName"/>
                     <xf:output style="color:#ffffff;font-size:20px;font-family:Inter,sans-serif;" id="output_nim">
