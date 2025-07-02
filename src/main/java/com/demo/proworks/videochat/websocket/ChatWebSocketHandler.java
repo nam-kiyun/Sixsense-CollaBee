@@ -90,6 +90,21 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                 case "leave":
                     handleLeave(session, chatMessage);
                     break;
+                case "join-room":
+                    handleJoinRoom(session, chatMessage);
+                    break;
+                case "leave-room":
+                    handleLeaveRoom(session, chatMessage);
+                    break;
+                case "offer":
+                    handleOffer(session, chatMessage);
+                    break;
+                case "answer":
+                    handleAnswer(session, chatMessage);
+                    break;
+                case "ice-candidate":
+                    handleIceCandidate(session, chatMessage);
+                    break;
                 default:
                     logger.warn("알 수 없는 메시지 타입: {}", chatMessage.getType());
             } 
@@ -300,6 +315,140 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             session.sendMessage(new TextMessage(errorJson));
         } catch (IOException e) {
             logger.error("오류 메시지 전송 실패", e);
+        }
+    }
+
+    // 🎥 webRTC 화상통화방 참가 처리
+    private void handleJoinRoom(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
+        String channelName = chatMessage.getChannelName();
+        String userId = chatMessage.getUserId();
+        String userName = chatMessage.getUserName();
+        
+        logger.info("사용자 {}가 화상통화방 {}에 참가했습니다.", userName, channelName);
+        
+        // 새로운 사용자에게 기존 참가자 목록 전송
+        List<WebSocketSession> sessions = channelSessions.get(channelName);
+        if (sessions != null) {
+            List<String> existingUsers = new ArrayList<>();
+            for (WebSocketSession existingSession : sessions) {
+                if (!existingSession.equals(session)) {
+                    ChatMessageVo existingUser = sessionUsers.get(existingSession.getId());
+                    if (existingUser != null) {
+                        existingUsers.add(existingUser.getUserId());
+                    }
+                }
+            }
+            
+            // 새로운 사용자에게 기존 참가자 목록 전송
+            if (!existingUsers.isEmpty()) {
+                Map<String, Object> roomInfo = new ConcurrentHashMap<>();
+                roomInfo.put("type", "existing-users");
+                roomInfo.put("users", existingUsers);
+                
+                String roomInfoJson = objectMapper.writeValueAsString(roomInfo);
+                session.sendMessage(new TextMessage(roomInfoJson));
+            }
+        }
+        
+        // 기존 참가자들에게 새로운 사용자 알림
+        ChatMessageVo userJoinedMessage = new ChatMessageVo();
+        userJoinedMessage.setType("user-joined");
+        userJoinedMessage.setChannelName(channelName);
+        userJoinedMessage.setUserId(userId);
+        userJoinedMessage.setUserName(userName);
+        
+        broadcastToChannel(channelName, userJoinedMessage, session);
+        
+        // 채팅 참가도 함께 처리
+        handleJoin(session, chatMessage);
+    }
+    
+    // 🎥 webRTC 화상통화방 나가기 처리
+    private void handleLeaveRoom(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
+        String channelName = chatMessage.getChannelName();
+        String userId = chatMessage.getUserId();
+        String userName = chatMessage.getUserName();
+        
+        logger.info("사용자 {}가 화상통화방 {}에서 나갔습니다.", userName, channelName);
+        
+        // 다른 참가자들에게 사용자 퇴장 알림
+        ChatMessageVo userLeftMessage = new ChatMessageVo();
+        userLeftMessage.setType("user-left");
+        userLeftMessage.setChannelName(channelName);
+        userLeftMessage.setUserId(userId);
+        userLeftMessage.setUserName(userName);
+        
+        broadcastToChannel(channelName, userLeftMessage, session);
+        
+        // 채팅 나가기도 함께 처리
+        handleLeave(session, chatMessage);
+    }
+    
+    // 🎥 webRTC Offer 처리
+    private void handleOffer(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
+        String targetUserId = chatMessage.getTargetUserId();
+        String channelName = chatMessage.getChannelName();
+        
+        logger.info("Offer 전달: {} -> {}", chatMessage.getUserId(), targetUserId);
+        
+        // 특정 사용자에게 Offer 전달
+        sendToSpecificUser(channelName, targetUserId, chatMessage);
+    }
+    
+    // 🎥 webRTC Answer 처리
+    private void handleAnswer(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
+        String targetUserId = chatMessage.getTargetUserId();
+        String channelName = chatMessage.getChannelName();
+        
+        logger.info("Answer 전달: {} -> {}", chatMessage.getUserId(), targetUserId);
+        
+        // 특정 사용자에게 Answer 전달
+        sendToSpecificUser(channelName, targetUserId, chatMessage);
+    }
+    
+    // 🎥 webRTC ICE Candidate 처리
+    private void handleIceCandidate(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
+        String targetUserId = chatMessage.getTargetUserId();
+        String channelName = chatMessage.getChannelName();
+        
+        logger.info("ICE Candidate 전달: {} -> {}", chatMessage.getUserId(), targetUserId);
+        
+        // 특정 사용자에게 ICE Candidate 전달
+        sendToSpecificUser(channelName, targetUserId, chatMessage);
+    }
+    
+    // 🎯 특정 사용자에게 메시지 전송 (webRTC 시그널링용)
+    private void sendToSpecificUser(String channelName, String targetUserId, ChatMessageVo message) {
+        List<WebSocketSession> sessions = channelSessions.get(channelName);
+        
+        if (sessions == null || sessions.isEmpty()) {
+            return;
+        }
+        
+        try {
+            String messageJson = objectMapper.writeValueAsString(message);
+            
+            for (WebSocketSession session : sessions) {
+                ChatMessageVo userInfo = sessionUsers.get(session.getId());
+                if (userInfo != null && targetUserId.equals(userInfo.getUserId())) {
+                    try {
+                        if (session.isOpen()) {
+                            synchronized (session) {
+                                session.sendMessage(new TextMessage(messageJson));
+                            }
+                            logger.debug("메시지 전달 완료: -> {}", targetUserId);
+                            return;
+                        }
+                    } catch (Exception e) {
+                        logger.error("특정 사용자에게 메시지 전송 실패: " + targetUserId, e);
+                    }
+                }
+            }
+            
+            logger.warn("대상 사용자를 찾을 수 없음: {}", targetUserId);
+            
+        } catch (Exception e) {
+            logger.error("특정 사용자 메시지 전송 실패", e);
         }
     }
 } 

@@ -34,8 +34,7 @@
         <w2:layoutInfo/>
         <w2:publicInfo method=""/>
         
-        <!-- Agora.io SDK 로드 -->
-        <script src="https://cdn.agora.io/sdk/release/AgoraRTC_N-4.19.0.js"></script>
+        <!-- 🎥 webRTC 화상통화 (Agora.io 제거) -->
         <link rel="stylesheet" href="/InsWebApp/css/videochat/videoChatPage.css" />
         
         <!-- 임시 인라인 CSS (테스트용) -->
@@ -125,6 +124,61 @@
                 min-width: 350px;
                 max-width: 400px;
             }
+            
+            /* 원격 비디오 그리드 스타일 */
+            .remote-videos-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                grid-gap: 15px;
+                padding: 20px;
+                height: 100%;
+                overflow-y: auto;
+            }
+            
+            .remote-user-video {
+                background: #2a2a2a;
+                border-radius: 12px;
+                overflow: hidden;
+                position: relative;
+                aspect-ratio: 16/9;
+                border: 2px solid #444;
+            }
+            
+            .remote-video-wrapper {
+                width: 100%;
+                height: 100%;
+                position: relative;
+            }
+            
+            .remote-video-player {
+                width: 100%;
+                height: 100%;
+            }
+            
+            .remote-video-player video {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                border-radius: 8px;
+            }
+            
+            .remote-user-name {
+                position: absolute;
+                bottom: 10px;
+                left: 10px;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+            
+            .muted { background: #dc3545 !important; }
+            .video-off { background: #6c757d !important; }
+            .leave-btn { background: #dc3545; }
+            .mute-btn { background: #17a2b8; }
+            .video-btn { background: #ffc107; color: #000; }
             
             /* 채팅 메시지 컨테이너 스크롤 스타일 */
             #chatMessages {
@@ -228,15 +282,17 @@
         </style>
         
         <script type="text/javascript"><![CDATA[
-// Agora.io 설정
-const APP_ID = "90c1b2c3196a43ffad0da502d11dfda7"; // 실제 App ID로 변경 필요
-const TOKEN = null; // 테스트용 (실제 환경에서는 토큰 서버 구축 필요)
+// ������ webRTC 다대다 화상통화 구현
+// STUN 서버 설정 (Google Public STUN)
+const ICE_SERVERS = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' }
+];
 
 // 전역 변수
-let client;
-let localVideoTrack;
-let localAudioTrack;
-let remoteUsers = {};
+let localStream = null;
+let peerConnections = {}; // 다대다 연결을 위한 Map
 let isJoined = false;
 let isMuted = false;
 let isVideoOff = false;
@@ -245,26 +301,26 @@ let isVideoOff = false;
 function getProjectIdFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const projectId = urlParams.get('project_id');
-    return projectId || 'default'; // project_id가 없으면 'default' 사용
+    return projectId || 'default';
 }
 
 // 사용자 정보
 let currentUser = {
     userId: Math.floor(Math.random() * 10000).toString(),
     userName: "사용자" + Math.floor(Math.random() * 100),
-    channelName: "collabee-room-" + getProjectIdFromUrl()
+    channelName: "webrtc-room-" + getProjectIdFromUrl()
 };
 
 scwin.onpageload = function() {
     // HTTPS 체크
     if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        scwin.addChatMessage("시스템", "⚠️ 화상통화는 HTTPS 환경에서만 작동합니다. SSL 인증서를 설정해주세요.", false);
+        scwin.addChatMessage("시스템", "⚠️ webRTC는 HTTPS 환경에서만 작동합니다. SSL 인증서를 설정해주세요.", false);
     }
     
     // 세션 생성을 위한 임시 로그인 먼저 실행
     scwin.createGuestSession().then(() => {
         // 초기 설정
-        scwin.initializeVideoChat();
+        scwin.initializeWebRTC();
         scwin.initializeChatWebSocket();
         
         // 데이터 초기화
@@ -275,106 +331,77 @@ scwin.onpageload = function() {
         dma_videoChat.set("isMuted", "false");
         dma_videoChat.set("isVideoOff", "false");
         
-        // 환영 메시지 추가
-        //scwin.addChatMessage("시스템", "화상통화 채팅방에 오신 것을 환영합니다!", false);
-        //scwin.addChatMessage("시스템", " 채널: " + currentUser.channelName, false);
-        //scwin.addChatMessage("시스템", " 프로젝트 ID: " + getProjectIdFromUrl(), false);
-        //scwin.addChatMessage("시스템", " 사용자 ID: " + currentUser.userId, false);
-        //scwin.addChatMessage("시스템", " 실시간 웹소켓 채팅 시스템", false);
-        
+        console.log("webRTC 화상통화 페이지 초기화 완료");
         
     }).catch(error => {
-        
-        
         // 세션 없이도 기본 기능은 작동하도록
-        scwin.initializeVideoChat();
-        //scwin.addChatMessage("시스템", "세션 생성 실패. 채팅 기능이 제한될 수 있습니다.", false);
-        //scwin.addChatMessage("시스템", "화상통화는 여전히 사용 가능합니다.", false);
+        scwin.initializeWebRTC();
     });
 };
 
-// Agora.io 초기화
-scwin.initializeVideoChat = function() {
+// ������ webRTC 초기화
+scwin.initializeWebRTC = function() {
     try {
-        // AgoraRTC SDK 로드 체크
-        if (typeof AgoraRTC === 'undefined') {
-            //scwin.addChatMessage("시스템", "Agora.io SDK 로드 실패. 인터넷 연결을 확인해주세요.", false);
+        // webRTC 지원 확인
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            scwin.addChatMessage("시스템", "❌ webRTC를 지원하지 않는 브라우저입니다.", false);
             return;
         }
         
-        // AgoraRTC 클라이언트 생성
-        client = AgoraRTC.createClient({
-            mode: "rtc",
-            codec: "vp8"
-        });
+        console.log("✅ webRTC 시스템 초기화 완료");
+        scwin.addChatMessage("시스템", "✅ webRTC 화상통화 시스템 준비 완료", false);
         
-        // 이벤트 리스너 등록
-        client.on("user-published", scwin.handleUserPublished);
-        client.on("user-unpublished", scwin.handleUserUnpublished);
-        client.on("user-left", scwin.handleUserLeft);
-        
-        //scwin.addChatMessage("시스템", "화상통화 시스템 초기화 완료", false);
     } catch (error) {
-        //scwin.addChatMessage("시스템", "화상통화 초기화 실패: " + error.message, false);
+        console.error("webRTC 초기화 실패:", error);
+        scwin.addChatMessage("시스템", "❌ webRTC 초기화 실패: " + error.message, false);
     }
 };
 
-// 임시 데모용 - joinCall 함수 수정
+// ������ 화상통화 참가
 scwin.joinCall = async function() {
     try {
-        scwin.showLoading("카메라에 접근하는 중...");
+        scwin.showLoading("카메라와 마이크에 접근하는 중...");
         
-        // 브라우저의 기본 getUserMedia 사용 (Agora.io 없이)
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
+        // 로컬 미디어 스트림 가져오기
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 1280, height: 720 },
             audio: true
         });
         
-        // 로컬 비디오 표시 - 여러 방법으로 시도
-        let localVideoElement = document.getElementById("localVideo");
-        
-        // WebSquare 환경에서는 다른 방식으로 요소를 찾을 수 있음
-        if (!localVideoElement) {
-            localVideoElement = document.querySelector("video[id*='localVideo']");
-        }
-        if (!localVideoElement) {
-            localVideoElement = document.querySelector(".local-video");
-        }
-        
-        if (localVideoElement) {
-            localVideoElement.srcObject = stream;
-        } else {
-            // 동적으로 비디오 요소 생성
-            const container = document.querySelector(".local-video-container");
-            if (container) {
-                const video = document.createElement("video");
-                video.id = "localVideo";
-                video.className = "local-video";
-                video.autoplay = true;
-                video.muted = true;
-                video.playsInline = true;
-                video.srcObject = stream;
-                container.appendChild(video);
-            }
+        // 로컬 비디오 표시
+        const localVideo = document.getElementById("localVideo");
+        if (localVideo) {
+            localVideo.srcObject = localStream;
         }
         
         isJoined = true;
         dma_videoChat.set("isJoined", "true");
         
+        // WebSocket으로 화상통화방 참가 알림
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            const joinRoomMessage = {
+                type: 'join-room',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName,
+                timestamp: Date.now()
+            };
+            chatSocket.send(JSON.stringify(joinRoomMessage));
+        }
+        
         scwin.updateControlButtons();
         scwin.hideLoading();
         
-        //scwin.addChatMessage("시스템", "로컬 카메라 연결 성공! (데모 모드)", false);
-        //scwin.addChatMessage("시스템", "실제 화상통화를 위해서는 Agora.io APP_ID가 필요합니다.", false);
-        
+        scwin.addChatMessage("시스템", "✅ webRTC 화상통화에 참가했습니다!", false);
+        console.log("webRTC 화상통화 참가 완료");
         
     } catch (error) {
+        console.error("화상통화 참가 실패:", error);
         scwin.hideLoading();
         
-        // 더 자세한 오류 메시지
-        let errorMessage = "카메라 접근 권한이 필요합니다";
+        let errorMessage = "카메라/마이크 접근 권한이 필요합니다";
         if (error.name === 'NotAllowedError') {
-            errorMessage = "카메라/마이크 권한을 허용해주세요. 주소창 왼쪽의 자물쇠 아이콘을 클릭하여 권한을 변경할 수 있습니다.";
+            errorMessage = "카메라/마이크 권한을 허용해주세요. 브라우저 주소창의 카메라 아이콘을 클릭하여 권한을 설정할 수 있습니다.";
         } else if (error.name === 'NotFoundError') {
             errorMessage = "카메라나 마이크를 찾을 수 없습니다.";
         } else if (error.name === 'NotReadableError') {
@@ -382,747 +409,274 @@ scwin.joinCall = async function() {
         }
         
         scwin.showError(errorMessage);
-        scwin.addChatMessage("시스템", errorMessage, false);
+        scwin.addChatMessage("시스템", "❌ " + errorMessage, false);
     }
 };
 
-// 화상통화 종료
+// ������ Peer Connection 생성
+scwin.createPeerConnection = function(remoteUserId) {
+    const peerConnection = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    
+    // 로컬 스트림을 Peer Connection에 추가
+    if (localStream) {
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+        });
+    }
+    
+    // ICE Candidate 이벤트 처리
+    peerConnection.onicecandidate = (event) => {
+        if (event.candidate && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            const candidateMessage = {
+                type: 'ice-candidate',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                targetUserId: remoteUserId,
+                iceCandidate: JSON.stringify(event.candidate)
+            };
+            chatSocket.send(JSON.stringify(candidateMessage));
+            console.log("ICE Candidate 전송:", remoteUserId);
+        }
+    };
+    
+    // 원격 스트림 수신
+    peerConnection.ontrack = (event) => {
+        console.log("원격 스트림 수신:", remoteUserId);
+        scwin.displayRemoteVideo(remoteUserId, event.streams[0]);
+    };
+    
+    // 연결 상태 모니터링
+    peerConnection.onconnectionstatechange = () => {
+        console.log(`Peer ${remoteUserId} 연결 상태:`, peerConnection.connectionState);
+        if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
+            scwin.removeRemoteUser(remoteUserId);
+        }
+    };
+    
+    return peerConnection;
+};
+
+// ������ 원격 비디오 표시
+scwin.displayRemoteVideo = function(userId, stream) {
+    // 기존 비디오 제거
+    scwin.removeRemoteUser(userId);
+    
+    // 새 비디오 컨테이너 생성
+    const remoteVideoContainer = document.createElement("div");
+    remoteVideoContainer.className = "remote-user-video";
+    remoteVideoContainer.id = `remote-${userId}`;
+    
+    const videoWrapper = document.createElement("div");
+    videoWrapper.className = "remote-video-wrapper";
+    
+    const videoPlayer = document.createElement("div");
+    videoPlayer.className = "remote-video-player";
+    
+    const video = document.createElement("video");
+    video.autoplay = true;
+    video.playsInline = true;
+    video.srcObject = stream;
+    
+    const userName = document.createElement("div");
+    userName.className = "remote-user-name";
+    userName.textContent = `사용자${userId}`;
+    
+    videoPlayer.appendChild(video);
+    videoWrapper.appendChild(videoPlayer);
+    videoWrapper.appendChild(userName);
+    remoteVideoContainer.appendChild(videoWrapper);
+    
+    document.getElementById("remoteVideosGrid").appendChild(remoteVideoContainer);
+    
+    console.log("원격 비디오 표시 완료:", userId);
+};
+
+// ������ Offer 생성 및 전송
+scwin.createOffer = async function(targetUserId) {
+    try {
+        const peerConnection = scwin.createPeerConnection(targetUserId);
+        peerConnections[targetUserId] = peerConnection;
+        
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            const offerMessage = {
+                type: 'offer',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                targetUserId: targetUserId,
+                sdp: JSON.stringify(offer)
+            };
+            chatSocket.send(JSON.stringify(offerMessage));
+            console.log("Offer 전송:", targetUserId);
+        }
+        
+    } catch (error) {
+        console.error("Offer 생성 실패:", error);
+    }
+};
+
+// ������ Answer 생성 및 전송
+scwin.createAnswer = async function(targetUserId, offer) {
+    try {
+        const peerConnection = scwin.createPeerConnection(targetUserId);
+        peerConnections[targetUserId] = peerConnection;
+        
+        await peerConnection.setRemoteDescription(offer);
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            const answerMessage = {
+                type: 'answer',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                targetUserId: targetUserId,
+                sdp: JSON.stringify(answer)
+            };
+            chatSocket.send(JSON.stringify(answerMessage));
+            console.log("Answer 전송:", targetUserId);
+        }
+        
+    } catch (error) {
+        console.error("Answer 생성 실패:", error);
+    }
+};
+
+// ������ 화상통화 종료
 scwin.leaveCall = async function() {
     try {
         scwin.showLoading("화상통화를 종료하는 중...");
         
-        // 로컬 트랙 정리
-        if (localVideoTrack) {
-            localVideoTrack.stop();
-            localVideoTrack.close();
-            localVideoTrack = null;
+        // WebSocket으로 화상통화방 나가기 알림
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            const leaveRoomMessage = {
+                type: 'leave-room',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName
+            };
+            chatSocket.send(JSON.stringify(leaveRoomMessage));
         }
         
-        if (localAudioTrack) {
-            localAudioTrack.stop();
-            localAudioTrack.close();
-            localAudioTrack = null;
-        }
-        
-        // 원격 사용자 정리
-        Object.keys(remoteUsers).forEach(userId => {
+        // 모든 Peer Connection 종료
+        Object.keys(peerConnections).forEach(userId => {
+            if (peerConnections[userId]) {
+                peerConnections[userId].close();
+                delete peerConnections[userId];
+            }
             scwin.removeRemoteUser(userId);
         });
         
-        // 채널 나가기
-        await client.leave();
+        // 로컬 스트림 정리
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+        
+        // 로컬 비디오 정리
+        const localVideo = document.getElementById("localVideo");
+        if (localVideo) {
+            localVideo.srcObject = null;
+        }
         
         isJoined = false;
         dma_videoChat.set("isJoined", "false");
         
-        // UI 업데이트
         scwin.updateControlButtons();
         scwin.hideLoading();
         
-        // 채팅 메시지 추가
-        //scwin.addChatMessage("시스템", currentUser.userName + "님이 화상통화를 종료했습니다.", false);
+        scwin.addChatMessage("시스템", "✅ 화상통화를 종료했습니다.", false);
+        console.log("webRTC 화상통화 종료 완료");
         
     } catch (error) {
+        console.error("화상통화 종료 실패:", error);
         scwin.hideLoading();
         scwin.showError("화상통화 종료에 실패했습니다.");
     }
 };
 
-// 마이크 토글
-scwin.toggleMute = async function() {
-    try {
-        if (!localAudioTrack) return;
-        
-        if (isMuted) {
-            await localAudioTrack.setEnabled(true);
-            isMuted = false;
-            dma_videoChat.set("isMuted", "false");
-        } else {
-            await localAudioTrack.setEnabled(false);
-            isMuted = true;
-            dma_videoChat.set("isMuted", "true");
-        }
-        
+// ������ 마이크 토글
+scwin.toggleMute = function() {
+    if (!localStream) return;
+    
+    const audioTracks = localStream.getAudioTracks();
+    if (audioTracks.length > 0) {
+        audioTracks[0].enabled = !audioTracks[0].enabled;
+        isMuted = !audioTracks[0].enabled;
+        dma_videoChat.set("isMuted", isMuted.toString());
         scwin.updateControlButtons();
-    } catch (error) {
-        scwin.showError("마이크 설정에 실패했습니다.");
+        
+        console.log("마이크 상태:", isMuted ? "음소거" : "음소거 해제");
     }
 };
 
-// 비디오 토글
-scwin.toggleVideo = async function() {
-    try {
-        if (!localVideoTrack) return;
-        
-        if (isVideoOff) {
-            await localVideoTrack.setEnabled(true);
-            isVideoOff = false;
-            dma_videoChat.set("isVideoOff", "false");
-        } else {
-            await localVideoTrack.setEnabled(false);
-            isVideoOff = true;
-            dma_videoChat.set("isVideoOff", "true");
-        }
-        
+// ������ 비디오 토글
+scwin.toggleVideo = function() {
+    if (!localStream) return;
+    
+    const videoTracks = localStream.getVideoTracks();
+    if (videoTracks.length > 0) {
+        videoTracks[0].enabled = !videoTracks[0].enabled;
+        isVideoOff = !videoTracks[0].enabled;
+        dma_videoChat.set("isVideoOff", isVideoOff.toString());
         scwin.updateControlButtons();
-    } catch (error) {
-        scwin.showError("비디오 설정에 실패했습니다.");
+        
+        console.log("비디오 상태:", isVideoOff ? "비디오 끄기" : "비디오 켜기");
     }
 };
 
-// 원격 사용자 퍼블리시 핸들러
-scwin.handleUserPublished = async function(user, mediaType) {
-    try {
-        await client.subscribe(user, mediaType);
-        
-        if (mediaType === "video") {
-            const remoteVideoContainer = document.createElement("div");
-            remoteVideoContainer.className = "remote-user-video";
-            remoteVideoContainer.id = `remote-${user.uid}`;
-            
-            const videoWrapper = document.createElement("div");
-            videoWrapper.className = "remote-video-wrapper";
-            
-            const videoPlayer = document.createElement("div");
-            videoPlayer.className = "remote-video-player";
-            videoPlayer.id = `remote-video-${user.uid}`;
-            
-            const userName = document.createElement("div");
-            userName.className = "remote-user-name";
-            userName.textContent = `사용자${user.uid}`;
-            
-            videoWrapper.appendChild(videoPlayer);
-            videoWrapper.appendChild(userName);
-            remoteVideoContainer.appendChild(videoWrapper);
-            
-            document.getElementById("remoteVideosGrid").appendChild(remoteVideoContainer);
-            
-            user.videoTrack.play(`remote-video-${user.uid}`);
-        }
-        
-        if (mediaType === "audio") {
-            user.audioTrack.play();
-        }
-        
-        remoteUsers[user.uid] = user;
-    } catch (error) {
-    }
-};
-
-// 원격 사용자 언퍼블리시 핸들러
-scwin.handleUserUnpublished = function(user, mediaType) {
-    if (mediaType === "video") {
-        const remoteVideoElement = document.getElementById(`remote-${user.uid}`);
-        if (remoteVideoElement) {
-            remoteVideoElement.remove();
-        }
-    }
-};
-
-// 원격 사용자 퇴장 핸들러
-scwin.handleUserLeft = function(user) {
-    scwin.removeRemoteUser(user.uid);
-};
-
-// 원격 사용자 제거
+// ������ 원격 사용자 제거
 scwin.removeRemoteUser = function(userId) {
     const remoteVideoElement = document.getElementById(`remote-${userId}`);
     if (remoteVideoElement) {
         remoteVideoElement.remove();
     }
-    delete remoteUsers[userId];
+    
+    if (peerConnections[userId]) {
+        peerConnections[userId].close();
+        delete peerConnections[userId];
+    }
+    
+    console.log("원격 사용자 제거:", userId);
 };
 
-// 컨트롤 버튼 업데이트 - 안전한 접근 방식
+// 컨트롤 버튼 업데이트
 scwin.updateControlButtons = function() {
     try {
-        // 안전한 요소 접근
-        const joinBtn = document.getElementById("joinBtn") || document.querySelector("[id*='joinBtn']");
-        const leaveBtn = document.getElementById("leaveBtn") || document.querySelector("[id*='leaveBtn']");
-        const muteBtn = document.getElementById("muteBtn") || document.querySelector("[id*='muteBtn']");
-        const videoBtn = document.getElementById("videoBtn") || document.querySelector("[id*='videoBtn']");
+        const joinBtn = document.getElementById("joinBtn");
+        const leaveBtn = document.getElementById("leaveBtn");
+        const muteBtn = document.getElementById("muteBtn");
+        const videoBtn = document.getElementById("videoBtn");
         
         if (isJoined) {
-            if (joinBtn && joinBtn.style) joinBtn.style.display = "none";
-            if (leaveBtn && leaveBtn.style) leaveBtn.style.display = "inline-block";
+            if (joinBtn) joinBtn.style.display = "none";
+            if (leaveBtn) leaveBtn.style.display = "inline-block";
             if (muteBtn) muteBtn.disabled = false;
             if (videoBtn) videoBtn.disabled = false;
             
             // 마이크 버튼 상태
             if (muteBtn) {
-                if (isMuted) {
-                    muteBtn.textContent = "MUTE";
-                    muteBtn.classList.add("muted");
-                } else {
-                    muteBtn.textContent = "MIC";
-                    muteBtn.classList.remove("muted");
-                }
+                muteBtn.textContent = isMuted ? "MUTE" : "MIC";
+                muteBtn.className = isMuted ? "control-btn mute-btn muted" : "control-btn mute-btn";
             }
             
             // 비디오 버튼 상태
             if (videoBtn) {
-                if (isVideoOff) {
-                    videoBtn.textContent = "CAM OFF";
-                    videoBtn.classList.add("video-off");
-                } else {
-                    videoBtn.textContent = "CAM ON";
-                    videoBtn.classList.remove("video-off");
-                }
+                videoBtn.textContent = isVideoOff ? "CAM OFF" : "CAM ON";
+                videoBtn.className = isVideoOff ? "control-btn video-btn video-off" : "control-btn video-btn";
             }
         } else {
-            if (joinBtn && joinBtn.style) joinBtn.style.display = "inline-block";
-            if (leaveBtn && leaveBtn.style) leaveBtn.style.display = "none";
+            if (joinBtn) joinBtn.style.display = "inline-block";
+            if (leaveBtn) leaveBtn.style.display = "none";
             if (muteBtn) muteBtn.disabled = true;
             if (videoBtn) videoBtn.disabled = true;
         }
     } catch (error) {
+        console.warn("버튼 업데이트 중 오류:", error);
     }
 };
-
-// 게스트 세션 생성 함수
-scwin.createGuestSession = async function() {
-    try {
-        
-        // WebSquare 로그인 서비스를 호출해서 세션 생성
-        const response = await fetch('/InsWebApp/CmmLogin.pwkjson', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "loginVo": {
-                    "id": "guest_" + currentUser.userId,
-                    "pw": "guest"
-                }
-            })
-        });
-        
-        if (response.ok) {
-            scwin.addChatMessage("시스템", "게스트 세션 생성 완료", false);
-            return true;
-        } else {
-            return true; // 로그인 실패여도 세션은 생성될 수 있음
-        }
-    } catch (error) {
-        // 오류가 발생해도 계속 진행 (채팅 기능을 위해)
-        return true;
-    }
-};
-
-// 웹소켓 채팅 시스템 (폴링 제거 - 웹소켓 전용)
-let chatSocket;
-let lastMessageTimestamp = 0;
-let reconnectAttempts = 0;
-let maxReconnectAttempts = 10; // 재시도 횟수 증가
-
-// 타임스탬프 관리 함수들
-function getLastMessageTimestamp() {
-    const channelKey = `lastTimestamp_${currentUser.channelName}`;
-    const stored = localStorage.getItem(channelKey);
-    return stored ? parseInt(stored) : 0;
-}
-
-function setLastMessageTimestamp(timestamp) {
-    const channelKey = `lastTimestamp_${currentUser.channelName}`;
-    lastMessageTimestamp = timestamp;
-    localStorage.setItem(channelKey, timestamp.toString());
-}
-
-scwin.initializeChatWebSocket = function() {
-    //console.log("������ 웹소켓 전용 모드로 채팅 시스템 초기화 시작...");
-    
-    // 저장된 타임스탬프 로드
-    lastMessageTimestamp = getLastMessageTimestamp();
-    
-    // 웹소켓 서버 URL - 동적으로 프로토콜과 포트 결정
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.hostname;
-    const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
-    
-    // 여러 URL 시도 (fallback)
-    const wsUrls = [
-        `${protocol}//${host}:${port}/InsWebApp/chat`,
-        `ws://${host}:9093/InsWebApp/chat`,
-        `ws://localhost:9093/InsWebApp/chat`
-    ];
-    
-    // 첫 번째 URL로 시작
-    let wsUrl = wsUrls[0];
-    let currentUrlIndex = 0;
-    
-    //console.log('������ 웹소켓 연결 시도할 URL들:', wsUrls);
-    //console.log("������ 첫 번째 웹소켓 연결 시도:", wsUrl);
-    
-    // 웹소켓 핸들러 설정 함수
-    function setupWebSocketHandlers() {
-        // 연결 성공
-        chatSocket.onopen = function() {
-            //console.log("✅ 웹소켓 연결 성공!");
-            //scwin.addChatMessage("시스템", "������ 웹소켓 채팅 연결 성공 (폴링 없음)", false);
-            reconnectAttempts = 0;
-            
-            // 채널 참가 요청
-            const joinMessage = {
-                type: 'join',
-                channelName: currentUser.channelName,
-                userId: currentUser.userId,
-                userName: currentUser.userName,
-                timestamp: Date.now()
-            };
-            
-            //console.log("������ 채널 참가 메시지 전송:", joinMessage);
-            chatSocket.send(JSON.stringify(joinMessage));
-            
-            // 기존 메시지 히스토리 요청
-            const historyMessage = {
-                type: 'history',
-                channelName: currentUser.channelName,
-                afterTimestamp: lastMessageTimestamp
-            };
-            
-            //console.log("������ 히스토리 요청:", historyMessage);
-            chatSocket.send(JSON.stringify(historyMessage));
-        };
-        
-        // 메시지 수신 (웹소켓 전용)
-        chatSocket.onmessage = function(event) {
-            try {
-                const data = JSON.parse(event.data);
-                //console.log("������ 웹소켓 메시지 수신:", data);
-                
-                switch(data.type) {
-                    case 'message':
-                        const isOwn = data.userId === currentUser.userId;
-                        scwin.addChatMessageToList(data.userName, data.message, isOwn, data.messageId, data.timestamp);
-                        
-                        // 타임스탬프 업데이트
-                        const msgTimestamp = parseInt(data.timestamp || data.messageId);
-                        if (msgTimestamp > lastMessageTimestamp) {
-                            setLastMessageTimestamp(msgTimestamp);
-                        }
-                        
-                        scwin.updateChatMessages();
-                        break;
-                        
-                    case 'history':
-                        if (data.messages && data.messages.length > 0) {
-                            //console.log("채팅 히스토리 수신:", data.messages.length + "개 메시지");
-                            // ������ 채팅 히스토리 로드 (기존 메시지 클리어 후 히스토리 추가)
-                            scwin.loadChatHistory(data.messages);
-                        } else {
-                            //console.log("������ 채팅 히스토리 없음");
-                            //scwin.addChatMessage("시스템", "������ 이전 채팅 기록이 없습니다. 첫 메시지를 보내보세요!", false);
-                        }
-                        break;
-                        
-                    case 'notification':
-                        // 시스템 알림 메시지 (참가/퇴장 등)
-                        scwin.addChatMessage("시스템", data.message, false, data.timestamp);
-                        break;
-                        
-                    case 'user_joined':
-                        scwin.addChatMessage("시스템", `${data.userName}님이 참가했습니다.`, false, data.timestamp);
-                        break;
-                        
-                    case 'user_left':
-                        scwin.addChatMessage("시스템", `${data.userName}님이 나갔습니다.`, false, data.timestamp);
-                        break;
-                        
-                    case 'error':
-                        scwin.addChatMessage("시스템", `❌ 오류: ${data.message}`, false);
-                        break;
-                }
-            } catch (error) {
-                console.error('❌ 웹소켓 메시지 처리 오류:', error);
-            }
-        };
-        
-        // 연결 끊김 - 웹소켓 전용 모드
-        chatSocket.onclose = function(event) {
-            console.log("❌ 웹소켓 연결이 끊어졌습니다. 코드:", event.code, "이유:", event.reason);
-            scwin.addChatMessage("시스템", "❌ 웹소켓 연결이 끊어졌습니다.", false);
-            
-            // 자동 재연결 시도 (웹소켓만)
-            if (reconnectAttempts < maxReconnectAttempts) {
-                reconnectAttempts++;
-                //scwin.addChatMessage("시스템", `������ 웹소켓 재연결 시도 중... (${reconnectAttempts}/${maxReconnectAttempts})`, false);
-                
-                setTimeout(() => {
-                    scwin.initializeChatWebSocket();
-                }, 2000 + (reconnectAttempts * 1000)); // 점진적 지연
-            } else {
-                scwin.addChatMessage("시스템", "❌ 웹소켓 재연결 실패. 페이지를 새로고침해주세요.", false);
-                console.error("❌ 웹소켓 재연결 횟수 초과. 폴백 모드 사용 안 함.");
-            }
-        };
-        
-        // 연결 오류 - 다음 URL 시도
-        chatSocket.onerror = function(error) {
-            console.error(`❌ 웹소켓 연결 오류 [${currentUrlIndex + 1}/${wsUrls.length}]:`, error);
-            console.log("❌ 현재 시도한 URL:", wsUrl);
-            
-            // 다음 URL 시도
-            currentUrlIndex++;
-            if (currentUrlIndex < wsUrls.length) {
-                //console.log(`������ 다음 URL로 재시도 중... [${currentUrlIndex + 1}/${wsUrls.length}]`);
-                setTimeout(() => {
-                    wsUrl = wsUrls[currentUrlIndex];
-                    try {
-                        chatSocket = new WebSocket(wsUrl);
-                        setupWebSocketHandlers();
-                    } catch (retryError) {
-                        console.error("❌ 재시도 중 오류:", retryError);
-                        chatSocket.onerror(retryError);
-                    }
-                }, 1000);
-            } else {
-                scwin.addChatMessage("시스템", "❌ 모든 웹소켓 서버 연결 실패. 서버를 확인해주세요.", false);
-            }
-        };
-    }
-    
-    // 웹소켓 연결 시도
-    try {
-        chatSocket = new WebSocket(wsUrl);
-        setupWebSocketHandlers();
-        
-    } catch (error) {
-        console.error("❌ 웹소켓 초기화 실패:", error);
-        scwin.addChatMessage("시스템", "❌ 웹소켓 초기화 실패. 서버를 확인해주세요.", false);
-    }
-    
-    // 스크롤 강제 활성화 (초기화 시) - 여러 번 시도
-    setTimeout(() => {
-        scwin.forceScrollEnable();
-    }, 500);
-    
-    setTimeout(() => {
-        scwin.forceScrollEnable();
-    }, 1000);
-    
-    setTimeout(() => {
-        scwin.forceScrollEnable();
-    }, 2000);
-    
-    // 채팅 입력창에 포커스 설정
-    setTimeout(() => {
-        const chatInput = document.getElementById("chatInput");
-        if (chatInput) {
-            chatInput.focus();
-            // JavaScript로 직접 이벤트 리스너 추가 (백업용)
-            chatInput.addEventListener('keydown', function(e) {
-                if (e.keyCode === 13 || e.key === 'Enter') {
-                    e.preventDefault();
-                    scwin.sendChatMessage();
-                }
-            });
-            
-            chatInput.addEventListener('keypress', function(e) {
-                if (e.keyCode === 13 || e.key === 'Enter') {
-                    e.preventDefault();
-                    scwin.sendChatMessage();
-                }
-            });
-        }
-    }, 1000);
-};
-
-// HTTP 폴백 모드 제거됨 - 웹소켓 전용
-
-// 채팅 메시지 전송 (웹소켓 전용)
-scwin.sendChatMessage = function() {
-    const messageInput = document.getElementById("chatInput");
-    const message = messageInput.value.trim();
-    
-    if (!message) return;
-    
-    // 웹소켓 연결 확인
-    if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
-        const messageData = {
-            type: 'message',
-            channelName: currentUser.channelName,
-            userId: currentUser.userId,
-            userName: currentUser.userName,
-            message: message,
-            timestamp: Date.now()
-        };
-        
-        //console.log("웹소켓으로 메시지 전송:", messageData);
-        chatSocket.send(JSON.stringify(messageData));
-        
-        // 입력창 초기화 및 포커스 유지
-        messageInput.value = "";
-        messageInput.focus();
-        
-    } else {
-        // 웹소켓 연결이 안 된 경우 - 사용자에게 메시지만 표시
-        scwin.addChatMessage("시스템", "❌ 웹소켓 연결이 필요합니다. 잠시 후 다시 시도해주세요.", false);
-        
-        // 메시지를 임시로 로컬에 표시
-        scwin.addChatMessage(currentUser.userName, message + " (전송 대기중)", true);
-        
-        // 입력창 초기화
-        messageInput.value = "";
-        messageInput.focus();
-    }
-};
-
-// HTTP 관련 함수들 제거됨 - 웹소켓 전용 모드
-
-// 데이터리스트에 메시지 추가 (실제 입력 시간 표시)
-scwin.addChatMessageToList = function(userName, message, isOwn, messageId, serverTimestamp) {
-    // 실제 메시지 입력 시간 표시 (강력새로고침 후에도 유지)
-    let timestamp;
-    if (serverTimestamp) {
-        // 서버 timestamp가 있으면 실제 입력 시간으로 표시
-        const date = new Date(parseInt(serverTimestamp));
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        
-        // 오늘 날짜면 시간만, 다른 날짜면 날짜+시간 표시
-        const today = new Date();
-        const isToday = (year == today.getFullYear() && 
-                        month == String(today.getMonth() + 1).padStart(2, '0') && 
-                        day == String(today.getDate()).padStart(2, '0'));
-        
-        if (isToday) {
-            timestamp = `${hours}:${minutes}:${seconds}`;
-        } else {
-            timestamp = `${month}/${day} ${hours}:${minutes}`;
-        }
-    } else {
-        // 로컬 메시지(시스템 메시지 등)인 경우만 현재 시간 사용
-        const now = new Date();
-        timestamp = now.toLocaleTimeString();
-    }
-    
-    // 데이터 추가
-    const rowIndex = dlt_chatMessages.insertRow();
-    dlt_chatMessages.setCellData(rowIndex, "messageId", messageId || Date.now().toString());
-    dlt_chatMessages.setCellData(rowIndex, "userId", isOwn ? currentUser.userId : "other");
-    dlt_chatMessages.setCellData(rowIndex, "userName", userName);
-    dlt_chatMessages.setCellData(rowIndex, "message", message);
-    dlt_chatMessages.setCellData(rowIndex, "timestamp", timestamp);
-    dlt_chatMessages.setCellData(rowIndex, "isOwn", isOwn.toString());
-    dlt_chatMessages.setCellData(rowIndex, "serverTimestamp", serverTimestamp || Date.now()); // 원본 서버 시간 저장
-};
-
-//  채팅 히스토리 로드 (Redis에서 가져온 이전 메시지들)
-scwin.loadChatHistory = function(messages) {
-    //console.log(" 채팅 히스토리 로드:", messages.length + "개 메시지");
-    
-    // 기존 메시지 클리어
-    dlt_chatMessages.removeAll();
-    
-    // 히스토리 메시지들을 시간 순으로 정렬 후 추가
-    const sortedMessages = messages.sort((a, b) => parseInt(a.timestamp) - parseInt(b.timestamp));
-    
-    sortedMessages.forEach(msg => {
-        const isOwn = msg.userId === currentUser.userId;
-        scwin.addChatMessageToList(msg.userName, msg.message, isOwn, msg.messageId, msg.timestamp);
-        
-        // 마지막 메시지 타임스탬프 업데이트
-        const msgTimestamp = parseInt(msg.timestamp || msg.messageId);
-        if (msgTimestamp > lastMessageTimestamp) {
-            setLastMessageTimestamp(msgTimestamp);
-        }
-    });
-    
-    // UI 업데이트
-    scwin.updateChatMessages();
-    
-    // 히스토리 로드 완료 메시지
-    if (sortedMessages.length > 0) {
-        //scwin.addChatMessage("시스템", `이전 채팅 ${sortedMessages.length}개를 불러왔습니다.`, false);
-    }
-};
-
-// 채팅 메시지 추가 (로컬용 - 시스템 메시지 등)
-scwin.addChatMessage = function(userName, message, isOwn, serverTimestamp) {
-    const messageId = Date.now().toString();
-    
-    // 내부 함수 사용 (서버 타임스탬프 전달)
-    scwin.addChatMessageToList(userName, message, isOwn, messageId, serverTimestamp);
-    
-    // UI 업데이트
-    scwin.updateChatMessages();
-};
-
-// 채팅 메시지 UI 업데이트 - 강화된 스크롤 버전
-scwin.updateChatMessages = function() {
-    const chatContainer = document.getElementById("chatMessages");
-    if (!chatContainer) {
-        return;
-    }
-    
-    const messages = dlt_chatMessages.getAllJSON();
-    
-    chatContainer.innerHTML = "";
-    
-    messages.forEach(msg => {
-        const messageDiv = document.createElement("div");
-        messageDiv.className = `chat-message ${msg.isOwn === 'true' ? 'own' : 'other'}`;
-        messageDiv.style.cssText = `
-            margin-bottom: 8px;
-            padding: 6px 10px;
-            border-radius: 8px;
-            max-width: 80%;
-            word-wrap: break-word;
-            ${msg.isOwn === 'true' ? 
-                'background: #FFB823; color: white; margin-left: auto; text-align: right;' : 
-                'background: #f1f1f1; color: black; margin-right: auto; text-align: left;'
-            }
-        `;
-        
-        const headerDiv = document.createElement("div");
-        headerDiv.className = "message-header";
-        headerDiv.style.cssText = "font-size: 11px; margin-bottom: 2px; opacity: 0.7;";
-        
-        const userNameSpan = document.createElement("span");
-        userNameSpan.className = "user-name";
-        userNameSpan.textContent = msg.userName;
-        userNameSpan.style.fontWeight = "bold";
-        
-        const timeSpan = document.createElement("span");
-        timeSpan.className = "message-time";
-        timeSpan.textContent = " " + msg.timestamp;
-        
-        headerDiv.appendChild(userNameSpan);
-        headerDiv.appendChild(timeSpan);
-        
-        const contentDiv = document.createElement("div");
-        contentDiv.className = "message-content";
-        contentDiv.textContent = msg.message;
-        contentDiv.style.cssText = "font-size: 14px; line-height: 1.4;";
-        
-        messageDiv.appendChild(headerDiv);
-        messageDiv.appendChild(contentDiv);
-        
-        chatContainer.appendChild(messageDiv);
-    });
-    
-    // 먼저 스크롤 강제 활성화
-    scwin.forceScrollEnable();
-    
-    // 그 다음 여러 방법으로 스크롤을 아래로
-    setTimeout(() => {
-        // 방법 1: 직접 scrollTop 설정
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        
-        // 방법 2: scrollIntoView 사용
-        if (chatContainer.lastElementChild) {
-            chatContainer.lastElementChild.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'end' 
-            });
-        }
-        
-        // 방법 3: smooth scroll 시도
-        try {
-            chatContainer.scrollTo({
-                top: chatContainer.scrollHeight,
-                behavior: 'smooth'
-            });
-        } catch (e) {
-            // smooth scroll 미지원 시 그냥 패스
-        }
-    }, 100);
-    
-    // 한 번 더 확실하게
-    setTimeout(() => {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    }, 200);
-};
-
-// Enter 키 처리 (모든 키 이벤트용)
-scwin.handleChatKeyPress = function(event) {
-    try {
-        // 이벤트가 없으면 종료
-        if (!event) {
-            return true;
-        }
-
-        // Enter 키 확인 (여러 방법으로)
-        const isEnter = (
-            event.key === 'Enter' || 
-            event.keyCode === 13 || 
-            event.which === 13 ||
-            event.code === 'Enter'
-        );
-        
-        // Enter 키이고 keydown 이벤트에서만 실행 (중복 방지)
-        if (isEnter && event.type === 'keydown') {
-            event.preventDefault(); // 기본 동작 방지
-            event.stopPropagation(); // 이벤트 전파 중지
-
-            // 메시지 전송
-            scwin.sendChatMessage();
-            return false; // 추가 안전장치
-        }
-        
-        // Enter 키이지만 다른 이벤트 타입인 경우 (keyup, keypress)
-        if (isEnter && (event.type === 'keyup' || event.type === 'keypress')) {
-            event.preventDefault(); // 기본 동작만 방지
-            return false;
-        }
-        
-        return true;
-        
-    } catch (error) {
-        console.error('키 이벤트 처리 오류:', error);
-        return true; // 오류 시에도 기본 동작 허용
-    }
-};
-
-
-
-// 스크롤 강제 활성화 함수 - 강화된 버전
-scwin.forceScrollEnable = function() {
-    const chatContainer = document.getElementById("chatMessages");
-    if (chatContainer) {
-        
-        // 스크롤 속성 강제 적용 - 더 강력하게
-        chatContainer.style.setProperty("overflow-y", "scroll", "important");
-        chatContainer.style.setProperty("overflow-x", "hidden", "important");
-        chatContainer.style.setProperty("height", "100%", "important");
-        chatContainer.style.setProperty("max-height", "100%", "important");
-        chatContainer.style.setProperty("min-height", "300px", "important");
-        chatContainer.style.setProperty("display", "block", "important");
-        chatContainer.style.setProperty("position", "relative", "important");
-        
-        // 부모 컨테이너들 모두 수정
-        let parent = chatContainer.parentElement;
-        while (parent && parent.className) {
-            if (parent.className.includes("chat-message-container")) {
-                parent.style.setProperty("overflow", "hidden", "important");
-                parent.style.setProperty("height", "calc(100vh - 100px)", "important");
-                parent.style.setProperty("flex", "1", "important");
-            } else if (parent.className.includes("chat-section")) {
-                parent.style.setProperty("height", "100vh", "important");
-                parent.style.setProperty("display", "flex", "important");
-                parent.style.setProperty("flex-direction", "column", "important");
-                parent.style.setProperty("overflow", "hidden", "important");
-            }
-            parent = parent.parentElement;
-        }
-        
-        // 여러번 시도해서 확실하게 스크롤 적용
-        for (let i = 0; i < 3; i++) {
-            setTimeout(() => {
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-                // 강제로 스크롤 이벤트 발생
-                chatContainer.dispatchEvent(new Event('scroll'));
-            }, i * 100);
-        }
-    } else {
-    }
-};
-
-
 
 // 로딩 표시
 scwin.showLoading = function(message) {

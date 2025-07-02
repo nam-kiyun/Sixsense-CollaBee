@@ -37,6 +37,15 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
     @ElDtoField(logicalName = "이후타임스탬프", physicalName = "afterTimestamp", type = "long", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private long afterTimestamp;
 
+    @ElDtoField(logicalName = "대상사용자ID", physicalName = "targetUserId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String targetUserId;
+
+    @ElDtoField(logicalName = "SDP정보", physicalName = "sdp", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String sdp;
+
+    @ElDtoField(logicalName = "ICE후보정보", physicalName = "iceCandidate", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String iceCandidate;
+
     @ElVoField(physicalName = "type")
     public String getType(){
         String ret = this.type;
@@ -123,6 +132,39 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
         this.afterTimestamp = afterTimestamp;
     }
 
+    @ElVoField(physicalName = "targetUserId")
+    public String getTargetUserId(){
+        String ret = this.targetUserId;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "targetUserId")
+    public void setTargetUserId(String targetUserId){
+        this.targetUserId = targetUserId;
+    }
+
+    @ElVoField(physicalName = "sdp")
+    public String getSdp(){
+        String ret = this.sdp;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "sdp")
+    public void setSdp(String sdp){
+        this.sdp = sdp;
+    }
+
+    @ElVoField(physicalName = "iceCandidate")
+    public String getIceCandidate(){
+        String ret = this.iceCandidate;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "iceCandidate")
+    public void setIceCandidate(String iceCandidate){
+        this.iceCandidate = iceCandidate;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -134,7 +176,10 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
         sb.append("userName").append("=").append(userName).append(",");
         sb.append("message").append("=").append(message).append(",");
         sb.append("timestamp").append("=").append(timestamp).append(",");
-        sb.append("afterTimestamp").append("=").append(afterTimestamp);
+        sb.append("afterTimestamp").append("=").append(afterTimestamp).append(",");
+        sb.append("targetUserId").append("=").append(targetUserId).append(",");
+        sb.append("sdp").append("=").append(sdp).append(",");
+        sb.append("iceCandidate").append("=").append(iceCandidate);
         sb.append("]");
         return sb.toString();
 
