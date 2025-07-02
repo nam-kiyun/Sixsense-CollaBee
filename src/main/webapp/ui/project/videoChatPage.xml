@@ -166,7 +166,7 @@
             }
             
             .chat-message.own {
-                background: #007bff !important;
+                background: #FFB823 !important;
                 color: white !important;
                 margin-left: auto !important;
                 text-align: right !important;
@@ -201,13 +201,13 @@
             }
             
             #chatInput:focus {
-                border-color: #007bff !important;
-                box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+                border-color: #FFB823 !important;
+                box-shadow: 0 0 0 0.2rem rgba(255, 184, 35, 0.25) !important;
             }
             
             .send-btn {
                 padding: 10px 20px !important;
-                background: #007bff !important;
+                background: #FFB823 !important;
                 color: white !important;
                 border: none !important;
                 border-radius: 25px !important;
@@ -219,7 +219,7 @@
             }
             
             .send-btn:hover {
-                background: #0056b3 !important;
+                background: #e6a625 !important;
             }
             
             .send-btn:active {
@@ -973,7 +973,7 @@ scwin.updateChatMessages = function() {
             max-width: 80%;
             word-wrap: break-word;
             ${msg.isOwn === 'true' ? 
-                'background: #007bff; color: white; margin-left: auto; text-align: right;' : 
+                'background: #FFB823; color: white; margin-left: auto; text-align: right;' : 
                 'background: #f1f1f1; color: black; margin-right: auto; text-align: left;'
             }
         `;
@@ -1234,7 +1234,7 @@ window.addEventListener("beforeunload", function() {
                 <!-- 채팅 입력 -->
                 <xf:group class="chat-input-container" style="height: 60px; flex-shrink: 0; display: flex; padding: 10px; background: #f8f9fa; border-top: 1px solid #dee2e6; align-items: center; gap: 10px;">
                     <input type="text" id="chatInput" class="chat-input" placeholder="메시지를 입력하세요..." style="flex: 1; padding: 10px 15px; border: 1px solid #ced4da; border-radius: 25px; font-size: 14px; outline: none; background: white;" />
-                    <xf:trigger class="send-btn" ev:onclick="scwin.sendChatMessage" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; min-width: 60px;">
+                    <xf:trigger class="send-btn" ev:onclick="scwin.sendChatMessage" style="padding: 10px 20px; background: #FFB823; color: white; border: none; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; min-width: 60px;">
                         <xf:label>전송</xf:label>
                     </xf:trigger>
                 </xf:group>
