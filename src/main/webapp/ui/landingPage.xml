@@ -582,10 +582,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="position: absolute;top: 60px;left: 20px;background: rgba(255,255,255,0.95);border-radius: 20px;padding: 20px;width: 140px;box-shadow: 0 10px 15px rgba(245, 158, 11, 0.2);text-align: center;animation: cardFloat 4s ease-in-out infinite;"
     				id="Group_card1" class="floating-card floating-card-1">
-    				<xf:output style="font-size: 4rem;color: #FFB823;margin-bottom: 15px;display: block;text-align: center;line-height: 1;"
-    					label="" id="" class="fa-solid fa-calendar">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/calendar-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 15px auto;display: block;filter: brightness(0) saturate(100%) invert(68%) sepia(69%) saturate(3187%) hue-rotate(15deg) brightness(103%) contrast(93%);" />
+				
     								<xf:output style="width: 150px;height: 23px;color:black;font-weight:bold;text-align: center;margin-left: -5px;" label="" id="">
 					<xf:label><![CDATA[일정관리]]></xf:label>
 				</xf:output>
@@ -593,10 +591,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="position: absolute;top: 40px;left: 380px;background: rgba(255,255,255,0.95);border-radius: 20px;padding: 20px;width: 140px;box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);text-align: center;animation: cardFloat 4s ease-in-out infinite;"
     				id="Group_card2" class="floating-card floating-card-2">
-    				<xf:output style="font-size: 4rem;color: #1f2937;margin-bottom: 15px;display: block;text-align: center;line-height: 1;"
-    					label="" id="" class="fa-brands fa-github">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/github-brands.svg" style="width: 64px;height: 64px;margin: 0 auto 15px auto;display: block;filter: brightness(0) saturate(100%) invert(13%) sepia(11%) saturate(825%) hue-rotate(192deg) brightness(97%) contrast(90%);" />
+				
     								<xf:output style="width: 150px;height: 23px;color:black;font-weight:bold;text-align: center;margin-left: -5px;" label="" id="">
 					<xf:label><![CDATA[Git연동]]></xf:label>
 				</xf:output>
@@ -604,10 +600,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="position: absolute;top: 300px;left: 250px;background: rgba(255,255,255,0.95);border-radius: 20px;padding: 20px;width: 140px;box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);text-align: center;animation: cardFloat 4s ease-in-out infinite;"
     				id="Group_card3" class="floating-card floating-card-3">
-    				<xf:output style="font-size: 4rem;color: #10b981;margin-bottom: 15px;display: block;text-align: center;line-height: 1;"
-    					label="" id="" class="fa-solid fa-video">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/video-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 15px auto;display: block;filter: brightness(0) saturate(100%) invert(67%) sepia(74%) saturate(584%) hue-rotate(121deg) brightness(94%) contrast(86%);" />
+				
     								<xf:output style="width: 150px;height: 23px;color:black;font-weight:bold;text-align: center;margin-left: -8px;" label="" id="">
 					<xf:label><![CDATA[화상통화]]></xf:label>
 				</xf:output>
@@ -628,10 +622,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
     				id="feature_card1">
-    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 55px;" label="" id=""
-    					class="fa-solid fa-clipboard-list">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/clipboard-list-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 55px auto;display: block;filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);" />
+				
     				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" label="" id="">
     					<xf:label><![CDATA[일정관리 & 칸반보드]]></xf:label>
     				</xf:output>
@@ -642,10 +634,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
     				id="feature_card2">
-    				<xf:output style="width: 150px;height: 23px;font-size: 4rem;color:black;margin-bottom: 45px;" label="" id=""
-    					class="fa-brands fa-github">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/github-brands.svg" style="width: 64px;height: 64px;margin: 0 auto 45px auto;display: block;filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);" />
+				
     				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" label="" id="">
     					<xf:label><![CDATA[GitHub 연동]]></xf:label>
     				</xf:output>
@@ -656,10 +646,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
     				id="feature_card3">
-    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 55px;" id="" label=""
-    					class="fa-solid fa-pencil">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/pencil-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 55px auto;display: block;filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);" />
+				
     				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" id="" label="">
     					<xf:label><![CDATA[실시간 동시편집]]></xf:label>
     				</xf:output>
@@ -670,10 +658,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
     				id="feature_card4">
-    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 45px;" id="" label=""
-    					class="fa-solid fa-video">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/video-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 45px auto;display: block;filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);" />
+				
     				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" id="" label="">
     					<xf:label><![CDATA[화상통화]]></xf:label>
     				</xf:output>
@@ -684,10 +670,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
     				id="feature_card5">
-    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 45px;" id="" label=""
-    					class="fa-solid fa-envelope">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/envelope-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 45px auto;display: block;filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);" />
+				
     				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" id="" label="">
     					<xf:label><![CDATA[스마트 알림]]></xf:label>
     				</xf:output>
@@ -698,10 +682,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
     				id="feature_card6">
-    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 55px;" id="" label=""
-    					class="fa-solid fa-calendar">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/calendar-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 55px auto;display: block;filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);" />
+				
     				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" id="" label="">
     					<xf:label><![CDATA[통합 캘린더]]></xf:label>
     				</xf:output>
