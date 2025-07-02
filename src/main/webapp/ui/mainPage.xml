@@ -7,16 +7,187 @@
         <w2:buildDate/>
         <w2:MSA/>
         <xf:model>
-            <w2:dataCollection baseNode="map"/>
-            <w2:workflowCollection/>
+            <w2:dataCollection baseNode="map">
+                <w2:dataMap baseNode="map" id="dm_userInfo">
+                    <w2:keyInfo>
+                        <w2:key id="userName" name="사용자명" dataType="text"/>
+                        <w2:key id="userId" name="사용자ID" dataType="text"/>
+                    </w2:keyInfo>
+                    <w2:data use="true">
+                        <userName>식스센스</userName>
+                        <userId>user01</userId>
+                    </w2:data>
+                </w2:dataMap>
+            </w2:dataCollection>
+            <w2:workflowCollection>
+                <xf:submission id="sbm_getUserInfo" action="/InsWebApp/UserSessionInfo.pwkjson" method="post" 
+                               mediatype="application/json" ref="" target="" encoding="UTF-8" 
+                               instance="" replace="" errorHandler="" customHandler="" 
+                               mode="asynchronous" processMsg="" ev:submit="" 
+                               ev:submitdone="scwin.sbm_getUserInfo_submitdone" 
+                               ev:submiterror="scwin.sbm_getUserInfo_submiterror" abortTrigger=""/>
+            </w2:workflowCollection>
         </xf:model>
         <w2:layoutInfo/>
         <w2:publicInfo method=""/>
         <script lazy="false" type="text/javascript"><![CDATA[
 scwin.onpageload = function() {
-	
+    // 메인 페이지 초기화
+    scwin.loadUserInfo();
+};
+
+// 사용자 정보 로드 - loginPage에서 전달받은 userId와 userName 사용
+scwin.loadUserInfo = function() {
+    try {
+        // $p.getParameter로 userId와 userName 가져오기
+        const userId = $p.getParameter("userId");
+        const userName = $p.getParameter("userName");
+        
+        console.log("로그인에서 전달받은 사용자 정보:", { userId: userId, userName: userName });
+        
+        if (userId && userName) {
+            // 전달받은 사용자 정보를 데이터맵에 설정
+            dm_userInfo.set("userId", userId);
+            dm_userInfo.set("userName", userName);
+            console.log("사용자 정보 설정 성공:", userName);
+        } else {
+            // 전달받은 정보가 없는 경우 기본값 사용
+            console.log("전달받은 사용자 정보가 없습니다. 기본값 사용.");
+            dm_userInfo.set("userId", "user01");
+            dm_userInfo.set("userName", "식스센스");
+        }
+        
+        scwin.updateUserInfoInComponents();
+    } catch(e) {
+        console.log("사용자 정보 로드 오류:", e);
+        // 오류 시 기본값 사용
+        dm_userInfo.set("userId", "user01");
+        dm_userInfo.set("userName", "식스센스");
+        scwin.updateUserInfoInComponents();
+    }
+};
+
+// 헤더 컴포넌트에 사용자 정보 전달
+scwin.updateUserInfoInComponents = async function() {
+    try {
+        // 헤더 컴포넌트가 완전히 로드될 때까지 대기
+        await scwin.waitForHeaderLoad();
+        
+        // 헤더 컴포넌트에 사용자 정보 전달
+        try {
+            if (wfr_header && wfr_header.getWindow) {
+                const headerWindow = wfr_header.getWindow();
+                if (headerWindow && headerWindow.dm_header) {
+                    const userName = dm_userInfo.get("userName");
+                    headerWindow.dm_header.set("userName", userName);
+                    console.log("헤더에 사용자 정보 전달 성공:", userName);
+                    
+                    // 헤더의 output_userName 컴포넌트 직접 업데이트
+                    if (headerWindow.output_userName) {
+                        headerWindow.output_userName.setValue(userName);
+                        console.log("헤더 사용자명 컴포넌트 직접 업데이트 완료:", userName);
+                    }
+                } else {
+                    console.log("헤더 dm_header를 찾을 수 없습니다.");
+                }
+            } else {
+                console.log("헤더 컴포넌트를 찾을 수 없습니다.");
+            }
+        } catch(e) {
+            console.log("헤더 업데이트 오류:", e);
+        }
+        
+        // 메인 콘텐츠에 사용자 정보 전달
+        try {
+            if (wfr_mainContent && wfr_mainContent.getWindow) {
+                const mainContentWindow = wfr_mainContent.getWindow();
+                if (mainContentWindow && mainContentWindow.dm_userInfo) {
+                    const userName = dm_userInfo.get("userName");
+                    mainContentWindow.dm_userInfo.set("userName", userName);
+                    
+                    // 메인 콘텐츠의 환영 메시지 업데이트
+                    if (mainContentWindow.scwin && mainContentWindow.scwin.updateWelcomeMessage) {
+                        mainContentWindow.scwin.updateWelcomeMessage();
+                        console.log("메인 콘텐츠에 사용자 정보 전달 성공:", userName);
+                    }
+                } else {
+                    console.log("메인 콘텐츠 dm_userInfo를 찾을 수 없습니다.");
+                }
+            } else {
+                console.log("메인 콘텐츠 컴포넌트를 찾을 수 없습니다.");
+            }
+        } catch(e) {
+            console.log("메인 콘텐츠 업데이트 오류:", e);
+        }
+    } catch(e) {
+        console.log("컴포넌트 업데이트 오류:", e);
+    }
+};
+
+// 헤더 로드 대기 함수
+scwin.waitForHeaderLoad = function() {
+    return new Promise((resolve) => {
+        const checkHeader = () => {
+            if (wfr_header && wfr_header.getWindow && wfr_header.getWindow().dm_header) {
+                resolve();
+            } else {
+                setTimeout(checkHeader, 100);
+            }
+        };
+        checkHeader();
+    });
+};
+
+// 사용자 정보 서버 요청 성공
+scwin.sbm_getUserInfo_submitdone = function(e) {
+    try {
+        var responseData = e.responseJSON;
+        if (responseData && responseData.elData) {
+            var userData = responseData.elData;
+            if (userData.userName) {
+                dm_userInfo.set("userName", userData.userName);
+                dm_userInfo.set("userId", userData.userId || "user01");
+                scwin.updateUserInfoInComponents();
+            }
+        }
+    } catch(err) {
+        console.log("사용자 정보 처리 오류:", err);
+    }
+};
+
+// 사용자 정보 서버 요청 실패
+scwin.sbm_getUserInfo_submiterror = function(e) {
+    console.log("사용자 정보 요청 실패:", e);
+    // 실패 시 기본값 사용
+    dm_userInfo.set("userName", "식스센스");
+    scwin.updateUserInfoInComponents();
 };
 ]]></script>
     </head>
-    <body ev:onpageload="scwin.onpageload"/>
+    <body ev:onpageload="scwin.onpageload">
+        <!-- 전체 페이지 컨테이너 -->
+        <xf:group style="width:100%;height:100vh;display:flex;flex-direction:column;margin:0;padding:0;" id="grp_mainContainer">
+            
+            <!-- 헤더 영역 -->
+            <xf:group style="width:100%;height:100px;position:fixed;top:0;left:0;z-index:1000;" id="grp_headerArea">
+                <w2:wframe id="wfr_header" style="width:100%;height:100%;" src="/InsWebApp/ui/cmmn/header.xml"/>
+            </xf:group>
+            
+            <!-- 메인 콘텐츠 영역 (헤더 아래) -->
+            <xf:group style="width:100%;height:calc(100vh - 100px);margin-top:100px;display:flex;" id="grp_contentArea">
+                
+                <!-- 사이드메뉴 영역 -->
+                <xf:group style="width:303px;height:100%;position:fixed;left:0;z-index:999;" id="grp_sideMenuArea">
+                    <w2:wframe id="wfr_sideMenu" style="width:100%;height:100%;" src="/InsWebApp/ui/cmmn/sideMenu.xml"/>
+                </xf:group>
+                
+                <!-- 메인 콘텐츠 -->
+                <xf:group style="margin-left:303px;width:calc(100% - 303px);height:100%;" id="grp_mainContent">
+                    <w2:wframe id="wfr_mainContent" style="width:100%;height:100%;" src="/InsWebApp/ui/mainContent.xml"/>
+                </xf:group>
+                
+            </xf:group>
+            
+        </xf:group>
+    </body>
 </html>
