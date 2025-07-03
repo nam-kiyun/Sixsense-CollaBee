@@ -31,20 +31,130 @@
         <w2:layoutInfo/>
         <w2:publicInfo method=""/>
         <script lazy="false" type="text/javascript"><![CDATA[
-scwin.onpageload = function() {
+scwin.onpageload = function () {
     // 메인 페이지 초기화
     scwin.loadUserInfo();
+
+    // 기본적으로 대시보드 로드
+    scwin.loadMainContent("dashboard");
+};
+
+// 메인 콘텐츠 동적 로드 함수
+scwin.loadMainContent = function (menuType) {
+    try {
+        let srcPath = "";
+
+        console.log("=== 메인 콘텐츠 로드 시작 ===");
+        console.log("요청된 메뉴 타입:", menuType);
+
+        switch (menuType) {
+            case "dashboard":
+                srcPath = "/InsWebApp/ui/mainContent.xml";
+                break;
+            case "project1":
+                srcPath = "/InsWebApp/ui/project1Content.xml";
+                break;
+            case "project2":
+                srcPath = "/InsWebApp/ui/project2Content.xml";
+                break;
+            default:
+                srcPath = "/InsWebApp/ui/mainContent.xml";
+                console.log("기본 대시보드로 설정:", menuType);
+                break;
+        }
+
+        console.log("결정된 소스 경로:", srcPath);
+
+        // wframe 존재 확인
+        if (wfr_mainContent) {
+            console.log("wfr_mainContent 찾음:", wfr_mainContent);
+            console.log("현재 wframe src:", wfr_mainContent.getSrc());
+
+            // 프레임 소스 변경
+            wfr_mainContent.setSrc(srcPath);
+
+            // 변경 후 확인
+            setTimeout(function () {
+                console.log("변경 후 wframe src:", wfr_mainContent.getSrc());
+                console.log("프레임 소스 변경 성공:", srcPath);
+            }, 100);
+
+        } else {
+            console.error("오류: wfr_mainContent를 찾을 수 없습니다.");
+            return false;
+        }
+
+        // 프레임이 로드된 후 사용자 정보 전달
+        setTimeout(() => {
+            scwin.updateMainContentUserInfo();
+        }, 500);
+
+        console.log("=== 메인 콘텐츠 로드 완료 ===");
+        return true;
+
+    } catch (e) {
+        console.error("메인 콘텐츠 로드 오류:", e);
+        console.error("Error stack:", e.stack);
+        return false;
+    }
+};
+
+// 메인 콘텐츠에 사용자 정보 업데이트
+scwin.updateMainContentUserInfo = function () {
+    try {
+        if (wfr_mainContent && wfr_mainContent.getWindow) {
+            const mainContentWindow = wfr_mainContent.getWindow();
+            if (mainContentWindow && mainContentWindow.dm_userInfo) {
+                const userName = dm_userInfo.get("userName");
+                mainContentWindow.dm_userInfo.set("userName", userName);
+
+                // 환영 메시지 업데이트 (대시보드인 경우)
+                if (mainContentWindow.scwin && mainContentWindow.scwin.updateWelcomeMessage) {
+                    mainContentWindow.scwin.updateWelcomeMessage();
+                }
+
+                console.log("메인 콘텐츠에 사용자 정보 전달 성공:", userName);
+            }
+        }
+    } catch (e) {
+        console.log("메인 콘텐츠 사용자 정보 업데이트 오류:", e);
+    }
+};
+
+// 사이드메뉴에서 호출할 메뉴 변경 함수
+scwin.changeMenu = function (menuType) {
+    console.log("=== 메뉴 변경 요청 ===", menuType);
+
+    // 메인 콘텐츠 로드
+    scwin.loadMainContent(menuType);
+
+    // 사이드메뉴에 선택된 메뉴 알림
+    try {
+        if (wfr_sideMenu && wfr_sideMenu.getWindow) {
+            const sideMenuWindow = wfr_sideMenu.getWindow();
+            if (sideMenuWindow && sideMenuWindow.scwin && sideMenuWindow.scwin.updateSelectedMenu) {
+                sideMenuWindow.scwin.updateSelectedMenu(menuType);
+                console.log("사이드메뉴 선택 상태 업데이트 성공:", menuType);
+            } else {
+                console.log("사이드메뉴 updateSelectedMenu 함수를 찾을 수 없습니다.");
+            }
+        } else {
+            console.log("사이드메뉴 wframe을 찾을 수 없습니다.");
+        }
+    } catch (e) {
+        console.log("사이드메뉴 업데이트 오류:", e);
+    }
 };
 
 // 사용자 정보 로드 - loginPage에서 전달받은 userId와 userName 사용
-scwin.loadUserInfo = function() {
+scwin.loadUserInfo = function () {
     try {
         // $p.getParameter로 userId와 userName 가져오기
         const userId = $p.getParameter("userId");
         const userName = $p.getParameter("userName");
-        
+
         console.log("로그인에서 전달받은 사용자 정보:", { userId: userId, userName: userName });
-        
+
         if (userId && userName) {
             // 전달받은 사용자 정보를 데이터맵에 설정
             dm_userInfo.set("userId", userId);
@@ -56,9 +166,9 @@ scwin.loadUserInfo = function() {
             dm_userInfo.set("userId", "user01");
             dm_userInfo.set("userName", "식스센스");
         }
-        
+
         scwin.updateUserInfoInComponents();
-    } catch(e) {
+    } catch (e) {
         console.log("사용자 정보 로드 오류:", e);
         // 오류 시 기본값 사용
         dm_userInfo.set("userId", "user01");
@@ -68,11 +178,11 @@ scwin.loadUserInfo = function() {
 };
 
 // 헤더 컴포넌트에 사용자 정보 전달
-scwin.updateUserInfoInComponents = async function() {
+scwin.updateUserInfoInComponents = async function () {
     try {
         // 헤더 컴포넌트가 완전히 로드될 때까지 대기
         await scwin.waitForHeaderLoad();
-        
+
         // 헤더 컴포넌트에 사용자 정보 전달
         try {
             if (wfr_header && wfr_header.getWindow) {
@@ -81,7 +191,7 @@ scwin.updateUserInfoInComponents = async function() {
                     const userName = dm_userInfo.get("userName");
                     headerWindow.dm_header.set("userName", userName);
                     console.log("헤더에 사용자 정보 전달 성공:", userName);
-                    
+
                     // 헤더의 output_userName 컴포넌트 직접 업데이트
                     if (headerWindow.output_userName) {
                         headerWindow.output_userName.setValue(userName);
@@ -93,10 +203,10 @@ scwin.updateUserInfoInComponents = async function() {
             } else {
                 console.log("헤더 컴포넌트를 찾을 수 없습니다.");
             }
-        } catch(e) {
+        } catch (e) {
             console.log("헤더 업데이트 오류:", e);
         }
-        
+
         // 메인 콘텐츠에 사용자 정보 전달
         try {
             if (wfr_mainContent && wfr_mainContent.getWindow) {
@@ -104,7 +214,7 @@ scwin.updateUserInfoInComponents = async function() {
                 if (mainContentWindow && mainContentWindow.dm_userInfo) {
                     const userName = dm_userInfo.get("userName");
                     mainContentWindow.dm_userInfo.set("userName", userName);
-                    
+
                     // 메인 콘텐츠의 환영 메시지 업데이트
                     if (mainContentWindow.scwin && mainContentWindow.scwin.updateWelcomeMessage) {
                         mainContentWindow.scwin.updateWelcomeMessage();
@@ -116,16 +226,16 @@ scwin.updateUserInfoInComponents = async function() {
             } else {
                 console.log("메인 콘텐츠 컴포넌트를 찾을 수 없습니다.");
             }
-        } catch(e) {
+        } catch (e) {
             console.log("메인 콘텐츠 업데이트 오류:", e);
         }
-    } catch(e) {
+    } catch (e) {
         console.log("컴포넌트 업데이트 오류:", e);
     }
 };
 
 // 헤더 로드 대기 함수
-scwin.waitForHeaderLoad = function() {
+scwin.waitForHeaderLoad = function () {
     return new Promise((resolve) => {
         const checkHeader = () => {
             if (wfr_header && wfr_header.getWindow && wfr_header.getWindow().dm_header) {
@@ -139,7 +249,7 @@ scwin.waitForHeaderLoad = function() {
 };
 
 // 사용자 정보 서버 요청 성공
-scwin.sbm_getUserInfo_submitdone = function(e) {
+scwin.sbm_getUserInfo_submitdone = function (e) {
     try {
         var responseData = e.responseJSON;
         if (responseData && responseData.elData) {
@@ -150,17 +260,122 @@ scwin.sbm_getUserInfo_submitdone = function(e) {
                 scwin.updateUserInfoInComponents();
             }
         }
-    } catch(err) {
+    } catch (err) {
         console.log("사용자 정보 처리 오류:", err);
     }
 };
 
 // 사용자 정보 서버 요청 실패
-scwin.sbm_getUserInfo_submiterror = function(e) {
+scwin.sbm_getUserInfo_submiterror = function (e) {
     console.log("사용자 정보 요청 실패:", e);
     // 실패 시 기본값 사용
     dm_userInfo.set("userName", "식스센스");
     scwin.updateUserInfoInComponents();
+};
+
+// =========================
+// 프로젝트 추가 모달 관련 함수들
+// =========================
+
+// 전역 변수로 모달 상태 관리
+scwin.isModalOpen = false;
+
+// 프로젝트 추가 모달 열기
+scwin.openProjectAddModal = function () {
+    try {
+        if (scwin.isModalOpen) {
+            console.log("모달이 이미 열려있습니다.");
+            return;
+        }
+
+        console.log("=== 프로젝트 추가 모달 열기 ===");
+        scwin.isModalOpen = true;
+
+        // WebSquare 방식으로 모달 생성
+        scwin.createProjectAddModal();
+
+    } catch (e) {
+        console.error("프로젝트 추가 모달 열기 오류:", e);
+        scwin.isModalOpen = false;
+    }
+};
+
+// 프로젝트 추가 모달 생성 (WebSquare 방식)
+scwin.createProjectAddModal = function () {
+    console.log("WebSquare 방식으로 모달 생성 시작");
+
+    // mainPage의 userInfo에서 userName 가져오기
+    var userName = dm_userInfo.get("userName") || "식스센스";
+    
+    // 팝업 화면에 데이터를 전달 (dataObject를 통해 전달)
+    var jsnPopupData = {
+        "type": "json", // 데이터 유형. "json"을 권장
+        "name": "project_param",  // 데이터를 가져오기 위한 파라미터 이름
+        "data": {
+            "teamName": userName
+        } // 실제 전달할 데이터
+    };
+
+    // 팝업 생성 옵션 지정
+    var options = {
+        id: "projectAddModal",
+        type: "wframePopup",
+        width: "500px",
+        height: "700px",
+        top: "100px",
+        left: "" + ((window.screen.width / 2) - 250) + "px",
+        popupName: "프로젝트 추가",
+        modal: true,
+        closeAction: "scwin.popup_closeAction", // 팝업의 닫기 버튼을 클릭했을 때 실행할 함수명
+        dataObject: jsnPopupData
+    };
+
+    console.log("모달에 전달할 사용자 정보:", jsnPopupData);
+
+    // 팝업 생성
+    $p.openPopup("/InsWebApp/ui/cmmn/projectAddModal.xml", options);
+
+    console.log("WebSquare 모달 생성 완료 - 팀장:", userName);
+};
+
+// 프로젝트 추가 모달 닫기
+scwin.closeProjectAddModal = function () {
+    try {
+        if (!scwin.isModalOpen) {
+            console.log("모달이 이미 닫혀있습니다.");
+            return;
+        }
+
+        console.log("=== 프로젝트 추가 모달 닫기 ===");
+
+        // WebSquare 팝업 닫기
+        $p.closePopup("projectAddModal");
+
+        scwin.isModalOpen = false;
+
+    } catch (e) {
+        console.error("프로젝트 추가 모달 닫기 오류:", e);
+        scwin.isModalOpen = false;
+    }
+};
+
+// 사이드메뉴 새로고침
+scwin.refreshSideMenu = function () {
+    try {
+        if (wfr_sideMenu) {
+            wfr_sideMenu.setSrc(wfr_sideMenu.getSrc());
+            console.log("사이드메뉴 새로고침 완료");
+        }
+    } catch (e) {
+        console.log("사이드메뉴 새로고침 오류:", e);
+    }
+};
+
+// 팝업 닫기 액션 (closeAction에서 호출)
+scwin.popup_closeAction = function(argRuntimeID, argJsnInfo) {
+    //팝업 객체 접근
+    let popObj = $p.getPopupWindow(argRuntimeID);
+    return true; //팝업 닫기 (반환 값이 true인 경우만 팝업이 닫힘)
 };
 ]]></script>
     </head>
@@ -182,7 +397,7 @@ scwin.sbm_getUserInfo_submiterror = function(e) {
                 </xf:group>
                 
                 <!-- 메인 콘텐츠 -->
-                <xf:group style="margin-left:303px;width:calc(100% - 303px);height:100%;" id="grp_mainContent">
+                <xf:group style="margin-left:303px;width:calc(100% - 303px);height:100%;background-color: #fff4d6" id="grp_mainContent">
                     <w2:wframe id="wfr_mainContent" style="width:100%;height:100%;" src="/InsWebApp/ui/mainContent.xml"/>
                 </xf:group>
                 

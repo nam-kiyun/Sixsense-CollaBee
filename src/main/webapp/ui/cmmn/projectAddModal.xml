@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare"
+	xmlns:xf="http://www.w3.org/2002/xforms">
+	<head meta_screenName="프로젝트 추가 모달">
+		<w2:type>COMPONENT</w2:type>
+		<w2:buildDate />
+		<w2:MSA />
+		<style>
+			/* WebSquare 팝업 기본 스타일 재설정 */
+			body, html {
+				margin: 0;
+				padding: 0;
+				border: none;
+				outline: none;
+				box-sizing: border-box;
+			}
+
+			/* 모든 요소의 기본 테두리 제거 */
+			* {
+				box-sizing: border-box;
+				border: none;
+				outline: none;
+			}
+
+			/* 모달 컨테이너 */
+			.modal-container {
+				background-color: white;
+				border-radius: 16px;
+				width: 400px;
+				padding: 30px;
+				box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+				position: relative;
+				margin: 20px auto;
+				border: none !important;
+				outline: none !important;
+			}
+
+			/* 프로젝트 이미지 */
+			.project-image {
+			width: 100%;
+			height: 200px;
+			border-radius: 12px;
+			margin-bottom: 20px;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			color: white;
+			font-size: 18px;
+			font-weight: 600;
+			}
+
+			/* 입력 필드 */
+			.input-group {
+			margin-bottom: 20px;
+			}
+
+			.input-label {
+			display: block;
+			font-size: 14px;
+			font-weight: 500;
+			color: #333;
+			margin-bottom: 8px;
+			}
+
+			.input-field {
+				width: 100%;
+				padding: 12px 16px;
+				border: 1px solid #ddd !important;
+				border-radius: 8px;
+				font-size: 16px;
+				box-sizing: border-box;
+				outline: none !important;
+			}
+
+			.input-field:focus {
+				outline: none !important;
+				border-color: #007bff !important;
+				box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25) !important;
+			}
+
+			/* 읽기전용 필드 스타일 */
+			.input-field-readonly {
+				width: 100%;
+				padding: 12px 16px;
+				border: 1px solid #ccc !important;
+				border-radius: 8px;
+				font-size: 16px;
+				box-sizing: border-box;
+				background-color: #f5f5f5;
+				color: #666;
+				cursor: not-allowed;
+				outline: none !important;
+			}
+
+			.input-field-readonly:focus {
+				outline: none !important;
+				border-color: #ccc !important;
+				box-shadow: none !important;
+			}
+
+			/* 시간 입력 그룹 */
+			.time-input-group {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+			}
+
+			.time-input {
+				width: 60px;
+				padding: 8px 12px;
+				border: 1px solid #ddd !important;
+				border-radius: 6px;
+				text-align: center;
+				font-size: 16px;
+				outline: none !important;
+			}
+
+			.time-input:focus {
+				outline: none !important;
+				border-color: #007bff !important;
+				box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.25) !important;
+			}
+
+			.time-separator
+			{
+			font-size: 18px;
+			font-weight: bold;
+			color: #666;
+			}
+
+			/* 프로젝트 시각 텍스트 */
+			.project-time-text {
+			font-size: 12px;
+			color: #ff4444;
+			text-align: center;
+			margin: 8px 0;
+			}
+
+			/* 저장 버튼 */
+			.save-btn {
+				width: 100%;
+				padding: 12px 16px;
+				background-color: #ffc107;
+				border: none !important;
+				border-radius: 8px;
+				font-size: 16px;
+				font-weight: 600;
+				color: #333;
+				cursor: pointer;
+				margin-top: 10px;
+				outline: none !important;
+			}
+
+			.save-btn:hover {
+				background-color: #ffb700;
+				outline: none !important;
+				border: none !important;
+			}
+		</style>
+		<xf:model>
+			<w2:dataCollection baseNode="map">
+				<w2:dataMap baseNode="map" id="dm_projectForm">
+					<w2:keyInfo>
+						<w2:key id="projectName" name="프로젝트명" dataType="text" />
+						<w2:key id="teamName" name="팀명" dataType="text" />
+						<w2:key id="hour" name="시간" dataType="text" />
+						<w2:key id="minute" name="분" dataType="text" />
+					</w2:keyInfo>
+					<w2:data use="true">
+						<projectName>2차 프로젝트</projectName>
+						<teamName>식스센스</teamName>
+						<hour>00</hour>
+						<minute>00</minute>
+					</w2:data>
+				</w2:dataMap>
+			</w2:dataCollection>
+			<w2:workflowCollection />
+			<xf:submission id="sbm_saveProject" action="/InsWebApp/saveProject.pwkjson" method="post" mediatype="application/json"
+				ref="data:json,dm_projectForm" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+				processMsg="프로젝트 저장 중..." ev:submitdone="scwin.sbm_saveProject_submitdone" ev:submiterror="scwin.sbm_saveProject_submiterror" />
+		</xf:model>
+		<w2:layoutInfo />
+		<w2:publicInfo method="" />
+		<script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+    // 모달 초기화
+    scwin.initModal();
+};
+
+// 모달 초기화
+scwin.initModal = function() {
+    try {
+        // 팝업 파라미터에서 teamName 가져오기 - dataObject 방식
+        var popupParam = $p.getParameter("project_param");
+        var teamName = "식스센스"; // 기본값
+        
+        if (popupParam && popupParam.teamName) {
+            teamName = popupParam.teamName;
+            console.log("팝업 파라미터에서 팀장명 가져옴:", teamName);
+        } else {
+            console.log("팝업 파라미터가 없어 기본값 사용:", teamName);
+        }
+        
+        // 기본값 설정
+        dm_projectForm.set("projectName", "2차 프로젝트");
+        dm_projectForm.set("teamName", teamName);
+        dm_projectForm.set("hour", "00");
+        dm_projectForm.set("minute", "00");
+        
+        // 팀장 인풋을 읽기전용으로 설정
+        if (input_teamName) {
+            input_teamName.setReadOnly(true);
+        }
+        
+        console.log("프로젝트 추가 모달 초기화 완료 - 팀장:", teamName);
+    } catch(e) {
+        console.error("모달 초기화 오류:", e);
+        // 오류 발생 시 기본값 설정
+        dm_projectForm.set("projectName", "2차 프로젝트");
+        dm_projectForm.set("teamName", "식스센스");
+        dm_projectForm.set("hour", "00");
+        dm_projectForm.set("minute", "00");
+        
+        if (input_teamName) {
+            input_teamName.setReadOnly(true);
+        }
+    }
+};
+
+// 모달 닫기
+scwin.closeModal = function() {
+    try {
+        // WebSquare 팝업 닫기
+        $p.closePopup();
+        console.log("모달 닫기 완료");
+    } catch(e) {
+        console.error("모달 닫기 오류:", e);
+    }
+};
+
+// 저장 버튼 클릭
+scwin.btn_save_onclick = function(e) {
+    try {
+        var projectName = dm_projectForm.get("projectName");
+        var teamName = dm_projectForm.get("teamName");
+        
+        if (!projectName || projectName.trim() === "") {
+            alert("프로젝트명을 입력해주세요.");
+            return;
+        }
+        
+        if (!teamName || teamName.trim() === "") {
+            alert("팀장명을 입력해주세요.");
+            return;
+        }
+        
+        // [수정] 서브미션 실행
+        $c.sbm.execute(sbm_saveProject);
+        
+    } catch(e) {
+        console.error("프로젝트 저장 오류:", e);
+        alert("프로젝트 저장 중 오류가 발생했습니다.");
+    }
+};
+
+// [추가] 서브미션 성공 시 처리
+scwin.sbm_saveProject_submitdone = function(e) {
+    console.log("프로젝트 저장 성공:", e.responseJSON);
+    alert("프로젝트가 성공적으로 저장되었습니다!");
+    scwin.closeModal(); // 모달 닫기
+    
+    // 부모 창의 refreshSideMenu 함수 호출 (필요시 주석 해제)
+    var parentFrame = $p.parent();
+    if (parentFrame && parentFrame.scwin && parentFrame.scwin.refreshSideMenu) {
+        parentFrame.scwin.refreshSideMenu();
+    }
+};
+
+// [추가] 서브미션 실패 시 처리
+scwin.sbm_saveProject_submiterror = function(e) {
+    console.error("프로젝트 저장 실패:", e);
+    alert("프로젝트 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+};
+
+// 이름 입력 키보드 이벤트
+scwin.input_name_onkeyup = function(e) {
+    dm_projectForm.set("projectName", e.target.value);
+};
+
+// 시간 입력 검증
+scwin.validateTimeInput = function(inputValue, maxValue) {
+    var num = parseInt(inputValue);
+    if (isNaN(num) || num < 0) {
+        return "00";
+    } else if (num > maxValue) {
+        return String(maxValue).padStart(2, '0');
+    } else {
+        return String(num).padStart(2, '0');
+    }
+};
+
+// [수정] 시간 입력 키보드 이벤트
+scwin.input_hour_onkeyup = function(e) {
+    dm_projectForm.set("hour", scwin.validateTimeInput(e.target.value, 23));
+};
+
+// [수정] 분 입력 키보드 이벤트
+scwin.input_minute_onkeyup = function(e) {
+    dm_projectForm.set("minute", scwin.validateTimeInput(e.target.value, 59));
+};
+]]></script>
+	</head>
+	<body ev:onpageload="scwin.onpageload">
+		<!-- 모달 컨테이너 -->
+		<xf:group class="modal-container" id="grp_modalContainer">
+
+			<!-- 프로젝트 이미지 -->
+			<xf:group class="project-image" id="grp_projectImage">
+				<xf:output id="output_imageText">
+					<xf:label><![CDATA[프로젝트 이미지]]></xf:label>
+				</xf:output>
+			</xf:group>
+
+			<!-- 이름 입력 -->
+			<xf:group class="input-group" id="grp_nameInput">
+				<xf:output class="input-label" id="label_name">
+					<xf:label><![CDATA[이름]]></xf:label>
+				</xf:output>
+				<xf:input class="input-field" id="input_projectName" ref="dm_projectForm.projectName" ev:onkeyup="scwin.input_name_onkeyup" />
+			</xf:group>
+
+			<!-- 팀장 입력 -->
+			<xf:group class="input-group" id="grp_teamInput">
+				<xf:output class="input-label" id="label_team">
+					<xf:label><![CDATA[팀장]]></xf:label>
+				</xf:output>
+				<xf:input class="input-field-readonly" id="input_teamName" ref="dm_projectForm.teamName" readOnly="true" />
+			</xf:group>
+
+			<!-- 매일 밤 9 시간 입력 -->
+			<xf:group class="input-group" id="grp_timeInput">
+				<xf:output class="input-label" id="label_time">
+					<xf:label><![CDATA[메일 전송 시각]]></xf:label>
+				</xf:output>
+
+				<xf:group class="time-input-group" id="grp_timeInputs">
+					<xf:input class="time-input" id="input_hour" ref="dm_projectForm.hour" ev:onkeyup="scwin.input_hour_onkeyup" maxlength="2" />
+					<xf:output class="time-separator" id="separator_time">
+						<xf:label><![CDATA[:]]></xf:label>
+					</xf:output>
+					<xf:input class="time-input" id="input_minute" ref="dm_projectForm.minute" ev:onkeyup="scwin.input_minute_onkeyup"
+						maxlength="2" />
+				</xf:group>
+
+				<!-- 프로젝트 시각 텍스트 -->
+			</xf:group>
+
+			<!-- 저장 버튼 -->
+			<xf:trigger class="save-btn" id="btn_save" ev:onclick="scwin.btn_save_onclick">
+				<xf:label><![CDATA[추가]]></xf:label>
+			</xf:trigger>
+
+		</xf:group>
+	</body>
+</html>

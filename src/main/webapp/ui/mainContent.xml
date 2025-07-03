@@ -64,7 +64,7 @@ scwin.updateWelcomeMessage = function() {
     </head>
     <body ev:onpageload="scwin.onpageload">
         <!-- 메인 콘텐츠 -->
-        <xf:group style="width:100%;height:100%;background-color:#fff4d6;padding:40px;" id="grp_mainContent">
+        <xf:group style="height: auto;background-color:#fff4d6;padding:40px;" id="grp_mainContent">
             
             <!-- 환영 메시지 -->
             <xf:group style="text-align:center;margin-bottom:60px;" id="grp_welcomeMessage">
