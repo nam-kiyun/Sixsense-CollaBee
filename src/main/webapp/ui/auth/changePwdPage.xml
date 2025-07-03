@@ -25,7 +25,7 @@
     			</w2:dataMap>
     		</w2:dataCollection>
     		<w2:workflowCollection />
-    		<xf:submission id="sbm_updatePassword" action="/InsWebApp/user/update.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_Param","key":"elData"}' target=""
+    		<xf:submission id="sbm_updatePassword" action="/InsWebApp/user/updatePassword.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_Param","key":"elData"}' target=""
     			encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
     			ev:submitdone="scwin.sbm_updatePassword_submitdone" ev:submiterror="" abortTrigger="">
     		</xf:submission>
