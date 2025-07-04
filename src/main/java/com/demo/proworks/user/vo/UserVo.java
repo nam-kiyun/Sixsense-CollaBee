@@ -40,6 +40,10 @@ public class UserVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "account_locked", physicalName = "accountLocked", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String accountLocked;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @ElDtoField(logicalName = "fileData", physicalName = "fileData", type = "MultipartFile", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private org.springframework.web.multipart.MultipartFile fileData;
+
     @ElVoField(physicalName = "userId")
     public String getUserId(){
         String ret = this.userId;
@@ -139,6 +143,16 @@ public class UserVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.accountLocked = accountLocked;
     }
 
+    @ElVoField(physicalName = "fileData")
+    public org.springframework.web.multipart.MultipartFile getFileData(){
+        return fileData;
+    }
+
+    @ElVoField(physicalName = "fileData")
+    public void setFileData(org.springframework.web.multipart.MultipartFile fileData){
+        this.fileData = fileData;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -151,7 +165,8 @@ public class UserVo extends com.demo.proworks.cmmn.ProworksCommVO {
         sb.append("createdAt").append("=").append(createdAt).append(",");
         sb.append("loginFailCount").append("=").append(loginFailCount).append(",");
         sb.append("lastFailTime").append("=").append(lastFailTime).append(",");
-        sb.append("accountLocked").append("=").append(accountLocked);
+        sb.append("accountLocked").append("=").append(accountLocked).append(",");
+        sb.append("fileData").append("=").append(fileData);
         sb.append("]");
         return sb.toString();
 

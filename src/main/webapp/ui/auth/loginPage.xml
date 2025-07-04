@@ -164,22 +164,22 @@ scwin.login_button_onclick = function (e) {
     if (!isValid) return;
 
     // 2. reCAPTCHA 완료 여부
-    const token = grecaptcha.getResponse();
-    if (!token) {
-        alert("reCAPTCHA를 먼저 완료해주세요!");
-        return;
-    }
+    // const token = grecaptcha.getResponse();
+    // if (!token) {
+    //     alert("reCAPTCHA를 먼저 완료해주세요!");
+    //     return;
+    // }
 
-    // 3. 리캡챠 서브미션 실행
-    const param = {
-        secretKey: "",
-        token: token
-    };
+    // // 3. 리캡챠 서브미션 실행
+    // const param = {
+    //     secretKey: "",
+    //     token: token
+    // };
 
-    dma_recaptcha.setJSON(param);
-    $c.sbm.execute(sbm_recaptcha);
+    // dma_recaptcha.setJSON(param);
+    // $c.sbm.execute(sbm_recaptcha);
 
-    grecaptcha.reset();
+    // grecaptcha.reset();
     $c.sbm.execute(sbm_login);
 };
 

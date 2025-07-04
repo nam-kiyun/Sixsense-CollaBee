@@ -34,7 +34,7 @@
     			ref='data:json,{"id":"dma_mailParam","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
     			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="" ev:submiterror="" abortTrigger="">
     		</xf:submission>
-    		<xf:submission id="sbm_signup" action="/InsWebApp/user/singup.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_signupParam","key":"elData"}' target="" encoding="UTF-8"
+    		<xf:submission id="sbm_signup" action="/InsWebApp/user/signup.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_signupParam","key":"elData"}' target="" encoding="UTF-8"
     			instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_signup_submitdone"
     			ev:submiterror="" abortTrigger="">
     		</xf:submission>
@@ -163,8 +163,10 @@ scwin.signup_button_onclick = function (e) {
 
 //회원가입 완료
 scwin.sbm_signup_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    console.log(responseData);
     $c.win.alert("회원가입이 완료되었습니다.", function () {
-        $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/loginPage.xml");
+        //$p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/loginPage.xml");
     });
 };
 

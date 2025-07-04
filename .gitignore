@@ -12,3 +12,4 @@ target/
 
 #license
 .elLicense
+src/main/resources/inswave/properties/elfw.properties
