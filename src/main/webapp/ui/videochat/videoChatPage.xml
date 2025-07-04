@@ -34,7 +34,7 @@
         <w2:layoutInfo/>
         <w2:publicInfo method=""/>
         
-        <!-- 🎥 webRTC 화상통화 (Agora.io 제거) -->
+        <!-- TC 화상통화 (Agora.io 제거) -->
         <link rel="stylesheet" href="/InsWebApp/css/videochat/videoChatPage.css" />
         
         <!-- 임시 인라인 CSS (테스트용) -->
@@ -282,7 +282,7 @@
         </style>
         
         <script type="text/javascript"><![CDATA[
-// ������ webRTC 다대다 화상통화 구현
+// webRTC 다대다 화상통화 구현
 // STUN 서버 설정 (Google Public STUN)
 const ICE_SERVERS = [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -339,7 +339,7 @@ scwin.onpageload = function() {
     });
 };
 
-// ������ webRTC 초기화
+// webRTC 초기화
 scwin.initializeWebRTC = function() {
     try {
         // webRTC 지원 확인
@@ -357,7 +357,7 @@ scwin.initializeWebRTC = function() {
     }
 };
 
-// ������ 화상통화 참가
+// 화상통화 참가
 scwin.joinCall = async function() {
     try {
         scwin.showLoading("카메라와 마이크에 접근하는 중...");
@@ -413,7 +413,7 @@ scwin.joinCall = async function() {
     }
 };
 
-// ������ Peer Connection 생성
+// Peer Connection 생성
 scwin.createPeerConnection = function(remoteUserId) {
     const peerConnection = new RTCPeerConnection({ iceServers: ICE_SERVERS });
     
@@ -456,7 +456,7 @@ scwin.createPeerConnection = function(remoteUserId) {
     return peerConnection;
 };
 
-// ������ 원격 비디오 표시
+// 원격 비디오 표시
 scwin.displayRemoteVideo = function(userId, stream) {
     // 기존 비디오 제거
     scwin.removeRemoteUser(userId);
@@ -491,7 +491,7 @@ scwin.displayRemoteVideo = function(userId, stream) {
     console.log("원격 비디오 표시 완료:", userId);
 };
 
-// ������ Offer 생성 및 전송
+// Offer 생성 및 전송
 scwin.createOffer = async function(targetUserId) {
     try {
         const peerConnection = scwin.createPeerConnection(targetUserId);
@@ -517,7 +517,7 @@ scwin.createOffer = async function(targetUserId) {
     }
 };
 
-// ������ Answer 생성 및 전송
+// Answer 생성 및 전송
 scwin.createAnswer = async function(targetUserId, offer) {
     try {
         const peerConnection = scwin.createPeerConnection(targetUserId);
@@ -544,7 +544,7 @@ scwin.createAnswer = async function(targetUserId, offer) {
     }
 };
 
-// ������ 화상통화 종료
+// 화상통화 종료
 scwin.leaveCall = async function() {
     try {
         scwin.showLoading("화상통화를 종료하는 중...");
@@ -597,7 +597,7 @@ scwin.leaveCall = async function() {
     }
 };
 
-// ������ 마이크 토글
+// 마이크 토글
 scwin.toggleMute = function() {
     if (!localStream) return;
     
@@ -612,7 +612,7 @@ scwin.toggleMute = function() {
     }
 };
 
-// ������ 비디오 토글
+// 비디오 토글
 scwin.toggleVideo = function() {
     if (!localStream) return;
     
@@ -627,7 +627,7 @@ scwin.toggleVideo = function() {
     }
 };
 
-// ������ 원격 사용자 제거
+// 원격 사용자 제거
 scwin.removeRemoteUser = function(userId) {
     const remoteVideoElement = document.getElementById(`remote-${userId}`);
     if (remoteVideoElement) {
