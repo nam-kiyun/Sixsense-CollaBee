@@ -226,9 +226,16 @@ scwin.onpageload = function() {
 			*[style*="linear-gradient"],
 			*[style*="background: white"],
 			*[id*="btn_"],
-			*[id*="feature_card"],
-			*[id*="Group_card"] {
+			*[id*="feature_card"] {
 				cursor: pointer !important;
+			}
+			
+			/* 플로팅 카드들은 기본 커서로 설정 */
+			*[id*="Group_card"],
+			#Group_card1,
+			#Group_card2,
+			#Group_card3 {
+				cursor: default !important;
 			}
 			
 			/* === 반응형 텍스트 처리 === */
@@ -244,7 +251,7 @@ scwin.onpageload = function() {
 				word-break: keep-all !important;
 				overflow: hidden !important;
 				text-overflow: ellipsis !important;
-				margin-left: 140px !important;
+				margin-left: 0px !important; 
 			}
 			
 			.sub-title,
@@ -257,14 +264,14 @@ scwin.onpageload = function() {
 				word-break: keep-all !important;
 				overflow: hidden !important;
 				text-overflow: ellipsis !important;
-				margin-left: 140px !important;
+				margin-left: 0px !important; 
 			}
 			
-			/* 첫번째 버튼 오른쪽 이동 */
+			/* 첫번째 버튼 왼쪽 정렬 */
 			#btn_start_free_1,
 			*[id="btn_start_free_1"],
 			*[style*="linear-gradient"] {
-				margin-left: 245px !important;
+				margin-left: 0px !important; /* 제목들과 같은 라인에서 시작 */
 			}
 			
 			.description,
@@ -276,6 +283,7 @@ scwin.onpageload = function() {
 				word-break: keep-all !important;
 				overflow: hidden !important;
 				text-overflow: ellipsis !important;
+				margin-left: 0px !important; /* 제목들과 같은 라인에서 시작 */
 			}
 			
 			/* CTA 섹션 텍스트 - 줄바꿈 방지하고 크기만 조절 */
@@ -367,23 +375,31 @@ scwin.onpageload = function() {
 				*[class*="main-title"],
 				*[style*="color:#0000FF"],
 				*[style*="초급 개발자를"] {
-					font-size: clamp(2.4rem, 5.5vw, 3rem) !important;
-					margin-left: 40px !important;
+					font-size: clamp(2.8rem, 6.5vw, 3.5rem) !important; /* 모바일에서 제목 크기 키움 */
+					margin-left: 0px !important; /* 다른 요소들과 같은 라인 */
 				}
 				
 				.sub-title,
 				*[class*="sub-title"],
 				*[style*="color:#FFC107"],
 				*[style*="올인원 협업"] {
-					font-size: clamp(2.4rem, 5.5vw, 3rem) !important;
-					margin-left: 40px !important;
+					font-size: clamp(2.8rem, 6.5vw, 3.5rem) !important; /* 모바일에서 제목 크기 키움 */
+					margin-left: 0px !important; /* 다른 요소들과 같은 라인 */
 				}
 				
 				/* 모바일에서 버튼 margin 조정 */
 				#btn_start_free_1,
 				*[id="btn_start_free_1"],
 				*[style*="linear-gradient"] {
-					margin-left: 85px !important;
+					margin-left: 0px !important; /* 제목들과 같은 라인 */
+				}
+				
+				/* 모바일에서 설명 텍스트도 조정 */
+				.description,
+				*[class*="description"],
+				*[style*="일정 관리부터"] {
+					margin-left: 0px !important; /* 제목들과 같은 라인 */
+					font-size: clamp(1.4rem, 4vw, 1.8rem) !important; /* 모바일에서 글자 크기 키움 */
 				}
 				
 				/* 모바일에서 설명 텍스트는 줄바꿈 허용 */
@@ -453,9 +469,9 @@ scwin.onpageload = function() {
 				}
 				
 				/* 인라인 스타일 강제 오버라이드 */
-				*[style*="margin-left: 140px"][style*="color:#0000FF"],
-				*[style*="margin-left: 140px"][style*="color:#FFC107"],
-				*[style*="margin-left: 245px"][style*="linear-gradient"] {
+				*[style*="margin-left: 50px"][style*="color:#0000FF"],
+				*[style*="margin-left: 50px"][style*="color:#FFC107"],
+				*[style*="linear-gradient"] {
 					margin-left: 0px !important;
 					margin-right: auto !important;
 					transform: translateX(0) !important;
@@ -464,8 +480,8 @@ scwin.onpageload = function() {
 				*[class*="main-title"],
 				*[style*="color:#0000FF"],
 				*[style*="초급 개발자를"],
-				*[style*="margin-left: 140px"] {
-					font-size: clamp(2rem, 4.5vw, 2.5rem) !important;
+				*[style*="margin-left: 50px"] {
+					font-size: clamp(2.4rem, 5.5vw, 3rem) !important; /* 작은 모바일에서도 제목 크기 키움 */
 					margin-left: 0px !important;
 					margin-right: auto !important;
 					text-align: left !important;
@@ -475,8 +491,8 @@ scwin.onpageload = function() {
 				*[class*="sub-title"],
 				*[style*="color:#FFC107"],
 				*[style*="올인원 협업"],
-				*[style*="margin-left: 140px"] {
-					font-size: clamp(2rem, 4.5vw, 2.5rem) !important;
+				*[style*="margin-left: 50px"] {
+					font-size: clamp(2.4rem, 5.5vw, 3rem) !important; /* 작은 모바일에서도 제목 크기 키움 */
 					margin-left: 0px !important;
 					margin-right: auto !important;
 					text-align: left !important;
@@ -485,8 +501,7 @@ scwin.onpageload = function() {
 				/* 작은 모바일에서 버튼 margin 조정 */
 				#btn_start_free_1,
 				*[id="btn_start_free_1"],
-				*[style*="linear-gradient"],
-				*[style*="margin-left: 245px"] {
+				*[style*="linear-gradient"] {
 					margin-left: 0px !important;
 					margin-right: auto !important;
 					display: block !important;
@@ -503,6 +518,7 @@ scwin.onpageload = function() {
 					word-break: keep-all !important;
 					overflow: visible !important;
 					text-overflow: unset !important;
+					margin-left: 0px !important; /* 작은 모바일에서는 왼쪽 끝 */
 				}
 				
 				/* 작은 모바일에서도 CTA 텍스트 줄바꿈 허용 */
@@ -554,29 +570,27 @@ scwin.onpageload = function() {
     		style="background:#FFF4D6;min-height: 80vh;display: flex;align-items: center;padding: 60px 20px;color: white;font-size:1em;margin-top: 60px;overflow: hidden;width: 100%;"
     		id="group_hero" class="hero-container">
     		<xf:group style="flex: 1;padding-right: 40px;padding-left: 10%;" id="hero_left" class="hero-left">
-    						<xf:output style="font-size: 3rem; font-weight: bold; margin-bottom: 10px;color:#0000FF;margin-left: 140px;" label="" id="" class="main-title">
+    						<xf:output style="font-size: 3rem; font-weight: bold; margin-bottom: 10px;color:#0000FF;margin-left: 50px;" label="" id="" class="main-title">
 				<xf:label><![CDATA[초급 개발자를 위한]]></xf:label>
 			</xf:output>
-			<xf:output style="font-size: 3rem; font-weight: bold;color:#FFC107; margin-bottom: 20px;margin-left: 140px;" label="" id="" class="sub-title">
+			<xf:output style="font-size: 3rem; font-weight: bold;color:#FFC107; margin-bottom: 20px;margin-left: 50px;" label="" id="" class="sub-title">
 				<xf:label><![CDATA[올인원 협업 플랫폼]]></xf:label>
 			</xf:output>
     			<xf:output style="font-size: 1.2rem; margin-bottom: 40px; opacity: 0.95;color:#000000;font-weight:bold;" label="" id="" class="description">
     				<xf:label><![CDATA[일정 관리부터 협업까지, 개발자가 필요한 모든 도구를 한 곳에서!]]></xf:label>
     			</xf:output>
     						<xf:trigger
-				style="background: linear-gradient(45deg, #FFB823, #f59e0b);color: white;border: none;border-radius: 50px;padding: 15px 35px;font-size: 1.1rem;font-weight: bold;box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);cursor: pointer;transition: all 0.3s ease;text-transform: none;margin-left: 245px;"
+				style="background: linear-gradient(45deg, #FFB823, #f59e0b);color: white;border: none;border-radius: 50px;padding: 15px 35px;font-size: 1.1rem;font-weight: bold;box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);cursor: pointer;transition: all 0.3s ease;text-transform: none;"
 				id="btn_start_free_1" type="button" ev:onclick="scwin.goToLogin">
 				<xf:label><![CDATA[무료로 시작하기]]></xf:label>
 			</xf:trigger>
     		</xf:group>
     		<xf:group style="flex:1;position: relative;height: 500px;overflow: hidden;padding-right: 5%;animation: cardFloat 4s ease-in-out infinite;" id="hero_right" class="hero-right">
     			<xf:group
-    				style="position: absolute;top: 60px;left: 20px;background: rgba(255,255,255,0.95);border-radius: 20px;padding: 20px;width: 140px;box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);text-align: center;animation: cardFloat 4s ease-in-out infinite;"
+    				style="position: absolute;top: 60px;left: 20px;background: rgba(255,255,255,0.95);border-radius: 20px;padding: 20px;width: 140px;box-shadow: 0 10px 15px rgba(245, 158, 11, 0.2);text-align: center;animation: cardFloat 4s ease-in-out infinite;"
     				id="Group_card1" class="floating-card floating-card-1">
-    				<xf:output style="font-size: 4rem;color: #FFB823;margin-bottom: 15px;display: block;text-align: center;line-height: 1;"
-    					label="" id="" class="fa-solid fa-calendar">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/calendar-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 15px auto;display: block;filter: brightness(0) saturate(100%) invert(65%) sepia(100%) saturate(1800%) hue-rotate(15deg) brightness(115%) contrast(120%);" />
+				
     								<xf:output style="width: 150px;height: 23px;color:black;font-weight:bold;text-align: center;margin-left: -5px;" label="" id="">
 					<xf:label><![CDATA[일정관리]]></xf:label>
 				</xf:output>
@@ -584,10 +598,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="position: absolute;top: 40px;left: 380px;background: rgba(255,255,255,0.95);border-radius: 20px;padding: 20px;width: 140px;box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);text-align: center;animation: cardFloat 4s ease-in-out infinite;"
     				id="Group_card2" class="floating-card floating-card-2">
-    				<xf:output style="font-size: 4rem;color: #1f2937;margin-bottom: 15px;display: block;text-align: center;line-height: 1;"
-    					label="" id="" class="fa-brands fa-github">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/github-brands.svg" style="width: 64px;height: 64px;margin: 0 auto 15px auto;display: block;filter: brightness(0) saturate(100%) invert(13%) sepia(11%) saturate(825%) hue-rotate(192deg) brightness(97%) contrast(90%);" />
+				
     								<xf:output style="width: 150px;height: 23px;color:black;font-weight:bold;text-align: center;margin-left: -5px;" label="" id="">
 					<xf:label><![CDATA[Git연동]]></xf:label>
 				</xf:output>
@@ -595,10 +607,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="position: absolute;top: 300px;left: 250px;background: rgba(255,255,255,0.95);border-radius: 20px;padding: 20px;width: 140px;box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);text-align: center;animation: cardFloat 4s ease-in-out infinite;"
     				id="Group_card3" class="floating-card floating-card-3">
-    				<xf:output style="font-size: 4rem;color: #10b981;margin-bottom: 15px;display: block;text-align: center;line-height: 1;"
-    					label="" id="" class="fa-solid fa-video">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/video-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 8px auto;display: block;filter: brightness(0) saturate(100%) invert(45%) sepia(100%) saturate(2000%) hue-rotate(210deg) brightness(105%) contrast(110%);" />
+				
     								<xf:output style="width: 150px;height: 23px;color:black;font-weight:bold;text-align: center;margin-left: -8px;" label="" id="">
 					<xf:label><![CDATA[화상통화]]></xf:label>
 				</xf:output>
@@ -619,10 +629,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
     				id="feature_card1">
-    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 55px;" label="" id=""
-    					class="fa-solid fa-clipboard-list">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/clipboard-list-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 25px auto;display: block;filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);" />
+				
     				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" label="" id="">
     					<xf:label><![CDATA[일정관리 & 칸반보드]]></xf:label>
     				</xf:output>
@@ -633,10 +641,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
     				id="feature_card2">
-    				<xf:output style="width: 150px;height: 23px;font-size: 4rem;color:black;margin-bottom: 45px;" label="" id=""
-    					class="fa-brands fa-github">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/github-brands.svg" style="width: 64px;height: 64px;margin: 0 auto 25px auto;display: block;filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);" />
+				
     				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" label="" id="">
     					<xf:label><![CDATA[GitHub 연동]]></xf:label>
     				</xf:output>
@@ -647,10 +653,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
     				id="feature_card3">
-    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 55px;" id="" label=""
-    					class="fa-solid fa-pencil">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/pencil-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 25px auto;display: block;filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);" />
+				
     				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" id="" label="">
     					<xf:label><![CDATA[실시간 동시편집]]></xf:label>
     				</xf:output>
@@ -661,10 +665,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
     				id="feature_card4">
-    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 45px;" id="" label=""
-    					class="fa-solid fa-video">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/video-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 25px auto;display: block;filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);" />
+				
     				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" id="" label="">
     					<xf:label><![CDATA[화상통화]]></xf:label>
     				</xf:output>
@@ -675,10 +677,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
     				id="feature_card5">
-    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 45px;" id="" label=""
-    					class="fa-solid fa-envelope">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/envelope-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 25px auto;display: block;filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);" />
+				
     				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" id="" label="">
     					<xf:label><![CDATA[스마트 알림]]></xf:label>
     				</xf:output>
@@ -689,10 +689,8 @@ scwin.onpageload = function() {
     			<xf:group
     				style="background: white;border-radius: 20px;padding: 40px 30px;width: 330px;box-shadow: 0 10px 30px rgba(0,0,0,0.1);text-align: center;transition: transform 0.3s ease;"
     				id="feature_card6">
-    				<xf:output style="width: 150px;height: 23px;color:black;font-size: 4rem;margin-bottom: 55px;" id="" label=""
-    					class="fa-solid fa-calendar">
-    					<xf:label></xf:label>
-    				</xf:output>
+    								<xf:image src="/InsWebApp/images/calendar-solid.svg" style="width: 64px;height: 64px;margin: 0 auto 25px auto;display: block;filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%);" />
+				
     				<xf:output style="font-size: 1.3rem;font-weight: bold;color: #1f2937;margin-bottom: 15px;" id="" label="">
     					<xf:label><![CDATA[통합 캘린더]]></xf:label>
     				</xf:output>

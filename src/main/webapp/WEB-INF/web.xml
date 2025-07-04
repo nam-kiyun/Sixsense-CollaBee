@@ -119,8 +119,12 @@
 		<servlet-name>action</servlet-name>
 		<url-pattern>*.fld</url-pattern>
 	</servlet-mapping>
-
-
+  
+	<!-- WebSocket 경로 추가 -->
+	<servlet-mapping>
+		<servlet-name>action</servlet-name>
+		<url-pattern>/chat</url-pattern>
+	</servlet-mapping>			
 	<!-- servlet>
 		<servlet-name>CXFServlet</servlet-name>
 		<servlet-class>
