@@ -353,7 +353,7 @@ scwin.createProjectAddModal = function () {
         id: uniqueModalId,  // 고유한 ID 사용
         type: "wframePopup",
         width: "500px",
-        height: "700px",
+        height: "750px",
         top: "100px",
         left: "" + ((window.screen.width / 2) - 250) + "px",
         popupName: "프로젝트 추가",
