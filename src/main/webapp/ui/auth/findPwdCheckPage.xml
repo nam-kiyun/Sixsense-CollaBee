@@ -100,7 +100,7 @@ scwin.input_onfocus = function (e) {
 };
 
 //메일전송 or 확인 버튼
-scwin.findPwd_button_onclick = function (e) {
+scwin.findPwd_button_onclick = async function (e) {
     if (findPwd_button.getValue() === "메일전송") {
         let param = {
             userId: email_input.getValue(),
@@ -129,7 +129,7 @@ scwin.findPwd_button_onclick = function (e) {
  
             $p.url("/InsWebApp/ui/auth/changePwdPage.xml", option);
         } else {
-            $c.win.alert("인증 코드가 일치하지 않습니다.");
+            await $c.win.alert("인증 코드가 일치하지 않습니다.");
         }
     }
 };

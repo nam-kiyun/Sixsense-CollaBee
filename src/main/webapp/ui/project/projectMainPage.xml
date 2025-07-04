@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map"/>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
+
+};
+
+scwin.new_task_onclick = function (e) {
+    //팝업 호출
+    //팝업 화면에 데이터를 전달 (dataObject를 통해 전달 가능)
+    // var jsnPopupData = {
+    //     "type": "json", // 데이터 유형. "json"을 권장
+    //     "name": "exam_param",  // 데이터를 가져오기 위한 파라미터 이름으로 팝업 화면에서 $p.getParameter("exam_param")로 추출할 수 있음
+    //     "data": {
+    //         "Personal_Info": { "Name": "Lee", "Age": 50, "Married": false },
+    //         "Region": "Seoul"
+    //     } // 실제 전달할 데이터
+    // };
+
+    // 팝업 생성 옵션 지정
+    var options = {
+        id: "exa_popup",
+        type: "wframePopup",
+        width: "600",
+        height: "400",
+        top: "100",
+        left: "200px",
+        popupName: "TASK",
+        modal: false,
+        closeAction: "scwin.popup_closeAction", 
+        customTitleBar: false
+    };
+
+    // 팝업 생성
+    $p.openPopup("./testModal.xml", options);
+
+};
+// 팝업 생성 옵션의 closeAction 함수 정의 예시
+scwin.popup_closeAction = function (argRuntimeID, argJsnInfo) {
+    var popObj = $p.getPopupWindow(argRuntimeID);
+    return true; //팝업 닫기 (반환 값이 true인 경우만 팝업이 닫힘)
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+    		style="">
+    		<xf:trigger type="button" style="width: 80px;height: 23px;" id="new_task" ev:onclick="scwin.new_task_onclick">
+    			<xf:label><![CDATA[TASK 생성]]></xf:label>
+    		</xf:trigger>
+    	</xf:group>
+    </body>
+</html>

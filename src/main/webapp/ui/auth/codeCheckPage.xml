@@ -89,7 +89,6 @@ scwin.onInputChar = function (e) {
     if (e.key !== "Backspace" && length === 1) {
         const nextNumber = currentNumber + 1;
         const nextInputId = 'mf_code_input' + nextNumber;
-        console.log(currentWsComponent.getValue().length);
 
         if (nextNumber <= 5) {
             const nextWsComponent = $p.getComponentById(nextInputId);
@@ -114,14 +113,9 @@ scwin.onInputChar = function (e) {
 
 };
 
-scwin.handleCodeInputKeyup = function (e) {
-    scwin.onInputChar(e);
-}
-
 //사용자 입력 코드와 인증코드 비교 함수
 scwin.codeCheck = function (e) {
     const code = scwin.code;
-    console.log(code);
 
     for (let i = 0; i < 5; i++) {
         if (code_input1.getValue().toString() !== code.charAt(i)) {
@@ -132,12 +126,12 @@ scwin.codeCheck = function (e) {
 }
 
 //회원가입 버튼가입 버튼
-scwin.signup_button_onclick = function (e) {
+scwin.signup_button_onclick = async function (e) {
     const now = new Date().getTime();
     const diffMinutes = (now - scwin.time) / (1000 * 60);
 
     if (diffMinutes > 10) {
-        $c.win.alert("인증 시간이 만료되었습니다. 이메일을 다시 전송해주세요.");
+        await $c.win.alert("인증 시간이 만료되었습니다. 이메일을 다시 전송해주세요.");
         return;
     }
 
@@ -146,27 +140,21 @@ scwin.signup_button_onclick = function (e) {
             userId: scwin.info.email,
             userName: scwin.info.name,
             password: scwin.info.password,
-            profileImageUrl: "",
-            isActive: "Y",
-            createdAt: "",
-            loginFailCount: "",
-            lastFailTime: "",
-            accountLocked: ""
         }
         dma_signupParam.setJSON(param);
 
         $c.sbm.execute(sbm_signup);
     } else {
-        $c.win.alert("인증 코드가 일치하지 않습니다.");
+        await $c.win.alert("인증 코드가 일치하지 않습니다.");
     }
 };
 
 //회원가입 완료
-scwin.sbm_signup_submitdone = function (e) {
+scwin.sbm_signup_submitdone = async function (e) {
     const responseData = e.responseJSON;
     console.log(responseData);
-    $c.win.alert("회원가입이 완료되었습니다.", function () {
-        //$p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/loginPage.xml");
+    await $c.win.alert("회원가입이 완료되었습니다.", function () {
+        $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/loginPage.xml");
     });
 };
 
@@ -197,28 +185,9 @@ scwin.startCountdown = function () {
     }, 1000);
 };
 
-// 전역(혹은 scwin 스코프)으로 이전 값 기억
-scwin._inputBeforeMap = {};
-
-scwin.onFocusInput = function (e) {
-    const id = e.target.id;
-    const comp = $p.getComponentById(id);
-    scwin._inputBeforeMap[id] = comp.getValue(); // 포커스 되었을 당시 값 저장
-};
-
+//input 다음 input으로 커서 가게 하는 기능
 scwin.onKeydownInput = function (e) {
-    const id = e.target.id;
-    const comp = $p.getComponentById(id);
-    const key = e.key;
-    const beforeValue = scwin._inputBeforeMap[id] || '';
-
-    if (key === 'Backspace') {
-        if (beforeValue === '') {
-            // 이전 input으로 이동
-        } else {
-            // 그대로 유지 (글자만 지워짐)
-        }
-    }
+    scwin.onInputChar(e);
 };
 ]]></script>
     	<style type="text/css"><![CDATA[]]></style>
@@ -240,20 +209,20 @@ scwin.onKeydownInput = function (e) {
 
     			<w2:textbox id="" label="쉽고 편하게 사용가능한 COLLABEE 사용하기" style="height: 23px;color: #DAD3D3;"></w2:textbox>
     			<xf:group style="" id="signup_group" class="code-input-group">
-    				<xf:input id="code_input1" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"
-    					dataType="number" ev:onfocus="scwin.onFocusInput" ev:onkeydown="scwin.onKeydownInput">
+    				<xf:input id="code_input1" style="" class="code-input" maxlength="1"
+    					dataType="number" ev:onkeydown="scwin.onKeydownInput" autocomplete="off">
     				</xf:input>
-    				<xf:input id="code_input2" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"
-    					dataType="number" ev:onkeydown="scwin.onKeydownInput" ev:onfocus="scwin.onFocusInput">
+    				<xf:input id="code_input2" style="" class="code-input" maxlength="1"
+    					dataType="number" ev:onkeydown="scwin.onKeydownInput" autocomplete="off">
     				</xf:input>
-    				<xf:input id="code_input3" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"
-    					dataType="number" ev:onkeydown="scwin.onKeydownInput" ev:onfocus="scwin.onFocusInput">
+    				<xf:input id="code_input3" style="" class="code-input" maxlength="1"
+    					dataType="number" ev:onkeydown="scwin.onKeydownInput" autocomplete="off">
     				</xf:input>
-    				<xf:input id="code_input4" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"
-    					dataType="number">
+    				<xf:input id="code_input4" style="" class="code-input" maxlength="1"
+    					dataType="number" autocomplete="off" ev:onkeydown="scwin.onKeydownInput">
     				</xf:input>
-    				<xf:input id="code_input5" style="" class="code-input" ev:onkeyup="scwin.handleCodeInputKeyup" maxlength="1"
-    					dataType="number">
+    				<xf:input id="code_input5" style="" class="code-input" maxlength="1"
+    					dataType="number" autocomplete="off" ev:onkeydown="scwin.onKeydownInput">
     				</xf:input>
     			</xf:group>
     			<xf:trigger type="button"

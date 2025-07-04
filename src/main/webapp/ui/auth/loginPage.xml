@@ -141,7 +141,7 @@ scwin.findPwd_button_onclick = function (e) {
 };
 
 //로그인 버튼 클릭
-scwin.login_button_onclick = function (e) {
+scwin.login_button_onclick = async function (e) {
     let email = email_input.getValue();
     let password = password_input.getValue();
     let isValid = true;
@@ -166,7 +166,7 @@ scwin.login_button_onclick = function (e) {
     // 2. reCAPTCHA 완료 여부
     // const token = grecaptcha.getResponse();
     // if (!token) {
-    //     alert("reCAPTCHA를 먼저 완료해주세요!");
+    //     await alert("reCAPTCHA를 먼저 완료해주세요!");
     //     return;
     // }
 
@@ -185,13 +185,13 @@ scwin.login_button_onclick = function (e) {
 
 
 //리캡챠 완료 실행
-scwin.sbm_rechapcher_submitdone = function (e) {
+scwin.sbm_rechapcher_submitdone = async function (e) {
     const responseData = e.responseJSON;
 
     if (responseData.verified) {
         $c.sbm.execute(sbm_login); //로그인 서브미션
     } else {
-        $c.win.alert("reCAPTCHA 인증에 실패했습니다. 다시 시도해주세요.");
+        await $c.win.alert("reCAPTCHA 인증에 실패했습니다. 다시 시도해주세요.");
     }
 };
 
@@ -203,32 +203,40 @@ scwin.sbm_recaptcha_submiterror = function (e) {
 
 
 //로그인 완료 실행
-scwin.sbm_login_submitdone = function (e) {
+scwin.sbm_login_submitdone = async function (e) {
     const responseData = e.responseJSON;
     console.log(responseData);
     if (responseData.elHeader.resMsg === "EL.ERROR.LOGIN.0002") {
-        $c.win.alert("로그인 정보가 올바르지 않습니다.");
+        await $c.win.alert("로그인 정보가 올바르지 않습니다.");
     } else if (responseData.elHeader.resMsg === "EL.ERROR.LOGIN.0001") {
-        $c.win.alert("존재하지 않는 ID 입니다.");
+        await $c.win.alert("존재하지 않는 ID 입니다.");
     } else if (responseData.elHeader.resMsg === "EL.ERROR.LOGIN.LOCKED") {
-        $c.win.alert("5회이상 로그인에 실패하여 <br/> 비밀번호 변경 페이지로 이동합니다.", function () {
+        await $c.win.alert("5회이상 로그인에 실패하여 <br/> 비밀번호 변경 페이지로 이동합니다.", function () {
             $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/findPwdCheckPage.xml");
         });
     } else if (responseData.elHeader.validateSuc) {
         let param = {
-           "userId": responseData.userHeader.userId,
-           "userName": responseData.userHeader.userName
+            "userId": responseData.userHeader.userId,
+            "userName": responseData.userHeader.userName
         }
         let option = {
             "spa": true,
             "param": param
         }
-
-        $p.url("/InsWebApp/ui/user/UserList.xml", option);
+        $p.url("/InsWebApp/ui/user/verifyPasswordPage.xml", option);
+        // $p.url("/InsWebApp/ui/user/UserList.xml", option);
     } else {
-        $c.win.alert("아이디 또는 비밀번호가 잘못 되었습니다.<br/> 아이디와 비밀번호를 정확히 입력해 주세요.");
+        await $c.win.alert("아이디 또는 비밀번호가 잘못 되었습니다.<br/> 아이디와 비밀번호를 정확히 입력해 주세요.");
     }
-};]]></script>
+};
+
+//엔터 누르면 로그인 버튼 클릭
+scwin.input_onkeyup = function (e) {
+    if (e.keyCode === 13) {
+        login_button.click();
+    }
+};
+]]></script>
     	<style type="text/css"><![CDATA[]]></style>
     </head>
     <body ev:onpageload="scwin.onpageload" style="padding: 0;margin: 0;;">
@@ -257,7 +265,7 @@ scwin.sbm_login_submitdone = function (e) {
     						</xf:output>
     						<xf:input class="input-group-container" id="email_input" placeholder="이메일을 입력하세요"
     							showPlaceHolderOnReadOnly="true" style="" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus"
-    							ref="data:dma_login.id">
+    							ref="data:dma_login.id" ev:onkeyup="scwin.input_onkeyup">
     						</xf:input>
     					</xf:group>
     					<w2:textbox id="email_error_text" label="" style="" class="error-text"></w2:textbox>
@@ -269,7 +277,7 @@ scwin.sbm_login_submitdone = function (e) {
     							<xf:label></xf:label>
     						</xf:output>
     						<xf:secret class="input-group-container" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus"
-    							id="password_input" placeholder="비밀번호를 입력하세요" style="" ref="data:dma_login.password">
+    							id="password_input" placeholder="비밀번호를 입력하세요" style="" ref="data:dma_login.password" ev:onkeyup="scwin.input_onkeyup">
     						</xf:secret>
     					</xf:group>
     					<w2:textbox id="password_error_text" label="" style="" class="error-text"></w2:textbox>

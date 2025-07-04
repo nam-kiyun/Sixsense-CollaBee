@@ -157,7 +157,7 @@ scwin.signup_button_onclick = function (e) {
 
 
     if (password && !pwRegex.test(password)) {
-        password_error_text.setValue("*비밀번호는 8자 이상이며 <br/> 영문자·숫자·특수문자를 포함해야 합니다.");
+        password_error_text.setValue("*비밀번호는 8자 이상이며 영문자·숫자·특수문자를 포함해야 합니다.");
         isValid = false;
     }
 
@@ -199,8 +199,6 @@ scwin.sbm_email_submitdone = function (e) {
         }
 
         $p.url("/InsWebApp/ui/auth/codeCheckPage.xml", option);
-
-        //$p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/codeCheckPage.xml");
     } else {
         alert("잘못된 이메일 주소입니다");
     }
@@ -216,18 +214,9 @@ scwin.sbm_email_submiterror = function (e) {
 scwin.emailCheck_button_onclick = function (e) {
     let param = {
         userId: email_input.getValue(),
-        userName: "",
-        password: "",
-        profileImageUrl: "",
-        isActive: "",
-        createdAt: "",
-        loginFailCount: "",
-        lastFailTime: "",
-        accountLocked: ""
     }
 
     dma_emailCheck.setJSON(param);
-    console.log(dma_emailCheck.getJSON());
     $c.sbm.execute(sbm_checkEmail);
 };
 

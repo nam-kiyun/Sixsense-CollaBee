@@ -23,19 +23,12 @@
 		USER_ID
 		<if test="userName  != null"> , USER_NAME         </if>
 		<if test="password  != null"> , PASSWORD          </if>
-		<if test="profileImageUrl != null "> , PROFILE_IMAGE_URL </if>
-		<if test="isActive  != null"> , IS_ACTIVE         </if>
-		<if test="createdAt != null and createdAt != ''"> , CREATED_AT        </if>
 		)
 		VALUES
 		(
 		#{userId}
 		<if test="userName        != null"> , #{userName}         </if>
 		<if test="password         != null"> , #{password}          </if>
-		<if test="profileImageUrl!= null"> , #{profileImageUrl} </if>
-		<if test="isActive        != null"> , #{isActive}         </if>
-		<if test="createdAt       != null and createdAt != ''"> , #{createdAt}        </if>
-
 		)
 	</insert>
 
