@@ -14,6 +14,7 @@ import com.demo.proworks.project.vo.ProjectListVo;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
 import com.inswave.elfw.annotation.ElValidator;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 /**  
  * @subject     : 프로젝트 정보 관련 처리를 담당하는 컨트롤러
@@ -81,9 +82,9 @@ public class ProjectController {
      * @param  projectVo 프로젝트 정보
      * @throws Exception
      */
-    @ElService(key="ProjectIns")    
-    @RequestMapping(value="ProjectIns")
-    @ElDescription(sub="프로젝트 정보 등록처리",desc="프로젝트 정보를 등록 처리 한다.")
+    @ElService(key = "project/create")    
+    @RequestMapping(value = "project/create")
+    @ElDescription(sub = "프로젝트 정보 등록처리", desc = "프로젝트 정보를 등록 처리 한다.")
     public void insertProject(ProjectVo projectVo) throws Exception {    	 
     	projectService.insertProject(projectVo);   
     }

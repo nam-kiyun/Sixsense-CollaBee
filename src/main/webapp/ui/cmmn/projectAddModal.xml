@@ -203,6 +203,7 @@ scwin.initModal = function() {
         
         // 팀장 인풋을 읽기전용으로 설정
         if (input_teamName) {
+            input_teamName.setValue(teamName);
             input_teamName.setReadOnly(true);
         }
         
@@ -222,15 +223,15 @@ scwin.initModal = function() {
 };
 
 // 모달 닫기
-scwin.closeModal = function() {
-    try {
-        // WebSquare 팝업 닫기
-        $p.closePopup();
-        console.log("모달 닫기 완료");
-    } catch(e) {
-        console.error("모달 닫기 오류:", e);
-    }
-};
+// scwin.closeModal = function() {
+//     try {
+//         // WebSquare 팝업 닫기
+//         $p.closePopup();
+//         console.log("모달 닫기 완료");
+//     } catch(e) {
+//         console.error("모달 닫기 오류:", e);
+//     }
+// };
 
 // 저장 버튼 클릭
 scwin.btn_save_onclick = function(e) {
@@ -260,7 +261,7 @@ scwin.btn_save_onclick = function(e) {
 // [추가] 서브미션 성공 시 처리
 scwin.sbm_saveProject_submitdone = function(e) {
     alert("프로젝트가 성공적으로 저장되었습니다!");
-    scwin.closeModal(); // 모달 닫기
+    $p.parent().popup_closeAction();
     
     // 부모 창의 refreshSideMenu 함수 호출 (필요시 주석 해제)
     var parentFrame = $p.parent();

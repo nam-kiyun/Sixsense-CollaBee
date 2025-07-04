@@ -381,6 +381,18 @@ scwin.createProjectAddModal = function () {
     }
 };
 
+// 사이드메뉴 새로고침
+scwin.refreshSideMenu = function () {
+    try {
+        if (wfr_sideMenu) {
+            wfr_sideMenu.setSrc(wfr_sideMenu.getSrc());
+            console.log("사이드메뉴 새로고침 완료");
+        }
+    } catch (e) {
+        console.log("사이드메뉴 새로고침 오류:", e);
+    }
+};
+
 // 팝업 닫기 액션 (최종 버전)
 scwin.popup_closeAction = function(argRuntimeID, argJsnInfo) {
     console.log("팝업 닫기 액션 호출:", argRuntimeID);
