@@ -245,7 +245,7 @@ scwin.btn_addProject_onclick = function(e) {
                     
                     <!-- 선택 표시 바 -->
                     <xf:group 
-                        style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:24px;background-color:#ffb823;"
+                        style="position:absolute;left:0;top:50%;transform:translateY(-50%) !important;width:3px;height:24px;background-color:#ffb823;"
                         id="grp_activeBar_dashboard"/>
                     
                     <xf:output style="color:#000000;font-size:24px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;" id="output_dashboard">
