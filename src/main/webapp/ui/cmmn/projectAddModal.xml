@@ -43,7 +43,6 @@
 			font-weight: 600;
 			}
 
-			/* 입력 필드 */
 			.input-group-modal {
 			margin-bottom: 20px;
 			}
@@ -162,9 +161,6 @@
 						<w2:key id="createdAt" name="생성일시" dataType="text" />
 						<w2:key id="emailSendTime" name="이메일전송시간" dataType="text" />
 						<w2:key id="userId" name="사용자ID" dataType="text" />
-						<w2:key id="teamName" name="팀명" dataType="text" />
-						<w2:key id="hour" name="시간" dataType="text" />
-						<w2:key id="minute" name="분" dataType="text" />
 					</w2:keyInfo>
 					<w2:data use="true">
 						<projectId></projectId>
@@ -174,15 +170,15 @@
 						<createdAt></createdAt>
 						<emailSendTime></emailSendTime>
 						<userId></userId>
-						<teamName>식스센스</teamName>
-						<hour>00</hour>
-						<minute>00</minute>
+						
+						
+						
 					</w2:data>
 				</w2:dataMap>
 			</w2:dataCollection>
 			<w2:workflowCollection />
 			<xf:submission id="sbm_saveProject" action="/InsWebApp/project/create.pwkjson" method="post" mediatype="application/json"
-				ref='data:json,{"id":"dm_projectForm","key":"ProjectVo"}' encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+				ref='data:json,{"id":"dm_projectForm","key":"projectVo"}' encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
 				processMsg="프로젝트 저장 중..." ev:submitdone="scwin.sbm_saveProject_submitdone" ev:submiterror="scwin.sbm_saveProject_submiterror" />
 		</xf:model>
 		<w2:layoutInfo />
@@ -191,41 +187,66 @@
 scwin.onpageload = function() {
     // 모달 초기화
     scwin.initModal();
+    // scwin.modalId = $p.parent().scwin.modalManager.modalId;
+    // scwin.modalArgJsnInfo = {isCloseButtonClick: true}
+    // console.log(scwin.modalId);
+    // console.log(scwin.modalClose);
 };
+
+scwin.modalClose = function(argRuntimeID) {
+    try {
+        // 팝업 객체 접근
+        let popObj = $p.getPopupWindow(argRuntimeID);
+        
+        // 모달 상태 초기화
+        scwin.modalManager.isModalOpen = false;
+        scwin.modalManager.modalInstance = null;
+        
+        console.log("팝업 닫기 액션 완료");
+        
+        return true; // 팝업 닫기 허용
+        
+    } catch (e) {
+        console.error("팝업 닫기 액션 오류:", e);
+        
+        // 오류가 있어도 레이아웃과 모달 상태는 초기화
+        scwin.modalManager.isModalOpen = false;
+        scwin.modalManager.modalInstance = null;
+        
+        return true; // 팝업 닫기 허용
+    }
+}
 
 // 모달 초기화
 scwin.initModal = function() {
     try {
-        // 팝업 파라미터에서 teamName 가져오기 - dataObject 방식
-        const popupParam = $p.getParameter("project_param");
-        let teamName = "식스센스"; // 기본값
-        
-        if (popupParam && popupParam.teamName) {
-            teamName = popupParam.teamName;
-            console.log("팝업 파라미터에서 팀장명 가져옴:", teamName);
+        // 팝업 파라미터에서 userName 가져오기 - dataObject 방식
+        let popupParam = $p.getParameter("project_param");
+        let userName = "식스센스"; // 기본값
+        if (popupParam && popupParam.userName) {
+            userName = popupParam.userName;
+            console.log("팝업 파라미터에서 팀장명 가져옴:", userName);
         } else {
-            console.log("팝업 파라미터가 없어 기본값 사용:", teamName);
+            console.log("팝업 파라미터가 없어 기본값 사용:", userName);
         }
         
         // 기본값 설정 - ProjectVo에 맞추어 모든 필드 초기화
-        dm_projectForm.set("projectId", "");
-        dm_projectForm.set("projectName", "2차 프로젝트");
-        dm_projectForm.set("description", "");
-        dm_projectForm.set("projectImageUrl", "");
-        dm_projectForm.set("createdAt", "");
-        dm_projectForm.set("emailSendTime", "");
-        dm_projectForm.set("userId", "");
-        dm_projectForm.set("teamName", teamName);
-        dm_projectForm.set("hour", "00");
-        dm_projectForm.set("minute", "00");
+        // dm_projectForm.set("projectId", "");
+        // dm_projectForm.set("projectName", "2차 프로젝트");
+        // dm_projectForm.set("description", "");
+        // dm_projectForm.set("projectImageUrl", "");
+        // dm_projectForm.set("createdAt", "");
+        // dm_projectForm.set("emailSendTime", "");
+        // dm_projectForm.set("userId", "");
+        // dm_projectForm.set("userName", userName);
         
         // 팀장 인풋을 읽기전용으로 설정
-        if (input_teamName) {
-            input_teamName.setValue(teamName);
-            input_teamName.setReadOnly(true);
+        if (input_userName) {
+            input_userName.setValue(userName);
+            input_userName.setReadOnly(true);
         }
         
-        console.log("프로젝트 추가 모달 초기화 완료 - 팀장:", teamName);
+        console.log("프로젝트 추가 모달 초기화 완료 - 팀장:", userName);
     } catch(e) {
         console.error("모달 초기화 오류:", e);
         // 오류 발생 시 기본값 설정 - ProjectVo에 맞추어 모든 필드 초기화
@@ -236,12 +257,12 @@ scwin.initModal = function() {
         dm_projectForm.set("createdAt", "");
         dm_projectForm.set("emailSendTime", "");
         dm_projectForm.set("userId", "");
-        dm_projectForm.set("teamName", "식스센스");
+        dm_projectForm.set("userName", "식스센스");
         dm_projectForm.set("hour", "00");
         dm_projectForm.set("minute", "00");
         
-        if (input_teamName) {
-            input_teamName.setReadOnly(true);
+        if (input_userName) {
+            input_userName.setReadOnly(true);
         }
     }
 };
@@ -250,32 +271,47 @@ scwin.initModal = function() {
 scwin.btn_save_onclick = function(e) {
     try {
         let projectName = dm_projectForm.get("projectName");
-        let teamName = dm_projectForm.get("teamName");
-        
+        // let userName = dm_projectForm.get("userName");
+        let popupParam = $p.getParameter("project_param");
+        // let modalId = $p.parent().scwin.modalManager.modalId;
         if (!projectName || projectName.trim() === "") {
             alert("프로젝트명을 입력해주세요.");
             return;
         }
         
-        if (!teamName || teamName.trim() === "") {
-            alert("팀장명을 입력해주세요.");
-            return;
-        }
+        // if (!userName || userName.trim() === "") {
+        //     alert("팀장명을 입력해주세요.");
+        //     return;
+        // }
         
+        // hour와 minute를 조립해서 emailSendTime에 설정
+        // const hour = dm_projectForm.get("hour") || "00";
+        // const minute = dm_projectForm.get("minute") || "00";
+        const hour = scwin.validateTimeInput(input_hour.getValue(), 23);
+        const minute = scwin.validateTimeInput(input_minute.getValue(), 59);
+        const emailSendTime = hour + ":" + minute;
+        dm_projectForm.set("emailSendTime", emailSendTime);
+        console.log(emailSendTime);
+        dm_projectForm.set("userId",popupParam.userId);
+        console.log(popupParam.userId);
+        dm_projectForm.set("description",input_description.getValue());
         // 서브미션 실행
         $c.sbm.execute(sbm_saveProject);
-        
+        // scwin.modalClose(scwin.modalId,modalArgJsnInfo);
+        scwin.modalClose(scwin.modalId);
     } catch(e) {
         console.error("프로젝트 저장 오류:", e);
         alert("프로젝트 저장 중 오류가 발생했습니다.");
+        scwin.modalClose(scwin.modalId,modalArgJsnInfo);
     }
 };
 
 // 서브미션 성공 시 처리
 scwin.sbm_saveProject_submitdone = function(e) {
     alert("프로젝트가 성공적으로 저장되었습니다!");
-    $p.parent().popup_closeAction();
-    
+    // $p.parent().scwin.popup_closeAction();
+    console.log(1);
+    $p.parent().scwin.popup_closeAction;
     // 부모 창의 refreshSideMenu 함수 호출 (필요시 주석 해제)
     const parentFrame = $p.parent();
     if (parentFrame && parentFrame.scwin && parentFrame.scwin.refreshSideMenu) {
@@ -306,15 +342,15 @@ scwin.validateTimeInput = function(inputValue, maxValue) {
     }
 };
 
-// 시간 입력 키보드 이벤트
-scwin.input_hour_onkeyup = function(e) {
-    dm_projectForm.set("hour", scwin.validateTimeInput(e.target.value, 23));
-};
+// // 시간 입력 키보드 이벤트
+// scwin.input_hour_onkeyup = function(e) {
+//     dm_projectForm.set("hour", scwin.validateTimeInput(e.target.value, 23));
+// };
 
-// 분 입력 키보드 이벤트
-scwin.input_minute_onkeyup = function(e) {
-    dm_projectForm.set("minute", scwin.validateTimeInput(e.target.value, 59));
-};
+// // 분 입력 키보드 이벤트
+// scwin.input_minute_onkeyup = function(e) {
+//     dm_projectForm.set("minute", scwin.validateTimeInput(e.target.value, 59));
+// };
 ]]></script>
 	</head>
 	<body ev:onpageload="scwin.onpageload">
@@ -331,7 +367,7 @@ scwin.input_minute_onkeyup = function(e) {
 			<!-- 이름 입력 -->
 			<xf:group class="input-group-modal" id="grp_nameInput">
 				<xf:output class="input-label" id="label_name">
-					<xf:label><![CDATA[이름]]></xf:label>
+					<xf:label><![CDATA[포르젝트 이름]]></xf:label>
 				</xf:output>
 				<xf:input class="input-field" id="input_projectName" ref="dm_projectForm.projectName" ev:onkeyup="scwin.input_name_onkeyup" />
 			</xf:group>
@@ -349,7 +385,7 @@ scwin.input_minute_onkeyup = function(e) {
 				<xf:output class="input-label" id="label_team">
 					<xf:label><![CDATA[팀장]]></xf:label>
 				</xf:output>
-				<xf:input class="input-field-readonly" id="input_teamName" ref="dm_projectForm.teamName" readOnly="true" />
+				<xf:input class="input-field-readonly" id="input_userName" ref="dm_projectForm.teamName" readOnly="true" />
 			</xf:group>
 
 			<!-- 매일 밤 9 시간 입력 -->

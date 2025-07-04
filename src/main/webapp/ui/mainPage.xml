@@ -331,25 +331,24 @@ scwin.cleanupModal = function() {
 
 // 프로젝트 추가 모달 생성 (강화된 버전)
 scwin.createProjectAddModal = function () {
-    console.log("WebSquare 방식으로 모달 생성 시작");
-
     // mainPage의 userInfo에서 userName 가져오기
-    var userName = dm_userInfo.get("userName") || "식스센스";
-    
+    let userName = dm_userInfo.get("userName") || "식스센스";
+    let userId = dm_userInfo.get("userId");
     // 팝업 화면에 데이터를 전달
-    var jsnPopupData = {
+    let jsnPopupData = {
         "type": "json",
         "name": "project_param",
         "data": {
-            "teamName": userName
+            "userName": userName,
+            "userId": userId
         }
     };
 
     // 고유한 모달 ID 생성 (시간 기반)
-    var uniqueModalId = scwin.modalManager.modalId + "_" + new Date().getTime();
+    let uniqueModalId = scwin.modalManager.modalId + "_" + new Date().getTime();
 
     // 팝업 생성 옵션 지정
-    var options = {
+    let options = {
         id: uniqueModalId,  // 고유한 ID 사용
         type: "wframePopup",
         width: "500px",
@@ -395,8 +394,9 @@ scwin.refreshSideMenu = function () {
 
 // 팝업 닫기 액션 (최종 버전)
 scwin.popup_closeAction = function(argRuntimeID, argJsnInfo) {
+    debugger;
     console.log("팝업 닫기 액션 호출:", argRuntimeID);
-    
+    console.log(argJsnInfo);
     try {
         // 팝업 객체 접근
         let popObj = $p.getPopupWindow(argRuntimeID);
