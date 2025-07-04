@@ -18,6 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,10 +35,6 @@ import com.inswave.elfw.annotation.ElService;
 import com.inswave.elfw.log.AppLog;
 import com.inswave.elfw.login.LoginInfo;
 import com.inswave.elfw.login.LoginProcessor;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import com.inswave.elfw.annotation.ElValidator;
 
 /**
  * @subject : 사용자 정보 관련 처리를 담당하는 컨트롤러
@@ -174,11 +171,25 @@ public class UserController {
 	 * @return 단건 조회 결과
 	 * @throws Exception
 	 */
-	@ElService(key = "user/{userId}")
-	@RequestMapping(value = "user/{userId}")
+	@ElService(key = "user/checkpassword")
+	@RequestMapping(value = "user/checkpassword")
 	@ElDescription(sub = "사용자 정보 갱신 폼을 위한 조회", desc = "사용자 정보 갱신 폼을 위한 조회를 한다.")
 	public UserVo selectUser(UserVo userVo) throws Exception {
+		// 사용자 조회
 		UserVo selectUserVo = userService.selectUser(userVo);
+
+		if (selectUserVo == null) {
+			throw new IllegalArgumentException("사용자 정보가 존재하지 않습니다.");
+		}
+
+		// 비밀번호 비교
+		String rawPassword = userVo.getPassword();
+
+		String encodedPassword = selectUserVo.getPassword();
+
+		if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
+			throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+		}
 
 		return selectUserVo;
 	}
@@ -218,7 +229,7 @@ public class UserController {
 	}
 
 	/**
-	 * 사용자 정보를 갱신 처리 한다.
+	 * 사용자 비밀번호를 업데이트 한다
 	 *
 	 * @param userVo 사용자 정보
 	 * @throws Exception
@@ -233,6 +244,12 @@ public class UserController {
 		userService.updateUser(userVo);
 	}
 
+	/**
+	 * 사용자 정보를 업데이트 한다
+	 *
+	 * @param userVo 사용자 정보
+	 * @throws Exception
+	 */
 	@ElService(key = "user/update")
 	@RequestMapping(value = "user/update")
 	@ElDescription(sub = "FormData 사용자 정보 갱신", desc = "파일 포함 사용자 정보 갱신")
@@ -250,7 +267,7 @@ public class UserController {
 		// 2. S3 업로드
 //		if (file != null && !file.isEmpty()) {
 //			String originalName = file.getOriginalFilename();
-//			String s3Key = System.currentTimeMillis() + "_" + originalName;
+//			String s3Key = "userImage/" + System.currentTimeMillis() + "_" + originalName;
 //
 //			ObjectMetadata metadata = new ObjectMetadata();
 //			metadata.setContentLength(file.getSize());
@@ -259,16 +276,15 @@ public class UserController {
 //			amazonS3.putObject(new PutObjectRequest(bucketName, s3Key, file.getInputStream(), metadata));
 //
 //			String fileUrl = "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/" + s3Key;
-//			userVo.setProfileImageUrl(fileUrl); // ✔ 업로드된 이미지 URL을 VO에 세팅
-//			System.out.println("저장완료: "  + fileUrl);
+//			userVo.setProfileImageUrl(fileUrl);
+//			System.out.println("저장완료: " + fileUrl);
 //		} else {
 //			System.out.println("첨부된 파일이 없습니다.");
 //		}
-//
-//		System.out.println("사용자 정보 (FormData): " + userVo.toString());
 
-		// TODO: 최종 사용자 정보 저장 처리
-		// userService.updateUser(userVo);
+		System.out.println("사용자 정보 (FormData): " + userVo.toString());
+
+		userService.updateUser(userVo);
 	}
 
 	/**

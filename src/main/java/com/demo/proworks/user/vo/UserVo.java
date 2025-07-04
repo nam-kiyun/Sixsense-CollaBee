@@ -19,7 +19,7 @@ public class UserVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "user_name", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userName;
 
-    @ElDtoField(logicalName = "password", physicalName = "password", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "IO+DB", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    @ElDtoField(logicalName = "password", physicalName = "password", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String password;
 
     @ElDtoField(logicalName = "profile_image_url", physicalName = "profileImageUrl", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
@@ -39,10 +39,6 @@ public class UserVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElDtoField(logicalName = "account_locked", physicalName = "accountLocked", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String accountLocked;
-
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    @ElDtoField(logicalName = "fileData", physicalName = "fileData", type = "MultipartFile", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private org.springframework.web.multipart.MultipartFile fileData;
 
     @ElVoField(physicalName = "userId")
     public String getUserId(){
@@ -69,13 +65,12 @@ public class UserVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElVoField(physicalName = "password")
     public String getPassword(){
         String ret = this.password;
-        ret = com.inswave.elfw.security.ElCryptoUtil.getEncrypt("", ret, true, true);
         return ret;
     }
 
     @ElVoField(physicalName = "password")
     public void setPassword(String password){
-        this.password = com.inswave.elfw.security.ElCryptoUtil.getDecrypt("", password, true, true);
+        this.password = password;
     }
 
     @ElVoField(physicalName = "profileImageUrl")
@@ -143,30 +138,19 @@ public class UserVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.accountLocked = accountLocked;
     }
 
-    @ElVoField(physicalName = "fileData")
-    public org.springframework.web.multipart.MultipartFile getFileData(){
-        return fileData;
-    }
-
-    @ElVoField(physicalName = "fileData")
-    public void setFileData(org.springframework.web.multipart.MultipartFile fileData){
-        this.fileData = fileData;
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("UserVo [");
         sb.append("userId").append("=").append(userId).append(",");
         sb.append("userName").append("=").append(userName).append(",");
-        sb.append("password").append("=").append(this.getPassword()).append(",");
+        sb.append("password").append("=").append(password).append(",");
         sb.append("profileImageUrl").append("=").append(profileImageUrl).append(",");
         sb.append("isActive").append("=").append(isActive).append(",");
         sb.append("createdAt").append("=").append(createdAt).append(",");
         sb.append("loginFailCount").append("=").append(loginFailCount).append(",");
         sb.append("lastFailTime").append("=").append(lastFailTime).append(",");
-        sb.append("accountLocked").append("=").append(accountLocked).append(",");
-        sb.append("fileData").append("=").append(fileData);
+        sb.append("accountLocked").append("=").append(accountLocked);
         sb.append("]");
         return sb.toString();
 
@@ -178,13 +162,11 @@ public class UserVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @Override
     public void _xStreamEnc() {
-        this.password = getPassword();
     }
 
 
     @Override
     public void _xStreamDec() {
-        setPassword(this.password);
     }
 
 

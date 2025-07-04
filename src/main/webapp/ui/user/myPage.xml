@@ -8,9 +8,18 @@
     	<w2:MSA />
     	<xf:model>
     		<w2:dataCollection baseNode="map">
-    			<w2:dataMap baseNode="map" id="dataMap1">
+    			<w2:dataMap baseNode="map" id="dma_Param">
     				<w2:keyInfo>
-    					<w2:key dataType="text" name="name1" id="key1"></w2:key>
+    					<w2:key dataType="text" name="아이디" id="userId"></w2:key>
+    					<w2:key dataType="text" name="이름" id="userName"></w2:key>
+    					<w2:key dataType="text" name="비밀번호" id="password"></w2:key>
+    					<w2:key dataType="text" name="이미지 URL" id="profileImageUrl"></w2:key>
+    					<w2:key dataType="text" name="상태" id="isActive"></w2:key>
+    					<w2:key dataType="text" name="가입일" id="createdAt"></w2:key>
+    					<w2:key dataType="text" name="로그인 실패 횟수" id="loginFailCount"></w2:key>
+    					<w2:key dataType="text" name="로그인 실패 시간" id="lastFailTime"></w2:key>
+    					<w2:key dataType="text" name="계정 잠금 여부" id="accountLocked"></w2:key>
+    					<w2:key dataType="text" name="파일" id="fileData"></w2:key>
     				</w2:keyInfo>
     			</w2:dataMap>
     		</w2:dataCollection>
@@ -24,7 +33,15 @@ scwin.onpageload = function () {
 
     //전역변수
     scwin.file = "";
-};
+    scwin.userId = $p.getParameter("userId");
+    scwin.userName = $p.getParameter("userName");
+    scwin.profileImageUrl = $p.getParameter("profileImageUrl");
+    name_input.setValue(scwin.userName);
+    email_input.setValue(scwin.userId)
+    if (scwin?.profileImageUrl) {
+        profile_button.setStyle("background-image", `url('${scwin.profileImageUrl}')`);
+    }
+}
 
 scwin.onresize = function (e) {
     // resize 이벤트 정의
@@ -68,35 +85,70 @@ scwin.fileInput_change = function (e) {
 
     if (!file) return;
     scwin.file = file;
+
+    const imageUrl = URL.createObjectURL(file);
+    profile_button.setStyle("background-image", `url('${imageUrl}')`);
 }
 
 //회원정보 수정된거 저장하는 버튼
 scwin.update_button_onclick = function (e) {
+    let password = password_input.getValue();
+    let passwordCheck = passwordCheck_input.getValue();
+
+    let isValid = true;
+    let pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+={}\[\]:;"'<>,.?/-]).{8,}$/;
+
+    // 1. 비밀번호
+    if (!password) {
+        password_error_text.setValue("*비밀번호를 입력해주세요.");
+        isValid = false;
+    } else {
+        password_error_text.setValue("");
+    }
+
+    // 2. 비밀번호 확인
+    if (!passwordCheck) {
+        passwordCheck_error_text.setValue("*비밀번호 확인을 입력해주세요.");
+        isValid = false;
+    }
+    else {
+        passwordCheck_error_text.setValue("");
+    }
+
+
+    if (password && !pwRegex.test(password)) {
+        password_error_text.setValue("*비밀번호는 8자 이상이며 영문자·숫자·특수문자를 포함해야 합니다.");
+        isValid = false;
+    }
+
+    // 비밀번호 일치 검사
+    if (password && passwordCheck && password !== passwordCheck) {
+        passwordCheck_error_text.setValue("*비밀번호가 일치하지 않습니다.");
+        isValid = false;
+    }
+
+    if (!isValid) return;
+
+
     const formData = new FormData();
 
     // 빈 값으로 필드 세팅
-    formData.append("userId", "");
-    formData.append("userName", "");
-    formData.append("password", "");
-    formData.append("profileImageUrl", "");
-    formData.append("isActive", "");
-    formData.append("createdAt", "");
-    formData.append("loginFailCount", 0);
-    formData.append("lastFailTime", "");
-    formData.append("accountLocked", "");
+    formData.append("userId", scwin.userId);
+    formData.append("userName", name_input.getValue());
+    formData.append("password", password_input.getValue());
     formData.append("fileData", scwin.file);
 
     $.ajax({
-        url: "/InsWebApp/user/update.pwkjson",  // 반드시 .pwk!
+        url: "/InsWebApp/user/update.pwkjson",
         type: "POST",
         data: formData,
         processData: false,
         contentType: false,
         success: function (res) {
-            console.log("✅ 성공:", res);
+            console.log("성공:", res);
         },
         error: function (err) {
-            console.error("❌ 실패:", err);
+            console.error("실패:", err);
         }
     });
 
@@ -141,14 +193,15 @@ scwin.update_button_onclick = function (e) {
 }
 
 /* input group 별 스타일 */
-.input-group-header{
-     width: 100%;
+.input-group-header {
+    width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: row;
     gap: 20%;
 }
+
 .input-group {
     width: 100%;
     display: flex;
@@ -156,6 +209,30 @@ scwin.update_button_onclick = function (e) {
     align-items: center;
     flex-direction: row;
     gap: 25px;
+    border: none;
+    outline: none;
+}
+
+.form-input-group {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    border: none;
+    outline: none;
+    gap: 10px;
+}
+
+.form-input-box {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    border: none;
+    outline: none;
+    gap:25px;
 }
 
 /* 프로필 이미지 그룹 */
@@ -169,7 +246,7 @@ scwin.update_button_onclick = function (e) {
     width: 150px;
     height: 150px;
     border-radius: 50%;
-    background-image: url('https://i.ibb.co/3493r17/cat.jpg');
+    background-image: url('https://github.com/dorazi0423/test/blob/main/group1.png?raw=true');
     background-size: cover;
     background-position: center;
 }
@@ -195,7 +272,7 @@ scwin.update_button_onclick = function (e) {
     display: none;
 }
 
-.name-input{
+.name-input {
     width: 35%;
     height: 45px;
     font-size: 20px;
@@ -212,14 +289,39 @@ scwin.update_button_onclick = function (e) {
     gap: 25px;
 }
 
-.input-content-group .content-input{
+.input-content-group .content-input {
     width: 50%;
     height: 45px;
 }
 
-.input-content-group .content-text{
+.input-content-group .content-text {
     width: 25%;
+    padding-top: 5px;
+    box-sizing: border-box;
 }
+
+/* 이메일 input */
+.email-input {
+    border: none;
+    outline: none;
+    pointer-events: none;
+    user-select: none;
+}
+
+
+.error-text {
+    width: 75%;
+    height: 23px;
+    font-size: 11px;
+    text-align: right;
+    color: red;
+    margin: 0;
+}
+
+.emal-error{
+    height:10px;
+}
+
 
 /*  ------------------------------------------------------------------------ */
 /* 버튼 */
@@ -258,20 +360,29 @@ scwin.update_button_onclick = function (e) {
     						</xf:trigger>
     						<input style="display:none;" id="fileInput_hidden" type="file" class="" onchange="scwin.fileInput_change"></input>
     					</xf:group>
-    					<xf:input style="" id="" class="name-input"></xf:input>
+    					<xf:input style="" id="name_input" class="name-input"></xf:input>
     				</xf:group>
     				<xf:group style="" id="" class="input-content-group">
-    					<xf:group style="" id="" class="input-group">
-    						<w2:textbox style="" id="" label="이메일" class="content-text"></w2:textbox>
-    						<xf:input style="" id="email_input" class="content-input"></xf:input>
+    					<xf:group style="" id="" class="form-input-group">
+    						<xf:group style="" id="" class="form-input-box">
+    							<w2:textbox style="" id="" label="이메일" class="content-text"></w2:textbox>
+    							<xf:input style="" id="email_input" class="content-input email-input"></xf:input>
+    						</xf:group>
+    						<w2:textbox class="error-text emal-error" id="" label="" style=""></w2:textbox>
     					</xf:group>
-    					<xf:group style="" id="" class="input-group">
-    						<w2:textbox style="" id="" label="비밀번호" class="content-text"></w2:textbox>
-    						<xf:input style="" id="" class="content-input"></xf:input>
+    					<xf:group style="" id="" class="form-input-group">
+    						<xf:group style="" id="" class="form-input-box">
+    							<w2:textbox style="" id="" label="비밀번호" class="content-text"></w2:textbox>
+    							<xf:secret style="" id="password_input" class="content-input"></xf:secret>
+    						</xf:group>
+    						<w2:textbox style="" id="password_error_text" label="" class="error-text"></w2:textbox>
     					</xf:group>
-    					<xf:group style="" id="" class="input-group">
-    						<w2:textbox style="" id="" label="비밀번호 확인" class="content-text"></w2:textbox>
-    						<xf:input style="" id="" class="content-input"></xf:input>
+    					<xf:group style="" id="" class="form-input-group">
+    						<xf:group style="" id="" class="form-input-box">
+    							<w2:textbox style="" id="" label="비밀번호 확인" class="content-text"></w2:textbox>
+    							<xf:secret style="" id="passwordCheck_input" class="content-input"></xf:secret>
+    						</xf:group>
+    						<w2:textbox class="error-text" id="passwordCheck_error_text" label="" style=""></w2:textbox>
     					</xf:group>
     				</xf:group>
     				<xf:trigger type="button" style="" id="update_button" class="user-button " ev:onclick="scwin.update_button_onclick">

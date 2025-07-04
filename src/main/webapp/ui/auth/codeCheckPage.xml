@@ -146,12 +146,6 @@ scwin.signup_button_onclick = function (e) {
             userId: scwin.info.email,
             userName: scwin.info.name,
             password: scwin.info.password,
-            profileImageUrl: "",
-            isActive: "Y",
-            createdAt: "",
-            loginFailCount: "",
-            lastFailTime: "",
-            accountLocked: ""
         }
         dma_signupParam.setJSON(param);
 
@@ -166,7 +160,7 @@ scwin.sbm_signup_submitdone = function (e) {
     const responseData = e.responseJSON;
     console.log(responseData);
     $c.win.alert("회원가입이 완료되었습니다.", function () {
-        //$p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/loginPage.xml");
+        $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/loginPage.xml");
     });
 };
 

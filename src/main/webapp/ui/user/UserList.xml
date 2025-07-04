@@ -89,6 +89,7 @@ scwin.sbm_userList_submitdone = function (e) {
         $c.win.alert(`에러코드 : ${elHeader.resCode}\n에러메시지 : ${elHeader.resMsg}`);
         return false;
     }
+    console.log(e.responseJSON);
 
     // 사용자 정보 dataMap 초기화
     dmp_userVoDetail.setEmptyValue();
