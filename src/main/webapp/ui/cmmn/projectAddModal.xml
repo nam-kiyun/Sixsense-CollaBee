@@ -187,10 +187,6 @@
 scwin.onpageload = function() {
     // 모달 초기화
     scwin.initModal();
-    // scwin.modalId = $p.parent().scwin.modalManager.modalId;
-    // scwin.modalArgJsnInfo = {isCloseButtonClick: true}
-    // console.log(scwin.modalId);
-    // console.log(scwin.modalClose);
 };
 
 scwin.modalClose = function(argRuntimeID) {
@@ -229,16 +225,6 @@ scwin.initModal = function() {
         } else {
             console.log("팝업 파라미터가 없어 기본값 사용:", userName);
         }
-        
-        // 기본값 설정 - ProjectVo에 맞추어 모든 필드 초기화
-        // dm_projectForm.set("projectId", "");
-        // dm_projectForm.set("projectName", "2차 프로젝트");
-        // dm_projectForm.set("description", "");
-        // dm_projectForm.set("projectImageUrl", "");
-        // dm_projectForm.set("createdAt", "");
-        // dm_projectForm.set("emailSendTime", "");
-        // dm_projectForm.set("userId", "");
-        // dm_projectForm.set("userName", userName);
         
         // 팀장 인풋을 읽기전용으로 설정
         if (input_userName) {
@@ -279,14 +265,7 @@ scwin.btn_save_onclick = function(e) {
             return;
         }
         
-        // if (!userName || userName.trim() === "") {
-        //     alert("팀장명을 입력해주세요.");
-        //     return;
-        // }
-        
         // hour와 minute를 조립해서 emailSendTime에 설정
-        // const hour = dm_projectForm.get("hour") || "00";
-        // const minute = dm_projectForm.get("minute") || "00";
         const hour = scwin.validateTimeInput(input_hour.getValue(), 23);
         const minute = scwin.validateTimeInput(input_minute.getValue(), 59);
         const emailSendTime = hour + ":" + minute;
@@ -295,10 +274,14 @@ scwin.btn_save_onclick = function(e) {
         dm_projectForm.set("userId",popupParam.userId);
         console.log(popupParam.userId);
         dm_projectForm.set("description",input_description.getValue());
-        // 서브미션 실행
+        
+        // 서브미션 실행 (다시 활성화)
         $c.sbm.execute(sbm_saveProject);
+        
+        
+        
         // scwin.modalClose(scwin.modalId,modalArgJsnInfo);
-        scwin.modalClose(scwin.modalId);
+        // scwin.modalClose(scwin.modalId);
     } catch(e) {
         console.error("프로젝트 저장 오류:", e);
         alert("프로젝트 저장 중 오류가 발생했습니다.");
@@ -308,14 +291,49 @@ scwin.btn_save_onclick = function(e) {
 
 // 서브미션 성공 시 처리
 scwin.sbm_saveProject_submitdone = function(e) {
-    alert("프로젝트가 성공적으로 저장되었습니다!");
-    // $p.parent().scwin.popup_closeAction();
-    console.log(1);
-    $p.parent().scwin.popup_closeAction;
-    // 부모 창의 refreshSideMenu 함수 호출 (필요시 주석 해제)
-    const parentFrame = $p.parent();
-    if (parentFrame && parentFrame.scwin && parentFrame.scwin.refreshSideMenu) {
-        parentFrame.scwin.refreshSideMenu();
+    try {
+        // 서버 응답 검증
+        const elHeader = e.responseJSON && e.responseJSON.elHeader;
+        if (elHeader && elHeader.resSuc === false) {
+            alert("에러코드: " + elHeader.resCode + "\n에러메시지: " + elHeader.resMsg);
+            return;
+        }
+        
+        alert("프로젝트가 성공적으로 저장되었습니다!");
+        
+        // 부모 창의 refreshSideMenu 함수 호출 (사이드메뉴 새로고침)
+        const parentFrame = $p.parent();
+        if (parentFrame && parentFrame.scwin && parentFrame.scwin.refreshSideMenu) {
+            parentFrame.scwin.refreshSideMenu();
+        }
+        
+        // WebSquare 팝업 닫기 - 여러 방법 시도
+        console.log("팝업 닫기 시도 시작");
+        
+        try {
+            // 방법 1: WebSquare 공식 API
+            if (typeof $p.closePopup === 'function') {
+                console.log("방법 1: $p.closePopup() 사용");
+                $p.closePopup();
+            } 
+        } catch (closeError) {
+            console.error("팝업 닫기 오류:", closeError);
+        }
+        
+    } catch (error) {
+        console.error("서브미션 완료 처리 중 오류:", error);
+        alert("프로젝트가 저장되었지만 화면 처리 중 오류가 발생했습니다.");
+        
+        // 오류가 발생해도 팝업은 닫기 시도
+        try {
+            if (typeof $p.closePopup === 'function') {
+                $p.closePopup();
+            } else if (window.close) {
+                window.close();
+            }
+        } catch (closeError) {
+            console.warn("팝업 닫기 실패:", closeError);
+        }
     }
 };
 
@@ -341,16 +359,6 @@ scwin.validateTimeInput = function(inputValue, maxValue) {
         return String(num).padStart(2, '0');
     }
 };
-
-// // 시간 입력 키보드 이벤트
-// scwin.input_hour_onkeyup = function(e) {
-//     dm_projectForm.set("hour", scwin.validateTimeInput(e.target.value, 23));
-// };
-
-// // 분 입력 키보드 이벤트
-// scwin.input_minute_onkeyup = function(e) {
-//     dm_projectForm.set("minute", scwin.validateTimeInput(e.target.value, 59));
-// };
 ]]></script>
 	</head>
 	<body ev:onpageload="scwin.onpageload">
