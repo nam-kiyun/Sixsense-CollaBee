@@ -12,3 +12,6 @@ target/
 
 #license
 .elLicense
+
+#properties
+*.properties
