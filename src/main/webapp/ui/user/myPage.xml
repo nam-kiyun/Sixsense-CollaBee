@@ -37,7 +37,8 @@ scwin.onpageload = function () {
     scwin.userName = $p.getParameter("userName");
     scwin.profileImageUrl = $p.getParameter("profileImageUrl");
     name_input.setValue(scwin.userName);
-    email_input.setValue(scwin.userId)
+    email_input.setValue(scwin.userId);
+    
     if (scwin?.profileImageUrl) {
         profile_button.setStyle("background-image", `url('${scwin.profileImageUrl}')`);
     }
@@ -129,7 +130,7 @@ scwin.update_button_onclick = function (e) {
 
     if (!isValid) return;
 
-
+    //  데이터 보내기
     const formData = new FormData();
 
     // 빈 값으로 필드 세팅
@@ -144,11 +145,11 @@ scwin.update_button_onclick = function (e) {
         data: formData,
         processData: false,
         contentType: false,
-        success: function (res) {
-            console.log("성공:", res);
+        success: async function (res) {
+            await $c.win.alert("회원정보가 수정되었습니다");
         },
-        error: function (err) {
-            console.error("실패:", err);
+        error: async function (err) {
+            await $c.win.alert("회원정보 수정을 실패했습니다");
         }
     });
 
