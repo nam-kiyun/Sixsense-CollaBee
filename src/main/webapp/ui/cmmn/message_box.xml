@@ -72,27 +72,35 @@ scwin.getMessageType = function () {
 	var messageType = $c.data.getParameter("messageType") || "alert";
 	return messageType;
 }
-]]></script>
+
+
+scwin.btnCloseLayer_onclick = function (e) {
+	try {
+		scwin.callBackParam = $c.data.getParameter("callBackParam");
+		if (scwin.getMessageType() == "confirm") {
+			scwin.callBackParam.clickValue = false;
+		}
+		$c.win.closePopup(scwin.callBackParam);
+	} catch (ex) {
+		console.error(ex);
+	}
+};]]></script>
 		<style type="text/css"><![CDATA[
 		 ]]></style>
 	</head>
 	<body ev:onpageload="scwin.onpageload" ev:onpageunload="scwin.onpageunload">
-		<xf:group id="" class="sub_contents">
-			<xf:group id="" class="poptxt">
-				<xf:group style="" id="">
-					<w2:textbox style="" label="MESSAGE" id="txb_message" class="tit"></w2:textbox>
-				</xf:group>
-			</xf:group>
-			<xf:group class="btnbox" id="" style="text-align: right;">
-				<xf:trigger class="btn_cm active" ev:onclick="scwin.btn_confirm_onclick" id="btn_confirm" localeRef="COMMON_BUTTON_00007"
-					style="margin-right: 5px;" type="button">
-					<xf:label><![CDATA[확인]]></xf:label>
-				</xf:trigger>
-				<xf:trigger class="btn_cm active" ev:onclick="scwin.btn_cancel_onclick" id="btn_cancel" localeRef="COMMON_BUTTON_00008"
-					style="" type="button">
-					<xf:label><![CDATA[취소]]></xf:label>
-				</xf:trigger>
-			</xf:group>
-		</xf:group>
+        <xf:group id="grpLyPopup" style="display:block;width:370px;height:120px;margin:0 0 0 0px;position:relative;top:0px;left:0px;border:0px; box-shadow:0 0 0 0; padding-bottom:20px;" class="ly_popup">
+    		<!-- <xf:group id="" style="background-color: red;" class="ly_head">
+    		</xf:group> -->
+    		<xf:group id="" style="" class="ly_cont">
+    			<!--<w2:textbox id="" style="" class="txt1" label="처리중 오류가 발생했습니다. " tagname="p"></w2:textbox>-->
+    			<w2:textbox id="txb_message" style="background-color:#ffffff;" class="txt2" label="" tagname="p" escape="false"></w2:textbox>
+    			<xf:group class="btnbox" id="" style="">
+    				<xf:trigger class="btn_cm" id="btnCloseLayer" style="" type="button" ev:onclick="scwin.btnCloseLayer_onclick">
+    						<xf:label><![CDATA[닫기]]></xf:label>
+    					</xf:trigger>
+    			</xf:group>
+    		</xf:group>
+        </xf:group>
 	</body>
 </html>

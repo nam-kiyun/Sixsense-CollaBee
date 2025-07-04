@@ -16,8 +16,8 @@ public class LoginVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "아이디", physicalName = "id", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String id;
 
-    @ElDtoField(logicalName = "비밀번호", physicalName = "pw", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private String pw;
+    @ElDtoField(logicalName = "비밀번호", physicalName = "password", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String password;
 
     @ElVoField(physicalName = "id")
     public String getId(){
@@ -30,15 +30,15 @@ public class LoginVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.id = id;
     }
 
-    @ElVoField(physicalName = "pw")
-    public String getPw(){
-        String ret = this.pw;
+    @ElVoField(physicalName = "password")
+    public String getPassword(){
+        String ret = this.password;
         return ret;
     }
 
-    @ElVoField(physicalName = "pw")
-    public void setPw(String pw){
-        this.pw = pw;
+    @ElVoField(physicalName = "password")
+    public void setPassword(String password){
+        this.password = password;
     }
 
     @Override
@@ -46,7 +46,7 @@ public class LoginVo extends com.demo.proworks.cmmn.ProworksCommVO {
         StringBuilder sb = new StringBuilder();
         sb.append("LoginVo [");
         sb.append("id").append("=").append(id).append(",");
-        sb.append("pw").append("=").append(pw);
+        sb.append("password").append("=").append(password);
         sb.append("]");
         return sb.toString();
 

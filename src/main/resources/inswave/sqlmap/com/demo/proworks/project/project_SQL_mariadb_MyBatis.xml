@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper      
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"      
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+	@subject     : 프로젝트 정보 관련 처리를 담당하는 Sql Mapper
+	@description : 프로젝트 정보 관련 처리를 담당하는 Sql Mapper
+	@author      : 국다인
+	@since       : 2025/07/01
+	@modification
+	===========================================================
+	DATE              AUTHOR             DESC
+	===========================================================
+	2025/07/01              국다인             최초 생성
+ -->
+<mapper namespace="com.demo.proworks.project">
+    <insert id="insertProject" parameterType="com.demo.proworks.project.vo.ProjectVo">
+    	<!-- 프로젝트 정보를 등록한다. -->	
+    		
+        INSERT INTO PROJECT   /* QueryID : com.demo.proworks.project.insertProject */
+        ( 
+            PROJECT_ID
+            <if test="projectName     != null"> , PROJECT_NAME      </if>
+            <if test="description      != null"> , DESCRIPTION       </if>
+            <if test="projectImageUrl!= null"> , PROJECT_IMAGE_URL </if>
+            <if test="createdAt       != null"> , CREATED_AT        </if>
+            <if test="emailSendTime  != null"> , EMAIL_SEND_TIME   </if>
+            <if test="userId          != null"> , USER_ID           </if>
+        )
+        VALUES  
+        ( 
+            #{projectId}
+            <if test="projectName     != null"> , #{projectName}      </if>
+            <if test="description      != null"> , #{description}       </if>
+            <if test="projectImageUrl!= null"> , #{projectImageUrl} </if>
+            <if test="createdAt       != null"> , #{createdAt}        </if>
+            <if test="emailSendTime  != null"> , #{emailSendTime}   </if>
+            <if test="userId          != null"> , #{userId}           </if> 
+        )          
+    </insert>	
+	
+    <update id="updateProject" parameterType="com.demo.proworks.project.vo.ProjectVo">
+    	<!-- 프로젝트 정보를 갱신한다. -->
+    	
+        UPDATE PROJECT    /* QueryID : com.demo.proworks.project.updateProject */      
+      	  SET  
+                PROJECT_ID        = #{projectId}               	                       
+            <if test="projectName     != null"> , PROJECT_NAME      = #{projectName}      </if>
+            <if test="description      != null"> , DESCRIPTION       = #{description}       </if>
+            <if test="projectImageUrl!= null"> , PROJECT_IMAGE_URL = #{projectImageUrl} </if>
+            <if test="createdAt       != null"> , CREATED_AT        = #{createdAt}        </if>
+            <if test="emailSendTime  != null"> , EMAIL_SEND_TIME   = #{emailSendTime}   </if>
+            <if test="userId          != null"> , USER_ID           = #{userId}           </if>                 
+        WHERE   
+                PROJECT_ID        = #{projectId}       
+    </update>
+	
+    <delete id="deleteProject" parameterType="com.demo.proworks.project.vo.ProjectVo">
+    	<!-- 프로젝트 정보를 삭제한다. -->
+    	
+        DELETE FROM PROJECT   /* QueryID : com.demo.proworks.project.deleteProject */ 
+        WHERE   
+                PROJECT_ID        = #{projectId}               
+    </delete>
+	
+    <select id="selectProject" parameterType="com.demo.proworks.project.vo.ProjectVo" resultType="com.demo.proworks.project.vo.ProjectVo">
+    	<!-- 프로젝트 정보를 상세 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.project.selectProject */
+            PROJECT_ID as projectId, PROJECT_NAME as projectName, DESCRIPTION as description, PROJECT_IMAGE_URL as projectImageUrl, CREATED_AT as createdAt, EMAIL_SEND_TIME as emailSendTime, USER_ID as userId
+        FROM PROJECT 
+        WHERE 
+                PROJECT_ID        = #{projectId}       			
+    </select>
+	
+    <select id="selectListProject" parameterType="com.demo.proworks.project.vo.ProjectVo" resultType="com.demo.proworks.project.vo.ProjectVo">
+    	<!-- 프로젝트 정보 목록을 조회한다. -->
+           SELECT    /* QueryID : com.demo.proworks.project.selectListProject */
+               PROJECT_ID as projectId, PROJECT_NAME as projectName, DESCRIPTION as description, PROJECT_IMAGE_URL as projectImageUrl, CREATED_AT as createdAt, EMAIL_SEND_TIME as emailSendTime, USER_ID as userId		       
+           FROM (
+               SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
+               FROM (				
+                   SELECT 
+                       *  		                  
+                   FROM PROJECT
+                   WHERE  1=1    		
+	     																														
+               ) S, (SELECT @ROWNUM := 0) TMP
+           ) A
+            WHERE PAGE = #{pageIndex}
+    </select>
+	
+    <select id="selectListCountProject" parameterType="com.demo.proworks.project.vo.ProjectVo" resultType="long">
+    <!-- 프로젝트 정보 목록의 카운트를 조회한다. -->
+    
+         SELECT    /* QueryID : com.demo.proworks.project.selectListCountProject */
+             COUNT(*) totcnt  		                  
+         FROM PROJECT
+         WHERE  1=1    		
+
+    </select>
+
+</mapper>

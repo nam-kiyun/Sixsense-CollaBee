@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper      
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"      
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+	@subject     : 깃허브 앱 토큰 저장 관련 처리를 담당하는 Sql Mapper
+	@description : 깃허브 앱 토큰 저장 관련 처리를 담당하는 Sql Mapper
+	@author      : 남기윤
+	@since       : 2025/07/01
+	@modification
+	===========================================================
+	DATE              AUTHOR             DESC
+	===========================================================
+	2025/07/01              남기윤             최초 생성
+ -->
+<mapper namespace="com.demo.proworks.githubapptoken">
+    <insert id="insertGithubAppToken" parameterType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo">
+    	<!-- 깃허브 앱 토큰 저장를 등록한다. -->	
+    		
+        INSERT INTO GITHUB_APP_TOKENS   /* QueryID : com.demo.proworks.githubapptoken.insertGithubAppToken */
+        ( 
+            GITHUB_APP_TOKEN_ID
+            <if test="projectRepoId    != null"> , PROJECT_REPO_ID     </if>
+            <if test="appToken          != null"> , APP_TOKEN           </if>
+            <if test="expiredAt         != null"> , EXPIRED_AT          </if>
+            <if test="createdAt         != null"> , CREATED_AT          </if>
+        )
+        VALUES  
+        ( 
+            #{githubAppTokenId}
+            <if test="projectRepoId    != null"> , #{projectRepoId}     </if>
+            <if test="appToken          != null"> , #{appToken}           </if>
+            <if test="expiredAt         != null"> , #{expiredAt}          </if>
+            <if test="createdAt         != null"> , #{createdAt}          </if> 
+        )          
+    </insert>	
+	
+    <update id="updateGithubAppToken" parameterType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo">
+    	<!-- 깃허브 앱 토큰 저장를 갱신한다. -->
+    	
+        UPDATE GITHUB_APP_TOKENS    /* QueryID : com.demo.proworks.githubapptoken.updateGithubAppToken */      
+      	  SET  
+                GITHUB_APP_TOKEN_ID = #{githubAppTokenId}        	                       
+            <if test="projectRepoId    != null"> , PROJECT_REPO_ID     = #{projectRepoId}     </if>
+            <if test="appToken          != null"> , APP_TOKEN           = #{appToken}           </if>
+            <if test="expiredAt         != null"> , EXPIRED_AT          = #{expiredAt}          </if>
+            <if test="createdAt         != null"> , CREATED_AT          = #{createdAt}          </if>                 
+        WHERE   
+                GITHUB_APP_TOKEN_ID = #{githubAppTokenId}
+    </update>
+	
+    <delete id="deleteGithubAppToken" parameterType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo">
+    	<!-- 깃허브 앱 토큰 저장를 삭제한다. -->
+    	
+        DELETE FROM GITHUB_APP_TOKENS   /* QueryID : com.demo.proworks.githubapptoken.deleteGithubAppToken */ 
+        WHERE   
+                GITHUB_APP_TOKEN_ID = #{githubAppTokenId}        
+    </delete>
+	
+    <select id="selectGithubAppToken" parameterType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo" resultType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo">
+    	<!-- 깃허브 앱 토큰 저장를 상세 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.githubapptoken.selectGithubAppToken */
+            GITHUB_APP_TOKEN_ID as githubAppTokenId, PROJECT_REPO_ID as projectRepoId, APP_TOKEN as appToken, EXPIRED_AT as expiredAt, CREATED_AT as createdAt
+        FROM GITHUB_APP_TOKENS 
+        WHERE 
+                GITHUB_APP_TOKEN_ID = #{githubAppTokenId}			
+    </select>
+	
+    <select id="selectListGithubAppToken" parameterType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo" resultType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo">
+    	<!-- 깃허브 앱 토큰 저장 목록을 조회한다. -->
+           SELECT    /* QueryID : com.demo.proworks.githubapptoken.selectListGithubAppToken */
+               GITHUB_APP_TOKEN_ID as githubAppTokenId, PROJECT_REPO_ID as projectRepoId, APP_TOKEN as appToken, EXPIRED_AT as expiredAt, CREATED_AT as createdAt		       
+           FROM (
+               SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
+               FROM (				
+                   SELECT 
+                       *  		                  
+                   FROM GITHUB_APP_TOKENS
+                   WHERE  1=1    		
+	     																														
+               ) S, (SELECT @ROWNUM := 0) TMP
+           ) A
+            WHERE PAGE = #{pageIndex}
+    </select>
+	
+    <select id="selectListCountGithubAppToken" parameterType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo" resultType="long">
+    <!-- 깃허브 앱 토큰 저장 목록의 카운트를 조회한다. -->
+    
+         SELECT    /* QueryID : com.demo.proworks.githubapptoken.selectListCountGithubAppToken */
+             COUNT(*) totcnt  		                  
+         FROM GITHUB_APP_TOKENS
+         WHERE  1=1    		
+
+    </select>
+
+</mapper>
