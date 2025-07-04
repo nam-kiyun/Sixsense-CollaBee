@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="프로젝트1 콘텐츠">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map">
+                <w2:dataMap baseNode="map" id="dm_userInfo">
+                    <w2:keyInfo>
+                        <w2:key id="userName" name="사용자명" dataType="text"/>
+                        <w2:key id="userId" name="사용자ID" dataType="text"/>
+                    </w2:keyInfo>
+                    <w2:data use="true">
+                        <userName>식스센스</userName>
+                        <userId>user01</userId>
+                    </w2:data>
+                </w2:dataMap>
+            </w2:dataCollection>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+    // 프로젝트1 콘텐츠 초기화
+    scwin.loadUserInfo();
+};
+
+// 사용자 정보 로드
+scwin.loadUserInfo = function() {
+    try {
+        // 부모 창에서 사용자 정보 가져오기
+        if (parent && parent.dm_userInfo) {
+            const userName = parent.dm_userInfo.get("userName") || "식스센스";
+            dm_userInfo.set("userName", userName);
+        } else {
+            // 기본값 사용
+            dm_userInfo.set("userName", "식스센스");
+        }
+    } catch(e) {
+        console.log("사용자 정보 로드 오류:", e);
+        dm_userInfo.set("userName", "식스센스");
+    }
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+        <!-- 프로젝트1 콘텐츠 -->
+        <xf:group style="width:100%;height:100%;background-color:#fff4d6;padding:40px;" id="grp_project1Content">
+            
+            <!-- 프로젝트1 제목 -->
+            <xf:group style="text-align:center;margin-bottom:60px;" id="grp_project1Title">
+                <xf:output style="font-size:60px;font-weight:bold;color:#000000;font-family:'Andada Pro',serif;" id="output_project1Title">
+                    <xf:label><![CDATA[프로젝트1 관리]]></xf:label>
+                </xf:output>
+            </xf:group>
+            
+            <!-- 프로젝트1 정보 카드 -->
+            <xf:group style="max-width:800px;margin:0 auto;" id="grp_project1Info">
+                <xf:group style="background-color:#ffffff;border:1px solid #000000;border-radius:16px;padding:40px;margin-bottom:30px;" id="grp_project1Card">
+                    
+                    <!-- 프로젝트 상세 정보 -->
+                    <xf:group style="margin-bottom:30px;" id="grp_projectDetails">
+                        <xf:output style="font-size:32px;font-weight:600;color:#000000;font-family:Inter,sans-serif;margin-bottom:20px;" id="output_projectName">
+                            <xf:label><![CDATA[프로젝트1 - 웹 애플리케이션 개발]]></xf:label>
+                        </xf:output>
+                        
+                        <xf:output style="font-size:16px;color:#666666;font-family:Inter,sans-serif;line-height:1.6;" id="output_projectDescription">
+                            <xf:label><![CDATA[React 기반의 모던 웹 애플리케이션 개발 프로젝트입니다. 사용자 친화적인 UI/UX와 확장 가능한 아키텍처를 목표로 합니다.]]></xf:label>
+                        </xf:output>
+                    </xf:group>
+                    
+                    <!-- 프로젝트 상태 -->
+                    <xf:group style="display:flex;gap:40px;margin-bottom:30px;" id="grp_projectStatus">
+                        <xf:group style="flex:1;" id="grp_progress">
+                            <xf:output style="font-size:14px;color:#666666;font-family:Inter,sans-serif;margin-bottom:8px;" id="output_progressLabel">
+                                <xf:label><![CDATA[진행률]]></xf:label>
+                            </xf:output>
+                            <xf:group style="width:100%;height:8px;background-color:#f0f0f0;border-radius:4px;overflow:hidden;" id="grp_progressBar">
+                                <xf:group style="width:75%;height:100%;background-color:#4CAF50;" id="grp_progressFill"/>
+                            </xf:group>
+                            <xf:output style="font-size:20px;font-weight:600;color:#000000;font-family:Inter,sans-serif;margin-top:8px;" id="output_progressPercent">
+                                <xf:label><![CDATA[75%]]></xf:label>
+                            </xf:output>
+                        </xf:group>
+                        
+                        <xf:group style="flex:1;" id="grp_deadline">
+                            <xf:output style="font-size:14px;color:#666666;font-family:Inter,sans-serif;margin-bottom:8px;" id="output_deadlineLabel">
+                                <xf:label><![CDATA[마감일]]></xf:label>
+                            </xf:output>
+                            <xf:output style="font-size:20px;font-weight:600;color:#000000;font-family:Inter,sans-serif;" id="output_deadline">
+                                <xf:label><![CDATA[2024.12.31]]></xf:label>
+                            </xf:output>
+                        </xf:group>
+                    </xf:group>
+                    
+                    <!-- 팀 정보 -->
+                    <xf:group style="margin-bottom:30px;" id="grp_teamSection">
+                        <xf:output style="font-size:18px;font-weight:600;color:#000000;font-family:Inter,sans-serif;margin-bottom:15px;" id="output_teamTitle">
+                            <xf:label><![CDATA[팀 멤버]]></xf:label>
+                        </xf:output>
+                        
+                        <xf:group style="display:flex;gap:8px;align-items:center;" id="grp_teamMembers">
+                            <xf:group style="width:40px;height:40px;background-color:#3B82F6;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_member1">
+                                <xf:output style="color:white;font-size:14px;font-weight:600;" id="output_member1">
+                                    <xf:label><![CDATA[EM]]></xf:label>
+                                </xf:output>
+                            </xf:group>
+                            <xf:group style="width:40px;height:40px;background-color:#10B981;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_member2">
+                                <xf:output style="color:white;font-size:14px;font-weight:600;" id="output_member2">
+                                    <xf:label><![CDATA[JC]]></xf:label>
+                                </xf:output>
+                            </xf:group>
+                            <xf:group style="width:40px;height:40px;background-color:#8B5CF6;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_member3">
+                                <xf:output style="color:white;font-size:14px;font-weight:600;" id="output_member3">
+                                    <xf:label><![CDATA[AK]]></xf:label>
+                                </xf:output>
+                            </xf:group>
+                            <xf:group style="width:40px;height:40px;background-color:#EC4899;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_member4">
+                                <xf:output style="color:white;font-size:14px;font-weight:600;" id="output_member4">
+                                    <xf:label><![CDATA[LW]]></xf:label>
+                                </xf:output>
+                            </xf:group>
+                            <xf:group style="width:40px;height:40px;background-color:#F59E0B;border-radius:50%;display:flex;align-items:center;justify-content:center;" id="grp_member5">
+                                <xf:output style="color:white;font-size:14px;font-weight:600;" id="output_member5">
+                                    <xf:label><![CDATA[RB]]></xf:label>
+                                </xf:output>
+                            </xf:group>
+                        </xf:group>
+                    </xf:group>
+                    
+                    <!-- 액션 버튼들 -->
+                    <xf:group style="display:flex;gap:15px;" id="grp_actionButtons">
+                        <xf:trigger style="padding:12px 24px;background-color:#007bff;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;" id="btn_editProject">
+                            <xf:label><![CDATA[프로젝트 편집]]></xf:label>
+                        </xf:trigger>
+                        <xf:trigger style="padding:12px 24px;background-color:#28a745;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;" id="btn_viewTasks">
+                            <xf:label><![CDATA[작업 보기]]></xf:label>
+                        </xf:trigger>
+                        <xf:trigger style="padding:12px 24px;background-color:#ffc107;color:#000;border:none;border-radius:8px;font-size:16px;cursor:pointer;" id="btn_generateReport">
+                            <xf:label><![CDATA[보고서 생성]]></xf:label>
+                        </xf:trigger>
+                    </xf:group>
+                    
+                </xf:group>
+            </xf:group>
+            
+        </xf:group>
+    </body>
+</html>

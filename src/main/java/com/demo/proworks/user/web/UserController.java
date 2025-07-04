@@ -16,9 +16,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.demo.proworks.user.service.UserService;
 import com.demo.proworks.user.vo.LoginVo;
 import com.demo.proworks.user.vo.RecaptchaVo;
@@ -30,6 +35,8 @@ import com.inswave.elfw.log.AppLog;
 import com.inswave.elfw.login.LoginInfo;
 import com.inswave.elfw.login.LoginProcessor;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import com.inswave.elfw.annotation.ElValidator;
 
 /**
@@ -55,6 +62,9 @@ public class UserController {
 
 	@Resource(name = "loginProcess")
 	protected LoginProcessor loginProcess;
+
+	@Resource(name = "amazonS3")
+	private AmazonS3 amazonS3;
 
 	@Value("${recaptcha.secret}")
 	private String secretKey;
@@ -96,7 +106,7 @@ public class UserController {
 	@ElService(key = "user/recaptcha")
 	@RequestMapping(value = "user/recaptcha")
 	@ElDescription(sub = "리캡챠", desc = "로그인시 봇인지 사림인지에 대해 파악한다")
-	public Map<String, Object> recaptcha(RecaptchaVo recaptchaVo) {
+	public Map<String, Object> verifyRecaptcha(RecaptchaVo recaptchaVo) {
 
 		String token = recaptchaVo.getToken();
 		String secret = recaptchaVo.getSecretKey();
@@ -104,9 +114,9 @@ public class UserController {
 		RestTemplate restTemplate = new RestTemplate();
 
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-		params.add("secret", secretKey);
+		params.add("secret", secret);
 		params.add("response", token);
-		System.out.println("비밀 : " + secretKey);
+		System.out.println("비밀 : " + secret);
 		System.out.println("토큰 : " + token);
 
 		HttpHeaders headers = new HttpHeaders();
@@ -197,8 +207,8 @@ public class UserController {
 	 * @param userVo 사용자 정보
 	 * @throws Exception
 	 */
-	@ElService(key = "user/singup")
-	@RequestMapping(value = "user/singup")
+	@ElService(key = "user/signup")
+	@RequestMapping(value = "user/signup")
 	@ElDescription(sub = "사용자 정보 등록처리", desc = "사용자 정보를 등록 처리 한다.")
 	public void insertUser(UserVo userVo) throws Exception {
 		String rawPassword = userVo.getPassword();
@@ -213,14 +223,52 @@ public class UserController {
 	 * @param userVo 사용자 정보
 	 * @throws Exception
 	 */
-	@ElService(key = "user/update")
-	@RequestMapping(value = "user/update")
+	@ElService(key = "user/updatePassword")
+	@RequestMapping(value = "user/updatePassword")
 	@ElDescription(sub = "사용자 정보 갱신처리", desc = "사용자 정보를 갱신 처리 한다.")
-	public void updateUser(UserVo userVo) throws Exception {
+	public void updatePassword(UserVo userVo) throws Exception {
 		String rawPassword = userVo.getPassword();
 		String encodedPassword = passwordEncoder.encode(rawPassword);
 		userVo.setPassword(encodedPassword);
 		userService.updateUser(userVo);
+	}
+
+	@ElService(key = "user/update")
+	@RequestMapping(value = "user/update")
+	@ElDescription(sub = "FormData 사용자 정보 갱신", desc = "파일 포함 사용자 정보 갱신")
+	public void updateUserWithFile(@ModelAttribute UserVo userVo,
+			@RequestParam(value = "fileData", required = false) MultipartFile file) throws Exception {
+		String bucketName = "collabee";
+
+		// 1. 비밀번호 암호화
+		String rawPassword = userVo.getPassword();
+		if (rawPassword != null && !rawPassword.isEmpty()) {
+			String encodedPassword = passwordEncoder.encode(rawPassword);
+			userVo.setPassword(encodedPassword);
+		}
+
+		// 2. S3 업로드
+//		if (file != null && !file.isEmpty()) {
+//			String originalName = file.getOriginalFilename();
+//			String s3Key = System.currentTimeMillis() + "_" + originalName;
+//
+//			ObjectMetadata metadata = new ObjectMetadata();
+//			metadata.setContentLength(file.getSize());
+//			metadata.setContentType(file.getContentType());
+//
+//			amazonS3.putObject(new PutObjectRequest(bucketName, s3Key, file.getInputStream(), metadata));
+//
+//			String fileUrl = "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/" + s3Key;
+//			userVo.setProfileImageUrl(fileUrl); // ✔ 업로드된 이미지 URL을 VO에 세팅
+//			System.out.println("저장완료: "  + fileUrl);
+//		} else {
+//			System.out.println("첨부된 파일이 없습니다.");
+//		}
+//
+//		System.out.println("사용자 정보 (FormData): " + userVo.toString());
+
+		// TODO: 최종 사용자 정보 저장 처리
+		// userService.updateUser(userVo);
 	}
 
 	/**
