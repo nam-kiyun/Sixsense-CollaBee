@@ -27,26 +27,347 @@
             .menu-item.selected-menu {
                 background-color: rgba(255,184,35,0.2) !important;
             }
+            
+            /* 동적 프로젝트 메뉴 스타일 */
+            .dynamic-project-menu {
+                padding: 12px 24px;
+                margin-bottom: 8px;
+                cursor: pointer;
+                background-color: transparent;
+                border-radius: 10px;
+                margin: 0 16px 8px 16px;
+                position: relative;
+                color: #000000;
+                font-size: 24px;
+                font-family: Inter, sans-serif;
+                font-weight: 400;
+            }
+            
+            .dynamic-project-menu:hover {
+                background-color: rgba(255,184,35,0.1);
+            }
+            
+            .dynamic-project-menu.selected {
+                background-color: rgba(255,184,35,0.2) !important;
+            }
+            
+            .project-active-bar {
+                position: absolute;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 3px;
+                height: 24px;
+                background-color: #ffb823;
+                display: none;
+            }
+            
+            .project-active-bar.show {
+                display: block;
+            }
         </style>
         <xf:model>
             <w2:dataCollection baseNode="map">
                 <w2:dataMap baseNode="map" id="dm_sideMenu">
                     <w2:keyInfo>
                         <w2:key id="selectedMenu" name="선택된메뉴" dataType="text"/>
+                        <w2:key id="userName" name="사용자명" dataType="text"/>
                     </w2:keyInfo>
                     <w2:data use="true">
                         <selectedMenu>dashboard</selectedMenu>
+                        <userName></userName>
                     </w2:data>
                 </w2:dataMap>
+                
+                <!-- 프로젝트 목록 조회를 위한 데이터맵 -->
+                <w2:dataMap baseNode="map" id="dmp_projectVo" style="">
+					<w2:keyInfo>
+						<w2:key dataType="text" id="pageIndex" name="페이지번호" defaultValue="1"></w2:key>
+						<w2:key dataType="text" id="pageSize" name="페이지사이즈" defaultValue="100"></w2:key>
+						<w2:key dataType="text" id="userId" name="사용자ID"></w2:key>
+					</w2:keyInfo>
+					<w2:data use="false"></w2:data>
+				</w2:dataMap>
+				
+				<!-- 프로젝트 목록 데이터리스트 -->
+				<w2:dataList baseNode="list" id="dlt_projectVoList" repeatNode="map" saveRemovedData="true" style="">
+					<w2:columnInfo>
+						<w2:column dataType="text" id="projectId" name="project_id"></w2:column>
+                        <w2:column dataType="text" id="projectName" name="project_name"></w2:column>
+                        <w2:column dataType="text" id="description" name="description"></w2:column>
+                        <w2:column dataType="text" id="projectImageUrl" name="project_image_url"></w2:column>
+                        <w2:column dataType="text" id="createdAt" name="created_at"></w2:column>
+                        <w2:column dataType="text" id="emailSendTime" name="email_send_time"></w2:column>
+                        <w2:column dataType="text" id="userId" name="user_id"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
             </w2:dataCollection>
-            <w2:workflowCollection/>
+            <w2:workflowCollection>
+                <!-- 프로젝트 목록 조회 submission -->
+                <xf:submission id="sbm_selectProjectList" ref='data:json,{"id":"dmp_projectVo","key":"projectVo"}'
+                    target='data:json,{"id":"dlt_projectVoList","key":"elData.projectVoList"}' action="/InsWebApp/ProjectList.pwkjson" method="post"
+                    mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+                    processMsg="" ev:submit="" ev:submitdone="scwin.sbm_selectProjectList_submitdone" ev:submiterror="" abortTrigger="">
+                </xf:submission>
+            </w2:workflowCollection>
         </xf:model>
         <w2:layoutInfo/>
         <w2:publicInfo method=""/>
         <script lazy="false" type="text/javascript"><![CDATA[
+// 전역 프로젝트 데이터 저장
+scwin.projectList = [];
+scwin.dynamicEventHandlers = {};
+scwin.dynamicComponents = []; // 동적으로 생성된 컴포넌트들을 관리
+
 scwin.onpageload = function() {
     // 기본적으로 대시보드 선택 상태로 설정
     scwin.changeSelectedMenu("dashboard");
+    
+    // 사용자 정보가 있으면 프로젝트 목록 조회
+    scwin.loadUserProjects();
+};
+
+// 사용자 정보 설정 및 프로젝트 목록 로드
+scwin.setUserInfo = function(userId) {
+    console.log("사용자 정보 설정:", userId);
+    dm_sideMenu.set("userName", userId);
+    dmp_projectVo.set("userId", userId);
+    scwin.loadUserProjects();
+};
+
+// 사용자의 프로젝트 목록 조회
+scwin.loadUserProjects = function() {
+    const userId = dm_sideMenu.get("userName");
+    
+    if (!userId) {
+        console.log("사용자 정보가 없어 프로젝트 목록을 조회하지 않습니다.");
+        return;
+    }
+    
+    console.log("프로젝트 목록 조회 시작:", userId);
+    dmp_projectVo.set("userId", userId);
+    dmp_projectVo.set("pageIndex", "1");
+    dmp_projectVo.set("pageSize", "100");
+    
+    // 서버통신 - 프로젝트 목록 조회
+    $c.sbm.execute($p, sbm_selectProjectList);
+};
+
+// 프로젝트 목록 조회 완료 후 처리
+scwin.sbm_selectProjectList_submitdone = function(e) {
+    console.log("프로젝트 목록 조회 완료:", e);
+    
+    // error 수신시
+    const elData = e.responseJSON.elData;
+    const elHeader = e.responseJSON.elHeader;
+    if (elHeader == null || elHeader == "" || elHeader == "undefined" || elHeader.resSuc == false) {
+        console.error("프로젝트 목록 조회 오류 - 에러코드: " + (elHeader ? elHeader.resCode : "unknown") + ", 에러메시지: " + (elHeader ? elHeader.resMsg : "unknown"));
+        // 에러가 발생해도 기본 프로젝트 메뉴는 표시
+        scwin.renderDefaultProjects();
+        return;
+    }
+    
+    // 프로젝트 목록을 전역 변수에 저장
+    scwin.projectList = elData.projectVoList || [];
+    
+    // 프로젝트 목록을 사이드메뉴에 동적으로 렌더링
+    scwin.renderProjectMenus(scwin.projectList);
+};
+
+// 기본 프로젝트 메뉴 렌더링 (데이터가 없을 때) - $p.dynamicCreate 사용
+scwin.renderDefaultProjects = function() {
+    // 기존 프로젝트 메뉴들 제거
+    scwin.clearProjectMenus();
+    
+    try {
+        // $p.dynamicCreate로 기본 메시지 표시
+        const noProjectsMessage = $p.dynamicCreate(
+            "grp_noProjects",
+            "group",
+            {
+                style: "padding:12px 24px;margin:0 16px 8px 16px;"
+            },
+            grp_projectList
+        );
+        
+        const messageText = $p.dynamicCreate(
+            "txt_noProjects",
+            "output",
+            {
+                style: "color:#666;font-style:italic;font-size:14px;"
+            },
+            noProjectsMessage
+        );
+        
+        messageText.setValue("참여 중인 프로젝트가 없습니다.");
+        
+        // 생성된 컴포넌트 저장
+        if (!scwin.dynamicComponents) {
+            scwin.dynamicComponents = [];
+        }
+        scwin.dynamicComponents.push({
+            menuGroup: noProjectsMessage,
+            projectText: messageText,
+            projectId: "no_projects"
+        });
+        
+        console.log("기본 프로젝트 메뉴 렌더링 완료 ($p.dynamicCreate)");
+    } catch(e) {
+        console.error("기본 프로젝트 메뉴 렌더링 오류:", e);
+    }
+};
+
+// 프로젝트 메뉴들을 동적으로 렌더링 ($p.dynamicCreate 사용)
+scwin.renderProjectMenus = function(projectList) {
+    console.log("프로젝트 메뉴 렌더링:", projectList);
+    
+    // 기존 프로젝트 메뉴들 제거
+    scwin.clearProjectMenus();
+    
+    if (!projectList || projectList.length === 0) {
+        scwin.renderDefaultProjects();
+        return;
+    }
+    
+    try {
+        // $p.dynamicCreate를 사용하여 프로젝트 메뉴 생성
+        for (let i = 0; i < projectList.length; i++) {
+            const project = projectList[i];
+            scwin.createProjectMenuItem(project, i);
+        }
+        
+        console.log("$p.dynamicCreate 방식으로 프로젝트 메뉴 생성 완료");
+        
+    } catch(e) {
+        console.error("프로젝트 메뉴 렌더링 오류:", e);
+    }
+};
+
+// $p.dynamicCreate로 개별 프로젝트 메뉴 아이템 생성
+scwin.createProjectMenuItem = function(project, index) {
+    const projectId = project.projectId;
+    const menuId = "grp_dynamic_project_" + projectId;
+    const textId = "txt_project_" + projectId;
+    const activeBarId = "grp_active_bar_" + projectId;
+    
+    try {
+        // 1. 메뉴 아이템 컨테이너 그룹 생성
+        const menuGroup = $p.dynamicCreate(
+            menuId,
+            "group",
+            {
+                style: "padding:12px 24px;margin-bottom:8px;cursor:pointer;background-color:transparent;border-radius:10px;margin:0 16px 8px 16px;position:relative;",
+                className: "dynamic-project-menu"
+            },
+            grp_projectList
+        );
+        
+        // 2. 선택 표시 바 생성
+        const activeBar = $p.dynamicCreate(
+            activeBarId,
+            "group",
+            {
+                style: "position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:24px;background-color:#ffb823;display:none;",
+                className: "project-active-bar"
+            },
+            menuGroup
+        );
+        
+        // 3. 프로젝트 이름 텍스트 생성
+        const projectText = $p.dynamicCreate(
+            textId,
+            "output",
+            {
+                style: "color:#000000;font-size:24px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;"
+            },
+            menuGroup
+        );
+        
+        // 프로젝트 이름 설정
+        projectText.setValue(project.projectName || "프로젝트 " + (index + 1));
+        
+        // 4. 클릭 이벤트 바인딩
+        menuGroup.bind("onclick", function() {
+            scwin.onProjectMenuClick(project);
+        });
+        
+        // 생성된 컴포넌트들을 전역 객체에 저장 (나중에 제거하기 위해)
+        if (!scwin.dynamicComponents) {
+            scwin.dynamicComponents = [];
+        }
+        scwin.dynamicComponents.push({
+            menuGroup: menuGroup,
+            activeBar: activeBar,
+            projectText: projectText,
+            projectId: projectId
+        });
+        
+        console.log("프로젝트 메뉴 아이템 생성 완료:", project.projectName);
+        
+    } catch(e) {
+        console.error("프로젝트 메뉴 아이템 생성 오류:", e);
+    }
+};
+
+// 프로젝트 메뉴 이벤트 리스너 등록 ($p.dynamicCreate로 생성된 컴포넌트는 이미 이벤트가 바인딩됨)
+scwin.attachProjectEventListeners = function() {
+    // $p.dynamicCreate로 생성할 때 이미 이벤트가 바인딩되므로 이 함수는 더 이상 필요하지 않음
+    console.log("프로젝트 메뉴 이벤트 리스너는 이미 바인딩됨 ($p.dynamicCreate)");
+};
+
+// 기존 프로젝트 메뉴들 제거 ($p.dynamicCreate로 생성된 컴포넌트들 제거)
+scwin.clearProjectMenus = function() {
+    try {
+        if (scwin.dynamicComponents && scwin.dynamicComponents.length > 0) {
+            // 동적으로 생성된 컴포넌트들 제거
+            for (let i = 0; i < scwin.dynamicComponents.length; i++) {
+                const component = scwin.dynamicComponents[i];
+                if (component.menuGroup && component.menuGroup.remove) {
+                    component.menuGroup.remove();
+                }
+            }
+            scwin.dynamicComponents = [];
+            console.log("동적 프로젝트 메뉴 컴포넌트들 제거 완료");
+        }
+        
+        // fallback: 컨테이너 내용 비우기
+        const container = grp_projectList.getElement();
+        if (container && container.innerHTML) {
+            container.innerHTML = "";
+        }
+        
+        console.log("프로젝트 메뉴 정리 완료");
+    } catch(e) {
+        console.error("프로젝트 메뉴 정리 오류:", e);
+    }
+};
+
+// 프로젝트 메뉴 클릭 이벤트 처리
+scwin.onProjectMenuClick = function(project) {
+    console.log("프로젝트 메뉴 클릭:", project);
+    
+    const menuKey = "project_" + project.projectId;
+    scwin.changeSelectedMenu(menuKey);
+    
+    // 부모 창의 메뉴 변경 함수 호출
+    try {
+        const parentFrame = $p.parent();
+        
+        if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
+            console.log("부모 changeMenu 함수 호출:", menuKey);
+            parentFrame.scwin.changeMenu(menuKey, project);
+        } else if (parent && parent.scwin && parent.scwin.changeMenu) {
+            console.log("부모 changeMenu 함수 호출 (parent):", menuKey);
+            parent.scwin.changeMenu(menuKey, project);
+        } else if (window.parent && window.parent.scwin && window.parent.scwin.changeMenu) {
+            console.log("부모 changeMenu 함수 호출 (window.parent):", menuKey);
+            window.parent.scwin.changeMenu(menuKey, project);
+        } else {
+            console.error("부모 창의 changeMenu 함수를 찾을 수 없습니다.");
+        }
+    } catch(e) {
+        console.error("부모 창 메뉴 변경 오류:", e);
+    }
 };
 
 // 메뉴 클릭 이벤트
@@ -55,12 +376,7 @@ scwin.menu_dashboard_onclick = function(e) {
     scwin.changeSelectedMenu("dashboard");
     // 부모 창의 메뉴 변경 함수 호출
     try {
-        console.log("parent 객체:", parent);
-        console.log("parent.scwin:", parent ? parent.scwin : 'undefined');
-        
-        // WebSquare에서는 $p.parent()를 사용하여 부모 프레임에 접근
-        var parentFrame = $p.parent();
-        console.log("$p.parent():", parentFrame);
+        const parentFrame = $p.parent();
         
         if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
             console.log("부모 changeMenu 함수 호출 시작 ($p.parent)");
@@ -71,10 +387,7 @@ scwin.menu_dashboard_onclick = function(e) {
             parent.scwin.changeMenu("dashboard");
             console.log("부모 changeMenu 함수 호출 완료");
         } else {
-            // 대안: window.parent 사용
-            var winParent = window.parent;
-            console.log("window.parent:", winParent);
-            console.log("window.parent.scwin:", winParent ? winParent.scwin : 'undefined');
+            const winParent = window.parent;
             
             if (winParent && winParent.scwin && winParent.scwin.changeMenu) {
                 console.log("부모 changeMenu 함수 호출 시작 (window.parent)");
@@ -82,7 +395,6 @@ scwin.menu_dashboard_onclick = function(e) {
                 console.log("부모 changeMenu 함수 호출 완료");
             } else {
                 console.error("부모 창의 changeMenu 함수를 찾을 수 없습니다.");
-                console.log("모든 방법 시도 실패");
             }
         }
     } catch(e) {
@@ -90,93 +402,47 @@ scwin.menu_dashboard_onclick = function(e) {
     }
 };
 
-scwin.menu_project1_onclick = function(e) {
-    console.log("=== 프로젝트1 메뉴 클릭 ===");
-    scwin.changeSelectedMenu("project1");
-    // 부모 창의 메뉴 변경 함수 호출
-    try {
-        // WebSquare에서는 $p.parent()를 사용하여 부모 프레임에 접근
-        var parentFrame = $p.parent();
-        
-        if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
-            console.log("부모 changeMenu 함수 호출: project1 ($p.parent)");
-            parentFrame.scwin.changeMenu("project1");
-        } else if (parent && parent.scwin && parent.scwin.changeMenu) {
-            console.log("부모 changeMenu 함수 호출: project1 (parent)");
-            parent.scwin.changeMenu("project1");
-        } else if (window.parent && window.parent.scwin && window.parent.scwin.changeMenu) {
-            console.log("부모 changeMenu 함수 호출: project1 (window.parent)");
-            window.parent.scwin.changeMenu("project1");
-        } else {
-            console.error("부모 창의 changeMenu 함수를 찾을 수 없습니다.");
-        }
-    } catch(e) {
-        console.error("부모 창 메뉴 변경 오류:", e);
-    }
-};
-
-scwin.menu_project2_onclick = function(e) {
-    console.log("=== 프로젝트2 메뉴 클릭 ===");
-    scwin.changeSelectedMenu("project2");
-    // 부모 창의 메뉴 변경 함수 호출
-    try {
-        // WebSquare에서는 $p.parent()를 사용하여 부모 프레임에 접근
-        var parentFrame = $p.parent();
-        
-        if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
-            console.log("부모 changeMenu 함수 호출: project2 ($p.parent)");
-            parentFrame.scwin.changeMenu("project2");
-        } else if (parent && parent.scwin && parent.scwin.changeMenu) {
-            console.log("부모 changeMenu 함수 호출: project2 (parent)");
-            parent.scwin.changeMenu("project2");
-        } else if (window.parent && window.parent.scwin && window.parent.scwin.changeMenu) {
-            console.log("부모 changeMenu 함수 호출: project2 (window.parent)");
-            window.parent.scwin.changeMenu("project2");
-        } else {
-            console.error("부모 창의 changeMenu 함수를 찾을 수 없습니다.");
-        }
-    } catch(e) {
-        console.error("부모 창 메뉴 변경 오류:", e);
-    }
-};
-
-// 선택된 메뉴 스타일 변경
+// 선택된 메뉴 스타일 변경 ($p.dynamicCreate로 생성된 컴포넌트 대응)
 scwin.changeSelectedMenu = function(selectedMenu) {
     try {
         console.log("메뉴 선택 변경 시작:", selectedMenu);
         
-        // 모든 메뉴에서 selected-menu 클래스 제거
+        // 기존 선택 해제
         grp_dashboard.removeClass("selected-menu");
-        grp_project1.removeClass("selected-menu");
-        grp_project2.removeClass("selected-menu");
-        
-        // 모든 선택 표시 바 숨기기
-        grp_activeBar_dashboard.hide();
-        grp_activeBar1.hide();
-        grp_activeBar2.hide();
-        
-        // 모든 메뉴의 배경색을 투명하게 강제 설정
         grp_dashboard.setStyle("background-color", "transparent");
-        grp_project1.setStyle("background-color", "transparent");
-        grp_project2.setStyle("background-color", "transparent");
+        grp_activeBar_dashboard.hide();
+        
+        // 모든 동적 프로젝트 메뉴의 선택 해제
+        if (scwin.dynamicComponents && scwin.dynamicComponents.length > 0) {
+            for (let i = 0; i < scwin.dynamicComponents.length; i++) {
+                const component = scwin.dynamicComponents[i];
+                if (component.menuGroup && component.activeBar) {
+                    component.menuGroup.setStyle("background-color", "transparent");
+                    component.activeBar.hide();
+                }
+            }
+        }
         
         // 선택된 메뉴에만 스타일 적용
-        switch(selectedMenu) {
-            case "dashboard":
-                grp_dashboard.addClass("selected-menu");
-                grp_dashboard.setStyle("background-color", "rgba(255,184,35,0.2)");
-                grp_activeBar_dashboard.show();
-                break;
-            case "project1":
-                grp_project1.addClass("selected-menu");
-                grp_project1.setStyle("background-color", "rgba(255,184,35,0.2)");
-                grp_activeBar1.show();
-                break;
-            case "project2":
-                grp_project2.addClass("selected-menu");
-                grp_project2.setStyle("background-color", "rgba(255,184,35,0.2)");
-                grp_activeBar2.show();
-                break;
+        if (selectedMenu === "dashboard") {
+            grp_dashboard.addClass("selected-menu");
+            grp_dashboard.setStyle("background-color", "rgba(255,184,35,0.2)");
+            grp_activeBar_dashboard.show();
+        } else if (selectedMenu.indexOf("project_") === 0) {
+            // 동적 프로젝트 메뉴 선택
+            const projectId = selectedMenu.replace("project_", "");
+            
+            // 해당 프로젝트의 컴포넌트 찾기
+            if (scwin.dynamicComponents) {
+                for (let i = 0; i < scwin.dynamicComponents.length; i++) {
+                    const component = scwin.dynamicComponents[i];
+                    if (component.projectId === projectId) {
+                        component.menuGroup.setStyle("background-color", "rgba(255,184,35,0.2)");
+                        component.activeBar.show();
+                        break;
+                    }
+                }
+            }
         }
         
         console.log("메뉴 선택 완료:", selectedMenu);
@@ -193,12 +459,18 @@ scwin.updateSelectedMenu = function(menuType) {
     scwin.changeSelectedMenu(menuType);
 };
 
+// 프로젝트 추가 후 목록 새로고침
+scwin.refreshProjectList = function() {
+    console.log("프로젝트 목록 새로고침");
+    scwin.loadUserProjects();
+};
+
 scwin.btn_addProject_onclick = function(e) {
     console.log("=== 프로젝트 추가 버튼 클릭 ===");
     
     try {
         // 부모 창의 모달 열기 함수 호출
-        var parentFrame = $p.parent();
+        const parentFrame = $p.parent();
         
         if (parentFrame && parentFrame.scwin && parentFrame.scwin.openProjectAddModal) {
             console.log("부모 openProjectAddModal 함수 호출 ($p.parent)");
@@ -265,43 +537,9 @@ scwin.btn_addProject_onclick = function(e) {
                     </xf:output>
                 </xf:group>
                 
-                <!-- 프로젝트 리스트 -->
+                <!-- 동적 프로젝트 리스트 컨테이너 -->
                 <xf:group id="grp_projectList">
-                    
-                    <!-- 프로젝트1 -->
-                    <xf:group 
-                        style="padding:12px 24px;margin-bottom:8px;cursor:pointer;background-color:transparent;border-radius:10px;margin:0 16px 8px 16px;position:relative;"
-                        id="grp_project1"
-                        class="menu-item"
-                        ev:onclick="scwin.menu_project1_onclick">
-                        
-                        <!-- 선택 표시 바 -->
-                        <xf:group 
-                            style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:24px;background-color:#ffb823;display:none;"
-                            id="grp_activeBar1"/>
-                        
-                        <xf:output style="color:#000000;font-size:24px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;" id="output_project1">
-                            <xf:label><![CDATA[프로젝트1]]></xf:label>
-                        </xf:output>
-                    </xf:group>
-                    
-                    <!-- 프로젝트2 -->
-                    <xf:group 
-                        style="padding:12px 24px;margin-bottom:8px;cursor:pointer;background-color:transparent;border-radius:10px;margin:0 16px 8px 16px;position:relative;"
-                        id="grp_project2"
-                        class="menu-item"
-                        ev:onclick="scwin.menu_project2_onclick">
-                        
-                        <!-- 선택 표시 바 -->
-                        <xf:group 
-                            style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:24px;background-color:#ffb823;display:none;"
-                            id="grp_activeBar2"/>
-                        
-                        <xf:output style="color:#000000;font-size:24px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;" id="output_project2">
-                            <xf:label><![CDATA[프로젝트2]]></xf:label>
-                        </xf:output>
-                    </xf:group>
-                    
+                    <!-- 여기에 동적으로 프로젝트 메뉴들이 생성됩니다 -->
                 </xf:group>
                 
                 <!-- 프로젝트 추가 버튼 -->

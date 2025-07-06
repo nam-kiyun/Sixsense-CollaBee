@@ -45,27 +45,41 @@ scwin.onpageload = function () {
 };
 
 // 메인 콘텐츠 동적 로드 함수
-scwin.loadMainContent = function (menuType) {
+scwin.loadMainContent = function (menuType, projectData) {
     try {
         let srcPath = "";
 
         console.log("=== 메인 콘텐츠 로드 시작 ===");
         console.log("요청된 메뉴 타입:", menuType);
+        console.log("프로젝트 데이터:", projectData);
 
-        switch (menuType) {
-            case "dashboard":
-                srcPath = "/InsWebApp/ui/mainContent.xml";
-                break;
-            case "project1":
-                srcPath = "/InsWebApp/ui/project1Content.xml";
-                break;
-            case "project2":
-                srcPath = "/InsWebApp/ui/project2Content.xml";
-                break;
-            default:
-                srcPath = "/InsWebApp/ui/mainContent.xml";
-                console.log("기본 대시보드로 설정:", menuType);
-                break;
+        if (menuType && menuType.startsWith("project_")) {
+            // 동적 프로젝트 메뉴인 경우
+            if (projectData) {
+                // 특정 프로젝트 상세 페이지로 이동
+                srcPath = "/InsWebApp/ui/project/projectMainPage.xml";
+                console.log("프로젝트 상세 페이지로 이동:", projectData.projectName);
+            } else {
+                // 기본 프로젝트 페이지
+                srcPath = "/InsWebApp/ui/project/ProjectList.xml";
+            }
+        } else {
+            // 기존 정적 메뉴들
+            switch (menuType) {
+                case "dashboard":
+                    srcPath = "/InsWebApp/ui/mainContent.xml";
+                    break;
+                case "project1":
+                    srcPath = "/InsWebApp/ui/project1Content.xml";
+                    break;
+                case "project2":
+                    srcPath = "/InsWebApp/ui/project2Content.xml";
+                    break;
+                default:
+                    srcPath = "/InsWebApp/ui/mainContent.xml";
+                    console.log("기본 대시보드로 설정:", menuType);
+                    break;
+            }
         }
 
         console.log("결정된 소스 경로:", srcPath);
@@ -82,6 +96,21 @@ scwin.loadMainContent = function (menuType) {
             setTimeout(function () {
                 console.log("변경 후 wframe src:", wfr_mainContent.getSrc());
                 console.log("프레임 소스 변경 성공:", srcPath);
+                
+                // 프로젝트 데이터가 있으면 메인 콘텐츠에 전달
+                if (projectData) {
+                    setTimeout(() => {
+                        try {
+                            const mainContentWindow = wfr_mainContent.getWindow();
+                            if (mainContentWindow && mainContentWindow.scwin && mainContentWindow.scwin.setProjectData) {
+                                mainContentWindow.scwin.setProjectData(projectData);
+                                console.log("메인 콘텐츠에 프로젝트 데이터 전달 성공");
+                            }
+                        } catch(e) {
+                            console.log("프로젝트 데이터 전달 오류:", e);
+                        }
+                    }, 800);
+                }
             }, 100);
 
         } else {
@@ -127,11 +156,11 @@ scwin.updateMainContentUserInfo = function () {
 };
 
 // 사이드메뉴에서 호출할 메뉴 변경 함수
-scwin.changeMenu = function (menuType) {
-    console.log("=== 메뉴 변경 요청 ===", menuType);
+scwin.changeMenu = function (menuType, projectData) {
+    console.log("=== 메뉴 변경 요청 ===", menuType, projectData);
 
     // 메인 콘텐츠 로드
-    scwin.loadMainContent(menuType);
+    scwin.loadMainContent(menuType, projectData);
 
     // 사이드메뉴에 선택된 메뉴 알림
     try {
@@ -233,6 +262,26 @@ scwin.updateUserInfoInComponents = async function () {
         } catch (e) {
             console.log("메인 콘텐츠 업데이트 오류:", e);
         }
+
+        // 사이드메뉴에 사용자 정보 전달
+        await scwin.waitForSideMenuLoad();
+        try {
+            if (wfr_sideMenu && wfr_sideMenu.getWindow) {
+                const sideMenuWindow = wfr_sideMenu.getWindow();
+                if (sideMenuWindow && sideMenuWindow.scwin && sideMenuWindow.scwin.setUserInfo) {
+                    const userId = dm_userInfo.get("userId");
+                    sideMenuWindow.scwin.setUserInfo(userId);
+                    console.log("사이드메뉴에 사용자 정보 전달 성공:", userId);
+                } else {
+                    console.log("사이드메뉴 setUserInfo 함수를 찾을 수 없습니다.");
+                }
+            } else {
+                console.log("사이드메뉴 컴포넌트를 찾을 수 없습니다.");
+            }
+        } catch (e) {
+            console.log("사이드메뉴 업데이트 오류:", e);
+        }
+        
     } catch (e) {
         console.log("컴포넌트 업데이트 오류:", e);
     }
@@ -249,6 +298,20 @@ scwin.waitForHeaderLoad = function () {
             }
         };
         checkHeader();
+    });
+};
+
+// 사이드메뉴 로드 대기 함수
+scwin.waitForSideMenuLoad = function () {
+    return new Promise((resolve) => {
+        const checkSideMenu = () => {
+            if (wfr_sideMenu && wfr_sideMenu.getWindow && wfr_sideMenu.getWindow().scwin) {
+                resolve();
+            } else {
+                setTimeout(checkSideMenu, 100);
+            }
+        };
+        checkSideMenu();
     });
 };
 
@@ -276,7 +339,6 @@ scwin.sbm_getUserInfo_submiterror = function (e) {
     dm_userInfo.set("userName", "식스센스");
     scwin.updateUserInfoInComponents();
 };
-
 
 // 전역 변수로 모달 상태 관리 개선
 scwin.modalManager = {
@@ -331,9 +393,9 @@ scwin.cleanupModal = function() {
 
 // 프로젝트 추가 모달 생성 (강화된 버전)
 scwin.createProjectAddModal = function () {
-    // mainPage의 userInfo에서 userName 가져오기
+    // mainPage의 userInfo에서 사용자 정보 가져오기
     let userName = dm_userInfo.get("userName") || "식스센스";
-    let userId = dm_userInfo.get("userId");
+    let userId = dm_userInfo.get("userId") || "user01";
     // 팝업 화면에 데이터를 전달
     let jsnPopupData = {
         "type": "json",
@@ -383,9 +445,16 @@ scwin.createProjectAddModal = function () {
 // 사이드메뉴 새로고침
 scwin.refreshSideMenu = function () {
     try {
-        if (wfr_sideMenu) {
-            wfr_sideMenu.setSrc(wfr_sideMenu.getSrc());
-            console.log("사이드메뉴 새로고침 완료");
+        if (wfr_sideMenu && wfr_sideMenu.getWindow && wfr_sideMenu.getWindow().scwin) {
+            const sideMenuWindow = wfr_sideMenu.getWindow();
+            if (sideMenuWindow.scwin.refreshProjectList) {
+                sideMenuWindow.scwin.refreshProjectList();
+                console.log("사이드메뉴 프로젝트 목록 새로고침 완료");
+            } else {
+                // fallback: 전체 사이드메뉴 새로고침
+                wfr_sideMenu.setSrc(wfr_sideMenu.getSrc());
+                console.log("사이드메뉴 전체 새로고침 완료");
+            }
         }
     } catch (e) {
         console.log("사이드메뉴 새로고침 오류:", e);
@@ -394,9 +463,8 @@ scwin.refreshSideMenu = function () {
 
 // 팝업 닫기 액션 (최종 버전)
 scwin.popup_closeAction = function(argRuntimeID, argJsnInfo) {
-    debugger;
     console.log("팝업 닫기 액션 호출:", argRuntimeID);
-    console.log(argJsnInfo);
+    console.log("팝업 정보:", argJsnInfo);
     try {
         // 팝업 객체 접근
         let popObj = $p.getPopupWindow(argRuntimeID);
@@ -404,6 +472,14 @@ scwin.popup_closeAction = function(argRuntimeID, argJsnInfo) {
         // 모달 상태 초기화
         scwin.modalManager.isModalOpen = false;
         scwin.modalManager.modalInstance = null;
+        
+        // 프로젝트가 추가되었다면 사이드메뉴 새로고침
+        if (argJsnInfo && argJsnInfo.projectAdded) {
+            console.log("프로젝트가 추가되어 사이드메뉴를 새로고침합니다.");
+            setTimeout(() => {
+                scwin.refreshSideMenu();
+            }, 500);
+        }
         
         console.log("팝업 닫기 액션 완료");
         
