@@ -88,6 +88,10 @@
 		*
 		FROM PROJECT
 		WHERE 1=1
+		<if test="userId != null and userId != ''">
+			AND USER_ID = #{userId}
+		</if>
+		ORDER BY CREATED_AT DESC
 
 		) S, (SELECT @ROWNUM := 0) TMP
 		) A
@@ -101,6 +105,9 @@
 		COUNT(*) totcnt
 		FROM PROJECT
 		WHERE 1=1
+		<if test="userId != null and userId != ''">
+			AND USER_ID = #{userId}
+		</if>
 
 	</select>
 
