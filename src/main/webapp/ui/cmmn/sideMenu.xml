@@ -472,6 +472,21 @@ scwin.updateSelectedMenu = function(menuType) {
     scwin.changeSelectedMenu(menuType);
 };
 
+// 외부에서 프로젝트 메뉴를 선택할 수 있는 함수 (메인 콘텐츠의 프로젝트 카드 클릭용)
+scwin.selectProjectMenuFromExternal = function(projectId, projectData) {
+    console.log("외부에서 프로젝트 메뉴 선택 요청:", projectId, projectData);
+    
+    const menuKey = "project_" + projectId;
+    
+    // 메뉴 선택 상태 변경
+    scwin.changeSelectedMenu(menuKey);
+    
+    // 프로젝트 메뉴 클릭 이벤트 처리
+    if (projectData) {
+        scwin.onProjectMenuClick(projectData);
+    }
+};
+
 // 프로젝트 추가 후 목록 새로고침
 scwin.refreshProjectList = function() {
     console.log("프로젝트 목록 새로고침");

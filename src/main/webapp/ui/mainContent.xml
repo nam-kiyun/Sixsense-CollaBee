@@ -305,9 +305,35 @@ scwin.clearProjectCards = function() {
 scwin.onProjectCardClick = function(project) {
     console.log("프로젝트 카드 클릭:", project);
     try {
+        const parent = $p.parent();
+        
+        // 1. 부모 창의 사이드 메뉴에서 해당 프로젝트 메뉴 선택
+        if (parent && parent.wfr_sideMenu && parent.wfr_sideMenu.getWindow) {
+            const sideMenuWindow = parent.wfr_sideMenu.getWindow();
+            if (sideMenuWindow && sideMenuWindow.scwin) {
+                console.log("사이드 메뉴로 프로젝트 선택 요청:", project.projectId);
+                
+                // 사이드 메뉴의 외부 선택 함수 호출
+                if (sideMenuWindow.scwin.selectProjectMenuFromExternal) {
+                    sideMenuWindow.scwin.selectProjectMenuFromExternal(project.projectId, project);
+                } else {
+                    // 대체 방법: 개별 함수 호출
+                    const menuKey = "project_" + project.projectId;
+                    if (sideMenuWindow.scwin.changeSelectedMenu) {
+                        sideMenuWindow.scwin.changeSelectedMenu(menuKey);
+                    }
+                    if (sideMenuWindow.scwin.onProjectMenuClick) {
+                        sideMenuWindow.scwin.onProjectMenuClick(project);
+                    }
+                }
+            }
+        }
+        
+        // 2. 부모 창의 메뉴 변경 함수 호출 (페이지 이동)
         if (parent && parent.scwin && parent.scwin.changeMenu) {
             parent.scwin.changeMenu("project_" + project.projectId, project);
         }
+        
     } catch(e) {
         console.error("프로젝트 카드 클릭 처리 오류:", e);
     }
@@ -327,10 +353,31 @@ scwin.img_addProject_onclick = function(e) {
     }
 };
 
-// 외부에서 호출할 수 있는 프로젝트 목록 새로고침 함수
-scwin.refreshProjectCards = function() {
-    console.log("프로젝트 카드 새로고침");
-    $c.sbm.execute(sbm_selectProjectList);
+// 사이드 메뉴와 연동하여 프로젝트 데이터 업데이트
+scwin.updateProjectDataFromSideMenu = function(projectList) {
+    console.log("사이드 메뉴로부터 프로젝트 데이터 수신:", projectList);
+    
+    // 기존 프로젝트 목록을 새로운 데이터로 교체
+    if (dlt_projectList) {
+        dlt_projectList.removeAll();
+        
+        if (projectList && projectList.length > 0) {
+            for (let i = 0; i < projectList.length; i++) {
+                dlt_projectList.insertRow("last");
+                const index = dlt_projectList.getRowCount() - 1;
+                dlt_projectList.setCellData(index, "projectId", projectList[i].projectId);
+                dlt_projectList.setCellData(index, "projectName", projectList[i].projectName);
+                dlt_projectList.setCellData(index, "description", projectList[i].description);
+                dlt_projectList.setCellData(index, "projectImageUrl", projectList[i].projectImageUrl);
+                dlt_projectList.setCellData(index, "createdAt", projectList[i].createdAt);
+                dlt_projectList.setCellData(index, "emailSendTime", projectList[i].emailSendTime);
+                dlt_projectList.setCellData(index, "userId", projectList[i].userId);
+            }
+        }
+    }
+    
+    // 프로젝트 카드 다시 렌더링
+    scwin.renderProjectCards(projectList);
 };
 
 /**
@@ -346,17 +393,17 @@ scwin.loadProjectDetail = function(projectId) {
     </head>
     <body ev:onpageload="scwin.onpageload">
         <!-- 메인 콘텐츠 -->
-        <xf:group style="height: 100%; overflow-y: auto; background-color:#fff4d6;padding:40px;" id="grp_mainContent">
+        <xf:group style="width:100%;height:100%;overflow-y:auto;overflow-x:hidden;background-color:#fff4d6;padding:40px 40px 20px 40px;box-sizing:border-box;" id="grp_mainContent">
             
             <!-- 환영 메시지 -->
-            <xf:group style="text-align:center;margin-bottom:60px;" id="grp_welcomeMessage">
+            <xf:group style="text-align:center;margin-bottom:40px;" id="grp_welcomeMessage">
                 <xf:output style="font-size:60px;font-weight:bold;color:#000000;font-family:'Andada Pro',serif;" id="output_welcomeText">
                     <xf:label><![CDATA[식스센스님 안녕하세요]]></xf:label>
                 </xf:output>
             </xf:group>
             
             <!-- 진행중인 프로젝트 섹션 -->
-            <xf:group style="display:flex;align-items:center;margin-bottom:30px;" id="grp_projectsTitle">
+            <xf:group style="display:flex;align-items:center;margin-bottom:20px;" id="grp_projectsTitle">
                 <xf:output style="font-size:24px;font-weight:400;color:#000000;font-family:Inter,sans-serif;" id="output_projectsTitle">
                     <xf:label><![CDATA[진행중인 프로젝트]]></xf:label>
                 </xf:output>
@@ -365,11 +412,9 @@ scwin.loadProjectDetail = function(projectId) {
             </xf:group>
             
             <!-- 프로젝트 카드들 컨테이너 (동적으로 생성됨) -->
-            <xf:group style="display:flex;gap:40px;flex-wrap:wrap;" id="grp_projectCards">
+            <xf:group style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:40px;max-width:100%;" id="grp_projectCards">
                 <!-- 여기에 동적으로 프로젝트 카드들이 생성됩니다 -->
             </xf:group>
-            
-        <w2:content id="contentControl" style="width:100%;height:100%;"></w2:content>
             
         </xf:group>
     </body>
