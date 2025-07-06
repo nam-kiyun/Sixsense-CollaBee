@@ -36,12 +36,12 @@
         <w2:layoutInfo/>
         <w2:publicInfo method=""/>
         <script lazy="false" type="text/javascript"><![CDATA[
-scwin.onpageload = function () {
+scwin.onpageload = async function () {
     // 메인 페이지 초기화
-    scwin.loadUserInfo();
+    await scwin.loadUserInfo();
 
     // 기본적으로 대시보드 로드
-    scwin.loadMainContent("dashboard");
+    await scwin.loadMainContent("dashboard");
 };
 
 // 메인 콘텐츠 동적 로드 함수
