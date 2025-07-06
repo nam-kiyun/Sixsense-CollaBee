@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="프로젝트 설정 세부사항 페이지">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <style type="text/css">
+        <![CDATA[
+        body {
+            overflow-y: auto !important;
+            height: auto !important;
+            min-height: 100vh;
+        }
+        
+        /* 프로젝트 이미지 업로드 스타일 */
+        .project-image-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .project-image-upload {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(255, 184, 35, 0.9);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .delete-button {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+        }
+        
+        .delete-button:hover {
+            background-color: #c82333 !important;
+            border-color: #bd2130 !important;
+        }
+        ]]>
+        </style>
+        <xf:model>
+            <w2:dataCollection baseNode="map">
+                <w2:dataMap baseNode="map" id="dm_projectDetail">
+                    <w2:keyInfo>
+                        <w2:key id="projectImage" name="프로젝트이미지" dataType="text"/>
+                        <w2:key id="projectName" name="프로젝트명" dataType="text"/>
+                        <w2:key id="teamLeader" name="팀장" dataType="text"/>
+                        <w2:key id="teamLeaderEmail" name="팀장이메일" dataType="text"/>
+                        <w2:key id="emailSendTime" name="메일발송시간" dataType="text"/>
+                    </w2:keyInfo>
+                    <w2:data use="true">
+                        <projectImage>/InsWebApp/assets/images/default_project.png</projectImage>
+                        <projectName>2차 프로젝트</projectName>
+                        <teamLeader>식스센스</teamLeader>
+                        <teamLeaderEmail>sixsense@gmail.com</teamLeaderEmail>
+                        <emailSendTime>오후 6:00</emailSendTime>
+                    </w2:data>
+                </w2:dataMap>
+            </w2:dataCollection>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+    console.log("=== 프로젝트 설정 세부사항 페이지 로드 ===");
+};
+
+// 프로젝트 이미지 변경
+scwin.btn_changeImage_onclick = function(e) {
+    console.log("=== 프로젝트 이미지 변경 ===");
+    
+    // 실제로는 파일 업로드 다이얼로그를 열어야 함
+    if (confirm("프로젝트 이미지를 변경하시겠습니까?")) {
+        // 임시로 기본 이미지 경로 변경
+        var newImagePath = "/InsWebApp/assets/images/project_sample.png";
+        dm_projectDetail.set("projectImage", newImagePath);
+        alert("프로젝트 이미지가 변경되었습니다.\n실제 구현시에는 파일 업로드 기능이 필요합니다.");
+    }
+};
+
+// 저장 버튼 클릭
+scwin.btn_save_onclick = function(e) {
+    console.log("=== 프로젝트 설정 저장 ===");
+    
+    var projectName = dm_projectDetail.get("projectName");
+    var emailSendTime = dm_projectDetail.get("emailSendTime");
+    
+    // 유효성 검사
+    if (!projectName || projectName.trim() === "") {
+        alert("프로젝트명을 입력해주세요.");
+        return;
+    }
+    
+    if (!emailSendTime || emailSendTime.trim() === "") {
+        alert("메일 발송 시간을 입력해주세요.");
+        return;
+    }
+    
+    // 저장 로직 (실제로는 서버 통신)
+    alert("프로젝트 설정이 저장되었습니다.");
+    
+    console.log("저장된 데이터:", {
+        projectName: projectName,
+        teamLeader: dm_projectDetail.get("teamLeader"),
+        emailSendTime: emailSendTime
+    });
+};
+
+// 프로젝트 삭제
+scwin.btn_deleteProject_onclick = function(e) {
+    console.log("=== 프로젝트 삭제 ===");
+    
+    // 삭제 확인 모달 열기
+    scwin.openDeleteConfirmModal();
+};
+
+// 삭제 확인 모달 열기
+scwin.openDeleteConfirmModal = function() {
+    // 모달 배경 표시 (모달창도 함께 표시됨)
+    grp_modalBackground.setStyle("display", "flex");
+    
+    // 입력 필드 초기화
+    input_confirmProjectName.setValue("");
+    
+    console.log("삭제 확인 모달 열림");
+};
+
+// 삭제 확인 모달 닫기
+scwin.closeDeleteConfirmModal = function() {
+    grp_modalBackground.setStyle("display", "none");
+    
+    console.log("삭제 확인 모달 닫힘");
+};
+
+// 모달 배경 클릭 시 닫기
+scwin.grp_modalBackground_onclick = function(e) {
+    // 모달창 외부 영역 클릭 시만 닫기
+    if (e.target === grp_modalBackground.getElement()) {
+        scwin.closeDeleteConfirmModal();
+    }
+};
+
+// 모달창 내부 클릭 시 이벤트 전파 방지
+scwin.grp_deleteModal_onclick = function(e) {
+    // 이벤트 전파 중지 (모달창 내부 클릭 시 닫히지 않도록)
+    e.stopPropagation();
+};
+
+// 모달 취소 버튼
+scwin.btn_modalCancel_onclick = function(e) {
+    scwin.closeDeleteConfirmModal();
+};
+
+// 모달 X 버튼
+scwin.btn_modalClose_onclick = function(e) {
+    scwin.closeDeleteConfirmModal();
+};
+
+// 모달 확인 버튼 (실제 삭제 실행)
+scwin.btn_modalConfirm_onclick = function(e) {
+    console.log("=== 모달 확인 버튼 클릭 ===");
+    
+    var originalProjectName = dm_projectDetail.get("projectName");
+    var inputProjectName = input_confirmProjectName.getValue();
+    
+    console.log("원본 프로젝트명:", originalProjectName);
+    console.log("입력된 프로젝트명:", inputProjectName);
+    
+    // 프로젝트명 검증
+    if (!inputProjectName || inputProjectName.trim() === "") {
+        alert("프로젝트명을 입력해주세요.");
+        return;
+    }
+    
+    if (inputProjectName.trim() !== originalProjectName.trim()) {
+        alert("프로젝트명이 일치하지 않습니다.\n정확한 프로젝트명을 입력해주세요.");
+        return;
+    }
+    
+    // 프로젝트명이 일치하면 삭제 진행
+    scwin.executeProjectDelete(originalProjectName);
+};
+
+// 실제 프로젝트 삭제 실행
+scwin.executeProjectDelete = function(projectName) {
+    console.log("프로젝트 삭제 실행:", projectName);
+    
+    // 모달 닫기
+    scwin.closeDeleteConfirmModal();
+    
+    // 삭제 완료 메시지
+    alert("'" + projectName + "' 프로젝트가 삭제되었습니다.\n메인 페이지로 이동합니다.");
+    
+    // 실제로는 서버에 삭제 요청 후 메인 페이지로 이동
+    console.log("프로젝트 삭제 완료:", projectName);
+    
+    // 부모 창으로 대시보드 이동
+    try {
+        var parentFrame = $p.parent();
+        if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
+            parentFrame.scwin.changeMenu("dashboard");
+        }
+    } catch(e) {
+        console.error("부모 창 이동 오류:", e);
+    }
+};
+
+// X 버튼 클릭 (프로젝트 페이지로 돌아가기)
+scwin.btn_close_onclick = function(e) {
+    console.log("=== 설정 페이지 닫기 ===");
+    
+    // 변경사항 확인 (실제로는 폼 데이터 변경 여부 체크)
+    if (confirm("설정 페이지를 닫고 프로젝트 페이지로 돌아가시겠습니까?")) {
+        try {
+            // 부모 창의 메뉴 변경 함수 호출하여 프로젝트 페이지로 이동
+            var parentFrame = $p.parent();
+            if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
+                parentFrame.scwin.changeMenu("project1"); // 또는 현재 프로젝트에 맞는 메뉴
+            }
+        } catch(e) {
+            console.error("페이지 이동 오류:", e);
+        }
+    }
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+        <!-- 세부사항 페이지 컨테이너 -->
+        <xf:group style="padding:40px;background-color:#ffffff;min-height:calc(100vh - 80px);position:relative;" id="grp_detailContainer">
+            
+            <!-- X 버튼 (오른쪽 상단) -->
+            <xf:trigger 
+                style="position:absolute;top:20px;right:20px;width:32px;height:32px;background-color:transparent;border:none;font-size:24px;color:#999999;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;"
+                id="btn_close" 
+                type="button" 
+                ev:onclick="scwin.btn_close_onclick">
+                <xf:label><![CDATA[✕]]></xf:label>
+            </xf:trigger>
+            
+            <!-- 페이지 제목 -->
+            
+            <!-- 프로젝트 이미지 영역 -->
+            <xf:group style="text-align:center;margin-bottom:40px;" id="grp_projectImage">
+                
+                <!-- 프로젝트 이미지 컨테이너 -->
+                <xf:group style="display:inline-block;position:relative;" id="grp_imageContainer" class="project-image-container">
+                    
+                    <!-- 프로젝트 이미지 -->
+                    <xf:image 
+                        style="width:440px;height:409px;border-radius:16px;object-fit:cover;border:3px solid #e9ecef;box-shadow:0 4px 12px rgba(0,0,0,0.1);" 
+                        ref="dm_projectDetail.projectImage" 
+                        id="img_projectImage"/>
+                    
+                    <!-- 이미지 변경 버튼 -->
+                    <xf:trigger 
+                        style="position:absolute;bottom:10px;right:10px;width:36px;height:36px;background-color:rgba(255,184,35,0.9);border:3px solid #fff;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,0.2);"
+                        id="btn_changeImage" 
+                        type="button" 
+                        ev:onclick="scwin.btn_changeImage_onclick">
+                        <xf:label><![CDATA[📷]]></xf:label>
+                    </xf:trigger>
+                    
+                </xf:group>
+                
+            </xf:group>
+            
+            <!-- 프로젝트 정보 폼 -->
+            <xf:group style="max-width:500px;margin:0 auto;background-color:#f8f9fa;border-radius:12px;padding:32px;" id="grp_projectForm">
+                
+                <!-- 프로젝트명 -->
+                <xf:group style="margin-bottom:24px;" id="grp_projectName">
+                    <xf:output style="font-size:16px;font-weight:500;color:#333333;font-family:Inter,sans-serif;margin-bottom:8px;display:block;" id="output_projectNameLabel">
+                        <xf:label><![CDATA[이름]]></xf:label>
+                    </xf:output>
+                    <xf:input 
+                        style="width:100%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;"
+                        ref="dm_projectDetail.projectName" 
+                        id="input_projectName"/>
+                </xf:group>
+                
+                <!-- 팀장 정보 -->
+                <xf:group style="margin-bottom:24px;" id="grp_teamLeader">
+                	<xf:output
+                		style="font-size:16px;font-weight:500;color:#333333;font-family:Inter,sans-serif;margin-bottom:8px;display:block;"
+                		id="output_teamLeaderLabel">
+                		<xf:label><![CDATA[팀장]]></xf:label>
+                	</xf:output>
+
+                	<!-- 팀장 정보 표시 (읽기 전용) -->
+
+                	<xf:input id="input1" ref="dm_projectDetail.projectName"
+                		style="width:100%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;">
+                	</xf:input>
+                </xf:group>
+
+                <!-- 메일 발송 시간 -->
+                <xf:group style="margin-bottom:32px;" id="grp_emailTime">
+                    <xf:output style="font-size:16px;font-weight:500;color:#333333;font-family:Inter,sans-serif;margin-bottom:8px;display:block;" id="output_emailTimeLabel">
+                        <xf:label><![CDATA[메일 발송 시간]]></xf:label>
+                    </xf:output>
+                    <xf:select1 
+                        style="width:100%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;"
+                        ref="dm_projectDetail.emailSendTime" 
+                        id="select_emailTime"
+                        appearance="minimal">
+                        <xf:choices>
+                            <xf:item>
+                                <xf:label>오전 9:00</xf:label>
+                                <xf:value>오전 9:00</xf:value>
+                            </xf:item>
+                            <xf:item>
+                                <xf:label>오후 12:00</xf:label>
+                                <xf:value>오후 12:00</xf:value>
+                            </xf:item>
+                            <xf:item>
+                                <xf:label>오후 6:00</xf:label>
+                                <xf:value>오후 6:00</xf:value>
+                            </xf:item>
+                            <xf:item>
+                                <xf:label>오후 9:00</xf:label>
+                                <xf:value>오후 9:00</xf:value>
+                            </xf:item>
+                        </xf:choices>
+                    </xf:select1>
+                </xf:group>
+                
+                <!-- 위험 구역 -->
+                <xf:group style="border-top:1px solid #dee2e6;padding-top:24px;" id="grp_dangerZone">
+                    
+                    <!-- 프로젝트 삭제 버튼 -->
+                    <xf:trigger 
+                        style="width:100%;height:48px;background-color:#dc3545;border:1px solid #dc3545;border-radius:8px;color:#ffffff;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
+                        id="btn_deleteProject" 
+                        type="button" 
+                        class="delete-button"
+                        ev:onclick="scwin.btn_deleteProject_onclick">
+                        <xf:label><![CDATA[프로젝트 삭제]]></xf:label>
+                    </xf:trigger>
+                </xf:group>
+                
+            </xf:group>
+            
+            <!-- 저장 버튼 영역 -->
+            <xf:group style="text-align:center;margin-top:32px;" id="grp_saveButton">
+                <xf:trigger 
+                    style="width:200px;height:48px;background-color:#ffb823;border:1px solid #ffb823;border-radius:8px;color:#000000;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
+                    id="btn_save" 
+                    type="button" 
+                    ev:onclick="scwin.btn_save_onclick">
+                    <xf:label><![CDATA[저장]]></xf:label>
+                </xf:trigger>
+            </xf:group>
+            
+        </xf:group>
+        
+        <!-- 삭제 확인 모달 -->
+        <!-- 모달 배경 (반투명 오버레이) -->
+        <xf:group style="position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:rgba(0,0,0,0.5);z-index:9999;display:none;justify-content:center;align-items:center;" id="grp_modalBackground" ev:onclick="scwin.grp_modalBackground_onclick">
+            
+            <!-- 삭제 확인 모달창 -->
+            <xf:group style="width:500px;background-color:#ffffff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.3);position:relative;" id="grp_deleteModal" ev:onclick="scwin.grp_deleteModal_onclick">
+                
+                <!-- 모달 헤더 -->
+                <xf:group style="position:relative;padding:24px 24px 0 24px;" id="grp_modalHeader">
+                    
+                    <!-- 모달 X 버튼 -->
+                    <xf:trigger 
+                        style="position:absolute;top:16px;right:16px;width:24px;height:24px;background-color:transparent;border:none;font-size:18px;color:#999999;cursor:pointer;"
+                        id="btn_modalClose" 
+                        type="button" 
+                        ev:onclick="scwin.btn_modalClose_onclick">
+                        <xf:label><![CDATA[✕]]></xf:label>
+                    </xf:trigger>
+                    
+                </xf:group>
+                
+                <!-- 모달 콘텐츠 -->
+                <xf:group style="padding:0 32px 32px 32px;text-align:center;" id="grp_modalContent">
+                    
+                    <!-- 프로젝트 이미지 -->
+                    <xf:group style="margin-bottom:24px;" id="grp_modalImage">
+                        <xf:image 
+                            style="width:180px;height:140px;border-radius:12px;object-fit:cover;border:2px solid #e9ecef;" 
+                            ref="dm_projectDetail.projectImage" 
+                            id="img_modalProjectImage"/>
+                    </xf:group>
+                    
+                    <!-- 모달 제목 -->
+                    <xf:group style="margin-bottom:8px;" id="grp_modalTitle">
+                        <xf:output style="font-size:20px;font-weight:600;color:#dc3545;font-family:Inter,sans-serif;" id="output_modalTitle">
+                            <xf:label><![CDATA[프로젝트를 삭제하시겠습니까?]]></xf:label>
+                        </xf:output>
+                    </xf:group>
+                    
+                    <!-- 모달 안내 메시지 -->
+                    <xf:group style="margin-bottom:24px;" id="grp_modalMessage">
+                        <xf:output style="font-size:14px;color:#666666;font-family:Inter,sans-serif;" id="output_modalMessage">
+                            <xf:label><![CDATA[삭제하실 프로젝트 이름을 입력해 주세요]]></xf:label>
+                        </xf:output>
+                    </xf:group>
+                    
+                    <!-- 프로젝트명 입력 필드 -->
+                    <xf:group style="margin-bottom:32px;" id="grp_modalInput">
+                        <xf:input 
+                            style="width:100%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;text-align:center;"
+                            id="input_confirmProjectName"
+                            placeholder="프로젝트명을 입력하세요"/>
+                    </xf:group>
+                    
+                    <!-- 모달 버튼 영역 -->
+                    <xf:group style="display:flex;gap:12px;justify-content:center;" id="grp_modalButtons">
+                        
+                        <!-- 취소 버튼 -->
+                        <xf:trigger 
+                            style="flex:1;height:48px;background-color:#ffffff;border:1px solid #ddd;border-radius:8px;color:#666666;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;"
+                            id="btn_modalCancel" 
+                            type="button" 
+                            ev:onclick="scwin.btn_modalCancel_onclick">
+                            <xf:label><![CDATA[취소]]></xf:label>
+                        </xf:trigger>
+                        
+                        <!-- 확인 버튼 -->
+                        <xf:trigger 
+                            style="flex:1;height:48px;background-color:#ffb823;border:1px solid #ffb823;border-radius:8px;color:#000000;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
+                            id="btn_modalConfirm" 
+                            type="button" 
+                            ev:onclick="scwin.btn_modalConfirm_onclick">
+                            <xf:label><![CDATA[확인]]></xf:label>
+                        </xf:trigger>
+                        
+                    </xf:group>
+                    
+                </xf:group>
+                
+            </xf:group>
+            
+        </xf:group>
+    </body>
+</html>

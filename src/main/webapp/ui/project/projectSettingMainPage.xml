@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="프로젝트 설정 메인 페이지">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <style type="text/css">
+        <![CDATA[body{
+    overflow: hidden;
+}
+]]></style>
+        <xf:model>
+            <w2:dataCollection baseNode="map">
+                <w2:dataMap baseNode="map" id="dm_main">
+                    <w2:keyInfo>
+                        <w2:key id="currentPage" name="현재페이지" dataType="text"/>
+                        <w2:key id="projectName" name="프로젝트명" dataType="text"/>
+                    </w2:keyInfo>
+                    <w2:data use="true">
+                        <currentPage>detail</currentPage>
+                        <projectName>2차 프로젝트</projectName>
+                    </w2:data>
+                </w2:dataMap>
+            </w2:dataCollection>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+    console.log("=== 프로젝트 설정 메인 페이지 로드 ===");
+    // 기본적으로 세부사항 페이지 표시
+    scwin.loadSettingContent("projectSettingDetail");
+};
+
+// 설정 콘텐츠 동적 로드 함수 (mainPage.xml 스타일과 동일)
+scwin.loadSettingContent = function (menuType) {
+    try {
+        let srcPath = "";
+        let selectedMenu = "";
+
+        console.log("=== 설정 콘텐츠 로드 시작 ===");
+        console.log("요청된 메뉴 타입:", menuType);
+
+        switch (menuType) {
+            case "projectSettingDetail":
+                srcPath = "/InsWebApp/ui/project/projectSettingDetailPage.xml";
+                selectedMenu = "detail";
+                break;
+            case "projectSettingAccess":
+                srcPath = "/InsWebApp/ui/project/projectSettingAccessPage.xml";
+                selectedMenu = "access";
+                break;
+            case "projectSettingGithub":
+                srcPath = "/InsWebApp/ui/project/projectSettingGithubPage.xml";
+                selectedMenu = "github";
+                break;
+            default:
+                srcPath = "/InsWebApp/ui/project/projectSettingDetailPage.xml";
+                selectedMenu = "detail";
+                console.log("기본 세부사항으로 설정:", menuType);
+                break;
+        }
+
+        console.log("결정된 소스 경로:", srcPath);
+
+        // wframe 존재 확인
+        if (wfr_settingContent) {
+            console.log("wfr_settingContent 찾음:", wfr_settingContent);
+            console.log("현재 wframe src:", wfr_settingContent.getSrc());
+
+            // 프레임 소스 변경
+            wfr_settingContent.setSrc(srcPath);
+
+            // 변경 후 확인
+            setTimeout(function () {
+                console.log("변경 후 wframe src:", wfr_settingContent.getSrc());
+                console.log("프레임 소스 변경 성공:", srcPath);
+            }, 100);
+
+        } else {
+            console.error("오류: wfr_settingContent를 찾을 수 없습니다.");
+            return false;
+        }
+
+        // 현재 페이지 상태 업데이트
+        dm_main.set("currentPage", selectedMenu);
+
+        console.log("=== 설정 콘텐츠 로드 완료 ===");
+        return true;
+
+    } catch (e) {
+        console.error("설정 콘텐츠 로드 오류:", e);
+        console.error("Error stack:", e.stack);
+        return false;
+    }
+};
+
+// 사이드메뉴에서 호출할 메뉴 변경 함수
+scwin.changeMenu = function (menuType) {
+    console.log("=== 메뉴 변경 요청 ===", menuType);
+
+    // 설정 콘텐츠 로드
+    scwin.loadSettingContent(menuType);
+
+    // 사이드메뉴에 선택된 메뉴 알림
+    try {
+        if (wfr_sideMenu && wfr_sideMenu.getWindow) {
+            const sideMenuWindow = wfr_sideMenu.getWindow();
+            if (sideMenuWindow && sideMenuWindow.scwin && sideMenuWindow.scwin.updateSelectedMenu) {
+                const selectedMenu = dm_main.get("currentPage");
+                sideMenuWindow.scwin.updateSelectedMenu(selectedMenu);
+                console.log("사이드메뉴 선택 상태 업데이트 성공:", selectedMenu);
+            } else {
+                console.log("사이드메뉴 updateSelectedMenu 함수를 찾을 수 없습니다.");
+            }
+        } else {
+            console.log("사이드메뉴 wframe을 찾을 수 없습니다.");
+        }
+    } catch (e) {
+        console.log("사이드메뉴 업데이트 오류:", e);
+    }
+};
+
+// 사이드바에 프로젝트 정보 전달
+scwin.updateSidebarProjectInfo = function() {
+    try {
+        if (wfr_sideMenu && wfr_sideMenu.getWindow) {
+            const sideMenuWindow = wfr_sideMenu.getWindow();
+            if (sideMenuWindow && sideMenuWindow.scwin && sideMenuWindow.scwin.updateProjectName) {
+                const projectName = dm_main.get("projectName");
+                sideMenuWindow.scwin.updateProjectName(projectName);
+                console.log("사이드바에 프로젝트 정보 전달 성공:", projectName);
+            }
+        }
+    } catch(e) {
+        console.error("사이드바 프로젝트 정보 업데이트 오류:", e);
+    }
+};
+
+// wframe 로드 완료 이벤트들
+scwin.wfr_sideMenu_onready = function() {
+    console.log("사이드바 로드 완료");
+    // 사이드바에 프로젝트 정보 전달
+    setTimeout(function() {
+        scwin.updateSidebarProjectInfo();
+    }, 100);
+};
+
+scwin.wfr_settingContent_onready = function() {
+    console.log("설정 내용 영역 로드 완료");
+};
+
+scwin.wfr_header_onready = function() {
+    console.log("헤더 로드 완료");
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+        <!-- 전체 페이지 컨테이너 (mainPage.xml 스타일과 동일) -->
+        <xf:group style="display:flex;flex-direction:column;margin:0;padding:0;" id="grp_mainContainer">
+            
+            <!-- 헤더 영역 -->
+            <xf:group style="width:100%;position:fixed;top:0;left:0;z-index:1000;" id="grp_headerArea">
+                <w2:wframe id="wfr_header" style="width:100%;" src="/InsWebApp/ui/cmmn/header.xml" ev:onready="scwin.wfr_header_onready"/>
+            </xf:group>
+            
+            <!-- 메인 콘텐츠 영역 (헤더 아래) -->
+            <xf:group style="width:100%;height:calc(100vh - 100px);margin-top:100px;display:flex;" id="grp_contentArea">
+                
+                <!-- 사이드메뉴 영역 -->
+                <xf:group style="width:303px;height:100%;position:fixed;left:0;z-index:999;" id="grp_sideMenuArea">
+                    <w2:wframe id="wfr_sideMenu" style="width:100%;" src="/InsWebApp/ui/cmmn/projectSettingSideMenu.xml" ev:onready="scwin.wfr_sideMenu_onready"/>
+                </xf:group>
+                
+                <!-- 설정 콘텐츠 -->
+                <xf:group style="margin-left:303px;width:calc(100% - 303px);background-color:#f5f5f5;border-left:1px solid #000000;height:100%;overflow-y:auto;" id="grp_settingContent">
+                    <w2:wframe id="wfr_settingContent" style="width:100%;height:100%;" src="/InsWebApp/ui/project/projectSettingDetailPage.xml" ev:onready="scwin.wfr_settingContent_onready"/>
+                </xf:group>
+                
+            </xf:group>
+            
+        </xf:group>
+    </body>
+</html>

@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="프로젝트 설정 액세스 페이지">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <style type="text/css">
+        <![CDATA[
+        body {
+            overflow-y: auto !important;
+            height: auto !important;
+            min-height: 100vh;
+        }
+        ]]>
+        </style>
+        <xf:model>
+            <w2:dataCollection baseNode="map">
+                <w2:dataMap baseNode="map" id="dm_search">
+                    <w2:keyInfo>
+                        <w2:key id="searchValue" name="검색어" dataType="text"/>
+                    </w2:keyInfo>
+                    <w2:data use="true">
+                        <searchValue></searchValue>
+                    </w2:data>
+                </w2:dataMap>
+                
+                <!-- 사용자 목록 데이터 -->
+                <w2:dataList baseNode="list" id="dl_userList" repeatNode="map">
+                    <w2:columnInfo>
+                        <w2:column id="userId" name="사용자ID" dataType="text"/>
+                        <w2:column id="userName" name="이름" dataType="text"/>
+                        <w2:column id="email" name="이메일" dataType="text"/>
+                        <w2:column id="role" name="역할" dataType="text"/>
+                        <w2:column id="status" name="상태" dataType="text"/>
+                    </w2:columnInfo>
+                    <w2:data use="true">
+                        <w2:row>
+                            <userId>juk123</userId>
+                            <userName>국다의</userName>
+                            <email>juk@gmail.com</email>
+                            <role>관리자</role>
+                            <status>활성</status>
+                        </w2:row>
+                        <w2:row>
+                            <userId>nam456</userId>
+                            <userName>남가을</userName>
+                            <email>nam@gmail.com</email>
+                            <role>멤버</role>
+                            <status>활성</status>
+                        </w2:row>
+                        <w2:row>
+                            <userId>hwang789</userId>
+                            <userName>황무지</userName>
+                            <email>hwang@gmail.com</email>
+                            <role>멤버</role>
+                            <status>활성</status>
+                        </w2:row>
+                    </w2:data>
+                </w2:dataList>
+            </w2:dataCollection>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+    console.log("=== 프로젝트 설정 액세스 페이지 로드 ===");
+};
+
+// 검색 버튼 클릭
+scwin.btn_search_onclick = function(e) {
+    var searchValue = dm_search.get("searchValue");
+    console.log("검색어:", searchValue);
+    
+    if (!searchValue || searchValue.trim() === "") {
+        alert("검색어를 입력해주세요.");
+        return;
+    }
+    
+    // 실제로는 서버에서 검색 결과를 가져옴
+    alert("'" + searchValue + "' 검색 결과를 조회합니다.");
+};
+
+// 사용자 추가 버튼 클릭
+scwin.btn_addUser_onclick = function(e) {
+    console.log("=== 사용자 추가 버튼 클릭 ===");
+    
+    // 사용자 추가 모달 또는 페이지로 이동
+    alert("사용자 추가 기능을 구현해주세요.");
+};
+
+// 그리드에서 역할 변경
+scwin.grd_userList_oncellclick = function(row, col) {
+    console.log("셀 클릭:", row, col);
+    
+    var columnId = grd_userList.getColumnID(col);
+    if (columnId === "role") {
+        // 역할 변경 로직
+        var currentRole = dl_userList.getCellData(row, "role");
+        var newRole = currentRole === "관리자" ? "멤버" : "관리자";
+        
+        if (confirm("역할을 '" + newRole + "'로 변경하시겠습니까?")) {
+            dl_userList.setCellData(row, "role", newRole);
+            alert("역할이 변경되었습니다.");
+        }
+    }
+};
+
+// 사용자 삭제
+scwin.deleteUser = function(row) {
+    var userName = dl_userList.getCellData(row, "userName");
+    
+    if (confirm("'" + userName + "' 사용자를 프로젝트에서 제거하시겠습니까?")) {
+        dl_userList.deleteRow(row);
+        alert("사용자가 제거되었습니다.");
+    }
+};
+
+// X 버튼 클릭 (프로젝트 페이지로 돌아가기)
+scwin.btn_close_onclick = function(e) {
+    console.log("=== 설정 페이지 닫기 ===");
+    
+    // 변경사항 확인 (실제로는 폼 데이터 변경 여부 체크)
+    if (confirm("설정 페이지를 닫고 프로젝트 페이지로 돌아가시겠습니까?")) {
+        try {
+            // 부모 창의 메뉴 변경 함수 호출하여 프로젝트 페이지로 이동
+            var parentFrame = $p.parent();
+            if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
+                parentFrame.scwin.changeMenu("project1"); // 또는 현재 프로젝트에 맞는 메뉴
+            }
+        } catch(e) {
+            console.error("페이지 이동 오류:", e);
+        }
+    }
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+        <!-- 액세스 페이지 컨테이너 -->
+        <xf:group style="padding:40px;background-color:#ffffff;min-height:calc(100vh - 80px);position:relative;" id="grp_accessContainer">
+            
+            <!-- X 버튼 (오른쪽 상단) -->
+            <xf:trigger 
+                style="position:absolute;top:20px;right:20px;width:32px;height:32px;background-color:transparent;border:none;font-size:24px;color:#999999;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;"
+                id="btn_close" 
+                type="button" 
+                ev:onclick="scwin.btn_close_onclick">
+                <xf:label><![CDATA[✕]]></xf:label>
+            </xf:trigger>
+            
+            <!-- 페이지 제목 -->
+            <xf:group style="margin-bottom:32px;" id="grp_pageTitle">
+                <xf:output style="font-size:28px;font-weight:600;color:#333333;font-family:Inter,sans-serif;" id="output_pageTitle">
+                    <xf:label><![CDATA[액세스 관리]]></xf:label>
+                </xf:output>
+                <xf:output style="font-size:16px;color:#666666;font-family:Inter,sans-serif;margin-top:8px;display:block;" id="output_pageDesc">
+                    <xf:label><![CDATA[프로젝트에 참여하는 사용자들을 관리할 수 있습니다.]]></xf:label>
+                </xf:output>
+            </xf:group>
+            
+            <!-- 검색 및 추가 영역 -->
+            <xf:group style="background-color:#f8f9fa;border-radius:12px;padding:24px;margin-bottom:32px;" id="grp_searchArea">
+                
+                <!-- 검색 바 -->
+                <xf:group style="display:flex;gap:16px;align-items:center;margin-bottom:20px;" id="grp_searchBar">
+                    <xf:input 
+                        style="flex:1;max-width:400px;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;"
+                        ref="dm_search.searchValue" 
+                        id="input_search"
+                        placeholder="사용자 이름 또는 이메일로 검색"/>
+                    
+                    <xf:trigger 
+                        style="width:80px;height:48px;background-color:#ffb823;border:1px solid #ffb823;border-radius:8px;color:#000000;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
+                        id="btn_search" 
+                        type="button" 
+                        ev:onclick="scwin.btn_search_onclick">
+                        <xf:label><![CDATA[검색]]></xf:label>
+                    </xf:trigger>
+                </xf:group>
+                
+                <!-- 사용자 추가 버튼 -->
+                <xf:group style="display:flex;justify-content:flex-end;" id="grp_addButton">
+                    <xf:trigger 
+                        style="width:140px;height:48px;background-color:#28a745;border:1px solid #28a745;border-radius:8px;color:#ffffff;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
+                        id="btn_addUser" 
+                        type="button" 
+                        ev:onclick="scwin.btn_addUser_onclick">
+                        <xf:label><![CDATA[+ 사용자 추가]]></xf:label>
+                    </xf:trigger>
+                </xf:group>
+                
+            </xf:group>
+            
+            <!-- 사용자 목록 영역 -->
+            <xf:group style="background-color:#ffffff;border:1px solid #e9ecef;border-radius:12px;overflow:hidden;" id="grp_userListArea">
+                
+                <!-- 테이블 헤더 -->
+                <xf:group style="background-color:#f8f9fa;padding:16px 24px;border-bottom:1px solid #e9ecef;" id="grp_tableHeader">
+                    <xf:output style="font-size:18px;font-weight:600;color:#333333;font-family:Inter,sans-serif;" id="output_tableTitle">
+                        <xf:label><![CDATA[프로젝트 멤버]]></xf:label>
+                    </xf:output>
+                </xf:group>
+                
+                <!-- 사용자 목록 그리드 -->
+                <w2:gridView 
+                    id="grd_userList" 
+                    style="width:100%;height:400px;" 
+                    dataList="dl_userList"
+                    defaultCellHeight="50"
+                    headerHeight="45"
+                    scrollByColumn="false"
+                    scrollByColumnAdaptive="false"
+                    useFilterList="true"
+                    autoFit="allColumn"
+                    ev:oncellclick="scwin.grd_userList_oncellclick">
+                    
+                    <w2:header style="height:45px;background-color:#f8f9fa;">
+                        <w2:row>
+                            <w2:column width="100" inputType="output" style="height:45px;background-color:#f8f9fa;text-align:center;font-weight:600;" id="column1" value="이름" displayMode="label"/>
+                            <w2:column width="200" inputType="output" style="height:45px;background-color:#f8f9fa;text-align:center;font-weight:600;" id="column2" value="이메일" displayMode="label"/>
+                            <w2:column width="100" inputType="output" style="height:45px;background-color:#f8f9fa;text-align:center;font-weight:600;" id="column3" value="역할" displayMode="label"/>
+                            <w2:column width="80" inputType="output" style="height:45px;background-color:#f8f9fa;text-align:center;font-weight:600;" id="column4" value="상태" displayMode="label"/>
+                            <w2:column width="80" inputType="output" style="height:45px;background-color:#f8f9fa;text-align:center;font-weight:600;" id="column5" value="작업" displayMode="label"/>
+                        </w2:row>
+                    </w2:header>
+                    
+                    <w2:gBody>
+                        <w2:row>
+                            <w2:column width="100" inputType="output" style="text-align:center;padding:12px;" id="userName" value="" displayMode="label"/>
+                            <w2:column width="200" inputType="output" style="text-align:center;padding:12px;" id="email" value="" displayMode="label"/>
+                            <w2:column width="100" inputType="select1" style="text-align:center;padding:12px;" id="role" value="" displayMode="label">
+                                <w2:choices>
+                                    <w2:item>
+                                        <w2:label>관리자</w2:label>
+                                        <w2:value>관리자</w2:value>
+                                    </w2:item>
+                                    <w2:item>
+                                        <w2:label>멤버</w2:label>
+                                        <w2:value>멤버</w2:value>
+                                    </w2:item>
+                                </w2:choices>
+                            </w2:column>
+                            <w2:column width="80" inputType="output" style="text-align:center;padding:12px;" id="status" value="" displayMode="label"/>
+                            <w2:column width="80" inputType="button" style="text-align:center;padding:12px;" id="deleteBtn" value="삭제" displayMode="label">
+                                <w2:expression script="scwin.deleteUser(rowIndex)"/>
+                            </w2:column>
+                        </w2:row>
+                    </w2:gBody>
+                </w2:gridView>
+                
+            </xf:group>
+            
+        </xf:group>
+    </body>
+</html>

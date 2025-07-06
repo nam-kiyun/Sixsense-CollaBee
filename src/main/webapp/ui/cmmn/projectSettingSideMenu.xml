@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="프로젝트 설정 사이드 메뉴">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <style>
+            /* 선택된 메뉴 스타일 */
+            .selected-setting-menu {
+                background-color: rgba(255,184,35,0.2) !important;
+            }
+            
+            /* 기본 메뉴 스타일 */
+            .setting-menu-item {
+                background-color: transparent !important;
+                transition: background-color 0.3s ease;
+            }
+            
+            /* 선택되지 않은 메뉴는 투명하게 */
+            .setting-menu-item:not(.selected-setting-menu) {
+                background-color: transparent !important;
+            }
+            
+            /* 호버 효과 */
+            .setting-menu-item:hover {
+                background-color: rgba(255,184,35,0.1) !important;
+            }
+            
+            /* 선택된 메뉴의 배경색을 강제로 적용 */
+            .setting-menu-item.selected-setting-menu {
+                background-color: rgba(255,184,35,0.2) !important;
+            }
+        </style>
+        <xf:model>
+            <w2:dataCollection baseNode="map">
+                <w2:dataMap baseNode="map" id="dm_settingSideMenu">
+                    <w2:keyInfo>
+                        <w2:key id="selectedMenu" name="선택된메뉴" dataType="text"/>
+                        <w2:key id="projectName" name="프로젝트명" dataType="text"/>
+                    </w2:keyInfo>
+                    <w2:data use="true">
+                        <selectedMenu>detail</selectedMenu>
+                        <projectName>2차 프로젝트</projectName>
+                    </w2:data>
+                </w2:dataMap>
+            </w2:dataCollection>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function() {
+    // 기본적으로 세부사항 선택 상태로 설정
+    scwin.changeSelectedMenu("detail");
+};
+
+// 세부사항 메뉴 클릭 이벤트
+scwin.menu_detail_onclick = function(e) {
+    console.log("=== 세부사항 메뉴 클릭 ===");
+    scwin.changeSelectedMenu("detail");
+    // 부모 창의 메뉴 변경 함수 호출
+    scwin.callParentMenuChange("projectSettingDetail");
+};
+
+// 액세스 메뉴 클릭 이벤트
+scwin.menu_access_onclick = function(e) {
+    console.log("=== 액세스 메뉴 클릭 ===");
+    scwin.changeSelectedMenu("access");
+    // 부모 창의 메뉴 변경 함수 호출
+    scwin.callParentMenuChange("projectSettingAccess");
+};
+
+// GitHub 연동 메뉴 클릭 이벤트
+scwin.menu_github_onclick = function(e) {
+    console.log("=== GitHub 연동 메뉴 클릭 ===");
+    scwin.changeSelectedMenu("github");
+    // 부모 창의 메뉴 변경 함수 호출
+    scwin.callParentMenuChange("projectSettingGithub");
+};
+
+// 부모 창의 메뉴 변경 함수 호출
+scwin.callParentMenuChange = function(menuType) {
+    try {
+        // WebSquare에서는 $p.parent()를 사용하여 부모 프레임에 접근
+        var parentFrame = $p.parent();
+        
+        if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
+            console.log("부모 changeMenu 함수 호출:", menuType, "($p.parent)");
+            parentFrame.scwin.changeMenu(menuType);
+        } else if (parent && parent.scwin && parent.scwin.changeMenu) {
+            console.log("부모 changeMenu 함수 호출:", menuType, "(parent)");
+            parent.scwin.changeMenu(menuType);
+        } else if (window.parent && window.parent.scwin && window.parent.scwin.changeMenu) {
+            console.log("부모 changeMenu 함수 호출:", menuType, "(window.parent)");
+            window.parent.scwin.changeMenu(menuType);
+        } else {
+            console.error("부모 창의 changeMenu 함수를 찾을 수 없습니다.");
+        }
+    } catch(e) {
+        console.error("부모 창 메뉴 변경 오류:", e);
+    }
+};
+
+// 선택된 메뉴 스타일 변경
+scwin.changeSelectedMenu = function(selectedMenu) {
+    try {
+        console.log("설정 메뉴 선택 변경 시작:", selectedMenu);
+        
+        // 모든 메뉴에서 selected-setting-menu 클래스 제거
+        grp_detail.removeClass("selected-setting-menu");
+        grp_access.removeClass("selected-setting-menu");
+        grp_github.removeClass("selected-setting-menu");
+        
+        // 모든 선택 표시 바 숨기기
+        grp_activeBar_detail.hide();
+        grp_activeBar_access.hide();
+        grp_activeBar_github.hide();
+        
+        // 모든 메뉴의 배경색을 투명하게 강제 설정
+        grp_detail.setStyle("background-color", "transparent");
+        grp_access.setStyle("background-color", "transparent");
+        grp_github.setStyle("background-color", "transparent");
+        
+        // 선택된 메뉴에만 스타일 적용
+        switch(selectedMenu) {
+            case "detail":
+                grp_detail.addClass("selected-setting-menu");
+                grp_detail.setStyle("background-color", "rgba(255,184,35,0.2)");
+                grp_activeBar_detail.show();
+                break;
+            case "access":
+                grp_access.addClass("selected-setting-menu");
+                grp_access.setStyle("background-color", "rgba(255,184,35,0.2)");
+                grp_activeBar_access.show();
+                break;
+            case "github":
+                grp_github.addClass("selected-setting-menu");
+                grp_github.setStyle("background-color", "rgba(255,184,35,0.2)");
+                grp_activeBar_github.show();
+                break;
+        }
+        
+        console.log("설정 메뉴 선택 완료:", selectedMenu);
+        
+        // 데이터맵에도 선택된 메뉴 저장
+        dm_settingSideMenu.set("selectedMenu", selectedMenu);
+    } catch(e) {
+        console.log("설정 메뉴 스타일 변경 오류:", e);
+    }
+};
+
+// 부모에서 호출할 수 있는 메뉴 업데이트 함수
+scwin.updateSelectedMenu = function(menuType) {
+    scwin.changeSelectedMenu(menuType);
+};
+
+// 프로젝트명 업데이트 함수
+scwin.updateProjectName = function(projectName) {
+    if (projectName) {
+        dm_settingSideMenu.set("projectName", projectName);
+    }
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+        <!-- 설정 사이드메뉴 전체 컨테이너 -->
+        <xf:group 
+            style="width:303px;height:924px;background-color:#ffffff;border-right:1px solid #000000;position:relative;padding:20px 0;"
+            id="grp_settingSideMenu">
+            
+            <!-- 프로젝트 정보 섹션 -->
+            <xf:group style="margin-bottom:32px;padding:0 24px;" id="grp_projectInfo">
+                <!-- 프로젝트명 표시 -->
+                <xf:output style="color:#000000;font-size:20px;font-family:Inter,sans-serif;font-weight:600;margin-bottom:8px;" 
+                           ref="dm_settingSideMenu.projectName" id="output_projectName"/>
+                <xf:output style="color:#666666;font-size:14px;font-family:Inter,sans-serif;font-weight:400;" id="output_settingLabel">
+                    <xf:label><![CDATA[프로젝트 설정]]></xf:label>
+                </xf:output>
+            </xf:group>
+            
+            <!-- 설정 메뉴 섹션 -->
+            <xf:group style="margin-bottom:20px;" id="grp_settingSection">
+                
+                <!-- 세부사항 메뉴 -->
+                <xf:group 
+                    style="padding:16px 24px;margin-bottom:8px;cursor:pointer;background-color:transparent;border-radius:10px;margin:0 16px 8px 16px;position:relative;"
+                    id="grp_detail"
+                    class="setting-menu-item"
+                    ev:onclick="scwin.menu_detail_onclick">
+                    
+                    <!-- 선택 표시 바 -->
+                    <xf:group 
+                        style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:24px;background-color:#ffb823;"
+                        id="grp_activeBar_detail"/>
+                    
+                    <xf:output style="color:#000000;font-size:20px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;" id="output_detail">
+                        <xf:label><![CDATA[세부사항]]></xf:label>
+                    </xf:output>
+                </xf:group>
+                
+                <!-- 액세스 메뉴 -->
+                <xf:group 
+                    style="padding:16px 24px;margin-bottom:8px;cursor:pointer;background-color:transparent;border-radius:10px;margin:0 16px 8px 16px;position:relative;"
+                    id="grp_access"
+                    class="setting-menu-item"
+                    ev:onclick="scwin.menu_access_onclick">
+                    
+                    <!-- 선택 표시 바 -->
+                    <xf:group 
+                        style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:24px;background-color:#ffb823;display:none;"
+                        id="grp_activeBar_access"/>
+                    
+                    <xf:output style="color:#000000;font-size:20px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;" id="output_access">
+                        <xf:label><![CDATA[액세스]]></xf:label>
+                    </xf:output>
+                </xf:group>
+                
+                <!-- GitHub 연동 메뉴 -->
+                <xf:group 
+                    style="padding:16px 24px;margin-bottom:8px;cursor:pointer;background-color:transparent;border-radius:10px;margin:0 16px 8px 16px;position:relative;"
+                    id="grp_github"
+                    class="setting-menu-item"
+                    ev:onclick="scwin.menu_github_onclick">
+                    
+                    <!-- 선택 표시 바 -->
+                    <xf:group 
+                        style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:24px;background-color:#ffb823;display:none;"
+                        id="grp_activeBar_github"/>
+                    
+                    <xf:output style="color:#000000;font-size:20px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;" id="output_github">
+                        <xf:label><![CDATA[GitHub 연동]]></xf:label>
+                    </xf:output>
+                </xf:group>
+                
+            </xf:group>
+            
+        </xf:group>
+    </body>
+</html>
