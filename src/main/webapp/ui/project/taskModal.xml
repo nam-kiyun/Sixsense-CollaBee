@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="/InsWebApp/css/task/taskModal.css" type="text/css"?>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare"
 	xmlns:xf="http://www.w3.org/2002/xforms">
 	<head>
@@ -6,18 +7,913 @@
 		<w2:buildDate />
 		<w2:MSA />
 		<xf:model>
-			<w2:dataCollection baseNode="map" />
+			<w2:dataCollection baseNode="map">
+				<w2:dataMap baseNode="map" id="dma_comment">
+					<w2:keyInfo>
+						<w2:key dataType="number" name="댓글 아이디" id="commentId"></w2:key>
+						<w2:key dataType="number" name="task 아이디" id="taskId"></w2:key>
+						<w2:key dataType="text" name="사용자 아이디" id="userId"></w2:key>
+						<w2:key dataType="text" name="메세지" id="message"></w2:key>
+						<w2:key dataType="text" name="생성일" id="created_at"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dma_getComment">
+					<w2:keyInfo>
+						<w2:key dataType="number" name="작업 아이디" id="taskId"></w2:key>
+						<w2:key dataType="number" name="페이지" id="page"></w2:key>
+						<w2:key dataType="number" name="페이지 사이즈" id="pageSize"></w2:key>
+						<w2:key dataType="number" name="시작번호" id="startOffset"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+			</w2:dataCollection>
 			<w2:workflowCollection />
+			<xf:submission id="sbm_comment_create" action="/InsWebApp/comment/create.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dma_comment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="" ev:submiterror="" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_comment_get" action="/InsWebApp/comment/{taskId}.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dma_getComment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
+				ev:submitdone="scwin.sbm_comment_get_submitdone" ev:submiterror="scwin.sbm_comment_get_submiterror" abortTrigger="">
+			</xf:submission>
 		</xf:model>
 		<w2:layoutInfo />
 		<w2:publicInfo method="" />
-		<script lazy="false" type="text/javascript"><![CDATA[
-scwin.onpageload = function() {
-	
+		<script lazy="false" type="text/javascript"><![CDATA[const getMediasoupServerUrl = () => {
+    const hostname = window.location.hostname;
+    const port = '3002';
+
+    // localhost인 경우 그대로 유지
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return `https://localhost:${port}`;
+    }
+
+    // 다른 IP인 경우 해당 IP 사용
+    return `https://${hostname}:${port}`;
+};
+
+const MEDIASOUP_SERVER_URL = getMediasoupServerUrl();
+
+// mediasoup 관련 변수들
+let mediasoupSocket = null;
+let device = null;
+let sendTransport = null;
+let recvTransport = null;
+let videoProducer = null;
+let audioProducer = null;
+let consumers = new Map(); // consumerId -> {consumer, remoteVideo}
+let remoteVideos = new Map(); // peerId -> video element info
+
+// 기존 변수들 (채팅용은 그대로 유지)
+let localStream = null;
+let chatSocket = null; // 채팅용 WebSocket (그대로 유지)
+let isJoined = false;
+let isMuted = false;
+let isVideoOff = false;
+let remoteUserInfo = new Map(); // 원격 사용자 정보 저장
+
+// 사용자 정보 (고유 ID 생성)
+const generateUserId = () => {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    return `user_${timestamp}_${random}`;
+};
+
+let currentUser = {
+    userId: "",
+    userName: "",
+    userImage: "",
+    channelName: "test"
+};
+
+
+scwin.onpageload = function () {
+    console.log("페이지로드");
+    scwin.initializeChatWebSocket();
+
+    let userInfo = $p.getParameter("userInfo");
+    scwin.defaultImage = "https://raw.githubusercontent.com/dorazi0423/test/refs/heads/main/group1.png";
+    currentUser.userId = userInfo.userId;
+    currentUser.userName = userInfo.userName;
+    currentUser.userImage = userInfo.userImage;
+
+    sbm_comment_get.action = "/InsWebApp/comment/1.pwkjson";
+    console.log(sbm_comment_get.action);
+    let param = {
+        page: 1
+    }
+    dma_getComment.setJSON(param);
+    $c.sbm.execute(sbm_comment_get);
+
+};
+
+scwin.initializeChatWebSocket = function () {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.hostname;
+    const port = window.location.port || (protocol === 'wss:' ? '443' : '80');
+
+    // 여러 WebSocket URL 시도
+    const wsUrls = [
+        `${protocol}//${host}:${port}/InsWebApp/chat`,
+        `ws://localhost:9093/InsWebApp/chat`,
+        `wss://localhost:19443/InsWebApp/chat`
+    ];
+
+    let wsUrl = wsUrls[0];
+    console.log("WebSocket 연결 시도:", wsUrl);
+
+    try {
+        chatSocket = new WebSocket(wsUrl);
+
+        chatSocket.onopen = function () {
+            console.log("✅ WebSocket 연결 성공");
+
+            // 채널 참가
+            const joinMessage = {
+                type: 'join',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName
+            };
+            chatSocket.send(JSON.stringify(joinMessage));
+
+            // 채팅 히스토리 요청
+            setTimeout(() => {
+                const historyMessage = {
+                    type: 'history',
+                    channelName: currentUser.channelName,
+                    afterTimestamp: 0
+                };
+                chatSocket.send(JSON.stringify(historyMessage));
+                console.log("채팅 히스토리 요청 전송");
+            }, 1000);
+        };
+
+        chatSocket.onmessage = function (event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log("WebSocket 메시지 수신:", data.type, data);
+
+                switch (data.type) {
+                    // 채팅 메시지 처리 (동일)
+                    case 'message':
+                        if (data.userId !== currentUser.userId) {
+
+                            console.log("다른 사용자 메시지:", data.userName, "->", data.message);
+                            scwin.addChatMessage(data.userName, data.message, "", false, data.userImage);
+                        } else {
+                            console.log("내 메시지 서버 에코 무시:", data.message);
+                        }
+                        break;
+
+                    case 'history':
+                        if (data.messages && data.messages.length > 0) {
+                            console.log("채팅 히스토리 로드:", data.messages.length, "개");
+
+                            //dlt_chatMessages.removeAll();
+                            //addedMessageIds.clear();
+
+                            // data.messages.forEach(msg => {
+                            //     const isOwn = msg.userId === currentUser.userId;
+                            //     const msgId = msg.messageId || `history_${msg.userId}_${msg.timestamp}`;
+                            //     scwin.addChatMessage(msg.userName, msg.message, isOwn, msgId);
+                            // });
+
+                            //scwin.addChatMessage("시스템", `이전 채팅 ${data.messages.length}개를 불러왔습니다.`, false);
+                        } else {
+                            console.log("채팅 히스토리 없음");
+                        }
+                        break;
+
+                    case 'existing-users':
+                        // 기존 사용자들과 webRTC 연결 시작 (화상통화 중일 때만)
+                        console.log("기존 사용자들:", data.users, "내 화상통화 상태:", isJoined);
+
+                        // 기존 사용자 정보 저장
+                        if (data.userInfos) {
+                            data.userInfos.forEach(user => {
+                                remoteUserInfo.set(user.userId, user);
+                                console.log("기존 사용자 정보 저장:", user.userName, user.userId);
+                            });
+                        }
+
+                        // P2P 관련 코드 제거됨 - mediasoup에서 자동 처리
+                        break;
+
+                    case 'user-joined':
+                        //scwin.addChatMessage("시스템", `${data.userName}님이 참가했습니다.`, false);
+
+                        // 새 사용자 정보 저장
+                        if (data.userId && data.userName) {
+                            remoteUserInfo.set(data.userId, {
+                                userId: data.userId,
+                                userName: data.userName
+                            });
+                            console.log("새 사용자 정보 저장:", data.userName, data.userId);
+                        }
+
+                        // P2P 관련 코드 제거됨 - mediasoup에서 자동 처리
+                        break;
+
+                    case 'user-left':
+                        //scwin.addChatMessage("시스템", `${data.userName}님이 나갔습니다.`, false);
+
+                        if (data.userId) {
+                            remoteUserInfo.delete(data.userId);
+                            console.log("사용자 정보 제거:", data.userName, data.userId);
+                        }
+
+                        scwin.removeRemoteUser(data.userId);
+                        break;
+
+                    // P2P WebRTC 메시지 처리 제거됨 - mediasoup SFU 방식으로 대체됨
+
+                    case 'notification':
+                        //scwin.addChatMessage("시스템", data.message, false);
+                        break;
+
+                    default:
+                        console.warn("알 수 없는 메시지 타입:", data.type, data);
+                        break;
+                }
+            } catch (error) {
+                console.error("❌ 메시지 처리 오류:", error);
+                //scwin.addChatMessage("시스템", "❌ 메시지 처리 중 오류 발생", false);
+            }
+        };
+
+        chatSocket.onclose = function (event) {
+            console.log("❌ WebSocket 연결 종료:", event.code, event.reason);
+
+            if (event.code !== 1000) {
+                //scwin.addChatMessage("시스템", "⚠️ 서버와의 연결이 끊어졌습니다. 재연결 시도 중...", false);
+
+                setTimeout(() => {
+                    console.log("WebSocket 재연결 시도...");
+                    scwin.initializeChatWebSocket();
+                }, 5000);
+            }
+        };
+
+        chatSocket.onerror = function (error) {
+            console.error("❌ WebSocket 오류:", error);
+            //scwin.addChatMessage("시스템", "❌ 서버 연결 오류 발생", false);
+        };
+
+    } catch (error) {
+        console.error("❌ WebSocket 초기화 실패:", error);
+        //scwin.addChatMessage("시스템", "❌ WebSocket 초기화 실패", false);
+    }
+};
+
+//엔터 누르면 로그인 버튼 클릭
+scwin.input_onkeyup = function (e) {
+    if (e.keyCode === 13) {
+        comment_send_button.addClass("active")
+
+        // 버튼 클릭
+        comment_send_button.click();
+
+        // 짧은 시간 후 active 스타일 제거
+        setTimeout(() => {
+            comment_send_button.removeClass("active");
+        }, 150); // 150ms 정도면 충분
+    }
+};
+
+scwin.comment_send_button_onclick = function () {
+    const message = comment_input.getValue().trim();
+    if (!message || !chatSocket || chatSocket.readyState !== 1) return;
+
+    const payload = {
+        type: "message",
+        userId: currentUser.userId,
+        userName: currentUser.userName,
+        userImage: currentUser.userImage,
+        channelName: currentUser.channelName,
+        message: message
+    };
+
+
+    chatSocket.send(JSON.stringify(payload));
+
+    scwin.addChatMessage(currentUser.userName, message, "", true, currentUser.userImage);
+
+    const param = {
+        taskId: 1,
+        userId: currentUser.userId,
+        message: message
+    }
+    dma_comment.setJSON(param);
+
+    $c.sbm.execute(sbm_comment_create);
+    comment_input.setValue("");
+};
+
+scwin.addChatMessage = function (userName, message, time = "", isMine = false, image) {
+    const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+    const wrapperId = "chat_wrapper_" + Date.now();
+    const profileId = "chat_profile_" + Date.now();
+    const nameId = "chat_name_" + Date.now();
+    const textId = "chat_text_" + Date.now();
+    const timeId = "chat_time_" + Date.now();
+
+    const wrapperStyle = `
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px;
+    background-color: ${isMine ? '#fff1d3' : '#D9D9D9'};
+    border-radius: 12px;
+    margin: 6px 0;
+    min-width: 60%;
+    max-width: 80%;
+    align-self: ${isMine ? 'flex-end' : 'flex-start'};
+`;
+
+    const headerRowStyle = `
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+`;
+
+    const profileStyle = `
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+`;
+
+    const nameStyle = `
+    font-weight: bold;
+    font-size: 14px;
+`;
+
+    const messageStyle = `
+    font-size: 15px;
+    word-break: break-word;
+    padding:3px;
+    box-sizing: border-box;
+`;
+
+    const timeStyle = `
+    font-size: 12px;
+    color: gray;
+    text-align: right;
+    align-self: flex-end;
+`;
+
+    // 1. wrapper (전체 말풍선 컨테이너)
+    const wrapper = $p.dynamicCreate(wrapperId, "span", {
+        style: wrapperStyle
+    }, group);
+
+    // 2. headerRow (이미지 + 이름)
+    // 2. headerRow (좌: 프로필+이름 / 우: 휴지통)
+    const headerRow = $p.dynamicCreate(wrapperId + "_header", "span", {
+        style: `
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    `
+    }, wrapper);
+
+    // ▶️ 왼쪽: 프로필 + 이름 묶음
+    const leftGroupId = wrapperId + "_left";
+    const leftGroup = $p.dynamicCreate(leftGroupId, "span", {
+        style: `
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    `
+    }, headerRow);
+
+    $p.dynamicCreate(profileId, "image", {
+        src: image && image.trim() !== "" ? `${image}` : `${scwin.defaultImage}`,
+        style: profileStyle
+    }, leftGroup);
+
+    $p.dynamicCreate(nameId, "span", {
+        label: userName,
+        style: nameStyle
+    }, leftGroup);
+
+    // ▶️ 오른쪽: 휴지통 아이콘 (내 메시지일 때만)
+    if (isMine) {
+        const deleteIconId = wrapperId + "_delete";
+        $p.dynamicCreate(deleteIconId, "image", {
+            src: "/InsWebApp/images/trash-solid.svg", // 휴지통 아이콘 URL 예시
+            style: `
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        `
+        }, headerRow);
+    }
+
+
+    // 3. 메시지 본문
+    $p.dynamicCreate(textId, "span", {
+        label: message,
+        style: messageStyle
+    }, wrapper);
+
+    // 4. 시간
+    $p.dynamicCreate(timeId, "span", {
+        label: time || scwin.getCurrentTime(),
+        style: timeStyle
+    }, wrapper);
+
+};
+
+scwin.addChatDate = function (dateText) {
+    const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+    const wrapperId = "chat_date_" + Date.now();
+
+    const dateStyle = `
+    font-size: 13px;
+    background-color: #eeeeee;
+    padding: 6px 12px;
+    border-radius: 16px;
+    color: #555;
+    margin: 16px auto 8px;
+    display: inline-block;
+    text-align: center;
+    font-weight: 500;
+`;
+
+    $p.dynamicCreate(wrapperId, "span", {
+        label: dateText,
+        style: dateStyle
+    }, group);
+};
+
+
+
+// 시간 포맷 유틸 함수 
+scwin.getCurrentTime = function () {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    return `${h}:${m}`;
+};
+
+
+
+scwin.sbm_comment_get_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    const commentList = responseData.elData?.commentVoList ?? [];
+
+    const myUserId = currentUser.userId;
+    let previousDate = ""; // 가장 최근 날짜를 저장하는 변수
+
+    commentList.reverse().forEach(comment => {
+        const commentDate = scwin.formatDate(comment.createdAt); // 날짜만 추출 (예: "2025년 07월 07일")
+
+        // 날짜가 바뀌었으면 날짜 구분선 추가
+        if (commentDate !== previousDate) {
+            scwin.addChatDate(commentDate);
+            previousDate = commentDate;
+        }
+
+        const isMine = (comment.userId === myUserId);
+
+        scwin.addChatMessage(
+            comment.userName,
+            comment.message,
+            scwin.formatTime(comment.createdAt), // 시간 포맷 분리 함수 사용
+            isMine,
+            comment.userImage
+        );
+    });
+};
+
+// "2025-07-07 06:03:39.0" → "2025년 07월 07일"
+scwin.formatDate = function (datetimeStr) {
+    const date = new Date(datetimeStr);
+    return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(date.getDate()).padStart(2, "0")}일`;
+};
+
+// "2025-07-07 06:03:39.0" → "오전 6:03"
+scwin.formatTime = function (datetimeStr) {
+    const date = new Date(datetimeStr);
+    let hour = date.getHours();
+    const minute = String(date.getMinutes()).padStart(2, "0");
+    const isAM = hour < 12;
+    if (hour > 12) hour -= 12;
+    if (hour === 0) hour = 12;
+    return `${isAM ? '오전' : '오후'} ${hour}:${minute}`;
+};
+
+
+scwin.sbm_comment_get_submiterror = function (e) {
+    const responseData = e.responseJSON;
+    console.log(responseData);
 };
 ]]></script>
+		<style type="text/css"><![CDATA[body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+/* 전체 컨테이너 */
+.modal-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    border: none;
+    height: 100%;
+    /* background-color: cadetblue; */
+}
+
+/* 컨텐츠 컨테이너 */
+.contents-group {
+    width: 65%;
+    height: 100%;
+    /* background-color: aqua; */
+}
+
+/* 컨텐츠 상단 부분 */
+.contents-group .contents-header-group {
+    width: 100%;
+    height: 30%;
+    display: flex;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    /* background-color: pink; */
+}
+
+.contents-group .contents-header-group .header-title {
+    width: 80%;
+    height: 25%;
+}
+
+.contents-group .contents-header-group .header-title .header-title-text {
+    font-size: 25px;
+}
+
+.contents-group .contents-header-group .header-input {
+    display: flex;
+    width: 80%;
+    height: 25%;
+    text-align: center;
+    align-items: center;
+    gap: 50px;
+}
+
+.contents-group .contents-header-group .header-input .header-input-box {
+    display: flex;
+    gap: 10px;
+}
+
+.contents-group .contents-header-group .header-input .header-input-box .header-input-text {
+    width: 80px;
+    text-align: left;
+}
+
+.input-text {
+    font-size: 17px;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.github-input {
+    width: 100px;
+}
+
+.text-bold {
+    font-weight: bold;
+}
+
+/* 컨텐츠 내용 입력 부분 */
+.contents-group .contents-main-group {
+    width: 100%;
+    height: 70%;
+    overflow: scroll;
+    overflow-x: hidden;
+    background-color: plum;
+}
+
+/* 텍스트 입력하는 곳 */
+.contents-group .contents-main-group .contents-text-group {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: lightgray;
+}
+
+.contents-group .contents-main-group .contents-text-group .textarea {
+    width: 80%;
+    height: 100%;
+}
+
+
+
+/* 컨텐츠 파일 부분 */
+.contents-group .contents-main-group .contents-file-group {
+    width: 100%;
+    height: 30%;
+    background-color: skyblue;
+}
+
+/* 채팅 컨테이너 */
+.comment-group {
+    width: 35%;
+    height: 100%;
+    overflow: hidden;
+    overflow-y: hidden;
+    border-left: 2px solid #D9D9D9;
+    /* background-color: darkorange; */
+}
+
+.comment-group .comment-text {
+    width: 100%;
+    height: 10%;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+    font-weight: bolder;
+    font-size: 17px;
+}
+
+.comment-group .comment-main-group {
+    width: 100%;
+    height: 80%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 30px;
+    padding-bottom: 15px;
+    box-sizing: border-box;
+    overflow: scroll;
+    overflow-x: hidden;
+    gap: 10px;
+    /* background-color: bisque; */
+}
+
+/* 채팅 input과 전송버튼 */
+.comment-group .comment-input-group {
+    width: 100%;
+    height: 10%;
+    display: flex;
+    justify-content: center;
+}
+
+.comment-group .comment-input-group .comment-box {
+    width: 85%;
+    height: 70%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    background-color: white;
+    border-radius: 5px;
+    border: 1px solid #D9D9D9;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+
+.comment-group .comment-input-group .comment-box .comment-input {
+    width: 80%;
+    height: 80%;
+    outline: none;
+    border: none;
+}
+
+.comment-group .comment-input-group .comment-box .comment-input:focus {
+    outline: none;
+    border: none;
+    box-shadow: none;
+}
+
+.comment-group .comment-input-group .comment-box .comment-input-button {
+    width: 15%;
+    height: 80%;
+    background-image: url('/InsWebApp/images/send.svg');
+    background-size: 20px 20px;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: none;
+    outline: none;
+    border-radius: 5px;
+    background-color: #FFB823;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.comment-group .comment-input-group .comment-box .comment-input-button:active,
+.comment-input-button.active {
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+    /* transform: translateY(2px);  */
+
+}
+
+
+
+
+
+
+
+/* 채팅 스타일 */
+.message-wrapper-right {
+    text-align: right; /* 오른쪽 정렬 */
+    width: 100%;
+    /* display: block; 또는 flexbox를 사용하여 블록 레벨 요소로 만듭니다. */
+}
+
+.message-wrapper-left {
+    text-align: left; /* 왼쪽 정렬 (기본값 또는 수신 메시지용) */
+    width: 100%;
+}
+
+/* 모든 말풍선의 공통 스타일 */
+.message-bubble-base {
+    display: inline-block; /* 텍스트 내용만큼만 너비를 가지되, 패딩/마진 적용 가능 */
+    padding: 8px 12px; /* 내부 여백 */
+    margin: 6px; /* 외부 여백 (말풍선 간 간격) */
+    border-radius: 12px; /* 둥근 모서리 */
+    max-width: 80%; /* 화면 너비의 최대 80%만 사용 (긴 메시지에도 유용) */
+    word-wrap: break-word; /* 긴 단어가 영역을 넘어가지 않도록 줄 바꿈 */
+    box-shadow: 0px 1px 3px rgba(0,0,0,0.1); /* 미묘한 그림자 효과 */
+    font-size: 14px; /* 글자 크기 */
+    line-height: 1.4; /* 줄 간격 */
+    vertical-align: top; /* inline-block 요소의 기본 정렬 문제를 해결 */
+}
+
+/* 서버로부터 받은 메시지 (왼쪽) */
+.message-bubble-received {
+    background-color: #e6f3ff; /* 연한 파란색 배경 */
+    color: #333; /* 글자색 */
+}
+
+/* 내가 보낸 메시지 (오른쪽) */
+.message-bubble-sent {
+    background-color: #ffe812; /* 카카오톡 노란색 배경 */
+    color: #333; /* 글자색 */
+}]]></style>
 	</head>
 	<body ev:onpageload="scwin.onpageload">
 
+		<xf:group class="sub_contents modal-container" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+			style="">
+			<xf:group style="" id="" class="contents-group">
+				<xf:group style="" id="" class="contents-header-group">
+					<xf:group style="" id="" class="header-title">
+						<w2:textbox id="" label="요구 명세서" style="" class="header-title-text  text-left"></w2:textbox>
+					</xf:group>
+					<xf:group style="" id="" class="header-input">
+						<xf:group style="" id="" class="header-input-box">
+							<w2:textbox id="" label="작성자" style="" class="header-input-text input-text text-bold"></w2:textbox>
+							<w2:textbox id="" label="다인" style="width:150px; height:23px;" class="text-left input-text"></w2:textbox>
+						</xf:group>
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox id="" label="태그" style="" class="header-input-text input-text text-bold"></w2:textbox>
+							<xf:select1 id="" chooseOption="true" style="width: 148px;height: 21px;" submenuSize="auto"
+								allOption="" disabled="false" direction="auto" appearance="minimal" disabledClass="w2selectbox_disabled" ref="" chooseOptionLabel=""
+								class="input-text">
+								<xf:choices>
+									<xf:item>
+										<xf:label><![CDATA[기획]]></xf:label>
+										<xf:value><![CDATA[plan]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[개발]]></xf:label>
+										<xf:value><![CDATA[dev]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[테스트]]></xf:label>
+										<xf:value><![CDATA[test]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[문서화]]></xf:label>
+										<xf:value><![CDATA[doc]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[분석]]></xf:label>
+										<xf:value><![CDATA[analytics]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[협업]]></xf:label>
+										<xf:value><![CDATA[collabo]]></xf:value>
+									</xf:item>
+								</xf:choices>
+							</xf:select1>
+						</xf:group>
+					</xf:group>
+					<xf:group class="header-input" id="" style="">
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox class="header-input-text input-text text-bold" id="" label="날짜" style=""></w2:textbox>
+							<w2:inputCalendar id="" style="width: 150px;height: 23px;" calendarValueType="yearMonthDate"></w2:inputCalendar>
+						</xf:group>
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox class="header-input-text input-text text-bold" id="" label="중요도" style=""></w2:textbox>
+							<xf:select1 allOption="" appearance="minimal" chooseOption="true" chooseOptionLabel="" class="input-text"
+								direction="auto" disabled="false" disabledClass="w2selectbox_disabled" id="" ref=""
+								style="width: 148px;height: 21px;font-size:26em;" submenuSize="auto">
+								<xf:choices>
+									<xf:item>
+										<xf:label><![CDATA[상]]></xf:label>
+										<xf:value><![CDATA[High]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[중]]></xf:label>
+										<xf:value><![CDATA[Medium]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[하]]></xf:label>
+										<xf:value><![CDATA[Low]]></xf:value>
+									</xf:item>
+								</xf:choices>
+							</xf:select1>
+						</xf:group>
+					</xf:group>
+					<xf:group class="header-input" id="" style="">
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox class="header-input-text input-text text-bold" id="" label="깃 브랜치" style=""></w2:textbox>
+							<xf:select1 id="" chooseOption="false" style="width: 148px;height: 21px;" submenuSize="auto" allOption="false"
+								disabled="false" direction="auto" appearance="minimal" disabledClass="w2selectbox_disabled">
+							</xf:select1>
+						</xf:group>
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox class="header-input-text input-text text-bold" id="" label="담당자" style=""></w2:textbox>
+							<xf:select1 allOption="" appearance="minimal" chooseOption="true" chooseOptionLabel="" class="input-text"
+								direction="auto" disabled="false" disabledClass="w2selectbox_disabled" id="" ref=""
+								style="width: 148px;height: 21px;font-size:26em;" submenuSize="auto">
+								<xf:choices>
+									<xf:item>
+										<xf:label><![CDATA[기획]]></xf:label>
+										<xf:value><![CDATA[plan]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[개발]]></xf:label>
+										<xf:value><![CDATA[dev]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[테스트]]></xf:label>
+										<xf:value><![CDATA[test]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[문서화]]></xf:label>
+										<xf:value><![CDATA[doc]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[분석]]></xf:label>
+										<xf:value><![CDATA[analytics]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[협업]]></xf:label>
+										<xf:value><![CDATA[collabo]]></xf:value>
+									</xf:item>
+								</xf:choices>
+							</xf:select1>
+						</xf:group>
+					</xf:group>
+				</xf:group>
+				<xf:group style="" id="" class="contents-main-group">
+					<xf:group style="" id="" class="contents-text-group">
+					</xf:group>
+					<xf:group style="" id="" class="contents-file-group"></xf:group>
+				</xf:group>
+			</xf:group>
+			<xf:group style="" id="" class="comment-group">
+				<w2:textbox id="" label="댓글" style="" class="comment-text"></w2:textbox>
+				<xf:group style="" id="comment_main_group" class="comment-main-group">
+					<!-- <xf:group style="height:120px;background-color: green;display: flex;align-items: center;padding: 0 30px;" id="">
+						<xf:group style="min-width: 40%;max-width: 60%;height: 90px;background: pink;border-radius: 15px;" id="">
+						<xf:group style="width:100%;height:25%;background: blue" id="">
+						<xf:trigger
+						style="width: 30px;height: 30px;border-radius: 50%;background-size: cover;background-position: center;background-image: url('https://github.com/dorazi0423/test/blob/main/group1.png?raw=true');"
+						id="" type="button">
+						<xf:label></xf:label>
+						</xf:trigger>
+						</xf:group>
+						<xf:group id="" style="width:100%;height:50%;">
+						<w2:textbox id="" label="집가고 싶다니깐 정말로 하늘로 날아가고 싶은 집가고 싶다니깐 정말로 하늘로 날아가고 싶은 집가고 싶다니깐 정말로 하늘로 날아가고 싶은 집가고 싶다니깐 정말로 하늘로 날아가고 싶은 집가고 싶다니깐 정말로 하늘로 날아가고 싶은 집가고 싶다니깐 정말로 하늘로 날아가고 싶은" style="width: 100%;height: 100%;"></w2:textbox>
+						</xf:group>
+						<xf:group id="" style="width:100%;height:25%;background-color: yellow"></xf:group>
+						</xf:group>
+						</xf:group> -->
+				</xf:group>
+				<xf:group style="" id="" class="comment-input-group">
+					<xf:group style="" id="" class="comment-box">
+						<xf:input style="" id="comment_input" class="comment-input" ev:onkeyup="scwin.input_onkeyup"></xf:input>
+						<xf:trigger style="" id="comment_send_button" type="button" class="comment-input-button" ev:onclick="scwin.comment_send_button_onclick">
+							<xf:label><![CDATA[]]></xf:label>
+						</xf:trigger>
+					</xf:group>
+				</xf:group>
+			</xf:group>
+		</xf:group>
 	</body>
 </html>

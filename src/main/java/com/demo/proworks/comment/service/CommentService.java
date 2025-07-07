@@ -2,6 +2,7 @@ package com.demo.proworks.comment.service;
 
 import java.util.List;
 
+import com.demo.proworks.comment.vo.CommentListSearchVo;
 import com.demo.proworks.comment.vo.CommentVo;
 
 /**  
@@ -17,6 +18,26 @@ import com.demo.proworks.comment.vo.CommentVo;
  * 
  */
 public interface CommentService {
+	/**
+     * 댓글정보 페이징 처리하여 목록을 조회한다.
+     *
+     * @param  commentVo 댓글정보 CommentVo
+     * @return 댓글정보 목록 List<CommentVo>
+     * @throws Exception
+     */
+	public List<CommentVo> selectListCommentByTaskId(CommentListSearchVo searchVo) throws Exception;
+	
+	
+	/**
+     * 댓글정보 페이징 처리하여 목록을 조회한다.
+     *
+     * @param  commentVo 댓글정보 CommentVo
+     * @return 댓글정보 목록 List<CommentVo>
+     * @throws Exception
+     */
+	public long selectListCountByTaskId(int taskId) throws Exception;
+	
+	
 	
     /**
      * 댓글정보 페이징 처리하여 목록을 조회한다.

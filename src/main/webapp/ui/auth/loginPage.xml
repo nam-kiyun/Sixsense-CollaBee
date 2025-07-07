@@ -217,14 +217,16 @@ scwin.sbm_login_submitdone = async function (e) {
     } else if (responseData.elHeader.validateSuc) {
         let param = {
             "userId": responseData.userHeader.userId,
-            "userName": responseData.userHeader.userName
+            "userName": responseData.userHeader.userName,
+            "userImage": responseData.userHeader.userImage
         }
         let option = {
             "spa": true,
             "param": param
         }
-        $p.url("/InsWebApp/ui/user/verifyPasswordPage.xml", option);
-        // $p.url("/InsWebApp/ui/user/UserList.xml", option);
+        // $p.url("/InsWebApp/ui/user/verifyPasswordPage.xml", option);
+        // $p.url("/InsWebApp/ui/mainPage.xml", option);
+       $p.url("/InsWebApp/ui/project/projectMainPage.xml", option);
     } else {
         await $c.win.alert("아이디 또는 비밀번호가 잘못 되었습니다.<br/> 아이디와 비밀번호를 정확히 입력해 주세요.");
     }
@@ -233,7 +235,7 @@ scwin.sbm_login_submitdone = async function (e) {
 //엔터 누르면 로그인 버튼 클릭
 scwin.input_onkeyup = function (e) {
     if (e.keyCode === 13) {
-        login_button.click();
+        scwin.login_button_onclick();
     }
 };
 ]]></script>
@@ -264,8 +266,8 @@ scwin.input_onkeyup = function (e) {
     							<xf:label></xf:label>
     						</xf:output>
     						<xf:input class="input-group-container" id="email_input" placeholder="이메일을 입력하세요"
-    							showPlaceHolderOnReadOnly="true" style="" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus"
-    							ref="data:dma_login.id" ev:onkeyup="scwin.input_onkeyup">
+    							showPlaceHolderOnReadOnly="true" style="" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus" ref="data:dma_login.id"
+    							ev:onkeyup="scwin.input_onkeyup">
     						</xf:input>
     					</xf:group>
     					<w2:textbox id="email_error_text" label="" style="" class="error-text"></w2:textbox>
@@ -288,10 +290,12 @@ scwin.input_onkeyup = function (e) {
     				<xf:label><![CDATA[로그인]]></xf:label>
     			</xf:trigger>
     			<xf:group style="height:54px;" id="" class="button-group">
-    				<xf:trigger style="width: 80px;height: 23px;" id="signup_button" type="button" class="login-button" ev:onclick="scwin.signup_button_onclick">
+    				<xf:trigger style="width: 80px;height: 23px;" id="signup_button" type="button" class="login-button"
+    					ev:onclick="scwin.signup_button_onclick">
     					<xf:label><![CDATA[회원가입]]></xf:label>
     				</xf:trigger>
-    				<xf:trigger style="width:96px;height:23px;" id="findPwd_button" type="button" class="login-button" ev:onclick="scwin.findPwd_button_onclick">
+    				<xf:trigger style="width:96px;height:23px;" id="findPwd_button" type="button" class="login-button"
+    					ev:onclick="scwin.findPwd_button_onclick">
     					<xf:label><![CDATA[비밀번호찾기]]></xf:label>
     				</xf:trigger>
     			</xf:group>

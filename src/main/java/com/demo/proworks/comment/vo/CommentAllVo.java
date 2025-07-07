@@ -6,11 +6,11 @@ import com.inswave.elfw.annotation.ElVoField;
 import com.fasterxml.jackson.annotation.JsonFilter;
 
 @JsonFilter("elExcludeFilter")
-@ElDto(FldYn = "", delimeterYn = "", logicalName = "댓글정보")
-public class CommentVo extends com.demo.proworks.cmmn.ProworksCommVO {
+@ElDto(FldYn = "", delimeterYn = "", logicalName = "댓글정보 전체")
+public class CommentAllVo extends com.demo.proworks.cmmn.ProworksCommVO {
     private static final long serialVersionUID = 1L;
 
-    public CommentVo(){
+    public CommentAllVo(){
     }
 
     @ElDtoField(logicalName = "comment_id", physicalName = "commentId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "0", desc = "", attr = "")
@@ -112,7 +112,7 @@ public class CommentVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("CommentVo [");
+        sb.append("CommentAllVo [");
         sb.append("commentId").append("=").append(commentId).append(",");
         sb.append("taskId").append("=").append(taskId).append(",");
         sb.append("userId").append("=").append(userId).append(",");

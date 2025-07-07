@@ -46,6 +46,9 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
     @ElDtoField(logicalName = "ICE후보정보", physicalName = "iceCandidate", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String iceCandidate;
 
+    @ElDtoField(logicalName = "사용자이미지", physicalName = "userImage", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String userImage;
+
     @ElVoField(physicalName = "type")
     public String getType(){
         String ret = this.type;
@@ -165,6 +168,17 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
         this.iceCandidate = iceCandidate;
     }
 
+    @ElVoField(physicalName = "userImage")
+    public String getUserImage(){
+        String ret = this.userImage;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "userImage")
+    public void setUserImage(String userImage){
+        this.userImage = userImage;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -179,7 +193,8 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
         sb.append("afterTimestamp").append("=").append(afterTimestamp).append(",");
         sb.append("targetUserId").append("=").append(targetUserId).append(",");
         sb.append("sdp").append("=").append(sdp).append(",");
-        sb.append("iceCandidate").append("=").append(iceCandidate);
+        sb.append("iceCandidate").append("=").append(iceCandidate).append(",");
+        sb.append("userImage").append("=").append(userImage);
         sb.append("]");
         return sb.toString();
 
