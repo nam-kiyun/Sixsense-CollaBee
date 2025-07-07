@@ -147,7 +147,11 @@ scwin.onpageload = function() {
         
         //console.log("✅ Simple WebRTC 다대다 화상통화 시스템 준비 완료");
         scwin.addChatMessage("시스템", "✅ Simple WebRTC 다대다 화상통화방에 오신 것을 환영합니다!", false);
-        scwin.addChatMessage("시스템", "'참가하기' 버튼을 눌러 화상통화를 시작하세요.", false);
+        
+        // 페이지 진입 시 자동으로 화상통화 참가 (빠른 실행)
+            setTimeout(() => {
+            scwin.autoJoinCall();
+        }, 100);
     }, 500);
     
     // 엔터키 이벤트 리스너 추가
@@ -205,7 +209,6 @@ scwin.initializeSimpleWebRTC = function() {
         //console.log('✅ STUN/TURN 서버 설정:', iceServers ? iceServers.length : 0 + '개');
         
         scwin.addChatMessage("시스템", "✅ Simple WebRTC 다대다 화상통화방에 오신 것을 환영합니다!", false);
-        scwin.addChatMessage("시스템", "'참가하기' 버튼을 눌러 화상통화를 시작하세요.", false);
         
         //console.log('✅ Simple WebRTC 초기화 완료');
         
@@ -215,7 +218,70 @@ scwin.initializeSimpleWebRTC = function() {
     }
 };
 
-// 화상통화 참가 (Simple WebRTC P2P 방식)
+// 자동 화상통화 참가 (페이지 진입 시)
+scwin.autoJoinCall = async function() {
+    try {
+        scwin.addChatMessage("시스템", "카메라와 마이크에 자동으로 연결합니다...", false);
+        
+        // 로컬 미디어 스트림 가져오기
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 1280, height: 720 },
+            audio: true
+        });
+        
+        // 로컬 비디오 표시 (기존 방식은 숨김)
+        const localVideo = document.getElementById("localVideo");
+        if (localVideo) {
+            localVideo.srcObject = localStream;
+        }
+        
+        // 내 비디오를 그리드에 추가
+        scwin.addMyVideoToGrid(localStream);
+        
+        // 화상통화 방 참가 알림
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            const joinRoomMessage = {
+                type: 'join-room',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName,
+                timestamp: Date.now()
+            };
+            chatSocket.send(JSON.stringify(joinRoomMessage));
+            //console.log("화상통화 방 참가 알림:", joinRoomMessage);
+        }
+        
+        isJoined = true;
+        dma_videoChat.set("isJoined", "true");
+        
+        scwin.updateControlButtons();
+        
+        scwin.addChatMessage("시스템", "✅ 화상통화가 자동으로 시작되었습니다!", false);
+        scwin.addChatMessage("시스템", "다른 사용자가 참가하면 자동으로 연결됩니다.", false);
+        
+        //console.log("✅ Simple WebRTC 자동 화상통화 참가 완료");
+        
+    } catch (error) {
+        //console.error("❌ 자동 화상통화 참가 실패:", error);
+        
+        let errorMessage = "카메라/마이크 접근 권한이 필요합니다";
+        if (error.name === 'NotAllowedError') {
+            errorMessage = "카메라/마이크 권한을 허용해주세요.";
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        scwin.addChatMessage("시스템", "❌ " + errorMessage, false);
+        scwin.addChatMessage("시스템", "수동으로 '참가하기' 버튼을 눌러주세요.", false);
+        
+        // 오류 발생 시 기본 상태로 복원
+        isJoined = false;
+        dma_videoChat.set("isJoined", "false");
+        scwin.updateControlButtons();
+    }
+};
+
+// 화상통화 참가 (Simple WebRTC P2P 방식) - 수동 참가용
 scwin.joinCall = async function() {
     try {
         scwin.showLoading("카메라와 마이크에 접근하는 중...");
@@ -308,9 +374,9 @@ async function handleUserJoined(data) {
     // 이미 연결된 사용자인지 확인
     if (peerConnections.has(userId)) {
         //console.log('⚠️ 이미 연결된 사용자:', userName, userId);
-        return;
-    }
-    
+                    return;
+                }
+
     //console.log('������ 새 사용자 참가:', userName, userId);
     scwin.addChatMessage("시스템", `${userName}님이 화상통화에 참가했습니다.`, false);
     
@@ -370,8 +436,8 @@ async function createPeerConnection(userId, userName, isOfferer) {
         
         //console.log('✅ P2P 연결 생성:', userName);
         return pc; // PC 객체 반환
-        
-    } catch (error) {
+
+            } catch (error) {
         //console.error('❌ P2P 연결 실패:', error);
         return null;
     }
@@ -463,7 +529,7 @@ async function processPendingIceCandidates(userId) {
         for (const candidate of candidates) {
             try {
                 await pc.addIceCandidate(candidate);
-            } catch (error) {
+    } catch (error) {
                 //console.error('❌ 대기 ICE 후보 처리 실패:', error);
             }
         }
@@ -727,7 +793,7 @@ scwin.initializeChatWebSocket = function() {
                     //console.warn("알 수 없는 메시지 타입:", data.type, data);
                     break;
                 }
-            } catch (error) {
+    } catch (error) {
                 //console.error("❌ 메시지 처리 오류:", error);
                 scwin.addChatMessage("시스템", "❌ 메시지 처리 중 오류 발생", false);
             }
@@ -3205,7 +3271,7 @@ scwin.leaveCall = function() {
         scwin.removeMyVideoFromGrid();
         
         scwin.updateControlButtons();
-        scwin.addChatMessage("시스템", "화상통화를 종료했습니다.", false);
+        scwin.addChatMessage("시스템", "화상통화를 나갔습니다. 카메라와 마이크가 꺼졌습니다.", false);
         
         //console.log("✅ 화상통화 종료 완료");
         
@@ -3446,19 +3512,19 @@ scwin.removeRemoteUser = function(userId) {
                 
                 <!-- 컨트롤 패널 -->
                 <xf:group class="control-panel">
-                    <xf:trigger id="joinBtn" class="control-btn join-btn" ev:onclick="scwin.joinCall">
+                    <xf:trigger id="joinBtn" class="control-btn join-btn" ev:onclick="scwin.joinCall" style="display: none;">
                         <xf:label>참가하기</xf:label>
                     </xf:trigger>
                     
-                    <xf:trigger id="leaveBtn" class="control-btn leave-btn" ev:onclick="scwin.leaveCall" style="display: none;">
+                    <xf:trigger id="leaveBtn" class="control-btn leave-btn" ev:onclick="scwin.leaveCall">
                         <xf:label>나가기</xf:label>
                     </xf:trigger>
                     
-                    <xf:trigger id="muteBtn" class="control-btn mute-btn" ev:onclick="scwin.toggleMute" disabled="true">
+                    <xf:trigger id="muteBtn" class="control-btn mute-btn" ev:onclick="scwin.toggleMute">
                         <xf:label>MIC</xf:label>
                     </xf:trigger>
                     
-                    <xf:trigger id="videoBtn" class="control-btn video-btn" ev:onclick="scwin.toggleVideo" disabled="true">
+                    <xf:trigger id="videoBtn" class="control-btn video-btn" ev:onclick="scwin.toggleVideo">
                         <xf:label>CAM</xf:label>
                     </xf:trigger>
                 </xf:group>
