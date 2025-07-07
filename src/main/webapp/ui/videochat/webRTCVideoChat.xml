@@ -66,70 +66,42 @@
             .send-btn { padding: 10px 20px; background: #FFB823; color: white; border: none; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; min-width: 60px; }
         </style>
         
-        <!-- mediasoup 클라이언트 라이브러리 로드 (로컬만 사용) -->
-        <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
-        <!-- 로컬 mediasoup-client 파일 사용 -->
-        <script src="/InsWebApp/js/mediasoup-client.min.js"></script>
+        <!-- Simple WebRTC 구현 (라이브러리 없음) -->
         <script>
-            // mediasoup-client 라이브러리 로드 확인
-            function loadMediasoupClient() {
-                return new Promise((resolve, reject) => {
-                    // 이미 로드되었는지 확인
-                    if (window.mediasoupClient) {
-                        console.log('✅ mediasoup-client 라이브러리가 로컬에서 성공적으로 로드됨');
-                        resolve();
-                        return;
-                    }
-                    
-                    // 짧은 시간 후 다시 확인 (로컬 파일 로드 시간)
-                    setTimeout(() => {
-                        if (window.mediasoupClient) {
-                            console.log('✅ mediasoup-client 라이브러리 확인됨');
-                            resolve();
-                        } else {
-                            console.error('❌ mediasoup-client 라이브러리를 찾을 수 없습니다');
-                            reject(new Error('mediasoup-client library not found'));
-                        }
-                    }, 100);
-                });
-            }
+            // Simple WebRTC 초기화 완료
+            console.log('✅ Simple WebRTC 준비 완료 - 라이브러리 불필요');
         </script>
         
         <script type="text/javascript"><![CDATA[
-// mediasoup SFU 다대다 화상통화 구현
-// 동적으로 mediasoup 서버 URL 설정 (WebSquare 서버와 같은 IP 사용)
-const getMediasoupServerUrl = () => {
-    const hostname = window.location.hostname;
-    const port = '3002';
-    
-    // localhost인 경우 그대로 유지
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return `https://localhost:${port}`;
-    }
-    
-    // 다른 IP인 경우 해당 IP 사용
-    return `https://${hostname}:${port}`;
-};
-
-const MEDIASOUP_SERVER_URL = getMediasoupServerUrl();
-
-// mediasoup 관련 변수들
-let mediasoupSocket = null;
-let device = null;
-let sendTransport = null;
-let recvTransport = null;
-let videoProducer = null;
-let audioProducer = null;
-let consumers = new Map(); // consumerId -> {consumer, remoteVideo}
-let remoteVideos = new Map(); // peerId -> video element info
-
-// 기존 변수들 (채팅용은 그대로 유지)
+// Simple WebRTC 다대다 화상통화 구현 (P2P Mesh 방식)
+// WebRTC 관련 변수들
+let peerConnections = new Map(); // userId -> RTCPeerConnection
 let localStream = null;
 let chatSocket = null; // 채팅용 WebSocket (그대로 유지)
 let isJoined = false;
 let isMuted = false;
 let isVideoOff = false;
 let remoteUserInfo = new Map(); // 원격 사용자 정보 저장
+let remoteStreams = new Map(); // userId -> MediaStream
+
+// STUN/TURN 서버 설정
+const iceServers = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    // 무료 TURN 서버 추가
+    {
+        urls: 'turn:openrelay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+    }
+];
+
+// RTCPeerConnection 설정
+const pcConfig = {
+    iceServers: iceServers,
+    iceCandidatePoolSize: 10
+};
 
 // 사용자 정보 (고유 ID 생성)
 const generateUserId = () => {
@@ -164,33 +136,18 @@ scwin.onpageload = function() {
     // WebSocket 초기화 (채팅용 - 그대로 유지)
     scwin.initializeChatWebSocket();
     
-    // mediasoup-client 라이브러리 로드 확인 및 초기화
+    // Simple WebRTC 초기화
     setTimeout(() => {
-        if (window.mediasoupClient) {
-            console.log("✅ mediasoup-client 라이브러리 로드 성공");
-            scwin.addChatMessage("시스템", "✅ 화상통화 라이브러리 로드 성공", false);
-            
-            // mediasoup 초기화
-            scwin.initializeMediasoup();
-            
-            console.log("✅ mediasoup SFU 화상통화 시스템 준비 완료");
-            scwin.addChatMessage("시스템", "✅ mediasoup SFU 화상통화방에 오신 것을 환영합니다!", false);
-            scwin.addChatMessage("시스템", "'참가하기' 버튼을 눌러 화상통화를 시작하세요.", false);
-        } else {
-            console.error("❌ mediasoup-client 라이브러리 로드 실패");
-            scwin.addChatMessage("시스템", "❌ 화상통화 라이브러리 로드 실패. 페이지를 새로고침해주세요.", false);
-            
-            // 다시 시도
-            setTimeout(() => {
-                if (window.mediasoupClient) {
-                    console.log("✅ mediasoup-client 라이브러리 지연 로드 성공");
-                    scwin.initializeMediasoup();
-                } else {
-                    console.error("❌ mediasoup-client 라이브러리 최종 로드 실패");
-                }
-            }, 2000);
-        }
-    }, 500); // 라이브러리 로드 대기
+        console.log("✅ Simple WebRTC 초기화 시작");
+        scwin.addChatMessage("시스템", "✅ Simple WebRTC 화상통화 시스템 준비 중...", false);
+        
+        // Simple WebRTC 초기화
+        scwin.initializeSimpleWebRTC();
+        
+        console.log("✅ Simple WebRTC 다대다 화상통화 시스템 준비 완료");
+        scwin.addChatMessage("시스템", "✅ Simple WebRTC 다대다 화상통화방에 오신 것을 환영합니다!", false);
+        scwin.addChatMessage("시스템", "'참가하기' 버튼을 눌러 화상통화를 시작하세요.", false);
+    }, 500);
     
     // 엔터키 이벤트 리스너 추가
     setTimeout(() => {
@@ -214,28 +171,21 @@ scwin.onpageload = function() {
         // 전체 시스템 상태 로그
         console.log("시스템 상태 체크:");
         console.log("- 현재 사용자:", currentUser);
-        console.log("- mediasoup 연결:", mediasoupSocket ? mediasoupSocket.connected : false);
+        console.log("- Simple WebRTC 모드 활성화");
         console.log("- 원격 사용자 정보:", Array.from(remoteUserInfo.entries()));
         
     }, 2000); // 충분한 로딩 시간 확보
 };
 
-// mediasoup 초기화
-scwin.initializeMediasoup = function() {
+// Simple WebRTC 초기화
+scwin.initializeSimpleWebRTC = function() {
     try {
-        // mediasoup-client 라이브러리 로드 확인
-        if (!window.mediasoupClient && !window.mediasoup) {
-            throw new Error('mediasoup-client 라이브러리가 로드되지 않았습니다');
-        }
+        console.log('✅ Simple WebRTC 초기화 시작');
         
-        // 전역 변수로 설정 (mediasoupClient 또는 mediasoup)
-        if (window.mediasoupClient) {
-            window.mediasoup = window.mediasoupClient;
-        } else if (window.mediasoup) {
-            window.mediasoupClient = window.mediasoup;
+        // WebRTC 지원 확인
+        if (!window.RTCPeerConnection) {
+            throw new Error('RTCPeerConnection을 지원하지 않는 브라우저입니다');
         }
-        
-        console.log('✅ mediasoup-client 라이브러리 확인됨:', !!window.mediasoupClient);
         
         // HTTPS 환경 체크
         const isHttps = window.location.protocol === 'https:';
@@ -250,237 +200,24 @@ scwin.initializeMediasoup = function() {
             console.log('✅ localhost 환경 (개발용)');
         }
         
-        // mediasoup 서버 연결
-        console.log(' mediasoup 서버 연결 시도:', MEDIASOUP_SERVER_URL);
+        console.log('✅ WebRTC 지원 확인됨');
+        console.log('✅ STUN/TURN 서버 설정:', iceServers ? iceServers.length : 0 + '개');
         
-        // Socket.IO 연결 옵션 설정
-        const socketOptions = {
-            forceNew: true,
-            reconnection: true,
-            reconnectionAttempts: 5,
-            reconnectionDelay: 1000,
-            timeout: 10000,
-            transports: ['websocket', 'polling'],
-            upgrade: true,
-            rememberUpgrade: false,
-            withCredentials: false
-        };
+        scwin.addChatMessage("시스템", "✅ Simple WebRTC 다대다 화상통화방에 오신 것을 환영합니다!", false);
+        scwin.addChatMessage("시스템", "'참가하기' 버튼을 눌러 화상통화를 시작하세요.", false);
         
-        // HTTPS 환경에서는 secure: true
-        if (window.location.protocol === 'https:') {
-            socketOptions.secure = true;
-            socketOptions.rejectUnauthorized = false;
-        }
-        
-        console.log('Socket.IO 연결 옵션:', socketOptions);
-        
-        mediasoupSocket = io(MEDIASOUP_SERVER_URL, socketOptions);
-
-        mediasoupSocket.on('connect', () => {
-            console.log('✅ mediasoup 서버 연결 성공 - Socket ID:', mediasoupSocket.id);
-            scwin.addChatMessage("시스템", "✅ 화상통화 서버 연결 성공", false);
-        });
-
-        mediasoupSocket.on('disconnect', (reason) => {
-            console.log(' mediasoup 서버 연결 해제 - 이유:', reason);
-            scwin.addChatMessage("시스템", " 화상통화 서버 연결 해제", false);
-        });
-
-        mediasoupSocket.on('connect_error', (error) => {
-            console.error('❌ mediasoup 서버 연결 실패:', error);
-            console.error('연결 상태:', {
-                connected: mediasoupSocket.connected,
-                disconnected: mediasoupSocket.disconnected,
-                id: mediasoupSocket.id
-            });
-            scwin.addChatMessage("시스템", "❌ 화상통화 서버 연결 실패. 잠시 후 다시 시도하세요.", false);
-        });
-
-        mediasoupSocket.on('reconnect', (attemptNumber) => {
-            console.log(' mediasoup 서버 재연결 성공 - 시도 횟수:', attemptNumber);
-            scwin.addChatMessage("시스템", " 화상통화 서버 재연결 성공", false);
-        });
-
-        mediasoupSocket.on('reconnect_error', (error) => {
-            console.error('❌ mediasoup 서버 재연결 실패:', error);
-        });
-
-        mediasoupSocket.on('reconnect_failed', () => {
-            console.error('❌ mediasoup 서버 재연결 포기');
-            scwin.addChatMessage("시스템", "❌ 화상통화 서버 연결 포기. 페이지를 새로고침해주세요.", false);
-        });
-
-        // 새로운 피어 참가 알림
-        mediasoupSocket.on('peerJoined', (data) => {
-            console.log(' 새 피어 참가:', data.peerId, data.userData);
-            
-            // 사용자 정보 저장 (여러 형식 지원)
-            const userInfo = {
-                userId: data.userData.userId || data.peerId,
-                name: data.userData.name || data.userData.userName || `사용자_${data.peerId.slice(-4)}`,
-                userName: data.userData.userName || data.userData.name || `사용자_${data.peerId.slice(-4)}`
-            };
-            
-            remoteUserInfo.set(data.peerId, userInfo);
-            console.log('✅ 사용자 정보 저장:', data.peerId, '→', userInfo);
-            
-            scwin.addChatMessage("시스템", `${userInfo.name}님이 화상통화에 참가했습니다.`, false);
-        });
-
-        // 피어 나가기 알림
-        mediasoupSocket.on('peerLeft', (data) => {
-            console.log(' 피어 나가기:', data.peerId);
-            const userInfo = remoteUserInfo.get(data.peerId);
-            if (userInfo) {
-                scwin.addChatMessage("시스템", `${userInfo.name}님이 화상통화를 나갔습니다.`, false);
-            }
-            scwin.removeRemoteUser(data.peerId);
-            remoteUserInfo.delete(data.peerId);
-        });
-
-        // 새 Producer 알림 (다른 사용자가 비디오/오디오 시작)
-        mediasoupSocket.on('newProducer', async (data) => {
-            console.log('������ 새 Producer 수신:', {
-                peerId: data.peerId,
-                producerId: data.producerId,
-                kind: data.kind,
-                userData: data.userData
-            });
-            
-            try {
-                // Producer와 함께 사용자 정보도 업데이트
-                if (data.userData && !remoteUserInfo.has(data.peerId)) {
-                    const userInfo = {
-                        userId: data.userData.userId || data.peerId,
-                        name: data.userData.name || data.userData.userName || `사용자_${data.peerId.slice(-4)}`,
-                        userName: data.userData.userName || data.userData.name || `사용자_${data.peerId.slice(-4)}`
-                    };
-                    remoteUserInfo.set(data.peerId, userInfo);
-                    console.log('✅ Producer와 함께 사용자 정보 저장:', data.peerId, '→', userInfo);
-                }
-                
-                // Consumer 생성 전 상태 확인
-                console.log('������ Consumer 생성 전 상태 확인:', {
-                    hasRecvTransport: !!recvTransport,
-                    recvTransportClosed: recvTransport?.closed,
-                    deviceLoaded: device?.loaded,
-                    remoteUserCount: remoteUserInfo.size,
-                    existingConsumers: consumers.size
-                });
-
-                // Receive Transport 상태 확인
-                if (!recvTransport) {
-                    console.error('❌ Receive Transport가 없습니다. Consumer 생성 불가');
-                    return;
-                }
-
-                if (recvTransport.closed) {
-                    console.error('❌ Receive Transport가 닫혀있습니다. Consumer 생성 불가');
-                    return;
-                }
-
-                // Device 상태 확인
-                if (!device || !device.loaded) {
-                    console.error('❌ Device가 로드되지 않았습니다. Consumer 생성 불가');
-                    return;
-                }
-
-                // Consumer 생성 (새로운 함수 사용)
-                const userInfo = remoteUserInfo.get(data.peerId);
-                const userName = userInfo?.name || userInfo?.userName || `사용자_${data.peerId.slice(-4)}`;
-                
-                console.log('������ Consumer 생성 시작:', {
-                    producerId: data.producerId,
-                    userName: userName,
-                    kind: data.kind
-                });
-
-                await createConsumer(data.producerId, userName);
-                
-                console.log('✅ Consumer 생성 완료:', data.producerId);
-
-            } catch (error) {
-                console.error('❌ newProducer 처리 실패:', error);
-                console.error('오류 상세:', {
-                    message: error.message,
-                    stack: error.stack,
-                    producerId: data.producerId,
-                    peerId: data.peerId
-                });
-            }
-        });
-
-        // 연결 상태 확인 및 대기
-        setTimeout(() => {
-            if (mediasoupSocket && mediasoupSocket.connected) {
-                console.log('✅ mediasoup 서버 연결 확인됨');
-                scwin.addChatMessage("시스템", "✅ 화상통화 준비 완료", false);
-            } else {
-                console.log('⚠️ mediasoup 서버 연결 대기 중...');
-                scwin.addChatMessage("시스템", "⚠️ 화상통화 서버 연결 중입니다...", false);
-            }
-        }, 2000);
-        
-        console.log('✅ mediasoup 클라이언트 초기화 완료');
+        console.log('✅ Simple WebRTC 초기화 완료');
         
     } catch (error) {
-        console.error('❌ mediasoup 초기화 실패:', error);
-        scwin.addChatMessage("시스템", "❌ 화상통화 시스템 초기화 실패", false);
+        console.error('❌ Simple WebRTC 초기화 실패:', error);
+        scwin.addChatMessage("시스템", "❌ Simple WebRTC 초기화 실패: " + error.message, false);
     }
 };
 
-// 화상통화 참가 (mediasoup SFU 방식)
+// 화상통화 참가 (Simple WebRTC P2P 방식)
 scwin.joinCall = async function() {
     try {
         scwin.showLoading("카메라와 마이크에 접근하는 중...");
-        
-        // mediasoup-client 라이브러리 확인
-        if (!window.mediasoupClient && !window.mediasoup) {
-            throw new Error('mediasoupClient is not defined');
-        }
-        
-        // Device 생성 (여러 방법 시도)
-        const MediasoupDevice = window.mediasoupClient?.Device || 
-                               window.mediasoup?.Device || 
-                               window.Device;
-        
-        if (!MediasoupDevice) {
-            throw new Error('mediasoupClient Device를 찾을 수 없습니다');
-        }
-        
-        console.log('✅ mediasoupClient Device 클래스 확인됨');
-        
-        // mediasoup 서버 연결 상태 확인
-        if (!mediasoupSocket) {
-            throw new Error('mediasoup 서버가 초기화되지 않았습니다. 페이지를 새로고침해주세요.');
-        }
-        
-        if (!mediasoupSocket.connected) {
-            throw new Error('mediasoup 서버와 연결되지 않았습니다. 잠시 후 다시 시도해주세요.');
-        }
-        
-        console.log('✅ mediasoup 서버 연결 상태 확인됨');
-        
-        // mediasoup-client 라이브러리 정보 확인
-        console.log('������ mediasoup-client 라이브러리 정보:', {
-            mediasoupClientType: typeof mediasoupClient,
-            mediasoupClientKeys: Object.keys(mediasoupClient || {}),
-            version: mediasoupClient?.version || 'unknown',
-            hasDevice: 'Device' in (mediasoupClient || {}),
-            deviceType: typeof (mediasoupClient?.Device || MediasoupDevice),
-            globalDeviceType: typeof MediasoupDevice
-        });
-        
-        // mediasoup Device 생성
-        device = new MediasoupDevice();
-        
-        console.log('������ Device 생성 완료:', {
-            deviceType: typeof device,
-            deviceKeys: Object.keys(device),
-            deviceProto: Object.getPrototypeOf(device).constructor.name,
-            deviceLoaded: device.loaded,
-            handlerName: device.handlerName
-        });
         
         // 로컬 미디어 스트림 가져오기
         localStream = await navigator.mediaDevices.getUserMedia({
@@ -494,22 +231,7 @@ scwin.joinCall = async function() {
             localVideo.srcObject = localStream;
         }
         
-        // mediasoup 방 참가
-        await scwin.joinMediasoupRoom();
-        
-        // Transport 생성
-        await scwin.createTransports();
-        
-        // 스트림 전송 시작 (새로운 Producer 생성 함수 사용)
-        await createProducer();
-        
-        // 기존 Producer들 소비 시작
-        await scwin.consumeExistingProducers();
-        
-        isJoined = true;
-        dma_videoChat.set("isJoined", "true");
-        
-        // 채팅에 참가 알림 (기존 채팅 시스템 활용)
+        // 화상통화 방 참가 알림
         if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
             const joinRoomMessage = {
                 type: 'join-room',
@@ -519,18 +241,22 @@ scwin.joinCall = async function() {
                 timestamp: Date.now()
             };
             chatSocket.send(JSON.stringify(joinRoomMessage));
-            console.log("채팅방 참가 알림 전송:", joinRoomMessage);
+            console.log("화상통화 방 참가 알림:", joinRoomMessage);
         }
+        
+        isJoined = true;
+        dma_videoChat.set("isJoined", "true");
         
         scwin.updateControlButtons();
         scwin.hideLoading();
         
-        scwin.addChatMessage("시스템", "✅ SFU 화상통화에 참가했습니다!", false);
+        scwin.addChatMessage("시스템", "✅ 화상통화에 참가했습니다!", false);
         scwin.addChatMessage("시스템", "다른 사용자가 참가하면 자동으로 연결됩니다.", false);
-        console.log("✅ mediasoup SFU 화상통화 참가 완료");
+        
+        console.log("✅ Simple WebRTC 화상통화 참가 완료");
         
     } catch (error) {
-        console.error("❌ SFU 화상통화 참가 실패:", error);
+        console.error("❌ 화상통화 참가 실패:", error);
         scwin.hideLoading();
         
         let errorMessage = "카메라/마이크 접근 권한이 필요합니다";
@@ -544,6 +270,431 @@ scwin.joinCall = async function() {
         scwin.addChatMessage("시스템", "❌ " + errorMessage, false);
     }
 };
+
+// ===== Simple WebRTC 필수 함수들 =====
+
+// WebRTC 시그널링 메시지 처리
+function handleWebRTCMessage(message) {
+    console.log('������ WebRTC 메시지 수신:', message);
+    
+    switch (message.type) {
+        case 'user-joined':
+            handleUserJoined(message.data);
+            break;
+        case 'offer':
+            handleOffer(message.data);
+            break;
+        case 'answer':
+            handleAnswer(message.data);
+            break;
+        case 'ice-candidate':
+            handleIceCandidate(message.data);
+            break;
+        case 'user-left':
+            handleUserLeft(message.data);
+            break;
+    }
+}
+
+// 새 사용자 참가 처리
+async function handleUserJoined(data) {
+    const { userId, userName } = data;
+    if (userId === currentUser.userId) return;
+    
+    console.log('������ 새 사용자 참가:', userName);
+    scwin.addChatMessage("시스템", `${userName}님이 참가했습니다.`, false);
+    
+    // P2P 연결 시작 (Offer 생성)
+    await createPeerConnection(userId, userName, true);
+}
+
+// P2P 연결 생성
+async function createPeerConnection(userId, userName, isOfferer) {
+    try {
+        const pc = new RTCPeerConnection(iceServers);
+        peerConnections.set(userId, pc);
+        
+        // 로컬 스트림 추가
+        if (localStream) {
+            localStream.getTracks().forEach(track => {
+                pc.addTrack(track, localStream);
+            });
+        }
+        
+        // 원격 스트림 처리
+        pc.ontrack = (event) => {
+            console.log('������ 원격 스트림 수신:', userName);
+            displayRemoteVideo(event.streams[0], userName);
+        };
+        
+        // ICE 후보 처리
+        pc.onicecandidate = (event) => {
+            if (event.candidate && chatSocket) {
+                chatSocket.send(JSON.stringify({
+                    type: 'ice-candidate',
+                    targetUserId: userId,
+                    candidate: event.candidate,
+                    userId: currentUser.userId,
+                    userName: currentUser.userName
+                }));
+            }
+        };
+        
+        // Offer 생성 및 전송
+        if (isOfferer) {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            
+            chatSocket.send(JSON.stringify({
+                type: 'offer',
+                targetUserId: userId,
+                offer: offer,
+                userId: currentUser.userId,
+                userName: currentUser.userName
+            }));
+        }
+        
+        console.log('✅ P2P 연결 생성:', userName);
+        
+    } catch (error) {
+        console.error('❌ P2P 연결 실패:', error);
+    }
+}
+
+// Offer 처리
+async function handleOffer(data) {
+    const { userId, userName, offer } = data;
+    console.log('������ Offer 수신:', userName);
+    
+    const pc = await createPeerConnection(userId, userName, false);
+    await pc.setRemoteDescription(offer);
+    
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    
+    chatSocket.send(JSON.stringify({
+        type: 'answer',
+        targetUserId: userId,
+        answer: answer,
+        userId: currentUser.userId,
+        userName: currentUser.userName
+    }));
+}
+
+// Answer 처리
+async function handleAnswer(data) {
+    const { userId, answer } = data;
+    const pc = peerConnections.get(userId);
+    if (pc) {
+        await pc.setRemoteDescription(answer);
+        console.log('✅ Answer 처리 완료:', userId);
+    }
+}
+
+// ICE 후보 처리
+async function handleIceCandidate(data) {
+    const { userId, candidate } = data;
+    const pc = peerConnections.get(userId);
+    if (pc) {
+        await pc.addIceCandidate(candidate);
+    }
+}
+
+// 사용자 나가기 처리
+function handleUserLeft(data) {
+    const { userId, userName } = data;
+    const pc = peerConnections.get(userId);
+    if (pc) {
+        pc.close();
+        peerConnections.delete(userId);
+    }
+    scwin.removeRemoteUser(userId);
+    scwin.addChatMessage("시스템", `${userName}님이 나갔습니다.`, false);
+}
+
+// 원격 비디오 표시
+function displayRemoteVideo(stream, userName) {
+    const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+    const videoContainer = document.createElement('div');
+    videoContainer.className = 'remote-video-item';
+    videoContainer.innerHTML = `
+        <video autoplay playsinline></video>
+        <div class="remote-video-label">${userName}</div>
+    `;
+    
+    const video = videoContainer.querySelector('video');
+    video.srcObject = stream;
+    remoteVideosGrid.appendChild(videoContainer);
+}
+
+// ===== 필수 함수들 (주석 밖에서 실행) =====
+
+// WebSocket 채팅 시스템 초기화
+scwin.initializeChatWebSocket = function() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.hostname;
+    const port = window.location.port || (protocol === 'wss:' ? '443' : '80');
+    
+    // 여러 WebSocket URL 시도
+    const wsUrls = [
+        `${protocol}//${host}:${port}/InsWebApp/chat`,
+        `ws://localhost:9093/InsWebApp/chat`,
+        `wss://localhost:19443/InsWebApp/chat`
+    ];
+    
+    let wsUrl = wsUrls[0];
+    console.log("WebSocket 연결 시도:", wsUrl);
+    
+    try {
+        chatSocket = new WebSocket(wsUrl);
+        
+        chatSocket.onopen = function() {
+            console.log("✅ WebSocket 연결 성공");
+            
+            // 채널 참가
+            const joinMessage = {
+                type: 'join',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName
+            };
+            chatSocket.send(JSON.stringify(joinMessage));
+            
+            // 채팅 히스토리 요청
+            setTimeout(() => {
+                const historyMessage = {
+                    type: 'history',
+                    channelName: currentUser.channelName,
+                    afterTimestamp: 0
+                };
+                chatSocket.send(JSON.stringify(historyMessage));
+                console.log("채팅 히스토리 요청 전송");
+            }, 1000);
+        };
+        
+        chatSocket.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log("WebSocket 메시지 수신:", data.type, data);
+                
+                switch(data.type) {
+                // 채팅 메시지 처리
+                case 'message':
+                    if (data.userId !== currentUser.userId) {
+                        scwin.addChatMessage(data.userName, data.message, false, data.messageId);
+                        console.log("다른 사용자 메시지:", data.userName, "->", data.message);
+                    } else {
+                        console.log("내 메시지 서버 에코 무시:", data.message);
+                    }
+                    break;
+                    
+                case 'history':
+                    if (data.messages && data.messages.length > 0) {
+                        console.log("채팅 히스토리 로드:", data.messages.length, "개");
+                        
+                        dlt_chatMessages.removeAll();
+                        
+                        data.messages.forEach(msg => {
+                            const isOwn = msg.userId === currentUser.userId;
+                            const msgId = msg.messageId || `history_${msg.userId}_${msg.timestamp}`;
+                            scwin.addChatMessage(msg.userName, msg.message, isOwn, msgId);
+                        });
+                        
+                        scwin.addChatMessage("시스템", `이전 채팅 ${data.messages.length}개를 불러왔습니다.`, false);
+                    } else {
+                        console.log("채팅 히스토리 없음");
+                    }
+                    break;
+                    
+                case 'existing-users':
+                    console.log("기존 사용자들:", data.users, "내 화상통화 상태:", isJoined);
+                    
+                    // 기존 사용자 정보 저장
+                    if (data.userInfos) {
+                        data.userInfos.forEach(user => {
+                            remoteUserInfo.set(user.userId, user);
+                            console.log("기존 사용자 정보 저장:", user.userName, user.userId);
+                        });
+                    }
+                    break;
+                    
+                case 'user-joined':
+                    scwin.addChatMessage("시스템", `${data.userName}님이 참가했습니다.`, false);
+                    
+                    // 새 사용자 정보 저장
+                    if (data.userId && data.userName) {
+                        remoteUserInfo.set(data.userId, {
+                            userId: data.userId,
+                            userName: data.userName
+                        });
+                        console.log("새 사용자 정보 저장:", data.userName, data.userId);
+                    }
+                    
+                    // Simple WebRTC P2P 연결 시작
+                    if (isJoined) {
+                        handleUserJoined(data);
+                    }
+                    break;
+                    
+                case 'user-left':
+                    scwin.addChatMessage("시스템", `${data.userName}님이 나갔습니다.`, false);
+                    
+                    if (data.userId) {
+                        remoteUserInfo.delete(data.userId);
+                        console.log("사용자 정보 제거:", data.userName, data.userId);
+                    }
+                    
+                    // Simple WebRTC P2P 연결 해제
+                    handleUserLeft(data);
+                    break;
+                    
+                // Simple WebRTC 시그널링 메시지 처리
+                case 'offer':
+                    if (isJoined) {
+                        handleOffer(data);
+                    }
+                    break;
+                    
+                case 'answer':
+                    if (isJoined) {
+                        handleAnswer(data);
+                    }
+                    break;
+                    
+                case 'ice-candidate':
+                    if (isJoined) {
+                        handleIceCandidate(data);
+                    }
+                    break;
+                    
+                case 'notification':
+                    scwin.addChatMessage("시스템", data.message, false);
+                    break;
+                    
+                case 'error':
+                    console.warn("서버 오류:", data.message);
+                    scwin.addChatMessage("시스템", `⚠️ 서버 오류: ${data.message}`, false);
+                    break;
+                    
+                default:
+                    console.warn("알 수 없는 메시지 타입:", data.type, data);
+                    break;
+                }
+            } catch (error) {
+                console.error("❌ 메시지 처리 오류:", error);
+                scwin.addChatMessage("시스템", "❌ 메시지 처리 중 오류 발생", false);
+            }
+        };
+        
+        chatSocket.onclose = function(event) {
+            console.log("❌ WebSocket 연결 종료:", event.code, event.reason);
+            
+            if (event.code !== 1000) {
+                scwin.addChatMessage("시스템", "⚠️ 서버와의 연결이 끊어졌습니다. 재연결 시도 중...", false);
+                
+                setTimeout(() => {
+                    console.log("WebSocket 재연결 시도...");
+                    scwin.initializeChatWebSocket();
+                }, 5000);
+            }
+        };
+        
+        chatSocket.onerror = function(error) {
+            console.error("❌ WebSocket 오류:", error);
+            scwin.addChatMessage("시스템", "❌ 서버 연결 오류 발생", false);
+        };
+        
+    } catch (error) {
+        console.error("❌ WebSocket 초기화 실패:", error);
+        scwin.addChatMessage("시스템", "❌ WebSocket 초기화 실패", false);
+    }
+};
+
+// 채팅 메시지 추가
+scwin.addChatMessage = function(userName, message, isOwn, messageId) {
+    if (!userName || !message) return;
+    
+    const msgId = messageId || `msg_${Date.now()}_${Math.random()}`;
+    
+    // 중복 메시지 방지
+    if (window.addedMessageIds && window.addedMessageIds.has(msgId)) {
+        return;
+    }
+    
+    if (!window.addedMessageIds) {
+        window.addedMessageIds = new Set();
+    }
+    window.addedMessageIds.add(msgId);
+    
+    const messageData = {
+        messageId: msgId,
+        userId: isOwn ? currentUser.userId : (userName === "시스템" ? "system" : "other"),
+        userName: userName,
+        message: message,
+        timestamp: new Date().toLocaleTimeString(),
+        isOwn: isOwn ? "true" : "false"
+    };
+    
+    dlt_chatMessages.insertRow(0, messageData);
+    
+    // 채팅 화면을 최신 메시지로 스크롤
+    setTimeout(() => {
+        const chatMessages = document.getElementById("chatMessages");
+        if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }, 100);
+    
+    console.log("채팅 메시지 추가:", userName, "->", message);
+};
+
+// 채팅 메시지 전송
+scwin.sendChatMessage = function() {
+    const chatInput = document.getElementById("chatInput");
+    if (!chatInput) return;
+    
+    const message = chatInput.value.trim();
+    if (!message) return;
+    
+    if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) {
+        alert("서버에 연결되지 않았습니다.");
+        return;
+    }
+    
+    const messageId = `msg_${Date.now()}_${Math.random()}`;
+    const messageData = {
+        type: 'message',
+        channelName: currentUser.channelName,
+        userId: currentUser.userId,
+        userName: currentUser.userName,
+        message: message,
+        messageId: messageId,
+        timestamp: Date.now()
+    };
+    
+    try {
+        chatSocket.send(JSON.stringify(messageData));
+        scwin.addChatMessage(currentUser.userName, message, true, messageId);
+        chatInput.value = "";
+        console.log("메시지 전송:", message);
+    } catch (error) {
+        console.error("메시지 전송 실패:", error);
+        alert("메시지 전송에 실패했습니다.");
+    }
+};
+
+// 로딩 표시/숨김
+scwin.showLoading = function(message) {
+    console.log("로딩:", message);
+};
+
+scwin.hideLoading = function() {
+    console.log("로딩 완료");
+};
+
+/*
+===== 기존 MediaSoup 코드 주석 처리 =====
+모든 MediaSoup 관련 함수들은 향후 제거 예정
 
 // mediasoup 방 참가
 scwin.joinMediasoupRoom = async function() {
@@ -2106,7 +2257,10 @@ scwin.initializeChatWebSocket = function() {
                         console.log("새 사용자 정보 저장:", data.userName, data.userId);
                     }
                     
-                    // P2P 관련 코드 제거됨 - mediasoup에서 자동 처리
+                    // Simple WebRTC P2P 연결 시작
+                    if (isJoined) {
+                        handleUserJoined(data);
+                    }
                     break;
                     
                 case 'user-left':
@@ -2117,10 +2271,28 @@ scwin.initializeChatWebSocket = function() {
                         console.log("사용자 정보 제거:", data.userName, data.userId);
                     }
                     
-                    scwin.removeRemoteUser(data.userId);
+                    // Simple WebRTC P2P 연결 해제
+                    handleUserLeft(data);
                     break;
                     
-                // P2P WebRTC 메시지 처리 제거됨 - mediasoup SFU 방식으로 대체됨
+                // Simple WebRTC 시그널링 메시지 처리
+                case 'offer':
+                    if (isJoined) {
+                        handleOffer(data);
+                    }
+                    break;
+                    
+                case 'answer':
+                    if (isJoined) {
+                        handleAnswer(data);
+                    }
+                    break;
+                    
+                case 'ice-candidate':
+                    if (isJoined) {
+                        handleIceCandidate(data);
+                    }
+                    break;
                     
                 case 'notification':
                     scwin.addChatMessage("시스템", data.message, false);
@@ -2162,9 +2334,9 @@ scwin.initializeChatWebSocket = function() {
 
 // P2P 관련 함수들 제거됨 - mediasoup SFU 방식으로 대체됨
 
-// 시스템 상태 체크 함수 (mediasoup 버전)
+// 시스템 상태 체크 함수 (Simple WebRTC 버전)
 scwin.checkSystemStatus = function() {
-    console.log("=== mediasoup 시스템 상태 체크 ===");
+    console.log("=== Simple WebRTC 시스템 상태 체크 ===");
     console.log("현재 사용자:", currentUser);
     console.log("화상통화 참가 상태:", isJoined);
     console.log("로컬 스트림:", localStream ? "있음" : "없음");
@@ -2172,25 +2344,21 @@ scwin.checkSystemStatus = function() {
         console.log("- 비디오 트랙:", localStream.getVideoTracks().length);
         console.log("- 오디오 트랙:", localStream.getAudioTracks().length);
     }
-    console.log("mediasoup 소켓 상태:", mediasoupSocket?.connected);
-    console.log("ChatSocket 상태:", chatSocket?.readyState);
-    console.log("Consumers 수:", consumers.size);
-    console.log("원격 비디오 수:", remoteVideos.size);
+    console.log("채팅 소켓 상태:", chatSocket?.readyState);
+    console.log("P2P 연결 수:", peerConnections.size);
     console.log("원격 사용자 정보:", Array.from(remoteUserInfo.entries()));
     
     return {
         currentUser,
         isJoined,
         hasLocalStream: !!localStream,
-        mediasoupConnected: mediasoupSocket?.connected,
         chatSocketState: chatSocket?.readyState,
-        consumersCount: consumers.size,
-        remoteVideosCount: remoteVideos.size,
+        peerConnectionsCount: peerConnections.size,
         remoteUsersCount: remoteUserInfo.size
     };
 };
 
-// mediasoup 재연결 함수
+// Simple WebRTC 재연결 함수
 scwin.forceReconnect = function() {
     if (!isJoined) {
         console.log("❌ 화상통화에 참가하지 않은 상태");
@@ -2198,10 +2366,10 @@ scwin.forceReconnect = function() {
         return;
     }
     
-    console.log("mediasoup 강제 재연결 시작...");
+    console.log("Simple WebRTC 강제 재연결 시작...");
     scwin.addChatMessage("시스템", "화상통화 연결을 재시작합니다...", false);
     
-    // mediasoup 연결 재시작
+    // Simple WebRTC 연결 재시작
     setTimeout(async () => {
         try {
             // 현재 연결 정리
@@ -2224,16 +2392,16 @@ scwin.forceReconnect = function() {
     }, 1000);
 };
 
-// 5초마다 자동 상태 체크 (mediasoup 버전)
+// 5초마다 자동 상태 체크 (Simple WebRTC 버전)
 setInterval(() => {
     if (isJoined) {
         const status = scwin.checkSystemStatus();
-        // mediasoup 연결 상태 체크
-        if (!status.mediasoupConnected) {
-            console.warn("⚠️ mediasoup 서버 연결이 끊어졌습니다!");
+        // WebSocket 연결 상태 체크
+        if (status.chatSocketState !== 1) { // WebSocket.OPEN = 1
+            console.warn("⚠️ 채팅 서버 연결이 끊어졌습니다!");
         }
-        if (status.remoteUsersCount > 0 && status.consumersCount === 0) {
-            console.warn("⚠️ 원격 사용자가 있지만 Consumer가 없습니다!");
+        if (status.remoteUsersCount > 0 && status.peerConnectionsCount === 0) {
+            console.warn("⚠️ 원격 사용자가 있지만 P2P 연결이 없습니다!");
         }
     }
 }, 5000);
@@ -2825,6 +2993,130 @@ async function waitForTransportConnection(transport) {
                 console.error('❌ MediaStream 추출 실패:', error);
             }
         }
+
+// ===== MediaSoup 코드 주석 처리 끝 =====
+*/
+
+// ===== Simple WebRTC 관련 추가 함수들 =====
+
+// 화상통화 나가기
+scwin.leaveCall = function() {
+    try {
+        // 모든 P2P 연결 종료
+        peerConnections.forEach((pc, userId) => {
+            pc.close();
+        });
+        peerConnections.clear();
+        
+        // 로컬 스트림 정지
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+        
+        // 비디오 요소 초기화
+        const localVideo = document.getElementById("localVideo");
+        if (localVideo) {
+            localVideo.srcObject = null;
+        }
+        
+        // 원격 비디오 제거
+        const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+        if (remoteVideosGrid) {
+            remoteVideosGrid.innerHTML = '';
+        }
+        
+        // 나가기 알림
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            const leaveMessage = {
+                type: 'leave-room',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName,
+                timestamp: Date.now()
+            };
+            chatSocket.send(JSON.stringify(leaveMessage));
+        }
+        
+        isJoined = false;
+        dma_videoChat.set("isJoined", "false");
+        
+        scwin.updateControlButtons();
+        scwin.addChatMessage("시스템", "화상통화를 종료했습니다.", false);
+        
+        console.log("✅ 화상통화 종료 완료");
+        
+    } catch (error) {
+        console.error("❌ 화상통화 종료 실패:", error);
+    }
+};
+
+// 음소거 토글
+scwin.toggleMute = function() {
+    if (localStream) {
+        const audioTrack = localStream.getAudioTracks()[0];
+        if (audioTrack) {
+            audioTrack.enabled = !audioTrack.enabled;
+            const muteBtn = document.getElementById("muteBtn");
+            if (muteBtn) {
+                muteBtn.textContent = audioTrack.enabled ? "MIC" : "음소거";
+                muteBtn.classList.toggle("muted", !audioTrack.enabled);
+            }
+            console.log("������ 마이크:", audioTrack.enabled ? "켜짐" : "꺼짐");
+        }
+    }
+};
+
+// 비디오 토글
+scwin.toggleVideo = function() {
+    if (localStream) {
+        const videoTrack = localStream.getVideoTracks()[0];
+        if (videoTrack) {
+            videoTrack.enabled = !videoTrack.enabled;
+            const videoBtn = document.getElementById("videoBtn");
+            if (videoBtn) {
+                videoBtn.textContent = videoTrack.enabled ? "CAM" : "CAM OFF";
+                videoBtn.classList.toggle("off", !videoTrack.enabled);
+            }
+            console.log("������ 카메라:", videoTrack.enabled ? "켜짐" : "꺼짐");
+        }
+    }
+};
+
+// 버튼 상태 업데이트
+scwin.updateControlButtons = function() {
+    const joinBtn = document.getElementById("joinBtn");
+    const leaveBtn = document.getElementById("leaveBtn");
+    const muteBtn = document.getElementById("muteBtn");
+    const videoBtn = document.getElementById("videoBtn");
+    
+    if (isJoined) {
+        if (joinBtn) joinBtn.style.display = "none";
+        if (leaveBtn) leaveBtn.style.display = "inline-block";
+        if (muteBtn) muteBtn.disabled = false;
+        if (videoBtn) videoBtn.disabled = false;
+    } else {
+        if (joinBtn) joinBtn.style.display = "inline-block";
+        if (leaveBtn) leaveBtn.style.display = "none";
+        if (muteBtn) muteBtn.disabled = true;
+        if (videoBtn) videoBtn.disabled = true;
+    }
+};
+
+// 원격 사용자 제거
+scwin.removeRemoteUser = function(userId) {
+    const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+    if (remoteVideosGrid) {
+        const videoItems = remoteVideosGrid.querySelectorAll('.remote-video-item');
+        videoItems.forEach(item => {
+            const label = item.querySelector('.remote-video-label');
+            if (label && label.textContent.includes(userId)) {
+                item.remove();
+            }
+        });
+    }
+};
+
 ]]></script>
     </head>
     <body ev:onpageload="scwin.onpageload">
