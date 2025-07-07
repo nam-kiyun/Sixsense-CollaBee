@@ -76,6 +76,7 @@
 // Simple WebRTC 다대다 화상통화 구현 (P2P Mesh 방식)
 // WebRTC 관련 변수들
 let peerConnections = new Map(); // userId -> RTCPeerConnection
+let pendingIceCandidates = new Map(); // userId -> [candidates] (대기 중인 ICE 후보)
 let localStream = null;
 let chatSocket = null; // 채팅용 WebSocket (그대로 유지)
 let isJoined = false;
@@ -301,8 +302,14 @@ async function handleUserJoined(data) {
     const { userId, userName } = data;
     if (userId === currentUser.userId) return;
     
-    console.log('������ 새 사용자 참가:', userName);
-    scwin.addChatMessage("시스템", `${userName}님이 참가했습니다.`, false);
+    // 이미 연결된 사용자인지 확인
+    if (peerConnections.has(userId)) {
+        console.log('⚠️ 이미 연결된 사용자:', userName, userId);
+        return;
+    }
+    
+    console.log('������ 새 사용자 참가:', userName, userId);
+    scwin.addChatMessage("시스템", `${userName}님이 화상통화에 참가했습니다.`, false);
     
     // P2P 연결 시작 (Offer 생성)
     await createPeerConnection(userId, userName, true);
@@ -332,10 +339,12 @@ async function createPeerConnection(userId, userName, isOfferer) {
             if (event.candidate && chatSocket) {
                 chatSocket.send(JSON.stringify({
                     type: 'ice-candidate',
+                    channelName: currentUser.channelName,
                     targetUserId: userId,
-                    candidate: event.candidate,
+                    iceCandidate: JSON.stringify(event.candidate),
                     userId: currentUser.userId,
-                    userName: currentUser.userName
+                    userName: currentUser.userName,
+                    timestamp: Date.now()
                 }));
             }
         };
@@ -347,56 +356,117 @@ async function createPeerConnection(userId, userName, isOfferer) {
             
             chatSocket.send(JSON.stringify({
                 type: 'offer',
+                channelName: currentUser.channelName,
                 targetUserId: userId,
-                offer: offer,
+                sdp: JSON.stringify(offer),
                 userId: currentUser.userId,
-                userName: currentUser.userName
+                userName: currentUser.userName,
+                timestamp: Date.now()
             }));
         }
         
         console.log('✅ P2P 연결 생성:', userName);
+        return pc; // PC 객체 반환
         
     } catch (error) {
         console.error('❌ P2P 연결 실패:', error);
+        return null;
     }
 }
 
 // Offer 처리
 async function handleOffer(data) {
-    const { userId, userName, offer } = data;
+    const { userId, userName, sdp } = data;
     console.log('������ Offer 수신:', userName);
     
+    const offer = JSON.parse(sdp);
     const pc = await createPeerConnection(userId, userName, false);
+    
+    if (!pc) {
+        console.error('❌ P2P 연결 생성 실패:', userName);
+        return;
+    }
+    
     await pc.setRemoteDescription(offer);
+    
+    // 대기 중인 ICE 후보들 처리
+    await processPendingIceCandidates(userId);
     
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
     
     chatSocket.send(JSON.stringify({
         type: 'answer',
+        channelName: currentUser.channelName,
         targetUserId: userId,
-        answer: answer,
+        sdp: JSON.stringify(answer),
         userId: currentUser.userId,
-        userName: currentUser.userName
+        userName: currentUser.userName,
+        timestamp: Date.now()
     }));
 }
 
 // Answer 처리
 async function handleAnswer(data) {
-    const { userId, answer } = data;
+    const { userId, sdp } = data;
+    const answer = JSON.parse(sdp);
     const pc = peerConnections.get(userId);
     if (pc) {
         await pc.setRemoteDescription(answer);
+        
+        // 대기 중인 ICE 후보들 처리
+        await processPendingIceCandidates(userId);
+        
         console.log('✅ Answer 처리 완료:', userId);
     }
 }
 
 // ICE 후보 처리
 async function handleIceCandidate(data) {
-    const { userId, candidate } = data;
+    try {
+        const { userId, iceCandidate } = data;
+        const candidate = JSON.parse(iceCandidate);
+        const pc = peerConnections.get(userId);
+        
+        if (pc) {
+            // Remote description이 설정되었는지 확인
+            if (pc.remoteDescription) {
+                await pc.addIceCandidate(candidate);
+                console.log('✅ ICE 후보 추가 완료:', userId);
+            } else {
+                // Remote description이 없으면 대기 큐에 저장
+                if (!pendingIceCandidates.has(userId)) {
+                    pendingIceCandidates.set(userId, []);
+                }
+                pendingIceCandidates.get(userId).push(candidate);
+                console.log('⏳ ICE 후보 대기 큐에 저장:', userId);
+            }
+        } else {
+            console.warn('⚠️ PeerConnection을 찾을 수 없음:', userId);
+        }
+    } catch (error) {
+        console.error('❌ ICE 후보 처리 실패:', error);
+    }
+}
+
+// 대기 중인 ICE 후보들 처리
+async function processPendingIceCandidates(userId) {
     const pc = peerConnections.get(userId);
-    if (pc) {
-        await pc.addIceCandidate(candidate);
+    const candidates = pendingIceCandidates.get(userId);
+    
+    if (pc && candidates && candidates.length > 0) {
+        console.log(`⏳ 대기 중인 ICE 후보 ${candidates.length}개 처리 시작:`, userId);
+        
+        for (const candidate of candidates) {
+            try {
+                await pc.addIceCandidate(candidate);
+            } catch (error) {
+                console.error('❌ 대기 ICE 후보 처리 실패:', error);
+            }
+        }
+        
+        pendingIceCandidates.delete(userId);
+        console.log('✅ 대기 중인 ICE 후보 처리 완료:', userId);
     }
 }
 
@@ -414,17 +484,81 @@ function handleUserLeft(data) {
 
 // 원격 비디오 표시
 function displayRemoteVideo(stream, userName) {
-    const remoteVideosGrid = document.getElementById('remoteVideosGrid');
-    const videoContainer = document.createElement('div');
-    videoContainer.className = 'remote-video-item';
-    videoContainer.innerHTML = `
-        <video autoplay playsinline></video>
-        <div class="remote-video-label">${userName}</div>
-    `;
-    
-    const video = videoContainer.querySelector('video');
-    video.srcObject = stream;
-    remoteVideosGrid.appendChild(videoContainer);
+    try {
+        const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+        if (!remoteVideosGrid) {
+            console.error('❌ remoteVideosGrid를 찾을 수 없음');
+            return;
+        }
+        
+        // 기존 비디오 제거 (중복 방지)
+        const existingVideo = remoteVideosGrid.querySelector(`[data-username="${userName}"]`);
+        if (existingVideo) {
+            existingVideo.remove();
+            console.log('������ 기존 비디오 제거:', userName);
+        }
+        
+        // 새 비디오 컨테이너 생성
+        const videoContainer = document.createElement('div');
+        videoContainer.className = 'remote-video-item';
+        videoContainer.setAttribute('data-username', userName);
+        videoContainer.style.cssText = `
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 5px;
+            min-width: 200px;
+            min-height: 150px;
+        `;
+        
+        // 비디오 엘리먼트 생성
+        const video = document.createElement('video');
+        video.autoplay = true;
+        video.playsinline = true;
+        video.muted = false;
+        video.srcObject = stream;
+        video.style.cssText = `
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        `;
+        
+        // 사용자 이름 라벨 생성
+        const label = document.createElement('div');
+        label.className = 'remote-video-label';
+        label.textContent = userName;
+        label.style.cssText = `
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1;
+        `;
+        
+        videoContainer.appendChild(video);
+        videoContainer.appendChild(label);
+        remoteVideosGrid.appendChild(videoContainer);
+        
+        console.log('✅ 원격 비디오 표시 완료:', userName);
+        scwin.addChatMessage("시스템", `${userName}님의 영상이 연결되었습니다.`, false);
+        
+        // 비디오 로드 이벤트 처리
+        video.onloadedmetadata = () => {
+            console.log('✅ 비디오 메타데이터 로드 완료:', userName);
+        };
+        
+        video.onerror = (error) => {
+            console.error('❌ 비디오 재생 오류:', error);
+        };
+        
+    } catch (error) {
+        console.error('❌ 원격 비디오 표시 실패:', error);
+    }
 }
 
 // ===== 필수 함수들 (주석 밖에서 실행) =====
@@ -493,6 +627,9 @@ scwin.initializeChatWebSocket = function() {
                         console.log("채팅 히스토리 로드:", data.messages.length, "개");
                         
                         dlt_chatMessages.removeAll();
+                        if (window.addedMessageIds) {
+                            window.addedMessageIds.clear();
+                        }
                         
                         data.messages.forEach(msg => {
                             const isOwn = msg.userId === currentUser.userId;
@@ -626,16 +763,14 @@ scwin.addChatMessage = function(userName, message, isOwn, messageId) {
     }
     window.addedMessageIds.add(msgId);
     
-    const messageData = {
-        messageId: msgId,
-        userId: isOwn ? currentUser.userId : (userName === "시스템" ? "system" : "other"),
-        userName: userName,
-        message: message,
-        timestamp: new Date().toLocaleTimeString(),
-        isOwn: isOwn ? "true" : "false"
-    };
-    
-    dlt_chatMessages.insertRow(0, messageData);
+    // 웹스퀘어 데이터리스트에 메시지 추가
+    const rowIndex = dlt_chatMessages.insertRow();
+    dlt_chatMessages.setCellData(rowIndex, "messageId", msgId);
+    dlt_chatMessages.setCellData(rowIndex, "userId", isOwn ? currentUser.userId : (userName === "시스템" ? "system" : "other"));
+    dlt_chatMessages.setCellData(rowIndex, "userName", userName);
+    dlt_chatMessages.setCellData(rowIndex, "message", message);
+    dlt_chatMessages.setCellData(rowIndex, "timestamp", new Date().toLocaleTimeString());
+    dlt_chatMessages.setCellData(rowIndex, "isOwn", isOwn ? "true" : "false");
     
     // 채팅 화면을 최신 메시지로 스크롤
     setTimeout(() => {
@@ -3105,15 +3240,35 @@ scwin.updateControlButtons = function() {
 
 // 원격 사용자 제거
 scwin.removeRemoteUser = function(userId) {
-    const remoteVideosGrid = document.getElementById('remoteVideosGrid');
-    if (remoteVideosGrid) {
-        const videoItems = remoteVideosGrid.querySelectorAll('.remote-video-item');
-        videoItems.forEach(item => {
-            const label = item.querySelector('.remote-video-label');
-            if (label && label.textContent.includes(userId)) {
-                item.remove();
-            }
-        });
+    try {
+        const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+        if (!remoteVideosGrid) {
+            console.warn('⚠️ remoteVideosGrid를 찾을 수 없음');
+            return;
+        }
+        
+        // userId로 사용자 이름 찾기
+        const userInfo = remoteUserInfo.get(userId);
+        const userName = userInfo ? userInfo.userName : userId;
+        
+        // data-username 속성으로 비디오 아이템 찾기
+        const videoItem = remoteVideosGrid.querySelector(`[data-username="${userName}"]`);
+        if (videoItem) {
+            videoItem.remove();
+            console.log('✅ 원격 비디오 제거 완료:', userName, userId);
+            scwin.addChatMessage("시스템", `${userName}님의 영상 연결이 종료되었습니다.`, false);
+        } else {
+            console.warn('⚠️ 제거할 비디오를 찾을 수 없음:', userName, userId);
+        }
+        
+        // pendingIceCandidates 정리
+        if (pendingIceCandidates.has(userId)) {
+            pendingIceCandidates.delete(userId);
+            console.log('✅ 대기 ICE 후보 정리:', userId);
+        }
+        
+    } catch (error) {
+        console.error('❌ 원격 사용자 제거 실패:', error);
     }
 };
 
@@ -3169,7 +3324,7 @@ scwin.removeRemoteUser = function(userId) {
                 </xf:group>
                 
                 <xf:group class="chat-input-container">
-                    <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." />
+                    <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode==13) scwin.sendChatMessage()" />
                     <xf:trigger class="send-btn" ev:onclick="scwin.sendChatMessage">
                         <xf:label>전송</xf:label>
                     </xf:trigger>
