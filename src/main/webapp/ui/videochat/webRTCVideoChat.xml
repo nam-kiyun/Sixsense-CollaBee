@@ -399,8 +399,8 @@ async function createPeerConnection(userId, userName, isOfferer) {
         
         // 원격 스트림 처리
         pc.ontrack = (event) => {
-            //console.log('������ 원격 스트림 수신:', userName);
-            displayRemoteVideo(event.streams[0], userName);
+            //console.log('������ 원격 스트림 수신:', userName, userId);
+            displayRemoteVideo(event.streams[0], userName, userId);
         };
         
         // ICE 후보 처리
@@ -551,8 +551,8 @@ function handleUserLeft(data) {
     scwin.addChatMessage("시스템", `${userName}님이 나갔습니다.`, false);
 }
 
-// 원격 비디오 표시
-function displayRemoteVideo(stream, userName) {
+// 원격 비디오 표시 (userId 추가로 정확한 매칭)
+function displayRemoteVideo(stream, userName, userId) {
     try {
         const remoteVideosGrid = document.getElementById('remoteVideosGrid');
         if (!remoteVideosGrid) {
@@ -560,17 +560,25 @@ function displayRemoteVideo(stream, userName) {
             return;
         }
         
-        // 기존 비디오 제거 (중복 방지)
-        const existingVideo = remoteVideosGrid.querySelector(`[data-username="${userName}"]`);
+        // userId를 키로 스트림 저장
+        if (userId) {
+            remoteStreams.set(userId, stream);
+        }
+        
+        // 기존 비디오 제거 (userName과 userId 둘 다 확인)
+        const existingVideo = remoteVideosGrid.querySelector(`[data-username="${userName}"], [data-userid="${userId}"]`);
         if (existingVideo) {
             existingVideo.remove();
-            //console.log('������ 기존 비디오 제거:', userName);
+            //console.log('������ 기존 비디오 제거:', userName, userId);
         }
         
         // 새 비디오 컨테이너 생성
         const videoContainer = document.createElement('div');
         videoContainer.className = 'remote-video-item';
         videoContainer.setAttribute('data-username', userName);
+        if (userId) {
+            videoContainer.setAttribute('data-userid', userId);
+        }
         videoContainer.style.cssText = `
             position: relative;
             background: #000;
@@ -613,7 +621,7 @@ function displayRemoteVideo(stream, userName) {
         videoContainer.appendChild(label);
         remoteVideosGrid.appendChild(videoContainer);
         
-        //console.log('✅ 원격 비디오 표시 완료:', userName);
+        //console.log('✅ 원격 비디오 표시 완료:', userName, userId);
         scwin.addChatMessage("시스템", `${userName}님의 영상이 연결되었습니다.`, false);
         
         // 비디오 로드 이벤트 처리
@@ -3456,9 +3464,11 @@ scwin.removeMyVideoFromGrid = function() {
     }
 };
 
-// 원격 사용자 제거
+// 원격 사용자 제거 (개선된 버전)
 scwin.removeRemoteUser = function(userId) {
     try {
+        //console.log('������ 원격 사용자 제거 시작:', userId);
+        
         const remoteVideosGrid = document.getElementById('remoteVideosGrid');
         if (!remoteVideosGrid) {
             //console.warn('⚠️ remoteVideosGrid를 찾을 수 없음');
@@ -3469,21 +3479,62 @@ scwin.removeRemoteUser = function(userId) {
         const userInfo = remoteUserInfo.get(userId);
         const userName = userInfo ? userInfo.userName : userId;
         
-        // data-username 속성으로 비디오 아이템 찾기
-        const videoItem = remoteVideosGrid.querySelector(`[data-username="${userName}"]`);
+        // 여러 방법으로 비디오 아이템 찾기 시도
+        let videoItem = null;
+        
+        // 방법 1: data-userid로 찾기
+        videoItem = remoteVideosGrid.querySelector(`[data-userid="${userId}"]`);
+        if (videoItem) {
+            //console.log('✅ userId로 비디오 발견:', userId);
+        }
+        
+        // 방법 2: data-username으로 찾기
+        if (!videoItem) {
+            videoItem = remoteVideosGrid.querySelector(`[data-username="${userName}"]`);
+            if (videoItem) {
+                //console.log('✅ userName으로 비디오 발견:', userName);
+            }
+        }
+        
+        // 방법 3: 모든 원격 비디오에서 검색
+        if (!videoItem) {
+            const allVideoItems = remoteVideosGrid.querySelectorAll('.remote-video-item');
+            //console.log('������ 전체 비디오 아이템 수:', allVideoItems.length);
+            
+            allVideoItems.forEach((item, index) => {
+                const itemUserId = item.getAttribute('data-userid');
+                const itemUserName = item.getAttribute('data-username');
+                //console.log(`  - ${index}: userid="${itemUserId}", username="${itemUserName}"`);
+                
+                if (itemUserId === userId || itemUserName === userName) {
+                    videoItem = item;
+                    //console.log('✅ 전체 검색으로 비디오 발견:', itemUserId, itemUserName);
+                }
+            });
+        }
+        
+        // 비디오 제거 실행
         if (videoItem) {
             videoItem.remove();
             //console.log('✅ 원격 비디오 제거 완료:', userName, userId);
             scwin.addChatMessage("시스템", `${userName}님의 영상 연결이 종료되었습니다.`, false);
         } else {
             //console.warn('⚠️ 제거할 비디오를 찾을 수 없음:', userName, userId);
+            //console.warn('현재 그리드 내용:', remoteVideosGrid.innerHTML);
         }
         
-        // pendingIceCandidates 정리
+        // 관련 데이터 정리
+        if (remoteStreams.has(userId)) {
+            remoteStreams.delete(userId);
+            //console.log('✅ 원격 스트림 정리:', userId);
+        }
+        
         if (pendingIceCandidates.has(userId)) {
             pendingIceCandidates.delete(userId);
             //console.log('✅ 대기 ICE 후보 정리:', userId);
         }
+        
+        //console.log('✅ 원격 사용자 제거 완료:', userId);
         
     } catch (error) {
         //console.error('❌ 원격 사용자 제거 실패:', error);
