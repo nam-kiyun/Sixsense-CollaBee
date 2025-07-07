@@ -52,16 +52,16 @@
             .video-btn { background: #ffc107; color: #000; }
             .muted { background: #dc3545 !important; }
             .video-off { background: #6c757d !important; }
-            .chat-section { flex: 1; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; min-width: 350px; max-width: 400px; }
+            .chat-section { flex: 1; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; min-width: 350px; max-width: 400px; padding: 0 !important; margin: 0 !important; gap: 0 !important; }
             .chat-header { height: 40px; flex-shrink: 0; padding: 8px 10px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
             .chat-title { font-size: 16px; font-weight: bold; color: #333; }
             .chat-subtitle { font-size: 12px; color: #666; }
-            .chat-message-container { flex: 1; overflow: hidden; height: calc(100vh - 100px); padding: 5px; }
+            .chat-message-container { flex: 1; overflow: hidden; height: calc(100vh - 100px); padding: 0 !important; margin: 0 !important; }
             #chatMessages { height: 100%; overflow-y: scroll; overflow-x: hidden; border: 2px solid #FFB823; padding: 8px; background: white; scrollbar-width: thin; scrollbar-color: #FFB823 #f1f1f1; }
             .chat-message { margin-bottom: 8px; padding: 6px 10px; border-radius: 8px; max-width: 80%; word-wrap: break-word; display: block; }
             .chat-message.own { background: #FFB823; color: white; margin-left: auto; text-align: right; }
             .chat-message.other { background: #f1f1f1; color: black; margin-right: auto; text-align: left; }
-            .chat-input-container { height: 60px; flex-shrink: 0; display: flex; padding: 10px; background: #f8f9fa; border-top: 1px solid #dee2e6; align-items: center; gap: 10px; }
+            .chat-input-container { height: 60px; flex-shrink: 0; display: flex; padding: 10px; background: #f8f9fa; border-top: 1px solid #dee2e6; align-items: center; gap: 10px; margin: 0 !important; }
             #chatInput { flex: 1; padding: 10px 15px; border: 1px solid #ced4da; border-radius: 25px; font-size: 14px; outline: none; background: white; }
             .send-btn { padding: 10px 20px; background: #FFB823; color: white; border: none; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; min-width: 60px; }
         </style>
@@ -626,9 +626,16 @@ scwin.initializeChatWebSocket = function() {
                     if (data.messages && data.messages.length > 0) {
                         console.log("채팅 히스토리 로드:", data.messages.length, "개");
                         
+                        // 웹스퀘어 데이터리스트 초기화
                         dlt_chatMessages.removeAll();
                         if (window.addedMessageIds) {
                             window.addedMessageIds.clear();
+                        }
+                        
+                        // 화면 채팅 메시지 초기화
+                        const chatMessages = document.getElementById("chatMessages");
+                        if (chatMessages) {
+                            chatMessages.innerHTML = "";
                         }
                         
                         data.messages.forEach(msg => {
@@ -772,13 +779,42 @@ scwin.addChatMessage = function(userName, message, isOwn, messageId) {
     dlt_chatMessages.setCellData(rowIndex, "timestamp", new Date().toLocaleTimeString());
     dlt_chatMessages.setCellData(rowIndex, "isOwn", isOwn ? "true" : "false");
     
-    // 채팅 화면을 최신 메시지로 스크롤
-    setTimeout(() => {
-        const chatMessages = document.getElementById("chatMessages");
-        if (chatMessages) {
+    // 실제 화면에 메시지 표시
+    const chatMessages = document.getElementById("chatMessages");
+    if (chatMessages) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `chat-message ${isOwn ? 'own' : 'other'}`;
+        messageDiv.style.cssText = `
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+            ${isOwn ? 
+                'background: #FFB823; color: white; margin-left: auto; text-align: right;' : 
+                'background: #f1f3f5; color: #333; margin-right: auto; text-align: left;'
+            }
+        `;
+        
+        const timestamp = new Date().toLocaleTimeString();
+        messageDiv.innerHTML = `
+            <div style="font-weight: bold; font-size: 11px; margin-bottom: 4px; opacity: 0.8;">
+                ${userName} ${timestamp}
+            </div>
+            <div style="font-size: 14px; line-height: 1.4;">
+                ${message}
+            </div>
+        `;
+        
+        chatMessages.appendChild(messageDiv);
+        
+        // 채팅 화면을 최신 메시지로 스크롤
+        setTimeout(() => {
             chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-    }, 100);
+        }, 100);
+    } else {
+        console.error("❌ chatMessages 요소를 찾을 수 없음");
+    }
     
     console.log("채팅 메시지 추가:", userName, "->", message);
 };
@@ -3319,16 +3355,52 @@ scwin.removeRemoteUser = function(userId) {
                     <xf:output class="chat-subtitle">webRTC 화상통화</xf:output>
                 </xf:group>
                 
-                <xf:group class="chat-message-container">
-                    <div id="chatMessages" class="chat-messages"></div>
-                </xf:group>
-                
-                <xf:group class="chat-input-container">
-                    <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode==13) scwin.sendChatMessage()" />
-                    <xf:trigger class="send-btn" ev:onclick="scwin.sendChatMessage">
-                        <xf:label>전송</xf:label>
-                    </xf:trigger>
-                </xf:group>
+                <div style="display: flex; flex-direction: column; flex: 1; margin: 0; padding: 0;">
+                    <div id="chatMessages" class="chat-messages" style="
+                        height: calc(100vh - 140px); 
+                        min-height: 400px;
+                        max-height: 700px;
+                        overflow-y: auto; 
+                        border: 1px solid #ddd; 
+                        padding: 10px; 
+                        background: white; 
+                        border-radius: 8px 8px 0 0;
+                        display: flex;
+                        flex-direction: column;
+                        margin: 0;
+                    "></div>
+                    <div class="chat-input-container" style="
+                        margin: 0;
+                        padding: 10px;
+                        border: 1px solid #ddd;
+                        border-top: none;
+                        border-radius: 0 0 8px 8px;
+                        background: white;
+                        display: flex;
+                        gap: 8px;
+                        height: 60px;
+                        align-items: center;
+                    ">
+                    <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode==13) scwin.sendChatMessage()" style="
+                        flex: 1;
+                        padding: 8px 12px;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        outline: none;
+                    " />
+                        <button type="button" onclick="scwin.sendChatMessage()" style="
+                            padding: 8px 16px;
+                            background: #FFB823;
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 14px;
+                            font-weight: bold;
+                            min-width: 60px;
+                        ">전송</button>
+                    </div>
+                </div>
             </xf:group>
         </xf:group>
     </body>
