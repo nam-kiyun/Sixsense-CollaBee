@@ -245,16 +245,42 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         
         if (userInfo != null) {
             String channelName = userInfo.getChannelName();
+            String userId = userInfo.getUserId();
+            String userName = userInfo.getUserName();
+            
+            logger.info("세션 제거 - 사용자: {} ({}), 채널: {}", userName, userId, channelName);
+            
             List<WebSocketSession> sessions = channelSessions.get(channelName);
             
             if (sessions != null) {
                 sessions.remove(session);
                 
+                // 🎥 다른 사용자들에게 자동 퇴장 알림 (브라우저 닫기 등)
+                try {
+                    ChatMessageVo userLeftMessage = new ChatMessageVo();
+                    userLeftMessage.setType("user-left");
+                    userLeftMessage.setChannelName(channelName);
+                    userLeftMessage.setUserId(userId);
+                    userLeftMessage.setUserName(userName);
+                    userLeftMessage.setTimestamp(System.currentTimeMillis());
+                    
+                    // 남은 사용자들에게 퇴장 알림 브로드캐스트
+                    broadcastToChannel(channelName, userLeftMessage, null);
+                    
+                    logger.info("사용자 {}의 자동 퇴장 알림 전송 완료", userName);
+                    
+                } catch (Exception e) {
+                    logger.error("자동 퇴장 알림 전송 실패: " + userName, e);
+                }
+                
                 // 채널에 세션이 없으면 채널 제거
                 if (sessions.isEmpty()) {
                     channelSessions.remove(channelName);
+                    logger.info("빈 채널 제거: {}", channelName);
                 }
             }
+        } else {
+            logger.warn("제거할 세션의 사용자 정보를 찾을 수 없음: {}", session.getId());
         }
     }
 
