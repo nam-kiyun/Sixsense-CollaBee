@@ -36,12 +36,12 @@
             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; overflow: hidden; }
             .video-chat-container { display: flex; height: 100vh; width: 100vw; background: #000; }
             .video-section { flex: 3; position: relative; background: #1a1a1a; display: flex; flex-direction: column; }
-            .local-video-container { position: absolute; top: 20px; right: 20px; width: 240px; height: 180px; z-index: 10; border-radius: 12px; overflow: hidden; border: 3px solid #FFB823; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); }
+            .local-video-container { display: none; /* 오른쪽 상단 고정 비디오 숨김 - 그리드로 이동 */ }
             .local-video { width: 100%; height: 100%; background: #2a2a2a; border-radius: 8px; object-fit: cover; }
             .remote-videos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); grid-gap: 15px; padding: 20px; height: 100%; overflow-y: auto; }
             .remote-user-video { background: #2a2a2a; border-radius: 12px; overflow: hidden; position: relative; aspect-ratio: 16/9; border: 2px solid #444; }
             .remote-video-wrapper { width: 100%; height: 100%; position: relative; }
-            .remote-video-player { width: 100%; height: 100%; }
+            .remote-video-player { width: 100%; height: 100%; position: relative; }
             .remote-video-player video { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
             .remote-user-name { position: absolute; bottom: 10px; left: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
             .control-panel { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 10; }
@@ -226,11 +226,14 @@ scwin.joinCall = async function() {
             audio: true
         });
         
-        // 로컬 비디오 표시
+        // 로컬 비디오 표시 (기존 방식은 숨김)
         const localVideo = document.getElementById("localVideo");
         if (localVideo) {
             localVideo.srcObject = localStream;
         }
+        
+        // 내 비디오를 그리드에 추가
+        scwin.addMyVideoToGrid(localStream);
         
         // 화상통화 방 참가 알림
         if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
@@ -644,7 +647,7 @@ scwin.initializeChatWebSocket = function() {
                             scwin.addChatMessage(msg.userName, msg.message, isOwn, msgId, msg.timestamp);
                         });
                         
-                        scwin.addChatMessage("시스템", `이전 채팅 ${data.messages.length}개를 불러왔습니다.`, false);
+                        //scwin.addChatMessage("시스템", `이전 채팅 ${data.messages.length}개를 불러왔습니다.`, false);
                     } else {
                         //console.log("채팅 히스토리 없음");
                     }
@@ -1981,7 +1984,7 @@ scwin.displayRemoteVideo = function(peerId, consumer) {
         if (playPromise !== undefined) {
             playPromise.then(() => {
                 //console.log('✅ 원격 비디오 재생 성공:', peerId);
-                scwin.addChatMessage("시스템", `✅ ${remoteVideoInfo.userName}님과 영상통화가 연결되었습니다!`, false);
+                //scwin.addChatMessage("시스템", `✅ ${remoteVideoInfo.userName}님과 영상통화가 연결되었습니다!`, false);
             }).catch(error => {
                 //console.error('❌ 비디오 자동재생 실패 (사용자 상호작용 필요):', error);
                 // 자동재생 실패 시 사용자에게 알림
@@ -2104,7 +2107,7 @@ scwin.displayRemoteVideoDirectly = function(peerId, stream, kind) {
         if (playPromise !== undefined) {
             playPromise.then(() => {
                 //console.log('✅ 원격 비디오 재생 성공:', peerId);
-                scwin.addChatMessage("시스템", `✅ ${remoteVideoInfo.userName}님과 영상통화가 연결되었습니다!`, false);
+                //scwin.addChatMessage("시스템", `✅ ${remoteVideoInfo.userName}님과 영상통화가 연결되었습니다!`, false);
             }).catch(error => {
                 //console.error('❌ 비디오 자동재생 실패 (사용자 상호작용 필요):', error);
                 // 자동재생 실패 시 사용자에게 알림
@@ -2226,7 +2229,7 @@ scwin.leaveCall = function() {
         dma_videoChat.set("isJoined", "false");
         
         scwin.updateControlButtons();
-        scwin.addChatMessage("시스템", "화상통화를 나갔습니다.", false);
+        //scwin.addChatMessage("시스템", "화상통화를 나갔습니다.", false);
         //console.log("✅ 화상통화 나가기 완료");
         
     } catch (error) {
@@ -2256,7 +2259,7 @@ scwin.toggleMute = function() {
         }
         
         scwin.updateControlButtons();
-        scwin.addChatMessage("시스템", `${isMuted ? '������ 마이크 음소거' : '������ 마이크 켜짐'}`, false);
+        //scwin.addChatMessage("시스템", `${isMuted ? '������ 마이크 음소거' : '������ 마이크 켜짐'}`, false);
     }
 };
 
@@ -2282,7 +2285,7 @@ scwin.toggleVideo = function() {
         }
         
         scwin.updateControlButtons();
-        scwin.addChatMessage("시스템", `${isVideoOff ? '������ 비디오 끄기' : '������ 비디오 켜기'}`, false);
+        //scwin.addChatMessage("시스템", `${isVideoOff ? '������ 비디오 끄기' : '������ 비디오 켜기'}`, false);
     }
 };
 
@@ -2404,7 +2407,7 @@ scwin.initializeChatWebSocket = function() {
                             scwin.addChatMessage(msg.userName, msg.message, isOwn, msgId, msg.timestamp);
                         });
                         
-                        scwin.addChatMessage("시스템", `이전 채팅 ${data.messages.length}개를 불러왔습니다.`, false);
+                        //scwin.addChatMessage("시스템", `이전 채팅 ${data.messages.length}개를 불러왔습니다.`, false);
                     } else {
                         //console.log("채팅 히스토리 없음");
                     }
@@ -3198,6 +3201,9 @@ scwin.leaveCall = function() {
         isJoined = false;
         dma_videoChat.set("isJoined", "false");
         
+        // 내 비디오를 그리드에서 제거
+        scwin.removeMyVideoFromGrid();
+        
         scwin.updateControlButtons();
         scwin.addChatMessage("시스템", "화상통화를 종료했습니다.", false);
         
@@ -3219,7 +3225,21 @@ scwin.toggleMute = function() {
                 muteBtn.textContent = audioTrack.enabled ? "MIC" : "음소거";
                 muteBtn.classList.toggle("muted", !audioTrack.enabled);
             }
+            
+            // 그리드에 있는 내 비디오의 사용자 이름에 음소거 표시
+            const myUserNameInGrid = document.querySelector('[data-username="나"] .remote-user-name');
+            if (myUserNameInGrid) {
+                if (audioTrack.enabled) {
+                    myUserNameInGrid.style.background = '#FFB823';
+                    myUserNameInGrid.textContent = `나 (${currentUser.userName})`;
+                } else {
+                    myUserNameInGrid.style.background = '#dc3545';
+                    myUserNameInGrid.textContent = `나 (${currentUser.userName}) - 음소거`;
+                }
+            }
+            
             //console.log("������ 마이크:", audioTrack.enabled ? "켜짐" : "꺼짐");
+            scwin.addChatMessage("시스템", audioTrack.enabled ? "마이크를 켰습니다." : "마이크를 껐습니다.", false);
         }
     }
 };
@@ -3235,7 +3255,44 @@ scwin.toggleVideo = function() {
                 videoBtn.textContent = videoTrack.enabled ? "CAM" : "CAM OFF";
                 videoBtn.classList.toggle("off", !videoTrack.enabled);
             }
+            
+            // 그리드에 있는 내 비디오에도 반영
+            const myVideoContainer = document.querySelector('[data-username="나"] .remote-video-player');
+            if (myVideoContainer) {
+                const myVideoInGrid = myVideoContainer.querySelector('video');
+                if (videoTrack.enabled) {
+                    if (myVideoInGrid) myVideoInGrid.style.display = 'block';
+                    // 카메라 꺼짐 메시지 제거
+                    const offMessage = myVideoContainer.querySelector('.camera-off-message');
+                    if (offMessage) offMessage.remove();
+                } else {
+                    if (myVideoInGrid) myVideoInGrid.style.display = 'none';
+                    // 카메라 꺼짐 메시지 표시
+                    let offMessage = myVideoContainer.querySelector('.camera-off-message');
+                    if (!offMessage) {
+                        offMessage = document.createElement('div');
+                        offMessage.className = 'camera-off-message';
+                        offMessage.style.cssText = `
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            color: white;
+                            font-size: 18px;
+                            font-weight: bold;
+                            text-align: center;
+                            background: rgba(0,0,0,0.7);
+                            padding: 10px;
+                            border-radius: 8px;
+                        `;
+                        offMessage.textContent = '카메라 꺼짐';
+                        myVideoContainer.appendChild(offMessage);
+                    }
+                }
+            }
+            
             //console.log("������ 카메라:", videoTrack.enabled ? "켜짐" : "꺼짐");
+            scwin.addChatMessage("시스템", videoTrack.enabled ? "카메라를 켰습니다." : "카메라를 껐습니다.", false);
         }
     }
 };
@@ -3257,6 +3314,79 @@ scwin.updateControlButtons = function() {
         if (leaveBtn) leaveBtn.style.display = "none";
         if (muteBtn) muteBtn.disabled = true;
         if (videoBtn) videoBtn.disabled = true;
+    }
+};
+
+// 내 비디오를 그리드에 추가 (다른 참가자들과 동일한 레이아웃)
+scwin.addMyVideoToGrid = function(stream) {
+    try {
+        const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+        if (!remoteVideosGrid) {
+            console.warn('⚠️ remoteVideosGrid를 찾을 수 없음');
+            return;
+        }
+        
+        // 기존에 내 비디오가 있는지 확인
+        const existingMyVideo = remoteVideosGrid.querySelector('[data-username="나"]');
+        if (existingMyVideo) {
+            existingMyVideo.remove();
+        }
+        
+        // 내 비디오 아이템 생성
+        const videoItem = document.createElement('div');
+        videoItem.className = 'remote-user-video';
+        videoItem.setAttribute('data-username', '나');
+        videoItem.setAttribute('data-userid', currentUser.userId);
+        
+        videoItem.innerHTML = `
+            <div class="remote-video-wrapper">
+                <div class="remote-video-player">
+                    <video autoplay muted playsinline style="
+                        width: 100%; 
+                        height: 100%; 
+                        object-fit: cover; 
+                        border-radius: 8px;
+                        border: 3px solid #FFB823;
+                    "></video>
+                </div>
+                <div class="remote-user-name" style="
+                    background: #FFB823;
+                    color: white;
+                    font-weight: bold;
+                ">나 (${currentUser.userName})</div>
+            </div>
+        `;
+        
+        // 비디오 스트림 연결
+        const video = videoItem.querySelector('video');
+        if (video && stream) {
+            video.srcObject = stream;
+        }
+        
+        // 그리드의 첫 번째 위치에 추가 (내가 맨 앞에 표시)
+        remoteVideosGrid.insertBefore(videoItem, remoteVideosGrid.firstChild);
+        
+        //console.log('✅ 내 비디오를 그리드에 추가 완료');
+        scwin.addChatMessage("시스템", "내 비디오가 메인 화면에 표시됩니다.", false);
+        
+    } catch (error) {
+        //console.error('❌ 내 비디오 그리드 추가 실패:', error);
+    }
+};
+
+// 내 비디오를 그리드에서 제거
+scwin.removeMyVideoFromGrid = function() {
+    try {
+        const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+        if (!remoteVideosGrid) return;
+        
+        const myVideoItem = remoteVideosGrid.querySelector('[data-username="나"]');
+        if (myVideoItem) {
+            myVideoItem.remove();
+            console.log('✅ 내 비디오를 그리드에서 제거 완료');
+        }
+    } catch (error) {
+        console.error('❌ 내 비디오 그리드 제거 실패:', error);
     }
 };
 
