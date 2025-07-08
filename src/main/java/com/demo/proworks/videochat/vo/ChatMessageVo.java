@@ -46,6 +46,9 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
     @ElDtoField(logicalName = "ICE후보정보", physicalName = "iceCandidate", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String iceCandidate;
 
+    @ElDtoField(logicalName = "Simple-Peer시그널", physicalName = "signal", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String signal;
+
     @ElVoField(physicalName = "type")
     public String getType(){
         String ret = this.type;
@@ -165,6 +168,17 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
         this.iceCandidate = iceCandidate;
     }
 
+    @ElVoField(physicalName = "signal")
+    public String getSignal(){
+        String ret = this.signal;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "signal")
+    public void setSignal(String signal){
+        this.signal = signal;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -179,7 +193,8 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
         sb.append("afterTimestamp").append("=").append(afterTimestamp).append(",");
         sb.append("targetUserId").append("=").append(targetUserId).append(",");
         sb.append("sdp").append("=").append(sdp).append(",");
-        sb.append("iceCandidate").append("=").append(iceCandidate);
+        sb.append("iceCandidate").append("=").append(iceCandidate).append(",");
+        sb.append("signal").append("=").append(signal);
         sb.append("]");
         return sb.toString();
 
