@@ -52,22 +52,23 @@ public class CommentController {
 	@ElService(key = "comment/{taskId}")
 	@RequestMapping(value = "comment/{taskId}")
 	@ElDescription(sub = "댓글정보 목록조회", desc = "페이징을 처리하여 댓글정보 목록 조회를 한다.")
-	public CommentListVo selectListComment(@PathVariable("taskId") int taskId, CommentListSearchVo searchVo) throws Exception {
-		long totCnt = commentService.selectListCountByTaskId(taskId); //해당 task의 댓글 개수
+	public CommentListVo selectListComment(@PathVariable("taskId") int taskId, CommentListSearchVo searchVo)
+			throws Exception {
+		long totCnt = commentService.selectListCountByTaskId(taskId); // 해당 task의 댓글 개수
 		int page = searchVo.getPage();
 		searchVo.setTaskId(taskId);
 		searchVo.setPageSize(10);
 		searchVo.setStartOffset((page - 1) * 10);
-		
-		List<CommentVo> commentList = commentService.selectListCommentByTaskId(searchVo); //해당 task의 댓글을 조회
-		
+
+		List<CommentVo> commentList = commentService.selectListCommentByTaskId(searchVo); // 해당 task의 댓글을 조회
+
 		CommentListVo listVo = new CommentListVo();
 		listVo.setCommentVoList(commentList);
 		listVo.setTotalCount(totCnt);
-		listVo.setPageSize((int)Math.ceil(totCnt / 10));
-		listVo.setPageIndex((long)page);
+		listVo.setPageSize((int) Math.ceil(totCnt / 10));
+		listVo.setPageIndex((long) page);
 		System.out.println("댓글정보 목록을 조회: " + commentList);
-		
+
 		return listVo;
 	}
 
@@ -96,8 +97,8 @@ public class CommentController {
 	@ElService(key = "comment/create")
 	@RequestMapping(value = "comment/create")
 	@ElDescription(sub = "댓글정보 등록처리", desc = "댓글정보를 등록 처리 한다.")
-	public void insertComment(CommentVo commentVo) throws Exception {
-		commentService.insertComment(commentVo);
+	public CommentVo insertComment(CommentVo commentVo) throws Exception {
+		return commentService.insertComment(commentVo);
 	}
 
 	/**
@@ -124,6 +125,7 @@ public class CommentController {
 	@RequestMapping(value = "comment/delete")
 	@ElDescription(sub = "댓글정보 삭제처리", desc = "댓글정보를 삭제 처리한다.")
 	public void deleteComment(CommentVo commentVo) throws Exception {
+		System.out.println("댓글 삭제 내용 확인: " + commentVo.toString());
 		commentService.deleteComment(commentVo);
 	}
 

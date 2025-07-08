@@ -153,9 +153,7 @@ scwin.update_button_onclick = function (e) {
         }
     });
 
-};
-
-]]></script>
+};]]></script>
     	<style type="text/css"><![CDATA[body {
     margin: 0;
     padding: 0;

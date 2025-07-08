@@ -95,7 +95,10 @@ public class CommentServiceImpl implements CommentService {
 	 * @return 번호
 	 * @throws Exception
 	 */
-	public int insertComment(CommentVo commentVo) throws Exception {
+//	public int insertComment(CommentVo commentVo) throws Exception {
+//		return commentDAO.insertComment(commentVo);
+//	}
+	public CommentVo insertComment(CommentVo commentVo) throws Exception {
 		return commentDAO.insertComment(commentVo);
 	}
 

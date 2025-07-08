@@ -14,7 +14,9 @@
 						<w2:key dataType="number" name="task 아이디" id="taskId"></w2:key>
 						<w2:key dataType="text" name="사용자 아이디" id="userId"></w2:key>
 						<w2:key dataType="text" name="메세지" id="message"></w2:key>
-						<w2:key dataType="text" name="생성일" id="created_at"></w2:key>
+						<w2:key dataType="text" name="생성일" id="createdAt"></w2:key>
+						<w2:key dataType="text" name="사용자 이름" id="userName"></w2:key>
+						<w2:key dataType="text" name="이미지" id="userImage"></w2:key>
 					</w2:keyInfo>
 				</w2:dataMap>
 				<w2:dataMap baseNode="map" id="dma_getComment">
@@ -29,11 +31,17 @@
 			<w2:workflowCollection />
 			<xf:submission id="sbm_comment_create" action="/InsWebApp/comment/create.pwkjson" method="post" mediatype="application/json"
 				ref='data:json,{"id":"dma_comment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
-				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="" ev:submiterror="" abortTrigger="">
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_create_submitdone" ev:submiterror="scwin.sbm_comment_create_submiterror" abortTrigger="">
 			</xf:submission>
 			<xf:submission id="sbm_comment_get" action="/InsWebApp/comment/{taskId}.pwkjson" method="post" mediatype="application/json"
-				ref='data:json,{"id":"dma_getComment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
-				ev:submitdone="scwin.sbm_comment_get_submitdone" ev:submiterror="scwin.sbm_comment_get_submiterror" abortTrigger="">
+				ref='data:json,{"id":"dma_getComment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
+				customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_get_submitdone"
+				ev:submiterror="scwin.sbm_comment_get_submiterror" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_comment_delete" action="/InsWebApp/comment/delete.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_comment","key":"elData"}'
+				target='' encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_delete_submitdone"
+				ev:submiterror="scwin.sbm_comment_delete_submiterror" abortTrigger="">
 			</xf:submission>
 		</xf:model>
 		<w2:layoutInfo />
@@ -78,6 +86,7 @@ const generateUserId = () => {
     return `user_${timestamp}_${random}`;
 };
 
+//사용자 정보
 let currentUser = {
     userId: "",
     userName: "",
@@ -85,9 +94,8 @@ let currentUser = {
     channelName: "test"
 };
 
-
+//페이지 로드 되었을 때 
 scwin.onpageload = function () {
-    console.log("페이지로드");
     scwin.initializeChatWebSocket();
 
     let userInfo = $p.getParameter("userInfo");
@@ -106,6 +114,7 @@ scwin.onpageload = function () {
 
 };
 
+//소켓 초기화
 scwin.initializeChatWebSocket = function () {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = window.location.hostname;
@@ -159,7 +168,8 @@ scwin.initializeChatWebSocket = function () {
                         if (data.userId !== currentUser.userId) {
 
                             console.log("다른 사용자 메시지:", data.userName, "->", data.message);
-                            scwin.addChatMessage(data.userName, data.message, "", false, data.userImage);
+                            console.log(data);
+                            scwin.addChatMessage(data.userName, data.message, data.createdAt, false, data.userImage, data.commentId);
                         } else {
                             console.log("내 메시지 서버 에코 무시:", data.message);
                         }
@@ -230,6 +240,33 @@ scwin.initializeChatWebSocket = function () {
                     case 'notification':
                         //scwin.addChatMessage("시스템", data.message, false);
                         break;
+                    case 'delete-message':
+                        console.log("삭제 메시지 수신:", data.messageId);
+
+                        const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+                        const children = group.getChildren ? group.getChildren() : [];
+                        console.log("group: " + group);
+                        console.log("children: " + children);
+
+
+                        for (let i = 0; i < children.length; i++) {
+                            const comp = children[i];
+                            const compId = comp?.id || "undefined";
+                            const userData = comp?.userData || "없음";
+                            const localMessageId = userData?.commentId;
+                            const match = String(localMessageId) === String(data.commentId);
+
+                            console.log(`[${i}] 컴포넌트 ID: ${compId}`);
+                            console.log(` -> userData:`, userData);
+                            console.log(` -> localMessageId: ${localMessageId} vs 삭제 대상: ${data.commentId}`);
+                            console.log(` -> 일치 여부: ${match}`);
+                            if (match) {
+                                console.log(`✅ 매칭 성공 → 컴포넌트 제거: ${compId}`);
+                                comp.remove();
+                                break;
+                            }
+                        }
+                        break;
 
                     default:
                         console.warn("알 수 없는 메시지 타입:", data.type, data);
@@ -280,23 +317,11 @@ scwin.input_onkeyup = function (e) {
     }
 };
 
+
+//채팅 전송 버튼 눌렀을 때
 scwin.comment_send_button_onclick = function () {
     const message = comment_input.getValue().trim();
     if (!message || !chatSocket || chatSocket.readyState !== 1) return;
-
-    const payload = {
-        type: "message",
-        userId: currentUser.userId,
-        userName: currentUser.userName,
-        userImage: currentUser.userImage,
-        channelName: currentUser.channelName,
-        message: message
-    };
-
-
-    chatSocket.send(JSON.stringify(payload));
-
-    scwin.addChatMessage(currentUser.userName, message, "", true, currentUser.userImage);
 
     const param = {
         taskId: 1,
@@ -309,44 +334,18 @@ scwin.comment_send_button_onclick = function () {
     comment_input.setValue("");
 };
 
-scwin.addChatMessage = function (userName, message, time = "", isMine = false, image) {
+
+//화면에 채팅 추가
+scwin.addChatMessage = function (userName, message, time = "", isMine = false, image, commentId = 0) {
     const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
-    const wrapperId = "chat_wrapper_" + Date.now();
-    const profileId = "chat_profile_" + Date.now();
-    const nameId = "chat_name_" + Date.now();
-    const textId = "chat_text_" + Date.now();
-    const timeId = "chat_time_" + Date.now();
-
-    const wrapperStyle = `
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 10px;
-    background-color: ${isMine ? '#fff1d3' : '#D9D9D9'};
-    border-radius: 12px;
-    margin: 6px 0;
-    min-width: 60%;
-    max-width: 80%;
-    align-self: ${isMine ? 'flex-end' : 'flex-start'};
-`;
-
-    const headerRowStyle = `
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-`;
-
-    const profileStyle = `
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-`;
-
-    const nameStyle = `
-    font-weight: bold;
-    font-size: 14px;
-`;
+    const generateUniqueId = (prefix) => {
+        return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    };
+    const wrapperId = generateUniqueId("chat_wrapper");
+    const profileId = generateUniqueId("chat_profile");
+    const nameId = generateUniqueId("chat_name");
+    const textId = generateUniqueId("chat_text");
+    const timeId = generateUniqueId("chat_time");
 
     const messageStyle = `
     font-size: 15px;
@@ -355,100 +354,89 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
     box-sizing: border-box;
 `;
 
-    const timeStyle = `
-    font-size: 12px;
-    color: gray;
-    text-align: right;
-    align-self: flex-end;
-`;
+    const wrapperClass = `comment-wrapper ${isMine ? "mine" : "other"}`;
 
-    // 1. wrapper (전체 말풍선 컨테이너)
     const wrapper = $p.dynamicCreate(wrapperId, "span", {
-        style: wrapperStyle
-    }, group);
+        className: wrapperClass,
 
-    // 2. headerRow (이미지 + 이름)
-    // 2. headerRow (좌: 프로필+이름 / 우: 휴지통)
+    }, group);//참고
+
+    // 바로 아래처럼 직접 할당해야 함
+    wrapper.userData = { commentId: commentId };
+
     const headerRow = $p.dynamicCreate(wrapperId + "_header", "span", {
-        style: `
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-    `
+        className: "comment-header"
     }, wrapper);
 
-    // ▶️ 왼쪽: 프로필 + 이름 묶음
     const leftGroupId = wrapperId + "_left";
     const leftGroup = $p.dynamicCreate(leftGroupId, "span", {
-        style: `
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 8px;
-    `
+        className: "comment-left"
     }, headerRow);
 
     $p.dynamicCreate(profileId, "image", {
         src: image && image.trim() !== "" ? `${image}` : `${scwin.defaultImage}`,
-        style: profileStyle
+        className: "comment-profile"
     }, leftGroup);
 
     $p.dynamicCreate(nameId, "span", {
         label: userName,
-        style: nameStyle
+        className: "comment-name"
     }, leftGroup);
 
-    // ▶️ 오른쪽: 휴지통 아이콘 (내 메시지일 때만)
     if (isMine) {
         const deleteIconId = wrapperId + "_delete";
         $p.dynamicCreate(deleteIconId, "image", {
-            src: "/InsWebApp/images/trash-solid.svg", // 휴지통 아이콘 URL 예시
-            style: `
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        `
+            src: "/InsWebApp/images/trash-solid.svg",
+            className: "comment-delete-button",
         }, headerRow);
+
+        const deleteIcon = $p.getComponentById(deleteIconId);
+
+        if (deleteIcon) {
+            deleteIcon.bind("onclick", function (e) {
+                const param = { commentId };
+                const deleteIcon = $p.getComponentById(wrapperId);
+
+                dma_comment.setJSON(param);
+                deleteIcon.remove();
+                $c.sbm.execute(sbm_comment_delete);
+
+                const payload = {
+                    type: "delete-message",
+                    commentId: commentId,
+                    userId: currentUser.userId,
+                    userName: currentUser.userName,
+                    userImage: currentUser.userImage,
+                    channelName: currentUser.channelName
+                };
+                chatSocket.send(JSON.stringify(payload));
+
+            });
+        }
     }
 
-
-    // 3. 메시지 본문
     $p.dynamicCreate(textId, "span", {
         label: message,
         style: messageStyle
     }, wrapper);
 
-    // 4. 시간
     $p.dynamicCreate(timeId, "span", {
         label: time || scwin.getCurrentTime(),
-        style: timeStyle
+        className: "comment-time"
     }, wrapper);
-
 };
 
+
+//화면에 날짜 표시
 scwin.addChatDate = function (dateText) {
     const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
     const wrapperId = "chat_date_" + Date.now();
 
-    const dateStyle = `
-    font-size: 13px;
-    background-color: #eeeeee;
-    padding: 6px 12px;
-    border-radius: 16px;
-    color: #555;
-    margin: 16px auto 8px;
-    display: inline-block;
-    text-align: center;
-    font-weight: 500;
-`;
-
     $p.dynamicCreate(wrapperId, "span", {
         label: dateText,
-        style: dateStyle
+        className: "comment-date"
     }, group);
 };
-
 
 
 // 시간 포맷 유틸 함수 
@@ -460,15 +448,17 @@ scwin.getCurrentTime = function () {
 };
 
 
-
+//댓글 10개씩 조회 성공
 scwin.sbm_comment_get_submitdone = function (e) {
     const responseData = e.responseJSON;
-    const commentList = responseData.elData?.commentVoList ?? [];
+    const commentList = responseData.elData?.commentVoList.reverse() ?? [];
 
     const myUserId = currentUser.userId;
     let previousDate = ""; // 가장 최근 날짜를 저장하는 변수
 
-    commentList.reverse().forEach(comment => {
+    console.log(commentList);
+
+    commentList.forEach(comment => {
         const commentDate = scwin.formatDate(comment.createdAt); // 날짜만 추출 (예: "2025년 07월 07일")
 
         // 날짜가 바뀌었으면 날짜 구분선 추가
@@ -479,13 +469,21 @@ scwin.sbm_comment_get_submitdone = function (e) {
 
         const isMine = (comment.userId === myUserId);
 
-        scwin.addChatMessage(
-            comment.userName,
-            comment.message,
-            scwin.formatTime(comment.createdAt), // 시간 포맷 분리 함수 사용
-            isMine,
-            comment.userImage
-        );
+
+        try {
+            scwin.addChatMessage(
+                comment.userName,
+                comment.message,
+                scwin.formatTime(comment.createdAt), // 시간 포맷 분리 함수 사용
+                isMine,
+                comment.userImage,
+                comment.commentId
+            );
+
+        } catch (e) {
+            console.error("메시지 생성 실패:", e);
+        }
+
     });
 };
 
@@ -510,6 +508,38 @@ scwin.formatTime = function (datetimeStr) {
 scwin.sbm_comment_get_submiterror = function (e) {
     const responseData = e.responseJSON;
     console.log(responseData);
+};
+
+scwin.sbm_comment_delete_submitdone = function (e) {
+
+};
+
+scwin.sbm_comment_delete_submiterror = function (e) {
+
+};
+
+scwin.sbm_comment_create_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    const elData = responseData.elData;
+    scwin.addChatMessage(currentUser.userName, elData.message, scwin.formatTime(elData.createdAt), true, currentUser.userImage, elData.commentId);
+    console.log("추가된 아이디: " + elData.commentId)
+    const payload = {
+        type: "message",
+        userId: currentUser.userId,
+        userName: currentUser.userName,
+        userImage: currentUser.userImage,
+        channelName: currentUser.channelName,
+        createdAt: scwin.formatTime(elData.createdAt),
+        message: elData.message,
+        commentId: elData.commentId
+    };
+
+
+    chatSocket.send(JSON.stringify(payload));
+};
+
+scwin.sbm_comment_create_submiterror = function (e) {
+
 };
 ]]></script>
 		<style type="text/css"><![CDATA[body {

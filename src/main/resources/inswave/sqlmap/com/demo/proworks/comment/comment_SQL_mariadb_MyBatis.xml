@@ -15,7 +15,8 @@
 	2025/07/01 국다인 최초 생성
 -->
 <mapper namespace="com.demo.proworks.comment">
-	<insert id="insertComment" parameterType="com.demo.proworks.comment.vo.CommentVo">
+	<insert id="insertComment" parameterType="com.demo.proworks.comment.vo.CommentVo" 
+	useGeneratedKeys="true" keyProperty="commentId">
 		<!-- 댓글정보를 등록한다. -->
 
 		INSERT INTO COMMENT /* QueryID : com.demo.proworks.comment.insertComment */

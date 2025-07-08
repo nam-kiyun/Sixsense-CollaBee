@@ -21,17 +21,16 @@
     console.log(scwin.userImage);
 };
 
+//task 버튼 눌렀을 때 
 scwin.new_task_onclick = function (e) {
-    //팝업 호출
-    //팝업 화면에 데이터를 전달 (dataObject를 통해 전달 가능)
     var param = {
-        "type": "json", // 데이터 유형. "json"을 권장
-        "name": "userInfo",  // 데이터를 가져오기 위한 파라미터 이름으로 팝업 화면에서 $p.getParameter("exam_param")로 추출할 수 있음
+        "type": "json", 
+        "name": "userInfo", 
         "data": {
             "userId": scwin.userId,
             "userName": scwin.userName,
             "userImage": scwin.userImage
-        } // 실제 전달할 데이터
+        }
     };
 
     // 팝업 생성 옵션 지정
@@ -53,7 +52,8 @@ scwin.new_task_onclick = function (e) {
     $p.openPopup("./taskModal.xml", options);
 
 };
-// 팝업 생성 옵션의 closeAction 함수 정의 예시
+
+//팝업창 닫기
 scwin.popup_closeAction = function (argRuntimeID, argJsnInfo) {
     var popObj = $p.getPopupWindow(argRuntimeID);
     return true; //팝업 닫기 (반환 값이 true인 경우만 팝업이 닫힘)

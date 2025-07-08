@@ -198,43 +198,81 @@ body {
 
 
 
-
-
-
-/* 채팅 스타일 */
-.message-wrapper-right {
-    text-align: right; /* 오른쪽 정렬 */
-    width: 100%;
-    /* display: block; 또는 flexbox를 사용하여 블록 레벨 요소로 만듭니다. */
+/*채팅 스타일*/
+.comment-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 12px;
+  margin: 6px 0;
+  min-width: 60%;
+  max-width: 80%;
 }
 
-.message-wrapper-left {
-    text-align: left; /* 왼쪽 정렬 (기본값 또는 수신 메시지용) */
-    width: 100%;
+.comment-wrapper.mine {
+  background-color: #fff1d3;
+  align-self: flex-end;
 }
 
-/* 모든 말풍선의 공통 스타일 */
-.message-bubble-base {
-    display: inline-block; /* 텍스트 내용만큼만 너비를 가지되, 패딩/마진 적용 가능 */
-    padding: 8px 12px; /* 내부 여백 */
-    margin: 6px; /* 외부 여백 (말풍선 간 간격) */
-    border-radius: 12px; /* 둥근 모서리 */
-    max-width: 80%; /* 화면 너비의 최대 80%만 사용 (긴 메시지에도 유용) */
-    word-wrap: break-word; /* 긴 단어가 영역을 넘어가지 않도록 줄 바꿈 */
-    box-shadow: 0px 1px 3px rgba(0,0,0,0.1); /* 미묘한 그림자 효과 */
-    font-size: 14px; /* 글자 크기 */
-    line-height: 1.4; /* 줄 간격 */
-    vertical-align: top; /* inline-block 요소의 기본 정렬 문제를 해결 */
+.comment-wrapper.other {
+  background-color: #D9D9D9;
+  align-self: flex-start;
 }
 
-/* 서버로부터 받은 메시지 (왼쪽) */
-.message-bubble-received {
-    background-color: #e6f3ff; /* 연한 파란색 배경 */
-    color: #333; /* 글자색 */
+.comment-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
 }
 
-/* 내가 보낸 메시지 (오른쪽) */
-.message-bubble-sent {
-    background-color: #ffe812; /* 카카오톡 노란색 배경 */
-    color: #333; /* 글자색 */
+.comment-left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.comment-profile {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.comment-name {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.comment-text {
+  font-size: 10px;
+  word-break: break-word;
+  padding: 3px;
+  box-sizing: border-box;
+}
+
+.comment-time {
+  font-size: 12px;
+  color: gray;
+  text-align: right;
+  align-self: flex-end;
+}
+
+.comment-delete-button {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.comment-date{
+	font-size: 13px;
+	background-color: #eeeeee;
+	padding: 6px 12px;
+	border-radius: 16px;
+	color: #555;
+	margin: 16px auto 8px;
+	display: inline-block;
+	text-align: center;
+	font-weight: 500;
 }

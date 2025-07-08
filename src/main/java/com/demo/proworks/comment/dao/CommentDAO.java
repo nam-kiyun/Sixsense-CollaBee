@@ -41,8 +41,7 @@ public class CommentDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
 	 * @return 댓글정보 조회의 전체 카운트
 	 * @throws ElException
 	 */
-	 
-	
+
 	public long selectListCountByTaskId(int taskId) throws ElException {
 		CommentVo commentVo = new CommentVo();
 		commentVo.setTaskId(taskId);
@@ -89,8 +88,12 @@ public class CommentDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
 	 * @return 번호
 	 * @throws ElException
 	 */
-	public int insertComment(CommentVo vo) throws ElException {
-		return insert("com.demo.proworks.comment.insertComment", vo);
+//	public int insertComment(CommentVo vo) throws ElException {
+//		return insert("com.demo.proworks.comment.insertComment", vo);
+//	}
+	public CommentVo insertComment(CommentVo vo) throws ElException {
+		insert("com.demo.proworks.comment.insertComment", vo);
+		return (CommentVo) selectByPk("com.demo.proworks.comment.selectComment", vo.getCommentId());
 	}
 
 	/**
