@@ -53,10 +53,10 @@ scwin.loadSettingContent = function (menuType) {
                 srcPath = "/InsWebApp/ui/project/projectSettingAccessPage.xml";
                 selectedMenu = "access";
                 break;
-            case "projectSettingGithub":
+            /* case "projectSettingGithub":
                 srcPath = "/InsWebApp/ui/project/projectSettingGithubPage.xml";
                 selectedMenu = "github";
-                break;
+                break; */
             default:
                 srcPath = "/InsWebApp/ui/project/projectSettingDetailPage.xml";
                 selectedMenu = "detail";
