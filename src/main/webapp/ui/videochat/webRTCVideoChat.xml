@@ -140,13 +140,13 @@ scwin.onpageload = function() {
     // Simple WebRTC 초기화
     setTimeout(() => {
         //console.log("✅ Simple WebRTC 초기화 시작");
-        scwin.addChatMessage("시스템", "✅ Simple WebRTC 화상통화 시스템 준비 중...", false);
+        //scwin.addChatMessage("시스템", "✅ Simple WebRTC 화상통화 시스템 준비 중...", false);
         
         // Simple WebRTC 초기화
         scwin.initializeSimpleWebRTC();
         
         //console.log("✅ Simple WebRTC 다대다 화상통화 시스템 준비 완료");
-        scwin.addChatMessage("시스템", "✅ Simple WebRTC 다대다 화상통화방에 오신 것을 환영합니다!", false);
+        //scwin.addChatMessage("시스템", "✅ Simple WebRTC 다대다 화상통화방에 오신 것을 환영합니다!", false);
         
         // 페이지 진입 시 자동으로 화상통화 참가 (빠른 실행)
             setTimeout(() => {
@@ -168,7 +168,7 @@ scwin.onpageload = function() {
             
             chatInput.focus();
             //console.log("✅ 엔터키 이벤트 연결 완료");
-            scwin.addChatMessage("시스템", "엔터키로 메시지 전송이 가능합니다.", false);
+            //scwin.addChatMessage("시스템", "엔터키로 메시지 전송이 가능합니다.", false);
         } else {
             //console.warn("⚠️ chatInput 요소를 찾을 수 없습니다");
         }
@@ -198,7 +198,7 @@ scwin.initializeSimpleWebRTC = function() {
         
         if (!isHttps && !isLocalhost) {
             //console.warn('⚠️ HTTPS가 아닌 환경에서는 카메라/마이크 접근이 제한될 수 있습니다.');
-            scwin.addChatMessage("시스템", "⚠️ HTTPS 환경을 권장합니다.", false);
+            //scwin.addChatMessage("시스템", "⚠️ HTTPS 환경을 권장합니다.", false);
         } else if (isHttps) {
             //console.log('✅ HTTPS 환경 확인됨');
         } else {
@@ -208,20 +208,20 @@ scwin.initializeSimpleWebRTC = function() {
         //console.log('✅ WebRTC 지원 확인됨');
         //console.log('✅ STUN/TURN 서버 설정:', iceServers ? iceServers.length : 0 + '개');
         
-        scwin.addChatMessage("시스템", "✅ Simple WebRTC 다대다 화상통화방에 오신 것을 환영합니다!", false);
+        //scwin.addChatMessage("시스템", "✅ Simple WebRTC 다대다 화상통화방에 오신 것을 환영합니다!", false);
         
         //console.log('✅ Simple WebRTC 초기화 완료');
         
     } catch (error) {
         //console.error('❌ Simple WebRTC 초기화 실패:', error);
-        scwin.addChatMessage("시스템", "❌ Simple WebRTC 초기화 실패: " + error.message, false);
+        //scwin.addChatMessage("시스템", "❌ Simple WebRTC 초기화 실패: " + error.message, false);
     }
 };
 
 // 자동 화상통화 참가 (페이지 진입 시)
 scwin.autoJoinCall = async function() {
     try {
-        scwin.addChatMessage("시스템", "카메라와 마이크에 자동으로 연결합니다...", false);
+        //scwin.addChatMessage("시스템", "카메라와 마이크에 자동으로 연결합니다...", false);
         
         // 로컬 미디어 스트림 가져오기
         localStream = await navigator.mediaDevices.getUserMedia({
@@ -256,8 +256,8 @@ scwin.autoJoinCall = async function() {
         
         scwin.updateControlButtons();
         
-        scwin.addChatMessage("시스템", "✅ 화상통화가 자동으로 시작되었습니다!", false);
-        scwin.addChatMessage("시스템", "다른 사용자가 참가하면 자동으로 연결됩니다.", false);
+        //scwin.addChatMessage("시스템", "✅ 화상통화가 자동으로 시작되었습니다!", false);
+        //scwin.addChatMessage("시스템", "다른 사용자가 참가하면 자동으로 연결됩니다.", false);
         
         //console.log("✅ Simple WebRTC 자동 화상통화 참가 완료");
         
@@ -271,8 +271,8 @@ scwin.autoJoinCall = async function() {
             errorMessage = error.message;
         }
         
-        scwin.addChatMessage("시스템", "❌ " + errorMessage, false);
-        scwin.addChatMessage("시스템", "수동으로 '참가하기' 버튼을 눌러주세요.", false);
+        //scwin.addChatMessage("시스템", "❌ " + errorMessage, false);
+        //scwin.addChatMessage("시스템", "수동으로 '참가하기' 버튼을 눌러주세요.", false);
         
         // 오류 발생 시 기본 상태로 복원
         isJoined = false;
@@ -320,8 +320,8 @@ scwin.joinCall = async function() {
         scwin.updateControlButtons();
         scwin.hideLoading();
         
-        scwin.addChatMessage("시스템", "✅ 화상통화에 참가했습니다!", false);
-        scwin.addChatMessage("시스템", "다른 사용자가 참가하면 자동으로 연결됩니다.", false);
+        //scwin.addChatMessage("시스템", "✅ 화상통화에 참가했습니다!", false);
+        //scwin.addChatMessage("시스템", "다른 사용자가 참가하면 자동으로 연결됩니다.", false);
         
         //console.log("✅ Simple WebRTC 화상통화 참가 완료");
         
@@ -337,7 +337,7 @@ scwin.joinCall = async function() {
         }
         
         alert("❌ " + errorMessage);
-        scwin.addChatMessage("시스템", "❌ " + errorMessage, false);
+        //scwin.addChatMessage("시스템", "❌ " + errorMessage, false);
     }
 };
 
@@ -622,7 +622,7 @@ function displayRemoteVideo(stream, userName, userId) {
         remoteVideosGrid.appendChild(videoContainer);
         
         //console.log('✅ 원격 비디오 표시 완료:', userName, userId);
-        scwin.addChatMessage("시스템", `${userName}님의 영상이 연결되었습니다.`, false);
+        //scwin.addChatMessage("시스템", `${userName}님의 영상이 연결되었습니다.`, false);
         
         // 비디오 로드 이벤트 처리
         video.onloadedmetadata = () => {
@@ -664,7 +664,7 @@ scwin.initializeChatWebSocket = function() {
             
             // 재연결 성공 시 시도 횟수 초기화
             if (window.wsReconnectAttempts && window.wsReconnectAttempts > 0) {
-                scwin.addChatMessage("시스템", "✅ 서버와의 연결이 복원되었습니다!", false);
+                //scwin.addChatMessage("시스템", "✅ 서버와의 연결이 복원되었습니다!", false);
                 window.wsReconnectAttempts = 0;
             }
             
@@ -809,7 +809,7 @@ scwin.initializeChatWebSocket = function() {
                 }
     } catch (error) {
                 //console.error("❌ 메시지 처리 오류:", error);
-                scwin.addChatMessage("시스템", "❌ 메시지 처리 중 오류 발생", false);
+                //scwin.addChatMessage("시스템", "❌ 메시지 처리 중 오류 발생", false);
             }
         };
         
@@ -826,7 +826,7 @@ scwin.initializeChatWebSocket = function() {
                 if (window.wsReconnectAttempts < 5) { // 최대 5번 재연결 시도
                     window.wsReconnectAttempts++;
                     
-                    scwin.addChatMessage("시스템", `⚠️ 연결이 끊어졌습니다. 재연결 시도 중... (${window.wsReconnectAttempts}/5)`, false);
+                    //scwin.addChatMessage("시스템", `⚠️ 연결이 끊어졌습니다. 재연결 시도 중... (${window.wsReconnectAttempts}/5)`, false);
                     
                     setTimeout(() => {
                         //console.log("WebSocket 재연결 시도:", window.wsReconnectAttempts);
@@ -846,26 +846,26 @@ scwin.initializeChatWebSocket = function() {
                                         timestamp: Date.now()
                                     };
                                     chatSocket.send(JSON.stringify(joinRoomMessage));
-                                    scwin.addChatMessage("시스템", "✅ 화상통화 상태가 복원되었습니다.", false);
+                                    //scwin.addChatMessage("시스템", "✅ 화상통화 상태가 복원되었습니다.", false);
                                 }
                             }, 2000);
                         }
                         
                     }, 3000 * window.wsReconnectAttempts); // 점진적으로 대기 시간 증가
                 } else {
-                    scwin.addChatMessage("시스템", "❌ 재연결에 실패했습니다. 페이지를 새로고침 해주세요.", false);
+                    //scwin.addChatMessage("시스템", "❌ 재연결에 실패했습니다. 페이지를 새로고침 해주세요.", false);
                 }
             }
         };
         
         chatSocket.onerror = function(error) {
             //console.error("❌ WebSocket 오류:", error);
-            scwin.addChatMessage("시스템", "❌ 서버 연결 오류 발생", false);
+            //scwin.addChatMessage("시스템", "❌ 서버 연결 오류 발생", false);
         };
         
     } catch (error) {
         //console.error("❌ WebSocket 초기화 실패:", error);
-        scwin.addChatMessage("시스템", "❌ WebSocket 초기화 실패", false);
+        //scwin.addChatMessage("시스템", "❌ WebSocket 초기화 실패", false);
     }
 };
 
@@ -2477,12 +2477,12 @@ scwin.checkSystemStatus = function() {
 scwin.forceReconnect = function() {
     if (!isJoined) {
         //console.log("❌ 화상통화에 참가하지 않은 상태");
-        scwin.addChatMessage("시스템", "❌ 먼저 화상통화에 참가해주세요.", false);
+        //scwin.addChatMessage("시스템", "❌ 먼저 화상통화에 참가해주세요.", false);
         return;
     }
     
     //console.log("Simple WebRTC 강제 재연결 시작...");
-    scwin.addChatMessage("시스템", "화상통화 연결을 재시작합니다...", false);
+    //scwin.addChatMessage("시스템", "화상통화 연결을 재시작합니다...", false);
     
     // Simple WebRTC 연결 재시작
     setTimeout(async () => {
@@ -2494,10 +2494,10 @@ scwin.forceReconnect = function() {
             setTimeout(async () => {
                 try {
                     await scwin.joinCall();
-                    scwin.addChatMessage("시스템", "✅ 화상통화 재연결 완료", false);
+                    //scwin.addChatMessage("시스템", "✅ 화상통화 재연결 완료", false);
                 } catch (error) {
                     //console.error("❌ 재연결 실패:", error);
-                    scwin.addChatMessage("시스템", "❌ 재연결 실패. 다시 시도해주세요.", false);
+                    //scwin.addChatMessage("시스템", "❌ 재연결 실패. 다시 시도해주세요.", false);
                 }
             }, 3000);
             
@@ -3215,7 +3215,7 @@ scwin.leaveCall = function() {
         scwin.removeMyVideoFromGrid();
         
         scwin.updateControlButtons();
-        scwin.addChatMessage("시스템", "화상통화를 나갔습니다. 카메라와 마이크가 꺼졌습니다.", false);
+        //scwin.addChatMessage("시스템", "화상통화를 나갔습니다. 카메라와 마이크가 꺼졌습니다.", false);
         
         //console.log("✅ 화상통화 종료 완료");
         
@@ -3249,7 +3249,7 @@ scwin.toggleMute = function() {
             }
             
             //console.log("������ 마이크:", audioTrack.enabled ? "켜짐" : "꺼짐");
-            scwin.addChatMessage("시스템", audioTrack.enabled ? "마이크를 켰습니다." : "마이크를 껐습니다.", false);
+            //scwin.addChatMessage("시스템", audioTrack.enabled ? "마이크를 켰습니다." : "마이크를 껐습니다.", false);
         }
     }
 };
@@ -3302,7 +3302,7 @@ scwin.toggleVideo = function() {
             }
             
             //console.log("������ 카메라:", videoTrack.enabled ? "켜짐" : "꺼짐");
-            scwin.addChatMessage("시스템", videoTrack.enabled ? "카메라를 켰습니다." : "카메라를 껐습니다.", false);
+            //scwin.addChatMessage("시스템", videoTrack.enabled ? "카메라를 켰습니다." : "카메라를 껐습니다.", false);
         }
     }
 };
@@ -3377,7 +3377,7 @@ scwin.addMyVideoToGrid = function(stream) {
         remoteVideosGrid.insertBefore(videoItem, remoteVideosGrid.firstChild);
         
         //console.log('✅ 내 비디오를 그리드에 추가 완료');
-        scwin.addChatMessage("시스템", "내 비디오가 메인 화면에 표시됩니다.", false);
+        //scwin.addChatMessage("시스템", "내 비디오가 메인 화면에 표시됩니다.", false);
         
     } catch (error) {
         //console.error('❌ 내 비디오 그리드 추가 실패:', error);
@@ -3453,7 +3453,7 @@ scwin.removeRemoteUser = function(userId) {
         if (videoItem) {
             videoItem.remove();
             //console.log('✅ 원격 비디오 제거 완료:', userName, userId);
-            scwin.addChatMessage("시스템", `${userName}님의 영상 연결이 종료되었습니다.`, false);
+            //scwin.addChatMessage("시스템", `${userName}님의 영상 연결이 종료되었습니다.`, false);
         } else {
             //console.warn('⚠️ 제거할 비디오를 찾을 수 없음:', userName, userId);
             //console.warn('현재 그리드 내용:', remoteVideosGrid.innerHTML);
