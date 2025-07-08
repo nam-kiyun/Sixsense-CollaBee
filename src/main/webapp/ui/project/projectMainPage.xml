@@ -1,63 +1,621 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<html xmlns="http://www.w3.org/1999/xhtml"
-    xmlns:ev="http://www.w3.org/2001/xml-events"
-    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
-    <head>
-        <w2:type>COMPONENT</w2:type>
-        <w2:buildDate/>
-        <w2:MSA/>
-        <xf:model>
-            <w2:dataCollection baseNode="map"/>
-            <w2:workflowCollection/>
-        </xf:model>
-        <w2:layoutInfo/>
-        <w2:publicInfo method=""/>
-        <script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
-
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare"
+	xmlns:xf="http://www.w3.org/2002/xforms">
+	<head>
+		<w2:type>COMPONENT</w2:type>
+		<w2:buildDate />
+		<w2:MSA />
+		<w2:autoJSLoad>false</w2:autoJSLoad>
+		<xf:model>
+			<w2:dataCollection baseNode="map">
+				<w2:dataMap baseNode="map" id="dm_taskVo">
+					<w2:keyInfo>
+						<w2:key id="taskTitle" name="업무 제목" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+			</w2:dataCollection>
+			<w2:workflowCollection />
+			<xf:submission id="add_task" action="/InsWebApp/task/create.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dm_taskVo","key":"taskVo"}' target="" encoding="UTF-8" instance=""
+				replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.add_task_submitdone"
+				ev:submiterror="" abortTrigger="">
+			</xf:submission>
+		</xf:model>
+		<w2:layoutInfo />
+		<w2:publicInfo method="" />
+		<script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function () {
+    // 페이지 로드 시 데이터 바인딩
+    scwin.loadProjectData();
 };
 
-scwin.new_task_onclick = function (e) {
-    //팝업 호출
-    //팝업 화면에 데이터를 전달 (dataObject를 통해 전달 가능)
-    // var jsnPopupData = {
-    //     "type": "json", // 데이터 유형. "json"을 권장
-    //     "name": "exam_param",  // 데이터를 가져오기 위한 파라미터 이름으로 팝업 화면에서 $p.getParameter("exam_param")로 추출할 수 있음
-    //     "data": {
-    //         "Personal_Info": { "Name": "Lee", "Age": 50, "Married": false },
-    //         "Region": "Seoul"
-    //     } // 실제 전달할 데이터
-    // };
+// 프로젝트 데이터 로드 함수
+scwin.loadProjectData = function() {
+    console.log("프로젝트 데이터 로드 완료");
+};
 
-    // 팝업 생성 옵션 지정
+/**
+ * 'Add card' 버튼 클릭 시 동적으로 카드를 생성하는 함수
+ * @param {String} parentId 카드를 추가할 부모 Group(칸반 컬럼)의 ID
+ */
+scwin.addCard_onclick = function(parentId) {
+    var parentGroup = $p.getComponentById(parentId);
+    var cardId = "dyn_card_" + new Date().getTime();
+    var cardOptions = {
+        className: "project-card",
+        style: "border-color: #2da44e; background-color: #f6ffed;"
+    };
+    var newCard = $p.dynamicCreate(cardId, "group", cardOptions, parentGroup);
+
+    // 생성된 input 컴포넌트 객체를 변수에 할당합니다.
+    var newInput = $p.dynamicCreate("dyn_input_" + new Date().getTime(), "input", {
+        placeholder: "새 작업명을 입력하세요.",
+        style: "width: 100%; height: 24px;"
+    }, newCard);
+
+    // --- 추가된 코드 ---
+    // 1. 생성된 input에 onkeydown 이벤트 핸들러를 연결합니다. [cite: 5]
+    newInput.bind("onkeydown", scwin.dynamicInput_onkeydown);
+
+    // 2. 생성된 input에 바로 포커스를 줍니다.
+    newInput.focus();
+};
+
+/**
+ * 동적으로 생성된 Input의 키보드 이벤트(keydown)를 처리하는 함수
+ * @param {Event} e 키보드 이벤트 객체
+ */
+scwin.dynamicInput_onkeydown = function(e) {
+    // 이벤트가 발생한 컴포넌트(input) 객체
+    var inputComponent = this;
+    
+    // 눌린 키의 코드 확인 (Enter: 13, ESC: 27)
+    var keyCode = e.keyCode;
+
+    if (keyCode === 13) { // Enter 키를 눌렀을 때
+        console.log("저장");
+        
+        // 입력 완료 후 포커스를 잃게 하여 추가 입력을 방지
+        inputComponent.blur();
+
+    } else if (keyCode === 27) { // ESC 키를 눌렀을 때
+        // 삭제할 대상은 input을 감싸고 있는 부모 컴포넌트(카드 그룹)입니다.
+        var cardComponent = inputComponent.getParent();
+
+        if (cardComponent) {
+            // $p.remove API로 카드 컴포넌트를 화면에서 삭제합니다.
+            cardComponent.remove();
+        }
+    }
+};
+
+// 프로젝트 설정 버튼 클릭
+scwin.project_settings_onclick = function(e) {
+    alert("프로젝트 설정 기능은 준비 중입니다.");
+};
+
+// 프로젝트 카드 클릭 이벤트
+scwin.projectCard_onclick = function(e) {
+    var selectedRow = parseInt(e.target.getAttribute('data-row'));
+    if (!isNaN(selectedRow)) {
+        dlt_projectList.setFocusedRow(selectedRow);
+        var projectName = dlt_projectList.getCellData(selectedRow, "projectName");
+        alert("선택된 프로젝트: " + projectName);
+    }
+};
+
+// 필터 버튼 클릭
+scwin.filter_onclick = function(e) {
+    alert("필터 기능은 준비 중입니다.");
+};
+
+// 정렬 버튼 클릭
+scwin.sort_onclick = function(e) {
+    alert("정렬 기능은 준비 중입니다.");
+};
+
+// 목록 보기 버튼 클릭
+scwin.list_onclick = function(e) {
+    alert("목록 보기 기능은 준비 중입니다.");
+};
+
+// 캘린더 보기 버튼 클릭
+scwin.calendar_onclick = function(e) {
+    alert("캘린더 보기 기능은 준비 중입니다.");
+};
+
+// GitHub 버튼 클릭 - GitHub App 관리 페이지로 이동
+scwin.github_onclick = function(e) {
     var options = {
-        id: "exa_popup",
+        id: "github_manager_popup",
         type: "wframePopup",
-        width: "600",
-        height: "400",
-        top: "100",
-        left: "200px",
-        popupName: "TASK",
-        modal: false,
-        closeAction: "scwin.popup_closeAction", 
+        width: "1000",
+        height: "700",
+        top: "50",
+        left: "100px",
+        popupName: "GitHub 관리",
+        modal: true,
+        closeAction: "scwin.github_popup_closeAction", 
         customTitleBar: false
     };
-
-    // 팝업 생성
-    $p.openPopup("./testModal.xml", options);
-
+    
+    $p.openPopup("/InsWebApp/ui/project/githubManager.xml", options);
 };
-// 팝업 생성 옵션의 closeAction 함수 정의 예시
+
+// GitHub 팝업 닫기 액션
+scwin.github_popup_closeAction = function (argRuntimeID, argJsnInfo) {
+    var popObj = $p.getPopupWindow(argRuntimeID);
+    // GitHub 관련 데이터 새로고침 로직 추가 가능
+    console.log("GitHub 관리자 창이 닫혔습니다.");
+    return true;
+};
+
+// 팝업 닫기 액션
 scwin.popup_closeAction = function (argRuntimeID, argJsnInfo) {
     var popObj = $p.getPopupWindow(argRuntimeID);
-    return true; //팝업 닫기 (반환 값이 true인 경우만 팝업이 닫힘)
-};]]></script>
-    </head>
-    <body ev:onpageload="scwin.onpageload">
-    	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
-    		style="">
-    		<xf:trigger type="button" style="width: 80px;height: 23px;" id="new_task" ev:onclick="scwin.new_task_onclick">
-    			<xf:label><![CDATA[TASK 생성]]></xf:label>
-    		</xf:trigger>
-    	</xf:group>
-    </body>
+    scwin.loadProjectData(); // 팝업 닫기 후 데이터 새로고침
+    return true;
+};
+
+scwin.add_task_submitdone = function (e) {
+
+};
+]]></script>
+		<style type="text/css"><![CDATA[
+/* 전체 컨테이너 */
+.project-main-container {
+    width: 100%;
+    height: 100vh;
+    background-color: #fff4d6;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* 헤더 영역 */
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 40px;
+    background-color: #fff4d6;
+    border-bottom: none;
+}
+
+.project-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* GitHub 스타일 버튼들 */
+.btn-github {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    color: #24292f;
+    background-color: #f6f8fa;
+    border: 1px solid #d1d9e0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    min-height: 32px;
+    box-sizing: border-box;
+}
+
+.btn-github:hover {
+    background-color: #f3f4f6;
+    border-color: #d1d9e0;
+}
+
+.btn-github:active {
+    background-color: #edeff2;
+    border-color: #d1d9e0;
+}
+
+/* GitHub 메인 버튼 스타일 */
+.btn-github-main {
+    color: #ffffff;
+    background-color: #24292f;
+    border-color: #24292f;
+}
+
+.btn-github-main:hover {
+    background-color: #32383f;
+    border-color: #32383f;
+}
+
+.btn-github-main:active {
+    background-color: #1c2128;
+    border-color: #1c2128;
+}
+
+.btn-primary {
+    color: #ffffff;
+    background-color: #2da44e;
+    border-color: #2da44e;
+}
+
+.btn-primary:hover {
+    background-color: #2c974b;
+    border-color: #2c974b;
+}
+
+.btn-primary:active {
+    background-color: #298e46;
+    border-color: #298e46;
+}
+
+/* 칸반 보드 컨테이너 */
+.kanban-container {
+    display: flex;
+    gap: 20px;
+    padding: 0 40px 40px 40px;
+    overflow-x: auto;
+    min-height: calc(100vh - 200px);
+}
+
+/* 칸반 열 */
+.kanban-column {
+    min-width: 350px;
+    background: #f6f8fa;
+    border-radius: 6px;
+    padding: 16px;
+    border: 1px solid #d1d9e0;
+}
+
+.kanban-column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.column-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #24292f;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-todo {
+    background-color: #fb8500;
+}
+
+.status-progress {
+    background-color: #d4af37;
+}
+
+.status-done {
+    background-color: #1f883d;
+}
+
+.task-count {
+    background-color: #eaeef2;
+    color: #656d76;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* 프로젝트 카드 */
+.project-card {
+    background: #ffffff;
+    border: 1px solid #d1d9e0;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.project-card:hover {
+    border-color: #1f883d;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.project-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.project-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #24292f;
+    margin: 0;
+    line-height: 1.25;
+}
+
+.priority-badge {
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: white;
+    text-transform: uppercase;
+}
+
+.priority-high {
+    background-color: #da3633;
+}
+
+.priority-medium {
+    background-color: #fb8500;
+}
+
+.priority-low {
+    background-color: #1f883d;
+}
+
+.project-description {
+    font-size: 12px;
+    color: #656d76;
+    margin: 8px 0;
+    line-height: 1.4;
+}
+
+.project-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #656d76;
+    margin-top: 12px;
+}
+
+.assignee {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.assignee-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #0969da;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.due-date {
+    color: #656d76;
+    font-size: 11px;
+}
+
+/* 새 카드 추가 버튼 */
+.add-card-btn {
+    width: 100%;
+    padding: 8px;
+    border: 1px dashed #d1d9e0;
+    background: none;
+    border-radius: 6px;
+    color: #656d76;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+}
+
+.add-card-btn:hover {
+    border-color: #1f883d;
+    color: #1f883d;
+    background-color: #f6ffed;
+}
+
+/* 반응형 */
+@media (max-width: 1200px) {
+    .kanban-container {
+        padding: 0 20px 40px 20px;
+    }
+    
+    .project-header {
+        padding: 24px 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .kanban-container {
+        flex-direction: column;
+        padding: 0 16px 40px 16px;
+    }
+    
+    .kanban-column {
+        min-width: auto;
+    }
+    
+    .project-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+        padding: 20px 16px;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}
+]]></style>
+	</head>
+	<body ev:onpageload="scwin.onpageload">
+		<xf:group class="project-main-container">
+			<!-- 헤더 영역 -->
+			<xf:group class="project-header">
+				<xf:group>
+					<w2:textbox class="project-title" id="txt_title" readonly="true">
+						프로젝트 이름
+					</w2:textbox>
+				</xf:group>
+
+				<xf:group class="header-actions">
+					<!-- GitHub 연동 버튼 - 제일 왼쪽에 배치 -->
+					<xf:trigger type="button" class="btn-github btn-github-main" id="btn_github" ev:onclick="scwin.github_onclick">
+						<xf:label><![CDATA[🐙 GitHub]]></xf:label>
+					</xf:trigger>
+
+					<xf:trigger type="button" class="btn-github" id="btn_filter" ev:onclick="scwin.filter_onclick">
+						<xf:label><![CDATA[🔽 Filter]]></xf:label>
+					</xf:trigger>
+
+					<xf:trigger type="button" class="btn-github" id="btn_sort" ev:onclick="scwin.sort_onclick">
+						<xf:label><![CDATA[📊 Sort]]></xf:label>
+					</xf:trigger>
+
+					<xf:trigger type="button" class="btn-github" id="btn_board">
+						<xf:label><![CDATA[Board]]></xf:label>
+					</xf:trigger>
+
+					<xf:trigger type="button" class="btn-github" id="btn_list" ev:onclick="scwin.list_onclick">
+						<xf:label><![CDATA[List]]></xf:label>
+					</xf:trigger>
+
+					<xf:trigger type="button" class="btn-github" id="btn_calendar" ev:onclick="scwin.calendar_onclick">
+						<xf:label><![CDATA[Calendar]]></xf:label>
+					</xf:trigger>
+
+					<xf:trigger type="button" class="btn-primary" id="btn_new_task" ev:onclick="scwin.new_task_onclick">
+						<xf:label><![CDATA[+ 새 작업]]></xf:label>
+					</xf:trigger>
+
+					<xf:trigger type="button" class="btn-github" id="btn_settings" ev:onclick="scwin.project_settings_onclick">
+						<xf:label><![CDATA[⚙️ 프로젝트 설정]]></xf:label>
+					</xf:trigger>
+				</xf:group>
+			</xf:group>
+
+			<!-- 칸반 보드 영역 -->
+			<xf:group class="kanban-container">
+				<!-- 할 일 2 컬럼 -->
+				<xf:group id="grp_todo" class="kanban-column">
+					<xf:group class="kanban-column-header">
+						<xf:group class="column-title">
+							<w2:span class="status-indicator status-todo"></w2:span>
+							할 일 2
+						</xf:group>
+						<w2:span class="task-count">1</w2:span>
+					</xf:group>
+
+					<xf:group id="card_container_todo" style="display: contents;">
+						<xf:group class="project-card" ev:onclick="scwin.projectCard_onclick" data-row="0">
+							<xf:group class="project-card-header">
+								<w2:span class="project-name">소규모 웹 개발</w2:span>
+								<w2:span class="priority-badge priority-high">높음</w2:span>
+							</xf:group>
+							<w2:span class="project-description">고객사 요청사항에 따른 웹사이트 개발</w2:span>
+							<xf:group class="project-meta">
+								<xf:group class="assignee">
+									<w2:span class="assignee-avatar">김</w2:span>
+									<w2:span>김개발</w2:span>
+								</xf:group>
+								<w2:span class="due-date">2025-08-15</w2:span>
+							</xf:group>
+						</xf:group>
+					</xf:group>
+
+					<xf:trigger type="button" class="add-card-btn" ev:onclick="scwin.addCard_onclick('card_container_todo')">
+						<xf:label><![CDATA[+ Add card]]></xf:label>
+					</xf:trigger>
+				</xf:group>
+
+				<!-- 진행중 2 컬럼 -->
+				<xf:group id="grp_inprogress" class="kanban-column">
+					<xf:group class="kanban-column-header">
+						<xf:group class="column-title">
+							<w2:span class="status-indicator status-progress"></w2:span>
+							진행중 2
+						</xf:group>
+						<w2:span class="task-count">1</w2:span>
+					</xf:group>
+
+					<!-- 프로젝트 카드 2 -->
+					<xf:group id="card_container_inprogress" style="display: contents;">
+						<xf:group class="project-card" ev:onclick="scwin.projectCard_onclick" data-row="1">
+							<xf:group class="project-card-header">
+								<w2:span class="project-name">데이터베이스 마이그레이션</w2:span>
+								<w2:span class="priority-badge priority-medium">중간</w2:span>
+							</xf:group>
+							<w2:span class="project-description">레거시 시스템 DB 이관 작업</w2:span>
+							<xf:group class="project-meta">
+								<xf:group class="assignee">
+									<w2:span class="assignee-avatar">이</w2:span>
+									<w2:span>이디비</w2:span>
+								</xf:group>
+								<w2:span class="due-date">2025-09-01</w2:span>
+							</xf:group>
+						</xf:group>
+					</xf:group>
+					<!-- 새 카드 추가 버튼 -->
+					<xf:trigger type="button" class="add-card-btn" ev:onclick="scwin.addCard_onclick('card_container_inprogress')">
+						<xf:label><![CDATA[+ Add card]]></xf:label>
+					</xf:trigger>
+				</xf:group>
+
+				<!-- 완료 2 컬럼 -->
+				<xf:group id="grp_done" class="kanban-column">
+					<xf:group class="kanban-column-header">
+						<xf:group class="column-title">
+							<w2:span class="status-indicator status-done"></w2:span>
+							완료 2
+						</xf:group>
+						<w2:span class="task-count">1</w2:span>
+					</xf:group>
+
+					<!-- 프로젝트 카드 3 -->
+					<xf:group id="card_container_done" style="display: contents;">
+						<xf:group class="project-card" ev:onclick="scwin.projectCard_onclick" data-row="2">
+							<xf:group class="project-card-header">
+								<w2:span class="project-name">API 서버 구축</w2:span>
+								<w2:span class="priority-badge priority-high">높음</w2:span>
+							</xf:group>
+							<w2:span class="project-description">RESTful API 서버 개발 완료</w2:span>
+							<xf:group class="project-meta">
+								<xf:group class="assignee">
+									<w2:span class="assignee-avatar">박</w2:span>
+									<w2:span>박백엔드</w2:span>
+								</xf:group>
+								<w2:span class="due-date">2025-07-20</w2:span>
+							</xf:group>
+						</xf:group>
+					</xf:group>
+					<!-- 새 카드 추가 버튼 -->
+					<xf:trigger type="button" class="add-card-btn" ev:onclick="scwin.addCard_onclick('card_container_done')">
+						<xf:label><![CDATA[+ Add card]]></xf:label>
+					</xf:trigger>
+				</xf:group>
+			</xf:group>
+		</xf:group>
+	</body>
 </html>
