@@ -156,7 +156,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         joinNotification.setChannelName(channelName);
         joinNotification.setUserId("system");
         joinNotification.setUserName("시스템");
-        joinNotification.setMessage(userName + "님이 채팅방에 참가했습니다.");
+        //joinNotification.setMessage(userName + "님이 채팅방에 참가했습니다.");
         joinNotification.setTimestamp(System.currentTimeMillis());
         
         // 참가 알림은 저장하지 않고 브로드캐스트만
