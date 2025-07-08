@@ -698,7 +698,75 @@ scwin.initializeChatWebSocket = function() {
                 switch(data.type) {
                 // 채팅 메시지 처리
                 case 'message':
-                    if (data.userId !== currentUser.userId) {
+                    // 시스템 비디오 상태 메시지 처리
+                    if (data.userName === 'SYSTEM_VIDEO_STATUS' && data.userId !== currentUser.userId) {
+                        try {
+                            const statusData = JSON.parse(data.message);
+                            if (statusData.action === 'video-toggle') {
+                                const remoteVideoContainer = document.querySelector(`[data-userid="${statusData.targetUserId}"] .remote-video-player`);
+                                if (remoteVideoContainer) {
+                                    const remoteVideo = remoteVideoContainer.querySelector('video');
+                                    if (statusData.isVideoOff) {
+                                        // 비디오 숨기고 꺼짐 메시지 표시
+                                        if (remoteVideo) remoteVideo.style.display = 'none';
+                                        let offMessage = remoteVideoContainer.querySelector('.camera-off-message');
+                                        if (!offMessage) {
+                                            offMessage = document.createElement('div');
+                                            offMessage.className = 'camera-off-message';
+                                            offMessage.style.cssText = `
+                                                position: absolute;
+                                                top: 50%;
+                                                left: 50%;
+                                                transform: translate(-50%, -50%);
+                                                color: white;
+                                                font-size: 18px;
+                                                font-weight: bold;
+                                                text-align: center;
+                                                background: rgba(0,0,0,0.7);
+                                                padding: 10px;
+                                                border-radius: 8px;
+                                                z-index: 10;
+                                            `;
+                                            offMessage.textContent = '카메라 꺼짐';
+                                            remoteVideoContainer.appendChild(offMessage);
+                                        }
+                                    } else {
+                                        // 비디오 표시하고 꺼짐 메시지 제거
+                                        if (remoteVideo) remoteVideo.style.display = 'block';
+                                        const offMessage = remoteVideoContainer.querySelector('.camera-off-message');
+                                        if (offMessage) offMessage.remove();
+                                    }
+                                }
+                                //console.log(`${statusData.targetUserName}님이 카메라를 ${statusData.isVideoOff ? '껐습니다' : '켰습니다'}`);
+                            }
+                        } catch (e) {
+                            //console.warn('비디오 상태 메시지 파싱 오류:', e);
+                        }
+                    } else if (data.userName === 'SYSTEM_AUDIO_STATUS' && data.userId !== currentUser.userId) {
+                        // 시스템 음소거 상태 메시지 처리
+                        try {
+                            const statusData = JSON.parse(data.message);
+                            if (statusData.action === 'audio-toggle') {
+                                const remoteUserName = document.querySelector(`[data-userid="${statusData.targetUserId}"] .remote-user-name`);
+                                if (remoteUserName) {
+                                    const userInfo = remoteUserInfo.get(statusData.targetUserId);
+                                    const userName = userInfo ? userInfo.userName : statusData.targetUserName;
+                                    
+                                    if (statusData.isMuted) {
+                                        remoteUserName.style.background = '#dc3545';
+                                        remoteUserName.textContent = `${userName} - 음소거`;
+                                    } else {
+                                        remoteUserName.style.background = '#444';
+                                        remoteUserName.textContent = userName;
+                                    }
+                                }
+                                //console.log(`${statusData.targetUserName}님이 마이크를 ${statusData.isMuted ? '껐습니다' : '켰습니다'}`);
+                            }
+                        } catch (e) {
+                            //console.warn('음소거 상태 메시지 파싱 오류:', e);
+                        }
+                    } else if (data.userId !== currentUser.userId && data.userName !== 'SYSTEM_VIDEO_STATUS' && data.userName !== 'SYSTEM_AUDIO_STATUS') {
+                        // 일반 채팅 메시지
                         scwin.addChatMessage(data.userName, data.message, false, data.messageId, data.timestamp);
                         //console.log("다른 사용자 메시지:", data.userName, "->", data.message);
                     } else {
@@ -3561,7 +3629,7 @@ scwin.removeRemoteUser = function(userId) {
                         border-radius: 4px;
                         outline: none;
                     " />
-                        <button type="button" onclick="scwin.sendChatMessage()" style="
+                        <xf:trigger id="sendBtn" class="send-btn" ev:onclick="scwin.sendChatMessage" style="
                             padding: 8px 16px;
                             background: #FFB823;
                             color: white;
@@ -3571,7 +3639,9 @@ scwin.removeRemoteUser = function(userId) {
                             font-size: 14px;
                             font-weight: bold;
                             min-width: 60px;
-                        ">전송</button>
+                        ">
+                            <xf:label>전송</xf:label>
+                        </xf:trigger>
                     </div>
                 </div>
             </xf:group>
