@@ -3527,7 +3527,7 @@ scwin.removeRemoteUser = function(userId) {
                 
                 <div style="display: flex; flex-direction: column; height: calc(100vh - 40px); margin: 0; padding: 0;">
                     <div id="chatMessages" class="chat-messages" style="
-                        height: calc(100vh - 140px);
+                        height: calc(100vh - 120px);
                         min-height: 300px;
                         overflow-y: auto; 
                         border: 1px solid #ddd; 
