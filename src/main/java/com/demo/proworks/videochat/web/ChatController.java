@@ -12,11 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,8 +29,7 @@ import com.demo.proworks.videochat.vo.ChatListVo;
 import com.demo.proworks.videochat.service.ChatService;
 import com.demo.proworks.videochat.vo.ChatMessageVo;
 
-@RestController
-@RequestMapping("/InsWebApp")
+@Controller
 public class ChatController {
     
     private static final Logger logger = LoggerFactory.getLogger(ChatController.class);
@@ -61,147 +57,6 @@ public class ChatController {
     
     // Redis에서 사용할 키 접두사
     private static final String REDIS_CHAT_PREFIX = "chat:messages:";
-    
-    /**
-     * 채팅 메시지 전송 (HTTP 폴백용)
-     */
-    @PostMapping("/ChatSend.pwkjson")
-    public ResponseEntity<Map<String, Object>> sendChatMessage(@RequestBody Map<String, Object> request) {
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> chatVoMap = (Map<String, Object>) request.get("chatVo");
-            
-            if (chatVoMap == null) {
-                response.put("resCode", "FAIL.SVR.001");
-                response.put("resMsg", "채팅 데이터가 없습니다.");
-                return ResponseEntity.badRequest().body(response);
-            }
-            
-            // ChatMessageVo 생성
-            ChatMessageVo chatMessage = new ChatMessageVo();
-            chatMessage.setType("message");
-            chatMessage.setChannelName((String) chatVoMap.get("channelName"));
-            chatMessage.setUserId((String) chatVoMap.get("userId"));
-            chatMessage.setUserName((String) chatVoMap.get("userName"));
-            chatMessage.setMessage((String) chatVoMap.get("message"));
-            chatMessage.setTimestamp(System.currentTimeMillis());
-            chatMessage.setMessageId(String.valueOf(chatMessage.getTimestamp()));
-            
-            // 메시지 저장
-            chatService.saveMessage(chatMessage);
-            
-            response.put("resCode", "SUCC.SVR.001");
-            response.put("resMsg", "메시지 전송 성공");
-            response.put("messageId", chatMessage.getMessageId());
-            
-            logger.info("HTTP 메시지 전송 성공: {}", chatMessage.getMessage());
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            logger.error("HTTP 메시지 전송 실패", e);
-            
-            response.put("resCode", "FAIL.SVR.002");
-            response.put("resMsg", "메시지 전송 중 오류가 발생했습니다.");
-            
-            return ResponseEntity.internalServerError().body(response);
-        }
-    }
-
-    /**
-     * 모든 채팅 메시지 조회 (HTTP 폴백용)
-     */
-    @PostMapping("/ChatAll.pwkjson")
-    public ResponseEntity<Map<String, Object>> getAllChatMessages(@RequestBody Map<String, Object> request) {
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> chatVoMap = (Map<String, Object>) request.get("chatVo");
-            
-            if (chatVoMap == null) {
-                response.put("resCode", "FAIL.SVR.001");
-                response.put("resMsg", "채팅 데이터가 없습니다.");
-                return ResponseEntity.badRequest().body(response);
-            }
-            
-            String channelName = (String) chatVoMap.get("channelName");
-            List<ChatMessageVo> messages = chatService.getChannelMessages(channelName);
-            
-            Map<String, Object> elData = new HashMap<>();
-            elData.put("chatVo", messages);
-            
-            response.put("elData", elData);
-            response.put("resCode", "SUCC.SVR.001");
-            response.put("resMsg", "메시지 조회 성공");
-            
-            logger.info("HTTP 전체 메시지 조회 성공: 채널={}, 메시지 수={}", channelName, messages.size());
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            logger.error("HTTP 전체 메시지 조회 실패", e);
-            
-            response.put("resCode", "FAIL.SVR.002");
-            response.put("resMsg", "메시지 조회 중 오류가 발생했습니다.");
-            
-            return ResponseEntity.internalServerError().body(response);
-        }
-    }
-
-    /**
-     * 새 채팅 메시지 조회 (HTTP 폴백용)
-     */
-    @PostMapping("/ChatMessages.pwkjson")
-    public ResponseEntity<Map<String, Object>> getNewChatMessages(@RequestBody Map<String, Object> request) {
-        Map<String, Object> response = new HashMap<>();
-        
-        try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> chatVoMap = (Map<String, Object>) request.get("chatVo");
-            
-            if (chatVoMap == null) {
-                response.put("resCode", "FAIL.SVR.001");
-                response.put("resMsg", "채팅 데이터가 없습니다.");
-                return ResponseEntity.badRequest().body(response);
-            }
-            
-            String channelName = (String) chatVoMap.get("channelName");
-            String afterTimestampStr = (String) chatVoMap.get("afterTimestamp");
-            
-            Long afterTimestamp = null;
-            if (afterTimestampStr != null && !afterTimestampStr.isEmpty()) {
-                try {
-                    afterTimestamp = Long.parseLong(afterTimestampStr);
-                } catch (NumberFormatException e) {
-                    logger.warn("타임스탬프 파싱 실패: {}", afterTimestampStr);
-                }
-            }
-            
-            List<ChatMessageVo> messages = chatService.getMessagesAfterTimestamp(channelName, afterTimestamp);
-            
-            Map<String, Object> elData = new HashMap<>();
-            elData.put("chatVo", messages);
-            
-            response.put("elData", elData);
-            response.put("resCode", "SUCC.SVR.001");
-            response.put("resMsg", "새 메시지 조회 성공");
-            
-            logger.info("HTTP 새 메시지 조회 성공: 채널={}, 메시지 수={}", channelName, messages.size());
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            logger.error("HTTP 새 메시지 조회 실패", e);
-            
-            response.put("resCode", "FAIL.SVR.002");
-            response.put("resMsg", "새 메시지 조회 중 오류가 발생했습니다.");
-            
-            return ResponseEntity.internalServerError().body(response);
-        }
-    }
     
     /**
      * 채팅 메시지 전송
@@ -369,7 +224,7 @@ public class ChatController {
     }
     
     /**
-     * 모든 채팅 메시지 조회 (관리용)
+     * 모든 채팅 메시지 조회
      */
     @ElService(key = "ChatAll")
     @RequestMapping(value = "ChatAll")
