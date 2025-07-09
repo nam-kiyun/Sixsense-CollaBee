@@ -497,7 +497,19 @@ scwin.uploadProjectImage = function(file) {
                     imageUrl = response.imageUrl;
                     message = response.message;
                 }
-                // WebSquare 응답 형식일 수 있으므로 다른 속성들도 확인
+                // WebSquare 응답 형식 확인
+                else if (response.elHeader) {
+                    // WebSquare 응답에서 성공 여부 확인
+                    if (response.elHeader.resSuc === true) {
+                        isSuccess = true;
+                        imageUrl = response.imageUrl;
+                        message = response.message;
+                    } else {
+                        // WebSquare 오류 메시지
+                        message = response.elHeader.resMsg || "WebSquare 오류가 발생했습니다.";
+                    }
+                }
+                // 일반 JSON 응답 형식
                 else if (response.resultCode === 'success' || response.status === 'success') {
                     isSuccess = true;
                     imageUrl = response.imageUrl || response.data || response.url;
