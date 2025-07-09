@@ -56,6 +56,8 @@
                         <w2:key id="teamLeader" name="팀장" dataType="text"/>
                         <w2:key id="teamLeaderEmail" name="팀장이메일" dataType="text"/>
                         <w2:key id="emailSendTime" name="메일발송시간" dataType="text"/>
+                        <w2:key id="emailHour" name="메일발송시간" dataType="text"/>
+                        <w2:key id="emailMinute" name="메일발송분" dataType="text"/>
                     </w2:keyInfo>
                     <w2:data use="true">
                         <projectImage>/InsWebApp/assets/images/default_project.png</projectImage>
@@ -73,6 +75,329 @@
         <script lazy="false" type="text/javascript"><![CDATA[
 scwin.onpageload = function() {
     console.log("=== 프로젝트 설정 세부사항 페이지 로드 ===");
+    
+    // 여러 방법으로 project_id 파라미터 가져오기
+    scwin.projectId = $p.getParameter("project_id");
+    console.log("$p.getParameter('project_id'):", scwin.projectId);
+    
+    // URL에서 직접 파라미터 추출
+    if (!scwin.projectId) {
+        var urlParams = new URLSearchParams(window.location.search);
+        scwin.projectId = urlParams.get('project_id');
+        console.log("URLSearchParams에서 project_id:", scwin.projectId);
+    }
+    
+    // 부모 프레임에서 파라미터 가져오기
+    if (!scwin.projectId) {
+        try {
+            var parentFrame = $p.parent();
+            if (parentFrame && parentFrame.scwin && parentFrame.scwin.projectId) {
+                scwin.projectId = parentFrame.scwin.projectId;
+                console.log("부모 프레임에서 project_id:", scwin.projectId);
+            }
+        } catch(e) {
+            console.log("부모 프레임 접근 오류:", e);
+        }
+    }
+    
+    // 기본값 설정
+    if (!scwin.projectId) {
+        scwin.projectId = "9";
+        console.log("project_id 파라미터가 없어서 기본값 9 사용");
+    }
+    
+    console.log("최종 사용할 projectId:", scwin.projectId);
+    
+    // 프로젝트 데이터 로드
+    scwin.loadProjectData();
+};
+
+// 시간 형식 변환 함수 (24시간 -> 12시간)
+scwin.convertTimeFormat = function(time24) {
+    if (!time24) return "오후 6:00";
+    
+    // "09:30:00" 형식에서 시간 추출
+    var timeParts = time24.split(":");
+    var hour = parseInt(timeParts[0]);
+    var minute = parseInt(timeParts[1]);
+    
+    console.log("시간 변환 시도:", "hour =", hour, "minute =", minute);
+    
+    // 12시간 형식으로 변환 (정확한 매칭)
+    if (hour === 9) {
+        return "오전 9:00";
+    } else if (hour === 12) {
+        return "오후 12:00";
+    } else if (hour === 18) {
+        return "오후 6:00";
+    } else if (hour === 21) {
+        return "오후 9:00";
+    } else {
+        // 가장 가까운 시간으로 매칭
+        if (hour < 12) {
+            return "오전 9:00";
+        } else if (hour < 18) {
+            return "오후 12:00";
+        } else if (hour < 21) {
+            return "오후 6:00";
+        } else {
+            return "오후 9:00";
+        }
+    }
+};
+
+// 프로젝트 데이터 로드
+scwin.loadProjectData = function() {
+    console.log("=== DB 조회 시작 (실제 데이터베이스) ===");
+    console.log("요청 URL: /InsWebApp/ProjectUpdView.pwkjson");
+    console.log("요청 데이터: { project_id: " + scwin.projectId + " }");
+    
+    $.ajax({
+        url: "/InsWebApp/ProjectUpdView.pwkjson",
+        type: "POST",
+        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+        data: {
+            project_id: scwin.projectId
+        },
+        success: function(res) {
+            console.log("=== jQuery Ajax 응답 수신 ===");
+            console.log("응답 데이터:", res);
+            console.log("응답 데이터 타입:", typeof res);
+            console.log("응답 데이터 JSON 문자열:", JSON.stringify(res, null, 2));
+            
+            // 응답 데이터의 모든 키 확인
+            if (res && typeof res === 'object') {
+                console.log("응답 데이터 키들:", Object.keys(res));
+                for (var key in res) {
+                    console.log("키:", key, "값:", res[key], "타입:", typeof res[key]);
+                }
+            }
+            
+            // 응답 데이터 구조 확인 및 파싱
+            var projectData = null;
+            
+            // projectVo 구조 확인 (가장 일반적인 구조)
+            if (res && res.projectVo && (res.projectVo.projectId || res.projectVo.projectName)) {
+                projectData = res.projectVo;
+                console.log("✅ res.projectVo에서 프로젝트 데이터 발견");
+            }
+            // 직접 프로젝트 데이터가 있는지 확인
+            else if (res && (res.projectId || res.projectName)) {
+                projectData = res;
+                console.log("✅ 직접 응답에서 프로젝트 데이터 발견");
+            }
+            // 데이터가 중첩된 구조인지 확인
+            else if (res && res.data && (res.data.projectId || res.data.projectName)) {
+                projectData = res.data;
+                console.log("✅ res.data에서 프로젝트 데이터 발견");
+            }
+            // 배열 형태인지 확인
+            else if (res && Array.isArray(res) && res.length > 0 && (res[0].projectId || res[0].projectName)) {
+                projectData = res[0];
+                console.log("✅ 배열 첫 번째 요소에서 프로젝트 데이터 발견");
+            }
+            // 기타 가능한 구조들 확인
+            else if (res && res.result && (res.result.projectId || res.result.projectName)) {
+                projectData = res.result;
+                console.log("✅ res.result에서 프로젝트 데이터 발견");
+            }
+            
+            if (projectData) {
+                console.log("✅ DB 조회 성공! 실제 데이터:", projectData);
+                scwin.setProjectData(projectData);
+            } else {
+                console.log("❌ 프로젝트 데이터가 없습니다. res:", res);
+                scwin.setDefaultData();
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log("=== jQuery Ajax 에러 발생 ===");
+            console.error("❌ 프로젝트 데이터 조회 실패");
+            console.error("- xhr:", xhr);
+            console.error("- status:", status);
+            console.error("- error:", error);
+            
+            scwin.setDefaultData();
+            alert("프로젝트 데이터 조회에 실패했습니다. 기본 데이터를 사용합니다.");
+        }
+    });
+};
+
+// 프로젝트 데이터 설정 함수
+scwin.setProjectData = function(data) {
+    console.log("=== 프로젝트 데이터 설정 ===");
+    console.log("설정할 데이터:", data);
+    
+    try {
+        // 데이터맵 객체 존재 확인 (여러 방법으로 시도)
+        var dataMap = null;
+        
+        // 방법 1: 직접 접근
+        if (typeof dm_projectDetail !== 'undefined') {
+            dataMap = dm_projectDetail;
+            console.log("✅ 방법 1: 직접 접근 성공");
+        }
+        // 방법 2: $p.getComponentById로 접근
+        else if (typeof $p !== 'undefined' && $p.getComponentById) {
+            dataMap = $p.getComponentById("dm_projectDetail");
+            console.log("✅ 방법 2: $p.getComponentById 접근 성공");
+        }
+        // 방법 3: window 객체에서 접근
+        else if (typeof window.dm_projectDetail !== 'undefined') {
+            dataMap = window.dm_projectDetail;
+            console.log("✅ 방법 3: window 객체 접근 성공");
+        }
+        
+        if (!dataMap) {
+            console.error("❌ dm_projectDetail 데이터맵을 찾을 수 없습니다");
+            return;
+        }
+        
+        console.log("데이터맵 객체:", dataMap);
+        console.log("데이터맵 타입:", typeof dataMap);
+        
+        // 데이터맵에 데이터 설정
+        dataMap.set("projectName", data.projectName || "");
+        dataMap.set("teamLeader", data.userId || "");
+        dataMap.set("teamLeaderEmail", data.userId || "");
+        
+        // 이메일 발송 시간 파싱 (HH:MM:SS 형식을 시간과 분으로 분리)
+        var emailSendTime = data.emailSendTime || "";
+        if (emailSendTime) {
+            var timeParts = emailSendTime.split(":");
+            var hour = timeParts[0] || "18";
+            var minute = timeParts[1] || "00";
+            
+            dataMap.set("emailHour", hour);
+            dataMap.set("emailMinute", minute);
+            dataMap.set("emailSendTime", emailSendTime);
+            console.log("이메일 발송 시간 파싱:", emailSendTime, "-> 시간:", hour, "분:", minute);
+        } else {
+            dataMap.set("emailHour", "18");
+            dataMap.set("emailMinute", "00");
+            dataMap.set("emailSendTime", "18:00:00");
+        }
+        
+        // 이미지 설정
+        var projectImageUrl = data.projectImageUrl;
+        if (projectImageUrl && projectImageUrl.trim() !== "" && projectImageUrl !== "null") {
+            dataMap.set("projectImage", projectImageUrl);
+            console.log("✅ 프로젝트 이미지 표시:", projectImageUrl);
+        } else {
+            // 기본 이미지 설정
+            var defaultImageUrl = "https://collabee.s3.ap-northeast-2.amazonaws.com/projectImage/default_project_image.jpg";
+            dataMap.set("projectImage", defaultImageUrl);
+            console.log("✅ 기본 이미지 표시:", defaultImageUrl);
+        }
+        
+        console.log("✅ 데이터 설정 완료");
+        
+        // 데이터맵 강제 새로고침
+        try {
+            if (dataMap && dataMap.refresh) {
+                dataMap.refresh();
+                console.log("데이터맵 새로고침 완료");
+            }
+        } catch (refreshError) {
+            console.error("데이터맵 새로고침 오류:", refreshError);
+        }
+        
+        // 화면 컴포넌트 강제 업데이트
+        //try {
+        //    $p.refresh();
+        //    console.log("화면 컴포넌트 새로고침 완료");
+        //} catch (refreshError) {
+        //    console.error("화면 컴포넌트 새로고침 오류:", refreshError);
+        //}
+        
+        // 개별 컴포넌트 직접 업데이트
+        try {
+            // 프로젝트명 업데이트
+            if (typeof input_projectName !== 'undefined') {
+                input_projectName.setValue(data.projectName || "");
+                console.log("프로젝트명 직접 설정:", data.projectName);
+            }
+            
+            // 팀장 업데이트
+            if (typeof input_teamLeader !== 'undefined') {
+                input_teamLeader.setValue(data.userId || "");
+                console.log("팀장 직접 설정:", data.userId);
+            }
+            
+            // 시간 업데이트
+            if (typeof input_emailHour !== 'undefined') {
+                var timeParts = (data.emailSendTime || "18:00:00").split(":");
+                input_emailHour.setValue(timeParts[0] || "18");
+                console.log("시간 직접 설정:", timeParts[0]);
+            }
+            
+            // 분 업데이트
+            if (typeof input_emailMinute !== 'undefined') {
+                var timeParts = (data.emailSendTime || "18:00:00").split(":");
+                input_emailMinute.setValue(timeParts[1] || "00");
+                console.log("분 직접 설정:", timeParts[1]);
+            }
+            
+            // 이미지 업데이트
+            if (typeof img_projectImage !== 'undefined') {
+                var imageUrl = data.projectImageUrl || "https://collabee.s3.ap-northeast-2.amazonaws.com/projectImage/default_project_image.jpg";
+                img_projectImage.setSrc(imageUrl);
+                console.log("이미지 직접 설정:", imageUrl);
+            }
+            
+        } catch (componentError) {
+            console.error("컴포넌트 직접 업데이트 오류:", componentError);
+        }
+        
+    } catch (error) {
+        console.error("데이터 설정 중 오류:", error);
+    }
+};
+
+// 기본 데이터 설정 (DB 조회 실패 시에만 사용)
+scwin.setDefaultData = function() {
+    console.log("DB 조회 실패로 기본 데이터 설정");
+    
+    try {
+        // 데이터맵 객체 존재 확인 (여러 방법으로 시도)
+        var dataMap = null;
+        
+        // 방법 1: 직접 접근
+        if (typeof dm_projectDetail !== 'undefined') {
+            dataMap = dm_projectDetail;
+            console.log("✅ 방법 1: 직접 접근 성공");
+        }
+        // 방법 2: $p.getComponentById로 접근
+        else if (typeof $p !== 'undefined' && $p.getComponentById) {
+            dataMap = $p.getComponentById("dm_projectDetail");
+            console.log("✅ 방법 2: $p.getComponentById 접근 성공");
+        }
+        // 방법 3: window 객체에서 접근
+        else if (typeof window.dm_projectDetail !== 'undefined') {
+            dataMap = window.dm_projectDetail;
+            console.log("✅ 방법 3: window 객체 접근 성공");
+        }
+        
+        if (!dataMap) {
+            console.error("❌ dm_projectDetail 데이터맵을 찾을 수 없습니다");
+            return;
+        }
+        
+        dataMap.set("projectName", "프로젝트명 없음");
+        dataMap.set("teamLeader", "");
+        dataMap.set("teamLeaderEmail", "");
+        dataMap.set("emailSendTime", "18:00:00");
+        dataMap.set("emailHour", "18");
+        dataMap.set("emailMinute", "00");
+        
+        // 기본 이미지 설정
+        var defaultImageUrl = "https://collabee.s3.ap-northeast-2.amazonaws.com/projectImage/default_project_image.jpg";
+        dataMap.set("projectImage", defaultImageUrl);
+        
+        console.log("기본 데이터 설정 완료");
+    } catch (error) {
+        console.error("기본 데이터 설정 중 오류:", error);
+    }
 };
 
 // 프로젝트 이미지 변경
@@ -93,7 +418,8 @@ scwin.btn_save_onclick = function(e) {
     console.log("=== 프로젝트 설정 저장 ===");
     
     var projectName = dm_projectDetail.get("projectName");
-    var emailSendTime = dm_projectDetail.get("emailSendTime");
+    var emailHour = dm_projectDetail.get("emailHour");
+    var emailMinute = dm_projectDetail.get("emailMinute");
     
     // 유효성 검사
     if (!projectName || projectName.trim() === "") {
@@ -101,10 +427,32 @@ scwin.btn_save_onclick = function(e) {
         return;
     }
     
-    if (!emailSendTime || emailSendTime.trim() === "") {
+    if (!emailHour || emailHour.trim() === "") {
         alert("메일 발송 시간을 입력해주세요.");
         return;
     }
+    
+    if (!emailMinute || emailMinute.trim() === "") {
+        alert("메일 발송 분을 입력해주세요.");
+        return;
+    }
+    
+    // 시간 유효성 검사
+    var hour = parseInt(emailHour);
+    var minute = parseInt(emailMinute);
+    
+    if (isNaN(hour) || hour < 0 || hour > 23) {
+        alert("시간은 0~23 사이의 숫자를 입력해주세요.");
+        return;
+    }
+    
+    if (isNaN(minute) || minute < 0 || minute > 59) {
+        alert("분은 0~59 사이의 숫자를 입력해주세요.");
+        return;
+    }
+    
+    // 시간 합치기
+    var emailSendTime = String(hour).padStart(2, '0') + ":" + String(minute).padStart(2, '0') + ":00";
     
     // 저장 로직 (실제로는 서버 통신)
     alert("프로젝트 설정이 저장되었습니다.");
@@ -112,7 +460,9 @@ scwin.btn_save_onclick = function(e) {
     console.log("저장된 데이터:", {
         projectName: projectName,
         teamLeader: dm_projectDetail.get("teamLeader"),
-        emailSendTime: emailSendTime
+        emailSendTime: emailSendTime,
+        emailHour: emailHour,
+        emailMinute: emailMinute
     });
 };
 
@@ -280,7 +630,7 @@ scwin.btn_close_onclick = function(e) {
                 <!-- 프로젝트명 -->
                 <xf:group style="margin-bottom:24px;" id="grp_projectName">
                     <xf:output style="font-size:16px;font-weight:500;color:#333333;font-family:Inter,sans-serif;margin-bottom:8px;display:block;" id="output_projectNameLabel">
-                        <xf:label><![CDATA[이름]]></xf:label>
+                        <xf:label><![CDATA[프로젝트명]]></xf:label>
                     </xf:output>
                     <xf:input 
                         style="width:100%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;"
@@ -297,43 +647,45 @@ scwin.btn_close_onclick = function(e) {
                 	</xf:output>
 
                 	<!-- 팀장 정보 표시 (읽기 전용) -->
-
-                	<xf:input id="input1" ref="dm_projectDetail.projectName"
-                		style="width:100%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;">
+                	<xf:input id="input_teamLeader" ref="dm_projectDetail.teamLeader"
+                		style="width:100%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;"
+                		readonly="true">
                 	</xf:input>
                 </xf:group>
 
                 <!-- 메일 발송 시간 -->
                 <xf:group style="margin-bottom:32px;" id="grp_emailTime">
-                    <xf:output style="font-size:16px;font-weight:500;color:#333333;font-family:Inter,sans-serif;margin-bottom:8px;display:block;" id="output_emailTimeLabel">
-                        <xf:label><![CDATA[메일 발송 시간]]></xf:label>
-                    </xf:output>
-                    <xf:select1 
-                        style="width:100%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;"
-                        ref="dm_projectDetail.emailSendTime" 
-                        id="select_emailTime"
-                        appearance="minimal">
-                        <xf:choices>
-                            <xf:item>
-                                <xf:label>오전 9:00</xf:label>
-                                <xf:value>오전 9:00</xf:value>
-                            </xf:item>
-                            <xf:item>
-                                <xf:label>오후 12:00</xf:label>
-                                <xf:value>오후 12:00</xf:value>
-                            </xf:item>
-                            <xf:item>
-                                <xf:label>오후 6:00</xf:label>
-                                <xf:value>오후 6:00</xf:value>
-                            </xf:item>
-                            <xf:item>
-                                <xf:label>오후 9:00</xf:label>
-                                <xf:value>오후 9:00</xf:value>
-                            </xf:item>
-                        </xf:choices>
-                    </xf:select1>
+                	<xf:output
+                		style="font-size:16px;font-weight:500;color:#333333;font-family:Inter,sans-serif;margin-bottom:8px;display:block;"
+                		id="output_emailTimeLabel">
+                		<xf:label><![CDATA[메일 발송 시간]]></xf:label>
+                	</xf:output>
+                	
+                	<!-- 시간과 분 입력 컨테이너 -->
+                	<xf:group style="display:flex;gap:8px;align-items:center;" id="grp_timeInputs">
+                		<!-- 시간 입력 -->
+                		<xf:input 
+                			id="input_emailHour" 
+                			ref="dm_projectDetail.emailHour"
+                			style="width:30%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;text-align:center;"
+                			placeholder="시간">
+                		</xf:input>
+                		
+                		<!-- 구분자 -->
+                		<xf:output style="font-size:18px;font-weight:500;color:#333333;font-family:Inter,sans-serif;" id="output_timeSeparator">
+                			<xf:label><![CDATA[:]]></xf:label>
+                		</xf:output>
+                		
+                		<!-- 분 입력 -->
+                		<xf:input 
+                			id="input_emailMinute" 
+                			ref="dm_projectDetail.emailMinute"
+                			style="width:30%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;text-align:center;"
+                			placeholder="분">
+                		</xf:input>
+                	</xf:group>
                 </xf:group>
-                
+
                 <!-- 위험 구역 -->
                 <xf:group style="border-top:1px solid #dee2e6;padding-top:24px;" id="grp_dangerZone">
                     

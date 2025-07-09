@@ -30,9 +30,51 @@
         <w2:publicInfo method=""/>
         <script lazy="false" type="text/javascript"><![CDATA[
 scwin.onpageload = function() {
-    console.log("=== 프로젝트 설정 메인 페이지 로드 ===");
-    // 기본적으로 세부사항 페이지 표시
-    scwin.loadSettingContent("projectSettingDetail");
+    
+    
+    // URL 파라미터에서 project_id 받기
+    scwin.projectId = $p.getParameter("project_id");
+    
+    
+    // project_id가 없으면 사용자에게 입력 요청
+    if (!scwin.projectId) {
+        scwin.requestProjectId();
+    } else {
+        // 기본적으로 세부사항 페이지 표시
+        scwin.loadSettingContent("projectSettingDetail");
+    }
+};
+
+// 프로젝트 ID 입력 요청 함수
+scwin.requestProjectId = function() {
+    
+    
+    var projectId = prompt("프로젝트 ID를 입력하세요:");
+    
+    if (projectId === null) {
+        // 사용자가 취소를 눌렀을 때
+        alert("프로젝트 ID가 필요합니다");
+        
+    } else if (projectId.trim() === "") {
+        // 빈 값을 입력했을 때
+        alert("프로젝트 ID를 입력해야 합니다");
+        
+    } else if (!/^\d+$/.test(projectId.trim())) {
+        // 숫자가 아닌 값을 입력했을 때
+        alert("프로젝트 ID는 숫자여야 합니다.");
+        
+    }
+    
+    projectId = projectId.trim();
+    
+    
+    // URL에 project_id 파라미터 추가하여 페이지 재로딩
+    var currentUrl = window.location.href;
+    var newUrl = currentUrl + "&project_id=" + projectId;
+    
+    
+    
+    window.location.href = newUrl;
 };
 
 // 설정 콘텐츠 동적 로드 함수 (mainPage.xml 스타일과 동일)
@@ -41,66 +83,62 @@ scwin.loadSettingContent = function (menuType) {
         let srcPath = "";
         let selectedMenu = "";
 
-        console.log("=== 설정 콘텐츠 로드 시작 ===");
-        console.log("요청된 메뉴 타입:", menuType);
+       
 
         switch (menuType) {
             case "projectSettingDetail":
-                srcPath = "/InsWebApp/ui/project/projectSettingDetailPage.xml";
+                srcPath = "/InsWebApp/ui/project/projectSettingDetailPage.xml?project_id=" + scwin.projectId;
                 selectedMenu = "detail";
                 break;
             case "projectSettingAccess":
-                srcPath = "/InsWebApp/ui/project/projectSettingAccessPage.xml";
+                srcPath = "/InsWebApp/ui/project/projectSettingAccessPage.xml?project_id=" + scwin.projectId;
                 selectedMenu = "access";
                 break;
             /* case "projectSettingGithub":
-                srcPath = "/InsWebApp/ui/project/projectSettingGithubPage.xml";
+                srcPath = "/InsWebApp/ui/project/projectSettingGithubPage.xml?project_id=" + scwin.projectId;
                 selectedMenu = "github";
                 break; */
             default:
-                srcPath = "/InsWebApp/ui/project/projectSettingDetailPage.xml";
+                srcPath = "/InsWebApp/ui/project/projectSettingDetailPage.xml?project_id=" + scwin.projectId;
                 selectedMenu = "detail";
-                console.log("기본 세부사항으로 설정:", menuType);
+                
                 break;
         }
 
-        console.log("결정된 소스 경로:", srcPath);
+       
 
         // wframe 존재 확인
         if (wfr_settingContent) {
-            console.log("wfr_settingContent 찾음:", wfr_settingContent);
-            console.log("현재 wframe src:", wfr_settingContent.getSrc());
+           
 
             // 프레임 소스 변경
             wfr_settingContent.setSrc(srcPath);
 
             // 변경 후 확인
             setTimeout(function () {
-                console.log("변경 후 wframe src:", wfr_settingContent.getSrc());
-                console.log("프레임 소스 변경 성공:", srcPath);
+                
             }, 100);
 
         } else {
-            console.error("오류: wfr_settingContent를 찾을 수 없습니다.");
+           
             return false;
         }
 
         // 현재 페이지 상태 업데이트
         dm_main.set("currentPage", selectedMenu);
 
-        console.log("=== 설정 콘텐츠 로드 완료 ===");
+        
         return true;
 
     } catch (e) {
-        console.error("설정 콘텐츠 로드 오류:", e);
-        console.error("Error stack:", e.stack);
+        
         return false;
     }
 };
 
 // 사이드메뉴에서 호출할 메뉴 변경 함수
 scwin.changeMenu = function (menuType) {
-    console.log("=== 메뉴 변경 요청 ===", menuType);
+   
 
     // 설정 콘텐츠 로드
     scwin.loadSettingContent(menuType);
@@ -112,15 +150,15 @@ scwin.changeMenu = function (menuType) {
             if (sideMenuWindow && sideMenuWindow.scwin && sideMenuWindow.scwin.updateSelectedMenu) {
                 const selectedMenu = dm_main.get("currentPage");
                 sideMenuWindow.scwin.updateSelectedMenu(selectedMenu);
-                console.log("사이드메뉴 선택 상태 업데이트 성공:", selectedMenu);
+              
             } else {
-                console.log("사이드메뉴 updateSelectedMenu 함수를 찾을 수 없습니다.");
+                
             }
         } else {
-            console.log("사이드메뉴 wframe을 찾을 수 없습니다.");
+         
         }
     } catch (e) {
-        console.log("사이드메뉴 업데이트 오류:", e);
+        
     }
 };
 
@@ -132,17 +170,17 @@ scwin.updateSidebarProjectInfo = function() {
             if (sideMenuWindow && sideMenuWindow.scwin && sideMenuWindow.scwin.updateProjectName) {
                 const projectName = dm_main.get("projectName");
                 sideMenuWindow.scwin.updateProjectName(projectName);
-                console.log("사이드바에 프로젝트 정보 전달 성공:", projectName);
+                
             }
         }
     } catch(e) {
-        console.error("사이드바 프로젝트 정보 업데이트 오류:", e);
+        
     }
 };
 
 // wframe 로드 완료 이벤트들
 scwin.wfr_sideMenu_onready = function() {
-    console.log("사이드바 로드 완료");
+   
     // 사이드바에 프로젝트 정보 전달
     setTimeout(function() {
         scwin.updateSidebarProjectInfo();
@@ -150,11 +188,11 @@ scwin.wfr_sideMenu_onready = function() {
 };
 
 scwin.wfr_settingContent_onready = function() {
-    console.log("설정 내용 영역 로드 완료");
+    
 };
 
 scwin.wfr_header_onready = function() {
-    console.log("헤더 로드 완료");
+    
 };
 ]]></script>
     </head>
