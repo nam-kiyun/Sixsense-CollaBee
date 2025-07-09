@@ -74,17 +74,17 @@
         <w2:publicInfo method=""/>
         <script lazy="false" type="text/javascript"><![CDATA[
 scwin.onpageload = function() {
-    console.log("=== 프로젝트 설정 세부사항 페이지 로드 ===");
+    
     
     // 여러 방법으로 project_id 파라미터 가져오기
     scwin.projectId = $p.getParameter("project_id");
-    console.log("$p.getParameter('project_id'):", scwin.projectId);
+   
     
     // URL에서 직접 파라미터 추출
     if (!scwin.projectId) {
         var urlParams = new URLSearchParams(window.location.search);
         scwin.projectId = urlParams.get('project_id');
-        console.log("URLSearchParams에서 project_id:", scwin.projectId);
+        
     }
     
     // 부모 프레임에서 파라미터 가져오기
@@ -93,20 +93,20 @@ scwin.onpageload = function() {
             var parentFrame = $p.parent();
             if (parentFrame && parentFrame.scwin && parentFrame.scwin.projectId) {
                 scwin.projectId = parentFrame.scwin.projectId;
-                console.log("부모 프레임에서 project_id:", scwin.projectId);
+                
             }
         } catch(e) {
-            console.log("부모 프레임 접근 오류:", e);
+            
         }
     }
     
     // 기본값 설정
     if (!scwin.projectId) {
         scwin.projectId = "9";
-        console.log("project_id 파라미터가 없어서 기본값 9 사용");
+        
     }
     
-    console.log("최종 사용할 projectId:", scwin.projectId);
+    
     
     // 프로젝트 데이터 로드
     scwin.loadProjectData();
@@ -121,7 +121,7 @@ scwin.convertTimeFormat = function(time24) {
     var hour = parseInt(timeParts[0]);
     var minute = parseInt(timeParts[1]);
     
-    console.log("시간 변환 시도:", "hour =", hour, "minute =", minute);
+    
     
     // 12시간 형식으로 변환 (정확한 매칭)
     if (hour === 9) {
@@ -148,9 +148,7 @@ scwin.convertTimeFormat = function(time24) {
 
 // 프로젝트 데이터 로드
 scwin.loadProjectData = function() {
-    console.log("=== DB 조회 시작 (실제 데이터베이스) ===");
-    console.log("요청 URL: /InsWebApp/ProjectUpdView.pwkjson");
-    console.log("요청 데이터: { project_id: " + scwin.projectId + " }");
+    
     
     $.ajax({
         url: "/InsWebApp/ProjectUpdView.pwkjson",
@@ -160,16 +158,13 @@ scwin.loadProjectData = function() {
             project_id: scwin.projectId
         },
         success: function(res) {
-            console.log("=== jQuery Ajax 응답 수신 ===");
-            console.log("응답 데이터:", res);
-            console.log("응답 데이터 타입:", typeof res);
-            console.log("응답 데이터 JSON 문자열:", JSON.stringify(res, null, 2));
+            
             
             // 응답 데이터의 모든 키 확인
             if (res && typeof res === 'object') {
-                console.log("응답 데이터 키들:", Object.keys(res));
+              
                 for (var key in res) {
-                    console.log("키:", key, "값:", res[key], "타입:", typeof res[key]);
+                    
                 }
             }
             
@@ -179,43 +174,39 @@ scwin.loadProjectData = function() {
             // projectVo 구조 확인 (가장 일반적인 구조)
             if (res && res.projectVo && (res.projectVo.projectId || res.projectVo.projectName)) {
                 projectData = res.projectVo;
-                console.log("✅ res.projectVo에서 프로젝트 데이터 발견");
+                
             }
             // 직접 프로젝트 데이터가 있는지 확인
             else if (res && (res.projectId || res.projectName)) {
                 projectData = res;
-                console.log("✅ 직접 응답에서 프로젝트 데이터 발견");
+              
             }
             // 데이터가 중첩된 구조인지 확인
             else if (res && res.data && (res.data.projectId || res.data.projectName)) {
                 projectData = res.data;
-                console.log("✅ res.data에서 프로젝트 데이터 발견");
+                
             }
             // 배열 형태인지 확인
             else if (res && Array.isArray(res) && res.length > 0 && (res[0].projectId || res[0].projectName)) {
                 projectData = res[0];
-                console.log("✅ 배열 첫 번째 요소에서 프로젝트 데이터 발견");
+                
             }
             // 기타 가능한 구조들 확인
             else if (res && res.result && (res.result.projectId || res.result.projectName)) {
                 projectData = res.result;
-                console.log("✅ res.result에서 프로젝트 데이터 발견");
+                
             }
             
             if (projectData) {
-                console.log("✅ DB 조회 성공! 실제 데이터:", projectData);
+                
                 scwin.setProjectData(projectData);
             } else {
-                console.log("❌ 프로젝트 데이터가 없습니다. res:", res);
+                
                 scwin.setDefaultData();
             }
         },
         error: function(xhr, status, error) {
-            console.log("=== jQuery Ajax 에러 발생 ===");
-            console.error("❌ 프로젝트 데이터 조회 실패");
-            console.error("- xhr:", xhr);
-            console.error("- status:", status);
-            console.error("- error:", error);
+           
             
             scwin.setDefaultData();
             alert("프로젝트 데이터 조회에 실패했습니다. 기본 데이터를 사용합니다.");
@@ -225,8 +216,7 @@ scwin.loadProjectData = function() {
 
 // 프로젝트 데이터 설정 함수
 scwin.setProjectData = function(data) {
-    console.log("=== 프로젝트 데이터 설정 ===");
-    console.log("설정할 데이터:", data);
+   
     
     try {
         // 데이터맵 객체 존재 확인 (여러 방법으로 시도)
@@ -235,26 +225,25 @@ scwin.setProjectData = function(data) {
         // 방법 1: 직접 접근
         if (typeof dm_projectDetail !== 'undefined') {
             dataMap = dm_projectDetail;
-            console.log("✅ 방법 1: 직접 접근 성공");
+          
         }
         // 방법 2: $p.getComponentById로 접근
         else if (typeof $p !== 'undefined' && $p.getComponentById) {
             dataMap = $p.getComponentById("dm_projectDetail");
-            console.log("✅ 방법 2: $p.getComponentById 접근 성공");
+           
         }
         // 방법 3: window 객체에서 접근
         else if (typeof window.dm_projectDetail !== 'undefined') {
             dataMap = window.dm_projectDetail;
-            console.log("✅ 방법 3: window 객체 접근 성공");
+            
         }
         
         if (!dataMap) {
-            console.error("❌ dm_projectDetail 데이터맵을 찾을 수 없습니다");
+            
             return;
         }
         
-        console.log("데이터맵 객체:", dataMap);
-        console.log("데이터맵 타입:", typeof dataMap);
+        
         
         // 데이터맵에 데이터 설정
         dataMap.set("projectName", data.projectName || "");
@@ -271,7 +260,7 @@ scwin.setProjectData = function(data) {
             dataMap.set("emailHour", hour);
             dataMap.set("emailMinute", minute);
             dataMap.set("emailSendTime", emailSendTime);
-            console.log("이메일 발송 시간 파싱:", emailSendTime, "-> 시간:", hour, "분:", minute);
+            
         } else {
             dataMap.set("emailHour", "18");
             dataMap.set("emailMinute", "00");
@@ -282,81 +271,75 @@ scwin.setProjectData = function(data) {
         var projectImageUrl = data.projectImageUrl;
         if (projectImageUrl && projectImageUrl.trim() !== "" && projectImageUrl !== "null") {
             dataMap.set("projectImage", projectImageUrl);
-            console.log("✅ 프로젝트 이미지 표시:", projectImageUrl);
+            
         } else {
             // 기본 이미지 설정
             var defaultImageUrl = "https://collabee.s3.ap-northeast-2.amazonaws.com/projectImage/default_project_image.jpg";
             dataMap.set("projectImage", defaultImageUrl);
-            console.log("✅ 기본 이미지 표시:", defaultImageUrl);
+            
         }
         
-        console.log("✅ 데이터 설정 완료");
+        
         
         // 데이터맵 강제 새로고침
         try {
             if (dataMap && dataMap.refresh) {
                 dataMap.refresh();
-                console.log("데이터맵 새로고침 완료");
+                
             }
         } catch (refreshError) {
-            console.error("데이터맵 새로고침 오류:", refreshError);
+            
         }
         
-        // 화면 컴포넌트 강제 업데이트
-        //try {
-        //    $p.refresh();
-        //    console.log("화면 컴포넌트 새로고침 완료");
-        //} catch (refreshError) {
-        //    console.error("화면 컴포넌트 새로고침 오류:", refreshError);
-        //}
+        
         
         // 개별 컴포넌트 직접 업데이트
         try {
             // 프로젝트명 업데이트
             if (typeof input_projectName !== 'undefined') {
                 input_projectName.setValue(data.projectName || "");
-                console.log("프로젝트명 직접 설정:", data.projectName);
+                
             }
             
             // 팀장 업데이트
             if (typeof input_teamLeader !== 'undefined') {
                 input_teamLeader.setValue(data.userId || "");
-                console.log("팀장 직접 설정:", data.userId);
+               
             }
             
             // 시간 업데이트
             if (typeof input_emailHour !== 'undefined') {
                 var timeParts = (data.emailSendTime || "18:00:00").split(":");
                 input_emailHour.setValue(timeParts[0] || "18");
-                console.log("시간 직접 설정:", timeParts[0]);
+               
             }
             
             // 분 업데이트
             if (typeof input_emailMinute !== 'undefined') {
                 var timeParts = (data.emailSendTime || "18:00:00").split(":");
                 input_emailMinute.setValue(timeParts[1] || "00");
-                console.log("분 직접 설정:", timeParts[1]);
+                
             }
             
             // 이미지 업데이트
             if (typeof img_projectImage !== 'undefined') {
                 var imageUrl = data.projectImageUrl || "https://collabee.s3.ap-northeast-2.amazonaws.com/projectImage/default_project_image.jpg";
                 img_projectImage.setSrc(imageUrl);
-                console.log("이미지 직접 설정:", imageUrl);
+               
             }
             
         } catch (componentError) {
-            console.error("컴포넌트 직접 업데이트 오류:", componentError);
+            
         }
         
     } catch (error) {
-        console.error("데이터 설정 중 오류:", error);
+        
     }
 };
 
 // 기본 데이터 설정 (DB 조회 실패 시에만 사용)
 scwin.setDefaultData = function() {
-    console.log("DB 조회 실패로 기본 데이터 설정");
+    
     
     try {
         // 데이터맵 객체 존재 확인 (여러 방법으로 시도)
@@ -365,21 +348,21 @@ scwin.setDefaultData = function() {
         // 방법 1: 직접 접근
         if (typeof dm_projectDetail !== 'undefined') {
             dataMap = dm_projectDetail;
-            console.log("✅ 방법 1: 직접 접근 성공");
+            
         }
         // 방법 2: $p.getComponentById로 접근
         else if (typeof $p !== 'undefined' && $p.getComponentById) {
             dataMap = $p.getComponentById("dm_projectDetail");
-            console.log("✅ 방법 2: $p.getComponentById 접근 성공");
+            
         }
         // 방법 3: window 객체에서 접근
         else if (typeof window.dm_projectDetail !== 'undefined') {
             dataMap = window.dm_projectDetail;
-            console.log("✅ 방법 3: window 객체 접근 성공");
+            
         }
         
         if (!dataMap) {
-            console.error("❌ dm_projectDetail 데이터맵을 찾을 수 없습니다");
+            
             return;
         }
         
@@ -394,15 +377,15 @@ scwin.setDefaultData = function() {
         var defaultImageUrl = "https://collabee.s3.ap-northeast-2.amazonaws.com/projectImage/default_project_image.jpg";
         dataMap.set("projectImage", defaultImageUrl);
         
-        console.log("기본 데이터 설정 완료");
+        
     } catch (error) {
-        console.error("기본 데이터 설정 중 오류:", error);
+        
     }
 };
 
 // 프로젝트 이미지 변경
 scwin.btn_changeImage_onclick = function(e) {
-    console.log("=== 프로젝트 이미지 변경 ===");
+    
     
     // 실제로는 파일 업로드 다이얼로그를 열어야 함
     if (confirm("프로젝트 이미지를 변경하시겠습니까?")) {
@@ -415,7 +398,7 @@ scwin.btn_changeImage_onclick = function(e) {
 
 // 저장 버튼 클릭
 scwin.btn_save_onclick = function(e) {
-    console.log("=== 프로젝트 설정 저장 ===");
+    
     
     var projectName = dm_projectDetail.get("projectName");
     var emailHour = dm_projectDetail.get("emailHour");
@@ -457,18 +440,12 @@ scwin.btn_save_onclick = function(e) {
     // 저장 로직 (실제로는 서버 통신)
     alert("프로젝트 설정이 저장되었습니다.");
     
-    console.log("저장된 데이터:", {
-        projectName: projectName,
-        teamLeader: dm_projectDetail.get("teamLeader"),
-        emailSendTime: emailSendTime,
-        emailHour: emailHour,
-        emailMinute: emailMinute
-    });
+    
 };
 
 // 프로젝트 삭제
 scwin.btn_deleteProject_onclick = function(e) {
-    console.log("=== 프로젝트 삭제 ===");
+    
     
     // 삭제 확인 모달 열기
     scwin.openDeleteConfirmModal();
@@ -482,14 +459,14 @@ scwin.openDeleteConfirmModal = function() {
     // 입력 필드 초기화
     input_confirmProjectName.setValue("");
     
-    console.log("삭제 확인 모달 열림");
+    
 };
 
 // 삭제 확인 모달 닫기
 scwin.closeDeleteConfirmModal = function() {
     grp_modalBackground.setStyle("display", "none");
     
-    console.log("삭제 확인 모달 닫힘");
+    
 };
 
 // 모달 배경 클릭 시 닫기
@@ -518,13 +495,12 @@ scwin.btn_modalClose_onclick = function(e) {
 
 // 모달 확인 버튼 (실제 삭제 실행)
 scwin.btn_modalConfirm_onclick = function(e) {
-    console.log("=== 모달 확인 버튼 클릭 ===");
+   
     
     var originalProjectName = dm_projectDetail.get("projectName");
     var inputProjectName = input_confirmProjectName.getValue();
     
-    console.log("원본 프로젝트명:", originalProjectName);
-    console.log("입력된 프로젝트명:", inputProjectName);
+   
     
     // 프로젝트명 검증
     if (!inputProjectName || inputProjectName.trim() === "") {
@@ -543,7 +519,7 @@ scwin.btn_modalConfirm_onclick = function(e) {
 
 // 실제 프로젝트 삭제 실행
 scwin.executeProjectDelete = function(projectName) {
-    console.log("프로젝트 삭제 실행:", projectName);
+    
     
     // 모달 닫기
     scwin.closeDeleteConfirmModal();
@@ -552,7 +528,7 @@ scwin.executeProjectDelete = function(projectName) {
     alert("'" + projectName + "' 프로젝트가 삭제되었습니다.\n메인 페이지로 이동합니다.");
     
     // 실제로는 서버에 삭제 요청 후 메인 페이지로 이동
-    console.log("프로젝트 삭제 완료:", projectName);
+    
     
     // 부모 창으로 대시보드 이동
     try {
@@ -561,13 +537,13 @@ scwin.executeProjectDelete = function(projectName) {
             parentFrame.scwin.changeMenu("dashboard");
         }
     } catch(e) {
-        console.error("부모 창 이동 오류:", e);
+        
     }
 };
 
 // X 버튼 클릭 (프로젝트 페이지로 돌아가기)
 scwin.btn_close_onclick = function(e) {
-    console.log("=== 설정 페이지 닫기 ===");
+    
     
     // 변경사항 확인 (실제로는 폼 데이터 변경 여부 체크)
     if (confirm("설정 페이지를 닫고 프로젝트 페이지로 돌아가시겠습니까?")) {
@@ -578,7 +554,7 @@ scwin.btn_close_onclick = function(e) {
                 parentFrame.scwin.changeMenu("project1"); // 또는 현재 프로젝트에 맞는 메뉴
             }
         } catch(e) {
-            console.error("페이지 이동 오류:", e);
+           
         }
     }
 };
