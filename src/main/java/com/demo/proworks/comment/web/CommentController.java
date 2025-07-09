@@ -56,11 +56,13 @@ public class CommentController {
 			throws Exception {
 		long totCnt = commentService.selectListCountByTaskId(taskId); // 해당 task의 댓글 개수
 		int page = searchVo.getPage();
+		int totalPageCount = (totCnt == 0) ? 0 : (int) Math.ceil((double) totCnt / 10);
 		searchVo.setTaskId(taskId);
 		searchVo.setPageSize(10);
 		searchVo.setStartOffset((page - 1) * 10);
 
 		List<CommentVo> commentList = commentService.selectListCommentByTaskId(searchVo); // 해당 task의 댓글을 조회
+		System.out.println(totCnt);
 
 		CommentListVo listVo = new CommentListVo();
 		listVo.setCommentVoList(commentList);

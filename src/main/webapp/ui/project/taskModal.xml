@@ -96,22 +96,60 @@ let currentUser = {
 
 //페이지 로드 되었을 때 
 scwin.onpageload = function () {
+    //소켓 초기화
     scwin.initializeChatWebSocket();
 
+    //사용자 정보
     let userInfo = $p.getParameter("userInfo");
     scwin.defaultImage = "https://raw.githubusercontent.com/dorazi0423/test/refs/heads/main/group1.png";
     currentUser.userId = userInfo.userId;
     currentUser.userName = userInfo.userName;
     currentUser.userImage = userInfo.userImage;
 
-    sbm_comment_get.action = "/InsWebApp/comment/1.pwkjson";
-    console.log(sbm_comment_get.action);
-    let param = {
-        page: 1
-    }
-    dma_getComment.setJSON(param);
-    $c.sbm.execute(sbm_comment_get);
+    // //댓글 불러오기
+    // sbm_comment_get.action = "/InsWebApp/comment/1.pwkjson";
+    // let param = {
+    //     page: 1
+    // }
+    // dma_getComment.setJSON(param);
+    // $c.sbm.execute(sbm_comment_get);
 
+    scwin.currentPage = 1; // 최초 로딩이 1페이지니까 다음은 2부터 시작
+    scwin.isLoading = false; // 중복 호출 방지용 플래그
+    scwin.hasMore = true; // 마지막 페이지에 도달하면 false로 바꾸기
+    scwin.loadMoreData();
+
+    //무한 스크롤
+    const scrollArea = $p.getComponentById("comment_main_group");
+
+
+    scrollArea.bind("onscroll", function () {
+        const scrollHeight = scrollArea.render.scrollHeight;
+        const scrollTop = scrollArea.render.scrollTop;
+        const clientHeight = scrollArea.render.clientHeight;
+
+        // console.log("scrollHeight: " + scrollHeight);
+        // console.log("scrollTop: " + scrollTop);
+        // console.log("clientHeight: " + clientHeight);
+
+        if (scrollTop <= 50) { // 화면 맨 위 근접했을 때
+            scwin.loadMoreData(); // 이전 댓글 불러오기
+        }
+    });
+
+};
+
+scwin.loadMoreData = function () {
+    if (scwin.isLoading || !scwin.hasMore) return;
+
+    scwin.isLoading = true;
+
+    const param = {
+        page: scwin.currentPage
+    };
+    dma_getComment.setJSON(param);
+    sbm_comment_get.action = "/InsWebApp/comment/1.pwkjson";
+    $c.sbm.execute(sbm_comment_get);
 };
 
 //소켓 초기화
@@ -335,8 +373,8 @@ scwin.comment_send_button_onclick = function () {
 };
 
 
-//화면에 채팅 추가
-scwin.addChatMessage = function (userName, message, time = "", isMine = false, image, commentId = 0) {
+//화면에 댓글 추가
+scwin.addChatMessage = function (userName, message, time = "", isMine = false, image, commentId = 0, insertBeforeComp) {
     const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
     const generateUniqueId = (prefix) => {
         return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -359,10 +397,13 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
     const wrapper = $p.dynamicCreate(wrapperId, "span", {
         className: wrapperClass,
 
-    }, group);//참고
+    }, group);
 
-    // 바로 아래처럼 직접 할당해야 함
     wrapper.userData = { commentId: commentId };
+    if (insertBeforeComp?.render && wrapper?.render) {
+        group.render.insertBefore(wrapper.render, insertBeforeComp.render);
+    }
+
 
     const headerRow = $p.dynamicCreate(wrapperId + "_header", "span", {
         className: "comment-header"
@@ -421,71 +462,152 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
     }, wrapper);
 
     $p.dynamicCreate(timeId, "span", {
-        label: time || scwin.getCurrentTime(),
+        label: time,
         className: "comment-time"
     }, wrapper);
+
+    return wrapper;
+
 };
 
 
 //화면에 날짜 표시
-scwin.addChatDate = function (dateText) {
+scwin.addChatDate = function (dateText, insertBeforeComp) {
     const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
     const wrapperId = "chat_date_" + Date.now();
 
-    $p.dynamicCreate(wrapperId, "span", {
+    const dateWrapper = $p.dynamicCreate(wrapperId, "span", {
         label: dateText,
         className: "comment-date"
     }, group);
+
+    if (insertBeforeComp?.render && dateWrapper?.render) {
+        group.render.insertBefore(dateWrapper.render, insertBeforeComp.render);
+    }
+    return dateWrapper;
 };
 
 
-// 시간 포맷 유틸 함수 
-scwin.getCurrentTime = function () {
-    const now = new Date();
-    const h = String(now.getHours()).padStart(2, '0');
-    const m = String(now.getMinutes()).padStart(2, '0');
-    return `${h}:${m}`;
-};
 
-
-//댓글 10개씩 조회 성공
+//댓글 조회 성공(10개씩)
 scwin.sbm_comment_get_submitdone = function (e) {
     const responseData = e.responseJSON;
-    const commentList = responseData.elData?.commentVoList.reverse() ?? [];
+    const commentList = responseData.elData?.commentVoList ?? [];
+    const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+    let insertBeforeTarget = group.childControlList?.length > 0 ? group.childControlList[group.childControlList.length - 1] : null;
+    // 기준점
 
-    const myUserId = currentUser.userId;
-    let previousDate = ""; // 가장 최근 날짜를 저장하는 변수
+    //날짜 비교후에 이전날짜와 같다면 삭제
+    if (insertBeforeTarget?.options) {
+        const currentDate = insertBeforeTarget?.options.label
+        const nextDate = scwin.formatDate(commentList[0].createdAt);
+        if (currentDate === nextDate) {
+            insertBeforeTarget.remove(); // 기존 날짜 컴포넌트 삭제
+            insertBeforeTarget = group.childControlList?.length > 0
+                ? group.childControlList[group.childControlList.length - 1]
+                : null;
+        }
+    }
 
-    console.log(commentList);
+    //반복문 돌면서 채팅 내용 삽입
+    for (let i = 0; i < commentList.length; i++) {
+        const comment = commentList[i];
+        const nextComment = commentList[i + 1];
 
-    commentList.forEach(comment => {
-        const commentDate = scwin.formatDate(comment.createdAt); // 날짜만 추출 (예: "2025년 07월 07일")
+        const currentDate = scwin.formatDate(comment.createdAt);
+        const nextDate = nextComment ? scwin.formatDate(nextComment.createdAt) : null;
+        const isMine = (comment.userId === currentUser.userId);
 
-        // 날짜가 바뀌었으면 날짜 구분선 추가
-        if (commentDate !== previousDate) {
-            scwin.addChatDate(commentDate);
-            previousDate = commentDate;
+        if (commentList.length === 0) {
+            scwin.hasMore = false; // 더 이상 불러올 댓글 없음
+            scwin.isLoading = false;
+            return;
         }
 
-        const isMine = (comment.userId === myUserId);
+        // 댓글 삽입
+        const commentComp = scwin.addChatMessage(
+            comment.commentId,
+            comment.message,
+            scwin.formatTime(comment.createdAt),
+            isMine,
+            comment.userImage,
+            comment.commentId,
+            insertBeforeTarget
+        );
+        insertBeforeTarget = commentComp;
 
-
-        try {
-            scwin.addChatMessage(
-                comment.userName,
-                comment.message,
-                scwin.formatTime(comment.createdAt), // 시간 포맷 분리 함수 사용
-                isMine,
-                comment.userImage,
-                comment.commentId
-            );
-
-        } catch (e) {
-            console.error("메시지 생성 실패:", e);
+        // 다음 댓글이 없거나 날짜가 다르면 → 지금 날짜를 현재 댓글 앞에 삽입
+        if (currentDate !== nextDate || i === commentList.length - 1) {
+            const dateComp = scwin.addChatDate(currentDate, insertBeforeTarget);
+            insertBeforeTarget = dateComp;
         }
+    }
 
-    });
+    //처음 페이지일 경우에는 스크롤 아래로
+    if (scwin.currentPage === 1) {
+        setTimeout(() => {
+            const scrollArea = $p.getComponentById("comment_main_group");
+            const el = scrollArea.render;
+            el.scrollTop = el.scrollHeight;
+        }, 30);
+    }else{
+        setTimeout(() => {
+            const scrollArea = $p.getComponentById("comment_main_group");
+            const el = scrollArea.render;
+            el.scrollTop = 300;
+        }, 30);
+    }
+
+    scwin.currentPage++; // 다음 호출 시 페이지 증가
+    scwin.isLoading = false;
+
 };
+
+
+
+//댓글 조회 실패
+scwin.sbm_comment_get_submiterror = function (e) {
+    const responseData = e.responseJSON;
+    console.log(responseData);
+};
+
+//댓글 삭제 완료
+scwin.sbm_comment_delete_submitdone = function (e) {
+
+};
+
+//댓글 삭제 실패
+scwin.sbm_comment_delete_submiterror = function (e) {
+
+};
+
+//댓글 생성 완료
+scwin.sbm_comment_create_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    const elData = responseData.elData;
+    scwin.addChatMessage(currentUser.userName, elData.message, scwin.formatTime(elData.createdAt), true, currentUser.userImage, elData.commentId);
+
+    const payload = {
+        type: "message",
+        userId: currentUser.userId,
+        userName: currentUser.userName,
+        userImage: currentUser.userImage,
+        channelName: currentUser.channelName,
+        createdAt: scwin.formatTime(elData.createdAt),
+        message: elData.message,
+        commentId: elData.commentId
+    };
+
+
+    chatSocket.send(JSON.stringify(payload));
+};
+
+//댓글 생성 실패
+scwin.sbm_comment_create_submiterror = function (e) {
+
+};
+
+
 
 // "2025-07-07 06:03:39.0" → "2025년 07월 07일"
 scwin.formatDate = function (datetimeStr) {
@@ -502,46 +624,7 @@ scwin.formatTime = function (datetimeStr) {
     if (hour > 12) hour -= 12;
     if (hour === 0) hour = 12;
     return `${isAM ? '오전' : '오후'} ${hour}:${minute}`;
-};
-
-
-scwin.sbm_comment_get_submiterror = function (e) {
-    const responseData = e.responseJSON;
-    console.log(responseData);
-};
-
-scwin.sbm_comment_delete_submitdone = function (e) {
-
-};
-
-scwin.sbm_comment_delete_submiterror = function (e) {
-
-};
-
-scwin.sbm_comment_create_submitdone = function (e) {
-    const responseData = e.responseJSON;
-    const elData = responseData.elData;
-    scwin.addChatMessage(currentUser.userName, elData.message, scwin.formatTime(elData.createdAt), true, currentUser.userImage, elData.commentId);
-    console.log("추가된 아이디: " + elData.commentId)
-    const payload = {
-        type: "message",
-        userId: currentUser.userId,
-        userName: currentUser.userName,
-        userImage: currentUser.userImage,
-        channelName: currentUser.channelName,
-        createdAt: scwin.formatTime(elData.createdAt),
-        message: elData.message,
-        commentId: elData.commentId
-    };
-
-
-    chatSocket.send(JSON.stringify(payload));
-};
-
-scwin.sbm_comment_create_submiterror = function (e) {
-
-};
-]]></script>
+};]]></script>
 		<style type="text/css"><![CDATA[body {
     margin: 0;
     padding: 0;
