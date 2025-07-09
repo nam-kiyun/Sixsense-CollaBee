@@ -106,14 +106,6 @@ scwin.onpageload = function () {
     currentUser.userName = userInfo.userName;
     currentUser.userImage = userInfo.userImage;
 
-    // //댓글 불러오기
-    // sbm_comment_get.action = "/InsWebApp/comment/1.pwkjson";
-    // let param = {
-    //     page: 1
-    // }
-    // dma_getComment.setJSON(param);
-    // $c.sbm.execute(sbm_comment_get);
-
     scwin.currentPage = 1; // 최초 로딩이 1페이지니까 다음은 2부터 시작
     scwin.isLoading = false; // 중복 호출 방지용 플래그
     scwin.hasMore = true; // 마지막 페이지에 도달하면 false로 바꾸기
@@ -124,13 +116,7 @@ scwin.onpageload = function () {
 
 
     scrollArea.bind("onscroll", function () {
-        const scrollHeight = scrollArea.render.scrollHeight;
         const scrollTop = scrollArea.render.scrollTop;
-        const clientHeight = scrollArea.render.clientHeight;
-
-        // console.log("scrollHeight: " + scrollHeight);
-        // console.log("scrollTop: " + scrollTop);
-        // console.log("clientHeight: " + clientHeight);
 
         if (scrollTop <= 50) { // 화면 맨 위 근접했을 때
             scwin.loadMoreData(); // 이전 댓글 불러오기
@@ -995,6 +981,7 @@ scwin.formatTime = function (datetimeStr) {
 				</xf:group>
 				<xf:group style="" id="" class="contents-main-group">
 					<xf:group style="" id="" class="contents-text-group">
+						<w2:editor style="width:500px; height:300px; " id=""></w2:editor>
 					</xf:group>
 					<xf:group style="" id="" class="contents-file-group"></xf:group>
 				</xf:group>
