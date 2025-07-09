@@ -269,15 +269,18 @@ scwin.setProjectData = function(data) {
         
         // 이미지 설정
         var projectImageUrl = data.projectImageUrl;
+        var finalImageUrl = null;
+        
         if (projectImageUrl && projectImageUrl.trim() !== "" && projectImageUrl !== "null") {
-            dataMap.set("projectImage", projectImageUrl);
-            
+            finalImageUrl = projectImageUrl;
+            console.log("DB에서 가져온 이미지 URL 사용:", finalImageUrl);
         } else {
             // 기본 이미지 설정
-            var defaultImageUrl = "https://collabee.s3.ap-northeast-2.amazonaws.com/projectImage/default_project_image.jpg";
-            dataMap.set("projectImage", defaultImageUrl);
-            
+            finalImageUrl = "https://collabee.s3.ap-northeast-2.amazonaws.com/projectImage/default_project_image.jpg";
+            console.log("기본 이미지 URL 사용:", finalImageUrl);
         }
+        
+        dataMap.set("projectImage", finalImageUrl);
         
         
         
@@ -323,9 +326,8 @@ scwin.setProjectData = function(data) {
             
             // 이미지 업데이트
             if (typeof img_projectImage !== 'undefined') {
-                var imageUrl = data.projectImageUrl || "https://collabee.s3.ap-northeast-2.amazonaws.com/projectImage/default_project_image.jpg";
-                img_projectImage.setSrc(imageUrl);
-               
+                img_projectImage.setSrc(finalImageUrl);
+                console.log("이미지 컴포넌트 업데이트:", finalImageUrl);
             }
             
         } catch (componentError) {
@@ -385,15 +387,162 @@ scwin.setDefaultData = function() {
 
 // 프로젝트 이미지 변경
 scwin.btn_changeImage_onclick = function(e) {
+    console.log("=== 프로젝트 이미지 변경 시작 ===");
     
+    // 파일 선택 input 생성
+    var fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    document.body.appendChild(fileInput);
     
-    // 실제로는 파일 업로드 다이얼로그를 열어야 함
-    if (confirm("프로젝트 이미지를 변경하시겠습니까?")) {
-        // 임시로 기본 이미지 경로 변경
-        var newImagePath = "/InsWebApp/assets/images/project_sample.png";
-        dm_projectDetail.set("projectImage", newImagePath);
-        alert("프로젝트 이미지가 변경되었습니다.\n실제 구현시에는 파일 업로드 기능이 필요합니다.");
-    }
+    // 파일 선택 이벤트 리스너
+    fileInput.addEventListener('change', function(event) {
+        var file = event.target.files[0];
+        if (file) {
+            console.log("선택된 파일:", file.name);
+            
+            // 파일 크기 체크 (10MB 제한)
+            if (file.size > 10 * 1024 * 1024) {
+                alert("파일 크기가 10MB를 초과합니다. 더 작은 파일을 선택해주세요.");
+                document.body.removeChild(fileInput);
+                return;
+            }
+            
+            // 파일 타입 체크
+            if (!file.type.startsWith('image/')) {
+                alert("이미지 파일만 업로드할 수 있습니다.");
+                document.body.removeChild(fileInput);
+                return;
+            }
+            
+            // 이미지 미리보기 설정
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var imageUrl = e.target.result;
+                
+                // 이미지 즉시 표시
+                if (typeof img_projectImage !== 'undefined') {
+                    img_projectImage.setSrc(imageUrl);
+                }
+                
+                console.log("이미지 미리보기 설정 완료");
+            };
+            reader.readAsDataURL(file);
+            
+            // 서버에 파일 업로드
+            scwin.uploadProjectImage(file);
+        }
+        
+        // 파일 input 제거
+        document.body.removeChild(fileInput);
+    });
+    
+    // 파일 선택 다이얼로그 열기
+    fileInput.click();
+};
+
+// 프로젝트 이미지 업로드 함수
+scwin.uploadProjectImage = function(file) {
+    console.log("=== 프로젝트 이미지 업로드 시작 ===");
+    
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('projectId', scwin.projectId);
+    
+    // 업로드 중 표시
+    var uploadingMessage = "이미지 업로드 중...";
+    console.log(uploadingMessage);
+    
+    $.ajax({
+        url: '/InsWebApp/uploadProjectImage.pwkjson',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            console.log("이미지 업로드 응답:", response);
+            console.log("응답 타입:", typeof response);
+            console.log("응답 전체 내용:", JSON.stringify(response, null, 2));
+            
+            // 응답 객체의 모든 속성 확인
+            if (response && typeof response === 'object') {
+                console.log("응답 객체 속성들:");
+                for (var key in response) {
+                    if (response.hasOwnProperty(key)) {
+                        console.log("  " + key + ":", response[key]);
+                    }
+                }
+            }
+            
+            // 응답이 문자열인 경우 JSON 파싱 시도
+            if (typeof response === 'string') {
+                try {
+                    response = JSON.parse(response);
+                    console.log("JSON 파싱 후 응답:", response);
+                } catch (e) {
+                    console.error("JSON 파싱 오류:", e);
+                }
+            }
+            
+            // 성공 여부 확인 (여러 가지 방법으로 확인)
+            var isSuccess = false;
+            var imageUrl = null;
+            var message = null;
+            
+            if (response) {
+                // 직접 success 속성 확인
+                if (response.success === true) {
+                    isSuccess = true;
+                    imageUrl = response.imageUrl;
+                    message = response.message;
+                }
+                // WebSquare 응답 형식일 수 있으므로 다른 속성들도 확인
+                else if (response.resultCode === 'success' || response.status === 'success') {
+                    isSuccess = true;
+                    imageUrl = response.imageUrl || response.data || response.url;
+                }
+                // 에러 메시지가 없다면 성공으로 간주
+                else if (!response.error && !response.message && response.imageUrl) {
+                    isSuccess = true;
+                    imageUrl = response.imageUrl;
+                }
+            }
+            
+            console.log("최종 성공 여부:", isSuccess);
+            console.log("최종 이미지 URL:", imageUrl);
+            
+            if (isSuccess && imageUrl) {
+                console.log("업로드 성공, 이미지 URL:", imageUrl);
+                
+                // 데이터맵 업데이트
+                if (typeof dm_projectDetail !== 'undefined') {
+                    dm_projectDetail.set("projectImage", imageUrl);
+                }
+                
+                // 이미지 표시
+                if (typeof img_projectImage !== 'undefined') {
+                    img_projectImage.setSrc(imageUrl);
+                }
+                
+                // 모달 이미지도 업데이트
+                if (typeof img_modalProjectImage !== 'undefined') {
+                    img_modalProjectImage.setSrc(imageUrl);
+                }
+                
+                alert("프로젝트 이미지가 성공적으로 업로드되었습니다!");
+                
+            } else {
+                console.error("이미지 업로드 실패:", response);
+                var errorMessage = (response && response.message) || "알 수 없는 오류가 발생했습니다.";
+                alert("이미지 업로드에 실패했습니다: " + errorMessage);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("이미지 업로드 오류:", error);
+            alert("이미지 업로드 중 오류가 발생했습니다. 다시 시도해주세요.");
+        }
+    });
 };
 
 // 저장 버튼 클릭
@@ -459,7 +608,43 @@ scwin.openDeleteConfirmModal = function() {
     // 입력 필드 초기화
     input_confirmProjectName.setValue("");
     
+    // 모달에 현재 프로젝트 이미지 표시
+    var currentImageUrl = null;
     
+    try {
+        // 데이터맵에서 현재 이미지 URL 가져오기
+        if (typeof dm_projectDetail !== 'undefined') {
+            currentImageUrl = dm_projectDetail.get("projectImage");
+        }
+        
+        // 데이터맵에서 가져오지 못한 경우 img_projectImage에서 직접 가져오기
+        if (!currentImageUrl && typeof img_projectImage !== 'undefined') {
+            currentImageUrl = img_projectImage.getSrc();
+        }
+        
+        // 여전히 없다면 기본 이미지 URL 사용
+        if (!currentImageUrl || currentImageUrl === "" || currentImageUrl === "null") {
+            currentImageUrl = "https://collabee.s3.ap-northeast-2.amazonaws.com/projectImage/default_project_image.jpg";
+        }
+        
+        console.log("모달에 표시할 이미지 URL:", currentImageUrl);
+        
+        // 모달 이미지 설정
+        if (typeof img_modalProjectImage !== 'undefined') {
+            img_modalProjectImage.setSrc(currentImageUrl);
+            console.log("모달에 프로젝트 이미지 설정 완료:", currentImageUrl);
+        }
+        
+    } catch (error) {
+        console.error("모달 이미지 설정 중 오류:", error);
+        
+        // 오류 발생 시 기본 이미지 설정
+        if (typeof img_modalProjectImage !== 'undefined') {
+            img_modalProjectImage.setSrc("https://collabee.s3.ap-northeast-2.amazonaws.com/projectImage/default_project_image.jpg");
+        }
+    }
+    
+    console.log("삭제 확인 모달 열림");
 };
 
 // 삭제 확인 모달 닫기
