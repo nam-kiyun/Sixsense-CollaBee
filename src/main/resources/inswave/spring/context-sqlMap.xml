@@ -32,5 +32,10 @@
 	    	</array>
 	    </property>	           	
 	</bean>	
+
+	<!-- SqlSession bean for GitHubDAO -->
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg index="0" ref="db1SqlSessionFactory" />
+	</bean>
 			
 </beans>	
