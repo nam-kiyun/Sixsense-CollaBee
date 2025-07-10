@@ -127,14 +127,14 @@
 var isInitializing = false;
 
 scwin.onpageload = function() {
-    console.log("=== 프로젝트 설정 액세스 페이지 로드 ===");
+    
     
     // 초기화 시작
     isInitializing = true;
     
     // URL 파라미터에서 project_id 받기
     var projectId = $p.getParameter("project_id");
-    console.log("프로젝트 ID:", projectId);
+    
     
     if (projectId) {
         dm_search.set("projectId", projectId);
@@ -151,7 +151,7 @@ scwin.onpageload = function() {
 
 // 프로젝트 멤버 목록 조회 (간단한 AJAX 방식)
 scwin.loadProjectUsers = function(projectId) {
-    console.log("프로젝트 멤버 목록 조회 시작:", projectId);
+    
     
     try {
         // 간단한 jQuery AJAX 호출
@@ -162,15 +162,14 @@ scwin.loadProjectUsers = function(projectId) {
             contentType: "application/x-www-form-urlencoded; charset=UTF-8",
             dataType: "json",
             success: function(data) {
-                console.log("프로젝트 멤버 목록 조회 성공:", data);
-                console.log("전체 응답 데이터:", JSON.stringify(data, null, 2));
+                
                 
                 // 데이터리스트 초기화
                 dl_projectUsers.removeAll();
                 
                 // 응답 데이터에서 프로젝트 사용자 목록 추출
                 var projectUserList = data.projectUserListVo.projectUserVoList || [];
-                console.log("조회된 사용자 수:", projectUserList.length);
+                
                 
                 // 데이터리스트에 데이터 추가
                 for (var i = 0; i < projectUserList.length; i++) {
@@ -181,24 +180,22 @@ scwin.loadProjectUsers = function(projectId) {
                     dl_projectUsers.setCellData(rowIndex, "role", user.role || "");
                 }
                 
-                console.log("dl_projectUsers 행 수:", dl_projectUsers.getTotalRow());
+               
                 
                 if (dl_projectUsers.getTotalRow() === 0) {
-                    console.log("조회된 멤버가 없습니다.");
+                   
                 } else {
-                    console.log("GridView에 멤버 목록이 설정되었습니다.");
+                   
                 }
             },
             error: function(xhr, status, error) {
-                console.error("프로젝트 멤버 목록 조회 실패:", error);
-                console.error("상태 코드:", xhr.status);
-                console.error("응답 텍스트:", xhr.responseText);
+                
                 alert("프로젝트 멤버 목록을 불러오는데 실패했습니다: " + error);
             }
         });
         
     } catch (e) {
-        console.error("프로젝트 멤버 목록 조회 오류:", e);
+        
         alert("프로젝트 멤버 목록을 불러오는데 오류가 발생했습니다: " + e.message);
     }
 };
@@ -208,8 +205,7 @@ scwin.btn_search_onclick = function(e) {
     var searchValue = dm_search.get("searchValue");
     var projectId = dm_search.get("projectId");
     
-    console.log("검색어:", searchValue);
-    console.log("프로젝트ID:", projectId);
+    
     
     if (!searchValue || searchValue.trim() === "") {
         alert("이메일을 입력해주세요.");
@@ -229,7 +225,7 @@ scwin.btn_search_onclick = function(e) {
 
 // 사용자 검색 함수
 scwin.searchUser = function(email, projectId) {
-    console.log("사용자 검색 시작:", email, projectId);
+    
     
     try {
         // 워크플로우 실행
@@ -237,11 +233,11 @@ scwin.searchUser = function(email, projectId) {
             id: "wf_searchUser",
             action: "action_searchUser",
             success: function(data) {
-                console.log("사용자 검색 성공:", data);
+               
                 scwin.handleSearchResult(data);
             },
             error: function(xhr, status, error) {
-                console.error("사용자 검색 실패:", error);
+                
                 alert("사용자 검색에 실패했습니다.");
             }
         };
@@ -253,7 +249,7 @@ scwin.searchUser = function(email, projectId) {
         // 워크플로우 실행
         $w.executeWorkflow(option);
     } catch (e) {
-        console.error("사용자 검색 오류:", e);
+        
         alert("사용자 검색 중 오류가 발생했습니다.");
     }
 };
@@ -285,7 +281,7 @@ scwin.handleSearchResult = function(result) {
 
 // 사용자 추가 버튼 클릭 (이메일 검색 후 사용)
 scwin.btn_addUser_onclick = function(e) {
-    console.log("=== 사용자 추가 버튼 클릭 ===");
+   
     
     alert("이메일을 검색한 후 사용자를 추가할 수 있습니다.\n\n1. 위의 검색창에 이메일을 입력하세요\n2. 검색 버튼을 클릭하세요\n3. 검색 결과에서 사용자를 추가하세요");
 };
@@ -294,7 +290,7 @@ scwin.btn_addUser_onclick = function(e) {
 scwin.inviteUser = function(userId) {
     var projectId = dm_search.get("projectId");
     
-    console.log("사용자 초대 시작:", userId, projectId);
+    
     
     try {
         // 워크플로우 실행
@@ -302,7 +298,7 @@ scwin.inviteUser = function(userId) {
             id: "wf_inviteUser",
             action: "action_inviteUser",
             success: function(data) {
-                console.log("사용자 초대 성공:", data);
+                
                 alert("사용자 초대가 완료되었습니다.\n\n사용자가 초대를 수락하면 프로젝트 멤버로 추가됩니다.");
                 
                 // 검색창 초기화
@@ -312,7 +308,7 @@ scwin.inviteUser = function(userId) {
                 scwin.loadProjectUsers(projectId);
             },
             error: function(xhr, status, error) {
-                console.error("사용자 초대 실패:", error);
+                
                 alert("사용자 초대에 실패했습니다.");
             }
         };
@@ -324,7 +320,7 @@ scwin.inviteUser = function(userId) {
         // 워크플로우 실행
         $w.executeWorkflow(option);
     } catch (e) {
-        console.error("사용자 초대 오류:", e);
+        
         alert("사용자 초대 중 오류가 발생했습니다.");
     }
 };
@@ -342,7 +338,7 @@ scwin.grd_projectUsers_oncellchange = function(e) {
         var newRole = e.newValue;
         var oldRole = e.oldValue;
         
-        console.log("GridView 역할 변경:", userName, "의 역할을", oldRole, "에서", newRole, "로 변경");
+        
         
         // 역할이 실제로 변경된 경우에만 처리
         if (newRole !== oldRole) {
@@ -353,7 +349,7 @@ scwin.grd_projectUsers_oncellchange = function(e) {
 
 // 권한 변경 함수 (GridView에서 호출)
 scwin.changeUserRole = function(userId, userName, newRole) {
-    console.log(userName + "의 역할이 " + newRole + "로 변경 요청");
+    
     
     var projectId = dm_search.get("projectId");
     
@@ -367,11 +363,11 @@ scwin.changeUserRole = function(userId, userName, newRole) {
 
 // 동적 사용자 목록 렌더링
 scwin.renderUserList = function() {
-    console.log("사용자 목록 렌더링 시작");
+    
     
     var userListContainer = document.getElementById("grp_userDataList");
     if (!userListContainer) {
-        console.error("사용자 목록 컨테이너를 찾을 수 없습니다.");
+        
         return;
     }
     
@@ -380,7 +376,7 @@ scwin.renderUserList = function() {
     
     // 데이터리스트에서 사용자 정보 가져오기
     var userCount = dl_projectUsers.getTotalRow();
-    console.log("사용자 수:", userCount);
+    
     
     if (userCount === 0) {
         // 사용자가 없는 경우 메시지 표시
@@ -453,12 +449,12 @@ scwin.renderUserList = function() {
         userListContainer.appendChild(userRow);
     }
     
-    console.log("사용자 목록 렌더링 완료");
+    
 };
 
 // X 버튼 클릭 (프로젝트 페이지로 돌아가기)
 scwin.btn_close_onclick = function(e) {
-    console.log("=== 설정 페이지 닫기 ===");
+    
     
     // 변경사항 확인 (실제로는 폼 데이터 변경 여부 체크)
     if (confirm("설정 페이지를 닫고 프로젝트 페이지로 돌아가시겠습니까?")) {
@@ -469,7 +465,7 @@ scwin.btn_close_onclick = function(e) {
                 parentFrame.scwin.changeMenu("project1"); // 또는 현재 프로젝트에 맞는 메뉴
             }
         } catch(e) {
-            console.error("페이지 이동 오류:", e);
+            
         }
     }
 };
