@@ -72,4 +72,13 @@ public interface ProjectUserService {
      */
 	public int deleteProjectUser(ProjectUserVo projectUserVo) throws Exception;
 	
+    /**
+     * 특정 프로젝트의 멤버 목록을 사용자 정보와 함께 조회한다.
+     *
+     * @param  projectUserVo 프로젝트에 초대(참가)한 사람들 ProjectUserVo
+     * @return 프로젝트 멤버 목록 (사용자 정보 포함) List<ProjectUserVo>
+     * @throws Exception
+     */
+	public List<ProjectUserVo> selectProjectUsersByProjectId(ProjectUserVo projectUserVo) throws Exception;
+	
 }

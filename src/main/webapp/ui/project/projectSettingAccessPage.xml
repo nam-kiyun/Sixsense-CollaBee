@@ -20,43 +20,105 @@
                 <w2:dataMap baseNode="map" id="dm_search">
                     <w2:keyInfo>
                         <w2:key id="searchValue" name="검색어" dataType="text"/>
+                        <w2:key id="projectId" name="프로젝트ID" dataType="text"/>
                     </w2:keyInfo>
                     <w2:data use="true">
                         <searchValue></searchValue>
+                        <projectId></projectId>
                     </w2:data>
                 </w2:dataMap>
                 
-                <!-- 사용자 목록 데이터 -->
-                <w2:dataList baseNode="list" id="dl_userList" repeatNode="map">
+                <!-- 프로젝트 멤버 목록 데이터 -->
+                <w2:dataList baseNode="list" id="dl_projectUsers" repeatNode="map">
                     <w2:columnInfo>
-                        <w2:column id="userId" name="사용자ID" dataType="text"/>
+                        <w2:column id="userId" name="사용자ID(이메일)" dataType="text"/>
                         <w2:column id="userName" name="이름" dataType="text"/>
-                        <w2:column id="email" name="이메일" dataType="text"/>
                         <w2:column id="role" name="역할" dataType="text"/>
                     </w2:columnInfo>
-                    <w2:data use="true">
-                        <w2:row>
-                            <userId>juk123</userId>
-                            <userName>국다의</userName>
-                            <email>juk@gmail.com</email>
-                            <role>관리자</role>
-                        </w2:row>
-                        <w2:row>
-                            <userId>nam456</userId>
-                            <userName>남가을</userName>
-                            <email>nam@gmail.com</email>
-                            <role>멤버</role>
-                        </w2:row>
-                        <w2:row>
-                            <userId>hwang789</userId>
-                            <userName>황무지</userName>
-                            <email>hwang@gmail.com</email>
-                            <role>멤버</role>
-                        </w2:row>
-                    </w2:data>
                 </w2:dataList>
+                
+                <!-- 검색 결과 데이터 -->
+                <w2:dataMap baseNode="map" id="dm_searchResult">
+                    <w2:keyInfo>
+                        <w2:key id="found" name="검색결과" dataType="boolean"/>
+                        <w2:key id="isProjectMember" name="프로젝트멤버여부" dataType="boolean"/>
+                        <w2:key id="userId" name="사용자ID" dataType="text"/>
+                        <w2:key id="userName" name="이름" dataType="text"/>
+                        <w2:key id="email" name="이메일" dataType="text"/>
+                        <w2:key id="profileImageSrc" name="프로필이미지" dataType="text"/>
+                    </w2:keyInfo>
+                    <w2:data use="true">
+                        <found>false</found>
+                        <isProjectMember>false</isProjectMember>
+                        <userId></userId>
+                        <userName></userName>
+                        <email></email>
+                        <profileImageSrc></profileImageSrc>
+                    </w2:data>
+                </w2:dataMap>
             </w2:dataCollection>
-            <w2:workflowCollection/>
+            <w2:workflowCollection>
+                <!-- 프로젝트 멤버 목록 조회 -->
+                <w2:workflow id="wf_getProjectUsers">
+                    <w2:requestInfo>
+                        <w2:action id="action_getProjectUsers" type="httpService" url="/InsWebApp/ProjectAccessSettings.pwkjson" method="post">
+                            <w2:param id="projectId" type="jsonParam" value="" ref="dm_search.projectId"/>
+                        </w2:action>
+                    </w2:requestInfo>
+                    <w2:responseInfo>
+                        <w2:action id="action_getProjectUsers" type="json" root="projectUserVoList">
+                            <w2:mapping target="dl_projectUsers"/>
+                        </w2:action>
+                    </w2:responseInfo>
+                </w2:workflow>
+                
+                <!-- 사용자 검색 -->
+                <w2:workflow id="wf_searchUser">
+                    <w2:param id="email" type="in" value=""/>
+                    <w2:param id="projectId" type="in" value=""/>
+                    <w2:requestInfo>
+                        <w2:action id="action_searchUser" type="httpService" url="/user/search" method="get">
+                            <w2:param id="email" type="urlParam" value=""/>
+                            <w2:param id="projectId" type="urlParam" value=""/>
+                        </w2:action>
+                    </w2:requestInfo>
+                    <w2:responseInfo>
+                        <w2:action id="action_searchUser" type="json" root="">
+                            <w2:mapping target="dm_searchResult"/>
+                        </w2:action>
+                    </w2:responseInfo>
+                </w2:workflow>
+                
+                <!-- 사용자 초대 -->
+                <w2:workflow id="wf_inviteUser">
+                    <w2:param id="projectId" type="in" value=""/>
+                    <w2:param id="userId" type="in" value=""/>
+                    <w2:requestInfo>
+                        <w2:action id="action_inviteUser" type="httpService" url="/project/{projectId}/settings/access" method="post">
+                            <w2:param id="projectId" type="urlPath" value=""/>
+                            <w2:param id="userId" type="jsonParam" value=""/>
+                            <w2:param id="role" type="jsonParam" value="editor"/>
+                        </w2:action>
+                    </w2:requestInfo>
+                    <w2:responseInfo>
+                        <w2:action id="action_inviteUser" type="json" root=""/>
+                    </w2:responseInfo>
+                </w2:workflow>
+                
+                <!-- 권한 변경 -->
+                <w2:workflow id="wf_changeRole">
+                    <w2:requestInfo>
+                        <w2:action id="action_changeRole" type="httpService" url="/project/{projectId}/settings/access" method="post">
+                            <w2:param id="projectId" type="urlPath" value=""/>
+                            <w2:param id="userId" type="jsonParam" value=""/>
+                            <w2:param id="role" type="jsonParam" value=""/>
+                        </w2:action>
+                    </w2:requestInfo>
+                    <w2:responseInfo>
+                        <w2:action id="action_changeRole" type="json" root=""/>
+                    </w2:responseInfo>
+                </w2:workflow>
+            </w2:workflowCollection>
         </xf:model>
         <w2:layoutInfo/>
         <w2:publicInfo method=""/>
@@ -70,86 +132,328 @@ scwin.onpageload = function() {
     // 초기화 시작
     isInitializing = true;
     
-    // 기본 역할 설정
-    select_user1Role.setValue("관리자");
-    select_user2Role.setValue("멤버");
-    select_user3Role.setValue("멤버");
+    // URL 파라미터에서 project_id 받기
+    var projectId = $p.getParameter("project_id");
+    console.log("프로젝트 ID:", projectId);
+    
+    if (projectId) {
+        dm_search.set("projectId", projectId);
+        // 프로젝트 멤버 목록 조회
+        scwin.loadProjectUsers(projectId);
+    } else {
+        alert("프로젝트 ID가 필요합니다.");
+        return;
+    }
     
     // 초기화 완료
     isInitializing = false;
 };
 
+// 프로젝트 멤버 목록 조회 (간단한 AJAX 방식)
+scwin.loadProjectUsers = function(projectId) {
+    console.log("프로젝트 멤버 목록 조회 시작:", projectId);
+    
+    try {
+        // 간단한 jQuery AJAX 호출
+        $.ajax({
+            type: "POST",
+            url: "/InsWebApp/ProjectAccessSettings.pwkjson",
+            data: "projectId=" + encodeURIComponent(projectId),
+            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+            dataType: "json",
+            success: function(data) {
+                console.log("프로젝트 멤버 목록 조회 성공:", data);
+                console.log("전체 응답 데이터:", JSON.stringify(data, null, 2));
+                
+                // 데이터리스트 초기화
+                dl_projectUsers.removeAll();
+                
+                // 응답 데이터에서 프로젝트 사용자 목록 추출
+                var projectUserList = data.projectUserListVo.projectUserVoList || [];
+                console.log("조회된 사용자 수:", projectUserList.length);
+                
+                // 데이터리스트에 데이터 추가
+                for (var i = 0; i < projectUserList.length; i++) {
+                    var user = projectUserList[i];
+                    var rowIndex = dl_projectUsers.insertRow();
+                    dl_projectUsers.setCellData(rowIndex, "userId", user.userId || "");
+                    dl_projectUsers.setCellData(rowIndex, "userName", user.userName || "");
+                    dl_projectUsers.setCellData(rowIndex, "role", user.role || "");
+                }
+                
+                console.log("dl_projectUsers 행 수:", dl_projectUsers.getTotalRow());
+                
+                if (dl_projectUsers.getTotalRow() === 0) {
+                    console.log("조회된 멤버가 없습니다.");
+                } else {
+                    console.log("GridView에 멤버 목록이 설정되었습니다.");
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("프로젝트 멤버 목록 조회 실패:", error);
+                console.error("상태 코드:", xhr.status);
+                console.error("응답 텍스트:", xhr.responseText);
+                alert("프로젝트 멤버 목록을 불러오는데 실패했습니다: " + error);
+            }
+        });
+        
+    } catch (e) {
+        console.error("프로젝트 멤버 목록 조회 오류:", e);
+        alert("프로젝트 멤버 목록을 불러오는데 오류가 발생했습니다: " + e.message);
+    }
+};
+
 // 검색 버튼 클릭
 scwin.btn_search_onclick = function(e) {
     var searchValue = dm_search.get("searchValue");
+    var projectId = dm_search.get("projectId");
+    
     console.log("검색어:", searchValue);
+    console.log("프로젝트ID:", projectId);
     
     if (!searchValue || searchValue.trim() === "") {
-        alert("검색어를 입력해주세요.");
+        alert("이메일을 입력해주세요.");
         return;
     }
     
-    // 실제로는 서버에서 검색 결과를 가져옴
-    alert("'" + searchValue + "' 검색 결과를 조회합니다.");
+    // 이메일 형식 검증
+    var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(searchValue.trim())) {
+        alert("올바른 이메일 형식을 입력해주세요.");
+        return;
+    }
+    
+    // 사용자 검색 실행
+    scwin.searchUser(searchValue.trim(), projectId);
 };
 
-// 사용자 추가 버튼 클릭
+// 사용자 검색 함수
+scwin.searchUser = function(email, projectId) {
+    console.log("사용자 검색 시작:", email, projectId);
+    
+    try {
+        // 워크플로우 실행
+        var option = {
+            id: "wf_searchUser",
+            action: "action_searchUser",
+            success: function(data) {
+                console.log("사용자 검색 성공:", data);
+                scwin.handleSearchResult(data);
+            },
+            error: function(xhr, status, error) {
+                console.error("사용자 검색 실패:", error);
+                alert("사용자 검색에 실패했습니다.");
+            }
+        };
+        
+        // 파라미터 설정
+        wf_searchUser.setParam("email", email);
+        wf_searchUser.setParam("projectId", projectId);
+        
+        // 워크플로우 실행
+        $w.executeWorkflow(option);
+    } catch (e) {
+        console.error("사용자 검색 오류:", e);
+        alert("사용자 검색 중 오류가 발생했습니다.");
+    }
+};
+
+// 검색 결과 처리
+scwin.handleSearchResult = function(result) {
+    var found = dm_searchResult.get("found");
+    var isProjectMember = dm_searchResult.get("isProjectMember");
+    var email = dm_searchResult.get("email");
+    var userName = dm_searchResult.get("userName");
+    
+    if (!found) {
+        alert("해당 이메일로 등록된 사용자를 찾을 수 없습니다.");
+        return;
+    }
+    
+    if (isProjectMember) {
+        alert("'" + userName + "' 사용자는 이미 프로젝트 멤버입니다.");
+        return;
+    }
+    
+    // 사용자 추가 가능 상태
+    var confirmMessage = "사용자 '" + userName + "' (" + email + ")을 프로젝트에 초대하시겠습니까?";
+    if (confirm(confirmMessage)) {
+        var userId = dm_searchResult.get("userId");
+        scwin.inviteUser(userId);
+    }
+};
+
+// 사용자 추가 버튼 클릭 (이메일 검색 후 사용)
 scwin.btn_addUser_onclick = function(e) {
     console.log("=== 사용자 추가 버튼 클릭 ===");
     
-    // 사용자 추가 모달 또는 페이지로 이동
-    var email = prompt("추가할 사용자의 이메일을 입력하세요:");
+    alert("이메일을 검색한 후 사용자를 추가할 수 있습니다.\n\n1. 위의 검색창에 이메일을 입력하세요\n2. 검색 버튼을 클릭하세요\n3. 검색 결과에서 사용자를 추가하세요");
+};
+
+// 사용자 초대 함수
+scwin.inviteUser = function(userId) {
+    var projectId = dm_search.get("projectId");
     
-    if (email && email.trim() !== "") {
-        var userName = prompt("사용자 이름을 입력하세요:");
+    console.log("사용자 초대 시작:", userId, projectId);
+    
+    try {
+        // 워크플로우 실행
+        var option = {
+            id: "wf_inviteUser",
+            action: "action_inviteUser",
+            success: function(data) {
+                console.log("사용자 초대 성공:", data);
+                alert("사용자 초대가 완료되었습니다.\n\n사용자가 초대를 수락하면 프로젝트 멤버로 추가됩니다.");
+                
+                // 검색창 초기화
+                dm_search.set("searchValue", "");
+                
+                // 멤버 목록 새로고침
+                scwin.loadProjectUsers(projectId);
+            },
+            error: function(xhr, status, error) {
+                console.error("사용자 초대 실패:", error);
+                alert("사용자 초대에 실패했습니다.");
+            }
+        };
         
-        if (userName && userName.trim() !== "") {
-            // 새로운 사용자 행을 동적으로 추가하는 방식
-            // 실제 구현에서는 동적 DOM 조작이나 다른 방식 사용
-            alert("사용자 '" + userName + "' (이메일: " + email + ")가 프로젝트에 추가되었습니다.\n\n새로운 사용자는 기본적으로 '멤버' 역할로 설정됩니다.");
-            
-            // 실제로는 서버에 사용자 추가 요청 후 페이지 새로고침
+        // 파라미터 설정
+        wf_inviteUser.setParam("projectId", projectId);
+        wf_inviteUser.setParam("userId", userId);
+        
+        // 워크플로우 실행
+        $w.executeWorkflow(option);
+    } catch (e) {
+        console.error("사용자 초대 오류:", e);
+        alert("사용자 초대 중 오류가 발생했습니다.");
+    }
+};
+
+// GridView 셀 변경 이벤트 핸들러 (역할 변경 처리)
+scwin.grd_projectUsers_oncellchange = function(e) {
+    // 초기화 중에는 처리하지 않음
+    if (isInitializing) return;
+    
+    // 역할 컬럼이 변경된 경우에만 처리
+    if (e.colID === "role") {
+        var rowIndex = e.rowIndex;
+        var userId = dl_projectUsers.getCellData(rowIndex, "userId");
+        var userName = dl_projectUsers.getCellData(rowIndex, "userName");
+        var newRole = e.newValue;
+        var oldRole = e.oldValue;
+        
+        console.log("GridView 역할 변경:", userName, "의 역할을", oldRole, "에서", newRole, "로 변경");
+        
+        // 역할이 실제로 변경된 경우에만 처리
+        if (newRole !== oldRole) {
+            scwin.changeUserRole(userId, userName, newRole);
         }
     }
 };
 
-// 사용자 1 역할 변경
-scwin.user1_role_onchange = function(e) {
-    var newRole = select_user1Role.getValue();
-    var userName = "국다의";
+// 권한 변경 함수 (GridView에서 호출)
+scwin.changeUserRole = function(userId, userName, newRole) {
+    console.log(userName + "의 역할이 " + newRole + "로 변경 요청");
     
-    console.log(userName + "의 역할이 " + newRole + "로 변경되었습니다.");
-    alert(userName + "의 역할이 " + newRole + "로 변경되었습니다.");
+    var projectId = dm_search.get("projectId");
     
-    // 실제로는 서버에 역할 변경 요청
+    // 일단 권한 변경 기능은 추후 구현 예정
+    alert("권한 변경 기능은 현재 개발 중입니다.\n" + userName + "의 역할을 " + 
+          (newRole === "admin" ? "관리자" : "에디터") + "로 변경하려고 했습니다.");
+    
+    // 원래 상태로 되돌리기 위해 목록 새로고침
+    scwin.loadProjectUsers(projectId);
 };
 
-// 사용자 2 역할 변경
-scwin.user2_role_onchange = function(e) {
-    // 초기화 중에는 팝업 표시하지 않음
-    if (isInitializing) return;
+// 동적 사용자 목록 렌더링
+scwin.renderUserList = function() {
+    console.log("사용자 목록 렌더링 시작");
     
-    var newRole = select_user2Role.getValue();
-    var userName = "남가을";
+    var userListContainer = document.getElementById("grp_userDataList");
+    if (!userListContainer) {
+        console.error("사용자 목록 컨테이너를 찾을 수 없습니다.");
+        return;
+    }
     
-    console.log(userName + "의 역할이 " + newRole + "로 변경되었습니다.");
-    alert(userName + "의 역할이 " + newRole + "로 변경되었습니다.");
+    // 기존 사용자 목록 초기화
+    userListContainer.innerHTML = "";
     
-    // 실제로는 서버에 역할 변경 요청
-};
-
-// 사용자 3 역할 변경
-scwin.user3_role_onchange = function(e) {
-    // 초기화 중에는 팝업 표시하지 않음
-    if (isInitializing) return;
+    // 데이터리스트에서 사용자 정보 가져오기
+    var userCount = dl_projectUsers.getTotalRow();
+    console.log("사용자 수:", userCount);
     
-    var newRole = select_user3Role.getValue();
-    var userName = "황무지";
+    if (userCount === 0) {
+        // 사용자가 없는 경우 메시지 표시
+        var noDataDiv = document.createElement("div");
+        noDataDiv.style.cssText = "padding:40px;text-align:center;color:#666666;font-size:16px;";
+        noDataDiv.innerHTML = "프로젝트에 참여하는 멤버가 없습니다.";
+        userListContainer.appendChild(noDataDiv);
+        return;
+    }
     
-    console.log(userName + "의 역할이 " + newRole + "로 변경되었습니다.");
-    alert(userName + "의 역할이 " + newRole + "로 변경되었습니다.");
+    // 각 사용자에 대해 HTML 생성
+    for (var i = 0; i < userCount; i++) {
+        var userId = dl_projectUsers.getCellData(i, "userId");
+        var userName = dl_projectUsers.getCellData(i, "userName");
+        var email = dl_projectUsers.getCellData(i, "email");
+        var role = dl_projectUsers.getCellData(i, "role");
+        
+        // 사용자 행 생성
+        var userRow = document.createElement("div");
+        userRow.className = "user-row";
+        userRow.style.cssText = "display:flex;padding:16px 24px;border-bottom:1px solid #e9ecef;align-items:center;";
+        
+        // 사용자명
+        var nameDiv = document.createElement("div");
+        nameDiv.style.cssText = "flex:1;text-align:center;font-size:16px;color:#333333;font-family:Inter,sans-serif;";
+        nameDiv.textContent = userName;
+        
+        // 이메일
+        var emailDiv = document.createElement("div");
+        emailDiv.style.cssText = "flex:2;text-align:center;font-size:16px;color:#666666;font-family:Inter,sans-serif;";
+        emailDiv.textContent = email;
+        
+        // 역할 선택
+        var roleDiv = document.createElement("div");
+        roleDiv.style.cssText = "flex:1;text-align:center;";
+        
+        var roleSelect = document.createElement("select");
+        roleSelect.style.cssText = "width:100px;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:14px;font-family:Inter,sans-serif;";
+        
+        // 관리자 옵션
+        var adminOption = document.createElement("option");
+        adminOption.value = "admin";
+        adminOption.textContent = "관리자";
+        if (role === "admin") adminOption.selected = true;
+        
+        // 에디터 옵션
+        var editorOption = document.createElement("option");
+        editorOption.value = "editor";
+        editorOption.textContent = "에디터";
+        if (role === "editor") editorOption.selected = true;
+        
+        roleSelect.appendChild(adminOption);
+        roleSelect.appendChild(editorOption);
+        
+        // 역할 변경 이벤트 리스너
+        roleSelect.addEventListener("change", function(userId, userName) {
+            return function(e) {
+                var newRole = e.target.value;
+                scwin.changeUserRole(userId, userName, newRole);
+            };
+        }(userId, userName));
+        
+        roleDiv.appendChild(roleSelect);
+        
+        // 행에 요소들 추가
+        userRow.appendChild(nameDiv);
+        userRow.appendChild(emailDiv);
+        userRow.appendChild(roleDiv);
+        
+        userListContainer.appendChild(userRow);
+    }
     
-    // 실제로는 서버에 역할 변경 요청
+    console.log("사용자 목록 렌더링 완료");
 };
 
 // X 버튼 클릭 (프로젝트 페이지로 돌아가기)
@@ -227,135 +531,60 @@ scwin.btn_close_onclick = function(e) {
                 
             </xf:group>
             
-            <!-- 사용자 목록 영역 -->
+            <!-- 사용자 목록 영역 (그리드뷰) -->
             <xf:group style="background-color:#ffffff;border:1px solid #e9ecef;border-radius:12px;overflow:hidden;" id="grp_userListArea">
             
             <!-- 테이블 헤더 -->
             <xf:group style="background-color:#f8f9fa;padding:16px 24px;border-bottom:1px solid #e9ecef;" id="grp_tableHeader">
-            <xf:output style="font-size:18px;font-weight:600;color:#333333;font-family:Inter,sans-serif;" id="output_tableTitle">
-            <xf:label><![CDATA[프로젝트 멤버]]></xf:label>
-            </xf:output>
-            </xf:group>
-            
-            <!-- 사용자 목록 헤더 -->
-            <xf:group style="display:flex;background-color:#f8f9fa;padding:12px 24px;border-bottom:1px solid #e9ecef;font-weight:600;" id="grp_listHeader">
-            <xf:group style="flex:1;text-align:center;" id="grp_headerName">
-                <xf:output style="font-size:16px;color:#333333;font-family:Inter,sans-serif;" id="output_headerName">
-                    <xf:label><![CDATA[이름]]></xf:label>
+                <xf:output style="font-size:18px;font-weight:600;color:#333333;font-family:Inter,sans-serif;" id="output_tableTitle">
+                    <xf:label><![CDATA[프로젝트 멤버]]></xf:label>
                 </xf:output>
             </xf:group>
-            <xf:group style="flex:2;text-align:center;" id="grp_headerEmail">
-                <xf:output style="font-size:16px;color:#333333;font-family:Inter,sans-serif;" id="output_headerEmail">
-                    <xf:label><![CDATA[이메일]]></xf:label>
-                </xf:output>
-            </xf:group>
-            <xf:group style="flex:1;text-align:center;" id="grp_headerRole">
-                <xf:output style="font-size:16px;color:#333333;font-family:Inter,sans-serif;" id="output_headerRole">
-                    <xf:label><![CDATA[역할]]></xf:label>
-                </xf:output>
-            </xf:group>
-            </xf:group>
             
-            <!-- 사용자 목록 데이터 -->
-            <xf:group id="grp_userDataList">
-            
-            <!-- 사용자 1 -->
-            <xf:group style="display:flex;padding:16px 24px;border-bottom:1px solid #e9ecef;align-items:center;" id="grp_user1">
-                <xf:group style="flex:1;text-align:center;" id="grp_user1Name">
-                <xf:output style="font-size:16px;color:#333333;font-family:Inter,sans-serif;" id="output_user1Name">
-                <xf:label><![CDATA[국다의]]></xf:label>
-            </xf:output>
-            </xf:group>
-            <xf:group style="flex:2;text-align:center;" id="grp_user1Email">
-            <xf:output style="font-size:16px;color:#666666;font-family:Inter,sans-serif;" id="output_user1Email">
-            <xf:label><![CDATA[juk@gmail.com]]></xf:label>
-            </xf:output>
-            </xf:group>
-            <xf:group style="flex:1;text-align:center;" id="grp_user1Role">
-            <xf:select1 
-            style="width:100px;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:14px;font-family:Inter,sans-serif;"
-            id="select_user1Role"
-            appearance="minimal"
-                ev:onchange="scwin.user1_role_onchange">
-                    <xf:choices>
-                            <xf:item>
-                                    <xf:label>관리자</xf:label>
-                                    <xf:value>관리자</xf:value>
-                                    </xf:item>
-                                        <xf:item>
-                                            <xf:label>멤버</xf:label>
-                                            <xf:value>멤버</xf:value>
-                                        </xf:item>
-                                    </xf:choices>
-                                </xf:select1>
-                            </xf:group>
-                        </xf:group>
-                        
-                        <!-- 사용자 2 -->
-                        <xf:group style="display:flex;padding:16px 24px;border-bottom:1px solid #e9ecef;align-items:center;" id="grp_user2">
-                            <xf:group style="flex:1;text-align:center;" id="grp_user2Name">
-                                <xf:output style="font-size:16px;color:#333333;font-family:Inter,sans-serif;" id="output_user2Name">
-                                    <xf:label><![CDATA[남가을]]></xf:label>
-                                </xf:output>
-                            </xf:group>
-                            <xf:group style="flex:2;text-align:center;" id="grp_user2Email">
-                                <xf:output style="font-size:16px;color:#666666;font-family:Inter,sans-serif;" id="output_user2Email">
-                                    <xf:label><![CDATA[nam@gmail.com]]></xf:label>
-                                </xf:output>
-                            </xf:group>
-                            <xf:group style="flex:1;text-align:center;" id="grp_user2Role">
-                                <xf:select1 
-                                    style="width:100px;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:14px;font-family:Inter,sans-serif;"
-                                    id="select_user2Role"
-                                    appearance="minimal"
-                                    ev:onchange="scwin.user2_role_onchange">
-                                    <xf:choices>
-                                        <xf:item>
-                                            <xf:label>관리자</xf:label>
-                                            <xf:value>관리자</xf:value>
-                                        </xf:item>
-                                        <xf:item>
-                                            <xf:label>멤버</xf:label>
-                                            <xf:value>멤버</xf:value>
-                                        </xf:item>
-                                    </xf:choices>
-                                </xf:select1>
-                            </xf:group>
-                        </xf:group>
-                        
-                        <!-- 사용자 3 -->
-                        <xf:group style="display:flex;padding:16px 24px;align-items:center;" id="grp_user3">
-                            <xf:group style="flex:1;text-align:center;" id="grp_user3Name">
-                                <xf:output style="font-size:16px;color:#333333;font-family:Inter,sans-serif;" id="output_user3Name">
-                                    <xf:label><![CDATA[황무지]]></xf:label>
-                                </xf:output>
-                            </xf:group>
-                            <xf:group style="flex:2;text-align:center;" id="grp_user3Email">
-                                <xf:output style="font-size:16px;color:#666666;font-family:Inter,sans-serif;" id="output_user3Email">
-                                    <xf:label><![CDATA[hwang@gmail.com]]></xf:label>
-                                </xf:output>
-                            </xf:group>
-                            <xf:group style="flex:1;text-align:center;" id="grp_user3Role">
-                                <xf:select1 
-                                    style="width:100px;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:14px;font-family:Inter,sans-serif;"
-                                    id="select_user3Role"
-                                    appearance="minimal"
-                                    ev:onchange="scwin.user3_role_onchange">
-                                    <xf:choices>
-                                        <xf:item>
-                                            <xf:label>관리자</xf:label>
-                                            <xf:value>관리자</xf:value>
-                                        </xf:item>
-                                        <xf:item>
-                                            <xf:label>멤버</xf:label>
-                                            <xf:value>멤버</xf:value>
-                                        </xf:item>
-                                    </xf:choices>
-                                </xf:select1>
-                            </xf:group>
-                        </xf:group>
-                        
-                    </xf:group>
+            <!-- 프로젝트 멤버 그리드 -->
+            <w2:gridView 
+                id="grd_projectUsers" 
+                style="width:100%;height:400px;font-family:Inter,sans-serif;" 
+                scrollByColumn="false" 
+                defaultCellHeight="40" 
+                dataList="dl_projectUsers"
+                keepDefaultColumnWidth="true"
+                visibleRowNum="10"
+                ev:oncellchange="scwin.grd_projectUsers_oncellchange">
+                
+                <w2:caption id="caption1" style="height:0px;"></w2:caption>
+                
+                <w2:header id="header1" style="height:40px;">
+                    <w2:row id="row1" style="height:40px;">
+                        <w2:column width="150" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;" id="column1" value="이름"></w2:column>
+                        <w2:column width="250" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;" id="column2" value="이메일"></w2:column>
+                        <w2:column width="120" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;" id="column3" value="역할"></w2:column>
+                    </w2:row>
+                </w2:header>
+                
+                <w2:gBody id="gBody1">
+                    <w2:row id="row2" style="height:40px;">
+                        <w2:column width="150" inputType="text" style="text-align:center;" id="userName" blockSelect="false"></w2:column>
+                        <w2:column width="250" inputType="text" style="text-align:center;" id="userId" blockSelect="false"></w2:column>
+                        <w2:column width="120" inputType="select" style="text-align:center;" id="role" blockSelect="false" allOption="">
+                            <w2:choices>
+                                <w2:itemset nodeset="">
+                                    <w2:label ref=""></w2:label>
+                                    <w2:value ref=""></w2:value>
+                                </w2:itemset>
+                                <w2:item>
+                                    <w2:label><![CDATA[관리자]]></w2:label>
+                                    <w2:value><![CDATA[admin]]></w2:value>
+                                </w2:item>
+                                <w2:item>
+                                    <w2:label><![CDATA[에디터]]></w2:label>
+                                    <w2:value><![CDATA[editor]]></w2:value>
+                                </w2:item>
+                            </w2:choices>
+                        </w2:column>
+                    </w2:row>
+                </w2:gBody>
+            </w2:gridView>
                     
                 </xf:group>
             

@@ -89,4 +89,15 @@ public class ProjectUserDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAb
         return delete("com.demo.proworks.projectuser.deleteProjectUser", vo);
     }
 
+    /**
+     * 특정 프로젝트의 멤버 목록을 사용자 정보와 함께 조회한다.
+     *  
+     * @param  ProjectUserVo 프로젝트에 초대(참가)한 사람들
+     * @return List<ProjectUserVo> 프로젝트 멤버 목록 (사용자 정보 포함)
+     * @throws ElException
+     */
+    public List<ProjectUserVo> selectProjectUsersByProjectId(ProjectUserVo vo) throws ElException {
+        return (List<ProjectUserVo>)list("com.demo.proworks.projectuser.selectProjectUsersByProjectId", vo);
+    }
+
 }
