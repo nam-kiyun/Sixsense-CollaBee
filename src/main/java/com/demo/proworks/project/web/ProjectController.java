@@ -246,7 +246,7 @@ public class ProjectController {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            System.out.println("=== 프로젝트 이미지 업로드 시작 ===");
+            
             
             // MultipartHttpServletRequest에서 파일과 파라미터 추출
             MultipartFile file = request.getFile("file");
@@ -260,81 +260,75 @@ public class ProjectController {
                 projectId = request.getParameter("project_id");
             }
             
-            System.out.println("Project ID: " + projectId);
-            System.out.println("File name: " + (file != null ? file.getOriginalFilename() : "null"));
-            System.out.println("File size: " + (file != null ? file.getSize() : "null"));
-            System.out.println("File content type: " + (file != null ? file.getContentType() : "null"));
+            
             
             if (file == null || file.isEmpty()) {
-                System.out.println("파일이 없음 또는 비어있음");
+                
                 result.put("success", false);
                 result.put("message", "파일이 선택되지 않았습니다.");
-                System.out.println("응답 결과: " + result);
+                
                 return result;
             }
             
             if (projectId == null || projectId.trim().isEmpty()) {
-                System.out.println("프로젝트 ID가 없음");
+                
                 result.put("success", false);
                 result.put("message", "프로젝트 ID가 필요합니다.");
-                System.out.println("응답 결과: " + result);
+                
                 return result;
             }
             
             // 파일 확장자 검증
             String originalFilename = file.getOriginalFilename();
             String extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
-            System.out.println("파일 확장자: " + extension);
+           
             
             if (!extension.matches("\\.(jpg|jpeg|png|gif|bmp|webp)$")) {
-                System.out.println("지원되지 않는 파일 형식: " + extension);
+                
                 result.put("success", false);
                 result.put("message", "지원되지 않는 이미지 형식입니다.");
-                System.out.println("응답 결과: " + result);
+                
                 return result;
             }
             
             // 파일 크기 검증 (10MB 제한)
             if (file.getSize() > 10 * 1024 * 1024) {
-                System.out.println("파일 크기 초과: " + file.getSize() + " bytes");
+                
                 result.put("success", false);
                 result.put("message", "파일 크기가 10MB를 초과합니다.");
-                System.out.println("응답 결과: " + result);
+                
                 return result;
             }
             
-            System.out.println("유효성 검사 통과, S3 업로드 시작");
+            
             
             // S3 업로드
             String imageUrl = uploadToS3(file, projectId);
-            System.out.println("S3 업로드 완료, URL: " + imageUrl);
+            
             
             // DB에 이미지 URL 저장
             ProjectVo projectVo = new ProjectVo();
             projectVo.setProjectId(projectId);
             projectVo.setProjectImageUrl(imageUrl);
             
-            System.out.println("DB 업데이트 시작");
+            
             projectService.updateProject(projectVo);
-            System.out.println("DB 업데이트 완료");
+            
             
             result.put("success", true);
             result.put("imageUrl", imageUrl);
             result.put("message", "이미지가 성공적으로 업로드되었습니다.");
             
-            System.out.println("=== 프로젝트 이미지 업로드 완료 ===");
-            System.out.println("최종 응답 결과: " + result);
+            
             
         } catch (Exception e) {
-            System.err.println("=== 프로젝트 이미지 업로드 오류 ===");
-            System.err.println("오류 메시지: " + e.getMessage());
-            System.err.println("오류 클래스: " + e.getClass().getName());
+            
             e.printStackTrace();
             
             result.put("success", false);
             result.put("message", "이미지 업로드 중 오류가 발생했습니다: " + e.getMessage());
             
-            System.out.println("오류 응답 결과: " + result);
+            
         }
         
         return result;
@@ -359,10 +353,7 @@ public class ProjectController {
         String fileName = "project_" + projectId + "_" + timestamp + "_" + uuid + extension;
         String s3Key = "projectImage/" + fileName;
         
-        System.out.println("S3 업로드 시작:");
-        System.out.println("- 파일명: " + fileName);
-        System.out.println("- S3 Key: " + s3Key);
-        System.out.println("- 파일 크기: " + file.getSize() + " bytes");
+        
         
         // S3 업로드를 위한 메타데이터 설정
         ObjectMetadata metadata = new ObjectMetadata();
@@ -375,7 +366,7 @@ public class ProjectController {
         // S3 URL 생성
         String s3Url = "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/" + s3Key;
         
-        System.out.println("S3 업로드 완료: " + s3Url);
+        
         
         return s3Url;
     }
