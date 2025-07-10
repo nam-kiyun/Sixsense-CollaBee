@@ -4,14 +4,13 @@ import java.util.List;
 import java.util.Map;
 
 import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
-import com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo;
+import com.demo.proworks.githubapptoken.vo.GithubAppTokenVo;
 import com.demo.proworks.repobranch.vo.RepositoryBranchVo;
 import com.demo.proworks.githubwebhook.vo.GithubWebhookVo;
 import com.demo.proworks.githubapptoken.vo.GithubAppTokenVo;
 import com.demo.proworks.github.vo.GitHubRepositoryVo;
 import com.demo.proworks.github.vo.GitHubRepositoryListVo;
-import com.demo.proworks.github.vo.GitHubBranchVo;
-import com.demo.proworks.github.vo.GitHubBranchListVo;
+import com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo;
 
 /**
  * GitHub 통합 서비스 인터페이스
@@ -42,10 +41,21 @@ public interface GitHubService {
     /**
      * GitHub 사용자 정보 조회 및 로컬 계정 연동
      * @param accessToken GitHub 액세스 토큰
+     * @param projectId 프로젝트 ID
      * @return 연동된 사용자 정보
      * @throws Exception
      */
-    UserPersonalTokenVo linkGitHubUser(String accessToken) throws Exception;
+    UserPersonalTokenVo linkGitHubUser(String accessToken, String projectId) throws Exception;
+    
+    /**
+     * GitHub 사용자 정보 조회 및 특정 사용자 ID와 연동
+     * @param accessToken GitHub 액세스 토큰
+     * @param userId 로컬 사용자 ID
+     * @param projectId 프로젝트 ID
+     * @return 연동된 사용자 정보
+     * @throws Exception
+     */
+    UserPersonalTokenVo linkGitHubUserWithUserId(String accessToken, String userId, String projectId) throws Exception;
     
     /**
      * GitHub 앱 설치 상태 확인
@@ -100,32 +110,8 @@ public interface GitHubService {
     ProjectRepositoryVo getCurrentRepository(String userId) throws Exception;
 
     // ==============================
-    // GitHub 브랜치 관리
+    // GitHub 브랜치 관리 (간소화)
     // ==============================
-    
-    /**
-     * 레포지토리의 브랜치 목록 조회
-     * @param param 조회 조건 (access_token, owner, repo, include_commit_info)
-     * @return 브랜치 목록
-     * @throws Exception
-     */
-    GitHubBranchListVo getBranches(Map<String, Object> param) throws Exception;
-    
-    /**
-     * 특정 브랜치 상세 정보 조회
-     * @param param 조회 조건 (access_token, owner, repo, branch)
-     * @return 브랜치 상세 정보
-     * @throws Exception
-     */
-    GitHubBranchVo getBranch(Map<String, Object> param) throws Exception;
-    
-    /**
-     * 새로운 브랜치 생성
-     * @param param 생성 정보 (access_token, owner, repo, branch_name, source_branch)
-     * @return 생성된 브랜치 정보
-     * @throws Exception
-     */
-    GitHubBranchVo createBranch(Map<String, Object> param) throws Exception;
     
     /**
      * 브랜치 삭제

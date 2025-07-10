@@ -33,6 +33,20 @@ scwin.loadProjectData = function() {
     console.log("프로젝트 데이터 로드 완료");
 };
 
+// 프로젝트 데이터 저장 (외부에서 호출 가능)
+scwin.currentProjectData = null;
+
+// 프로젝트 데이터 설정 함수
+scwin.setProjectData = function(projectData) {
+    scwin.currentProjectData = projectData;
+    console.log("프로젝트 데이터 설정됨:", projectData);
+    
+    // 프로젝트 제목 업데이트
+    if (projectData && projectData.projectName) {
+        txt_title.setValue(projectData.projectName);
+    }
+};
+
 /**
  * 'Add card' 버튼 클릭 시 동적으로 카드를 생성하는 함수
  * @param {String} parentId 카드를 추가할 부모 Group(칸반 컬럼)의 ID
@@ -125,6 +139,75 @@ scwin.calendar_onclick = function(e) {
 
 // GitHub 버튼 클릭 - GitHub App 관리 페이지로 이동
 scwin.github_onclick = function(e) {
+    console.log("GitHub 버튼 클릭됨");
+    
+    // 현재 프로젝트 데이터 확인
+    var projectData = scwin.currentProjectData;
+    if (!projectData) {
+        console.error("프로젝트 데이터가 없습니다.");
+        alert("프로젝트 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+        return;
+    }
+    
+    console.log("GitHub 관리자에게 전달할 프로젝트 데이터:", projectData);
+    console.log(projectData.userId);
+    // 현재 로그인된 사용자 정보 가져오기
+    var currentUserId = null;
+    try {
+        // 1. 프로젝트 데이터에서 사용자 ID 가져오기 (우선순위 1)
+        if (projectData && projectData.userId) {
+            currentUserId = projectData.userId;
+            console.log("프로젝트 데이터에서 사용자 ID 찾음:", currentUserId);
+        }
+        
+        // 2. WebSquare 파라미터에서 가져오기
+        if (!currentUserId && typeof $p !== "undefined" && $p.getParameter) {
+            currentUserId = $p.getParameter("userId") || $p.getParameter("user_id") || $p.getParameter("userEmail");
+        }
+        
+        // 3. 세션 스토리지에서 가져오기
+        if (!currentUserId && typeof sessionStorage !== "undefined") {
+            currentUserId = sessionStorage.getItem("userId") || sessionStorage.getItem("userEmail") || sessionStorage.getItem("user_id");
+        }
+        
+        // 4. 로컬 스토리지에서 가져오기
+        if (!currentUserId && typeof localStorage !== "undefined") {
+            currentUserId = localStorage.getItem("userId") || localStorage.getItem("userEmail") || localStorage.getItem("user_id");
+        }
+        
+        // 5. 전역 변수에서 가져오기
+        if (!currentUserId && typeof window !== "undefined") {
+            currentUserId = window.currentUserId || window.userEmail || window.userId;
+        }
+        
+        if (currentUserId && currentUserId.trim().length > 0 && currentUserId !== "user01") {
+            currentUserId = currentUserId.trim();
+            console.log("최종 사용자 ID:", currentUserId);
+        } else {
+            console.error("사용자 ID를 찾을 수 없습니다. GitHub 연동이 불가능합니다.");
+            alert("로그인된 사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.");
+            return;
+        }
+    } catch (e) {
+        console.error("사용자 정보 가져오기 실패:", e);
+        alert("사용자 정보를 가져오는 중 오류가 발생했습니다.");
+        return;
+    }
+    
+    console.log("현재 사용자 ID:", currentUserId);
+    
+    // 프로젝트 정보를 팝업에 전달
+    var jsnPopupData = {
+        type: "json",
+        name: "project_param",
+        data: {
+            projectId: projectData.projectId,
+            projectName: projectData.projectName,
+            description: projectData.description,
+            userId: currentUserId
+        }
+    };
+    
     var options = {
         id: "github_manager_popup",
         type: "wframePopup",
@@ -132,10 +215,11 @@ scwin.github_onclick = function(e) {
         height: "700",
         top: "50",
         left: "100px",
-        popupName: "GitHub 관리",
+        popupName: "GitHub 관리 - " + projectData.projectName,
         modal: true,
         closeAction: "scwin.github_popup_closeAction", 
-        customTitleBar: false
+        customTitleBar: false,
+        dataObject: jsnPopupData
     };
     
     $p.openPopup("/InsWebApp/ui/project/githubManager.xml", options);

@@ -1,5 +1,6 @@
 package com.demo.proworks.github.web;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -170,26 +171,69 @@ public class GitHubController {
     
     @ElService(key = "auth/start")
     @ElDescription(sub = "GitHub OAuth 인증 시작", desc = "GitHub OAuth 인증 프로세스를 시작합니다.")
-    @RequestMapping(value = "auth/start")
-    public ModelAndView startGitHubAuth(HttpServletRequest request, HttpServletResponse response) {
-        logger.info("GitHub OAuth 인증 시작");
+    @RequestMapping(value = "auth/start", method = RequestMethod.GET)
+    public ModelAndView startGitHubAuth(
+            @RequestParam(required = false) String projectId,
+            @RequestParam(required = false) String userId,
+            HttpServletRequest request, 
+            HttpServletResponse response) {
+        logger.info("GitHub OAuth 인증 시작 (projectId: {}, userId: {})", projectId, userId);
         
         try {
             HttpSession session = request.getSession();
-            String state = java.util.UUID.randomUUID().toString();
+            
+            // state에 userId와 projectId 정보를 포함 (JSON 형태)
+            Map<String, String> stateData = new HashMap<>();
+            stateData.put("uuid", java.util.UUID.randomUUID().toString());
+            if (userId != null && !userId.trim().isEmpty()) {
+                stateData.put("userId", userId);
+                logger.info("state에 사용자 ID 포함: {}", userId);
+            }
+            if (projectId != null && !projectId.trim().isEmpty()) {
+                stateData.put("projectId", projectId);
+                logger.info("state에 프로젝트 ID 포함: {}", projectId);
+            }
+            
+            // 간단한 JSON 형태로 state 생성 (Jackson 대신 수동 생성)
+            StringBuilder stateJson = new StringBuilder("{");
+            stateJson.append("\"uuid\":\"").append(stateData.get("uuid")).append("\"");
+            if (stateData.get("userId") != null) {
+                stateJson.append(",\"userId\":\"").append(stateData.get("userId")).append("\"");
+            }
+            if (stateData.get("projectId") != null) {
+                stateJson.append(",\"projectId\":\"").append(stateData.get("projectId")).append("\"");
+            }
+            stateJson.append("}");
+            
+            String state = java.util.Base64.getEncoder().encodeToString(stateJson.toString().getBytes("UTF-8"));
+            
             session.setAttribute("githubOAuthState", state);
+            
+            // 백업용으로 세션에도 저장
+            if (projectId != null && !projectId.trim().isEmpty()) {
+                session.setAttribute("githubOAuthProjectId", projectId);
+            }
+            if (userId != null && !userId.trim().isEmpty()) {
+                session.setAttribute("githubOAuthUserId", userId);
+            }
             
             // GitHub OAuth URL 생성
             String redirectUri = request.getScheme() + "://" + request.getServerName() + 
                     ":" + request.getServerPort() + "/InsWebApp/github/auth/callback";
             
+            String clientId = System.getProperty("GITHUB_CLIENT_ID", "Iv23liShQFpINkvH7lCV");
             String authUrl = "https://github.com/login/oauth/authorize?" +
-                    "client_id=Iv23liShQFpINkvH7lCV&" +
+                    "client_id=" + clientId + "&" +
                     "redirect_uri=" + java.net.URLEncoder.encode(redirectUri, "UTF-8") + "&" +
                     "scope=repo read:user admin:repo_hook&" +
                     "state=" + state;
             
-            logger.info("GitHub OAuth URL: {}", authUrl);
+            logger.info("=== GitHub OAuth 정보 ===");
+            logger.info("Client ID: {}", clientId);
+            logger.info("Redirect URI: {}", redirectUri);
+            logger.info("State: {}", state);
+            logger.info("Full OAuth URL: {}", authUrl);
+            logger.info("========================");
             
             // Node.js 방식처럼 직접 리다이렉트
             return new ModelAndView("redirect:" + authUrl);
@@ -210,7 +254,7 @@ public class GitHubController {
     
     @ElService(key = "auth/callback")
     @ElDescription(sub = "GitHub OAuth 콜백 처리", desc = "GitHub OAuth 인증 콜백을 처리합니다.")
-    @RequestMapping(value = "auth/callback")
+    @RequestMapping(value = "auth/callback", method = RequestMethod.GET)
     public ModelAndView handleGitHubCallback(
             @RequestParam(required = false) String code,
             @RequestParam(required = false) String state,
@@ -222,15 +266,17 @@ public class GitHubController {
         try {
             if (error != null) {
                 logger.error("GitHub OAuth 인증 실패: {}", error);
-                ModelAndView mv = new ModelAndView("/error");
-                mv.addObject("error", "GitHub 인증이 거부되었습니다.");
+                ModelAndView mv = new ModelAndView();
+                mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                    java.net.URLEncoder.encode("GitHub 인증이 거부되었습니다.", "UTF-8"));
                 return mv;
             }
             
             if (code == null) {
                 logger.error("GitHub OAuth 코드가 없습니다");
-                ModelAndView mv = new ModelAndView("/error");
-                mv.addObject("error", "인증 코드가 제공되지 않았습니다.");
+                ModelAndView mv = new ModelAndView();
+                mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                    java.net.URLEncoder.encode("인증 코드가 제공되지 않았습니다.", "UTF-8"));
                 return mv;
             }
             
@@ -239,15 +285,129 @@ public class GitHubController {
             
             if (!state.equals(sessionState)) {
                 logger.error("GitHub OAuth state 불일치");
-                ModelAndView mv = new ModelAndView("/error");
-                mv.addObject("error", "인증 상태가 유효하지 않습니다.");
+                ModelAndView mv = new ModelAndView();
+                mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                    java.net.URLEncoder.encode("인증 상태가 유효하지 않습니다.", "UTF-8"));
                 return mv;
+            }
+            
+            // state에서 userId와 projectId 추출
+            String stateUserId = null;
+            String stateProjectId = null;
+            try {
+                // Base64 디코딩 후 간단한 JSON 파싱
+                String stateJson = new String(java.util.Base64.getDecoder().decode(state), "UTF-8");
+                logger.info("디코딩된 state JSON: {}", stateJson);
+                
+                // 간단한 JSON 파싱 (userId와 projectId 추출)
+                if (stateJson.contains("\"userId\":\"")) {
+                    int start = stateJson.indexOf("\"userId\":\"") + 10;
+                    int end = stateJson.indexOf("\"", start);
+                    if (end > start) {
+                        stateUserId = stateJson.substring(start, end);
+                    }
+                }
+                
+                if (stateJson.contains("\"projectId\":\"")) {
+                    int start = stateJson.indexOf("\"projectId\":\"") + 13;
+                    int end = stateJson.indexOf("\"", start);
+                    if (end > start) {
+                        stateProjectId = stateJson.substring(start, end);
+                    }
+                }
+                
+                logger.info("state에서 추출된 userId: {}, projectId: {}", stateUserId, stateProjectId);
+            } catch (Exception e) {
+                logger.warn("state 파싱 실패, 세션에서 정보 확인: {}", e.getMessage());
             }
             
             // 서비스를 통해 OAuth 콜백 처리
             Map<String, Object> param = new HashMap<>();
             param.put("code", code);
             param.put("state", state);
+            
+            // OAuth 시작 시 저장된 사용자 ID 또는 현재 로그인된 사용자 ID 가져오기
+            String oauthUserId = (String) session.getAttribute("githubOAuthUserId");
+            String currentUserId = (String) session.getAttribute("userId");
+            
+            logger.info("디버깅 - oauthUserId: {}", oauthUserId);
+            logger.info("디버깅 - currentUserId (session): {}", currentUserId);
+            
+            // 세션에서 다양한 키로 사용자 ID 찾기
+            if (currentUserId == null) {
+                // 다양한 세션 키 시도
+                String[] userIdKeys = {"userId", "user_id", "userEmail", "user_email", "loginUserId", "login_user_id"};
+                for (String key : userIdKeys) {
+                    currentUserId = (String) session.getAttribute(key);
+                    if (currentUserId != null && !currentUserId.trim().isEmpty()) {
+                        logger.info("세션에서 사용자 ID 찾음 (키: {}): {}", key, currentUserId);
+                        break;
+                    }
+                }
+            }
+            
+            // ElHeader에서 사용자 정보 가져오기 시도
+            if (currentUserId == null) {
+                Object elHeader = request.getAttribute("ElHeader");
+                logger.info("디버깅 - ElHeader 객체: {}", elHeader != null ? elHeader.getClass().getName() : "null");
+                if (elHeader != null) {
+                    try {
+                        java.lang.reflect.Method getUserIdMethod = elHeader.getClass().getMethod("getUserId");
+                        currentUserId = (String) getUserIdMethod.invoke(elHeader);
+                        logger.info("ElHeader에서 사용자 ID 가져옴: {}", currentUserId);
+                    } catch (Exception e) {
+                        logger.error("ElHeader에서 사용자 ID 가져오기 실패", e);
+                    }
+                }
+            }
+            
+            // request parameter에서 확인 (프론트엔드에서 전달)
+            if (currentUserId == null) {
+                currentUserId = request.getParameter("userId");
+                if (currentUserId != null && !currentUserId.trim().isEmpty()) {
+                    logger.info("request parameter에서 사용자 ID 찾음: {}", currentUserId);
+                }
+            }
+            
+            // 최종 사용자 ID 결정 (우선순위: state > OAuth 시작 시 전달 > 세션 > 기타)
+            String finalUserId = null;
+            if (stateUserId != null && !stateUserId.trim().isEmpty() && !"user01".equals(stateUserId)) {
+                finalUserId = stateUserId;
+                logger.info("state에서 추출한 사용자 ID 사용: {}", finalUserId);
+            } else if (oauthUserId != null && !oauthUserId.trim().isEmpty() && !"user01".equals(oauthUserId)) {
+                finalUserId = oauthUserId;
+                logger.info("OAuth에서 전달받은 사용자 ID 사용: {}", finalUserId);
+            } else if (currentUserId != null && !currentUserId.trim().isEmpty() && !"user01".equals(currentUserId)) {
+                finalUserId = currentUserId;
+                logger.info("세션/기타에서 현재 사용자 ID 사용: {}", finalUserId);
+            } else {
+                logger.error("사용자 ID를 찾을 수 없습니다. OAuth 연동을 진행할 수 없습니다.");
+                ModelAndView mv = new ModelAndView();
+                mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                    java.net.URLEncoder.encode("로그인된 사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.", "UTF-8"));
+                return mv;
+            }
+            
+            logger.info("디버깅 - 최종 사용할 userId: {}", finalUserId);
+            param.put("user_id", finalUserId);
+            
+            // 프로젝트 ID 결정 (우선순위: state > 세션)
+            String finalProjectId = null;
+            if (stateProjectId != null && !stateProjectId.trim().isEmpty()) {
+                finalProjectId = stateProjectId;
+                logger.info("state에서 추출한 프로젝트 ID 사용: {}", finalProjectId);
+            } else {
+                finalProjectId = (String) session.getAttribute("githubOAuthProjectId");
+                if (finalProjectId != null && !finalProjectId.trim().isEmpty()) {
+                    logger.info("세션에서 프로젝트 ID 사용: {}", finalProjectId);
+                } else {
+                    logger.warn("프로젝트 ID를 찾을 수 없습니다.");
+                }
+            }
+            
+            if (finalProjectId != null && !finalProjectId.trim().isEmpty()) {
+                param.put("project_id", finalProjectId);
+            }
             
             Map<String, Object> authResult = gitHubService.processOAuthCallback(param);
             
@@ -256,15 +416,28 @@ public class GitHubController {
             session.setAttribute("githubAvatarUrl", authResult.get("avatar_url"));
             session.setAttribute("githubAccessToken", authResult.get("access_token"));
             
-            logger.info("GitHub OAuth 콜백 처리 성공 (테스트용)");
+            logger.info("GitHub OAuth 콜백 처리 성공");
             
-            // 웹스퀘어 구조에 맞게 프로젝트 메인 페이지로 리다이렉트
-            return new ModelAndView("redirect:/websquare/websquare.html?w2xPath=/InsWebApp/ui/project/projectMainPage.xml&githubConnected=true");
+            // WebSquare 방식으로 콜백 처리 - websquare.html을 통해 XML 파일 로드
+            String username = (String) authResult.get("username");
+            String hasSelectedRepo = "false"; // 현재는 기본값
+            
+            String redirectUrl = String.format(
+                "/websquare/websquare.html?w2xPath=/InsWebApp/ui/github_callback.xml&status=success&username=%s&hasSelectedRepo=%s", 
+                java.net.URLEncoder.encode(username != null ? username : "", "UTF-8"),
+                hasSelectedRepo
+            );
+            
+            logger.info("WebSquare 콜백 URL로 리다이렉트: {}", redirectUrl);
+            ModelAndView mv = new ModelAndView();
+            mv.setViewName("redirect:" + redirectUrl);
+            return mv;
             
         } catch (Exception e) {
             logger.error("GitHub OAuth 콜백 처리 실패", e);
-            ModelAndView mv = new ModelAndView("/error");
-            mv.addObject("error", "GitHub 인증 처리 중 오류가 발생했습니다.");
+            ModelAndView mv = new ModelAndView();
+//            mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+//                java.net.URLEncoder.encode("GitHub OAuth 처리 중 오류가 발생했습니다.", "UTF-8"));
             return mv;
         }
     }

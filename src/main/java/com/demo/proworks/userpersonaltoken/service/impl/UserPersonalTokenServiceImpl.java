@@ -81,6 +81,23 @@ public class UserPersonalTokenServiceImpl implements UserPersonalTokenService {
 	}
 
     /**
+     * 사용자 ID로 깃허브 개인 처리를 위한 PAT토큰을 조회한다.
+     *
+     * @process
+     * 1. 사용자 ID로 깃허브 개인 처리를 위한 PAT토큰을 조회한다.
+     * 2. 결과 UserPersonalTokenVo을(를) 리턴한다.
+     * 
+     * @param  userPersonalTokenVo 깃허브 개인 처리를 위한 PAT토큰 UserPersonalTokenVo (userId 필드 사용)
+     * @return 단건 조회 결과
+     * @throws Exception
+     */
+	public UserPersonalTokenVo selectUserPersonalTokenByUserId(UserPersonalTokenVo userPersonalTokenVo) throws Exception {
+		UserPersonalTokenVo resultVO = userPersonalTokenDAO.selectUserPersonalTokenByUserId(userPersonalTokenVo);			
+        
+        return resultVO;
+	}
+
+    /**
      * 깃허브 개인 처리를 위한 PAT토큰를 등록 처리 한다.
      *
      * @process

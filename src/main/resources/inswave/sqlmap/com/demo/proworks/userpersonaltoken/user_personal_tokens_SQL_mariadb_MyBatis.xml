@@ -16,25 +16,15 @@
  -->
 <mapper namespace="com.demo.proworks.userpersonaltoken">
     <insert id="insertUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
-    	<!-- 깃허브 개인 처리를 위한 PAT토큰를 등록한다. -->	
+    	<!-- 깃허브 개인 처리를 위한 PAT토큰를 등록한다. AUTO_INCREMENT PK이므로 USER_PERSONAL_TOKEN_ID는 자동 생성 -->	
     		
         INSERT INTO USER_PERSONAL_TOKENS   /* QueryID : com.demo.proworks.userpersonaltoken.insertUserPersonalToken */
         ( 
-            USER_PERSONAL_TOKEN_ID
-            <if test="userId               != null"> , USER_ID                </if>
-            <if test="accessToken          != null"> , ACCESS_TOKEN           </if>
-            <if test="scope                 != null"> , SCOPE                  </if>
-            <if test="createdAt            != null"> , CREATED_AT             </if>
-            <if test="expiredAt            != null"> , EXPIRED_AT             </if>
+            USER_ID, ACCESS_TOKEN, SCOPE, CREATED_AT
         )
         VALUES  
         ( 
-            #{userPersonalTokenId}
-            <if test="userId               != null"> , #{userId}                </if>
-            <if test="accessToken          != null"> , #{accessToken}           </if>
-            <if test="scope                 != null"> , #{scope}                  </if>
-            <if test="createdAt            != null"> , #{createdAt}             </if>
-            <if test="expiredAt            != null"> , #{expiredAt}             </if> 
+            #{userId}, #{accessToken}, #{scope}, NOW()
         )          
     </insert>	
 	
@@ -43,12 +33,9 @@
     	
         UPDATE USER_PERSONAL_TOKENS    /* QueryID : com.demo.proworks.userpersonaltoken.updateUserPersonalToken */      
       	  SET  
-                USER_PERSONAL_TOKEN_ID = #{userPersonalTokenId}        	                       
-            <if test="userId               != null"> , USER_ID                = #{userId}                </if>
-            <if test="accessToken          != null"> , ACCESS_TOKEN           = #{accessToken}           </if>
+                ACCESS_TOKEN = #{accessToken}
             <if test="scope                 != null"> , SCOPE                  = #{scope}                  </if>
-            <if test="createdAt            != null"> , CREATED_AT             = #{createdAt}             </if>
-            <if test="expiredAt            != null"> , EXPIRED_AT             = #{expiredAt}             </if>                 
+            <if test="expiredAt            != null"> , EXPIRED_AT             = #{expiredAt}             </if>                 
         WHERE   
                 USER_PERSONAL_TOKEN_ID = #{userPersonalTokenId}
     </update>
@@ -58,7 +45,7 @@
     	
         DELETE FROM USER_PERSONAL_TOKENS   /* QueryID : com.demo.proworks.userpersonaltoken.deleteUserPersonalToken */ 
         WHERE   
-                USER_PERSONAL_TOKEN_ID = #{userPersonalTokenId}        
+                USER_PERSONAL_TOKEN_ID = #{userPersonalTokenId}        
     </delete>
 	
     <select id="selectUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo" resultType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
@@ -67,7 +54,18 @@
             USER_PERSONAL_TOKEN_ID as userPersonalTokenId, USER_ID as userId, ACCESS_TOKEN as accessToken, SCOPE as scope, CREATED_AT as createdAt, EXPIRED_AT as expiredAt
         FROM USER_PERSONAL_TOKENS 
         WHERE 
-                USER_PERSONAL_TOKEN_ID = #{userPersonalTokenId}			
+                USER_PERSONAL_TOKEN_ID = #{userPersonalTokenId}			
+    </select>
+	
+    <select id="selectUserPersonalTokenByUserId" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo" resultType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
+    	<!-- 사용자 ID로 깃허브 개인 처리를 위한 PAT토큰을 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.userpersonaltoken.selectUserPersonalTokenByUserId */
+            USER_PERSONAL_TOKEN_ID as userPersonalTokenId, USER_ID as userId, ACCESS_TOKEN as accessToken, SCOPE as scope, CREATED_AT as createdAt, EXPIRED_AT as expiredAt
+        FROM USER_PERSONAL_TOKENS 
+        WHERE 
+                USER_ID = #{userId}
+        ORDER BY CREATED_AT DESC
+        LIMIT 1
     </select>
 	
     <select id="selectListUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo" resultType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">

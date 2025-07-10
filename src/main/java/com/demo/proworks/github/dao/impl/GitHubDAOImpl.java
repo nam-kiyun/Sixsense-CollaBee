@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import com.demo.proworks.github.dao.GitHubDAO;
 import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
-import com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo;
+import com.demo.proworks.githubapptoken.vo.GithubAppTokenVo;
 import com.demo.proworks.repobranch.vo.RepositoryBranchVo;
 import com.demo.proworks.githubwebhook.vo.GithubWebhookVo;
 import com.demo.proworks.githubapptoken.vo.GithubAppTokenVo;
@@ -29,14 +29,19 @@ public class GitHubDAOImpl implements GitHubDAO {
     // ==============================
     
     @Override
-    public String upsertGitHubUser(Map<String, Object> param) throws Exception {
-        sqlSession.insert("GitHubDAO.upsertGitHubUser", param);
-        return param.get("user_personal_token_id") != null ? param.get("user_personal_token_id").toString() : null;
+    public String insertGitHubAppToken(Map<String, Object> param) throws Exception {
+        sqlSession.insert("com.demo.proworks.github.insertGitHubAppToken", param);
+        return param.get("github_app_token_id") != null ? param.get("github_app_token_id").toString() : null;
     }
     
     @Override
-    public UserPersonalTokenVo selectGitHubUserByLocalId(String userId) throws Exception {
-        return sqlSession.selectOne("GitHubDAO.selectGitHubUserByLocalId", userId);
+    public void updateGitHubAppToken(Map<String, Object> param) throws Exception {
+        sqlSession.update("com.demo.proworks.github.updateGitHubAppToken", param);
+    }
+    
+    @Override
+    public GithubAppTokenVo selectGitHubAppTokenByUserId(String userId) throws Exception {
+        return sqlSession.selectOne("com.demo.proworks.github.selectGitHubAppTokenByUserId", userId);
     }
 
     // ==============================
@@ -44,24 +49,24 @@ public class GitHubDAOImpl implements GitHubDAO {
     // ==============================
     
     @Override
-    public ProjectRepositoryVo selectUserSelectedRepository(String userId) throws Exception {
-        return sqlSession.selectOne("GitHubDAO.selectUserSelectedRepository", userId);
+    public ProjectRepositoryVo selectProjectRepositoryByUserId(String userId) throws Exception {
+        return sqlSession.selectOne("com.demo.proworks.github.selectProjectRepositoryByUserId", userId);
     }
     
     @Override
-    public String insertUserSelectedRepository(Map<String, Object> param) throws Exception {
-        sqlSession.insert("GitHubDAO.insertUserSelectedRepository", param);
-        return param.get("id") != null ? param.get("id").toString() : null;
+    public String insertProjectRepository(Map<String, Object> param) throws Exception {
+        sqlSession.insert("com.demo.proworks.github.insertProjectRepository", param);
+        return param.get("project_repo_id") != null ? param.get("project_repo_id").toString() : null;
     }
     
     @Override
-    public void updateUserSelectedRepository(Map<String, Object> param) throws Exception {
-        sqlSession.update("GitHubDAO.updateUserSelectedRepository", param);
+    public void updateProjectRepository(Map<String, Object> param) throws Exception {
+        sqlSession.update("com.demo.proworks.github.updateProjectRepository", param);
     }
     
     @Override
     public Map<String, Object> selectProjectRepositoryByGitHubId(String githubRepoId) throws Exception {
-        return sqlSession.selectOne("GitHubDAO.selectProjectRepositoryByGitHubId", githubRepoId);
+        return sqlSession.selectOne("com.demo.proworks.github.selectProjectRepositoryByGitHubId", githubRepoId);
     }
 
     // ==============================
@@ -70,19 +75,19 @@ public class GitHubDAOImpl implements GitHubDAO {
     
     
     @Override
-    public String insertGitHubBranch(RepositoryBranchVo repositoryBranchVo) throws Exception {
-        sqlSession.insert("GitHubDAO.insertGitHubBranch", repositoryBranchVo);
+    public String insertRepositoryBranch(RepositoryBranchVo repositoryBranchVo) throws Exception {
+        sqlSession.insert("com.demo.proworks.github.insertRepositoryBranch", repositoryBranchVo);
         return repositoryBranchVo.getRepoBranchId();
     }
     
     @Override
-    public void updateGitHubBranch(RepositoryBranchVo repositoryBranchVo) throws Exception {
-        sqlSession.update("GitHubDAO.updateGitHubBranch", repositoryBranchVo);
+    public void updateRepositoryBranch(RepositoryBranchVo repositoryBranchVo) throws Exception {
+        sqlSession.update("com.demo.proworks.github.updateRepositoryBranch", repositoryBranchVo);
     }
     
     @Override
-    public List<RepositoryBranchVo> selectGitHubBranches(Map<String, Object> param) throws Exception {
-        return sqlSession.selectList("GitHubDAO.selectGitHubBranches", param);
+    public List<RepositoryBranchVo> selectRepositoryBranches(Map<String, Object> param) throws Exception {
+        return sqlSession.selectList("com.demo.proworks.github.selectRepositoryBranches", param);
     }
 
     // ==============================
@@ -90,20 +95,20 @@ public class GitHubDAOImpl implements GitHubDAO {
     // ==============================
     
     @Override
-    public String insertGitHubWebhook(GithubWebhookVo githubWebhookVo) throws Exception {
-        sqlSession.insert("GitHubDAO.insertGitHubWebhook", githubWebhookVo);
+    public String insertRepositoryWebhook(GithubWebhookVo githubWebhookVo) throws Exception {
+        sqlSession.insert("com.demo.proworks.github.insertRepositoryWebhook", githubWebhookVo);
         return githubWebhookVo.getGithubWebhookId();
     }
     
     @Override
-    public void deleteGitHubWebhook(String githubWebhookId) throws Exception {
-        sqlSession.delete("GitHubDAO.deleteGitHubWebhook", githubWebhookId);
+    public void deleteRepositoryWebhook(String githubWebhookId) throws Exception {
+        sqlSession.delete("com.demo.proworks.github.deleteRepositoryWebhook", githubWebhookId);
     }
     
     
     @Override
-    public Map<String, Object> selectWebhookByRepoId(String githubRepoId) throws Exception {
-        return sqlSession.selectOne("GitHubDAO.selectWebhookByRepoId", githubRepoId);
+    public Map<String, Object> selectRepositoryWebhookByRepoId(String githubRepoId) throws Exception {
+        return sqlSession.selectOne("com.demo.proworks.github.selectRepositoryWebhookByRepoId", githubRepoId);
     }
 
 
@@ -112,18 +117,18 @@ public class GitHubDAOImpl implements GitHubDAO {
     // ==============================
     
     @Override
-    public Map<String, Object> selectGitHubActivityStats(Map<String, Object> param) throws Exception {
-        return sqlSession.selectOne("GitHubDAO.selectGitHubActivityStats", param);
+    public Map<String, Object> selectProjectGitHubActivityStats(Map<String, Object> param) throws Exception {
+        return sqlSession.selectOne("com.demo.proworks.github.selectProjectGitHubActivityStats", param);
     }
     
     @Override
     public Map<String, Object> selectUserGitHubActivityStats(Map<String, Object> param) throws Exception {
-        return sqlSession.selectOne("GitHubDAO.selectUserGitHubActivityStats", param);
+        return sqlSession.selectOne("com.demo.proworks.github.selectUserGitHubActivityStats", param);
     }
     
     @Override
-    public Map<String, Object> selectGitHubConnectionStatus(String projectRepoId) throws Exception {
-        return sqlSession.selectOne("GitHubDAO.selectGitHubConnectionStatus", projectRepoId);
+    public Map<String, Object> selectRepositoryConnectionStatus(String projectRepoId) throws Exception {
+        return sqlSession.selectOne("com.demo.proworks.github.selectRepositoryConnectionStatus", projectRepoId);
     }
 
     // ==============================
@@ -131,13 +136,13 @@ public class GitHubDAOImpl implements GitHubDAO {
     // ==============================
     
     @Override
-    public boolean testConnection() throws Exception {
-        Integer result = sqlSession.selectOne("GitHubDAO.testConnection");
+    public boolean testDatabaseConnection() throws Exception {
+        Integer result = sqlSession.selectOne("com.demo.proworks.github.testDatabaseConnection");
         return result != null && result == 1;
     }
     
     @Override
-    public Map<String, Object> selectServiceStatus() throws Exception {
-        return sqlSession.selectOne("GitHubDAO.selectServiceStatus");
+    public Map<String, Object> selectGitHubServiceStatus() throws Exception {
+        return sqlSession.selectOne("com.demo.proworks.github.selectGitHubServiceStatus");
     }
 }

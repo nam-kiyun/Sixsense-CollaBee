@@ -18,14 +18,14 @@ import com.demo.proworks.github.util.GitHubApiUtil;
 import com.demo.proworks.github.util.GitHubSyncUtil;
 import com.demo.proworks.github.util.GitHubWebhookUtil;
 import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
-import com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo;
+import com.demo.proworks.githubapptoken.vo.GithubAppTokenVo;
 import com.demo.proworks.repobranch.vo.RepositoryBranchVo;
 import com.demo.proworks.githubwebhook.vo.GithubWebhookVo;
 import com.demo.proworks.githubapptoken.vo.GithubAppTokenVo;
 import com.demo.proworks.github.vo.GitHubRepositoryVo;
 import com.demo.proworks.github.vo.GitHubRepositoryListVo;
-import com.demo.proworks.github.vo.GitHubBranchVo;
-import com.demo.proworks.github.vo.GitHubBranchListVo;
+import com.demo.proworks.userpersonaltoken.service.UserPersonalTokenService;
+import com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo;
 
 /**
  * GitHub 통합 서비스 구현체
@@ -47,6 +47,9 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Resource
     private GitHubWebhookUtil gitHubWebhookUtil;
+    
+    @Resource(name = "userPersonalTokenServiceImpl")
+    private UserPersonalTokenService userPersonalTokenService;
 
     // ==============================
     // GitHub OAuth 인증 관리
@@ -94,12 +97,22 @@ public class GitHubServiceImpl implements GitHubService {
         try {
             String code = (String) param.get("code");
             String state = (String) param.get("state");
+            String userId = (String) param.get("user_id"); // 세션에서 받은 사용자 ID
             
-            // GitHub API 호출하여 액세스 토큰 획득
-            String clientId = System.getProperty("github.client.id", "your-client-id");
-            String clientSecret = System.getProperty("github.client.secret", "your-client-secret");
+            // 디버깅 로그 추가
+            logger.info("서비스 processOAuthCallback - 받은 파라미터: {}", param);
+            logger.info("서비스 processOAuthCallback - userId: '{}' (length: {})", userId, userId != null ? userId.length() : "null");
+            logger.info("서비스 processOAuthCallback - userId is null? {}", userId == null);
+            logger.info("서비스 processOAuthCallback - userId is empty? {}", userId != null && userId.trim().isEmpty());
+            
+            // GitHub API 호출하여 액세스 토큰 획득 (elfw.properties에서 설정값 읽기)
+            String clientId = System.getProperty("GITHUB_CLIENT_ID", "Iv23liShQFpINkvH7lCV");
+            String clientSecret = System.getProperty("GITHUB_CLIENT_SECRET", "ac534ffba44e6eae3ee74832e406724bfea12620");
+            
+            logger.info("GitHub OAuth 설정 - ClientID: {}, ClientSecret: {}****", clientId, clientSecret.substring(0, 8));
             
             Map<String, Object> tokenResponse = gitHubApiUtil.exchangeCodeForToken(code, clientId, clientSecret);
+            logger.info("GitHub 토큰 교환 결과: {}", tokenResponse.get("success"));
             
             if ((Boolean) tokenResponse.get("success")) {
                 @SuppressWarnings("unchecked")
@@ -111,12 +124,22 @@ public class GitHubServiceImpl implements GitHubService {
                 Map<String, Object> userInfo = gitHubApiUtil.getUserInfo(accessToken);
                 
                 // GitHub 사용자를 로컬 사용자와 연동
-                UserPersonalTokenVo userToken = linkGitHubUser(accessToken);
+                String projectId = (String) param.get("project_id");
+                UserPersonalTokenVo userToken = null;
+                if (userId != null && !userId.trim().isEmpty()) {
+                    logger.info("userId가 있으므로 linkGitHubUserWithUserId 호출: userId='{}'", userId);
+                    userToken = linkGitHubUserWithUserId(accessToken, userId, projectId);
+                } else {
+                    logger.warn("userId가 null이거나 빈 문자열이므로 기본 linkGitHubUser 호출: userId='{}'", userId);
+                    userToken = linkGitHubUser(accessToken, projectId); // 기본 방식
+                }
                 
                 result.put("success", true);
                 result.put("message", "OAuth 콜백 처리 완료");
                 result.put("user", userToken);
                 result.put("access_token", accessToken);
+                result.put("username", userInfo.get("login"));
+                result.put("avatar_url", userInfo.get("avatar_url"));
             } else {
                 result.put("success", false);
                 result.put("error", "액세스 토큰 획득 실패");
@@ -133,33 +156,55 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Override
     @Transactional
-    public UserPersonalTokenVo linkGitHubUser(String accessToken) throws Exception {
-        logger.info("GitHub 사용자 연동 시작");
+    public UserPersonalTokenVo linkGitHubUser(String accessToken, String projectId) throws Exception {
+        logger.error("linkGitHubUser 호출됨 - userId 파라미터가 없어서 GitHub 연동을 진행할 수 없습니다.");
+        throw new RuntimeException("사용자 ID가 제공되지 않아 GitHub 연동을 진행할 수 없습니다. 다시 로그인해주세요.");
+    }
+
+    @Override
+    @Transactional
+    public UserPersonalTokenVo linkGitHubUserWithUserId(String accessToken, String userId, String projectId) throws Exception {
+        logger.info("GitHub 사용자 연동 시작 (userId: {}, projectId: {})", userId, projectId);
         
         UserPersonalTokenVo userToken = null;
         
         try {
             // GitHub API로 사용자 정보 조회
             Map<String, Object> userInfo = gitHubApiUtil.getUserInfo(accessToken);
+            String githubUserId = userInfo.get("login").toString();
+            logger.info("GitHub 사용자 정보 조회 완료: {}", githubUserId);
             
-            // user_personal_token 테이블에 저장할 데이터 준비
-            Map<String, Object> param = new HashMap<>();
-            param.put("user_personal_token_id", java.util.UUID.randomUUID().toString());
-            param.put("user_id", "current_user_id"); // TODO: 세션에서 현재 사용자 ID 가져오기
-            param.put("access_token", accessToken);
-            param.put("scope", "repo read:user admin:repo_hook");
-            param.put("expired_at", null); // GitHub 토큰은 만료되지 않음
+            // USER_PERSONAL_TOKENS 테이블에 저장할 데이터 준비
+            UserPersonalTokenVo tokenVo = new UserPersonalTokenVo();
+            // userPersonalTokenId는 AUTO_INCREMENT이므로 설정하지 않음
+            tokenVo.setUserId(userId);
+            tokenVo.setAccessToken(accessToken);
+            tokenVo.setScope("repo read:user admin:repo_hook");
+            // createdAt은 NOW()로 처리하므로 설정하지 않음
+            
+            // 기존 토큰 정보 확인
+            UserPersonalTokenVo queryVo = new UserPersonalTokenVo();
+            queryVo.setUserId(userId);
+            UserPersonalTokenVo existingToken = userPersonalTokenService.selectUserPersonalTokenByUserId(queryVo);
             
             // DB에 GitHub 사용자 정보 저장/업데이트
-            String tokenId = gitHubDAO.upsertGitHubUser(param);
+            if (existingToken == null) {
+                // 새 사용자 - INSERT
+                userPersonalTokenService.insertUserPersonalToken(tokenVo);
+                logger.info("새 OAuth 토큰 저장 완료: userId={}, projectId={}", userId, projectId);
+            } else {
+                // 기존 사용자 - UPDATE
+                existingToken.setAccessToken(accessToken);
+                existingToken.setScope("repo read:user admin:repo_hook");
+                userPersonalTokenService.updateUserPersonalToken(existingToken);
+                tokenVo = existingToken;
+                logger.info("기존 OAuth 토큰 업데이트 완료: userId={}, projectId={}", userId, projectId);
+            }
             
-            // 저장된 토큰 정보 조회
-            userToken = gitHubDAO.selectGitHubUserByLocalId("current_user_id");
-            
-            logger.info("GitHub 사용자 연동 완료: {}", tokenId);
+            userToken = tokenVo;
             
         } catch (Exception e) {
-            logger.error("GitHub 사용자 연동 실패", e);
+            logger.error("GitHub 사용자 연동 실패 (userId: {}, projectId: {})", userId, projectId, e);
             throw e;
         }
         
@@ -357,7 +402,7 @@ public class GitHubServiceImpl implements GitHubService {
             // TODO: 사용자의 레포지토리 선택 정보 DB 저장
             // test 디렉터리의 auth.js의 select-repo 로직 참고
             
-            String recordId = gitHubDAO.insertUserSelectedRepository(param);
+            String recordId = gitHubDAO.insertProjectRepository(param);
             
             result.put("success", true);
             result.put("record_id", recordId);
@@ -381,7 +426,7 @@ public class GitHubServiceImpl implements GitHubService {
         ProjectRepositoryVo repository = null;
         
         try {
-            repository = gitHubDAO.selectUserSelectedRepository(userId);
+            repository = gitHubDAO.selectProjectRepositoryByUserId(userId);
             logger.info("현재 선택된 레포지토리 조회 완료");
             
         } catch (Exception e) {
@@ -393,156 +438,8 @@ public class GitHubServiceImpl implements GitHubService {
     }
 
     // ==============================
-    // GitHub 브랜치 관리
+    // GitHub 브랜치 관리 (간소화)
     // ==============================
-    
-    @Override
-    public GitHubBranchListVo getBranches(Map<String, Object> param) throws Exception {
-        logger.info("GitHub 브랜치 목록 조회 시작");
-        
-        GitHubBranchListVo result = new GitHubBranchListVo();
-        
-        try {
-            // GitHub API로 브랜치 목록 조회 및 DB 동기화
-            String accessToken = (String) param.get("access_token");
-            String owner = (String) param.get("owner");
-            String repo = (String) param.get("repo");
-            
-            // GitHub API에서 브랜치 목록 조회
-            Map<String, Object> apiResponse = gitHubApiUtil.getBranches(accessToken, owner, repo);
-            
-            List<GitHubBranchVo> branches = new ArrayList<>();
-            
-            if ((Boolean) apiResponse.get("success")) {
-                @SuppressWarnings("unchecked")
-                List<Map<String, Object>> branchList = (List<Map<String, Object>>) apiResponse.get("data");
-                
-                String projectRepoId = (String) param.get("project_repo_id");
-                String repositoryFullName = owner + "/" + repo;
-                
-                for (Map<String, Object> branchData : branchList) {
-                    // GitHub 브랜치 정보를 ProWorks 형식으로 변환
-                    Map<String, Object> localBranch = gitHubSyncUtil.convertGitHubBranchToLocal(
-                        branchData, projectRepoId, repositoryFullName);
-                    
-                    GitHubBranchVo branch = new GitHubBranchVo();
-                    branch.setProjectRepoId((String) localBranch.get("project_repo_id"));
-                    branch.setRepositoryFullName((String) localBranch.get("repository_full_name"));
-                    branch.setBranchName((String) localBranch.get("branch_name"));
-                    branch.setCommitSha((String) localBranch.get("commit_sha"));
-                    branch.setCommitMessage((String) localBranch.get("commit_message"));
-                    branch.setCommitAuthor((String) localBranch.get("commit_author"));
-                    branch.setCommitDate((String) localBranch.get("commit_date"));
-                    branch.setIsProtected((String) localBranch.get("is_protected"));
-                    branch.setIsDefault((String) localBranch.get("is_default"));
-                    branch.setBranchUrl((String) localBranch.get("branch_url"));
-                    
-                    branches.add(branch);
-                }
-            }
-            
-            // GitHub API에서 가져온 브랜치 정보를 우선 사용
-            result.setGitHubBranchVoList(branches);
-            
-            // DB 브랜치 정보는 필요시 별도로 조회하여 비교/동기화에 사용
-            
-            logger.info("GitHub 브랜치 목록 조회 완료: {} 개", branches.size());
-            
-        } catch (Exception e) {
-            logger.error("GitHub 브랜치 목록 조회 실패", e);
-            throw e;
-        }
-        
-        return result;
-    }
-    
-    @Override
-    public GitHubBranchVo getBranch(Map<String, Object> param) throws Exception {
-        logger.info("GitHub 브랜치 상세 조회 시작");
-        
-        GitHubBranchVo branch = new GitHubBranchVo();
-        
-        try {
-            // TODO: GitHub API로 특정 브랜치 상세 정보 조회
-            
-            logger.info("GitHub 브랜치 상세 조회 완료");
-            
-        } catch (Exception e) {
-            logger.error("GitHub 브랜치 상세 조회 실패", e);
-            throw e;
-        }
-        
-        return branch;
-    }
-    
-    @Override
-    @Transactional
-    public GitHubBranchVo createBranch(Map<String, Object> param) throws Exception {
-        logger.info("GitHub 브랜치 생성 시작");
-        
-        GitHubBranchVo branch = new GitHubBranchVo();
-        
-        try {
-            // GitHub API로 브랜치 생성
-            String accessToken = (String) param.get("access_token");
-            String owner = (String) param.get("owner");
-            String repo = (String) param.get("repo");
-            String branchName = (String) param.get("branch_name");
-            String sourceBranch = (String) param.get("source_branch");
-            
-            // 소스 브랜치의 SHA 가져오기
-            String sourceSha = null;
-            if (sourceBranch != null) {
-                String endpoint = "/repos/" + owner + "/" + repo + "/git/refs/heads/" + sourceBranch;
-                Map<String, Object> refResponse = gitHubApiUtil.get(endpoint, accessToken);
-                if ((Boolean) refResponse.get("success")) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> refData = (Map<String, Object>) refResponse.get("data");
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> object = (Map<String, Object>) refData.get("object");
-                    sourceSha = (String) object.get("sha");
-                }
-            }
-            
-            if (sourceSha != null) {
-                // GitHub API로 브랜치 생성
-                Map<String, Object> apiResponse = gitHubApiUtil.createBranch(accessToken, owner, repo, branchName, sourceSha);
-                
-                if ((Boolean) apiResponse.get("success")) {
-                    // 브랜치 정보 생성
-                    branch.setProjectRepoId((String) param.get("project_repo_id"));
-                    branch.setRepositoryFullName(owner + "/" + repo);
-                    branch.setBranchName(branchName);
-                    branch.setCommitSha(sourceSha);
-                    branch.setIsProtected("N");
-                    branch.setIsDefault("N");
-                    branch.setBranchUrl("https://github.com/" + owner + "/" + repo + "/tree/" + branchName);
-                    
-                    // DB에 브랜치 정보 저장 (RepositoryBranchVo로 변환)
-                    RepositoryBranchVo repositoryBranch = new RepositoryBranchVo();
-                    repositoryBranch.setProjectRepoId(branch.getProjectRepoId());
-                    repositoryBranch.setBranchName(branch.getBranchName());
-                    repositoryBranch.setBaseSha(branch.getCommitSha());
-                    
-                    String branchId = gitHubDAO.insertGitHubBranch(repositoryBranch);
-                    
-                    // 브랜치 생성 이력은 웹훅으로 처리되므로 별도 저장하지 않음
-                    
-                    logger.info("GitHub 브랜치 생성 완료: {}", branchId);
-                } else {
-                    throw new Exception("GitHub API 브랜치 생성 실패");
-                }
-            } else {
-                throw new Exception("소스 브랜치 SHA를 찾을 수 없습니다");
-            }
-            
-        } catch (Exception e) {
-            logger.error("GitHub 브랜치 생성 실패", e);
-            throw e;
-        }
-        
-        return branch;
-    }
     
     @Override
     @Transactional
@@ -929,7 +826,7 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Override
     public Map<String, Object> getProjectGitHubStats(Map<String, Object> param) throws Exception {
-        return gitHubDAO.selectGitHubActivityStats(param);
+        return gitHubDAO.selectProjectGitHubActivityStats(param);
     }
     
     @Override
@@ -939,7 +836,7 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Override
     public Map<String, Object> getServiceStatus() throws Exception {
-        return gitHubDAO.selectServiceStatus();
+        return gitHubDAO.selectGitHubServiceStatus();
     }
     
     @Override
@@ -966,5 +863,24 @@ public class GitHubServiceImpl implements GitHubService {
     public Map<String, Object> disconnectGitHub(Map<String, Object> param) throws Exception {
         // TODO: GitHub 연결 해제 구현
         return new HashMap<>();
+    }
+    
+    /**
+     * 현재 프로젝트 레포지토리 ID를 가져오는 헬퍼 메서드
+     * @return 프로젝트 레포지토리 ID
+     */
+    private String getCurrentProjectRepoId() {
+        // 현재 세션 또는 컨텍스트에서 프로젝트 레포지토리 ID를 가져오는 로직
+        // 임시로 기본값 반환 (실제 구현 시 수정 필요)
+        String projectRepoId = "1"; // 기본 프로젝트 레포지토리 ID
+        
+        // TODO: 실제 구현 시 다음 중 하나의 방식으로 구현
+        // 1. HttpSession에서 현재 선택된 프로젝트 정보 가져오기
+        // 2. SecurityContext에서 현재 사용자의 기본 프로젝트 가져오기
+        // 3. 파라미터로 전달된 프로젝트 ID 사용
+        // 4. 사용자별 최근 사용 프로젝트 조회
+        
+        logger.debug("현재 프로젝트 레포지토리 ID: {}", projectRepoId);
+        return projectRepoId;
     }
 }

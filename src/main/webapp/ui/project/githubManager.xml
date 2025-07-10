@@ -8,6 +8,37 @@
 		<w2:autoJSLoad>false</w2:autoJSLoad>
 		<xf:model>
 			<w2:dataCollection baseNode="map">
+				<!-- 백엔드 요청용 데이터맵 -->
+				<w2:dataMap baseNode="map" id="dm_github_form">
+					<w2:keyInfo>
+						<w2:key id="projectId" name="프로젝트ID" dataType="text" />
+					</w2:keyInfo>
+				</w2:dataMap>
+				
+				<!-- GitHubRepositoryVo와 동일한 구조 -->
+				<w2:dataList id="dlt_GitHubRepositoryVoList" baseNode="list" repeatNode="map">
+					<w2:columnInfo>
+						<w2:column id="githubRepoId" name="github_repo_id" dataType="text" />
+						<w2:column id="repoName" name="repo_name" dataType="text" />
+						<w2:column id="repoFullName" name="repo_full_name" dataType="text" />
+						<w2:column id="repoOwner" name="repo_owner" dataType="text" />
+						<w2:column id="repoDescription" name="repo_description" dataType="text" />
+						<w2:column id="repoUrl" name="repo_url" dataType="text" />
+						<w2:column id="cloneUrl" name="clone_url" dataType="text" />
+						<w2:column id="sshUrl" name="ssh_url" dataType="text" />
+						<w2:column id="defaultBranch" name="default_branch" dataType="text" />
+						<w2:column id="isPrivate" name="is_private" dataType="text" />
+						<w2:column id="isFork" name="is_fork" dataType="text" />
+						<w2:column id="language" name="language" dataType="text" />
+						<w2:column id="starsCount" name="stars_count" dataType="text" />
+						<w2:column id="forksCount" name="forks_count" dataType="text" />
+						<w2:column id="createdAt" name="created_at" dataType="text" />
+						<w2:column id="updatedAt" name="updated_at" dataType="text" />
+						<w2:column id="pushedAt" name="pushed_at" dataType="text" />
+					</w2:columnInfo>
+				</w2:dataList>
+
+				<!-- UI 상태 관리용 데이터맵들 -->
 				<w2:dataMap baseNode="map" id="dm_auth_status">
 					<w2:keyInfo>
 						<w2:key id="isAuthenticated" name="인증상태" dataType="text" />
@@ -18,92 +49,12 @@
 					</w2:keyInfo>
 				</w2:dataMap>
 
-				<w2:dataList id="dlt_connected_repositories" baseNode="list">
-					<w2:columnInfo>
-						<w2:column id="projectRepoId" name="프로젝트레포ID" dataType="text" />
-						<w2:column id="repoOwner" name="소유자" dataType="text" />
-						<w2:column id="repoName" name="레포지토리명" dataType="text" />
-						<w2:column id="defaultBranch" name="기본브랜치" dataType="text" />
-						<w2:column id="githubRepositoryId" name="GitHub레포ID" dataType="text" />
-						<w2:column id="hasValidToken" name="유효토큰여부" dataType="text" />
-						<w2:column id="webhookStatus" name="웹훅상태" dataType="text" />
-						<w2:column id="isConnected" name="연결상태" dataType="text" />
-						<w2:column id="lastSyncTime" name="마지막동기화시간" dataType="text" />
-						<w2:column id="errorMessage" name="에러메시지" dataType="text" />
-					</w2:columnInfo>
-				</w2:dataList>
-
-				<w2:dataList id="dlt_branches" baseNode="list">
-					<w2:columnInfo>
-						<w2:column id="name" name="브랜치명" dataType="text" />
-						<w2:column id="sha" name="커밋SHA" dataType="text" />
-						<w2:column id="protected" name="보호됨" dataType="text" />
-						<w2:column id="commit_author" name="커밋작성자" dataType="text" />
-						<w2:column id="commit_date" name="커밋일시" dataType="text" />
-						<w2:column id="commit_message" name="커밋메시지" dataType="text" />
-						<w2:column id="isDefault" name="기본브랜치여부" dataType="text" />
-					</w2:columnInfo>
-				</w2:dataList>
-
-				<w2:dataList id="dlt_repo_history" baseNode="list">
-					<w2:columnInfo>
-						<w2:column id="action" name="액션" dataType="text" />
-						<w2:column id="repoName" name="레포지토리명" dataType="text" />
-						<w2:column id="branchName" name="브랜치명" dataType="text" />
-						<w2:column id="timestamp" name="시간" dataType="text" />
-						<w2:column id="result" name="결과" dataType="text" />
-						<w2:column id="details" name="상세정보" dataType="text" />
-					</w2:columnInfo>
-				</w2:dataList>
-
-				<w2:dataList id="dlt_webhook_events" baseNode="list">
-					<w2:columnInfo>
-						<w2:column id="eventId" name="이벤트ID" dataType="text" />
-						<w2:column id="eventType" name="이벤트타입" dataType="text" />
-						<w2:column id="action" name="액션" dataType="text" />
-						<w2:column id="repositoryName" name="레포지토리명" dataType="text" />
-						<w2:column id="senderLogin" name="발신자" dataType="text" />
-						<w2:column id="ref" name="브랜치/태그" dataType="text" />
-						<w2:column id="commitsCount" name="커밋수" dataType="text" />
-						<w2:column id="pullRequestNumber" name="PR번호" dataType="text" />
-						<w2:column id="pullRequestTitle" name="PR제목" dataType="text" />
-						<w2:column id="issueNumber" name="이슈번호" dataType="text" />
-						<w2:column id="issueTitle" name="이슈제목" dataType="text" />
-						<w2:column id="status" name="처리상태" dataType="text" />
-						<w2:column id="processedAt" name="처리시간" dataType="text" />
-						<w2:column id="errorMessage" name="오류메시지" dataType="text" />
-					</w2:columnInfo>
-				</w2:dataList>
-
-				<w2:dataMap baseNode="map" id="dm_github_form">
+				<w2:dataMap baseNode="map" id="dm_ui_state">
 					<w2:keyInfo>
-						<w2:key id="projectId" name="프로젝트ID" dataType="text" />
-						<w2:key id="selectedProjectRepoId" name="선택된프로젝트레포ID" dataType="text" />
-						<w2:key id="userAccessToken" name="사용자액세스토큰" dataType="text" />
-						<w2:key id="newRepoOwner" name="신규레포소유자" dataType="text" />
-						<w2:key id="newRepoName" name="신규레포이름" dataType="text" />
-						<w2:key id="webhookUrl" name="웹훅URL" dataType="text" />
-						<w2:key id="newBranchName" name="신규브랜치명" dataType="text" />
-						<w2:key id="sourceBranch" name="소스브랜치" dataType="text" />
-						<w2:key id="currentRepo" name="현재레포지토리" dataType="text" />
-						<w2:key id="repoSearchKeyword" name="레포검색키워드" dataType="text" />
+						<w2:key id="selectedRepo" name="선택된레포" dataType="text" />
+						<w2:key id="currentView" name="현재뷰" dataType="text" />
 						<w2:key id="isLoading" name="로딩상태" dataType="text" />
 						<w2:key id="loadingMessage" name="로딩메시지" dataType="text" />
-					</w2:keyInfo>
-				</w2:dataMap>
-
-				<w2:dataMap baseNode="map" id="dm_current_repo">
-					<w2:keyInfo>
-						<w2:key id="full_name" name="전체이름" dataType="text" />
-						<w2:key id="description" name="설명" dataType="text" />
-						<w2:key id="html_url" name="GitHub URL" dataType="text" />
-						<w2:key id="private" name="비공개여부" dataType="text" />
-						<w2:key id="default_branch" name="기본브랜치" dataType="text" />
-						<w2:key id="language" name="주언어" dataType="text" />
-						<w2:key id="created_at" name="생성일시" dataType="text" />
-						<w2:key id="updated_at" name="업데이트일시" dataType="text" />
-						<w2:key id="stars_count" name="스타수" dataType="text" />
-						<w2:key id="forks_count" name="포크수" dataType="text" />
 					</w2:keyInfo>
 				</w2:dataMap>
 			</w2:dataCollection>
@@ -138,7 +89,7 @@
 
 			<xf:submission id="sbm_loadRepositories" 
 						   ref="" 
-						   target="data:json,dlt_connected_repositories" 
+						   target="data:json,dlt_GitHubRepositoryVoList" 
 						   action="/InsWebApp/github/repositories.pwkjson" 
 						   method="get" 
 						   mediatype="application/json" 
@@ -322,17 +273,56 @@
 scwin.onpageload = function () {
     console.log("GitHub Manager 페이지 로드 시작");
 
+    // 팝업에서 전달받은 프로젝트 데이터 처리
+    scwin.initializeProjectData();
+
     // 초기값 설정
-    dm_github_form.set("projectId", "default-project-id");
-    dm_github_form.set("webhookUrl", "https://smee.io/aYKJH3maBXQp0hDE");
-    dm_github_form.set("isLoading", "false");
+    dm_ui_state.set("isLoading", "false");
+    dm_ui_state.set("loadingMessage", "");
+    dm_ui_state.set("currentView", "repositories");
     dm_auth_status.set("needsLogin", "true");
 
     // 이벤트 핸들러 초기화
     scwin.initializeEventHandlers();
 
+    // OAuth 성공 메시지 리스너 추가
+    // scwin.initializeOAuthMessageListener();
+
     // 인증 상태 확인
     scwin.checkAuthenticationStatus();
+};
+
+// 프로젝트 데이터 초기화 함수
+scwin.initializeProjectData = function() {
+    try {
+        // 팝업에서 전달받은 데이터 확인
+        var popupData = $p.getParameter("project_param");
+        console.log("팝업에서 전달받은 데이터:", popupData);
+        
+        if (popupData) {
+            
+            // 프로젝트 정보를 폼에 설정
+            dm_github_form.set("projectId", popupData.projectId);
+            
+            console.log("프로젝트 정보 설정 완료:", {
+                projectId: popupData.projectId,
+                projectName: popupData.projectName,
+                userId: popupData.userId
+            });
+            
+            // 현재 프로젝트 정보를 전역 변수에 저장
+            scwin.currentProjectData = popupData;
+            
+        } else {
+            console.warn("팝업에서 전달받은 프로젝트 데이터가 없습니다. 기본값을 사용합니다.");
+            dm_github_form.set("projectId", "default-project-id");
+            scwin.currentProjectData = null;
+        }
+    } catch (e) {
+        console.error("프로젝트 데이터 초기화 오류:", e);
+        dm_github_form.set("projectId", "default-project-id");
+        scwin.currentProjectData = null;
+    }
 };
 
 // 이벤트 핸들러 초기화
@@ -358,22 +348,40 @@ scwin.initializeEventHandlers = function () {
     }
 };
 
+// OAuth 성공 메시지 리스너 초기화
+scwin.initializeOAuthMessageListener = function() {
+    try {
+        // postMessage 이벤트 리스너 추가 (iframe 방식 OAuth 대응)
+        window.addEventListener('message', function(event) {
+            console.log("부모 창에서 메시지 수신:", event);
+            
+            if (event.data && event.data.type === 'githubAuthSuccess') {
+                console.log("GitHub OAuth 성공 메시지 수신:", event.data);
+                
+                // 성공 알림 표시
+                if (typeof $c !== 'undefined' && $c.win && $c.win.alert) {
+                    $c.win.alert("������ GitHub 연동이 성공적으로 완료되었습니다!\n\n사용자: @" + (event.data.data.username || ""));
+                }
+                
+                // 인증 상태 다시 확인
+                setTimeout(function() {
+                    scwin.checkAuthenticationStatus();
+                }, 1000);
+            }
+        });
+        
+        console.log("OAuth 메시지 리스너 초기화 완료");
+    } catch (e) {
+        console.error("OAuth 메시지 리스너 초기화 실패:", e);
+    }
+};
+
 // GitHub 인증 상태 확인 (AJAX 방식 - myPage.xml 패턴 참조)
 scwin.checkAuthenticationStatus = function () {
     console.log("GitHub 인증 상태 확인 중... (AJAX 방식)");
     scwin.setLoading(true, "인증 상태 확인 중...");
 
-    try {
-        // jQuery 존재 확인
-        if (typeof $ === 'undefined') {
-            console.error("jQuery가 로드되지 않았습니다!");
-            scwin.setLoading(false);
-            scwin.showLoginRequiredUI();
-            return;
-        }
-        
-        console.log("jQuery 로드 확인됨, AJAX 요청 시작");
-        
+    try {    
         // myPage.xml과 동일한 AJAX 패턴 사용
         // 먼저 간단한 테스트 엔드포인트로 시도
         $.ajax({
@@ -415,9 +423,9 @@ scwin.checkAuthenticationStatus = function () {
             }
         });
     } catch (e) {
-        scwin.setLoading(false);
+    scwin.setLoading(false);
         console.error("AJAX 호출 오류:", e);
-        scwin.showLoginRequiredUI();
+        scwin.showLoginRequiredUI();    
     }
 };
 
@@ -428,7 +436,6 @@ scwin.checkAuthenticationStatus_submitdone = function(e) {
     console.log("responseJSON:", e.responseJSON);
     console.log("responseText:", e.responseText);
     
-    try {
         var result = null;
         if (e.responseJSON) {
             result = e.responseJSON;
@@ -455,10 +462,7 @@ scwin.checkAuthenticationStatus_submitdone = function(e) {
             console.log("사용자 인증되지 않음 - 로그인 필요 UI 표시");
             scwin.showLoginRequiredUI();
         }
-    } catch (parseError) {
-        console.error("응답 파싱 오류:", parseError);
-        scwin.showLoginRequiredUI();
-    }
+    
 };
 
 // 인증 상태 확인 실패 핸들러
@@ -516,24 +520,212 @@ scwin.checkAuthStatus_submiterror = function(e) {
     scwin.showLoginRequiredUI();
 };
 
-// GitHub 로그인 페이지로 이동 (Node.js 방식으로 변경 - 직접 리다이렉트)
-scwin.redirectToGitHubLogin = function () {
-    console.log("GitHub 로그인 요청 시작");
+// // GitHub 로그인 페이지로 이동 (Node.js 방식으로 변경 - 직접 리다이렉트)
+// scwin.redirectToGitHubLogin = function () {
+//     console.log("GitHub 로그인 요청 시작");
     
+//     try {
+//         // 베이스 URL 생성
+//         var baseUrl = window.location.protocol + "//" + window.location.host;
+//         var githubAuthStartUrl = baseUrl + "/InsWebApp/github/auth/start";
+        
+//         // 현재 프로젝트 정보가 있으면 OAuth 요청에 포함
+//         var params = [];
+//         if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
+//             params.push("projectId=" + encodeURIComponent(scwin.currentProjectData.projectId));
+//             console.log("프로젝트 ID를 OAuth에 포함:", scwin.currentProjectData.projectId);
+//         }
+//         if (scwin.currentProjectData && scwin.currentProjectData.userId) {
+//             params.push("userId=" + encodeURIComponent(scwin.currentProjectData.userId));
+//             console.log("사용자 ID를 OAuth에 포함:", scwin.currentProjectData.userId);
+//         }
+        
+//         if (params.length > 0) {
+//             githubAuthStartUrl += "?" + params.join("&");
+//         }
+        
+//         console.log("GitHub OAuth 시작 URL로 직접 이동:", githubAuthStartUrl);
+        
+//         // Node.js 방식처럼 직접 리다이렉트
+//         // 서버에서 GitHub OAuth URL로 리다이렉트 해줌
+//         window.top.location.href = githubAuthStartUrl;
+        
+//     } catch (e) {
+//         console.error("GitHub 로그인 리다이렉트 실패:", e);
+//         $c.win.alert("GitHub 로그인 페이지로 이동할 수 없습니다.\n\n오류: " + e.message);
+//     }
+// };
+
+
+/**
+ * GitHub 로그인 팝업을 열고, 콜백 메시지를 비동기적으로 처리합니다.
+ * SPA 환경에서 페이지 새로고침 없이 안전하게 인증을 완료하기 위한 표준 방식입니다.
+ */
+/**
+ * GitHub 로그인을 WebSquare 표준 팝업으로 처리합니다.
+ */
+scwin.redirectToGitHubLogin = function() {
+    console.log("GitHub 로그인 요청 시작 (WebSquare 표준 팝업 방식)");
+
     try {
-        // 베이스 URL 생성
-        var baseUrl = window.location.protocol + "//" + window.location.host;
-        var githubAuthStartUrl = baseUrl + "/InsWebApp/github/auth/start";
+        // OAuth URL 생성
+        const baseUrl = window.location.protocol + "//" + window.location.host;
+        let githubAuthStartUrl = baseUrl + "/InsWebApp/github/auth/start";
         
-        console.log("GitHub OAuth 시작 URL로 직접 이동:", githubAuthStartUrl);
+        // 현재 프로젝트 데이터에서 사용자 ID와 프로젝트 ID 가져오기
+        const params = [];
+        if (scwin.currentProjectData) {
+            if (scwin.currentProjectData.projectId) {
+                params.push("projectId=" + encodeURIComponent(scwin.currentProjectData.projectId));
+                console.log("프로젝트 ID를 OAuth에 포함:", scwin.currentProjectData.projectId);
+            }
+            if (scwin.currentProjectData.userId) {
+                params.push("userId=" + encodeURIComponent(scwin.currentProjectData.userId));
+                console.log("사용자 ID를 OAuth에 포함:", scwin.currentProjectData.userId);
+            }
+        }
         
-        // Node.js 방식처럼 직접 리다이렉트
-        // 서버에서 GitHub OAuth URL로 리다이렉트 해줌
-        window.top.location.href = githubAuthStartUrl;
+        // WebSquare에서 추가 사용자 정보 가져오기 시도
+        if (!scwin.currentProjectData || !scwin.currentProjectData.userId) {
+            try {
+                // 다양한 방법으로 사용자 ID 가져오기 시도
+                let userId = null;
+                
+                // WebSquare 파라미터에서 시도
+                try {
+                    userId = $p.getParameter("userId") || $p.getParameter("user_id");
+                } catch(e) {}
+                
+                // 세션 스토리지에서 시도
+                if (!userId && typeof sessionStorage !== 'undefined') {
+                    userId = sessionStorage.getItem("userId") || sessionStorage.getItem("userEmail");
+                }
+                
+                // 로컬 스토리지에서 시도
+                if (!userId && typeof localStorage !== 'undefined') {
+                    userId = localStorage.getItem("userId") || localStorage.getItem("userEmail");
+                }
+                
+                if (userId && userId.trim() && userId !== "user01") {
+                    params.push("userId=" + encodeURIComponent(userId));
+                    console.log("추가로 찾은 사용자 ID를 OAuth에 포함:", userId);
+                }
+            } catch(e) {
+                console.log("추가 사용자 ID 찾기 실패:", e);
+            }
+        }
         
+        // URL 파라미터 추가
+        if (params.length > 0) {
+            githubAuthStartUrl += "?" + params.join("&");
+        }
+        
+        console.log("OAuth 시작 URL:", githubAuthStartUrl);
+        
+        // 팝업에 전달할 데이터
+        const popupData = {
+            authUrl: githubAuthStartUrl,
+            projectData: scwin.currentProjectData,
+            callbackFn: function(result) {
+                console.log("GitHub 인증 콜백 수신:", result);
+                
+                if (result && result.status === 'success') {
+                    console.log("GitHub 인증 성공!");
+                    $c.win.alert("GitHub 계정이 성공적으로 연동되었습니다.");
+
+                    // 인증 성공 처리
+                    dm_auth_status.set("isAuthenticated", "true");
+                    dm_auth_status.set("needsLogin", "false");
+                    
+                    if (result.data && result.data.user) {
+                        dm_auth_status.set("username", result.data.user.login || "");
+                        dm_auth_status.set("avatarUrl", result.data.user.avatar_url || "");
+                    }
+                    dm_auth_status.set("hasGitHubApp", result.data && result.data.hasSelectedRepo ? "true" : "false");
+                    
+                    // UI 업데이트
+                    scwin.showAuthenticatedUI();
+                    scwin.loadConnectedRepositories();
+                    
+                } else {
+                    const errorMessage = result && result.data ? result.data.message : "알 수 없는 오류";
+                    console.error("GitHub 인증 실패:", errorMessage);
+                    $c.win.alert("GitHub 계정 연동에 실패했습니다: " + errorMessage);
+                }
+            }
+        };
+        
+        // 전역 콜백 함수 등록
+        window.githubAuthCallback = popupData.callbackFn;
+        
+        // postMessage 이벤트 리스너 등록
+        const messageListener = function(event) {
+            console.log("postMessage 수신:", event);
+            
+            // 보안을 위해 origin 확인
+            if (event.origin !== window.location.origin) {
+                console.warn("다른 origin에서 온 메시지 무시:", event.origin);
+                return;
+            }
+            
+            if (event.data && event.data.type === 'githubAuthResult') {
+                console.log("GitHub 인증 결과 수신:", event.data.result);
+                
+                // 이벤트 리스너 제거
+                window.removeEventListener('message', messageListener);
+                
+                // 콜백 함수 호출
+                if (typeof popupData.callbackFn === 'function') {
+                    popupData.callbackFn(event.data.result);
+                }
+            }
+        };
+        
+        window.addEventListener('message', messageListener);
+        
+        console.log("브라우저 팝업으로 GitHub OAuth 시작:", githubAuthStartUrl);
+        
+        // WebSquare 팝업 대신 직접 브라우저 팝업 사용
+        const authWindow = window.open(
+            githubAuthStartUrl,
+            'github_oauth_popup',
+            'width=800,height=650,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
+        );
+        
+        if (authWindow) {
+            // 팝업이 닫힐 때까지 주기적으로 확인
+            const checkClosed = setInterval(() => {
+                if (authWindow.closed) {
+                    clearInterval(checkClosed);
+                    console.log("GitHub OAuth 팝업이 닫혔습니다");
+                    
+                    // 이벤트 리스너 정리
+                    window.removeEventListener('message', messageListener);
+                    
+                    // 인증 상태 재확인 (postMessage 실패 시 백업)
+                    setTimeout(() => {
+                        scwin.checkAuthenticationStatus();
+                    }, 1000);
+                }
+            }, 1000);
+            
+            // 5분 후 자동 정리
+            setTimeout(() => {
+                clearInterval(checkClosed);
+                window.removeEventListener('message', messageListener);
+                if (authWindow && !authWindow.closed) {
+                    authWindow.close();
+                }
+            }, 300000);
+        } else {
+            console.error("팝업이 차단되었습니다. 팝업 차단 해제 후 다시 시도해주세요.");
+            window.removeEventListener('message', messageListener);
+            $c.win.alert("팝업이 차단되었습니다. 브라우저 설정에서 팝업 차단을 해제한 후 다시 시도해주세요.");
+        }
+
     } catch (e) {
-        console.error("GitHub 로그인 리다이렉트 실패:", e);
-        $c.win.alert("GitHub 로그인 페이지로 이동할 수 없습니다.\n\n오류: " + e.message);
+        console.error("GitHub 로그인 팝업 실행 오류:", e);
+        $c.win.alert("GitHub 인증을 시작할 수 없습니다: " + e.message);
     }
 };
 
@@ -845,11 +1037,10 @@ scwin.loadConnectedRepositories = function () {
             console.log("연결된 레포지토리 목록 로드 완료:", e);
 
             scwin.updateRepositoryDisplay();
-            scwin.addToHistory("load_repositories", "전체", "", "성공");
 
             // 첫 번째 레포지토리 자동 선택
-            if (dlt_connected_repositories.getTotalRow() > 0) {
-                dlt_connected_repositories.setFocusedRow(0);
+            if (dlt_GitHubRepositoryVoList.getTotalRow() > 0) {
+                dlt_GitHubRepositoryVoList.setFocusedRow(0);
                 scwin.onRepositorySelect();
             } else {
                 scwin.showEmptyRepositoryState();
@@ -860,7 +1051,6 @@ scwin.loadConnectedRepositories = function () {
 
             var errorMsg = scwin.getErrorMessage(e);
             $c.win.alert("연결된 레포지토리 목록을 불러올 수 없습니다.\n" + errorMsg);
-            scwin.addToHistory("load_repositories", "전체", "", "실패");
 
             if (e.status === 401) {
                 scwin.showLoginRequiredUI();
@@ -876,22 +1066,20 @@ scwin.loadConnectedRepositories = function () {
 // 레포지토리 표시 업데이트
 scwin.updateRepositoryDisplay = function () {
     try {
-        var totalRepos = dlt_connected_repositories.getTotalRow();
-        var connectedRepos = 0;
-        var activeRepos = 0;
+        var totalRepos = dlt_GitHubRepositoryVoList.getTotalRow();
+        var privateRepos = 0;
+        var publicRepos = 0;
 
         for (var i = 0; i < totalRepos; i++) {
-            if (dlt_connected_repositories.getCellData(i, "isConnected") === "true") {
-                connectedRepos++;
-            }
-            if (dlt_connected_repositories.getCellData(i, "hasValidToken") === "true") {
-                activeRepos++;
+            if (dlt_GitHubRepositoryVoList.getCellData(i, "isPrivate") === "true") {
+                privateRepos++;
+            } else {
+                publicRepos++;
             }
         }
 
-        var countText = "총 " + totalRepos + "개 레포지토리, " +
-            connectedRepos + "개 연결됨, " +
-            activeRepos + "개 활성상태";
+        var countText = "총 " + totalRepos + "개 레포지토리 (" + 
+            publicRepos + "개 공개, " + privateRepos + "개 비공개)";
 
         var countElement = document.getElementById("repo-count-info");
         if (countElement) {
@@ -912,13 +1100,8 @@ scwin.showEmptyRepositoryState = function () {
             countElement.textContent = "연결된 레포지토리가 없습니다. 새 레포지토리를 연결해보세요.";
         }
 
-        // 현재 레포지토리 정보 초기화
-        dm_current_repo.set("full_name", "");
-        dm_current_repo.set("description", "선택된 레포지토리가 없습니다.");
-        dm_current_repo.set("html_url", "");
-
-        // 브랜치 목록 초기화
-        dlt_branches.removeAll();
+        // 선택된 레포지토리 정보 초기화
+        dm_ui_state.set("selectedRepo", "");
     } catch (e) {
         console.error("빈 상태 표시 실패:", e);
     }
@@ -932,8 +1115,8 @@ scwin.checkServiceStatus_onclick = function () {
 // 로딩 상태 설정 및 표시 업데이트
 scwin.setLoading = function (isLoading, message) {
     try {
-        dm_github_form.set("isLoading", isLoading ? "true" : "false");
-        dm_github_form.set("loadingMessage", message || "처리 중...");
+        dm_ui_state.set("isLoading", isLoading ? "true" : "false");
+        dm_ui_state.set("loadingMessage", message || "처리 중...");
 
         // 직접 로딩 표시 업데이트
         scwin.updateLoadingDisplay(isLoading);
@@ -954,7 +1137,7 @@ scwin.updateLoadingDisplay = function (isLoading) {
             if (isLoading) {
                 var messageElement = loadingElement.querySelector(".loading-message");
                 if (messageElement) {
-                    messageElement.textContent = dm_github_form.get("loadingMessage") || "처리 중...";
+                    messageElement.textContent = dm_ui_state.get("loadingMessage") || "처리 중...";
                 }
             }
         }
@@ -1317,38 +1500,119 @@ scwin.testGitHubAuthStart = function() {
         var baseUrl = window.location.protocol + "//" + window.location.host;
         var authUrl = baseUrl + "/InsWebApp/github/auth/start";
         
+        // 현재 프로젝트 정보가 있으면 OAuth 요청에 포함
+        var params = [];
+        if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
+            params.push("projectId=" + encodeURIComponent(scwin.currentProjectData.projectId));
+            console.log("프로젝트 ID를 OAuth에 포함:", scwin.currentProjectData.projectId);
+        }
+        if (scwin.currentProjectData && scwin.currentProjectData.userId) {
+            params.push("userId=" + encodeURIComponent(scwin.currentProjectData.userId));
+            console.log("사용자 ID를 OAuth에 포함:", scwin.currentProjectData.userId);
+        }
+        
+        // 추가 사용자 ID 찾기 (프로젝트 데이터에 없는 경우)
+        if (!scwin.currentProjectData || !scwin.currentProjectData.userId) {
+            try {
+                var userId = null;
+                
+                // WebSquare 파라미터에서 시도
+                try {
+                    userId = $p.getParameter("userId") || $p.getParameter("user_id");
+                } catch(e) {}
+                
+                // 세션 스토리지에서 시도
+                if (!userId && typeof sessionStorage !== 'undefined') {
+                    userId = sessionStorage.getItem("userId") || sessionStorage.getItem("userEmail");
+                }
+                
+                // 로컬 스토리지에서 시도
+                if (!userId && typeof localStorage !== 'undefined') {
+                    userId = localStorage.getItem("userId") || localStorage.getItem("userEmail");
+                }
+                
+                if (userId && userId.trim() && userId !== "user01") {
+                    params.push("userId=" + encodeURIComponent(userId));
+                    console.log("WebSquare에서 추가로 찾은 사용자 ID를 OAuth에 포함:", userId);
+                }
+            } catch(e) {
+                console.log("WebSquare 추가 사용자 ID 찾기 실패:", e);
+            }
+        }
+        
+        if (params.length > 0) {
+            authUrl += "?" + params.join("&");
+        }
+        
         console.log("인증 URL:", authUrl);
         
-        // 새 창에서 인증 시작 (테스트용)
-        var authWindow = window.open(authUrl, 'githubAuth', 'width=600,height=700,scrollbars=yes');
+        // 콜백 함수 정의
+        var callbackFn = function(result) {
+            console.log("GitHub 인증 테스트 콜백 수신:", result);
+            
+            if (result && result.status === 'success') {
+                console.log("GitHub 인증 성공!");
+                $c.win.alert("GitHub 계정이 성공적으로 연동되었습니다.");
+                
+                // 인증 상태 재확인
+                setTimeout(function() {
+                    scwin.checkAuthenticationStatus();
+                }, 1000);
+            } else {
+                var errorMessage = result && result.data ? result.data.message : "알 수 없는 오류";
+                console.error("GitHub 인증 실패:", errorMessage);
+                $c.win.alert("GitHub 계정 연동에 실패했습니다: " + errorMessage);
+            }
+        };
         
-        // 인증 완료 감지 (간단한 폴링)
-        var checkInterval = setInterval(function() {
-            try {
+        // 전역 콜백 함수 등록
+        window.githubAuthCallback = callbackFn;
+        
+        console.log("브라우저 팝업으로 GitHub OAuth 시작:", authUrl);
+        
+        // WebSquare 팝업 대신 직접 브라우저 팝업 사용
+        var authWindow = window.open(
+            authUrl,
+            'github_oauth_popup',
+            'width=800,height=650,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
+        );
+        
+        if (authWindow) {
+            // 팝업이 닫힐 때까지 주기적으로 확인
+            var checkClosed = setInterval(function() {
                 if (authWindow.closed) {
-                    clearInterval(checkInterval);
-                    console.log("인증 창이 닫힘 - 상태 재확인");
+                    clearInterval(checkClosed);
+                    console.log("GitHub OAuth 팝업이 닫혔습니다 - 인증 상태 재확인");
                     setTimeout(function() {
                         scwin.checkAuthenticationStatus();
                     }, 1000);
                 }
-            } catch (e) {
-                // 크로스 도메인 에러 무시
-            }
-        }, 1000);
-        
-        // 5분 후 자동 정리
-        setTimeout(function() {
-            clearInterval(checkInterval);
-            if (authWindow && !authWindow.closed) {
-                authWindow.close();
-            }
-        }, 300000);
+            }, 1000);
+            
+            // 5분 후 자동 정리
+            setTimeout(function() {
+                clearInterval(checkClosed);
+                if (authWindow && !authWindow.closed) {
+                    authWindow.close();
+                }
+            }, 300000);
+        } else {
+            console.error("팝업이 차단되었습니다. 팝업 차단 해제 후 다시 시도해주세요.");
+            $c.win.alert("팝업이 차단되었습니다. 브라우저 설정에서 팝업 차단을 해제한 후 다시 시도해주세요.");
+        }
         
     } catch (e) {
         console.error("인증 시작 오류:", e);
         $c.win.alert("❌ 인증 시작 중 오류 발생\n\n" + e.message);
     }
+};
+
+// OAuth 팝업 닫기 액션
+scwin.oauthPopup_closeAction = function() {
+    console.log("OAuth 팝업이 닫혔습니다 - 인증 상태 재확인");
+    setTimeout(function() {
+        scwin.checkAuthenticationStatus();
+    }, 1000);
 };
 
 // 백엔드 GitHub 인증 시작 테스트 (서브미션 방식)
