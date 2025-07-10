@@ -238,10 +238,10 @@ public class ProjectController {
      */
     @ElService(key = "uploadProjectImage")
     @RequestMapping(value = "uploadProjectImage")
-    @ResponseBody
     @ElDescription(sub = "프로젝트 이미지 업로드 처리", desc = "프로젝트 이미지를 S3에 업로드하고 DB에 URL을 저장한다.")
     public Map<String, Object> uploadProjectImage(
-            MultipartHttpServletRequest request) throws Exception {
+            MultipartHttpServletRequest request,
+            @RequestParam(value = "projectId", required = false) String projectIdParam) throws Exception {
         
         Map<String, Object> result = new HashMap<>();
         
@@ -250,7 +250,15 @@ public class ProjectController {
             
             // MultipartHttpServletRequest에서 파일과 파라미터 추출
             MultipartFile file = request.getFile("file");
-            String projectId = request.getParameter("projectId");
+            String projectId = projectIdParam;
+            
+            // projectId가 없으면 다른 방법들로 확인
+            if (projectId == null || projectId.trim().isEmpty()) {
+                projectId = request.getParameter("projectId");
+            }
+            if (projectId == null || projectId.trim().isEmpty()) {
+                projectId = request.getParameter("project_id");
+            }
             
             System.out.println("Project ID: " + projectId);
             System.out.println("File name: " + (file != null ? file.getOriginalFilename() : "null"));
