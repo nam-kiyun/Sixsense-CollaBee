@@ -23,6 +23,8 @@ body {
     width: 65%;
     height: 100%;
     /* background-color: aqua; */
+	overflow: scroll;
+	overflow-x: hidden;
 }
 
 /* 컨텐츠 상단 부분 */
@@ -34,12 +36,13 @@ body {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    /* background-color: pink; */
+    /*background-color: pink; */
 }
 
 .contents-group .contents-header-group .header-title {
     width: 80%;
     height: 25%;
+	/*background-color: blue;*/
 }
 
 .contents-group .contents-header-group .header-title .header-title-text {
@@ -53,7 +56,9 @@ body {
     text-align: center;
     align-items: center;
     gap: 50px;
+	/*background-color: green;*/
 }
+
 
 .contents-group .contents-header-group .header-input .header-input-box {
     display: flex;
@@ -84,9 +89,7 @@ body {
 /* 컨텐츠 내용 입력 부분 */
 .contents-group .contents-main-group {
     width: 100%;
-    height: 70%;
-    overflow: scroll;
-    overflow-x: hidden;
+    min-height: 500px;
     background-color: plum;
 }
 
@@ -98,19 +101,78 @@ body {
     align-items: center;
     justify-content: center;
     background-color: lightgray;
+	flex-direction: column;
+}
+.contents-group .contents-main-group .contents-text-group .editor-group{
+	width: 100%;
+	height: 100%;
+	display: flex;
+}
+/*에디터*/
+.w2editor {
+	width: 100%;
+	height: 100%;
+/*	background-color: yellow;*/
+	display:flex;
+	justify-content: center;
+	padding: 0;
+	margin:0;
+}
+.cke_inner{
+	width: 100%;
+	height: 100%;
 }
 
-.contents-group .contents-main-group .contents-text-group .textarea {
+
+#cke_27{
+	/*background-color: green;*/
+}
+.cke_wysiwyg_frame{
+/*	background-color:green;*/
+}
+#cke_mf_exa_popup_wframe_contents_editor_{
+	width:10%;
+	margin:0;
+	/*background-color:green;*/
+}
+.cke_inner, .cke_reset{
+	display: flex !important;
+	flex-direction: column !important;
+	height: 100% !important;
+}
+.cke_inner #cke_1_top{ /*에디터 헤더*/
+	/*background-color: orange;*/
+	min-height: 30px !important;
+}
+.cke_inner #cke_1_contents{ /*에디터 내용*/
+/*	background-color: #D6D85D !important;*/
+/*	height: auto !important;*/
+/*	min-height: 1px !important;*/
+	min-height: 370px !important;
+}
+.cke_inner .cke_bottom{ /*에디터 bottom*/
+/*	background-color: #D6D85D;*/
+	min-height: 3px !important;
+}
+
+.cke_wysiwyg_frame {
+  min-height: 370px !important;
+  display: block;
+ /* transition: height 0.3s ease !important;*/
+}
+
+
+/*.w2editor {
     width: 80%;
     height: 100%;
-}
+}*/
 
 
 
 /* 컨텐츠 파일 부분 */
 .contents-group .contents-main-group .contents-file-group {
     width: 100%;
-    height: 30%;
+	min-height: 150px;
     background-color: skyblue;
 }
 
@@ -118,6 +180,9 @@ body {
 .comment-group {
     width: 35%;
     height: 100%;
+    overflow: hidden;
+    overflow-y: hidden;
+    border-left: 2px solid #D9D9D9;
     /* background-color: darkorange; */
 }
 
@@ -135,6 +200,15 @@ body {
 .comment-group .comment-main-group {
     width: 100%;
     height: 80%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 30px;
+    padding-bottom: 15px;
+    box-sizing: border-box;
+    overflow: scroll;
+    overflow-x: hidden;
+    gap: 10px;
+    /* background-color: bisque; */
 }
 
 /* 채팅 input과 전송버튼 */
@@ -275,4 +349,33 @@ body {
 	display: inline-block;
 	text-align: center;
 	font-weight: 500;
+}
+
+
+
+/*모달 스타일*/
+.header-btn-group{
+	display: flex; 
+	gap: 17px; 
+	align-items: center;
+	justify-content: center;
+	width: 220px; 
+	height: 100%;
+}
+.header-btn{
+	height:70%; 
+	width: 90px;
+	border-radius: 6px;
+	background-color: #FFB823;
+}
+.btn-version{
+	background-image: url('/InsWebApp/images/version.svg');
+	background-size: 20px 20px;
+    background-position: center;
+    background-repeat: no-repeat;
+	height:70%; 
+	width: 50px;
+	background-color: transparent; 
+	border: none;
+
 }

@@ -99,6 +99,91 @@ scwin.onpageload = function () {
     //소켓 초기화
     scwin.initializeChatWebSocket();
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    const generateUniqueId = (prefix) => {
+        return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    };
+    const group = $p.getComponentById("mf_exa_popup_header"); // 헤더의 버튼 영역
+    const close = $p.getComponentById("mf_exa_popup_header_control");
+    const btnGroupId = generateUniqueId("btn_group");
+    const saveId = generateUniqueId("btn_save");
+    const versionId = generateUniqueId("btn_version");
+
+    // 버튼 그룹 생성
+    const btnGroup = $p.dynamicCreate(btnGroupId, "group", {
+        className: "header-btn-group",
+    }, group);
+
+
+    if (btnGroup?.render) {
+        group.insertBefore(btnGroup.render, close);
+    }
+
+
+    // 버튼 생성 → btnGroup에 삽입
+    const save = $p.dynamicCreate(saveId, "button", {
+        className: "btn-save header-btn",
+        label: "저장",
+    }, btnGroup);
+
+    const version = $p.dynamicCreate(versionId, "button", {
+        className: "btn-version",
+        // label: "버전관리",
+    }, btnGroup);
+
+    const btn_save = $p.getComponentById("btn_save");
+
+    // btn_save.bind("onclick", function () {
+    //     console.log("저장버튼");
+    // });
+
+    // x 버튼 앞에 삽입
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    // setTimeout(() => {
+    //     const iframe = document.querySelector('.cke_wysiwyg_frame');
+    //     if (iframe && iframe.contentDocument) {
+    //         iframe.style.height = iframe.contentDocument.body.scrollHeight + 'px';
+    //     }
+    // }, 500); // 렌더링 지연 고려
+
+    // setTimeout(() => {
+    //     const iframe = document.querySelector('.cke_wysiwyg_frame');
+    //     const contents = $p.getComponentById("cke_1_contents");
+
+    //     //iframe.style.height = iframe.contentDocument.body.scrollHeight + 'px';
+    //     // contents.style.heigth =
+    //     console.log("iframe: " + iframe);
+    //     console.log("contents: " + contents);
+    //     iframe.style.setProperty('height', '100px', 'important');
+    // }, 500); // 또는 CKEditor onInstanceReady 이벤트 사용
+
+    let lastHeight = 0;
+
+
+
+    setInterval(() => {
+        const iframe = document.querySelector('.cke_wysiwyg_frame');
+        const contents = $p.getComponentById("cke_1_contents");
+
+        const innerDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+        const body = innerDoc?.body;
+
+        if (iframe && body) {
+            const scrollHeight = body.scrollHeight + 100;
+            body.style.overflow = 'hidden';
+
+            iframe.style.setProperty('height', scrollHeight + 'px', 'important');
+            contents.style.setProperty('height', scrollHeight + 'px', 'important');
+
+            // scwin.smoothResize(iframe, scrollHeight);
+            // scwin.smoothResize(contents, scrollHeight);
+        }
+    }, 300);
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //사용자 정보
     let userInfo = $p.getParameter("userInfo");
     scwin.defaultImage = "https://raw.githubusercontent.com/dorazi0423/test/refs/heads/main/group1.png";
@@ -125,6 +210,24 @@ scwin.onpageload = function () {
 
 };
 
+scwin.smoothResize = function (target, newHeight) {
+    const currentHeight = parseInt(target.style.height || 0);
+    const step = (newHeight - currentHeight) / 10;
+    let frame = 0;
+
+    function animate() {
+        frame++;
+        const nextHeight = currentHeight + step * frame;
+        target.style.height = nextHeight + 'px';
+        if (frame < 2) requestAnimationFrame(animate);
+    }
+
+    animate();
+};
+
+
+
+//해당 작업에 대한 채팅 불러오기(20개씩)
 scwin.loadMoreData = function () {
     if (scwin.isLoading || !scwin.hasMore) return;
 
@@ -512,7 +615,7 @@ scwin.sbm_comment_get_submitdone = function (e) {
 
         // 댓글 삽입
         const commentComp = scwin.addChatMessage(
-            comment.commentId,
+            comment.userName,
             comment.message,
             scwin.formatTime(comment.createdAt),
             isMine,
@@ -536,7 +639,7 @@ scwin.sbm_comment_get_submitdone = function (e) {
             const el = scrollArea.render;
             el.scrollTop = el.scrollHeight;
         }, 30);
-    }else{
+    } else {
         setTimeout(() => {
             const scrollArea = $p.getComponentById("comment_main_group");
             const el = scrollArea.render;
@@ -611,256 +714,7 @@ scwin.formatTime = function (datetimeStr) {
     if (hour === 0) hour = 12;
     return `${isAM ? '오전' : '오후'} ${hour}:${minute}`;
 };]]></script>
-		<style type="text/css"><![CDATA[body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-}
-
-/* 전체 컨테이너 */
-.modal-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    margin: 0;
-    border: none;
-    height: 100%;
-    /* background-color: cadetblue; */
-}
-
-/* 컨텐츠 컨테이너 */
-.contents-group {
-    width: 65%;
-    height: 100%;
-    /* background-color: aqua; */
-}
-
-/* 컨텐츠 상단 부분 */
-.contents-group .contents-header-group {
-    width: 100%;
-    height: 30%;
-    display: flex;
-    text-align: center;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    /* background-color: pink; */
-}
-
-.contents-group .contents-header-group .header-title {
-    width: 80%;
-    height: 25%;
-}
-
-.contents-group .contents-header-group .header-title .header-title-text {
-    font-size: 25px;
-}
-
-.contents-group .contents-header-group .header-input {
-    display: flex;
-    width: 80%;
-    height: 25%;
-    text-align: center;
-    align-items: center;
-    gap: 50px;
-}
-
-.contents-group .contents-header-group .header-input .header-input-box {
-    display: flex;
-    gap: 10px;
-}
-
-.contents-group .contents-header-group .header-input .header-input-box .header-input-text {
-    width: 80px;
-    text-align: left;
-}
-
-.input-text {
-    font-size: 17px;
-}
-
-.text-left {
-    text-align: left;
-}
-
-.github-input {
-    width: 100px;
-}
-
-.text-bold {
-    font-weight: bold;
-}
-
-/* 컨텐츠 내용 입력 부분 */
-.contents-group .contents-main-group {
-    width: 100%;
-    height: 70%;
-    overflow: scroll;
-    overflow-x: hidden;
-    background-color: plum;
-}
-
-/* 텍스트 입력하는 곳 */
-.contents-group .contents-main-group .contents-text-group {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: lightgray;
-}
-
-.contents-group .contents-main-group .contents-text-group .textarea {
-    width: 80%;
-    height: 100%;
-}
-
-
-
-/* 컨텐츠 파일 부분 */
-.contents-group .contents-main-group .contents-file-group {
-    width: 100%;
-    height: 30%;
-    background-color: skyblue;
-}
-
-/* 채팅 컨테이너 */
-.comment-group {
-    width: 35%;
-    height: 100%;
-    overflow: hidden;
-    overflow-y: hidden;
-    border-left: 2px solid #D9D9D9;
-    /* background-color: darkorange; */
-}
-
-.comment-group .comment-text {
-    width: 100%;
-    height: 10%;
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
-    box-sizing: border-box;
-    font-weight: bolder;
-    font-size: 17px;
-}
-
-.comment-group .comment-main-group {
-    width: 100%;
-    height: 80%;
-    display: flex;
-    flex-direction: column;
-    padding: 0 30px;
-    padding-bottom: 15px;
-    box-sizing: border-box;
-    overflow: scroll;
-    overflow-x: hidden;
-    gap: 10px;
-    /* background-color: bisque; */
-}
-
-/* 채팅 input과 전송버튼 */
-.comment-group .comment-input-group {
-    width: 100%;
-    height: 10%;
-    display: flex;
-    justify-content: center;
-}
-
-.comment-group .comment-input-group .comment-box {
-    width: 85%;
-    height: 70%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-    background-color: white;
-    border-radius: 5px;
-    border: 1px solid #D9D9D9;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-
-.comment-group .comment-input-group .comment-box .comment-input {
-    width: 80%;
-    height: 80%;
-    outline: none;
-    border: none;
-}
-
-.comment-group .comment-input-group .comment-box .comment-input:focus {
-    outline: none;
-    border: none;
-    box-shadow: none;
-}
-
-.comment-group .comment-input-group .comment-box .comment-input-button {
-    width: 15%;
-    height: 80%;
-    background-image: url('/InsWebApp/images/send.svg');
-    background-size: 20px 20px;
-    background-position: center;
-    background-repeat: no-repeat;
-    border: none;
-    outline: none;
-    border-radius: 5px;
-    background-color: #FFB823;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.comment-group .comment-input-group .comment-box .comment-input-button:active,
-.comment-input-button.active {
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
-    /* transform: translateY(2px);  */
-
-}
-
-
-
-
-
-
-
-/* 채팅 스타일 */
-.message-wrapper-right {
-    text-align: right; /* 오른쪽 정렬 */
-    width: 100%;
-    /* display: block; 또는 flexbox를 사용하여 블록 레벨 요소로 만듭니다. */
-}
-
-.message-wrapper-left {
-    text-align: left; /* 왼쪽 정렬 (기본값 또는 수신 메시지용) */
-    width: 100%;
-}
-
-/* 모든 말풍선의 공통 스타일 */
-.message-bubble-base {
-    display: inline-block; /* 텍스트 내용만큼만 너비를 가지되, 패딩/마진 적용 가능 */
-    padding: 8px 12px; /* 내부 여백 */
-    margin: 6px; /* 외부 여백 (말풍선 간 간격) */
-    border-radius: 12px; /* 둥근 모서리 */
-    max-width: 80%; /* 화면 너비의 최대 80%만 사용 (긴 메시지에도 유용) */
-    word-wrap: break-word; /* 긴 단어가 영역을 넘어가지 않도록 줄 바꿈 */
-    box-shadow: 0px 1px 3px rgba(0,0,0,0.1); /* 미묘한 그림자 효과 */
-    font-size: 14px; /* 글자 크기 */
-    line-height: 1.4; /* 줄 간격 */
-    vertical-align: top; /* inline-block 요소의 기본 정렬 문제를 해결 */
-}
-
-/* 서버로부터 받은 메시지 (왼쪽) */
-.message-bubble-received {
-    background-color: #e6f3ff; /* 연한 파란색 배경 */
-    color: #333; /* 글자색 */
-}
-
-/* 내가 보낸 메시지 (오른쪽) */
-.message-bubble-sent {
-    background-color: #ffe812; /* 카카오톡 노란색 배경 */
-    color: #333; /* 글자색 */
-}]]></style>
+		<style type="text/css"><![CDATA[]]></style>
 	</head>
 	<body ev:onpageload="scwin.onpageload">
 
@@ -981,7 +835,8 @@ scwin.formatTime = function (datetimeStr) {
 				</xf:group>
 				<xf:group style="" id="" class="contents-main-group">
 					<xf:group style="" id="" class="contents-text-group">
-						<w2:editor style="width:500px; height:300px; " id=""></w2:editor>
+						
+						<w2:editor style="" id="contents_editor"></w2:editor>
 					</xf:group>
 					<xf:group style="" id="" class="contents-file-group"></xf:group>
 				</xf:group>

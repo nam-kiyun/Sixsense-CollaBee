@@ -58,7 +58,7 @@ public class CommentController {
 		int page = searchVo.getPage();
 		int totalPageCount = (totCnt == 0) ? 0 : (int) Math.ceil((double) totCnt / 10);
 		searchVo.setTaskId(taskId);
-		searchVo.setPageSize(10);
+		searchVo.setPageSize(20);
 		searchVo.setStartOffset((page - 1) * 10);
 
 		List<CommentVo> commentList = commentService.selectListCommentByTaskId(searchVo); // 해당 task의 댓글을 조회

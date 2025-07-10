@@ -99,24 +99,6 @@ scwin.update_button_onclick = function (e) {
     let isValid = true;
     let pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+={}\[\]:;"'<>,.?/-]).{8,}$/;
 
-    // 1. 비밀번호
-    if (!password) {
-        password_error_text.setValue("*비밀번호를 입력해주세요.");
-        isValid = false;
-    } else {
-        password_error_text.setValue("");
-    }
-
-    // 2. 비밀번호 확인
-    if (!passwordCheck) {
-        passwordCheck_error_text.setValue("*비밀번호 확인을 입력해주세요.");
-        isValid = false;
-    }
-    else {
-        passwordCheck_error_text.setValue("");
-    }
-
-
     if (password && !pwRegex.test(password)) {
         password_error_text.setValue("*비밀번호는 8자 이상이며 영문자·숫자·특수문자를 포함해야 합니다.");
         isValid = false;
