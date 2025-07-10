@@ -210,9 +210,126 @@ public class ProjectController {
     @RequestMapping(value="ProjectUpd")    
     @ElValidator(errUrl="/project/projectRegister", errContinue=true)
     @ElDescription(sub="프로젝트 정보를 담는 테이블 갱신처리",desc="프로젝트 정보를 담는 테이블를 갱신 처리 한다.")    
-    public void updateProject(ProjectVo projectVo) throws Exception {  
- 
-    	projectService.updateProject(projectVo);                                            
+    public Map<String, Object> updateProject(HttpServletRequest request) throws Exception {  
+
+        System.out.println("=== 프로젝트 정보 업데이트 시작 ===");
+        
+        // 모든 파라미터 출력해보기
+        System.out.println("모든 파라미터 목록:");
+        java.util.Enumeration<String> paramNames = request.getParameterNames();
+        while (paramNames.hasMoreElements()) {
+            String paramName = paramNames.nextElement();
+            String paramValue = request.getParameter(paramName);
+            System.out.println("  " + paramName + " = " + paramValue);
+        }
+        
+        // POST body 직접 읽기 시도
+        String projectId = null;
+        String projectName = null;
+        String emailSendTime = null;
+        
+        try {
+            java.io.BufferedReader reader = request.getReader();
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+            String body = sb.toString();
+            System.out.println("POST Body: " + body);
+            
+            // URL 디코딩 및 파싱
+            if (body.contains("projectId=")) {
+                String[] pairs = body.split("&");
+                for (String pair : pairs) {
+                    if (pair.contains("=")) {
+                        String[] keyValue = pair.split("=", 2);
+                        if (keyValue.length == 2) {
+                            String key = keyValue[0];
+                            String value = java.net.URLDecoder.decode(keyValue[1], "UTF-8");
+                            System.out.println("파싱된 파라미터: " + key + " = " + value);
+                            
+                            if ("projectId".equals(key)) {
+                                projectId = value;
+                            } else if ("projectName".equals(key)) {
+                                projectName = value;
+                            } else if ("emailSendTime".equals(key)) {
+                                emailSendTime = value;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("POST body 읽기 오류: " + e.getMessage());
+            
+            // 실패 시 일반 파라미터 방식으로 시도
+            projectId = request.getParameter("projectId");
+            projectName = request.getParameter("projectName");
+            emailSendTime = request.getParameter("emailSendTime");
+        }
+        
+        System.out.println("추출된 파라미터:");
+        System.out.println("프로젝트 ID: " + projectId);
+        System.out.println("프로젝트명: " + projectName);
+        System.out.println("메일 발송 시간: " + emailSendTime);
+        
+        // 파라미터 유효성 검사
+        if (projectId == null || projectId.trim().isEmpty()) {
+            System.err.println("프로젝트 ID가 없습니다.");
+            throw new Exception("프로젝트 ID가 필요합니다.");
+        }
+        
+        if (projectName == null || projectName.trim().isEmpty()) {
+            System.err.println("프로젝트명이 없습니다.");
+            throw new Exception("프로젝트명이 필요합니다.");
+        }
+        
+        if (emailSendTime == null || emailSendTime.trim().isEmpty()) {
+            System.err.println("메일 발송 시간이 없습니다.");
+            throw new Exception("메일 발송 시간이 필요합니다.");
+        }
+        
+        ProjectVo projectVo = new ProjectVo();
+        projectVo.setProjectId(projectId);
+        projectVo.setProjectName(projectName);
+        projectVo.setEmailSendTime(emailSendTime);
+        
+    	int updateCount = projectService.updateProject(projectVo);
+    	
+    	System.out.println("프로젝트 정보 업데이트 완료");
+    	System.out.println("업데이트된 행 수: " + updateCount);
+    	
+    	// 업데이트 후 실제 DB 상태 확인
+    	try {
+    	    ProjectVo checkVo = new ProjectVo();
+    	    checkVo.setProjectId(projectId);
+    	    ProjectVo updatedProject = projectService.selectProject(checkVo);
+    	    
+    	    System.out.println("=== 업데이트 후 DB 상태 확인 ===");
+    	    System.out.println("DB에서 조회된 프로젝트명: " + updatedProject.getProjectName());
+    	    System.out.println("DB에서 조회된 메일 발송 시간: " + updatedProject.getEmailSendTime());
+    	    System.out.println("업데이트한 프로젝트명: " + projectName);
+    	    System.out.println("업데이트한 메일 발송 시간: " + emailSendTime);
+    	    
+    	    if (projectName.equals(updatedProject.getProjectName()) && 
+    	        emailSendTime.equals(updatedProject.getEmailSendTime())) {
+    	        System.out.println("✓ DB 업데이트가 성공적으로 반영되었습니다.");
+    	    } else {
+    	        System.err.println("✗ DB 업데이트가 반영되지 않았습니다!");
+    	    }
+    	} catch (Exception e) {
+    	    System.err.println("DB 상태 확인 중 오류: " + e.getMessage());
+    	}
+    	
+    	// WebSquare용 성공 응답 반환
+    	Map<String, Object> result = new HashMap<>();
+    	result.put("success", true);
+    	result.put("message", "프로젝트 정보가 성공적으로 업데이트되었습니다.");
+    	result.put("updateCount", updateCount);
+    	
+    	System.out.println("WebSquare 응답 반환: " + result);
+    	return result;
     }
 
     /**

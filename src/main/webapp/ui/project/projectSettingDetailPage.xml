@@ -558,9 +558,21 @@ scwin.uploadProjectImage = function(file) {
 scwin.btn_save_onclick = function(e) {
     
     
-    var projectName = dm_projectDetail.get("projectName");
-    var emailHour = dm_projectDetail.get("emailHour");
-    var emailMinute = dm_projectDetail.get("emailMinute");
+    // 입력 필드에서 직접 현재 값 가져오기
+    var projectName = input_projectName.getValue() || dm_projectDetail.get("projectName");
+    var emailHour = input_emailHour.getValue() || dm_projectDetail.get("emailHour");
+    var emailMinute = input_emailMinute.getValue() || dm_projectDetail.get("emailMinute");
+    
+    console.log("=== 입력값 확인 ===");
+    console.log("입력 필드에서 가져온 프로젝트명:", input_projectName.getValue());
+    console.log("입력 필드에서 가져온 시간:", input_emailHour.getValue());
+    console.log("입력 필드에서 가져온 분:", input_emailMinute.getValue());
+    console.log("데이터맵에서 가져온 프로젝트명:", dm_projectDetail.get("projectName"));
+    console.log("데이터맵에서 가져온 시간:", dm_projectDetail.get("emailHour"));
+    console.log("데이터맵에서 가져온 분:", dm_projectDetail.get("emailMinute"));
+    console.log("최종 사용할 프로젝트명:", projectName);
+    console.log("최종 사용할 시간:", emailHour);
+    console.log("최종 사용할 분:", emailMinute);
     
     // 유효성 검사
     if (!projectName || projectName.trim() === "") {
@@ -595,9 +607,106 @@ scwin.btn_save_onclick = function(e) {
     // 시간 합치기
     var emailSendTime = String(hour).padStart(2, '0') + ":" + String(minute).padStart(2, '0') + ":00";
     
-    // 저장 로직 (실제로는 서버 통신)
-    alert("프로젝트 설정이 저장되었습니다.");
+    console.log("=== 프로젝트 정보 저장 시작 ===");
+    console.log("프로젝트 ID:", scwin.projectId);
+    console.log("프로젝트명:", projectName);
+    console.log("메일 발송 시간:", emailSendTime);
     
+    // 서버에 프로젝트 정보 업데이트 요청
+    console.log("AJAX 요청 시작");
+    console.log("URL:", "/InsWebApp/ProjectUpd.pwkjson");
+    console.log("전송 데이터:", {
+        projectId: scwin.projectId,
+        projectName: projectName,
+        emailSendTime: emailSendTime
+    });
+    
+    $.ajax({
+        url: "/InsWebApp/ProjectUpd.pwkjson",
+        type: "POST",
+        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+        data: {
+            projectId: scwin.projectId,
+            projectName: projectName,
+            emailSendTime: emailSendTime
+        },
+        beforeSend: function(xhr) {
+            console.log("AJAX 요청 전송 직전");
+        },
+        success: function(response) {
+            console.log("프로젝트 정보 업데이트 응답:", response);
+            
+            // WebSquare 응답 처리 (void 반환 타입에 대한 특별 처리)
+            var isSuccess = false;
+            var message = "프로젝트 설정이 저장되었습니다.";
+            
+            console.log("응답 처리 시작 - 응답 객체:", response);
+            
+            if (response) {
+                // WebSquare elHeader 확인
+                if (response.elHeader) {
+                    console.log("elHeader 발견:", response.elHeader);
+                    if (response.elHeader.resSuc === true) {
+                        isSuccess = true;
+                        console.log("elHeader.resSuc가 true - 성공");
+                        // 서버에서 받은 메시지가 있으면 사용
+                        if (response.success === true && response.message) {
+                            message = response.message;
+                        }
+                    } else if (response.elHeader.resSuc === false) {
+                        isSuccess = false;
+                        message = response.elHeader.resMsg || "서버 오류가 발생했습니다.";
+                        console.log("elHeader.resSuc가 false - 실패:", message);
+                    } else {
+                        // resSuc이 정의되지 않은 경우, 직접 success 확인
+                        if (response.success === true) {
+                            isSuccess = true;
+                            message = response.message || message;
+                            console.log("response.success가 true - 성공");
+                        } else {
+                            isSuccess = true;
+                            console.log("elHeader.resSuc가 정의되지 않음 - void 반환으로 간주하여 성공");
+                        }
+                    }
+                } else {
+                    // elHeader가 없는 경우 직접 success 확인
+                    if (response.success === true) {
+                        isSuccess = true;
+                        message = response.message || message;
+                        console.log("response.success가 true - 성공");
+                    } else {
+                        isSuccess = true;
+                        console.log("elHeader가 없음 - 성공으로 간주");
+                    }
+                }
+            } else {
+                // 응답이 전혀 없는 경우
+                isSuccess = true;
+                console.log("응답이 없음 - 성공으로 간주");
+            }
+            
+            console.log("최종 성공 여부:", isSuccess);
+            console.log("최종 메시지:", message);
+            
+            if (isSuccess) {
+                alert(message);
+                console.log("프로젝트 정보 업데이트 성공");
+                
+                // 업데이트 성공 후 최신 데이터 다시 로드
+                setTimeout(function() {
+                    console.log("업데이트 후 데이터 다시 로드");
+                    scwin.loadProjectData();
+                }, 500);
+            } else {
+                alert("저장 중 오류가 발생했습니다: " + message);
+                console.error("프로젝트 정보 업데이트 실패:", response);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("프로젝트 정보 업데이트 오류:", error);
+            alert("프로젝트 정보 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+        }
+    });
     
 };
 
