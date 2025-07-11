@@ -211,7 +211,6 @@ scwin.loadProjectUsers = function(projectId) {
                 // 데이터리스트에 데이터 추가
                 for (var i = 0; i < projectUserList.length; i++) {
                     var user = projectUserList[i];
-                    console.log("프로젝트 멤버 추가:", user);
                     var rowIndex = dl_projectUsers.insertRow();
                     dl_projectUsers.setCellData(rowIndex, "userId", user.userId || "");
                     dl_projectUsers.setCellData(rowIndex, "userName", user.userName || "");
@@ -244,10 +243,6 @@ scwin.btn_search_onclick = function(e) {
     var searchValue = input_search.getValue();
     var projectId = dm_search.get("projectId");
     
-    console.log("=== 검색 버튼 클릭 ===");
-    console.log("searchValue (from input):", searchValue);
-    console.log("projectId:", projectId);
-    
     if (!searchValue || searchValue.trim() === "") {
         alert("사용자 ID를 입력해주세요.");
         return;
@@ -266,9 +261,6 @@ scwin.btn_search_onclick = function(e) {
 
 // 사용자 검색 함수
 scwin.searchUser = function(userId, projectId) {
-    console.log("=== 사용자 검색 함수 호출 ===");
-    console.log("userId:", userId);
-    console.log("projectId:", projectId);
     
     try {
         // 직접 AJAX 호출로 변경
@@ -281,8 +273,6 @@ scwin.searchUser = function(userId, projectId) {
             },
             dataType: "json",
             success: function(data) {
-                console.log("=== 검색 API 성공 ===");
-                console.log("응답 데이터:", data);
                 
                 // 검색 결과를 데이터맵에 설정
                 dm_searchResult.set("found", data.found || false);
@@ -295,17 +285,10 @@ scwin.searchUser = function(userId, projectId) {
                 scwin.handleSearchResult(data);
             },
             error: function(xhr, status, error) {
-                console.log("=== 검색 API 오류 ===");
-                console.log("xhr:", xhr);
-                console.log("status:", status);
-                console.log("error:", error);
-                console.log("responseText:", xhr.responseText);
                 alert("사용자 검색에 실패했습니다.");
             }
         });
     } catch (e) {
-        console.log("=== 사용자 검색 예외 발생 ===");
-        console.log("예외:", e);
         alert("사용자 검색 중 오류가 발생했습니다.");
     }
 };
@@ -329,7 +312,6 @@ scwin.showSearchMessage = function(message, isError) {
         //    scwin.hideSearchMessage();
         //}, 3000);
     } catch (e) {
-        console.log("메시지 표시 오류:", e);
     }
 };
 
@@ -339,7 +321,6 @@ scwin.hideSearchMessage = function() {
         output_searchMessage.setStyle("display", "none");
         output_searchMessage.setValue("");
     } catch (e) {
-        console.log("메시지 숨김 오류:", e);
     }
 };
 
@@ -370,11 +351,7 @@ scwin.handleSearchResult = function(result) {
     // 사용자 추가 가능 상태
     scwin.showSearchMessage("사용자 '" + userName + "'을 프로젝트에 초대할 수 있습니다.", false);
     
-    //var confirmMessage = "사용자 '" + userName + "' (" + email + ")을 프로젝트에 초대하시겠습니까?";
-    if (confirm(confirmMessage)) {
-        var userId = result.userId;
-        scwin.inviteUser(userId);
-    }
+    
 };
 
 // 사용자 추가 버튼 클릭 (이메일 검색 후 사용)
