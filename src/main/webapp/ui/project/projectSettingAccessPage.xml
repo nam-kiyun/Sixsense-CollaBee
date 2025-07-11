@@ -13,6 +13,34 @@
             height: auto !important;
             min-height: 100vh;
         }
+        
+        /* 그리드뷰 선택 효과 제거 */
+        #grd_projectUsers .w2grid_row_selected {
+            background-color: transparent !important;
+        }
+        
+        #grd_projectUsers .w2grid_cell_selected {
+            background-color: transparent !important;
+        }
+        
+        #grd_projectUsers .w2grid_row:hover {
+            background-color: #f8f9fa !important;
+        }
+        
+        #grd_projectUsers .w2grid_body .w2grid_row_selected,
+        #grd_projectUsers .w2grid_body .w2grid_row_selected td,
+        #grd_projectUsers .w2grid_body .w2grid_row_selected .w2grid_cell,
+        #grd_projectUsers .w2grid_body .w2grid_row.w2grid_row_selected {
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+        
+        #grd_projectUsers .w2grid_body .w2grid_row_focus,
+        #grd_projectUsers .w2grid_body .w2grid_row_focus td,
+        #grd_projectUsers .w2grid_body .w2grid_row_focus .w2grid_cell {
+            background-color: transparent !important;
+            background: transparent !important;
+        }
         ]]>
         </style>
         <xf:model>
@@ -145,6 +173,15 @@ scwin.onpageload = function() {
         return;
     }
     
+    // 그리드뷰 선택 효과 제거 설정
+    setTimeout(function() {
+        if (grd_projectUsers && typeof grd_projectUsers.setSelection === 'function') {
+            grd_projectUsers.setSelection(false);
+        } else if (grd_projectUsers && typeof grd_projectUsers.clearSelection === 'function') {
+            grd_projectUsers.clearSelection();
+        }
+    }, 100);
+    
     // 초기화 완료
     isInitializing = false;
 };
@@ -174,6 +211,7 @@ scwin.loadProjectUsers = function(projectId) {
                 // 데이터리스트에 데이터 추가
                 for (var i = 0; i < projectUserList.length; i++) {
                     var user = projectUserList[i];
+                    console.log("프로젝트 멤버 추가:", user);
                     var rowIndex = dl_projectUsers.insertRow();
                     dl_projectUsers.setCellData(rowIndex, "userId", user.userId || "");
                     dl_projectUsers.setCellData(rowIndex, "userName", user.userName || "");
@@ -202,13 +240,16 @@ scwin.loadProjectUsers = function(projectId) {
 
 // 검색 버튼 클릭
 scwin.btn_search_onclick = function(e) {
-    var searchValue = dm_search.get("searchValue");
+    // 직접 input에서 값 가져오기
+    var searchValue = input_search.getValue();
     var projectId = dm_search.get("projectId");
     
-    
+    console.log("=== 검색 버튼 클릭 ===");
+    console.log("searchValue (from input):", searchValue);
+    console.log("projectId:", projectId);
     
     if (!searchValue || searchValue.trim() === "") {
-        alert("이메일을 입력해주세요.");
+        alert("사용자 ID를 입력해주세요.");
         return;
     }
     
@@ -224,42 +265,63 @@ scwin.btn_search_onclick = function(e) {
 };
 
 // 사용자 검색 함수
-scwin.searchUser = function(email, projectId) {
-    
+scwin.searchUser = function(userId, projectId) {
+    console.log("=== 사용자 검색 함수 호출 ===");
+    console.log("userId:", userId);
+    console.log("projectId:", projectId);
     
     try {
-        // 워크플로우 실행
-        var option = {
-            id: "wf_searchUser",
-            action: "action_searchUser",
+        // 직접 AJAX 호출로 변경
+        $.ajax({
+            type: "GET",
+            url: "/InsWebApp/ProjectUserSearch.pwkjson",
+            data: {
+                userId: userId,
+                projectId: projectId
+            },
+            dataType: "json",
             success: function(data) {
-               
+                console.log("=== 검색 API 성공 ===");
+                console.log("응답 데이터:", data);
+                
+                // 검색 결과를 데이터맵에 설정
+                dm_searchResult.set("found", data.found || false);
+                dm_searchResult.set("isProjectMember", data.isProjectMember || false);
+                dm_searchResult.set("userId", data.userId || "");
+                dm_searchResult.set("userName", data.userName || "");
+                dm_searchResult.set("email", data.email || "");
+                dm_searchResult.set("profileImageSrc", data.profileImageSrc || "");
+                
                 scwin.handleSearchResult(data);
             },
             error: function(xhr, status, error) {
-                
+                console.log("=== 검색 API 오류 ===");
+                console.log("xhr:", xhr);
+                console.log("status:", status);
+                console.log("error:", error);
+                console.log("responseText:", xhr.responseText);
                 alert("사용자 검색에 실패했습니다.");
             }
-        };
-        
-        // 파라미터 설정
-        wf_searchUser.setParam("email", email);
-        wf_searchUser.setParam("projectId", projectId);
-        
-        // 워크플로우 실행
-        $w.executeWorkflow(option);
+        });
     } catch (e) {
-        
+        console.log("=== 사용자 검색 예외 발생 ===");
+        console.log("예외:", e);
         alert("사용자 검색 중 오류가 발생했습니다.");
     }
 };
 
+
+
+
+
 // 검색 결과 처리
 scwin.handleSearchResult = function(result) {
-    var found = dm_searchResult.get("found");
-    var isProjectMember = dm_searchResult.get("isProjectMember");
-    var email = dm_searchResult.get("email");
-    var userName = dm_searchResult.get("userName");
+    var found = result.found;
+    var isProjectMember = result.isProjectMember;
+    var email = result.email;
+    var userName = result.userName;
+    
+
     
     if (!found) {
         alert("해당 이메일로 등록된 사용자를 찾을 수 없습니다.");
@@ -272,9 +334,10 @@ scwin.handleSearchResult = function(result) {
     }
     
     // 사용자 추가 가능 상태
+    
     var confirmMessage = "사용자 '" + userName + "' (" + email + ")을 프로젝트에 초대하시겠습니까?";
     if (confirm(confirmMessage)) {
-        var userId = dm_searchResult.get("userId");
+        var userId = result.userId;
         scwin.inviteUser(userId);
     }
 };
@@ -452,6 +515,17 @@ scwin.renderUserList = function() {
     
 };
 
+// 그리드뷰 클릭 이벤트 핸들러 - 선택 효과 제거
+scwin.grd_projectUsers_oncellclick = function(e) {
+    // 클릭 후 선택 효과 제거
+    setTimeout(function() {
+        if (grd_projectUsers) {
+            grd_projectUsers.clearSelection();
+        }
+    }, 1);
+    return false;
+};
+
 // X 버튼 클릭 (프로젝트 페이지로 돌아가기)
 scwin.btn_close_onclick = function(e) {
     
@@ -473,7 +547,7 @@ scwin.btn_close_onclick = function(e) {
     </head>
     <body ev:onpageload="scwin.onpageload">
         <!-- 액세스 페이지 컨테이너 -->
-        <xf:group style="padding:40px;background-color:#ffffff;min-height:calc(100vh - 80px);position:relative;" id="grp_accessContainer">
+        <xf:group style="padding:40px;background-color:#ffffff;min-height:calc(100vh - 80px);height:auto;position:relative;" id="grp_accessContainer">
             
             <!-- X 버튼 (오른쪽 상단) -->
             <xf:trigger 
@@ -514,10 +588,12 @@ scwin.btn_close_onclick = function(e) {
                     </xf:trigger>
                 </xf:group>
                 
+                
+                
                 <!-- 사용자 추가 버튼 -->
                 <xf:group style="display:flex;justify-content:flex-end;" id="grp_addButton">
                     <xf:trigger 
-                        style="width:140px;height:48px;background-color:#28a745;border:1px solid #28a745;border-radius:8px;color:#ffffff;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
+                        style="width:140px;height:48px;background-color:#ffb823;border:1px solid #ffb823;border-radius:8px;color:#000000s;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
                         id="btn_addUser" 
                         type="button" 
                         ev:onclick="scwin.btn_addUser_onclick">
@@ -528,7 +604,7 @@ scwin.btn_close_onclick = function(e) {
             </xf:group>
             
             <!-- 사용자 목록 영역 (그리드뷰) -->
-            <xf:group style="background-color:#ffffff;border:1px solid #e9ecef;border-radius:12px;overflow:hidden;" id="grp_userListArea">
+            <xf:group style="background-color:#ffffff;border:1px solid #e9ecef;border-radius:12px;overflow:hidden;min-height:900px;" id="grp_userListArea">
             
             <!-- 테이블 헤더 -->
             <xf:group style="background-color:#f8f9fa;padding:16px 24px;border-bottom:1px solid #e9ecef;" id="grp_tableHeader">
@@ -540,29 +616,33 @@ scwin.btn_close_onclick = function(e) {
             <!-- 프로젝트 멤버 그리드 -->
             <w2:gridView 
                 id="grd_projectUsers" 
-                style="width:100%;height:400px;font-family:Inter,sans-serif;" 
+                style="width:100%;height:800px;font-family:Inter,sans-serif;" 
                 scrollByColumn="false" 
                 defaultCellHeight="40" 
                 dataList="dl_projectUsers"
                 keepDefaultColumnWidth="true"
-                visibleRowNum="10"
-                ev:oncellchange="scwin.grd_projectUsers_oncellchange">
+                visibleRowNum="20"
+                useShiftKey="false"
+                useCtrlKey="false"
+                rowStatusVisible="false"
+                ev:oncellchange="scwin.grd_projectUsers_oncellchange"
+                ev:oncellclick="scwin.grd_projectUsers_oncellclick">
                 
                 <w2:caption id="caption1" style="height:0px;"></w2:caption>
                 
                 <w2:header id="header1" style="height:40px;">
                     <w2:row id="row1" style="height:40px;">
-                        <w2:column width="150" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;" id="column1" value="이름"></w2:column>
-                        <w2:column width="250" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;" id="column2" value="이메일"></w2:column>
-                        <w2:column width="120" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;" id="column3" value="역할"></w2:column>
+                        <w2:column width="330" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;" id="column1" value="이름"></w2:column>
+                        <w2:column width="389" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;" id="column2" value="이메일"></w2:column>
+                        <w2:column width="323" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;" id="column3" value="역할"></w2:column>
                     </w2:row>
                 </w2:header>
                 
                 <w2:gBody id="gBody1">
                     <w2:row id="row2" style="height:40px;">
-                        <w2:column width="150" inputType="text" style="text-align:center;" id="userName" blockSelect="false"></w2:column>
-                        <w2:column width="250" inputType="text" style="text-align:center;" id="userId" blockSelect="false"></w2:column>
-                        <w2:column width="120" inputType="select" style="text-align:center;" id="role" blockSelect="false" allOption="">
+                        <w2:column width="330" inputType="text" style="text-align:center;" id="userName" blockSelect="false" readOnly="true"></w2:column>
+                        <w2:column width="389" inputType="text" style="text-align:center;" id="userId" blockSelect="false" readOnly="true"></w2:column>
+                        <w2:column width="323" inputType="select" style="text-align:center;" id="role" blockSelect="false" allOption="">
                             <w2:choices>
                                 <w2:itemset nodeset="">
                                     <w2:label ref=""></w2:label>

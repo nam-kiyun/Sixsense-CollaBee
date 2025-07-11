@@ -1,12 +1,16 @@
 package com.demo.proworks.projectuser.web;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import javax.annotation.Resource;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -131,13 +135,13 @@ public class ProjectUserController {
     @ElDescription(sub = "프로젝트 멤버 목록 조회", desc = "특정 프로젝트의 멤버 목록을 사용자 정보와 함께 조회한다.")    
     public ProjectUserListVo selectProjectUsersByProjectId(HttpServletRequest request) throws Exception {
         
-        System.out.println("=== 프로젝트 멤버 목록 조회 시작 ===");
+        
         
         // 여러 방법으로 projectId 파라미터 확인
         String projectIdFromParam = request.getParameter("projectId");
         String projectIdFromBody = null;
         
-        System.out.println("파라미터에서 projectId: " + projectIdFromParam);
+        
         
         // POST body에서 직접 읽기 시도
         if ("POST".equals(request.getMethod())) {
@@ -149,7 +153,7 @@ public class ProjectUserController {
                     sb.append(line);
                 }
                 String body = sb.toString();
-                System.out.println("POST Body: " + body);
+                
                 
                 // URL 인코딩된 데이터 파싱
                 if (body.contains("projectId=")) {
@@ -159,14 +163,14 @@ public class ProjectUserController {
                             String[] keyValue = pair.split("=", 2);
                             if (keyValue.length == 2 && "projectId".equals(keyValue[0])) {
                                 projectIdFromBody = keyValue[1];
-                                System.out.println("Body에서 projectId: " + projectIdFromBody);
+                                
                                 break;
                             }
                         }
                     }
                 }
             } catch (Exception e) {
-                System.err.println("POST body 읽기 오류: " + e.getMessage());
+                
             }
         }
         
@@ -178,10 +182,10 @@ public class ProjectUserController {
             projectId = projectIdFromParam;
         }
         
-        System.out.println("최종 사용할 projectId: " + projectId);
+       
         
         if (projectId == null || projectId.trim().isEmpty()) {
-            System.err.println("프로젝트 ID가 없습니다.");
+            
             throw new Exception("프로젝트 ID가 필요합니다.");
         }
         
@@ -189,7 +193,7 @@ public class ProjectUserController {
         projectUserVo.setProjectId(projectId);
         
         List<ProjectUserVo> projectUserList = projectUserService.selectProjectUsersByProjectId(projectUserVo);
-        System.out.println("조회된 멤버 수: " + projectUserList.size());
+        
         
         ProjectUserListVo retProjectUserList = new ProjectUserListVo();
         retProjectUserList.setProjectUserVoList(projectUserList); 
@@ -197,8 +201,166 @@ public class ProjectUserController {
         retProjectUserList.setPageSize(projectUserList.size()); // 조회된 데이터 수와 같게
         retProjectUserList.setPageIndex(1); // 첫 번째 페이지
         
-        System.out.println("=== 프로젝트 멤버 목록 조회 완료 ===");
+        
         return retProjectUserList;
+    }
+
+    /**
+     * userId로 사용자를 검색한다.
+     *
+     * @param request HTTP 요청 객체
+     * @return Map<String, Object> 검색 결과
+     * @throws Exception
+     */
+    @ElService(key="ProjectUserSearch")    
+    @RequestMapping(value="ProjectUserSearch")
+    @ElDescription(sub="사용자 ID 검색", desc="userId로 사용자를 검색하고 프로젝트 멤버 여부를 확인한다.")    
+    public Map<String, Object> searchUser(HttpServletRequest request) throws Exception {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 파라미터 읽기
+            String userId = request.getParameter("userId");
+            String projectId = request.getParameter("projectId");
+            
+            if (userId == null || projectId == null) {
+                result.put("found", false);
+                result.put("isProjectMember", false);
+                result.put("error", "필수 파라미터가 누락되었습니다.");
+                return result;
+            }
+            
+            // userId로 사용자 검색
+            ProjectUserVo userInfo = projectUserService.searchUserByUserId(userId, projectId);
+            
+            if (userInfo == null) {
+                // 사용자가 존재하지 않음
+                result.put("found", false);
+                result.put("isProjectMember", false);
+                result.put("userId", "");
+                result.put("userName", "");
+                result.put("email", userId);
+                result.put("profileImageSrc", "");
+            } else {
+                // 사용자가 존재함
+                result.put("found", true);
+                result.put("userId", userInfo.getUserId());
+                result.put("userName", userInfo.getUserName());
+                result.put("email", userInfo.getUserId()); // user_id가 이메일이므로
+                result.put("profileImageSrc", ""); // 프로필 이미지는 추후 구현
+                
+                // 이미 프로젝트 멤버인지 확인 (role이 있으면 멤버)
+                boolean isProjectMember = (userInfo.getRole() != null && !userInfo.getRole().isEmpty());
+                result.put("isProjectMember", isProjectMember);
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("found", false);
+            result.put("isProjectMember", false);
+            result.put("error", "사용자 검색 중 오류가 발생했습니다.");
+        }
+        
+        return result;
+    }
+
+    /**
+     * 프로젝트에 사용자를 초대한다.
+     *
+     * @param request HTTP 요청
+     * @return Map<String, Object> 초대 결과
+     * @throws Exception
+     */
+    @RequestMapping(value = "/project/{projectId}/settings/access", method = RequestMethod.POST)
+    @ResponseBody
+    public Map<String, Object> inviteUser(HttpServletRequest request) throws Exception {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // URL 경로에서 projectId 추출
+            String requestURI = request.getRequestURI();
+            String projectId = null;
+            if (requestURI.contains("/project/")) {
+                String[] parts = requestURI.split("/");
+                for (int i = 0; i < parts.length; i++) {
+                    if ("project".equals(parts[i]) && i + 1 < parts.length) {
+                        projectId = parts[i + 1];
+                        break;
+                    }
+                }
+            }
+            
+            // POST body에서 파라미터 읽기
+            String userId = null;
+            String role = "editor"; // 기본값
+            
+            try {
+                java.io.BufferedReader reader = request.getReader();
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                }
+                String body = sb.toString();
+                
+                // JSON 형태로 파싱 (간단한 방식)
+                if (body.contains("\"userId\"")) {
+                    // JSON 파싱
+                    String[] pairs = body.replace("{", "").replace("}", "").replace("\"", "").split(",");
+                    for (String pair : pairs) {
+                        String[] keyValue = pair.split(":", 2);
+                        if (keyValue.length == 2) {
+                            String key = keyValue[0].trim();
+                            String value = keyValue[1].trim();
+                            
+                            if ("userId".equals(key)) {
+                                userId = value;
+                            } else if ("role".equals(key)) {
+                                role = value;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                // JSON 파싱 실패 시 URL 인코딩된 파라미터로 시도
+                userId = request.getParameter("userId");
+                String roleParam = request.getParameter("role");
+                if (roleParam != null && !roleParam.isEmpty()) {
+                    role = roleParam;
+                }
+            }
+            
+            if (projectId == null || userId == null) {
+                result.put("success", false);
+                result.put("message", "필수 파라미터가 누락되었습니다.");
+                return result;
+            }
+            
+            // ProjectUser 추가
+            ProjectUserVo projectUserVo = new ProjectUserVo();
+            projectUserVo.setProjectId(projectId);
+            projectUserVo.setUserId(userId);
+            projectUserVo.setRole(role);
+            
+            int insertResult = projectUserService.inviteUserToProject(projectUserVo);
+            
+            if (insertResult > 0) {
+                result.put("success", true);
+                result.put("message", "사용자가 성공적으로 프로젝트에 추가되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "사용자 추가에 실패했습니다.");
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "사용자 초대 중 오류가 발생했습니다: " + e.getMessage());
+        }
+        
+        return result;
     }
    
 }

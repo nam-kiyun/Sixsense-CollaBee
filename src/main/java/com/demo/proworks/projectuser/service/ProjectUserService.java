@@ -80,5 +80,24 @@ public interface ProjectUserService {
      * @throws Exception
      */
 	public List<ProjectUserVo> selectProjectUsersByProjectId(ProjectUserVo projectUserVo) throws Exception;
+
+    /**
+     * user_id(이메일)로 사용자를 검색하고 프로젝트 멤버 여부를 확인한다.
+     *
+     * @param  userId 사용자 ID (이메일)
+     * @param  projectId 프로젝트 ID
+     * @return ProjectUserVo 사용자 정보와 프로젝트 멤버 여부
+     * @throws Exception
+     */
+	public ProjectUserVo searchUserByUserId(String userId, String projectId) throws Exception;
+
+    /**
+     * 프로젝트에 사용자를 추가한다.
+     *
+     * @param  projectUserVo 프로젝트 사용자 정보
+     * @return 번호
+     * @throws Exception
+     */
+	public int inviteUserToProject(ProjectUserVo projectUserVo) throws Exception;
 	
 }

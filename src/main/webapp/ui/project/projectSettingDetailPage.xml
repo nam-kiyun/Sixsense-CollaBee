@@ -875,7 +875,7 @@ scwin.btn_close_onclick = function(e) {
                 	<!-- 팀장 정보 표시 (읽기 전용) -->
                 	<xf:input id="input_teamLeader" ref="dm_projectDetail.teamLeader"
                 		style="width:100%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;"
-                		readonly="true">
+                		readonly="true" readOnly="true">
                 	</xf:input>
                 </xf:group>
 

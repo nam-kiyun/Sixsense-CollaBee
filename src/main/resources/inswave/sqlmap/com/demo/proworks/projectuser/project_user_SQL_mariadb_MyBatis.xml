@@ -106,4 +106,30 @@
          ORDER BY pu.ROLE DESC, u.USER_NAME ASC
     </select>
 
+    <!-- 사용자 검색 관련 쿼리 -->
+    <select id="selectUserByUserId" parameterType="String" resultType="com.demo.proworks.projectuser.vo.ProjectUserVo">
+        <!-- user_id(이메일)로 사용자 정보를 조회한다. -->
+        SELECT /* QueryID : com.demo.proworks.projectuser.selectUserByUserId */
+        USER_ID as userId, USER_NAME as userName
+        FROM USER
+        WHERE USER_ID = #{userId}
+    </select>
+
+    <select id="selectProjectUserByIds" parameterType="com.demo.proworks.projectuser.vo.ProjectUserVo" resultType="com.demo.proworks.projectuser.vo.ProjectUserVo">
+        <!-- 프로젝트 사용자 중복 체크 -->
+        SELECT /* QueryID : com.demo.proworks.projectuser.selectProjectUserByIds */
+        PROJECT_USER_ID as projectUserId, PROJECT_ID as projectId, USER_ID as userId, ROLE as role
+        FROM PROJECT_USER
+        WHERE PROJECT_ID = #{projectId} AND USER_ID = #{userId}
+    </select>
+
+    <insert id="insertProjectUserBySearch" parameterType="com.demo.proworks.projectuser.vo.ProjectUserVo" 
+        useGeneratedKeys="true" keyProperty="projectUserId">
+        <!-- 검색을 통한 프로젝트 사용자 추가 -->
+        INSERT INTO PROJECT_USER /* QueryID : com.demo.proworks.projectuser.insertProjectUserBySearch */
+        (PROJECT_ID, USER_ID, ROLE)
+        VALUES
+        (#{projectId}, #{userId}, #{role})
+    </insert>
+
 </mapper>
