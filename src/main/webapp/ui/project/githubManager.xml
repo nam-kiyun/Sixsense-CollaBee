@@ -1017,50 +1017,110 @@ scwin.showAuthenticatedUI = function () {
     console.log("인증된 사용자 UI 표시");
 };
 
-// 연결된 레포지토리 목록 로드 (수정됨)
+// GitHub 레포지토리 목록 로드 (프론트엔드에서 직접 GitHub API 호출)
 scwin.loadConnectedRepositories = function () {
     if (dm_auth_status.get("needsLogin") === "true") {
         console.log("인증되지 않은 상태 - 레포지토리 로드 건너뜀");
         return;
     }
 
-    var projectId = dm_github_form.get("projectId");
-    scwin.setLoading(true, "연결된 레포지토리 목록 로딩 중...");
+    scwin.setLoading(true, "GitHub 레포지토리 목록 로딩 중...");
 
-    var requestData = {
-        projectId: projectId
-    };
+    // 레포지토리 로딩 상태 표시
+    scwin.showRepositoryLoadingState();
 
-    try {
-        $c.sbm.execute(sbm_loadRepositories, requestData).then(function (e) {
-            scwin.setLoading(false);
-            console.log("연결된 레포지토리 목록 로드 완료:", e);
-
-            scwin.updateRepositoryDisplay();
-
-            // 첫 번째 레포지토리 자동 선택
-            if (dlt_GitHubRepositoryVoList.getTotalRow() > 0) {
-                dlt_GitHubRepositoryVoList.setFocusedRow(0);
-                scwin.onRepositorySelect();
-            } else {
-                scwin.showEmptyRepositoryState();
-            }
-        }).catch(function (e) {
-            scwin.setLoading(false);
-            console.error("레포지토리 목록 로드 실패:", e);
-
-            var errorMsg = scwin.getErrorMessage(e);
-            $c.win.alert("연결된 레포지토리 목록을 불러올 수 없습니다.\n" + errorMsg);
-
-            if (e.status === 401) {
+    // 먼저 세션에서 GitHub 토큰 가져오기
+    $.ajax({
+        url: "/InsWebApp/github/auth/status.pwkjson",
+        type: "GET",
+        dataType: "json",
+        success: function (authResult) {
+            if (!authResult.authenticated) {
+                scwin.setLoading(false);
                 scwin.showLoginRequiredUI();
+                return;
             }
-        });
-    } catch (e) {
-        scwin.setLoading(false);
-        console.error("submission 실행 오류:", e);
-        scwin.showEmptyRepositoryState();
-    }
+
+            // GitHub API 직접 호출 (CORS 문제로 프록시 방식 사용)
+            $.ajax({
+                url: "/InsWebApp/github/api/repositories.pwkjson",
+                type: "GET", 
+                dataType: "json",
+                data: {
+                    sort: "updated",
+                    per_page: 100,
+                    affiliation: "owner,collaborator"
+                },
+                success: function (repositories) {
+                    scwin.setLoading(false);
+                    console.log("GitHub 레포지토리 목록 로드 완료:", repositories);
+                    console.log("데이터 타입:", typeof repositories);
+                    
+                    // DataList 초기화
+                    dlt_GitHubRepositoryVoList.removeAll();
+                    
+                    // 문자열을 JSON으로 파싱
+                    try {
+                        if (typeof repositories === 'string') {
+                            repositories = JSON.parse(repositories);
+                            console.log("JSON 파싱 완료:", repositories);
+                        }
+                    } catch (e) {
+                        console.error("JSON 파싱 실패:", e);
+                        scwin.showEmptyRepositoryState();
+                        return;
+                    }
+                    
+                    // 레포지토리 데이터 검증
+                    if (!Array.isArray(repositories)) {
+                        console.error("저장소 데이터가 배열이 아닙니다:", repositories);
+                        scwin.showEmptyRepositoryState();
+                        return;
+                    }
+                    
+                    // 첫 번째 저장소 구조 확인
+                    if (repositories.length > 0) {
+                        console.log("첫 번째 저장소 구조:", {
+                            name: repositories[0].name,
+                            owner: repositories[0].owner,
+                            private: repositories[0].private,
+                            html_url: repositories[0].html_url
+                        });
+                    }
+                    
+                    // 레포지토리 데이터를 직접 카드 형태로 출력
+                    console.log("GitHub 저장소 목록 (파싱 후):", repositories);
+                    scwin.renderRepositoryCards(repositories);
+
+                    // 레포지토리 개수 표시 업데이트
+                    scwin.updateRepositoryCount(repositories.length);
+                },
+                error: function (xhr, status, error) {
+                    scwin.setLoading(false);
+                    console.error("GitHub API 요청 실패:", {
+                        status: xhr.status,
+                        statusText: xhr.statusText,
+                        responseText: xhr.responseText,
+                        error: error
+                    });
+                    
+                    scwin.showEmptyRepositoryState();
+                    
+                    if (xhr.status === 401) {
+                        $c.win.alert("GitHub 인증이 만료되었습니다. 다시 로그인해주세요.");
+                        scwin.showLoginRequiredUI();
+                    } else {
+                        $c.win.alert("GitHub에서 레포지토리 목록을 불러올 수 없습니다.\n오류: " + (xhr.responseText || error));
+                    }
+                }
+            });
+        },
+        error: function (xhr, status, error) {
+            scwin.setLoading(false);
+            console.error("인증 상태 확인 실패:", error);
+            scwin.showLoginRequiredUI();
+        }
+    });
 };
 
 // 레포지토리 표시 업데이트
@@ -1070,14 +1130,17 @@ scwin.updateRepositoryDisplay = function () {
         var privateRepos = 0;
         var publicRepos = 0;
 
+        // 상태 카운트 계산
         for (var i = 0; i < totalRepos; i++) {
-            if (dlt_GitHubRepositoryVoList.getCellData(i, "isPrivate") === "true") {
+            var isPrivate = dlt_GitHubRepositoryVoList.getCellData(i, "isPrivate");
+            if (isPrivate && isPrivate.indexOf("Private") !== -1) {
                 privateRepos++;
             } else {
                 publicRepos++;
             }
         }
 
+        // 헤더 정보 업데이트
         var countText = "총 " + totalRepos + "개 레포지토리 (" + 
             publicRepos + "개 공개, " + privateRepos + "개 비공개)";
 
@@ -1086,9 +1149,537 @@ scwin.updateRepositoryDisplay = function () {
             countElement.textContent = countText;
         }
 
+        // 카드 형태로 레포지토리 표시
+        scwin.renderRepositoryCards();
+
         console.log("레포지토리 표시 업데이트:", countText);
     } catch (e) {
         console.error("레포지토리 표시 업데이트 실패:", e);
+    }
+};
+
+// 레포지토리 카드 렌더링 (웹스퀘어 방식)
+scwin.renderRepositoryCards = function (repositories) {
+    try {
+        // 카드 컨테이너 찾기
+        var cardsContainer = $p.getComponentById("repo_cards_container");
+        if (!cardsContainer) {
+            console.error("카드 컨테이너를 찾을 수 없습니다.");
+            return;
+        }
+        
+        // 컨테이너 스크롤 스타일 적용 (웹스퀘어 방식)
+        try {
+            var containerComponent = $p.getComponentById("repo_cards_container");
+            if (containerComponent) {
+                // JavaScript 방식으로 스타일 적용
+                var realDomElement = document.getElementById(containerComponent.id);
+                if (realDomElement) {
+                    console.log("=== DOM 요소 스타일 분석 (수정 전) ===");
+                    console.log("인라인 스타일:", realDomElement.style.cssText);
+                    console.log("클래스 목록:", realDomElement.classList.toString());
+                    console.log("계산된 display:", window.getComputedStyle(realDomElement).display);
+                    
+                    // 강제로 display: grid 적용
+                    realDomElement.style.display = "grid";
+                    realDomElement.style.maxHeight = "350px";
+                    realDomElement.style.overflowY = "auto";
+                    realDomElement.style.padding = "10px";
+                    realDomElement.style.visibility = "visible";
+                    
+                    console.log("=== DOM 요소 스타일 분석 (수정 후) ===");
+                    console.log("인라인 스타일:", realDomElement.style.cssText);
+                    console.log("계산된 display:", window.getComputedStyle(realDomElement).display);
+                    console.log("계산된 max-height:", window.getComputedStyle(realDomElement).maxHeight);
+                    console.log("계산된 overflow-y:", window.getComputedStyle(realDomElement).overflowY);
+                    
+                    // 비동기 스타일 재적용 함수
+                    const recheckAndApplyStyles = async () => {
+                        // 웹스퀘어 렌더링 완료 대기
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                        console.log("=== 지연 후 재확인 ===");
+                        console.log("지연 후 인라인 스타일:", realDomElement.style.cssText);
+                        console.log("지연 후 계산된 display:", window.getComputedStyle(realDomElement).display);
+                        
+                        // 웹스퀘어가 덮어썼다면 다시 적용
+                        if (realDomElement.style.display !== "grid") {
+                            console.log("웹스퀘어가 스타일을 덮어썼습니다. 다시 적용합니다.");
+                            realDomElement.style.display = "grid";
+                            realDomElement.style.setProperty("display", "grid", "important");
+                            console.log("!important로 강제 적용 완료");
+                            
+                            // 추가 확인 (한 번 더 대기 후 최종 확인)
+                            await new Promise(resolve => setTimeout(resolve, 50));
+                            console.log("최종 확인 - 인라인 스타일:", realDomElement.style.cssText);
+                        } else {
+                            console.log("웹스퀘어 스타일이 유지되고 있습니다.");
+                        }
+                    };
+                    
+                    // 비동기 함수 실행
+                    recheckAndApplyStyles().catch(console.error);
+                } else {
+                    console.log("실제 DOM 요소를 찾을 수 없습니다.");
+                }
+            } else {
+                console.log("WebSquare 컨테이너를 찾을 수 없습니다.");
+            }
+        } catch (e) {
+            console.log("WebSquare 스타일 적용 실패:", e);
+        }
+
+        // 로딩 상태 숨기기
+        var loadingSection = $p.getComponentById("repo_loading_section");
+        if (loadingSection) {
+            loadingSection.hide();
+        }
+
+        if (!repositories || repositories.length === 0) {
+            // 빈 상태 표시
+            var emptySection = $p.getComponentById("repo_empty_section");
+            if (emptySection) {
+                emptySection.show();
+            }
+            cardsContainer.hide();
+            return;
+        }
+
+        // 빈 상태 숨기기
+        var emptySection = $p.getComponentById("repo_empty_section");
+        if (emptySection) {
+            emptySection.hide();
+        }
+
+        // 기존 카드 제거
+        scwin.clearRepositoryCards();
+
+        // 각 레포지토리를 카드로 렌더링
+        for (var i = 0; i < repositories.length; i++) {
+            var repo = repositories[i];
+            scwin.createRepositoryCard(repo, i, cardsContainer);
+        }
+
+        // 카드 컨테이너 표시
+        cardsContainer.show();
+
+        console.log("레포지토리 카드 렌더링 완료:", repositories.length + "개");
+    } catch (e) {
+        console.error("레포지토리 카드 렌더링 실패:", e);
+    }
+};
+
+// 저장소 개수 업데이트
+scwin.updateRepositoryCount = function(count) {
+    try {
+        var countElement = document.getElementById("repo-count-info");
+        if (countElement) {
+            countElement.textContent = "총 " + count + "개의 저장소";
+        }
+    } catch (e) {
+        console.error("저장소 개수 업데이트 실패:", e);
+    }
+};
+
+// 날짜 포맷팅 함수
+scwin.formatDate = function(dateString) {
+    try {
+        if (!dateString) return "";
+        var date = new Date(dateString);
+        return date.toLocaleDateString('ko-KR');
+    } catch (e) {
+        return dateString;
+    }
+};
+
+// 기존 카드 제거
+scwin.clearRepositoryCards = function() {
+    try {
+        var cardsContainer = $p.getComponentById("repo_cards_container");
+        if (cardsContainer) {
+            // 자식 컴포넌트들을 모두 제거
+            var children = cardsContainer.getChildren();
+            for (var i = children.length - 1; i >= 0; i--) {
+                children[i].remove();
+            }
+        }
+    } catch (e) {
+        console.error("카드 제거 실패:", e);
+    }
+};
+
+// 저장소 카드 생성 (웹스퀘어 방식)
+scwin.createRepositoryCard = function(repo, index, container) {
+    try {
+        var cardId = "repo_card_" + index;
+        var isPrivate = repo.private || false;
+        var visibilityText = isPrivate ? "������ Private" : "������ Public";
+        var visibilityClass = isPrivate ? "private" : "public";
+        var language = repo.language || "Unknown";
+        var stars = repo.stargazers_count || 0;
+        var forks = repo.forks_count || 0;
+        var description = repo.description || "설명이 없습니다.";
+        var updatedAt = scwin.formatDate(repo.updated_at) || "업데이트 정보 없음";
+        
+        // 카드 그룹 생성
+        var cardGroup = $p.dynamicCreate(
+            cardId,
+            "group",
+            {
+                style: "background: white; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); transition: all 0.2s ease; cursor: pointer; display: block;",
+                className: "repo-card"
+            },
+            container
+        );
+
+        // 카드 헤더 그룹
+        var headerGroup = $p.dynamicCreate(
+            cardId + "_header",
+            "group",
+            {
+                style: "display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;",
+                className: "repo-card-header"
+            },
+            cardGroup
+        );
+
+        // 왼쪽 정보 그룹
+        var leftInfoGroup = $p.dynamicCreate(
+            cardId + "_left_info",
+            "group",
+            {
+                style: "flex: 1;",
+                className: "repo-left-info"
+            },
+            headerGroup
+        );
+
+        // 소유자 이름
+        var ownerSpan = $p.dynamicCreate(
+            cardId + "_owner",
+            "span",
+            {
+                style: "font-size: 14px; color: #6c757d; margin-bottom: 4px; display: block;",
+                className: "repo-owner"
+            },
+            leftInfoGroup
+        );
+        ownerSpan.setValue(repo.owner ? repo.owner.login : "");
+
+        // 저장소 이름
+        var nameSpan = $p.dynamicCreate(
+            cardId + "_name",
+            "span",
+            {
+                style: "font-size: 18px; font-weight: 600; color: #2c3e50; margin: 0; line-height: 1.3; display: block;",
+                className: "repo-name"
+            },
+            leftInfoGroup
+        );
+        nameSpan.setValue(repo.name || "");
+
+        // 가시성 표시
+        var visibilitySpan = $p.dynamicCreate(
+            cardId + "_visibility",
+            "span",
+            {
+                style: "display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; " +
+                       (isPrivate ? "background-color: #fff3cd; color: #856404;" : "background-color: #d4edda; color: #155724;"),
+                className: "repo-visibility " + visibilityClass
+            },
+            headerGroup
+        );
+        visibilitySpan.setValue(visibilityText);
+
+        // 설명
+        var descSpan = $p.dynamicCreate(
+            cardId + "_desc",
+            "span",
+            {
+                style: "font-size: 14px; color: #6c757d; line-height: 1.4; margin-bottom: 16px; display: block;",
+                className: "repo-description"
+            },
+            cardGroup
+        );
+        descSpan.setValue(description);
+
+        // 통계 그룹
+        var statsGroup = $p.dynamicCreate(
+            cardId + "_stats",
+            "group",
+            {
+                style: "display: flex; gap: 16px; margin-bottom: 16px;",
+                className: "repo-stats"
+            },
+            cardGroup
+        );
+
+        // 별 개수
+        var starsSpan = $p.dynamicCreate(
+            cardId + "_stars",
+            "span",
+            {
+                style: "display: flex; align-items: center; gap: 4px; font-size: 14px; color: #6c757d;",
+                className: "repo-stat"
+            },
+            statsGroup
+        );
+        starsSpan.setValue("⭐ " + stars);
+
+        // 포크 개수
+        var forksSpan = $p.dynamicCreate(
+            cardId + "_forks",
+            "span",
+            {
+                style: "display: flex; align-items: center; gap: 4px; font-size: 14px; color: #6c757d;",
+                className: "repo-stat"
+            },
+            statsGroup
+        );
+        forksSpan.setValue("������ " + forks);
+
+        // 언어
+        var langSpan = $p.dynamicCreate(
+            cardId + "_language",
+            "span",
+            {
+                style: "display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6c757d;",
+                className: "repo-language"
+            },
+            statsGroup
+        );
+        langSpan.setValue("������ " + language);
+
+        // 푸터 그룹
+        var footerGroup = $p.dynamicCreate(
+            cardId + "_footer",
+            "group",
+            {
+                style: "display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e9ecef;",
+                className: "repo-footer"
+            },
+            cardGroup
+        );
+
+        // 업데이트 날짜
+        var updatedSpan = $p.dynamicCreate(
+            cardId + "_updated",
+            "span",
+            {
+                style: "font-size: 12px; color: #6c757d;",
+                className: "repo-updated"
+            },
+            footerGroup
+        );
+        updatedSpan.setValue("업데이트: " + updatedAt);
+
+        // 액션 버튼 그룹
+        var actionsGroup = $p.dynamicCreate(
+            cardId + "_actions",
+            "group",
+            {
+                style: "display: flex; gap: 8px;",
+                className: "repo-actions"
+            },
+            footerGroup
+        );
+
+        // 선택 버튼
+        var selectBtn = $p.dynamicCreate(
+            cardId + "_select_btn",
+            "trigger",
+            {
+                style: "padding: 6px 12px; background-color: #007bff; border: 1px solid #007bff; border-radius: 6px; font-size: 12px; color: white; cursor: pointer;",
+                className: "repo-action-btn primary"
+            },
+            actionsGroup
+        );
+        selectBtn.setValue("선택");
+        selectBtn.bind("onclick", function() {
+            scwin.selectRepository(repo.id, repo.name, repo.owner ? repo.owner.login : "", repo);
+        });
+
+        // GitHub 링크 버튼
+        var githubBtn = $p.dynamicCreate(
+            cardId + "_github_btn",
+            "trigger",
+            {
+                style: "padding: 6px 12px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; font-size: 12px; color: #6c757d; cursor: pointer;",
+                className: "repo-action-btn"
+            },
+            actionsGroup
+        );
+        githubBtn.setValue("GitHub");
+        githubBtn.bind("onclick", function() {
+            window.open(repo.html_url, '_blank');
+        });
+
+        // 카드 클릭 이벤트 (카드 선택 효과)
+        cardGroup.bind("onclick", function() {
+            scwin.highlightSelectedCard(cardId);
+        });
+
+        console.log("카드 생성 완료:", repo.name);
+    } catch (e) {
+        console.error("카드 생성 실패:", e);
+    }
+};
+
+// 선택된 카드 하이라이트
+scwin.highlightSelectedCard = function(selectedCardId) {
+    try {
+        var container = $p.getComponentById("repo_cards_container");
+        if (container) {
+            var children = container.getChildren();
+            for (var i = 0; i < children.length; i++) {
+                var card = children[i];
+                if (card.getId() === selectedCardId) {
+                    // 선택된 카드 스타일
+                    card.setStyle("border-color: #007bff; box-shadow: 0 4px 16px rgba(0, 123, 255, 0.15);");
+                } else {
+                    // 일반 카드 스타일
+                    card.setStyle("border-color: #e9ecef; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);");
+                }
+            }
+        }
+    } catch (e) {
+        console.error("카드 하이라이트 실패:", e);
+    }
+};
+
+// 저장소 선택 처리
+scwin.selectRepository = function(repoId, repoName, repoOwner, repoData) {
+    try {
+        console.log('저장소 선택:', repoOwner + '/' + repoName);
+        
+        // 선택된 저장소 정보 설정
+        dm_ui_state.set("selectedRepo", repoOwner + "/" + repoName);
+        
+        // 성공 메시지 표시
+        $c.win.alert("저장소가 선택되었습니다:\n" + repoOwner + "/" + repoName + "\n\n다음 단계에서 이 저장소를 프로젝트에 연결할 수 있습니다.");
+        
+        // TODO: 2번 작업 - DB에 저장소 정보 저장하는 로직 추가
+        console.log('선택된 저장소 데이터:', repoData);
+        
+    } catch (e) {
+        console.error("저장소 선택 처리 실패:", e);
+        $c.win.alert("저장소 선택 중 오류가 발생했습니다.");
+    }
+};
+
+// 레포지토리 카드 HTML 생성
+scwin.createRepositoryCardHtml = function (repo) {
+    var isPrivate = repo.isPrivate;
+    var visibilityClass = isPrivate ? "private" : "public";
+    var visibilityText = isPrivate ? "������ Private" : "������ Public";
+    var language = repo.language || "Unknown";
+    var stars = parseInt(repo.stars) || 0;
+    var forks = parseInt(repo.forks) || 0;
+    var description = repo.description || "설명이 없습니다.";
+    var updatedAt = repo.updatedAt || "업데이트 정보 없음";
+
+    return `
+        <div class="repo-card" data-repo-id="${repo.id}" data-repo-name="${repo.name}" data-repo-owner="${repo.owner}">
+            <div class="repo-card-header">
+                <div>
+                    <div class="repo-owner">${repo.owner}</div>
+                    <h3 class="repo-name">${repo.name}</h3>
+                <span class="repo-visibility ${visibilityClass}">${visibilityText}</span>
+            </div>
+            
+            <div class="repo-description">${description}</div>
+            
+            <div class="repo-stats">
+                <div class="repo-stat">
+                    <svg class="repo-stat-icon" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25zm0 2.445L6.615 5.5a.75.75 0 01-.564.41l-3.097.45 2.24 2.184a.75.75 0 01.216.664l-.528 3.084 2.769-1.456a.75.75 0 01.698 0l2.77 1.456-.53-3.084a.75.75 0 01.216-.664l2.24-2.183-3.096-.45a.75.75 0 01-.564-.41L8 2.694v.001z"/>
+                    </svg>
+                    ${stars}
+                </div>
+                <div class="repo-stat">
+                    <svg class="repo-stat-icon" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M5 3.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm0 2.122a2.25 2.25 0 10-1.5 0v.878A2.25 2.25 0 005.75 8.5h1.5v2.128a2.251 2.251 0 101.5 0V8.5h1.5a2.25 2.25 0 002.25-2.25v-.878a2.25 2.25 0 10-1.5 0v.878a.75.75 0 01-.75.75h-4.5A.75.75 0 015 6.25v-.878z"/>
+                    </svg>
+                    ${forks}
+                </div>
+                <div class="repo-language">
+                    <span class="language-dot"></span>
+                    ${language}
+                </div>
+            </div>
+            
+            <div class="repo-footer">
+                <div class="repo-updated">업데이트: ${updatedAt}</div>
+                <div class="repo-actions">
+                    <button class="repo-action-btn primary" onclick="scwin.selectRepository('${repo.id}', '${repo.name}', '${repo.owner}')">
+                        선택
+                    </button>
+                    <button class="repo-action-btn" onclick="window.open('${repo.url}', '_blank')">
+                        GitHub
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+// 카드 이벤트 연결
+scwin.attachCardEvents = function () {
+    try {
+        var cards = document.querySelectorAll('.repo-card');
+        cards.forEach(function(card) {
+            card.addEventListener('click', function(e) {
+                // 버튼 클릭 시에는 카드 선택 이벤트 방지
+                if (e.target.classList.contains('repo-action-btn')) {
+                    return;
+                }
+                
+                var repoId = card.dataset.repoId;
+                var repoName = card.dataset.repoName;
+                var repoOwner = card.dataset.repoOwner;
+                
+                // 기존 선택된 카드 스타일 제거
+                document.querySelectorAll('.repo-card').forEach(function(c) {
+                    c.style.borderColor = '#e9ecef';
+                });
+                
+                // 현재 카드를 선택된 상태로 표시
+                card.style.borderColor = '#007bff';
+                
+                console.log('저장소 카드 선택:', repoOwner + '/' + repoName);
+                
+                // 선택된 저장소 정보 설정
+                dm_ui_state.set("selectedRepo", repoOwner + "/" + repoName);
+            });
+        });
+    } catch (e) {
+        console.error("카드 이벤트 연결 실패:", e);
+    }
+};
+
+// 저장소 선택 처리
+scwin.selectRepository = function (repoId, repoName, repoOwner) {
+    try {
+        console.log('저장소 선택:', repoOwner + '/' + repoName);
+        
+        // TODO: 2번 작업 - DB에 저장소 정보 저장
+        var repositoryData = {
+            githubRepoId: repoId,
+            repoName: repoName,
+            repoOwner: repoOwner,
+            projectId: scwin.currentProjectData ? scwin.currentProjectData.projectId : null
+        };
+        
+        // 임시로 콘솔에 표시
+        console.log('선택된 저장소 데이터:', repositoryData);
+        $c.win.alert('저장소 "' + repoOwner + '/' + repoName + '"을(를) 선택했습니다.\n\n다음 단계: DB 저장 구현 예정');
+        
+        // 선택된 저장소 정보 설정
+        dm_ui_state.set("selectedRepo", repoOwner + "/" + repoName);
+        
+    } catch (e) {
+        console.error("저장소 선택 처리 실패:", e);
+        $c.win.alert("저장소 선택 중 오류가 발생했습니다: " + e.message);
     }
 };
 
@@ -1100,10 +1691,48 @@ scwin.showEmptyRepositoryState = function () {
             countElement.textContent = "연결된 레포지토리가 없습니다. 새 레포지토리를 연결해보세요.";
         }
 
+        // UI 상태 업데이트
+        var cardsContainer = document.getElementById("repo_cards_container");
+        var loadingSection = document.getElementById("repo_loading_section");
+        var emptySection = document.getElementById("repo_empty_section");
+
+        if (loadingSection) {
+            loadingSection.style.display = "none";
+        }
+        if (cardsContainer) {
+            cardsContainer.style.display = "none";
+        }
+        if (emptySection) {
+            emptySection.style.display = "flex";
+        }
+
         // 선택된 레포지토리 정보 초기화
         dm_ui_state.set("selectedRepo", "");
     } catch (e) {
         console.error("빈 상태 표시 실패:", e);
+    }
+};
+
+// 레포지토리 로딩 상태 표시
+scwin.showRepositoryLoadingState = function () {
+    try {
+        var cardsContainer = document.getElementById("repo_cards_container");
+        var loadingSection = document.getElementById("repo_loading_section");
+        var emptySection = document.getElementById("repo_empty_section");
+
+        if (cardsContainer) {
+            cardsContainer.style.display = "none";
+        }
+        if (emptySection) {
+            emptySection.style.display = "none";
+        }
+        if (loadingSection) {
+            loadingSection.style.display = "flex";
+        }
+
+        console.log("레포지토리 로딩 상태 표시");
+    } catch (e) {
+        console.error("레포지토리 로딩 상태 표시 실패:", e);
     }
 };
 
@@ -1143,6 +1772,34 @@ scwin.updateLoadingDisplay = function (isLoading) {
         }
     } catch (e) {
         console.error("로딩 표시 업데이트 실패:", e);
+    }
+};
+
+// 날짜 포맷 함수
+scwin.formatDate = function(dateString) {
+    if (!dateString) return "";
+    
+    try {
+        var date = new Date(dateString);
+        var now = new Date();
+        var diff = now - date;
+        var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        
+        if (days === 0) {
+            return "오늘";
+        } else if (days === 1) {
+            return "어제";
+        } else if (days < 7) {
+            return days + "일 전";
+        } else if (days < 30) {
+            return Math.floor(days / 7) + "주 전";
+        } else if (days < 365) {
+            return Math.floor(days / 30) + "개월 전";
+        } else {
+            return Math.floor(days / 365) + "년 전";
+        }
+    } catch (e) {
+        return dateString.substring(0, 10); // YYYY-MM-DD 형태로 표시
     }
 };
 
@@ -2036,6 +2693,201 @@ scwin.redirectToGitHubLogin = function() {
 				flex-wrap: wrap;
 			}
 
+			/* 저장소 카드 스타일 */
+			.repo-cards-container {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+				gap: 20px;
+				padding: 20px;
+				max-height: 600px;
+				overflow-y: auto;
+			}
+			
+			.repo-card {
+				background: white;
+				border: 1px solid #e9ecef;
+				border-radius: 12px;
+				padding: 20px;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+				transition: all 0.2s ease;
+				cursor: pointer;
+				position: relative;
+			}
+			
+			.repo-card:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+				border-color: #007bff;
+			}
+			
+			.repo-card-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: flex-start;
+				margin-bottom: 12px;
+			}
+			
+			.repo-name {
+				font-size: 18px;
+				font-weight: 600;
+				color: #2c3e50;
+				margin: 0;
+				line-height: 1.3;
+			}
+			
+			.repo-owner {
+				font-size: 14px;
+				color: #6c757d;
+				margin: 0 0 4px 0;
+			}
+			
+			.repo-visibility {
+				display: inline-flex;
+				align-items: center;
+				padding: 4px 8px;
+				border-radius: 12px;
+				font-size: 12px;
+				font-weight: 500;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+			
+			.repo-visibility.private {
+				background-color: #fff3cd;
+				color: #856404;
+			}
+			
+			.repo-visibility.public {
+				background-color: #d4edda;
+				color: #155724;
+			}
+			
+			.repo-description {
+				font-size: 14px;
+				color: #6c757d;
+				line-height: 1.4;
+				margin-bottom: 16px;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+			}
+			
+			.repo-stats {
+				display: flex;
+				gap: 16px;
+				margin-bottom: 16px;
+			}
+			
+			.repo-stat {
+				display: flex;
+				align-items: center;
+				gap: 4px;
+				font-size: 14px;
+				color: #6c757d;
+			}
+			
+			.repo-stat-icon {
+				width: 16px;
+				height: 16px;
+				opacity: 0.7;
+			}
+			
+			.repo-language {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 12px;
+				color: #6c757d;
+			}
+			
+			.language-dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				background-color: #007bff;
+			}
+			
+			.repo-footer {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-top: 12px;
+				padding-top: 12px;
+				border-top: 1px solid #e9ecef;
+			}
+			
+			.repo-updated {
+				font-size: 12px;
+				color: #6c757d;
+			}
+			
+			.repo-actions {
+				display: flex;
+				gap: 8px;
+			}
+			
+			.repo-action-btn {
+				padding: 6px 12px;
+				background-color: #f8f9fa;
+				border: 1px solid #e9ecef;
+				border-radius: 6px;
+				font-size: 12px;
+				color: #6c757d;
+				cursor: pointer;
+				transition: all 0.2s ease;
+			}
+			
+			.repo-action-btn:hover {
+				background-color: #e9ecef;
+				color: #495057;
+			}
+			
+			.repo-action-btn.primary {
+				background-color: #007bff;
+				border-color: #007bff;
+				color: white;
+			}
+			
+			.repo-action-btn.primary:hover {
+				background-color: #0056b3;
+				border-color: #0056b3;
+			}
+			
+			/* 빈 상태 및 로딩 스타일 */
+			.empty-section,
+			.loading-section {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				height: 300px;
+				text-align: center;
+			}
+			
+			.empty-content {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 16px;
+			}
+			
+			.empty-icon {
+				font-size: 48px;
+				opacity: 0.5;
+			}
+			
+			.empty-title {
+				font-size: 18px;
+				font-weight: 600;
+				color: #2c3e50;
+			}
+			
+			.empty-description {
+				font-size: 14px;
+				color: #6c757d;
+				max-width: 400px;
+			}
+
 			@media (max-width: 768px) {
 				.github-content {
 					flex-direction: column;
@@ -2051,6 +2903,13 @@ scwin.redirectToGitHubLogin = function() {
 				.login-container {
 					margin: 20px;
 					padding: 30px;
+				}
+				.repo-cards-container {
+					grid-template-columns: 1fr;
+					padding: 16px;
+				}
+				.repo-card {
+					padding: 16px;
 				}
 			}
 		]]></style>
@@ -2122,11 +2981,36 @@ scwin.redirectToGitHubLogin = function() {
 				<xf:group class="github-main">
 					<xf:group class="card">
 						<xf:group class="card-header">
-							<w2:span class="card-title">📚 GitHub Manager 테스트</w2:span>
+							<w2:span class="card-title">📚 GitHub 레포지토리 목록</w2:span>
+							<xf:trigger type="button" class="btn btn-primary" ev:onclick="scwin.loadConnectedRepositories">
+								<xf:label>🔄 새로고침</xf:label>
+							</xf:trigger>
 						</xf:group>
 						<xf:group class="card-body">
-							<w2:span>GitHub Manager가 성공적으로 로드되었습니다!</w2:span><br /><br />
-							<w2:span style="color: #6c757d;">현재는 테스트 모드로 실행 중입니다. 실제 GitHub 기능을 사용하려면 위의 로그인 버튼을 클릭하여 GitHub 인증을 완료해주세요.</w2:span>
+							<!-- 로딩 메시지 -->
+							<xf:group id="repo_loading_section" class="loading-section" style="display: none;">
+								<xf:group class="loading-content">
+									<xf:group class="loading-spinner"></xf:group>
+									<w2:span class="loading-message">GitHub 저장소 목록을 불러오는 중...</w2:span>
+								</xf:group>
+							</xf:group>
+							
+							<!-- 빈 상태 메시지 -->
+							<xf:group id="repo_empty_section" class="empty-section" style="display: none;">
+								<xf:group class="empty-content">
+									<w2:span class="empty-icon">📂</w2:span>
+									<w2:span class="empty-title">연결된 저장소가 없습니다</w2:span>
+									<w2:span class="empty-description">GitHub 저장소를 연결하여 프로젝트를 관리해보세요.</w2:span>
+									<xf:trigger type="button" class="btn btn-primary" ev:onclick="scwin.loadConnectedRepositories">
+										<xf:label>🔄 새로고침</xf:label>
+									</xf:trigger>
+								</xf:group>
+							</xf:group>
+							
+							<!-- 저장소 카드 컨테이너 -->
+							<xf:group id="repo_cards_container" class="repo-cards-container" style="display: grid; max-height: 500px; overflow-y: auto; padding: 10px;">
+								<!-- 저장소 카드들이 여기에 동적으로 추가됩니다 -->
+							</xf:group>
 						</xf:group>
 					</xf:group>
 				</xf:group>

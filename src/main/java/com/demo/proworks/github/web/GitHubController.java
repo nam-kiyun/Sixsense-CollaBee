@@ -539,54 +539,70 @@ public class GitHubController {
     // ==============================
     
     /**
-     * 사용자의 GitHub 레포지토리 목록 조회
-     * test의 /api/repositories 에 해당
+     * GitHub API 프록시 - 레포지토리 목록 조회
+     * 프론트엔드에서 CORS 문제 없이 GitHub API 호출할 수 있도록 프록시 역할
      */
-    @ElService(key = "repositories")
-    @ElDescription(sub = "GitHub 레포지토리 목록 조회", desc = "사용자의 GitHub 레포지토리 목록을 조회합니다.")
-    @RequestMapping(value = "repositories")
+    @ElService(key = "api/repositories")
+    @ElDescription(sub = "GitHub API 프록시 - 레포지토리 목록", desc = "GitHub API를 프록시하여 레포지토리 목록을 조회합니다.")
+    @RequestMapping(value = "api/repositories")
     @ResponseBody
-    public Map<String, Object> getRepositories(
-            @RequestParam(defaultValue = "all") String type,
+    public String getRepositoriesProxy(
             @RequestParam(defaultValue = "updated") String sort,
-            @RequestParam(defaultValue = "100") int perPage,
+            @RequestParam(defaultValue = "100") int per_page,
+            @RequestParam(defaultValue = "owner,collaborator") String affiliation,
             HttpServletRequest request) {
         
-        logger.info("GitHub 레포지토리 목록 조회 시작");
-        
-        Map<String, Object> result = new HashMap<>();
+        logger.info("GitHub API 프록시 - 레포지토리 목록 조회 시작");
         
         try {
             HttpSession session = request.getSession();
-            String userId = (String) session.getAttribute("userId");
-            
-            // 서비스를 통해 레포지토리 목록 조회
             String accessToken = (String) session.getAttribute("githubAccessToken");
             
             if (accessToken == null) {
-                result.put("success", false);
-                result.put("error", "GitHub 인증이 필요합니다.");
-                return result;
+                throw new RuntimeException("GitHub 인증이 필요합니다.");
             }
             
-            Map<String, Object> param = new HashMap<>();
-            param.put("access_token", accessToken);
-            param.put("type", type);
-            param.put("sort", sort);
-            param.put("per_page", perPage);
+            // GitHub API 직접 호출
+            String url = "https://api.github.com/user/repos?sort=" + sort + 
+                        "&per_page=" + per_page + "&affiliation=" + affiliation;
             
-            GitHubRepositoryListVo repositories = gitHubService.getRepositories(param);
-            result.put("success", true);
-            result.put("repositories", repositories.getGitHubRepositoryVoList());
-            result.put("total_count", repositories.getTotalCount());
+            java.net.URL apiUrl = new java.net.URL(url);
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) apiUrl.openConnection();
+            
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Authorization", "token " + accessToken);
+            conn.setRequestProperty("Accept", "application/vnd.github.v3+json");
+            conn.setRequestProperty("User-Agent", "InsWebApp/1.0");
+            
+            int responseCode = conn.getResponseCode();
+            logger.info("GitHub API 응답 코드: {}", responseCode);
+            
+            java.io.BufferedReader reader;
+            if (responseCode >= 200 && responseCode < 300) {
+                reader = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()));
+            } else {
+                reader = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getErrorStream()));
+            }
+            
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            reader.close();
+            
+            if (responseCode >= 200 && responseCode < 300) {
+                logger.info("GitHub API 레포지토리 목록 조회 성공");
+                return response.toString();
+            } else {
+                logger.error("GitHub API 오류: {} - {}", responseCode, response.toString());
+                throw new RuntimeException("GitHub API 호출 실패: " + responseCode);
+            }
             
         } catch (Exception e) {
-            logger.error("GitHub 레포지토리 목록 조회 실패", e);
-            result.put("success", false);
-            result.put("error", e.getMessage());
+            logger.error("GitHub API 프록시 실패", e);
+            return "{\"error\": \"" + e.getMessage() + "\"}";
         }
-        
-        return result;
     }
     
     /**
