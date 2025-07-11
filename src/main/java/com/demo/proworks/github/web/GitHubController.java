@@ -44,6 +44,9 @@ public class GitHubController {
     @Autowired
     private RequestMappingHandlerMapping requestMappingHandlerMapping;
     
+    @Autowired
+    private com.demo.proworks.github.util.GitHubApiUtil gitHubApiUtil;
+    
     /**
      * 생성자 - 빈 등록 확인용
      */
@@ -613,17 +616,136 @@ public class GitHubController {
     @ElDescription(sub = "레포지토리 선택", desc = "사용자가 선택한 레포지토리를 등록합니다.")
     @RequestMapping(value = "repositories/select")
     @ResponseBody
-    public Map<String, Object> selectRepository(
-            @RequestParam String repositoryData,
+    public Map<String, Object> selectRepository(ProjectRepositoryVo projectRepositoryVo,
             HttpServletRequest request) {
         
-        logger.info("레포지토리 선택 처리 시작");
+        System.out.println("=== 컨트롤러 selectRepository 메소드 시작 ===");
+        System.out.println("받은 ProjectRepositoryVo: " + projectRepositoryVo);
         
         Map<String, Object> result = new HashMap<>();
         
         try {
             HttpSession session = request.getSession();
-            String userId = (String) session.getAttribute("userId");
+            String userId = null;
+            
+            // ProWorks UserHeader에서 userId 가져오기
+            try {
+                Object userHeader = session.getAttribute("userHeader");
+                System.out.println("세션의 userHeader: " + userHeader);
+                
+                if (userHeader != null) {
+                    // userHeader가 ProworksUserHeader 타입이라면
+                    if (userHeader instanceof com.demo.proworks.cmmn.ProworksUserHeader) {
+                        com.demo.proworks.cmmn.ProworksUserHeader proworksUserHeader = (com.demo.proworks.cmmn.ProworksUserHeader) userHeader;
+                        userId = proworksUserHeader.getUserId();
+                        System.out.println("ProworksUserHeader에서 가져온 userId: " + userId);
+                    } else {
+                        // 다른 타입이면 reflection으로 userId 필드 접근
+                        try {
+                            java.lang.reflect.Field userIdField = userHeader.getClass().getDeclaredField("userId");
+                            userIdField.setAccessible(true);
+                            userId = (String) userIdField.get(userHeader);
+                            System.out.println("Reflection으로 가져온 userId: " + userId);
+                        } catch (Exception e) {
+                            System.out.println("Reflection으로 userId 가져오기 실패: " + e.getMessage());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("UserHeader에서 userId 가져오기 실패: " + e.getMessage());
+            }
+            
+            // 세션에서 직접 userId 가져오기 시도
+            if (userId == null) {
+                userId = (String) session.getAttribute("userId");
+                System.out.println("세션에서 직접 가져온 userId: " + userId);
+            }
+            
+            System.out.println("최종 사용할 userId: " + userId);
+            
+            if (userId == null) {
+                System.out.println("userId가 null입니다. 로그인 필요");
+                result.put("success", false);
+                result.put("error", "로그인이 필요합니다.");
+                return result;
+            }
+            
+            // DB 저장을 위한 파라미터 구성
+            Map<String, Object> param = new HashMap<>();
+            param.put("project_id", projectRepositoryVo.getProjectId());
+            param.put("github_repository_id", projectRepositoryVo.getGithubRepositoryId());
+            param.put("repo_owner", projectRepositoryVo.getRepoOwner());
+            param.put("repo_name", projectRepositoryVo.getRepoName());
+            param.put("default_branch", projectRepositoryVo.getDefaultBranch());
+            param.put("github_app_installation_id", projectRepositoryVo.getGithubAppInstallationId());
+            
+            System.out.println("컨트롤러 - DB 저장 파라미터: " + param);
+            
+            // 서비스를 통해 레포지토리 선택 처리
+            System.out.println("서비스 호출 시작");
+            Map<String, Object> selectResult = gitHubService.selectRepository(param);
+            System.out.println("서비스 호출 완료, 결과: " + selectResult);
+            
+            result.putAll(selectResult);
+            
+            if ((Boolean) selectResult.get("success")) {
+                session.setAttribute("selectedRepository", true);
+                System.out.println("레포지토리 선택 성공");
+            }
+            
+        } catch (Exception e) {
+            System.out.println("컨트롤러 - 레포지토리 선택 처리 실패: " + e.getMessage());
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        
+        System.out.println("컨트롤러 - 최종 결과: " + result);
+        return result;
+    }
+    
+    // ==============================
+    // 브랜치 관리 API
+    // ==============================
+    
+    /**
+     * 저장소 브랜치 목록 조회
+     */
+    @ElService(key = "branches")
+    @ElDescription(sub = "브랜치 목록 조회", desc = "선택된 저장소의 브랜치 목록을 조회합니다.")
+    @RequestMapping(value = "branches")
+    @ResponseBody
+    public Map<String, Object> getBranches(
+            @RequestParam(value = "owner", required = true) String owner,
+            @RequestParam(value = "repo", required = true) String repo,
+            HttpServletRequest request) {
+        
+        System.out.println("=== 브랜치 목록 조회 API 호출 ===");
+        System.out.println("owner: " + owner);
+        System.out.println("repo: " + repo);
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            HttpSession session = request.getSession();
+            String userId = null;
+            
+            // UserHeader에서 userId 가져오기
+            try {
+                Object userHeader = session.getAttribute("userHeader");
+                if (userHeader != null && userHeader instanceof com.demo.proworks.cmmn.ProworksUserHeader) {
+                    com.demo.proworks.cmmn.ProworksUserHeader proworksUserHeader = (com.demo.proworks.cmmn.ProworksUserHeader) userHeader;
+                    userId = proworksUserHeader.getUserId();
+                }
+            } catch (Exception e) {
+                System.out.println("UserHeader에서 userId 가져오기 실패: " + e.getMessage());
+            }
+            
+            if (userId == null) {
+                userId = (String) session.getAttribute("userId");
+            }
+            
+            System.out.println("userId: " + userId);
             
             if (userId == null) {
                 result.put("success", false);
@@ -631,24 +753,198 @@ public class GitHubController {
                 return result;
             }
             
-            // 서비스를 통해 레포지토리 선택 처리
-            Map<String, Object> param = new HashMap<>();
-            param.put("user_id", userId);
-            param.put("repository_data", repositoryData);
+            // GitHub API 프록시 호출
+            String accessToken = (String) session.getAttribute("github_access_token");
+            System.out.println("accessToken 존재 여부: " + (accessToken != null));
             
-            Map<String, Object> selectResult = gitHubService.selectRepository(param);
-            result.putAll(selectResult);
+            if (accessToken == null) {
+                result.put("success", false);
+                result.put("error", "GitHub 인증이 필요합니다.");
+                return result;
+            }
             
-            if ((Boolean) selectResult.get("success")) {
-                session.setAttribute("selectedRepository", true);
+            // GitHub API 호출
+            System.out.println("GitHub API 호출 시작");
+            
+            try {
+                Map<String, Object> apiResponse = gitHubApiUtil.getBranches(accessToken, owner, repo);
+                System.out.println("GitHub API 응답: " + apiResponse);
+                
+                if ((Boolean) apiResponse.get("success")) {
+                    result.put("success", true);
+                    result.put("message", "브랜치 목록 조회 성공");
+                    result.put("data", apiResponse.get("data"));
+                } else {
+                    result.put("success", false);
+                    result.put("error", "GitHub API 호출 실패: " + apiResponse.get("data"));
+                }
+            } catch (Exception e) {
+                System.out.println("GitHub API 호출 오류: " + e.getMessage());
+                result.put("success", false);
+                result.put("error", "GitHub API 호출 오류: " + e.getMessage());
             }
             
         } catch (Exception e) {
-            logger.error("레포지토리 선택 처리 실패", e);
+            System.out.println("브랜치 목록 조회 실패: " + e.getMessage());
+            e.printStackTrace();
             result.put("success", false);
             result.put("error", e.getMessage());
         }
         
+        System.out.println("브랜치 목록 조회 결과: " + result);
+        return result;
+    }
+    
+    /**
+     * 브랜치 생성
+     */
+    @ElService(key = "branches/create")
+    @ElDescription(sub = "브랜치 생성", desc = "새로운 브랜치를 생성합니다.")
+    @RequestMapping(value = "branches/create", method = RequestMethod.POST)
+    @ResponseBody
+    public Map<String, Object> createBranch(
+            @RequestParam(value = "owner", required = true) String owner,
+            @RequestParam(value = "repo", required = true) String repo,
+            @RequestParam(value = "branchName", required = true) String branchName,
+            @RequestParam(value = "fromBranch", required = true) String fromBranch,
+            HttpServletRequest request) {
+        
+        System.out.println("=== 브랜치 생성 API 호출 ===");
+        System.out.println("owner: " + owner);
+        System.out.println("repo: " + repo);
+        System.out.println("branchName: " + branchName);
+        System.out.println("fromBranch: " + fromBranch);
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 인증 확인
+            HttpSession session = request.getSession();
+            String accessToken = (String) session.getAttribute("github_access_token");
+            
+            if (accessToken == null) {
+                result.put("success", false);
+                result.put("error", "GitHub 인증이 필요합니다.");
+                return result;
+            }
+            
+            // 1. 기준 브랜치의 최신 커밋 SHA 가져오기
+            System.out.println("기준 브랜치 커밋 SHA 조회: " + fromBranch);
+            
+            try {
+                // 기준 브랜치 정보 조회
+                Map<String, Object> branchInfo = gitHubApiUtil.get("/repos/" + owner + "/" + repo + "/branches/" + fromBranch, accessToken);
+                System.out.println("기준 브랜치 정보: " + branchInfo);
+                
+                if ((Boolean) branchInfo.get("success")) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> branchData = (Map<String, Object>) branchInfo.get("data");
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> commit = (Map<String, Object>) branchData.get("commit");
+                    String sourceSha = (String) commit.get("sha");
+                    
+                    System.out.println("기준 브랜치 SHA: " + sourceSha);
+                    
+                    // 2. 새 브랜치 생성
+                    Map<String, Object> createResponse = gitHubApiUtil.createBranch(accessToken, owner, repo, branchName, sourceSha);
+                    System.out.println("브랜치 생성 응답: " + createResponse);
+                    
+                    if ((Boolean) createResponse.get("success")) {
+                        result.put("success", true);
+                        result.put("message", "브랜치 생성 성공: " + branchName);
+                        result.put("data", createResponse.get("data"));
+                    } else {
+                        result.put("success", false);
+                        result.put("error", "브랜치 생성 실패: " + createResponse.get("data"));
+                    }
+                } else {
+                    result.put("success", false);
+                    result.put("error", "기준 브랜치 정보 조회 실패: " + branchInfo.get("data"));
+                }
+            } catch (Exception e) {
+                System.out.println("브랜치 생성 API 호출 오류: " + e.getMessage());
+                result.put("success", false);
+                result.put("error", "브랜치 생성 오류: " + e.getMessage());
+            }
+            
+        } catch (Exception e) {
+            System.out.println("브랜치 생성 실패: " + e.getMessage());
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        
+        System.out.println("브랜치 생성 결과: " + result);
+        return result;
+    }
+    
+    /**
+     * 브랜치 삭제
+     */
+    @ElService(key = "branches/delete")
+    @ElDescription(sub = "브랜치 삭제", desc = "브랜치를 삭제합니다.")
+    @RequestMapping(value = "branches/delete", method = RequestMethod.POST)
+    @ResponseBody
+    public Map<String, Object> deleteBranch(
+            @RequestParam(value = "owner", required = true) String owner,
+            @RequestParam(value = "repo", required = true) String repo,
+            @RequestParam(value = "branchName", required = true) String branchName,
+            HttpServletRequest request) {
+        
+        System.out.println("=== 브랜치 삭제 API 호출 ===");
+        System.out.println("owner: " + owner);
+        System.out.println("repo: " + repo);
+        System.out.println("branchName: " + branchName);
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 인증 확인
+            HttpSession session = request.getSession();
+            String accessToken = (String) session.getAttribute("github_access_token");
+            
+            if (accessToken == null) {
+                result.put("success", false);
+                result.put("error", "GitHub 인증이 필요합니다.");
+                return result;
+            }
+            
+            // 기본 브랜치 삭제 방지
+            if ("main".equals(branchName) || "master".equals(branchName)) {
+                result.put("success", false);
+                result.put("error", "기본 브랜치는 삭제할 수 없습니다.");
+                return result;
+            }
+            
+            // GitHub API 호출하여 브랜치 삭제
+            System.out.println("GitHub API 호출하여 브랜치 삭제 시작");
+            
+            try {
+                Map<String, Object> deleteResponse = gitHubApiUtil.deleteBranch(accessToken, owner, repo, branchName);
+                System.out.println("브랜치 삭제 응답: " + deleteResponse);
+                
+                if ((Boolean) deleteResponse.get("success")) {
+                    result.put("success", true);
+                    result.put("message", "브랜치 삭제 성공: " + branchName);
+                    result.put("data", deleteResponse.get("data"));
+                } else {
+                    result.put("success", false);
+                    result.put("error", "브랜치 삭제 실패: " + deleteResponse.get("data"));
+                }
+            } catch (Exception e) {
+                System.out.println("브랜치 삭제 API 호출 오류: " + e.getMessage());
+                result.put("success", false);
+                result.put("error", "브랜치 삭제 오류: " + e.getMessage());
+            }
+            
+        } catch (Exception e) {
+            System.out.println("브랜치 삭제 실패: " + e.getMessage());
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        
+        System.out.println("브랜치 삭제 결과: " + result);
         return result;
     }
     

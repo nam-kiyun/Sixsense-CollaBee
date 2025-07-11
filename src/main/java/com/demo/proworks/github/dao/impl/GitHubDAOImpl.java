@@ -55,8 +55,23 @@ public class GitHubDAOImpl implements GitHubDAO {
     
     @Override
     public String insertProjectRepository(Map<String, Object> param) throws Exception {
-        sqlSession.insert("com.demo.proworks.github.insertProjectRepository", param);
-        return param.get("project_repo_id") != null ? param.get("project_repo_id").toString() : null;
+        System.out.println("=== DAO insertProjectRepository 시작 ===");
+        System.out.println("DAO - 받은 파라미터: " + param);
+        
+        try {
+            System.out.println("MyBatis insert 실행 전");
+            sqlSession.insert("com.demo.proworks.github.insertProjectRepository", param);
+            System.out.println("MyBatis insert 실행 후");
+            
+            String recordId = param.get("project_repo_id") != null ? param.get("project_repo_id").toString() : null;
+            System.out.println("생성된 recordId: " + recordId);
+            
+            return recordId;
+        } catch (Exception e) {
+            System.out.println("DAO insertProjectRepository 실패: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
     
     @Override

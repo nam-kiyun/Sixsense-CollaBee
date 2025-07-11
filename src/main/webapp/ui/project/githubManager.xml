@@ -57,6 +57,58 @@
 						<w2:key id="loadingMessage" name="로딩메시지" dataType="text" />
 					</w2:keyInfo>
 				</w2:dataMap>
+				
+				<!-- 저장소 선택 데이터 -->
+				<w2:dataMap baseNode="map" id="dm_repository_select">
+					<w2:keyInfo>
+						<w2:key id="projectId" name="프로젝트ID" dataType="text" />
+						<w2:key id="githubRepositoryId" name="깃허브저장소ID" dataType="text" />
+						<w2:key id="repoOwner" name="저장소소유자" dataType="text" />
+						<w2:key id="repoName" name="저장소이름" dataType="text" />
+						<w2:key id="defaultBranch" name="기본브랜치" dataType="text" />
+						<w2:key id="githubAppInstallationId" name="깃허브앱설치ID" dataType="text" />
+					</w2:keyInfo>
+				</w2:dataMap>
+				
+				<!-- 브랜치 조회 파라미터 -->
+				<w2:dataMap baseNode="map" id="dm_branch_params">
+					<w2:keyInfo>
+						<w2:key id="owner" name="저장소소유자" dataType="text" />
+						<w2:key id="repo" name="저장소이름" dataType="text" />
+					</w2:keyInfo>
+				</w2:dataMap>
+				
+				<!-- 브랜치 생성 파라미터 -->
+				<w2:dataMap baseNode="map" id="dm_create_branch">
+					<w2:keyInfo>
+						<w2:key id="owner" name="저장소소유자" dataType="text" />
+						<w2:key id="repo" name="저장소이름" dataType="text" />
+						<w2:key id="branchName" name="브랜치이름" dataType="text" />
+						<w2:key id="fromBranch" name="기준브랜치" dataType="text" />
+					</w2:keyInfo>
+				</w2:dataMap>
+				
+				<!-- 브랜치 삭제 파라미터 -->
+				<w2:dataMap baseNode="map" id="dm_delete_branch">
+					<w2:keyInfo>
+						<w2:key id="owner" name="저장소소유자" dataType="text" />
+						<w2:key id="repo" name="저장소이름" dataType="text" />
+						<w2:key id="branchName" name="브랜치이름" dataType="text" />
+					</w2:keyInfo>
+				</w2:dataMap>
+				
+				<!-- 브랜치 목록 데이터 -->
+				<w2:dataList id="dlt_branches" baseNode="list" repeatNode="map">
+					<w2:columnInfo>
+						<w2:column id="name" name="브랜치명" dataType="text" />
+						<w2:column id="commit_sha" name="커밋SHA" dataType="text" />
+						<w2:column id="commit_message" name="커밋메시지" dataType="text" />
+						<w2:column id="commit_author" name="커밋작성자" dataType="text" />
+						<w2:column id="commit_date" name="커밋일시" dataType="text" />
+						<w2:column id="is_protected" name="보호상태" dataType="text" />
+						<w2:column id="is_default" name="기본브랜치여부" dataType="text" />
+					</w2:columnInfo>
+				</w2:dataList>
 			</w2:dataCollection>
 			<w2:workflowCollection />
 			
@@ -100,19 +152,21 @@
 						   processMsg="" />
 
 			<xf:submission id="sbm_connectRepository" 
-						   ref="" 
+						   ref='data:json,{"id":"dm_repository_select","key":"projectRepositoryVo"}' 
 						   target="" 
 						   action="/InsWebApp/github/repositories/select.pwkjson" 
 						   method="post" 
 						   mediatype="application/json" 
 						   encoding="UTF-8" 
 						   instance="" 
-						   replace="none" 
+						   replace="" 
 						   mode="asynchronous" 
-						   processMsg="" />
+						   processMsg="저장소를 프로젝트에 연결 중..."
+						   submitdone="scwin.sbm_connectRepository_submitdone"
+						   submiterror="scwin.sbm_connectRepository_submiterror" ev:submitdone="scwin.sbm_connectRepository_submitdone" ev:submiterror="scwin.sbm_connectRepository_submiterror"/>
 
 			<xf:submission id="sbm_loadBranches" 
-						   ref="" 
+						   ref="data:json,dm_branch_params" 
 						   target="data:json,dlt_branches" 
 						   action="/InsWebApp/github/branches.pwkjson" 
 						   method="get" 
@@ -121,10 +175,12 @@
 						   instance="" 
 						   replace="" 
 						   mode="asynchronous" 
-						   processMsg="" />
+						   processMsg="브랜치 목록을 불러오는 중..."
+						   submitdone="scwin.sbm_loadBranches_submitdone"
+						   submiterror="scwin.sbm_loadBranches_submiterror" />
 
 			<xf:submission id="sbm_createBranch" 
-						   ref="" 
+						   ref="data:json,dm_create_branch" 
 						   target="" 
 						   action="/InsWebApp/github/branches/create.pwkjson" 
 						   method="post" 
@@ -133,10 +189,12 @@
 						   instance="" 
 						   replace="none" 
 						   mode="asynchronous" 
-						   processMsg="" />
+						   processMsg="브랜치를 생성하는 중..."
+						   submitdone="scwin.sbm_createBranch_submitdone"
+						   submiterror="scwin.sbm_createBranch_submiterror" />
 
 			<xf:submission id="sbm_deleteBranch" 
-						   ref="" 
+						   ref="data:json,dm_delete_branch" 
 						   target="" 
 						   action="/InsWebApp/github/branches/delete.pwkjson" 
 						   method="post" 
@@ -145,7 +203,9 @@
 						   instance="" 
 						   replace="none" 
 						   mode="asynchronous" 
-						   processMsg="" />
+						   processMsg="브랜치를 삭제하는 중..."
+						   submitdone="scwin.sbm_deleteBranch_submitdone"
+						   submiterror="scwin.sbm_deleteBranch_submiterror" />
 
 			<xf:submission id="sbm_getCurrentRepository" 
 						   ref="" 
@@ -1533,12 +1593,15 @@ scwin.highlightSelectedCard = function(selectedCardId) {
             var children = container.getChildren();
             for (var i = 0; i < children.length; i++) {
                 var card = children[i];
-                if (card.getId() === selectedCardId) {
+                var cardId = card.id || card.getId();
+                if (cardId === selectedCardId) {
                     // 선택된 카드 스타일
-                    card.setStyle("border-color: #007bff; box-shadow: 0 4px 16px rgba(0, 123, 255, 0.15);");
+                    card.setStyle("border-color", "#007bff");
+                    card.setStyle("box-shadow", "0 4px 16px rgba(0, 123, 255, 0.15)");
                 } else {
                     // 일반 카드 스타일
-                    card.setStyle("border-color: #e9ecef; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);");
+                    card.setStyle("border-color", "#e9ecef");
+                    card.setStyle("box-shadow", "0 2px 8px rgba(0, 0, 0, 0.1)");
                 }
             }
         }
@@ -1550,21 +1613,99 @@ scwin.highlightSelectedCard = function(selectedCardId) {
 // 저장소 선택 처리
 scwin.selectRepository = function(repoId, repoName, repoOwner, repoData) {
     try {
+        console.log('=== 저장소 선택 함수 호출됨 ===');
+        console.log('repoId:', repoId);
+        console.log('repoName:', repoName);
+        console.log('repoOwner:', repoOwner);
+        console.log('repoData:', repoData);
         console.log('저장소 선택:', repoOwner + '/' + repoName);
         
         // 선택된 저장소 정보 설정
         dm_ui_state.set("selectedRepo", repoOwner + "/" + repoName);
         
-        // 성공 메시지 표시
-        $c.win.alert("저장소가 선택되었습니다:\n" + repoOwner + "/" + repoName + "\n\n다음 단계에서 이 저장소를 프로젝트에 연결할 수 있습니다.");
+        // 현재 선택된 저장소 정보를 저장해서 콜백에서 사용
+        scwin.currentSelectingRepo = {
+            id: repoId,
+            name: repoName,
+            owner: repoOwner,
+            data: repoData
+        };
         
-        // TODO: 2번 작업 - DB에 저장소 정보 저장하는 로직 추가
-        console.log('선택된 저장소 데이터:', repoData);
+        // DataMap에 개별 필드로 설정
+        dm_repository_select.set("projectId", scwin.currentProjectData ? scwin.currentProjectData.projectId : "");
+        dm_repository_select.set("githubRepositoryId", repoId ? repoId.toString() : "");
+        dm_repository_select.set("repoOwner", repoOwner || "");
+        dm_repository_select.set("repoName", repoName || "");
+        dm_repository_select.set("defaultBranch", repoData.default_branch || "main");
+        dm_repository_select.set("githubAppInstallationId", "");
+        
+        console.log('DataMap 설정 완료:', {
+            projectId: dm_repository_select.get("projectId"),
+            githubRepositoryId: dm_repository_select.get("githubRepositoryId"),
+            repoOwner: dm_repository_select.get("repoOwner"),
+            repoName: dm_repository_select.get("repoName"),
+            defaultBranch: dm_repository_select.get("defaultBranch"),
+            githubAppInstallationId: dm_repository_select.get("githubAppInstallationId")
+        });
+        
+        // 서브미션 실행
+        console.log('서브미션 실행 전');
+        $p.executeSubmission("sbm_connectRepository");
+        console.log('서브미션 실행 후');
         
     } catch (e) {
         console.error("저장소 선택 처리 실패:", e);
-        $c.win.alert("저장소 선택 중 오류가 발생했습니다.");
+        $c.win.alert("저장소 선택 중 오류가 발생했습니다: " + e.message);
     }
+};
+
+// 저장소 연결 성공 콜백
+scwin.sbm_connectRepository_submitdone = function(e) {
+    console.log('저장소 연결 성공:', e);
+    
+    try {
+        var response = e.responseJSON || e.response;
+        
+        if (response && response.success) {
+            var repoInfo = scwin.currentSelectingRepo;
+            $c.win.alert("저장소가 성공적으로 프로젝트에 연결되었습니다:\n" + repoInfo.owner + "/" + repoInfo.name);
+            
+            // 브랜치 관리 화면으로 전환
+            scwin.showBranchManagementView(repoInfo);
+            
+        } else {
+            $c.win.alert("저장소 연결 실패:\n" + (response.error || "알 수 없는 오류"));
+        }
+    } catch (err) {
+        console.error("저장소 연결 응답 처리 실패:", err);
+        $c.win.alert("저장소 연결 응답 처리 중 오류가 발생했습니다.");
+    }
+    
+    // 임시 데이터 정리
+    scwin.currentSelectingRepo = null;
+};
+
+// 저장소 연결 실패 콜백
+scwin.sbm_connectRepository_submiterror = function(e) {
+    console.error('저장소 연결 실패:', e);
+    
+    try {
+        var errorMsg = "저장소 연결 중 오류가 발생했습니다.";
+        
+        if (e.responseText) {
+            errorMsg += "\n오류 내용: " + e.responseText;
+        } else if (e.statusText) {
+            errorMsg += "\n오류 상태: " + e.statusText;
+        }
+        
+        $c.win.alert(errorMsg);
+    } catch (err) {
+        console.error("에러 처리 중 오류:", err);
+        $c.win.alert("저장소 연결 중 오류가 발생했습니다.");
+    }
+    
+    // 임시 데이터 정리
+    scwin.currentSelectingRepo = null;
 };
 
 // 레포지토리 카드 HTML 생성
@@ -1658,30 +1799,30 @@ scwin.attachCardEvents = function () {
 };
 
 // 저장소 선택 처리
-scwin.selectRepository = function (repoId, repoName, repoOwner) {
-    try {
-        console.log('저장소 선택:', repoOwner + '/' + repoName);
+// scwin.selectRepository = function (repoId, repoName, repoOwner) {
+//     try {
+//         console.log('저장소 선택:', repoOwner + '/' + repoName);
         
-        // TODO: 2번 작업 - DB에 저장소 정보 저장
-        var repositoryData = {
-            githubRepoId: repoId,
-            repoName: repoName,
-            repoOwner: repoOwner,
-            projectId: scwin.currentProjectData ? scwin.currentProjectData.projectId : null
-        };
+//         // TODO: 2번 작업 - DB에 저장소 정보 저장
+//         var repositoryData = {
+//             githubRepoId: repoId,
+//             repoName: repoName,
+//             repoOwner: repoOwner,
+//             projectId: scwin.currentProjectData ? scwin.currentProjectData.projectId : null
+//         };
         
-        // 임시로 콘솔에 표시
-        console.log('선택된 저장소 데이터:', repositoryData);
-        $c.win.alert('저장소 "' + repoOwner + '/' + repoName + '"을(를) 선택했습니다.\n\n다음 단계: DB 저장 구현 예정');
+//         // 임시로 콘솔에 표시
+//         console.log('선택된 저장소 데이터:', repositoryData);
+//         $c.win.alert('저장소 "' + repoOwner + '/' + repoName + '"을(를) 선택했습니다.\n\n다음 단계: DB 저장 구현 예정');
         
-        // 선택된 저장소 정보 설정
-        dm_ui_state.set("selectedRepo", repoOwner + "/" + repoName);
+//         // 선택된 저장소 정보 설정
+//         dm_ui_state.set("selectedRepo", repoOwner + "/" + repoName);
         
-    } catch (e) {
-        console.error("저장소 선택 처리 실패:", e);
-        $c.win.alert("저장소 선택 중 오류가 발생했습니다: " + e.message);
-    }
-};
+//     } catch (e) {
+//         console.error("저장소 선택 처리 실패:", e);
+//         $c.win.alert("저장소 선택 중 오류가 발생했습니다: " + e.message);
+//     }
+// };
 
 // 빈 레포지토리 상태 표시
 scwin.showEmptyRepositoryState = function () {
@@ -1838,6 +1979,596 @@ scwin.getErrorMessage = function (error) {
     } catch (e) {
         console.error("에러 메시지 추출 실패:", e);
         return "오류 정보를 확인할 수 없습니다.";
+    }
+};
+
+// ==============================
+// 브랜치 관리 기능
+// ==============================
+
+// 브랜치 관리 화면 표시
+scwin.showBranchManagementView = function(repoInfo) {
+    try {
+        console.log('브랜치 관리 화면 표시:', repoInfo);
+        
+        // 저장소 목록 숨기기
+        var cardsContainer = $p.getComponentById("repo_cards_container");
+        if (cardsContainer) {
+            cardsContainer.hide();
+        }
+        
+        // 브랜치 관리 섹션 표시
+        scwin.showBranchManagementSection(repoInfo);
+        
+        // 브랜치 목록 로드
+        scwin.loadBranches(repoInfo);
+        
+    } catch (e) {
+        console.error("브랜치 관리 화면 표시 실패:", e);
+    }
+};
+
+// 브랜치 관리 섹션 UI 생성
+scwin.showBranchManagementSection = function(repoInfo) {
+    try {
+        // 기존 브랜치 관리 섹션 제거
+        var existingSection = $p.getComponentById("branch_management_section");
+        if (existingSection) {
+            existingSection.remove();
+        }
+        
+        // 메인 컨테이너 찾기
+        var mainContainer = $p.getComponentById("repo_cards_container").getParent();
+        
+        // 브랜치 관리 섹션 생성
+        var branchSection = $p.dynamicCreate(
+            "branch_management_section",
+            "group",
+            {
+                style: "width: 100%; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;",
+                className: "branch-management-section"
+            },
+            mainContainer
+        );
+        
+        // 저장소 정보 헤더
+        var headerGroup = $p.dynamicCreate(
+            "branch_header",
+            "group",
+            {
+                style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e9ecef;",
+                className: "branch-header"
+            },
+            branchSection
+        );
+        
+        // 저장소 제목
+        var titleSpan = $p.dynamicCreate(
+            "branch_title",
+            "span",
+            {
+                style: "font-size: 20px; font-weight: 600; color: #2c3e50;",
+                className: "branch-title"
+            },
+            headerGroup
+        );
+        titleSpan.setValue("📁 " + repoInfo.owner + "/" + repoInfo.name);
+        
+        // 뒤로가기 버튼
+        var backBtn = $p.dynamicCreate(
+            "back_to_repos_btn",
+            "trigger",
+            {
+                style: "padding: 8px 16px; background-color: #6c757d; border: 1px solid #6c757d; border-radius: 6px; color: white; cursor: pointer;",
+                className: "back-btn"
+            },
+            headerGroup
+        );
+        backBtn.setValue("← 저장소 목록");
+        backBtn.bind("onclick", function() {
+            scwin.showRepositoryList();
+        });
+        
+        // 브랜치 액션 버튼 그룹
+        var actionGroup = $p.dynamicCreate(
+            "branch_actions",
+            "group",
+            {
+                style: "display: flex; gap: 12px; margin-bottom: 20px;",
+                className: "branch-actions"
+            },
+            branchSection
+        );
+        
+        // 브랜치 생성 버튼
+        var createBtn = $p.dynamicCreate(
+            "create_branch_btn",
+            "trigger",
+            {
+                style: "padding: 10px 20px; background-color: #28a745; border: 1px solid #28a745; border-radius: 6px; color: white; cursor: pointer;",
+                className: "create-branch-btn"
+            },
+            actionGroup
+        );
+        createBtn.setValue("+ 브랜치 생성");
+        createBtn.bind("onclick", function() {
+            scwin.showCreateBranchDialog(repoInfo);
+        });
+        
+        // 새로고침 버튼
+        var refreshBtn = $p.dynamicCreate(
+            "refresh_branches_btn",
+            "trigger",
+            {
+                style: "padding: 10px 20px; background-color: #17a2b8; border: 1px solid #17a2b8; border-radius: 6px; color: white; cursor: pointer;",
+                className: "refresh-branches-btn"
+            },
+            actionGroup
+        );
+        refreshBtn.setValue("🔄 새로고침");
+        refreshBtn.bind("onclick", function() {
+            scwin.loadBranches(repoInfo);
+        });
+        
+        // 브랜치 목록 컨테이너
+        var branchListContainer = $p.dynamicCreate(
+            "branch_list_container",
+            "group",
+            {
+                style: "min-height: 200px;",
+                className: "branch-list-container"
+            },
+            branchSection
+        );
+        
+        // 현재 저장소 정보 저장
+        scwin.currentRepository = repoInfo;
+        
+        console.log('브랜치 관리 섹션 생성 완료');
+        
+    } catch (e) {
+        console.error("브랜치 관리 섹션 생성 실패:", e);
+    }
+};
+
+// 저장소 목록으로 돌아가기
+scwin.showRepositoryList = function() {
+    try {
+        // 브랜치 관리 섹션 숨기기
+        var branchSection = $p.getComponentById("branch_management_section");
+        if (branchSection) {
+            branchSection.remove();
+        }
+        
+        // 저장소 목록 표시
+        var cardsContainer = $p.getComponentById("repo_cards_container");
+        if (cardsContainer) {
+            cardsContainer.show();
+        }
+        
+        // 현재 저장소 정보 초기화
+        scwin.currentRepository = null;
+        
+        console.log('저장소 목록으로 돌아가기 완료');
+        
+    } catch (e) {
+        console.error("저장소 목록 표시 실패:", e);
+    }
+};
+
+// 브랜치 목록 로드
+scwin.loadBranches = function(repoInfo) {
+    try {
+        console.log('브랜치 목록 로드 시작:', repoInfo);
+        
+        // 로딩 상태 표시
+        scwin.showBranchLoadingState();
+        
+        // 브랜치 조회 파라미터 설정
+        dm_branch_params.set("owner", repoInfo.owner);
+        dm_branch_params.set("repo", repoInfo.name);
+        
+        // 서브미션 실행
+        $p.executeSubmission("sbm_loadBranches");
+        
+    } catch (e) {
+        console.error('브랜치 목록 로드 실패:', e);
+        scwin.showBranchErrorState("브랜치 목록을 불러오는 중 오류가 발생했습니다.");
+    }
+};
+
+// 브랜치 로딩 상태 표시
+scwin.showBranchLoadingState = function() {
+    try {
+        var container = $p.getComponentById("branch_list_container");
+        if (container) {
+            // 기존 내용 제거
+            var children = container.getChildren();
+            for (var i = children.length - 1; i >= 0; i--) {
+                children[i].remove();
+            }
+            
+            // 로딩 메시지 표시
+            var loadingSpan = $p.dynamicCreate(
+                "branch_loading",
+                "span",
+                {
+                    style: "text-align: center; color: #6c757d; font-size: 16px; padding: 40px;",
+                    className: "branch-loading"
+                },
+                container
+            );
+            loadingSpan.setValue("브랜치 목록을 불러오는 중...");
+        }
+    } catch (e) {
+        console.error("브랜치 로딩 상태 표시 실패:", e);
+    }
+};
+
+// 브랜치 에러 상태 표시
+scwin.showBranchErrorState = function(message) {
+    try {
+        var container = $p.getComponentById("branch_list_container");
+        if (container) {
+            // 기존 내용 제거
+            var children = container.getChildren();
+            for (var i = children.length - 1; i >= 0; i--) {
+                children[i].remove();
+            }
+            
+            // 에러 메시지 표시
+            var errorSpan = $p.dynamicCreate(
+                "branch_error",
+                "span",
+                {
+                    style: "text-align: center; color: #dc3545; font-size: 16px; padding: 40px;",
+                    className: "branch-error"
+                },
+                container
+            );
+            errorSpan.setValue(message || "브랜치 정보를 불러올 수 없습니다.");
+        }
+    } catch (e) {
+        console.error("브랜치 에러 상태 표시 실패:", e);
+    }
+};
+
+// ==============================
+// 브랜치 관련 콜백 함수들
+// ==============================
+
+// 브랜치 목록 조회 성공 콜백
+scwin.sbm_loadBranches_submitdone = function(e) {
+    console.log('브랜치 목록 조회 성공:', e);
+    
+    try {
+        var response = e.responseJSON || e.response;
+        
+        if (response && response.success) {
+            var branches = response.data || [];
+            console.log('브랜치 목록:', branches);
+            
+            // 브랜치 목록 화면에 표시
+            scwin.renderBranchList(branches);
+            
+        } else {
+            console.error('브랜치 목록 조회 실패:', response.error);
+            scwin.showBranchErrorState(response.error || "브랜치 목록을 불러올 수 없습니다.");
+        }
+    } catch (err) {
+        console.error("브랜치 목록 조회 응답 처리 실패:", err);
+        scwin.showBranchErrorState("브랜치 목록 처리 중 오류가 발생했습니다.");
+    }
+};
+
+// 브랜치 목록 조회 실패 콜백
+scwin.sbm_loadBranches_submiterror = function(e) {
+    console.error('브랜치 목록 조회 실패:', e);
+    scwin.showBranchErrorState("브랜치 목록을 불러오는 중 오류가 발생했습니다.");
+};
+
+// 브랜치 생성 성공 콜백
+scwin.sbm_createBranch_submitdone = function(e) {
+    console.log('브랜치 생성 성공:', e);
+    
+    try {
+        var response = e.responseJSON || e.response;
+        
+        if (response && response.success) {
+            $c.win.alert("브랜치가 성공적으로 생성되었습니다.");
+            
+            // 브랜치 목록 새로고침
+            if (scwin.currentRepository) {
+                scwin.loadBranches(scwin.currentRepository);
+            }
+            
+        } else {
+            console.error('브랜치 생성 실패:', response.error);
+            $c.win.alert("브랜치 생성 실패:\n" + (response.error || "알 수 없는 오류"));
+        }
+    } catch (err) {
+        console.error("브랜치 생성 응답 처리 실패:", err);
+        $c.win.alert("브랜치 생성 응답 처리 중 오류가 발생했습니다.");
+    }
+};
+
+// 브랜치 생성 실패 콜백
+scwin.sbm_createBranch_submiterror = function(e) {
+    console.error('브랜치 생성 실패:', e);
+    $c.win.alert("브랜치 생성 중 오류가 발생했습니다.");
+};
+
+// 브랜치 삭제 성공 콜백
+scwin.sbm_deleteBranch_submitdone = function(e) {
+    console.log('브랜치 삭제 성공:', e);
+    
+    try {
+        var response = e.responseJSON || e.response;
+        
+        if (response && response.success) {
+            $c.win.alert("브랜치가 성공적으로 삭제되었습니다.");
+            
+            // 브랜치 목록 새로고침
+            if (scwin.currentRepository) {
+                scwin.loadBranches(scwin.currentRepository);
+            }
+            
+        } else {
+            console.error('브랜치 삭제 실패:', response.error);
+            $c.win.alert("브랜치 삭제 실패:\n" + (response.error || "알 수 없는 오류"));
+        }
+    } catch (err) {
+        console.error("브랜치 삭제 응답 처리 실패:", err);
+        $c.win.alert("브랜치 삭제 응답 처리 중 오류가 발생했습니다.");
+    }
+};
+
+// 브랜치 삭제 실패 콜백
+scwin.sbm_deleteBranch_submiterror = function(e) {
+    console.error('브랜치 삭제 실패:', e);
+    $c.win.alert("브랜치 삭제 중 오류가 발생했습니다.");
+};
+
+// 브랜치 목록 렌더링
+scwin.renderBranchList = function(branches) {
+    try {
+        var container = $p.getComponentById("branch_list_container");
+        if (!container) {
+            console.error("브랜치 목록 컨테이너를 찾을 수 없습니다.");
+            return;
+        }
+        
+        // 기존 내용 제거
+        var children = container.getChildren();
+        for (var i = children.length - 1; i >= 0; i--) {
+            children[i].remove();
+        }
+        
+        if (!branches || branches.length === 0) {
+            var emptySpan = $p.dynamicCreate(
+                "branch_empty",
+                "span",
+                {
+                    style: "text-align: center; color: #6c757d; font-size: 16px; padding: 40px;",
+                    className: "branch-empty"
+                },
+                container
+            );
+            emptySpan.setValue("브랜치가 없습니다.");
+            return;
+        }
+        
+        // 브랜치 목록 생성
+        for (var i = 0; i < branches.length; i++) {
+            var branch = branches[i];
+            scwin.createBranchCard(branch, i, container);
+        }
+        
+        console.log("브랜치 목록 렌더링 완료:", branches.length + "개");
+        
+    } catch (e) {
+        console.error("브랜치 목록 렌더링 실패:", e);
+    }
+};
+
+// 브랜치 카드 생성
+scwin.createBranchCard = function(branch, index, container) {
+    try {
+        var cardId = "branch_card_" + index;
+        var branchName = branch.name || "Unknown";
+        var commitSha = branch.commit ? branch.commit.sha : "Unknown";
+        var commitMessage = branch.commit && branch.commit.commit ? branch.commit.commit.message : "No message";
+        var commitAuthor = branch.commit && branch.commit.commit && branch.commit.commit.author ? branch.commit.commit.author.name : "Unknown";
+        var isProtected = branch.protected || false;
+        
+        // 기본 브랜치 확인
+        var isDefault = (branchName === "main" || branchName === "master");
+        
+        // 카드 그룹 생성
+        var cardGroup = $p.dynamicCreate(
+            cardId,
+            "group",
+            {
+                style: "background: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);",
+                className: "branch-card"
+            },
+            container
+        );
+        
+        // 브랜치 정보 헤더
+        var headerGroup = $p.dynamicCreate(
+            cardId + "_header",
+            "group",
+            {
+                style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;",
+                className: "branch-header"
+            },
+            cardGroup
+        );
+        
+        // 브랜치 이름
+        var nameSpan = $p.dynamicCreate(
+            cardId + "_name",
+            "span",
+            {
+                style: "font-size: 16px; font-weight: 600; color: #2c3e50;",
+                className: "branch-name"
+            },
+            headerGroup
+        );
+        nameSpan.setValue("🌿 " + branchName);
+        
+        // 브랜치 상태
+        var statusGroup = $p.dynamicCreate(
+            cardId + "_status",
+            "group",
+            {
+                style: "display: flex; gap: 8px;",
+                className: "branch-status"
+            },
+            headerGroup
+        );
+        
+        if (isDefault) {
+            var defaultBadge = $p.dynamicCreate(
+                cardId + "_default",
+                "span",
+                {
+                    style: "padding: 4px 8px; background-color: #28a745; color: white; border-radius: 4px; font-size: 12px;",
+                    className: "default-badge"
+                },
+                statusGroup
+            );
+            defaultBadge.setValue("기본");
+        }
+        
+        if (isProtected) {
+            var protectedBadge = $p.dynamicCreate(
+                cardId + "_protected",
+                "span",
+                {
+                    style: "padding: 4px 8px; background-color: #ffc107; color: #212529; border-radius: 4px; font-size: 12px;",
+                    className: "protected-badge"
+                },
+                statusGroup
+            );
+            protectedBadge.setValue("보호됨");
+        }
+        
+        // 커밋 정보
+        var commitGroup = $p.dynamicCreate(
+            cardId + "_commit",
+            "group",
+            {
+                style: "margin-bottom: 12px;",
+                className: "branch-commit"
+            },
+            cardGroup
+        );
+        
+        var commitSpan = $p.dynamicCreate(
+            cardId + "_commit_info",
+            "span",
+            {
+                style: "font-size: 14px; color: #6c757d;",
+                className: "commit-info"
+            },
+            commitGroup
+        );
+        commitSpan.setValue("최신 커밋: " + commitSha.substring(0, 7) + " - " + commitMessage + " by " + commitAuthor);
+        
+        // 액션 버튼
+        if (!isDefault) {
+            var actionGroup = $p.dynamicCreate(
+                cardId + "_actions",
+                "group",
+                {
+                    style: "display: flex; gap: 8px;",
+                    className: "branch-actions"
+                },
+                cardGroup
+            );
+            
+            var deleteBtn = $p.dynamicCreate(
+                cardId + "_delete",
+                "trigger",
+                {
+                    style: "padding: 6px 12px; background-color: #dc3545; border: 1px solid #dc3545; border-radius: 4px; color: white; cursor: pointer;",
+                    className: "delete-branch-btn"
+                },
+                actionGroup
+            );
+            deleteBtn.setValue("삭제");
+            deleteBtn.bind("onclick", function() {
+                scwin.deleteBranch(branchName);
+            });
+        }
+        
+        console.log("브랜치 카드 생성 완료:", branchName);
+        
+    } catch (e) {
+        console.error("브랜치 카드 생성 실패:", e);
+    }
+};
+
+// 브랜치 생성 다이얼로그 표시
+scwin.showCreateBranchDialog = function(repoInfo) {
+    try {
+        var branchName = prompt("새 브랜치 이름을 입력하세요:");
+        if (branchName && branchName.trim()) {
+            var fromBranch = prompt("기준 브랜치 이름을 입력하세요:", "main");
+            if (fromBranch && fromBranch.trim()) {
+                scwin.createBranch(repoInfo, branchName.trim(), fromBranch.trim());
+            }
+        }
+    } catch (e) {
+        console.error("브랜치 생성 다이얼로그 표시 실패:", e);
+    }
+};
+
+// 브랜치 생성 실행
+scwin.createBranch = function(repoInfo, branchName, fromBranch) {
+    try {
+        console.log('브랜치 생성 실행:', branchName, 'from', fromBranch);
+        
+        // 브랜치 생성 파라미터 설정
+        dm_create_branch.set("owner", repoInfo.owner);
+        dm_create_branch.set("repo", repoInfo.name);
+        dm_create_branch.set("branchName", branchName);
+        dm_create_branch.set("fromBranch", fromBranch);
+        
+        // 서브미션 실행
+        $p.executeSubmission("sbm_createBranch");
+        
+    } catch (e) {
+        console.error('브랜치 생성 실행 실패:', e);
+        $c.win.alert("브랜치 생성 중 오류가 발생했습니다: " + e.message);
+    }
+};
+
+// 브랜치 삭제 실행
+scwin.deleteBranch = function(branchName) {
+    try {
+        if (confirm("정말로 '" + branchName + "' 브랜치를 삭제하시겠습니까?")) {
+            console.log('브랜치 삭제 실행:', branchName);
+            
+            var repoInfo = scwin.currentRepository;
+            if (!repoInfo) {
+                $c.win.alert("저장소 정보를 찾을 수 없습니다.");
+                return;
+            }
+            
+            // 브랜치 삭제 파라미터 설정
+            dm_delete_branch.set("owner", repoInfo.owner);
+            dm_delete_branch.set("repo", repoInfo.name);
+            dm_delete_branch.set("branchName", branchName);
+            
+            // 서브미션 실행
+            $p.executeSubmission("sbm_deleteBranch");
+        }
+    } catch (e) {
+        console.error('브랜치 삭제 실행 실패:', e);
+        $c.win.alert("브랜치 삭제 중 오류가 발생했습니다: " + e.message);
     }
 };
 

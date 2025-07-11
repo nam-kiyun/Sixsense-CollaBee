@@ -394,24 +394,34 @@ public class GitHubServiceImpl implements GitHubService {
     @Override
     @Transactional
     public Map<String, Object> selectRepository(Map<String, Object> param) throws Exception {
-        logger.info("레포지토리 선택 처리 시작");
+        System.out.println("=== 레포지토리 선택 처리 시작 ===");
+        System.out.println("서비스 - 받은 파라미터: " + param);
         
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // TODO: 사용자의 레포지토리 선택 정보 DB 저장
-            // test 디렉터리의 auth.js의 select-repo 로직 참고
+            // 파라미터 상세 로그
+            System.out.println("project_id: " + param.get("project_id"));
+            System.out.println("github_repository_id: " + param.get("github_repository_id"));
+            System.out.println("repo_owner: " + param.get("repo_owner"));
+            System.out.println("repo_name: " + param.get("repo_name"));
+            System.out.println("default_branch: " + param.get("default_branch"));
+            System.out.println("github_app_installation_id: " + param.get("github_app_installation_id"));
             
+            // DB 저장 실행
+            System.out.println("DB 저장 시작");
             String recordId = gitHubDAO.insertProjectRepository(param);
+            System.out.println("DB 저장 완료, recordId: " + recordId);
             
             result.put("success", true);
             result.put("record_id", recordId);
             result.put("message", "레포지토리 선택 완료");
             
-            logger.info("레포지토리 선택 처리 완료");
+            System.out.println("레포지토리 선택 처리 완료");
             
         } catch (Exception e) {
-            logger.error("레포지토리 선택 처리 실패", e);
+            System.out.println("레포지토리 선택 처리 실패: " + e.getMessage());
+            e.printStackTrace();
             result.put("success", false);
             result.put("error", e.getMessage());
         }
