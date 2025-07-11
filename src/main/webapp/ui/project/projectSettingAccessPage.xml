@@ -585,21 +585,22 @@ scwin.btn_close_onclick = function(e) {
                 
                 <!-- 검색 바 -->
                 <xf:group style="display:flex;gap:16px;align-items:center;margin-bottom:20px;" id="grp_searchBar">
-                    <xf:input 
-                        style="flex:1;max-width:400px;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;"
-                        ref="dm_search.searchValue" 
-                        id="input_search"
-                        placeholder="이메일로 검색"/>
-                    
-                    <xf:trigger 
-                        style="width:80px;height:48px;background-color:#ffb823;border:1px solid #ffb823;border-radius:8px;color:#000000;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
-                        id="btn_search" 
-                        type="button" 
-                        ev:onclick="scwin.btn_search_onclick">
-                        <xf:label><![CDATA[검색]]></xf:label>
-                    </xf:trigger>
+                	<xf:input
+                		style="flex:1;max-width:400px;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;"
+                		ref="dm_search.searchValue" id="input_search" placeholder="이메일로 검색" />
+
+                	<xf:trigger
+                		style="width:80px;height:48px;background-color:#ffb823;border:1px solid #ffb823;border-radius:8px;color:#000000;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
+                		id="btn_search" type="button" ev:onclick="scwin.btn_search_onclick">
+                		<xf:label><![CDATA[검색]]></xf:label>
+                	</xf:trigger>
+                	<xf:trigger
+                		style="width:140px;height:48px;background-color:#ffb823;border:1px solid #ffb823;border-radius:8px;color:#000000s;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
+                		id="btn_addUser" type="button" ev:onclick="scwin.btn_addUser_onclick">
+                		<xf:label><![CDATA[+ 사용자 추가]]></xf:label>
+                	</xf:trigger>
                 </xf:group>
-                
+
                 <!-- 검색 결과 메시지 영역 -->
                 <xf:group style="margin-top:16px;margin-bottom:8px;" id="grp_searchMessage">
                     <xf:output 
@@ -611,13 +612,7 @@ scwin.btn_close_onclick = function(e) {
                 
                 <!-- 사용자 추가 버튼 -->
                 <xf:group style="display:flex;justify-content:flex-end;" id="grp_addButton">
-                    <xf:trigger 
-                        style="width:140px;height:48px;background-color:#ffb823;border:1px solid #ffb823;border-radius:8px;color:#000000s;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
-                        id="btn_addUser" 
-                        type="button" 
-                        ev:onclick="scwin.btn_addUser_onclick">
-                        <xf:label><![CDATA[+ 사용자 추가]]></xf:label>
-                    </xf:trigger>
+                    
                 </xf:group>
                 
             </xf:group>
