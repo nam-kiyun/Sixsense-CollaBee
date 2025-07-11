@@ -21,13 +21,13 @@
         INSERT INTO MANAGER   /* QueryID : com.demo.proworks.manager.insertManager */
         ( 
             MANAGER_ID
-            <if test="taskVersionId!= null"> , TASK_VERSION_ID </if>
+            <if test="taskId!= null"> , TASK_ID </if>
             <if test="userId        != null"> , USER_ID         </if>
         )
         VALUES  
         ( 
             #{managerId}
-            <if test="taskVersionId!= null"> , #{taskVersionId} </if>
+            <if test="taskId!= null"> , #{taskId} </if>
             <if test="userId        != null"> , #{userId}         </if> 
         )          
     </insert>	
@@ -38,7 +38,7 @@
         UPDATE MANAGER    /* QueryID : com.demo.proworks.manager.updateManager */      
       	  SET  
                 MANAGER_ID      = #{managerId}             	                       
-            <if test="taskVersionId!= null"> , TASK_VERSION_ID = #{taskVersionId} </if>
+            <if test="taskId!= null"> , TASK_ID = #{taskId} </if>
             <if test="userId        != null"> , USER_ID         = #{userId}         </if>                 
         WHERE   
                 MANAGER_ID      = #{managerId}     
@@ -51,11 +51,21 @@
         WHERE   
                 MANAGER_ID      = #{managerId}             
     </delete>
+    
+    <select id="selectManagerByTaskId" parameterType="com.demo.proworks.manager.vo.ManagerVo" resultType="com.demo.proworks.manager.vo.ManagerVo">
+    	<!-- 업무 담당자 정보를 상세 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.manager.selectManager */
+            MANAGER_ID as managerId, TASK_ID as taskId, USER_ID as userId
+        FROM MANAGER 
+        WHERE 
+                TASK_ID      = #{taskId}     
+			
+    </select>
 	
     <select id="selectManager" parameterType="com.demo.proworks.manager.vo.ManagerVo" resultType="com.demo.proworks.manager.vo.ManagerVo">
     	<!-- 업무 담당자 정보를 상세 조회한다. -->	
         SELECT     /* QueryID : com.demo.proworks.manager.selectManager */
-            MANAGER_ID as managerId, TASK_VERSION_ID as taskVersionId, USER_ID as userId
+            MANAGER_ID as managerId, TASK_ID as taskId, USER_ID as userId
         FROM MANAGER 
         WHERE 
                 MANAGER_ID      = #{managerId}     			
@@ -64,7 +74,7 @@
     <select id="selectListManager" parameterType="com.demo.proworks.manager.vo.ManagerVo" resultType="com.demo.proworks.manager.vo.ManagerVo">
     	<!-- 업무 담당자 정보 목록을 조회한다. -->
            SELECT    /* QueryID : com.demo.proworks.manager.selectListManager */
-               MANAGER_ID as managerId, TASK_VERSION_ID as taskVersionId, USER_ID as userId		       
+               MANAGER_ID as managerId, TASK_ID as taskId, USER_ID as userId		       
            FROM (
                SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
                FROM (				

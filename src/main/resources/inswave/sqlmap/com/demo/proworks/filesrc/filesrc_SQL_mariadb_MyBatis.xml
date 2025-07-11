@@ -63,6 +63,16 @@
         WHERE 
                 FILE_ID         = #{fileId}        			
     </select>
+    
+    <select id="selectFileSrcByTaskVersionId" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo" resultType="com.demo.proworks.filesrc.vo.FileSrcVo">
+    	<!-- 파일 를 상세 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.filesrc.selectFileSrc */
+            FILE_ID as fileId, TASK_VERSION_ID as taskVersionId, FILE_NAME as fileName, FILE_PATH as filePath
+        FROM FILESRC 
+        WHERE 
+                TASK_VERSION_ID         = #{taskVersionId}        
+			
+    </select>
 	
     <select id="selectListFileSrc" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo" resultType="com.demo.proworks.filesrc.vo.FileSrcVo">
     	<!-- 파일  목록을 조회한다. -->

@@ -170,7 +170,7 @@ scwin.login_button_onclick = async function (e) {
     //     return;
     // }
 
-    // // 3. 리캡챠 서브미션 실행
+    // 3. 리캡챠 서브미션 실행
     // const param = {
     //     secretKey: "",
     //     token: token

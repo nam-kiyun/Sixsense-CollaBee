@@ -111,7 +111,7 @@ public class UserController {
 		RestTemplate restTemplate = new RestTemplate();
 
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-		params.add("secret", secret);
+		params.add("secret", secretKey);
 		params.add("response", token);
 		System.out.println("비밀 : " + secret);
 		System.out.println("토큰 : " + token);

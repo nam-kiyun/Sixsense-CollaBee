@@ -6,45 +6,49 @@ import com.inswave.elfw.annotation.ElVoField;
 import com.fasterxml.jackson.annotation.JsonFilter;
 
 @JsonFilter("elExcludeFilter")
-@ElDto(FldYn = "", logicalName = "버전관리를 위한 Task(업무) 정보")
+@ElDto(FldYn = "", delimeterYn = "", logicalName = "버전관리를 위한 Task(업무) 정보")
 public class TaskVersionVo extends com.demo.proworks.cmmn.ProworksCommVO {
     private static final long serialVersionUID = 1L;
 
-    @ElDtoField(logicalName = "task_version_id", physicalName = "taskVersionId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String taskVersionId;
+    public TaskVersionVo(){
+    }
 
-    @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String taskId;
+    @ElDtoField(logicalName = "task_version_id", physicalName = "taskVersionId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int taskVersionId;
 
-    @ElDtoField(logicalName = "content", physicalName = "content", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int taskId;
+
+    @ElDtoField(logicalName = "content", physicalName = "content", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String content;
 
-    @ElDtoField(logicalName = "created_at", physicalName = "createdAt", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "created_at", physicalName = "createdAt", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String createdAt;
 
     @ElVoField(physicalName = "taskVersionId")
-    public String getTaskVersionId(){
+    public int getTaskVersionId(){
         return taskVersionId;
     }
 
     @ElVoField(physicalName = "taskVersionId")
-    public void setTaskVersionId(String taskVersionId){
+    public void setTaskVersionId(int taskVersionId){
         this.taskVersionId = taskVersionId;
     }
 
     @ElVoField(physicalName = "taskId")
-    public String getTaskId(){
+    public int getTaskId(){
         return taskId;
     }
 
     @ElVoField(physicalName = "taskId")
-    public void setTaskId(String taskId){
+    public void setTaskId(int taskId){
         this.taskId = taskId;
     }
 
     @ElVoField(physicalName = "content")
     public String getContent(){
-        return content;
+        String ret = this.content;
+        return ret;
     }
 
     @ElVoField(physicalName = "content")
@@ -54,7 +58,8 @@ public class TaskVersionVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElVoField(physicalName = "createdAt")
     public String getCreatedAt(){
-        return createdAt;
+        String ret = this.createdAt;
+        return ret;
     }
 
     @ElVoField(physicalName = "createdAt")
@@ -64,11 +69,29 @@ public class TaskVersionVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @Override
     public String toString() {
-        return "TaskVersionVo [taskVersionId=" + taskVersionId + ",taskId=" + taskId + ",content=" + content + ",createdAt=" + createdAt + "]";
+        StringBuilder sb = new StringBuilder();
+        sb.append("TaskVersionVo [");
+        sb.append("taskVersionId").append("=").append(taskVersionId).append(",");
+        sb.append("taskId").append("=").append(taskId).append(",");
+        sb.append("content").append("=").append(content).append(",");
+        sb.append("createdAt").append("=").append(createdAt);
+        sb.append("]");
+        return sb.toString();
+
     }
 
     public boolean isFixedLengthVo() {
         return false;
     }
+
+    @Override
+    public void _xStreamEnc() {
+    }
+
+
+    @Override
+    public void _xStreamDec() {
+    }
+
 
 }

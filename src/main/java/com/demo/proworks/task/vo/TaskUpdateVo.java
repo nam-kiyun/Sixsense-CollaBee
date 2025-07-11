@@ -6,11 +6,11 @@ import com.inswave.elfw.annotation.ElVoField;
 import com.fasterxml.jackson.annotation.JsonFilter;
 
 @JsonFilter("elExcludeFilter")
-@ElDto(FldYn = "", delimeterYn = "", logicalName = "업무(Task) 정보")
-public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
+@ElDto(FldYn = "", delimeterYn = "", logicalName = "버전관리를 위한 Task(업무) 정보")
+public class TaskUpdateVo extends com.demo.proworks.cmmn.ProworksCommVO {
     private static final long serialVersionUID = 1L;
 
-    public TaskVo(){
+    public TaskUpdateVo(){
     }
 
     @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
@@ -39,6 +39,27 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElDtoField(logicalName = "tags", physicalName = "tags", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String tags;
+
+    @ElDtoField(logicalName = "task_version_id", physicalName = "taskVersionId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int taskVersionId;
+
+    @ElDtoField(logicalName = "content", physicalName = "content", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String content;
+
+    @ElDtoField(logicalName = "created_at", physicalName = "createdAt", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String createdAt;
+
+    @ElDtoField(logicalName = "업무 담당자 정보", physicalName = "managerVo", type = "", typeKind = "List", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private java.util.List<com.demo.proworks.manager.vo.ManagerVo> managerVo;
+
+    @ElDtoField(logicalName = "파일 ", physicalName = "fileSrcVo", type = "", typeKind = "List", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private java.util.List<com.demo.proworks.filesrc.vo.FileSrcVo> fileSrcVo;
+
+    @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int projectId;
+
+    @ElDtoField(logicalName = "프로젝트에 초대(참가)한 사람들", physicalName = "projectUserVo", type = "", typeKind = "List", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private java.util.List<com.demo.proworks.projectuser.vo.ProjectUserVo> projectUserVo;
 
     @ElDtoField(logicalName = "user_name", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userName;
@@ -138,6 +159,78 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.tags = tags;
     }
 
+    @ElVoField(physicalName = "taskVersionId")
+    public int getTaskVersionId(){
+        return taskVersionId;
+    }
+
+    @ElVoField(physicalName = "taskVersionId")
+    public void setTaskVersionId(int taskVersionId){
+        this.taskVersionId = taskVersionId;
+    }
+
+    @ElVoField(physicalName = "content")
+    public String getContent(){
+        String ret = this.content;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "content")
+    public void setContent(String content){
+        this.content = content;
+    }
+
+    @ElVoField(physicalName = "createdAt")
+    public String getCreatedAt(){
+        String ret = this.createdAt;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "createdAt")
+    public void setCreatedAt(String createdAt){
+        this.createdAt = createdAt;
+    }
+
+    @ElVoField(physicalName = "managerVo")
+    public java.util.List<com.demo.proworks.manager.vo.ManagerVo> getManagerVo(){
+        return managerVo;
+    }
+
+    @ElVoField(physicalName = "managerVo")
+    public void setManagerVo(java.util.List<com.demo.proworks.manager.vo.ManagerVo> managerVo){
+        this.managerVo = managerVo;
+    }
+
+    @ElVoField(physicalName = "fileSrcVo")
+    public java.util.List<com.demo.proworks.filesrc.vo.FileSrcVo> getFileSrcVo(){
+        return fileSrcVo;
+    }
+
+    @ElVoField(physicalName = "fileSrcVo")
+    public void setFileSrcVo(java.util.List<com.demo.proworks.filesrc.vo.FileSrcVo> fileSrcVo){
+        this.fileSrcVo = fileSrcVo;
+    }
+
+    @ElVoField(physicalName = "projectId")
+    public int getProjectId(){
+        return projectId;
+    }
+
+    @ElVoField(physicalName = "projectId")
+    public void setProjectId(int projectId){
+        this.projectId = projectId;
+    }
+
+    @ElVoField(physicalName = "projectUserVo")
+    public java.util.List<com.demo.proworks.projectuser.vo.ProjectUserVo> getProjectUserVo(){
+        return projectUserVo;
+    }
+
+    @ElVoField(physicalName = "projectUserVo")
+    public void setProjectUserVo(java.util.List<com.demo.proworks.projectuser.vo.ProjectUserVo> projectUserVo){
+        this.projectUserVo = projectUserVo;
+    }
+
     @ElVoField(physicalName = "userName")
     public String getUserName(){
         String ret = this.userName;
@@ -152,7 +245,7 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("TaskVo [");
+        sb.append("TaskUpdateVo [");
         sb.append("taskId").append("=").append(taskId).append(",");
         sb.append("boardId").append("=").append(boardId).append(",");
         sb.append("projectUserId").append("=").append(projectUserId).append(",");
@@ -162,6 +255,13 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
         sb.append("startDate").append("=").append(startDate).append(",");
         sb.append("endDate").append("=").append(endDate).append(",");
         sb.append("tags").append("=").append(tags).append(",");
+        sb.append("taskVersionId").append("=").append(taskVersionId).append(",");
+        sb.append("content").append("=").append(content).append(",");
+        sb.append("createdAt").append("=").append(createdAt).append(",");
+        sb.append("managerVo").append("=").append(managerVo).append(",");
+        sb.append("fileSrcVo").append("=").append(fileSrcVo).append(",");
+        sb.append("projectId").append("=").append(projectId).append(",");
+        sb.append("projectUserVo").append("=").append(projectUserVo).append(",");
         sb.append("userName").append("=").append(userName);
         sb.append("]");
         return sb.toString();
@@ -174,11 +274,35 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @Override
     public void _xStreamEnc() {
+        for( int i=0 ; managerVo != null && i < managerVo.size() ; i++ ) {
+            com.demo.proworks.manager.vo.ManagerVo vo = (com.demo.proworks.manager.vo.ManagerVo)managerVo.get(i);
+            vo._xStreamEnc();	 
+        }
+        for( int i=0 ; fileSrcVo != null && i < fileSrcVo.size() ; i++ ) {
+            com.demo.proworks.filesrc.vo.FileSrcVo vo = (com.demo.proworks.filesrc.vo.FileSrcVo)fileSrcVo.get(i);
+            vo._xStreamEnc();	 
+        }
+        for( int i=0 ; projectUserVo != null && i < projectUserVo.size() ; i++ ) {
+            com.demo.proworks.projectuser.vo.ProjectUserVo vo = (com.demo.proworks.projectuser.vo.ProjectUserVo)projectUserVo.get(i);
+            vo._xStreamEnc();	 
+        }
     }
 
 
     @Override
     public void _xStreamDec() {
+        for( int i=0 ; managerVo != null && i < managerVo.size() ; i++ ) {
+            com.demo.proworks.manager.vo.ManagerVo vo = (com.demo.proworks.manager.vo.ManagerVo)managerVo.get(i);
+            vo._xStreamDec();	 
+        }
+        for( int i=0 ; fileSrcVo != null && i < fileSrcVo.size() ; i++ ) {
+            com.demo.proworks.filesrc.vo.FileSrcVo vo = (com.demo.proworks.filesrc.vo.FileSrcVo)fileSrcVo.get(i);
+            vo._xStreamDec();	 
+        }
+        for( int i=0 ; projectUserVo != null && i < projectUserVo.size() ; i++ ) {
+            com.demo.proworks.projectuser.vo.ProjectUserVo vo = (com.demo.proworks.projectuser.vo.ProjectUserVo)projectUserVo.get(i);
+            vo._xStreamDec();	 
+        }
     }
 
 

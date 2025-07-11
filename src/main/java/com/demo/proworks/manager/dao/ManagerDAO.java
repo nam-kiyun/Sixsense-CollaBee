@@ -23,6 +23,18 @@ import com.demo.proworks.manager.dao.ManagerDAO;
 @Repository("managerDAO")
 public class ManagerDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstractDAO {
 
+	/**
+     * 업무 담당자 정보 상세 조회한다.
+     *  
+     * @param  ManagerVo 업무 담당자 정보
+     * @return ManagerVo 업무 담당자 정보
+     * @throws ElException
+     */
+    public List<ManagerVo> selectManagerByTaskId(ManagerVo vo) throws ElException {
+        return (List<ManagerVo>)list("com.demo.proworks.manager.selectManagerByTaskId", vo);
+    }
+
+
     /**
      * 업무 담당자 정보 상세 조회한다.
      *  
