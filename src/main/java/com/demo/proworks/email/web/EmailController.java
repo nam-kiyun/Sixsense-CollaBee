@@ -268,7 +268,7 @@ public class EmailController {
                 + ".project-image { width: 80px; height: 80px; border-radius: 8px; margin-bottom: 15px; object-fit: cover; }"
                 + ".project-name { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 10px; }"
                 + ".project-info { font-size: 14px; color: #666; margin: 5px 0; }"
-                + ".join-button { display: inline-block; padding: 15px 30px; background-color: #ffb823; color: #000; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px; }"
+                + ".join-button { display: inline-block; padding: 15px 30px; background-color: #ffb823; color: #000 !important; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px; }"
                 + ".email-footer { text-align: center; font-size: 14px; color: gray; margin-top: 20px; }"
                 + "</style></head>"
                 + "<body>"
