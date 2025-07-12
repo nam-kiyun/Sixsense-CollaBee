@@ -262,7 +262,7 @@ scwin.input_search_onkeyup = function(e) {
     dm_searchResult.set("userName", "");
     dm_searchResult.set("email", "");
     
-    console.log("=== input_search_onkeyup: 검색 결과 초기화 완료 ===");
+    
 };
 
 // 검색 버튼 클릭
@@ -362,11 +362,7 @@ scwin.handleSearchResult = function(result) {
     // 기존 메시지 숨김
     scwin.hideSearchMessage();
     
-    console.log("=== handleSearchResult 디버깅 ===");
-    console.log("found:", found);
-    console.log("isProjectMember:", isProjectMember);
-    console.log("email:", email);
-    console.log("userName:", userName);
+    
     
     if (!found) {
         scwin.showSearchMessage("해당 사용자 ID로 등록된 사용자를 찾을 수 없습니다.", true);
@@ -413,18 +409,17 @@ scwin.recheckUserMembership = function(userId, projectId, callback) {
             },
             dataType: "json",
             success: function(data) {
-                console.log("=== recheckUserMembership 결과 ===");
-                console.log("isProjectMember:", data.isProjectMember);
+                
                 callback(data.isProjectMember || false);
             },
             error: function(xhr, status, error) {
-                console.error("멤버 여부 재확인 실패:", error);
+                
                 // 오류 시 안전하게 false 반환
                 callback(false);
             }
         });
     } catch (e) {
-        console.error("멤버 여부 재확인 중 예외:", e.message);
+        
         callback(false);
     }
 };
@@ -446,12 +441,7 @@ scwin.btn_addUser_onclick = function(e) {
     var userName = dm_searchResult.get("userName");
     var resultEmail = dm_searchResult.get("email");
     
-    console.log("=== btn_addUser_onclick 디버깅 ===");
-    console.log("searchValue:", searchValue);
-    console.log("found:", found);
-    console.log("isProjectMember:", isProjectMember);
-    console.log("userName:", userName);
-    console.log("resultEmail:", resultEmail);
+    
     
     // 현재 입력된 이메일과 검색 결과의 이메일이 일치하는지 확인
     if (resultEmail !== searchValue.trim()) {
@@ -465,9 +455,9 @@ scwin.btn_addUser_onclick = function(e) {
     }
     
     // 실시간으로 다시 한번 멤버 여부 확인
-    console.log("=== 실시간 멤버 여부 재확인 시작 ===");
+    
     scwin.recheckUserMembership(searchValue.trim(), projectId, function(isActualMember) {
-        console.log("실시간 확인 결과 - isActualMember:", isActualMember);
+        
         
         if (isActualMember) {
             scwin.showSearchMessage("'" + userName + "' 사용자는 이미 프로젝트 멤버입니다.", true);

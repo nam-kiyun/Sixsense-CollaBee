@@ -166,8 +166,7 @@ public class EmailController {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            System.out.println("=== sendProjectInviteEmail 디버깅 ===");
-            System.out.println("받은 jsonData: " + jsonData);
+            
             
             // JSON 문자열을 파싱
             ObjectMapper objectMapper = new ObjectMapper();
@@ -178,15 +177,12 @@ public class EmailController {
             String email = (String) params.get("email");
             String projectId = (String) params.get("projectId");
             
-            System.out.println("파싱된 userId: " + userId);
-            System.out.println("파싱된 email: " + email);
-            System.out.println("파싱된 projectId: " + projectId);
+            
             
             
             String targetUserEmail = email;     // 초대받을 사용자 이메일
             
-            System.out.println("targetUserEmail: " + targetUserEmail);
-            System.out.println("projectId: " + projectId);
+            
             
             if (targetUserEmail == null || targetUserEmail.trim().isEmpty()) {
                 result.put("success", false);
@@ -221,7 +217,7 @@ public class EmailController {
             // 3. HTML 이메일 내용 작성
             String content = createProjectInviteEmailContent(projectInfo);
 
-            System.out.println("발송할 이메일: " + toEmail);
+            
             JavaMailSenderImpl impl = (JavaMailSenderImpl) mailSender;
             impl.setUsername(username);
             impl.setPassword(password);
@@ -240,7 +236,7 @@ public class EmailController {
             result.put("message", "프로젝트 초대 메일 발송 성공");
             
         } catch (Exception e) {
-            System.out.println("프로젝트 초대 메일 발송 오류: " + e);
+           
             result.put("success", false);
             result.put("message", "프로젝트 초대 메일 발송 실패: " + e.getMessage());
         }

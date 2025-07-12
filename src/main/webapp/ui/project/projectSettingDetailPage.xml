@@ -667,6 +667,16 @@ scwin.openDeleteConfirmModal = function() {
     // 입력 필드 초기화
     input_confirmProjectName.setValue("");
     
+    // 현재 프로젝트명 표시 업데이트
+    try {
+        var currentProjectName = dm_projectDetail.get("projectName");
+        if (typeof output_modalProjectName !== 'undefined' && currentProjectName) {
+            output_modalProjectName.setValue(currentProjectName);
+        }
+    } catch (error) {
+        
+    }
+    
     // 모달에 현재 프로젝트 이미지 표시
     var currentImageUrl = null;
     
@@ -975,9 +985,15 @@ scwin.btn_close_onclick = function(e) {
                     </xf:group>
                     
                     <!-- 모달 안내 메시지 -->
-                    <xf:group style="margin-bottom:24px;" id="grp_modalMessage">
+                    <xf:group style="margin-bottom:16px;" id="grp_modalMessage">
                         <xf:output style="font-size:14px;color:#666666;font-family:Inter,sans-serif;" id="output_modalMessage">
                             <xf:label><![CDATA[삭제하실 프로젝트 이름을 입력해 주세요]]></xf:label>
+                        </xf:output>
+                    </xf:group>
+                    
+                    <!-- 프로젝트명 표시 (빨간색) -->
+                    <xf:group style="margin-bottom:24px;" id="grp_modalProjectName">
+                        <xf:output style="font-size:18px;color:#dc3545;font-weight:600;font-family:Inter,sans-serif;" id="output_modalProjectName" ref="dm_projectDetail.projectName">
                         </xf:output>
                     </xf:group>
                     
