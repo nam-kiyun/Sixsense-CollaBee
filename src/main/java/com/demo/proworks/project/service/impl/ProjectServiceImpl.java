@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.demo.proworks.project.service.ProjectService;
 import com.demo.proworks.project.vo.ProjectVo;
 import com.demo.proworks.project.dao.ProjectDAO;
+import com.demo.proworks.email.vo.EmailVo;
 
 /**  
  * @subject     : 프로젝트 정보 관련 처리를 담당하는 ServiceImpl
@@ -120,6 +121,21 @@ public class ProjectServiceImpl implements ProjectService {
      */
 	public int deleteProject(ProjectVo projectVo) throws Exception {
 		return projectDAO.deleteProject(projectVo);
+	}
+
+    /**
+     * 프로젝트 초대 이메일을 위한 프로젝트 정보와 팀장 정보를 조회합니다.
+     *
+     * @process
+     * 1. projectId로 프로젝트 정보와 팀장 정보를 JOIN하여 조회한다.
+     * 2. 조회된 데이터를 EmailVo에 매핑하여 리턴한다.
+     * 
+     * @param  projectId 프로젝트 ID
+     * @return EmailVo 이메일 발송을 위한 프로젝트 정보
+     * @throws Exception
+     */
+	public EmailVo selectProjectForEmail(String projectId) throws Exception {
+		return projectDAO.selectProjectForEmail(projectId);
 	}
 	
 }
