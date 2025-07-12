@@ -19,6 +19,12 @@ public class BranchParameterVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "repo", physicalName = "repo", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String repo;
 
+    @ElDtoField(logicalName = "branchName", physicalName = "branchName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String branchName;
+
+    @ElDtoField(logicalName = "fromBranch", physicalName = "fromBranch", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String fromBranch;
+
     @ElVoField(physicalName = "owner")
     public String getOwner(){
         String ret = this.owner;
@@ -41,12 +47,36 @@ public class BranchParameterVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.repo = repo;
     }
 
+    @ElVoField(physicalName = "branchName")
+    public String getBranchName(){
+        String ret = this.branchName;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "branchName")
+    public void setBranchName(String branchName){
+        this.branchName = branchName;
+    }
+
+    @ElVoField(physicalName = "fromBranch")
+    public String getFromBranch(){
+        String ret = this.fromBranch;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "fromBranch")
+    public void setFromBranch(String fromBranch){
+        this.fromBranch = fromBranch;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("branchParameterVo [");
+        sb.append("BranchParameterVo [");
         sb.append("owner").append("=").append(owner).append(",");
-        sb.append("repo").append("=").append(repo);
+        sb.append("repo").append("=").append(repo).append(",");
+        sb.append("branchName").append("=").append(branchName).append(",");
+        sb.append("fromBranch").append("=").append(fromBranch);
         sb.append("]");
         return sb.toString();
 

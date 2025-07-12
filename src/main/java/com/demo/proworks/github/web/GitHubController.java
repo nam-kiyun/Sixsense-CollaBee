@@ -21,7 +21,6 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 
 import com.demo.proworks.github.service.GitHubService;
 import com.demo.proworks.github.vo.BranchParameterVo;
-import com.demo.proworks.github.vo.CreateBranchVo;
 import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
@@ -1016,13 +1015,13 @@ public class GitHubController {
     @RequestMapping(value = "branches/create", method = RequestMethod.POST)
     @ResponseBody
     public Map<String, Object> createBranch(
-            CreateBranchVo createBranchVo,
+            BranchParameterVo branchParameterVo,
             HttpServletRequest request) {
         
-        String owner = createBranchVo.getOwner();
-        String repo = createBranchVo.getRepo();
-        String branchName = createBranchVo.getBranchName();
-        String fromBranch = createBranchVo.getFromBranch();
+        String owner = branchParameterVo.getOwner();
+        String repo = branchParameterVo.getRepo();
+        String branchName = branchParameterVo.getBranchName();
+        String fromBranch = branchParameterVo.getFromBranch();
         
         System.out.println("=== 브랜치 생성 API 호출 ===");
         System.out.println("owner: " + owner);
@@ -1202,10 +1201,12 @@ public class GitHubController {
     @RequestMapping(value = "branches/delete", method = RequestMethod.POST)
     @ResponseBody
     public Map<String, Object> deleteBranch(
-            @RequestParam(value = "owner", required = true) String owner,
-            @RequestParam(value = "repo", required = true) String repo,
-            @RequestParam(value = "branchName", required = true) String branchName,
+            BranchParameterVo branchParameterVo,
             HttpServletRequest request) {
+        
+        String owner = branchParameterVo.getOwner();
+        String repo = branchParameterVo.getRepo();
+        String branchName = branchParameterVo.getBranchName();
         
         System.out.println("=== 브랜치 삭제 API 호출 ===");
         System.out.println("owner: " + owner);
