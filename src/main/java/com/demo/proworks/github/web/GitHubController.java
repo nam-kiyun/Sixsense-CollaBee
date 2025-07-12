@@ -24,6 +24,7 @@ import com.demo.proworks.github.vo.BranchParameterVo;
 import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
+import com.inswave.elfw.annotation.ElValidator;
 
 /**
  * GitHub 통합 컨트롤러
@@ -45,6 +46,10 @@ public class GitHubController {
     
     @Resource(name = "userPersonalTokenServiceImpl")
     private com.demo.proworks.userpersonaltoken.service.UserPersonalTokenService userPersonalTokenService;
+    
+    // 중복 웹훅 방지를 위한 배송 ID 캐시 (간단한 메모리 기반)
+    private static final java.util.Set<String> processedDeliveryIds = 
+        java.util.Collections.synchronizedSet(new java.util.LinkedHashSet<String>());
     
     /**
      * 생성자 - 빈 등록 확인용
@@ -1355,7 +1360,7 @@ public class GitHubController {
     
     
     /**
-     * 웹훅 이벤트 수신 처리
+     * 웹훅 이벤트 수신 처리 (중복 감지 로깅 포함)
      * test의 POST /webhook 에 해당
      */
     @ElService(key = "webhook/legacy")
@@ -1366,8 +1371,6 @@ public class GitHubController {
             HttpServletRequest request,
             HttpServletResponse response) {
         
-        logger.info("GitHub 웹훅 이벤트 수신");
-        
         Map<String, Object> result = new HashMap<>();
         
         try {
@@ -1375,20 +1378,61 @@ public class GitHubController {
             String eventType = request.getHeader("X-GitHub-Event");
             String deliveryId = request.getHeader("X-GitHub-Delivery");
             String signature = request.getHeader("X-Hub-Signature-256");
+            String userAgent = request.getHeader("User-Agent");
+            String forwardedFor = request.getHeader("X-Forwarded-For");
+            String realIp = request.getHeader("X-Real-IP");
             
-            logger.info("웹훅 이벤트: {} ({})", eventType, deliveryId);
+            // 페이로드(request body) 읽기
+            StringBuilder payloadBuilder = new StringBuilder();
+            java.io.BufferedReader reader = request.getReader();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                payloadBuilder.append(line);
+            }
+            String payload = payloadBuilder.toString();
+            
+            // 상세 로깅으로 중복 원인 분석
+            logger.info("🔔 GitHub 웹훅 수신 - 이벤트: {} | 배송ID: {} | 페이로드 크기: {} bytes", 
+                eventType, deliveryId, payload.length());
+            logger.info("📋 헤더 정보 - UserAgent: {} | X-Forwarded-For: {} | X-Real-IP: {}", 
+                userAgent, forwardedFor, realIp);
+            logger.info("🔐 서명: {} | 요청 IP: {}", 
+                signature != null ? signature.substring(0, Math.min(signature.length(), 20)) + "..." : "없음",
+                request.getRemoteAddr());
+            
+            // Delivery ID 기반 중복 검사 (GitHub의 고유 배송 ID)
+            if (deliveryId != null) {
+                // 중복 검사 로직 (실제로는 캐시나 DB에 저장해서 확인해야 함)
+                logger.info("🔍 배송 ID로 중복 검사: {}", deliveryId);
+                
+                // 간단한 메모리 기반 중복 검사 (실제 운영에서는 Redis나 DB 사용 권장)
+                if (isDuplicateDelivery(deliveryId)) {
+                    logger.warn("⚠️  중복 웹훅 감지! 배송 ID: {} | 이벤트: {}", deliveryId, eventType);
+                    result.put("success", true);
+                    result.put("message", "중복 웹훅 - 처리 스킵");
+                    result.put("duplicate", true);
+                    result.put("delivery_id", deliveryId);
+                    return result;
+                }
+                
+                // 배송 ID 기록
+                recordDeliveryId(deliveryId);
+            }
             
             // 서비스를 통해 웹훅 이벤트 처리
             Map<String, Object> param = new HashMap<>();
             param.put("event_type", eventType);
             param.put("delivery_id", deliveryId);
             param.put("signature", signature);
+            param.put("payload", payload);
             
             Map<String, Object> webhookResult = gitHubService.processWebhookEvent(param);
             result.putAll(webhookResult);
             
+            logger.info("✅ 웹훅 처리 완료 - 배송ID: {} | 결과: {}", deliveryId, webhookResult.get("success"));
+            
         } catch (Exception e) {
-            logger.error("GitHub 웹훅 이벤트 처리 실패", e);
+            logger.error("❌ GitHub 웹훅 이벤트 처리 실패", e);
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -1396,6 +1440,31 @@ public class GitHubController {
         return result;
     }
     
+    /**
+     * 중복 배송 ID 검사
+     */
+    private boolean isDuplicateDelivery(String deliveryId) {
+        return processedDeliveryIds.contains(deliveryId);
+    }
+    
+    /**
+     * 배송 ID 기록 (중복 방지용)
+     */
+    private void recordDeliveryId(String deliveryId) {
+        processedDeliveryIds.add(deliveryId);
+        
+        // 캐시 크기 제한 (메모리 누수 방지)
+        if (processedDeliveryIds.size() > 1000) {
+            // LinkedHashSet의 첫 번째 요소(가장 오래된 것) 제거
+            java.util.Iterator<String> iterator = processedDeliveryIds.iterator();
+            if (iterator.hasNext()) {
+                iterator.next();
+                iterator.remove();
+            }
+        }
+        
+        logger.debug("배송 ID 기록됨: {} (총 {}개)", deliveryId, processedDeliveryIds.size());
+    }
 
     // ==============================
     // 서비스 상태 및 헬스 체크

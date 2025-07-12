@@ -59,6 +59,11 @@ public class GitHubDAOImpl implements GitHubDAO {
     }
     
     @Override
+    public ProjectRepositoryVo selectProjectRepositoryByOwnerAndName(ProjectRepositoryVo repoVo) throws Exception {
+        return sqlSession.selectOne("com.demo.proworks.github.selectProjectRepositoryByOwnerAndName", repoVo);
+    }
+    
+    @Override
     public String insertProjectRepository(Map<String, Object> param) throws Exception {
         System.out.println("=== DAO insertProjectRepository 시작 ===");
         System.out.println("DAO - 받은 파라미터: " + param);
@@ -108,6 +113,12 @@ public class GitHubDAOImpl implements GitHubDAO {
     @Override
     public List<RepositoryBranchVo> selectRepositoryBranches(Map<String, Object> param) throws Exception {
         return sqlSession.selectList("com.demo.proworks.github.selectRepositoryBranches", param);
+    }
+    
+    @Override
+    public int selectBranchExists(Map<String, Object> param) throws Exception {
+        Integer result = sqlSession.selectOne("com.demo.proworks.github.selectBranchExists", param);
+        return result != null ? result : 0;
     }
 
     // ==============================

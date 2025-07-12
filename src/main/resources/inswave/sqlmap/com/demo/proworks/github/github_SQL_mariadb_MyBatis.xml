@@ -84,6 +84,23 @@
         LIMIT 1
     </select>
     
+    <!-- 저장소 소유자와 이름으로 프로젝트 레포지토리 조회 -->
+    <select id="selectProjectRepositoryByOwnerAndName" parameterType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo" resultType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo">
+        SELECT 
+            pr.project_repo_id as projectRepoId,
+            pr.project_id as projectId,
+            pr.github_repository_id as githubRepositoryId,
+            pr.repo_owner as repoOwner,
+            pr.repo_name as repoName,
+            pr.default_branch as defaultBranch,
+            pr.github_app_installation_id as githubAppInstallationId
+        FROM PROJECT_REPO pr
+        WHERE pr.repo_owner = #{repoOwner}
+        AND pr.repo_name = #{repoName}
+        ORDER BY pr.project_repo_id DESC 
+        LIMIT 1
+    </select>
+    
     <!-- 프로젝트 레포지토리 연결 정보 저장 -->
     <insert id="insertProjectRepository" parameterType="Map" useGeneratedKeys="true" keyProperty="project_repo_id">
         INSERT INTO PROJECT_REPO (
@@ -173,6 +190,14 @@
             AND project_repo_id = #{project_repo_id}
         </if>
         ORDER BY created_at DESC
+    </select>
+    
+    <!-- 특정 브랜치 존재 여부 확인 (중복 방지용) -->
+    <select id="selectBranchExists" parameterType="Map" resultType="int">
+        SELECT COUNT(*)
+        FROM REPO_BRANCHES 
+        WHERE project_repo_id = #{project_repo_id}
+        AND branch_name = #{branch_name}
     </select>
 
     <!-- ==============================

@@ -63,6 +63,14 @@ public interface GitHubDAO {
     ProjectRepositoryVo selectProjectRepositoryByProjectId(String projectId) throws Exception;
     
     /**
+     * 저장소 소유자와 이름으로 프로젝트 레포지토리 정보 조회
+     * @param repoVo 저장소 소유자와 이름을 포함한 VO
+     * @return 프로젝트 레포지토리 정보
+     * @throws Exception
+     */
+    ProjectRepositoryVo selectProjectRepositoryByOwnerAndName(ProjectRepositoryVo repoVo) throws Exception;
+    
+    /**
      * 사용자의 레포지토리 선택 정보 저장
      * @param param 레포지토리 선택 정보 (user_id, repo_data)
      * @return 저장된 레코드 ID
@@ -112,6 +120,14 @@ public interface GitHubDAO {
      * @throws Exception
      */
     List<RepositoryBranchVo> selectRepositoryBranches(Map<String, Object> param) throws Exception;
+    
+    /**
+     * 특정 브랜치 존재 여부 확인 (중복 방지용)
+     * @param param 조회 조건 (project_repo_id, branch_name)
+     * @return 브랜치 개수 (0: 존재하지 않음, 1 이상: 존재함)
+     * @throws Exception
+     */
+    int selectBranchExists(Map<String, Object> param) throws Exception;
 
     // ==============================
     // GitHub 웹훅 관리

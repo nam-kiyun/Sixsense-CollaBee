@@ -50,6 +50,9 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Resource(name = "userPersonalTokenServiceImpl")
     private UserPersonalTokenService userPersonalTokenService;
+    
+    @Resource(name = "repositoryBranchServiceImpl")
+    private com.demo.proworks.repobranch.service.RepositoryBranchService repositoryBranchService;
 
     // ==============================
     // GitHub OAuth 인증 관리
@@ -804,81 +807,328 @@ public class GitHubServiceImpl implements GitHubService {
     @Transactional
     private void processPushEvent(Map<String, Object> param) throws Exception {
         logger.info("Push 이벤트 처리");
-        // Push 이벤트 처리 로직 구현
-        @SuppressWarnings("unchecked")
-        Map<String, Object> eventInfo = (Map<String, Object>) param.get("event_info");
         
-        String branchName = (String) eventInfo.get("branch_name");
-        String repositoryName = (String) eventInfo.get("repository_name");
-        String senderLogin = (String) eventInfo.get("sender_login");
-        
-        // 브랜치 활동 이력은 웹훅 자체에 기록되므로 별도 저장하지 않음
-        
-        // ProWorks 로그에 GitHub 활동 동기화
-        Map<String, Object> logEntry = gitHubSyncUtil.convertWebhookEventToLog(
-            "push", eventInfo, (String) param.get("project_id"), (String) param.get("user_id"));
-        
-        // TODO: project_log 테이블에 저장하는 로직 필요시 추가
-        
-        logger.info("Push 이벤트 처리 완료: {} -> {}", senderLogin, branchName);
+        try {
+            // 페이로드에서 이벤트 정보 파싱
+            String payload = (String) param.get("payload");
+            if (payload == null || payload.trim().isEmpty()) {
+                logger.warn("Push 이벤트 페이로드가 비어있습니다.");
+                return;
+            }
+            
+            // JSON 파싱
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> payloadMap = objectMapper.readValue(payload, Map.class);
+            
+            // Push 이벤트에서 브랜치 정보 추출
+            String ref = (String) payloadMap.get("ref");
+            String branchName = null;
+            if (ref != null && ref.startsWith("refs/heads/")) {
+                branchName = ref.substring("refs/heads/".length());
+            }
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> repository = (Map<String, Object>) payloadMap.get("repository");
+            String repositoryName = null;
+            if (repository != null) {
+                repositoryName = (String) repository.get("name");
+            }
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> pusher = (Map<String, Object>) payloadMap.get("pusher");
+            String senderLogin = null;
+            if (pusher != null) {
+                senderLogin = (String) pusher.get("name");
+            }
+            
+            logger.info("Push 이벤트 파싱: ref={}, branchName={}, repository={}, pusher={}", 
+                ref, branchName, repositoryName, senderLogin);
+            
+            // Push 이벤트는 브랜치 생성/삭제가 아닌 커밋 푸시이므로 별도 DB 처리하지 않음
+            logger.info("Push 이벤트 처리 완료: {} -> {}", senderLogin, branchName);
+            
+        } catch (Exception e) {
+            logger.error("Push 이벤트 처리 실패", e);
+            throw e;
+        }
     }
     
     @Transactional
     private void processPullRequestEvent(Map<String, Object> param) throws Exception {
         logger.info("Pull Request 이벤트 처리");
-        // PR 이벤트 처리 로직 구현
-        @SuppressWarnings("unchecked")
-        Map<String, Object> eventInfo = (Map<String, Object>) param.get("event_info");
         
-        String action = (String) eventInfo.get("action");
-        String prNumber = eventInfo.get("pr_number") != null ? eventInfo.get("pr_number").toString() : null;
-        String senderLogin = (String) eventInfo.get("sender_login");
-        
-        // PR 정보를 Task로 동기화 (필요시)
-        if ("opened".equals(action)) {
-            Map<String, Object> prTask = gitHubSyncUtil.convertGitHubPRToTask(
-                eventInfo, (String) param.get("project_id"), (String) param.get("user_id"));
+        try {
+            // 페이로드에서 이벤트 정보 파싱
+            String payload = (String) param.get("payload");
+            if (payload == null || payload.trim().isEmpty()) {
+                logger.warn("Pull Request 이벤트 페이로드가 비어있습니다.");
+                return;
+            }
             
-            // TODO: task 테이블에 저장하는 로직 필요시 추가
+            // JSON 파싱
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> payloadMap = objectMapper.readValue(payload, Map.class);
+            
+            String action = (String) payloadMap.get("action");
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> pullRequest = (Map<String, Object>) payloadMap.get("pull_request");
+            String prNumber = null;
+            if (pullRequest != null) {
+                Object number = pullRequest.get("number");
+                prNumber = number != null ? number.toString() : null;
+            }
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> sender = (Map<String, Object>) payloadMap.get("sender");
+            String senderLogin = null;
+            if (sender != null) {
+                senderLogin = (String) sender.get("login");
+            }
+            
+            logger.info("Pull Request 이벤트 파싱: action={}, number={}, sender={}", 
+                action, prNumber, senderLogin);
+            
+            // PR 이벤트는 현재 별도 DB 처리하지 않음 (필요시 추가)
+            logger.info("Pull Request 이벤트 처리 완료: {} #{} by {}", action, prNumber, senderLogin);
+            
+        } catch (Exception e) {
+            logger.error("Pull Request 이벤트 처리 실패", e);
+            throw e;
         }
-        
-        logger.info("Pull Request 이벤트 처리 완료: {} #{} by {}", action, prNumber, senderLogin);
     }
     
     @Transactional
     private void processCreateEvent(Map<String, Object> param) throws Exception {
         logger.info("Create 이벤트 처리");
-        // 브랜치/태그 생성 이벤트 처리 로직 구현
-        @SuppressWarnings("unchecked")
-        Map<String, Object> eventInfo = (Map<String, Object>) param.get("event_info");
         
-        String refType = (String) eventInfo.get("ref_type");
-        String refName = (String) eventInfo.get("ref");
-        String senderLogin = (String) eventInfo.get("sender_login");
-        
-        if ("branch".equals(refType)) {
-            // 브랜치 생성 이력은 웹훅 자체에 기록되므로 별도 저장하지 않음
+        try {
+            // 페이로드에서 이벤트 정보 파싱
+            String payload = (String) param.get("payload");
+            if (payload == null || payload.trim().isEmpty()) {
+                logger.warn("Create 이벤트 페이로드가 비어있습니다.");
+                return;
+            }
+            
+            // JSON 파싱
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> payloadMap = objectMapper.readValue(payload, Map.class);
+            
+            String refType = (String) payloadMap.get("ref_type");
+            String refName = (String) payloadMap.get("ref");
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> repository = (Map<String, Object>) payloadMap.get("repository");
+            String repoOwner = null;
+            String repoName = null;
+            
+            if (repository != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> owner = (Map<String, Object>) repository.get("owner");
+                if (owner != null) {
+                    repoOwner = (String) owner.get("login");
+                }
+                repoName = (String) repository.get("name");
+            }
+            
+            logger.info("브랜치 생성 이벤트 파싱: refType={}, refName={}, repository={}/{}", 
+                refType, refName, repoOwner, repoName);
+            
+            if ("branch".equals(refType) && refName != null && repoOwner != null && repoName != null) {
+                // repository_branch 테이블에 브랜치 추가
+                insertBranchToDatabase(repoOwner, repoName, refName, payloadMap);
+            }
+            
+            logger.info("Create 이벤트 처리 완료: {} {}", refType, refName);
+            
+        } catch (Exception e) {
+            logger.error("Create 이벤트 처리 실패", e);
+            throw e;
         }
-        
-        logger.info("Create 이벤트 처리 완료: {} {} by {}", refType, refName, senderLogin);
     }
     
     @Transactional
     private void processDeleteEvent(Map<String, Object> param) throws Exception {
         logger.info("Delete 이벤트 처리");
-        // 브랜치/태그 삭제 이벤트 처리 로직 구현
-        @SuppressWarnings("unchecked")
-        Map<String, Object> eventInfo = (Map<String, Object>) param.get("event_info");
         
-        String refType = (String) eventInfo.get("ref_type");
-        String refName = (String) eventInfo.get("ref");
-        String senderLogin = (String) eventInfo.get("sender_login");
-        
-        if ("branch".equals(refType)) {
-            // 브랜치 삭제 이력은 웹훅 자체에 기록되므로 별도 저장하지 않음
+        try {
+            // 페이로드에서 이벤트 정보 파싱
+            String payload = (String) param.get("payload");
+            if (payload == null || payload.trim().isEmpty()) {
+                logger.warn("Delete 이벤트 페이로드가 비어있습니다.");
+                return;
+            }
+            
+            // JSON 파싱
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> payloadMap = objectMapper.readValue(payload, Map.class);
+            
+            String refType = (String) payloadMap.get("ref_type");
+            String refName = (String) payloadMap.get("ref");
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> repository = (Map<String, Object>) payloadMap.get("repository");
+            String repoOwner = null;
+            String repoName = null;
+            
+            if (repository != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> owner = (Map<String, Object>) repository.get("owner");
+                if (owner != null) {
+                    repoOwner = (String) owner.get("login");
+                }
+                repoName = (String) repository.get("name");
+            }
+            
+            logger.info("브랜치 삭제 이벤트 파싱: refType={}, refName={}, repository={}/{}", 
+                refType, refName, repoOwner, repoName);
+            
+            if ("branch".equals(refType) && refName != null && repoOwner != null && repoName != null) {
+                // repository_branch 테이블에서 브랜치 삭제
+                deleteBranchFromDatabase(repoOwner, repoName, refName);
+            }
+            
+            logger.info("Delete 이벤트 처리 완료: {} {}", refType, refName);
+            
+        } catch (Exception e) {
+            logger.error("Delete 이벤트 처리 실패", e);
+            throw e;
         }
+    }
+    
+    // ==============================
+    // 웹훅 이벤트 처리 헬퍼 메서드들
+    // ==============================
+    
+    /**
+     * 브랜치 생성 시 repository_branch 테이블에 데이터 삽입 (중복 방지)
+     */
+    @Transactional
+    private void insertBranchToDatabase(String repoOwner, String repoName, String branchName, Map<String, Object> payloadMap) throws Exception {
+        logger.info("데이터베이스에 브랜치 추가: {}/{} - {}", repoOwner, repoName, branchName);
         
-        logger.info("Delete 이벤트 처리 완료: {} {} by {}", refType, refName, senderLogin);
+        try {
+            // 먼저 해당 저장소가 project_repository에 등록되어 있는지 확인
+            String projectRepoId = findProjectRepoId(repoOwner, repoName);
+            if (projectRepoId == null) {
+                logger.warn("프로젝트에 연결되지 않은 저장소의 브랜치 생성 이벤트: {}/{}", repoOwner, repoName);
+                return;
+            }
+            
+            // 중복 브랜치 확인 - 이미 존재하는지 검사
+            if (isBranchExists(projectRepoId, branchName)) {
+                logger.warn("브랜치가 이미 존재합니다. 중복 생성 방지: {}/{} - {}", repoOwner, repoName, branchName);
+                return;
+            }
+            
+            // repository_branch 테이블에 브랜치 정보 삽입
+            com.demo.proworks.repobranch.vo.RepositoryBranchVo branchVo = new com.demo.proworks.repobranch.vo.RepositoryBranchVo();
+            branchVo.setProjectRepoId(projectRepoId);
+            branchVo.setBranchName(branchName);
+            branchVo.setCreatedAt(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
+            
+            // 페이로드에서 추가 정보 추출 (있는 경우)
+            if (payloadMap != null) {
+                // GitHub 웹훅에서 브랜치 생성 시 커밋 SHA는 master_branch에서 가져올 수 있음
+                @SuppressWarnings("unchecked")
+                Map<String, Object> repository = (Map<String, Object>) payloadMap.get("repository");
+                if (repository != null) {
+                    String defaultBranch = (String) repository.get("default_branch");
+                    if (defaultBranch != null) {
+                        branchVo.setBaseSha("created_from_" + defaultBranch);
+                    }
+                }
+            }
+            
+            int insertResult = repositoryBranchService.insertRepositoryBranch(branchVo);
+            logger.info("브랜치 데이터베이스 삽입 완료: {} (result: {})", branchName, insertResult);
+            
+        } catch (org.springframework.dao.DuplicateKeyException e) {
+            // 유니크 제약 조건 위반 시 (데이터베이스 레벨에서의 중복 방지)
+            logger.warn("브랜치 중복 생성 감지 (DB 제약): {}/{} - {}", repoOwner, repoName, branchName);
+        } catch (Exception e) {
+            logger.error("브랜치 데이터베이스 삽입 실패: {}/{} - {}", repoOwner, repoName, branchName, e);
+            throw e;
+        }
+    }
+    
+    /**
+     * 브랜치 삭제 시 repository_branch 테이블에서 데이터 삭제
+     */
+    @Transactional
+    private void deleteBranchFromDatabase(String repoOwner, String repoName, String branchName) throws Exception {
+        logger.info("데이터베이스에서 브랜치 삭제: {}/{} - {}", repoOwner, repoName, branchName);
+        
+        try {
+            // 먼저 해당 저장소가 project_repository에 등록되어 있는지 확인
+            String projectRepoId = findProjectRepoId(repoOwner, repoName);
+            if (projectRepoId == null) {
+                logger.warn("프로젝트에 연결되지 않은 저장소의 브랜치 삭제 이벤트: {}/{}", repoOwner, repoName);
+                return;
+            }
+            
+            // repository_branch 테이블에서 브랜치 정보 삭제
+            com.demo.proworks.repobranch.vo.RepositoryBranchVo branchVo = new com.demo.proworks.repobranch.vo.RepositoryBranchVo();
+            branchVo.setProjectRepoId(projectRepoId);
+            branchVo.setBranchName(branchName);
+            
+            int deleteResult = repositoryBranchService.deleteRepositoryBranch(branchVo);
+            logger.info("브랜치 데이터베이스 삭제 완료: {} (result: {})", branchName, deleteResult);
+            
+        } catch (Exception e) {
+            logger.error("브랜치 데이터베이스 삭제 실패: {}/{} - {}", repoOwner, repoName, branchName, e);
+            throw e;
+        }
+    }
+    
+    /**
+     * 저장소 소유자와 이름으로 project_repository 테이블에서 project_repo_id 찾기
+     */
+    private String findProjectRepoId(String repoOwner, String repoName) throws Exception {
+        try {
+            // project_repository 테이블에서 해당 저장소 조회
+            ProjectRepositoryVo repoVo = new ProjectRepositoryVo();
+            repoVo.setRepoOwner(repoOwner);
+            repoVo.setRepoName(repoName);
+            
+            // DAO를 통해 저장소 조회 (GitHubDAO 사용)
+            ProjectRepositoryVo foundRepo = gitHubDAO.selectProjectRepositoryByOwnerAndName(repoVo);
+            if (foundRepo != null) {
+                return foundRepo.getProjectRepoId();
+            }
+            
+            return null;
+            
+        } catch (Exception e) {
+            logger.error("프로젝트 저장소 ID 조회 실패: {}/{}", repoOwner, repoName, e);
+            throw e;
+        }
+    }
+    
+    /**
+     * 브랜치가 이미 존재하는지 확인 (효율적인 COUNT 쿼리 사용)
+     */
+    private boolean isBranchExists(String projectRepoId, String branchName) throws Exception {
+        try {
+            // 효율적인 COUNT 쿼리로 존재 여부만 확인
+            Map<String, Object> searchParam = new HashMap<>();
+            searchParam.put("project_repo_id", projectRepoId);
+            searchParam.put("branch_name", branchName);
+            
+            int count = gitHubDAO.selectBranchExists(searchParam);
+            boolean exists = count > 0;
+            
+            logger.debug("브랜치 존재 여부 확인: {} (projectRepoId: {}) = {}", branchName, projectRepoId, exists);
+            return exists;
+            
+        } catch (Exception e) {
+            logger.error("브랜치 존재 여부 확인 실패: {} (projectRepoId: {})", branchName, projectRepoId, e);
+            throw e;
+        }
     }
 
     // ==============================
