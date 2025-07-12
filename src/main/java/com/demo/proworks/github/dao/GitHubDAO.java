@@ -55,6 +55,14 @@ public interface GitHubDAO {
     ProjectRepositoryVo selectProjectRepositoryByUserId(String userId) throws Exception;
     
     /**
+     * 프로젝트 ID로 연결된 레포지토리 정보 조회
+     * @param projectId 프로젝트 ID
+     * @return 연결된 레포지토리 정보
+     * @throws Exception
+     */
+    ProjectRepositoryVo selectProjectRepositoryByProjectId(String projectId) throws Exception;
+    
+    /**
      * 사용자의 레포지토리 선택 정보 저장
      * @param param 레포지토리 선택 정보 (user_id, repo_data)
      * @return 저장된 레코드 ID

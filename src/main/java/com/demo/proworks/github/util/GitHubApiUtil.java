@@ -135,10 +135,23 @@ public class GitHubApiUtil {
             result.put("status_code", responseCode);
             result.put("success", responseCode >= 200 && responseCode < 300);
             
+            // 401 에러 감지 및 표시
+            if (responseCode == 401) {
+                result.put("is_auth_error", true);
+                logger.warn("GitHub API 401 인증 오류 감지: {}", endpoint);
+            }
+            
             if (response.length() > 0) {
                 try {
                     Map<String, Object> jsonResponse = objectMapper.readValue(response.toString(), Map.class);
                     result.put("data", jsonResponse);
+                    
+                    // 401 에러의 경우 추가 정보 확인
+                    if (responseCode == 401 && jsonResponse.containsKey("message")) {
+                        String errorMessage = (String) jsonResponse.get("message");
+                        result.put("auth_error_message", errorMessage);
+                        logger.warn("GitHub API 401 인증 오류 메시지: {}", errorMessage);
+                    }
                 } catch (Exception e) {
                     result.put("data", response.toString());
                 }

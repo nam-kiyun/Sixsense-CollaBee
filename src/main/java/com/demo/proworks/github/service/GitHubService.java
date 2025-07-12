@@ -108,6 +108,22 @@ public interface GitHubService {
      * @throws Exception
      */
     ProjectRepositoryVo getCurrentRepository(String userId) throws Exception;
+    
+    /**
+     * 현재 선택된 레포지토리 정보 조회 (Map 형태)
+     * @param param 조회 조건 (user_id)
+     * @return 선택된 레포지토리 정보
+     * @throws Exception
+     */
+    Map<String, Object> getCurrentRepository(Map<String, Object> param) throws Exception;
+    
+    /**
+     * 프로젝트 ID로 연결된 레포지토리 정보 조회
+     * @param projectId 프로젝트 ID
+     * @return 연결된 레포지토리 정보
+     * @throws Exception
+     */
+    ProjectRepositoryVo getCurrentRepositoryByProjectId(String projectId) throws Exception;
 
     // ==============================
     // GitHub 브랜치 관리 (간소화)

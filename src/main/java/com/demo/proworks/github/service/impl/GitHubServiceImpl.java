@@ -401,21 +401,48 @@ public class GitHubServiceImpl implements GitHubService {
         
         try {
             // 파라미터 상세 로그
-            System.out.println("project_id: " + param.get("project_id"));
+            String projectId = (String) param.get("project_id");
+            System.out.println("project_id: " + projectId);
             System.out.println("github_repository_id: " + param.get("github_repository_id"));
             System.out.println("repo_owner: " + param.get("repo_owner"));
             System.out.println("repo_name: " + param.get("repo_name"));
             System.out.println("default_branch: " + param.get("default_branch"));
             System.out.println("github_app_installation_id: " + param.get("github_app_installation_id"));
             
-            // DB 저장 실행
-            System.out.println("DB 저장 시작");
-            String recordId = gitHubDAO.insertProjectRepository(param);
-            System.out.println("DB 저장 완료, recordId: " + recordId);
+            // 기존 연결된 저장소 확인 (프로젝트 ID 기반)
+            System.out.println("기존 연결된 저장소 확인 (프로젝트 ID: " + projectId + ")");
+            ProjectRepositoryVo existingRepo = gitHubDAO.selectProjectRepositoryByProjectId(projectId);
             
-            result.put("success", true);
-            result.put("record_id", recordId);
-            result.put("message", "레포지토리 선택 완료");
+            if (existingRepo != null) {
+                System.out.println("기존 연결된 저장소 발견: " + existingRepo.getRepoOwner() + "/" + existingRepo.getRepoName());
+                System.out.println("기존 저장소 정보 업데이트");
+                
+                // 기존 저장소 정보 업데이트
+                Map<String, Object> updateParam = new HashMap<>();
+                updateParam.put("project_repo_id", existingRepo.getProjectRepoId());
+                updateParam.put("repo_owner", param.get("repo_owner"));
+                updateParam.put("repo_name", param.get("repo_name"));
+                updateParam.put("default_branch", param.get("default_branch"));
+                updateParam.put("github_app_installation_id", param.get("github_app_installation_id"));
+                
+                gitHubDAO.updateProjectRepository(updateParam);
+                
+                result.put("success", true);
+                result.put("record_id", existingRepo.getProjectRepoId());
+                result.put("message", "레포지토리 연결 정보 업데이트 완료");
+                result.put("action", "updated");
+                
+            } else {
+                System.out.println("새로운 저장소 연결");
+                // 새로운 저장소 연결
+                String recordId = gitHubDAO.insertProjectRepository(param);
+                System.out.println("DB 저장 완료, recordId: " + recordId);
+                
+                result.put("success", true);
+                result.put("record_id", recordId);
+                result.put("message", "레포지토리 선택 완료");
+                result.put("action", "created");
+            }
             
             System.out.println("레포지토리 선택 처리 완료");
             
@@ -427,6 +454,43 @@ public class GitHubServiceImpl implements GitHubService {
         }
         
         return result;
+    }
+    
+    @Override
+    public ProjectRepositoryVo getCurrentRepositoryByProjectId(String projectId) throws Exception {
+        System.out.println("=== 프로젝트 ID로 연결된 레포지토리 조회 시작 ===");
+        System.out.println("프로젝트 ID: " + projectId);
+        
+        ProjectRepositoryVo repository = null;
+        
+        try {
+            repository = gitHubDAO.selectProjectRepositoryByProjectId(projectId);
+            
+            if (repository != null) {
+                System.out.println("연결된 저장소 발견: " + repository.getRepoOwner() + "/" + repository.getRepoName());
+            } else {
+                System.out.println("연결된 저장소 없음");
+            }
+            
+        } catch (Exception e) {
+            System.out.println("프로젝트 ID로 레포지토리 조회 실패: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+        
+        return repository;
+    }
+    
+    // 현재 사용자 ID 가져오기 헬퍼 메소드
+    private String getCurrentUserId() {
+        try {
+            // 현재 스레드에서 사용자 ID 가져오기
+            // 실제 구현에서는 SecurityContext나 ThreadLocal에서 가져와야 함
+            return "fordnam1@gmail.com"; // 임시로 하드코딩
+        } catch (Exception e) {
+            System.out.println("현재 사용자 ID 가져오기 실패: " + e.getMessage());
+            return null;
+        }
     }
     
     @Override
@@ -445,6 +509,57 @@ public class GitHubServiceImpl implements GitHubService {
         }
         
         return repository;
+    }
+    
+    @Override
+    public Map<String, Object> getCurrentRepository(Map<String, Object> param) throws Exception {
+        System.out.println("=== 현재 선택된 레포지토리 조회 (Map 형태) ===");
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            String userId = (String) param.get("user_id");
+            System.out.println("조회 대상 userId: " + userId);
+            
+            if (userId == null || userId.trim().isEmpty()) {
+                result.put("success", false);
+                result.put("error", "사용자 ID가 필요합니다.");
+                return result;
+            }
+            
+            // 기존 메서드 호출
+            ProjectRepositoryVo repository = getCurrentRepository(userId);
+            
+            if (repository != null) {
+                System.out.println("연결된 저장소 발견: " + repository.getRepoOwner() + "/" + repository.getRepoName());
+                
+                // VO를 Map으로 변환 (ProjectRepositoryVo에 실제 존재하는 필드만 사용)
+                Map<String, Object> repositoryMap = new HashMap<>();
+                repositoryMap.put("projectRepoId", repository.getProjectRepoId());
+                repositoryMap.put("projectId", repository.getProjectId());
+                repositoryMap.put("githubRepositoryId", repository.getGithubRepositoryId());
+                repositoryMap.put("repoOwner", repository.getRepoOwner());
+                repositoryMap.put("repoName", repository.getRepoName());
+                repositoryMap.put("defaultBranch", repository.getDefaultBranch());
+                repositoryMap.put("githubAppInstallationId", repository.getGithubAppInstallationId());
+                
+                result.put("success", true);
+                result.put("repository", repositoryMap);
+                
+            } else {
+                System.out.println("연결된 저장소가 없습니다.");
+                result.put("success", false);
+                result.put("error", "연결된 저장소가 없습니다.");
+            }
+            
+        } catch (Exception e) {
+            System.out.println("현재 저장소 조회 실패: " + e.getMessage());
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        
+        return result;
     }
 
     // ==============================

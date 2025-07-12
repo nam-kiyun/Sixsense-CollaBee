@@ -54,6 +54,11 @@ public class GitHubDAOImpl implements GitHubDAO {
     }
     
     @Override
+    public ProjectRepositoryVo selectProjectRepositoryByProjectId(String projectId) throws Exception {
+        return sqlSession.selectOne("com.demo.proworks.github.selectProjectRepositoryByProjectId", projectId);
+    }
+    
+    @Override
     public String insertProjectRepository(Map<String, Object> param) throws Exception {
         System.out.println("=== DAO insertProjectRepository 시작 ===");
         System.out.println("DAO - 받은 파라미터: " + param);

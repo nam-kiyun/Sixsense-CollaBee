@@ -166,10 +166,10 @@
 						   submiterror="scwin.sbm_connectRepository_submiterror" ev:submitdone="scwin.sbm_connectRepository_submitdone" ev:submiterror="scwin.sbm_connectRepository_submiterror"/>
 
 			<xf:submission id="sbm_loadBranches" 
-						   ref="data:json,dm_branch_params" 
+						   ref='data:json,{"id":"dm_branch_params","key":"branchParameterVo"}' 
 						   target="data:json,dlt_branches" 
 						   action="/InsWebApp/github/branches.pwkjson" 
-						   method="get" 
+						   method="post" 
 						   mediatype="application/json" 
 						   encoding="UTF-8" 
 						   instance="" 
@@ -177,21 +177,21 @@
 						   mode="asynchronous" 
 						   processMsg="브랜치 목록을 불러오는 중..."
 						   submitdone="scwin.sbm_loadBranches_submitdone"
-						   submiterror="scwin.sbm_loadBranches_submiterror" />
+						   submiterror="scwin.sbm_loadBranches_submiterror" ev:submitdone="scwin.sbm_loadBranches_submitdone" ev:submiterror="scwin.sbm_loadBranches_submiterror"/>
 
 			<xf:submission id="sbm_createBranch" 
-						   ref="data:json,dm_create_branch" 
+						   ref='data:json,{"id":"dm_create_branch","key":"createBranchVo"}' 
 						   target="" 
 						   action="/InsWebApp/github/branches/create.pwkjson" 
 						   method="post" 
 						   mediatype="application/json" 
 						   encoding="UTF-8" 
 						   instance="" 
-						   replace="none" 
+						   replace="" 
 						   mode="asynchronous" 
 						   processMsg="브랜치를 생성하는 중..."
 						   submitdone="scwin.sbm_createBranch_submitdone"
-						   submiterror="scwin.sbm_createBranch_submiterror" />
+						   submiterror="scwin.sbm_createBranch_submiterror" ev:submitdone="scwin.sbm_createBranch_submitdone" ev:submiterror="scwin.sbm_createBranch_submiterror"/>
 
 			<xf:submission id="sbm_deleteBranch" 
 						   ref="data:json,dm_delete_branch" 
@@ -217,7 +217,9 @@
 						   instance="" 
 						   replace="none" 
 						   mode="asynchronous" 
-						   processMsg="" />
+						   processMsg="연결된 저장소 확인 중..."
+						   submitdone="scwin.sbm_getCurrentRepository_submitdone"
+						   submiterror="scwin.sbm_getCurrentRepository_submiterror" />
 
 			<xf:submission id="sbm_checkWebhookStatus" 
 						   ref="" 
@@ -342,37 +344,40 @@ scwin.onpageload = function () {
     dm_ui_state.set("currentView", "repositories");
     dm_auth_status.set("needsLogin", "true");
 
+    // 프로젝트 데이터 초기화
+    scwin.initializeProjectData();
+
     // 이벤트 핸들러 초기화
     scwin.initializeEventHandlers();
 
     // OAuth 성공 메시지 리스너 추가
     // scwin.initializeOAuthMessageListener();
 
-    // 인증 상태 확인
+    // 인증 상태 확인 (이 안에서 checkCurrentRepository 호출)
     scwin.checkAuthenticationStatus();
 };
 
 // 프로젝트 데이터 초기화 함수
-scwin.initializeProjectData = function() {
+scwin.initializeProjectData = function () {
     try {
         // 팝업에서 전달받은 데이터 확인
         var popupData = $p.getParameter("project_param");
         console.log("팝업에서 전달받은 데이터:", popupData);
-        
+
         if (popupData) {
-            
+
             // 프로젝트 정보를 폼에 설정
             dm_github_form.set("projectId", popupData.projectId);
-            
+
             console.log("프로젝트 정보 설정 완료:", {
                 projectId: popupData.projectId,
                 projectName: popupData.projectName,
                 userId: popupData.userId
             });
-            
+
             // 현재 프로젝트 정보를 전역 변수에 저장
             scwin.currentProjectData = popupData;
-            
+
         } else {
             console.warn("팝업에서 전달받은 프로젝트 데이터가 없습니다. 기본값을 사용합니다.");
             dm_github_form.set("projectId", "default-project-id");
@@ -409,27 +414,27 @@ scwin.initializeEventHandlers = function () {
 };
 
 // OAuth 성공 메시지 리스너 초기화
-scwin.initializeOAuthMessageListener = function() {
+scwin.initializeOAuthMessageListener = function () {
     try {
         // postMessage 이벤트 리스너 추가 (iframe 방식 OAuth 대응)
-        window.addEventListener('message', function(event) {
+        window.addEventListener('message', function (event) {
             console.log("부모 창에서 메시지 수신:", event);
-            
+
             if (event.data && event.data.type === 'githubAuthSuccess') {
                 console.log("GitHub OAuth 성공 메시지 수신:", event.data);
-                
+
                 // 성공 알림 표시
                 if (typeof $c !== 'undefined' && $c.win && $c.win.alert) {
                     $c.win.alert("������ GitHub 연동이 성공적으로 완료되었습니다!\n\n사용자: @" + (event.data.data.username || ""));
                 }
-                
+
                 // 인증 상태 다시 확인
-                setTimeout(function() {
+                setTimeout(function () {
                     scwin.checkAuthenticationStatus();
                 }, 1000);
             }
         });
-        
+
         console.log("OAuth 메시지 리스너 초기화 완료");
     } catch (e) {
         console.error("OAuth 메시지 리스너 초기화 실패:", e);
@@ -441,7 +446,7 @@ scwin.checkAuthenticationStatus = function () {
     console.log("GitHub 인증 상태 확인 중... (AJAX 방식)");
     scwin.setLoading(true, "인증 상태 확인 중...");
 
-    try {    
+    try {
         // myPage.xml과 동일한 AJAX 패턴 사용
         // 먼저 간단한 테스트 엔드포인트로 시도
         $.ajax({
@@ -451,7 +456,7 @@ scwin.checkAuthenticationStatus = function () {
             success: function (result) {
                 scwin.setLoading(false);
                 console.log("인증 상태 확인 완료:", result);
-                
+
                 if (result && result.authenticated === true) {
                     // 인증된 상태
                     console.log("사용자 인증됨 - 인증된 UI 표시");
@@ -462,7 +467,8 @@ scwin.checkAuthenticationStatus = function () {
                     dm_auth_status.set("needsLogin", "false");
 
                     scwin.showAuthenticatedUI();
-                    scwin.loadConnectedRepositories();
+                    // 기존 저장소가 있는지 확인하고 바로 브랜치 관리 화면으로 이동
+                    scwin.checkCurrentRepository();
                 } else {
                     // 인증되지 않은 상태
                     console.log("사용자 인증되지 않음 - 로그인 필요 UI 표시");
@@ -483,57 +489,57 @@ scwin.checkAuthenticationStatus = function () {
             }
         });
     } catch (e) {
-    scwin.setLoading(false);
+        scwin.setLoading(false);
         console.error("AJAX 호출 오류:", e);
-        scwin.showLoginRequiredUI();    
+        scwin.showLoginRequiredUI();
     }
 };
 
 // 인증 상태 확인 완료 핸들러
-scwin.checkAuthenticationStatus_submitdone = function(e) {
+scwin.checkAuthenticationStatus_submitdone = function (e) {
     scwin.setLoading(false);
     console.log("인증 상태 확인 완료:", e);
     console.log("responseJSON:", e.responseJSON);
     console.log("responseText:", e.responseText);
-    
-        var result = null;
-        if (e.responseJSON) {
-            result = e.responseJSON;
-        } else if (e.responseText) {
-            result = JSON.parse(e.responseText);
-        }
-        
-        console.log("파싱된 결과:", result);
-        console.log("authenticated 값:", result ? result.authenticated : "없음");
-        
-        if (result && result.authenticated === true) {
-            // 인증된 상태
-            console.log("사용자 인증됨 - 인증된 UI 표시");
-            dm_auth_status.set("isAuthenticated", "true");
-            dm_auth_status.set("username", result.user ? result.user.login || "" : "");
-            dm_auth_status.set("avatarUrl", result.user ? result.user.avatar_url || "" : "");
-            dm_auth_status.set("hasGitHubApp", result.hasSelectedRepo ? "true" : "false");
-            dm_auth_status.set("needsLogin", "false");
 
-            scwin.showAuthenticatedUI();
-            scwin.loadConnectedRepositories();
-        } else {
-            // 인증되지 않은 상태
-            console.log("사용자 인증되지 않음 - 로그인 필요 UI 표시");
-            scwin.showLoginRequiredUI();
-        }
-    
+    var result = null;
+    if (e.responseJSON) {
+        result = e.responseJSON;
+    } else if (e.responseText) {
+        result = JSON.parse(e.responseText);
+    }
+
+    console.log("파싱된 결과:", result);
+    console.log("authenticated 값:", result ? result.authenticated : "없음");
+
+    if (result && result.authenticated === true) {
+        // 인증된 상태
+        console.log("사용자 인증됨 - 인증된 UI 표시");
+        dm_auth_status.set("isAuthenticated", "true");
+        dm_auth_status.set("username", result.user ? result.user.login || "" : "");
+        dm_auth_status.set("avatarUrl", result.user ? result.user.avatar_url || "" : "");
+        dm_auth_status.set("hasGitHubApp", result.hasSelectedRepo ? "true" : "false");
+        dm_auth_status.set("needsLogin", "false");
+
+        scwin.showAuthenticatedUI();
+        scwin.loadConnectedRepositories();
+    } else {
+        // 인증되지 않은 상태
+        console.log("사용자 인증되지 않음 - 로그인 필요 UI 표시");
+        scwin.showLoginRequiredUI();
+    }
+
 };
 
 // 인증 상태 확인 실패 핸들러
-scwin.checkAuthenticationStatus_submiterror = function(e) {
+scwin.checkAuthenticationStatus_submiterror = function (e) {
     scwin.setLoading(false);
     console.error("인증 상태 확인 실패:", e);
     scwin.showLoginRequiredUI();
 };
 
 // GitHub 인증 상태 확인 완료 핸들러
-scwin.checkAuthStatus_submit_done = function(e) {
+scwin.checkAuthStatus_submit_done = function (e) {
     scwin.setLoading(false);
     console.log("인증 상태 확인 완료:", e);
     console.log("e.responseJSON:", e.responseJSON);
@@ -574,7 +580,7 @@ scwin.checkAuthStatus_submit_done = function(e) {
 };
 
 // GitHub 인증 상태 확인 실패 핸들러
-scwin.checkAuthStatus_submiterror = function(e) {
+scwin.checkAuthStatus_submiterror = function (e) {
     scwin.setLoading(false);
     console.log("인증 상태 확인 실패 - 로그인 필요:", e);
     scwin.showLoginRequiredUI();
@@ -583,12 +589,12 @@ scwin.checkAuthStatus_submiterror = function(e) {
 // // GitHub 로그인 페이지로 이동 (Node.js 방식으로 변경 - 직접 리다이렉트)
 // scwin.redirectToGitHubLogin = function () {
 //     console.log("GitHub 로그인 요청 시작");
-    
+
 //     try {
 //         // 베이스 URL 생성
 //         var baseUrl = window.location.protocol + "//" + window.location.host;
 //         var githubAuthStartUrl = baseUrl + "/InsWebApp/github/auth/start";
-        
+
 //         // 현재 프로젝트 정보가 있으면 OAuth 요청에 포함
 //         var params = [];
 //         if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
@@ -599,17 +605,17 @@ scwin.checkAuthStatus_submiterror = function(e) {
 //             params.push("userId=" + encodeURIComponent(scwin.currentProjectData.userId));
 //             console.log("사용자 ID를 OAuth에 포함:", scwin.currentProjectData.userId);
 //         }
-        
+
 //         if (params.length > 0) {
 //             githubAuthStartUrl += "?" + params.join("&");
 //         }
-        
+
 //         console.log("GitHub OAuth 시작 URL로 직접 이동:", githubAuthStartUrl);
-        
+
 //         // Node.js 방식처럼 직접 리다이렉트
 //         // 서버에서 GitHub OAuth URL로 리다이렉트 해줌
 //         window.top.location.href = githubAuthStartUrl;
-        
+
 //     } catch (e) {
 //         console.error("GitHub 로그인 리다이렉트 실패:", e);
 //         $c.win.alert("GitHub 로그인 페이지로 이동할 수 없습니다.\n\n오류: " + e.message);
@@ -624,14 +630,14 @@ scwin.checkAuthStatus_submiterror = function(e) {
 /**
  * GitHub 로그인을 WebSquare 표준 팝업으로 처리합니다.
  */
-scwin.redirectToGitHubLogin = function() {
+scwin.redirectToGitHubLogin = function () {
     console.log("GitHub 로그인 요청 시작 (WebSquare 표준 팝업 방식)");
 
     try {
         // OAuth URL 생성
         const baseUrl = window.location.protocol + "//" + window.location.host;
         let githubAuthStartUrl = baseUrl + "/InsWebApp/github/auth/start";
-        
+
         // 현재 프로젝트 데이터에서 사용자 ID와 프로젝트 ID 가져오기
         const params = [];
         if (scwin.currentProjectData) {
@@ -644,51 +650,51 @@ scwin.redirectToGitHubLogin = function() {
                 console.log("사용자 ID를 OAuth에 포함:", scwin.currentProjectData.userId);
             }
         }
-        
+
         // WebSquare에서 추가 사용자 정보 가져오기 시도
         if (!scwin.currentProjectData || !scwin.currentProjectData.userId) {
             try {
                 // 다양한 방법으로 사용자 ID 가져오기 시도
                 let userId = null;
-                
+
                 // WebSquare 파라미터에서 시도
                 try {
                     userId = $p.getParameter("userId") || $p.getParameter("user_id");
-                } catch(e) {}
-                
+                } catch (e) { }
+
                 // 세션 스토리지에서 시도
                 if (!userId && typeof sessionStorage !== 'undefined') {
                     userId = sessionStorage.getItem("userId") || sessionStorage.getItem("userEmail");
                 }
-                
+
                 // 로컬 스토리지에서 시도
                 if (!userId && typeof localStorage !== 'undefined') {
                     userId = localStorage.getItem("userId") || localStorage.getItem("userEmail");
                 }
-                
+
                 if (userId && userId.trim() && userId !== "user01") {
                     params.push("userId=" + encodeURIComponent(userId));
                     console.log("추가로 찾은 사용자 ID를 OAuth에 포함:", userId);
                 }
-            } catch(e) {
+            } catch (e) {
                 console.log("추가 사용자 ID 찾기 실패:", e);
             }
         }
-        
+
         // URL 파라미터 추가
         if (params.length > 0) {
             githubAuthStartUrl += "?" + params.join("&");
         }
-        
+
         console.log("OAuth 시작 URL:", githubAuthStartUrl);
-        
+
         // 팝업에 전달할 데이터
         const popupData = {
             authUrl: githubAuthStartUrl,
             projectData: scwin.currentProjectData,
-            callbackFn: function(result) {
+            callbackFn: function (result) {
                 console.log("GitHub 인증 콜백 수신:", result);
-                
+
                 if (result && result.status === 'success') {
                     console.log("GitHub 인증 성공!");
                     $c.win.alert("GitHub 계정이 성공적으로 연동되었습니다.");
@@ -696,17 +702,18 @@ scwin.redirectToGitHubLogin = function() {
                     // 인증 성공 처리
                     dm_auth_status.set("isAuthenticated", "true");
                     dm_auth_status.set("needsLogin", "false");
-                    
+
                     if (result.data && result.data.user) {
                         dm_auth_status.set("username", result.data.user.login || "");
                         dm_auth_status.set("avatarUrl", result.data.user.avatar_url || "");
                     }
                     dm_auth_status.set("hasGitHubApp", result.data && result.data.hasSelectedRepo ? "true" : "false");
-                    
+
                     // UI 업데이트
                     scwin.showAuthenticatedUI();
-                    scwin.loadConnectedRepositories();
-                    
+                    // 기존 저장소가 있는지 확인하고 바로 브랜치 관리 화면으로 이동
+                    scwin.checkCurrentRepository();
+
                 } else {
                     const errorMessage = result && result.data ? result.data.message : "알 수 없는 오류";
                     console.error("GitHub 인증 실패:", errorMessage);
@@ -714,61 +721,61 @@ scwin.redirectToGitHubLogin = function() {
                 }
             }
         };
-        
+
         // 전역 콜백 함수 등록
         window.githubAuthCallback = popupData.callbackFn;
-        
+
         // postMessage 이벤트 리스너 등록
-        const messageListener = function(event) {
+        const messageListener = function (event) {
             console.log("postMessage 수신:", event);
-            
+
             // 보안을 위해 origin 확인
             if (event.origin !== window.location.origin) {
                 console.warn("다른 origin에서 온 메시지 무시:", event.origin);
                 return;
             }
-            
+
             if (event.data && event.data.type === 'githubAuthResult') {
                 console.log("GitHub 인증 결과 수신:", event.data.result);
-                
+
                 // 이벤트 리스너 제거
                 window.removeEventListener('message', messageListener);
-                
+
                 // 콜백 함수 호출
                 if (typeof popupData.callbackFn === 'function') {
                     popupData.callbackFn(event.data.result);
                 }
             }
         };
-        
+
         window.addEventListener('message', messageListener);
-        
+
         console.log("브라우저 팝업으로 GitHub OAuth 시작:", githubAuthStartUrl);
-        
+
         // WebSquare 팝업 대신 직접 브라우저 팝업 사용
         const authWindow = window.open(
             githubAuthStartUrl,
             'github_oauth_popup',
             'width=800,height=650,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
         );
-        
+
         if (authWindow) {
             // 팝업이 닫힐 때까지 주기적으로 확인
             const checkClosed = setInterval(() => {
                 if (authWindow.closed) {
                     clearInterval(checkClosed);
                     console.log("GitHub OAuth 팝업이 닫혔습니다");
-                    
+
                     // 이벤트 리스너 정리
                     window.removeEventListener('message', messageListener);
-                    
+
                     // 인증 상태 재확인 (postMessage 실패 시 백업)
                     setTimeout(() => {
                         scwin.checkAuthenticationStatus();
                     }, 1000);
                 }
             }, 1000);
-            
+
             // 5분 후 자동 정리
             setTimeout(() => {
                 clearInterval(checkClosed);
@@ -797,41 +804,41 @@ scwin.testGitHubController = function () {
     try {
         var baseUrl = window.location.protocol + "//" + window.location.host;
         var testUrl = baseUrl + "/InsWebApp/github/test";
-        
+
         console.log("GitHub 컨트롤러 테스트 URL:", testUrl);
-        
+
         fetch(testUrl, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
             }
         })
-        .then(function(response) {
-            scwin.setLoading(false);
-            
-            if (response.ok) {
-                return response.json();
-            } else {
-                console.error("GitHub 컨트롤러 테스트 오류:", response.status, response.statusText);
-                throw new Error("HTTP " + response.status);
-            }
-        })
-        .then(function(result) {
-            console.log("GitHub 컨트롤러 테스트 결과:", result);
-            
-            if (result && result.success) {
-                $c.win.alert("GitHub 컨트롤러가 정상적으로 동작합니다!\n\n" +
-                    "메시지: " + result.message + "\n" +
-                    "시간: " + result.timestamp);
-            } else {
-                $c.win.alert("GitHub 컨트롤러 테스트 실패");
-            }
-        })
-        .catch(function(error) {
-            scwin.setLoading(false);
-            console.error("GitHub 컨트롤러 테스트 실패:", error);
-            $c.win.alert("GitHub 컨트롤러에 연결할 수 없습니다.\n\n오류: " + error.message);
-        });
+            .then(function (response) {
+                scwin.setLoading(false);
+
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    console.error("GitHub 컨트롤러 테스트 오류:", response.status, response.statusText);
+                    throw new Error("HTTP " + response.status);
+                }
+            })
+            .then(function (result) {
+                console.log("GitHub 컨트롤러 테스트 결과:", result);
+
+                if (result && result.success) {
+                    $c.win.alert("GitHub 컨트롤러가 정상적으로 동작합니다!\n\n" +
+                        "메시지: " + result.message + "\n" +
+                        "시간: " + result.timestamp);
+                } else {
+                    $c.win.alert("GitHub 컨트롤러 테스트 실패");
+                }
+            })
+            .catch(function (error) {
+                scwin.setLoading(false);
+                console.error("GitHub 컨트롤러 테스트 실패:", error);
+                $c.win.alert("GitHub 컨트롤러에 연결할 수 없습니다.\n\n오류: " + error.message);
+            });
     } catch (e) {
         scwin.setLoading(false);
         console.error("컨트롤러 테스트 실행 오류:", e);
@@ -870,7 +877,7 @@ scwin.showLoginRequiredUI = function () {
 };
 
 // 로그인 필요 섹션 동적 생성
-scwin.createLoginRequiredSection = function() {
+scwin.createLoginRequiredSection = function () {
     try {
         // 기존 로그인 섹션이 있으면 제거
         var existingLoginSection = $p.getComponentById("login_required_section");
@@ -880,11 +887,11 @@ scwin.createLoginRequiredSection = function() {
 
         // 메인 컨테이너 찾기
         var container = $p.getComponentById("github_main_content");
-        
+
         // 로그인 필요 섹션 그룹 생성
         var loginSection = $p.dynamicCreate(
-            "login_required_section", 
-            "group", 
+            "login_required_section",
+            "group",
             {
                 style: "display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; text-align: center; padding: 40px;",
                 className: "login-required-section"
@@ -894,8 +901,8 @@ scwin.createLoginRequiredSection = function() {
 
         // 로그인 컨테이너 그룹 생성
         var loginContainer = $p.dynamicCreate(
-            "login_container", 
-            "group", 
+            "login_container",
+            "group",
             {
                 style: "max-width: 500px; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);",
                 className: "login-container"
@@ -905,8 +912,8 @@ scwin.createLoginRequiredSection = function() {
 
         // 제목 텍스트 생성
         var titleSpan = $p.dynamicCreate(
-            "login_title", 
-            "span", 
+            "login_title",
+            "span",
             {
                 style: "font-size: 24px; font-weight: 600; color: #2c3e50; margin-bottom: 16px; display: block;",
                 className: "login-title"
@@ -917,8 +924,8 @@ scwin.createLoginRequiredSection = function() {
 
         // 설명 텍스트 생성
         var descSpan = $p.dynamicCreate(
-            "login_description", 
-            "span", 
+            "login_description",
+            "span",
             {
                 style: "font-size: 16px; color: #6c757d; margin-bottom: 24px; display: block;",
                 className: "login-description"
@@ -941,11 +948,11 @@ scwin.createLoginRequiredSection = function() {
         loginButton.setValue("GitHub으로 로그인");
         loginButton.bind("onclick", scwin.redirectToGitHubLogin);
         */
-        
+
         // 테스트용 GitHub 로그인 버튼 생성
         var testLoginButton = $p.dynamicCreate(
-            "test_github_login_btn", 
-            "trigger", 
+            "test_github_login_btn",
+            "trigger",
             {
                 style: "display: inline-flex; align-items: center; gap: 12px; padding: 12px 24px; background-color: #28a745; color: white; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 500; border: none; cursor: pointer;",
                 className: "test-github-login-btn"
@@ -957,8 +964,8 @@ scwin.createLoginRequiredSection = function() {
 
         // 테스트 섹션 그룹 생성
         var testSection = $p.dynamicCreate(
-            "test_section", 
-            "group", 
+            "test_section",
+            "group",
             {
                 style: "margin-top: 20px; padding: 16px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px;",
                 className: "test-section"
@@ -968,8 +975,8 @@ scwin.createLoginRequiredSection = function() {
 
         // 테스트 섹션 제목
         var testTitle = $p.dynamicCreate(
-            "test_title", 
-            "span", 
+            "test_title",
+            "span",
             {
                 style: "font-weight: 600; color: #856404; display: block; margin-bottom: 12px;",
                 className: "test-title"
@@ -980,8 +987,8 @@ scwin.createLoginRequiredSection = function() {
 
         // 테스트 버튼 컨테이너
         var testButtons = $p.dynamicCreate(
-            "test_buttons", 
-            "group", 
+            "test_buttons",
+            "group",
             {
                 style: "display: flex; gap: 12px; flex-wrap: wrap;",
                 className: "test-buttons"
@@ -991,8 +998,8 @@ scwin.createLoginRequiredSection = function() {
 
         // 연결 테스트 버튼
         var testConnButton = $p.dynamicCreate(
-            "test_conn_btn", 
-            "trigger", 
+            "test_conn_btn",
+            "trigger",
             {
                 style: "padding: 6px 12px; font-size: 12px; background-color: #ffc107; color: #212529; border: none; border-radius: 4px; cursor: pointer;",
                 className: "btn btn-warning btn-small"
@@ -1004,8 +1011,8 @@ scwin.createLoginRequiredSection = function() {
 
         // 상태 다시 확인 버튼
         var recheckButton = $p.dynamicCreate(
-            "recheck_btn", 
-            "trigger", 
+            "recheck_btn",
+            "trigger",
             {
                 style: "padding: 6px 12px; font-size: 12px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;",
                 className: "btn btn-secondary btn-small"
@@ -1017,8 +1024,8 @@ scwin.createLoginRequiredSection = function() {
 
         // 참고사항 섹션
         var noteSection = $p.dynamicCreate(
-            "note_section", 
-            "group", 
+            "note_section",
+            "group",
             {
                 style: "margin-top: 24px; padding: 16px; background-color: #e7f3ff; border: 1px solid #b6d7ff; border-radius: 6px; font-size: 14px; color: #0c5aa6;",
                 className: "note-section"
@@ -1027,8 +1034,8 @@ scwin.createLoginRequiredSection = function() {
         );
 
         var noteTitle = $p.dynamicCreate(
-            "note_title", 
-            "span", 
+            "note_title",
+            "span",
             {
                 style: "font-weight: 600; display: block; margin-bottom: 8px;",
                 className: "note-title"
@@ -1038,8 +1045,8 @@ scwin.createLoginRequiredSection = function() {
         noteTitle.setValue("������ 참고사항");
 
         var noteContent = $p.dynamicCreate(
-            "note_content", 
-            "span", 
+            "note_content",
+            "span",
             {
                 style: "display: block; line-height: 1.5;",
                 className: "note-content"
@@ -1104,7 +1111,7 @@ scwin.loadConnectedRepositories = function () {
             // GitHub API 직접 호출 (CORS 문제로 프록시 방식 사용)
             $.ajax({
                 url: "/InsWebApp/github/api/repositories.pwkjson",
-                type: "GET", 
+                type: "GET",
                 dataType: "json",
                 data: {
                     sort: "updated",
@@ -1115,10 +1122,10 @@ scwin.loadConnectedRepositories = function () {
                     scwin.setLoading(false);
                     console.log("GitHub 레포지토리 목록 로드 완료:", repositories);
                     console.log("데이터 타입:", typeof repositories);
-                    
+
                     // DataList 초기화
                     dlt_GitHubRepositoryVoList.removeAll();
-                    
+
                     // 문자열을 JSON으로 파싱
                     try {
                         if (typeof repositories === 'string') {
@@ -1130,14 +1137,14 @@ scwin.loadConnectedRepositories = function () {
                         scwin.showEmptyRepositoryState();
                         return;
                     }
-                    
+
                     // 레포지토리 데이터 검증
                     if (!Array.isArray(repositories)) {
                         console.error("저장소 데이터가 배열이 아닙니다:", repositories);
                         scwin.showEmptyRepositoryState();
                         return;
                     }
-                    
+
                     // 첫 번째 저장소 구조 확인
                     if (repositories.length > 0) {
                         console.log("첫 번째 저장소 구조:", {
@@ -1147,7 +1154,7 @@ scwin.loadConnectedRepositories = function () {
                             html_url: repositories[0].html_url
                         });
                     }
-                    
+
                     // 레포지토리 데이터를 직접 카드 형태로 출력
                     console.log("GitHub 저장소 목록 (파싱 후):", repositories);
                     scwin.renderRepositoryCards(repositories);
@@ -1163,9 +1170,9 @@ scwin.loadConnectedRepositories = function () {
                         responseText: xhr.responseText,
                         error: error
                     });
-                    
+
                     scwin.showEmptyRepositoryState();
-                    
+
                     if (xhr.status === 401) {
                         $c.win.alert("GitHub 인증이 만료되었습니다. 다시 로그인해주세요.");
                         scwin.showLoginRequiredUI();
@@ -1201,7 +1208,7 @@ scwin.updateRepositoryDisplay = function () {
         }
 
         // 헤더 정보 업데이트
-        var countText = "총 " + totalRepos + "개 레포지토리 (" + 
+        var countText = "총 " + totalRepos + "개 레포지토리 (" +
             publicRepos + "개 공개, " + privateRepos + "개 비공개)";
 
         var countElement = document.getElementById("repo-count-info");
@@ -1227,7 +1234,7 @@ scwin.renderRepositoryCards = function (repositories) {
             console.error("카드 컨테이너를 찾을 수 없습니다.");
             return;
         }
-        
+
         // 컨테이너 스크롤 스타일 적용 (웹스퀘어 방식)
         try {
             var containerComponent = $p.getComponentById("repo_cards_container");
@@ -1239,36 +1246,36 @@ scwin.renderRepositoryCards = function (repositories) {
                     console.log("인라인 스타일:", realDomElement.style.cssText);
                     console.log("클래스 목록:", realDomElement.classList.toString());
                     console.log("계산된 display:", window.getComputedStyle(realDomElement).display);
-                    
+
                     // 강제로 display: grid 적용
                     realDomElement.style.display = "grid";
                     realDomElement.style.maxHeight = "350px";
                     realDomElement.style.overflowY = "auto";
                     realDomElement.style.padding = "10px";
                     realDomElement.style.visibility = "visible";
-                    
+
                     console.log("=== DOM 요소 스타일 분석 (수정 후) ===");
                     console.log("인라인 스타일:", realDomElement.style.cssText);
                     console.log("계산된 display:", window.getComputedStyle(realDomElement).display);
                     console.log("계산된 max-height:", window.getComputedStyle(realDomElement).maxHeight);
                     console.log("계산된 overflow-y:", window.getComputedStyle(realDomElement).overflowY);
-                    
+
                     // 비동기 스타일 재적용 함수
                     const recheckAndApplyStyles = async () => {
                         // 웹스퀘어 렌더링 완료 대기
                         await new Promise(resolve => setTimeout(resolve, 100));
-                        
+
                         console.log("=== 지연 후 재확인 ===");
                         console.log("지연 후 인라인 스타일:", realDomElement.style.cssText);
                         console.log("지연 후 계산된 display:", window.getComputedStyle(realDomElement).display);
-                        
+
                         // 웹스퀘어가 덮어썼다면 다시 적용
                         if (realDomElement.style.display !== "grid") {
                             console.log("웹스퀘어가 스타일을 덮어썼습니다. 다시 적용합니다.");
                             realDomElement.style.display = "grid";
                             realDomElement.style.setProperty("display", "grid", "important");
                             console.log("!important로 강제 적용 완료");
-                            
+
                             // 추가 확인 (한 번 더 대기 후 최종 확인)
                             await new Promise(resolve => setTimeout(resolve, 50));
                             console.log("최종 확인 - 인라인 스타일:", realDomElement.style.cssText);
@@ -1276,7 +1283,7 @@ scwin.renderRepositoryCards = function (repositories) {
                             console.log("웹스퀘어 스타일이 유지되고 있습니다.");
                         }
                     };
-                    
+
                     // 비동기 함수 실행
                     recheckAndApplyStyles().catch(console.error);
                 } else {
@@ -1330,7 +1337,7 @@ scwin.renderRepositoryCards = function (repositories) {
 };
 
 // 저장소 개수 업데이트
-scwin.updateRepositoryCount = function(count) {
+scwin.updateRepositoryCount = function (count) {
     try {
         var countElement = document.getElementById("repo-count-info");
         if (countElement) {
@@ -1342,7 +1349,7 @@ scwin.updateRepositoryCount = function(count) {
 };
 
 // 날짜 포맷팅 함수
-scwin.formatDate = function(dateString) {
+scwin.formatDate = function (dateString) {
     try {
         if (!dateString) return "";
         var date = new Date(dateString);
@@ -1353,7 +1360,7 @@ scwin.formatDate = function(dateString) {
 };
 
 // 기존 카드 제거
-scwin.clearRepositoryCards = function() {
+scwin.clearRepositoryCards = function () {
     try {
         var cardsContainer = $p.getComponentById("repo_cards_container");
         if (cardsContainer) {
@@ -1369,7 +1376,7 @@ scwin.clearRepositoryCards = function() {
 };
 
 // 저장소 카드 생성 (웹스퀘어 방식)
-scwin.createRepositoryCard = function(repo, index, container) {
+scwin.createRepositoryCard = function (repo, index, container) {
     try {
         var cardId = "repo_card_" + index;
         var isPrivate = repo.private || false;
@@ -1380,7 +1387,7 @@ scwin.createRepositoryCard = function(repo, index, container) {
         var forks = repo.forks_count || 0;
         var description = repo.description || "설명이 없습니다.";
         var updatedAt = scwin.formatDate(repo.updated_at) || "업데이트 정보 없음";
-        
+
         // 카드 그룹 생성
         var cardGroup = $p.dynamicCreate(
             cardId,
@@ -1444,7 +1451,7 @@ scwin.createRepositoryCard = function(repo, index, container) {
             "span",
             {
                 style: "display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; " +
-                       (isPrivate ? "background-color: #fff3cd; color: #856404;" : "background-color: #d4edda; color: #155724;"),
+                    (isPrivate ? "background-color: #fff3cd; color: #856404;" : "background-color: #d4edda; color: #155724;"),
                 className: "repo-visibility " + visibilityClass
             },
             headerGroup
@@ -1555,7 +1562,7 @@ scwin.createRepositoryCard = function(repo, index, container) {
             actionsGroup
         );
         selectBtn.setValue("선택");
-        selectBtn.bind("onclick", function() {
+        selectBtn.bind("onclick", function () {
             scwin.selectRepository(repo.id, repo.name, repo.owner ? repo.owner.login : "", repo);
         });
 
@@ -1570,12 +1577,12 @@ scwin.createRepositoryCard = function(repo, index, container) {
             actionsGroup
         );
         githubBtn.setValue("GitHub");
-        githubBtn.bind("onclick", function() {
+        githubBtn.bind("onclick", function () {
             window.open(repo.html_url, '_blank');
         });
 
         // 카드 클릭 이벤트 (카드 선택 효과)
-        cardGroup.bind("onclick", function() {
+        cardGroup.bind("onclick", function () {
             scwin.highlightSelectedCard(cardId);
         });
 
@@ -1586,7 +1593,7 @@ scwin.createRepositoryCard = function(repo, index, container) {
 };
 
 // 선택된 카드 하이라이트
-scwin.highlightSelectedCard = function(selectedCardId) {
+scwin.highlightSelectedCard = function (selectedCardId) {
     try {
         var container = $p.getComponentById("repo_cards_container");
         if (container) {
@@ -1611,7 +1618,7 @@ scwin.highlightSelectedCard = function(selectedCardId) {
 };
 
 // 저장소 선택 처리
-scwin.selectRepository = function(repoId, repoName, repoOwner, repoData) {
+scwin.selectRepository = function (repoId, repoName, repoOwner, repoData) {
     try {
         console.log('=== 저장소 선택 함수 호출됨 ===');
         console.log('repoId:', repoId);
@@ -1619,10 +1626,32 @@ scwin.selectRepository = function(repoId, repoName, repoOwner, repoData) {
         console.log('repoOwner:', repoOwner);
         console.log('repoData:', repoData);
         console.log('저장소 선택:', repoOwner + '/' + repoName);
-        
+
+        // 현재 프로젝트에 이미 연결된 저장소가 있는지 확인
+        if (scwin.currentRepository) {
+            var currentRepo = scwin.currentRepository.owner + "/" + scwin.currentRepository.name;
+            var selectedRepo = repoOwner + "/" + repoName;
+
+            if (currentRepo === selectedRepo) {
+                $c.win.alert("이미 연결된 저장소입니다.");
+                return;
+            }
+
+            // 다른 저장소가 이미 연결되어 있는 경우 교체 확인
+            var confirmMessage = "현재 프로젝트에 다른 저장소가 연결되어 있습니다.\n";
+            confirmMessage += "현재 연결된 저장소: " + currentRepo + "\n";
+            confirmMessage += "새로 선택한 저장소: " + selectedRepo + "\n\n";
+            confirmMessage += "저장소를 교체하시겠습니까?";
+
+            if (!confirm(confirmMessage)) {
+                console.log('사용자가 저장소 교체를 취소했습니다.');
+                return;
+            }
+        }
+
         // 선택된 저장소 정보 설정
         dm_ui_state.set("selectedRepo", repoOwner + "/" + repoName);
-        
+
         // 현재 선택된 저장소 정보를 저장해서 콜백에서 사용
         scwin.currentSelectingRepo = {
             id: repoId,
@@ -1630,15 +1659,16 @@ scwin.selectRepository = function(repoId, repoName, repoOwner, repoData) {
             owner: repoOwner,
             data: repoData
         };
-        
-        // DataMap에 개별 필드로 설정
-        dm_repository_select.set("projectId", scwin.currentProjectData ? scwin.currentProjectData.projectId : "");
+
+        // DataMap에 개별 필드로 설정 (새로운 프로젝트 ID 헬퍼 함수 사용)
+        var projectId = scwin.getCurrentProjectId();
+        dm_repository_select.set("projectId", projectId);
         dm_repository_select.set("githubRepositoryId", repoId ? repoId.toString() : "");
         dm_repository_select.set("repoOwner", repoOwner || "");
         dm_repository_select.set("repoName", repoName || "");
         dm_repository_select.set("defaultBranch", repoData.default_branch || "main");
         dm_repository_select.set("githubAppInstallationId", "");
-        
+
         console.log('DataMap 설정 완료:', {
             projectId: dm_repository_select.get("projectId"),
             githubRepositoryId: dm_repository_select.get("githubRepositoryId"),
@@ -1647,12 +1677,12 @@ scwin.selectRepository = function(repoId, repoName, repoOwner, repoData) {
             defaultBranch: dm_repository_select.get("defaultBranch"),
             githubAppInstallationId: dm_repository_select.get("githubAppInstallationId")
         });
-        
+
         // 서브미션 실행
         console.log('서브미션 실행 전');
         $p.executeSubmission("sbm_connectRepository");
         console.log('서브미션 실행 후');
-        
+
     } catch (e) {
         console.error("저장소 선택 처리 실패:", e);
         $c.win.alert("저장소 선택 중 오류가 발생했습니다: " + e.message);
@@ -1660,19 +1690,19 @@ scwin.selectRepository = function(repoId, repoName, repoOwner, repoData) {
 };
 
 // 저장소 연결 성공 콜백
-scwin.sbm_connectRepository_submitdone = function(e) {
+scwin.sbm_connectRepository_submitdone = function (e) {
     console.log('저장소 연결 성공:', e);
-    
+
     try {
         var response = e.responseJSON || e.response;
-        
+
         if (response && response.success) {
             var repoInfo = scwin.currentSelectingRepo;
             $c.win.alert("저장소가 성공적으로 프로젝트에 연결되었습니다:\n" + repoInfo.owner + "/" + repoInfo.name);
-            
+
             // 브랜치 관리 화면으로 전환
-            scwin.showBranchManagementView(repoInfo);
-            
+            scwin.showBranchManagement(repoInfo);
+
         } else {
             $c.win.alert("저장소 연결 실패:\n" + (response.error || "알 수 없는 오류"));
         }
@@ -1680,30 +1710,30 @@ scwin.sbm_connectRepository_submitdone = function(e) {
         console.error("저장소 연결 응답 처리 실패:", err);
         $c.win.alert("저장소 연결 응답 처리 중 오류가 발생했습니다.");
     }
-    
+
     // 임시 데이터 정리
     scwin.currentSelectingRepo = null;
 };
 
 // 저장소 연결 실패 콜백
-scwin.sbm_connectRepository_submiterror = function(e) {
+scwin.sbm_connectRepository_submiterror = function (e) {
     console.error('저장소 연결 실패:', e);
-    
+
     try {
         var errorMsg = "저장소 연결 중 오류가 발생했습니다.";
-        
+
         if (e.responseText) {
             errorMsg += "\n오류 내용: " + e.responseText;
         } else if (e.statusText) {
             errorMsg += "\n오류 상태: " + e.statusText;
         }
-        
+
         $c.win.alert(errorMsg);
     } catch (err) {
         console.error("에러 처리 중 오류:", err);
         $c.win.alert("저장소 연결 중 오류가 발생했습니다.");
     }
-    
+
     // 임시 데이터 정리
     scwin.currentSelectingRepo = null;
 };
@@ -1768,27 +1798,27 @@ scwin.createRepositoryCardHtml = function (repo) {
 scwin.attachCardEvents = function () {
     try {
         var cards = document.querySelectorAll('.repo-card');
-        cards.forEach(function(card) {
-            card.addEventListener('click', function(e) {
+        cards.forEach(function (card) {
+            card.addEventListener('click', function (e) {
                 // 버튼 클릭 시에는 카드 선택 이벤트 방지
                 if (e.target.classList.contains('repo-action-btn')) {
                     return;
                 }
-                
+
                 var repoId = card.dataset.repoId;
                 var repoName = card.dataset.repoName;
                 var repoOwner = card.dataset.repoOwner;
-                
+
                 // 기존 선택된 카드 스타일 제거
-                document.querySelectorAll('.repo-card').forEach(function(c) {
+                document.querySelectorAll('.repo-card').forEach(function (c) {
                     c.style.borderColor = '#e9ecef';
                 });
-                
+
                 // 현재 카드를 선택된 상태로 표시
                 card.style.borderColor = '#007bff';
-                
+
                 console.log('저장소 카드 선택:', repoOwner + '/' + repoName);
-                
+
                 // 선택된 저장소 정보 설정
                 dm_ui_state.set("selectedRepo", repoOwner + "/" + repoName);
             });
@@ -1802,7 +1832,7 @@ scwin.attachCardEvents = function () {
 // scwin.selectRepository = function (repoId, repoName, repoOwner) {
 //     try {
 //         console.log('저장소 선택:', repoOwner + '/' + repoName);
-        
+
 //         // TODO: 2번 작업 - DB에 저장소 정보 저장
 //         var repositoryData = {
 //             githubRepoId: repoId,
@@ -1810,14 +1840,14 @@ scwin.attachCardEvents = function () {
 //             repoOwner: repoOwner,
 //             projectId: scwin.currentProjectData ? scwin.currentProjectData.projectId : null
 //         };
-        
+
 //         // 임시로 콘솔에 표시
 //         console.log('선택된 저장소 데이터:', repositoryData);
 //         $c.win.alert('저장소 "' + repoOwner + '/' + repoName + '"을(를) 선택했습니다.\n\n다음 단계: DB 저장 구현 예정');
-        
+
 //         // 선택된 저장소 정보 설정
 //         dm_ui_state.set("selectedRepo", repoOwner + "/" + repoName);
-        
+
 //     } catch (e) {
 //         console.error("저장소 선택 처리 실패:", e);
 //         $c.win.alert("저장소 선택 중 오류가 발생했습니다: " + e.message);
@@ -1917,15 +1947,15 @@ scwin.updateLoadingDisplay = function (isLoading) {
 };
 
 // 날짜 포맷 함수
-scwin.formatDate = function(dateString) {
+scwin.formatDate = function (dateString) {
     if (!dateString) return "";
-    
+
     try {
         var date = new Date(dateString);
         var now = new Date();
         var diff = now - date;
         var days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        
+
         if (days === 0) {
             return "오늘";
         } else if (days === 1) {
@@ -1986,40 +2016,79 @@ scwin.getErrorMessage = function (error) {
 // 브랜치 관리 기능
 // ==============================
 
-// 브랜치 관리 화면 표시
-scwin.showBranchManagementView = function(repoInfo) {
+// 브랜치 관리 화면 표시 (통합 함수)
+scwin.showBranchManagement = function (repoInfo) {
     try {
         console.log('브랜치 관리 화면 표시:', repoInfo);
-        
+
+        // 저장소 정보 정규화 (데이터베이스 VO와 선택된 저장소 데이터 통일)
+        var normalizedRepoInfo = scwin.normalizeRepositoryInfo(repoInfo);
+
         // 저장소 목록 숨기기
         var cardsContainer = $p.getComponentById("repo_cards_container");
         if (cardsContainer) {
             cardsContainer.hide();
         }
-        
+
         // 브랜치 관리 섹션 표시
-        scwin.showBranchManagementSection(repoInfo);
-        
+        scwin.showBranchManagementSection(normalizedRepoInfo);
+
         // 브랜치 목록 로드
-        scwin.loadBranches(repoInfo);
-        
+        scwin.loadBranches(normalizedRepoInfo);
+
     } catch (e) {
         console.error("브랜치 관리 화면 표시 실패:", e);
     }
 };
 
+// 저장소 정보 정규화 (DB VO와 선택된 저장소 데이터 통일)
+scwin.normalizeRepositoryInfo = function (repoInfo) {
+    try {
+        var normalized = {};
+
+        // 데이터베이스 VO 형식인지 확인
+        if (repoInfo.repoOwner && repoInfo.repoName) {
+            // 데이터베이스 VO 형식
+            normalized.owner = repoInfo.repoOwner;
+            normalized.name = repoInfo.repoName;
+            normalized.default_branch = repoInfo.defaultBranch || "main";
+            normalized.projectRepoId = repoInfo.projectRepoId;
+            normalized.githubRepositoryId = repoInfo.githubRepositoryId;
+        } else {
+            // 선택된 저장소 데이터 형식
+            normalized.owner = repoInfo.owner;
+            normalized.name = repoInfo.name;
+            normalized.default_branch = repoInfo.default_branch || "main";
+            normalized.projectRepoId = repoInfo.projectRepoId;
+            normalized.githubRepositoryId = repoInfo.githubRepositoryId;
+        }
+
+        console.log("정규화된 저장소 정보:", normalized);
+        return normalized;
+
+    } catch (e) {
+        console.error("저장소 정보 정규화 실패:", e);
+        return repoInfo; // 실패시 원본 반환
+    }
+};
+
+// 브랜치 관리 화면 표시 (기존 함수 - 호환성 유지)
+scwin.showBranchManagementView = function (repoInfo) {
+    scwin.showBranchManagement(repoInfo);
+};
+
 // 브랜치 관리 섹션 UI 생성
-scwin.showBranchManagementSection = function(repoInfo) {
+scwin.showBranchManagementSection = function (repoInfo) {
     try {
         // 기존 브랜치 관리 섹션 제거
         var existingSection = $p.getComponentById("branch_management_section");
         if (existingSection) {
             existingSection.remove();
         }
-        
+
         // 메인 컨테이너 찾기
         var mainContainer = $p.getComponentById("repo_cards_container").getParent();
-        
+
         // 브랜치 관리 섹션 생성
         var branchSection = $p.dynamicCreate(
             "branch_management_section",
@@ -2030,7 +2099,7 @@ scwin.showBranchManagementSection = function(repoInfo) {
             },
             mainContainer
         );
-        
+
         // 저장소 정보 헤더
         var headerGroup = $p.dynamicCreate(
             "branch_header",
@@ -2041,7 +2110,7 @@ scwin.showBranchManagementSection = function(repoInfo) {
             },
             branchSection
         );
-        
+
         // 저장소 제목
         var titleSpan = $p.dynamicCreate(
             "branch_title",
@@ -2052,8 +2121,8 @@ scwin.showBranchManagementSection = function(repoInfo) {
             },
             headerGroup
         );
-        titleSpan.setValue("📁 " + repoInfo.owner + "/" + repoInfo.name);
-        
+        titleSpan.setValue("������ " + repoInfo.owner + "/" + repoInfo.name);
+
         // 뒤로가기 버튼
         var backBtn = $p.dynamicCreate(
             "back_to_repos_btn",
@@ -2065,10 +2134,10 @@ scwin.showBranchManagementSection = function(repoInfo) {
             headerGroup
         );
         backBtn.setValue("← 저장소 목록");
-        backBtn.bind("onclick", function() {
+        backBtn.bind("onclick", function () {
             scwin.showRepositoryList();
         });
-        
+
         // 브랜치 액션 버튼 그룹
         var actionGroup = $p.dynamicCreate(
             "branch_actions",
@@ -2079,7 +2148,7 @@ scwin.showBranchManagementSection = function(repoInfo) {
             },
             branchSection
         );
-        
+
         // 브랜치 생성 버튼
         var createBtn = $p.dynamicCreate(
             "create_branch_btn",
@@ -2091,10 +2160,10 @@ scwin.showBranchManagementSection = function(repoInfo) {
             actionGroup
         );
         createBtn.setValue("+ 브랜치 생성");
-        createBtn.bind("onclick", function() {
+        createBtn.bind("onclick", function () {
             scwin.showCreateBranchDialog(repoInfo);
         });
-        
+
         // 새로고침 버튼
         var refreshBtn = $p.dynamicCreate(
             "refresh_branches_btn",
@@ -2105,11 +2174,11 @@ scwin.showBranchManagementSection = function(repoInfo) {
             },
             actionGroup
         );
-        refreshBtn.setValue("🔄 새로고침");
-        refreshBtn.bind("onclick", function() {
+        refreshBtn.setValue("������ 새로고침");
+        refreshBtn.bind("onclick", function () {
             scwin.loadBranches(repoInfo);
         });
-        
+
         // 브랜치 목록 컨테이너
         var branchListContainer = $p.dynamicCreate(
             "branch_list_container",
@@ -2120,57 +2189,68 @@ scwin.showBranchManagementSection = function(repoInfo) {
             },
             branchSection
         );
-        
+
         // 현재 저장소 정보 저장
         scwin.currentRepository = repoInfo;
-        
+
         console.log('브랜치 관리 섹션 생성 완료');
-        
+
     } catch (e) {
         console.error("브랜치 관리 섹션 생성 실패:", e);
     }
 };
 
 // 저장소 목록으로 돌아가기
-scwin.showRepositoryList = function() {
+scwin.showRepositoryList = function () {
     try {
         // 브랜치 관리 섹션 숨기기
         var branchSection = $p.getComponentById("branch_management_section");
         if (branchSection) {
             branchSection.remove();
         }
-        
+
         // 저장소 목록 표시
         var cardsContainer = $p.getComponentById("repo_cards_container");
         if (cardsContainer) {
             cardsContainer.show();
         }
-        
+
         // 현재 저장소 정보 초기화
         scwin.currentRepository = null;
-        
+
         console.log('저장소 목록으로 돌아가기 완료');
-        
+
     } catch (e) {
         console.error("저장소 목록 표시 실패:", e);
     }
 };
 
 // 브랜치 목록 로드
-scwin.loadBranches = function(repoInfo) {
+scwin.loadBranches = function (repoInfo) {
     try {
         console.log('브랜치 목록 로드 시작:', repoInfo);
-        
+
         // 로딩 상태 표시
         scwin.showBranchLoadingState();
-        
+
         // 브랜치 조회 파라미터 설정
+        console.log("브랜치 조회 파라미터 설정:");
+        console.log("repoInfo.owner:", repoInfo.owner);
+        console.log("repoInfo.name:", repoInfo.name);
+
+        console.log("dm_branch_params 설정 전:", dm_branch_params.getJSON());
         dm_branch_params.set("owner", repoInfo.owner);
         dm_branch_params.set("repo", repoInfo.name);
-        
+        console.log("dm_branch_params 설정 후:", dm_branch_params.getJSON());
+
+        // 파라미터 확인
+        console.log("설정된 파라미터:");
+        console.log("owner:", dm_branch_params.get("owner"));
+        console.log("repo:", dm_branch_params.get("repo"));
+
         // 서브미션 실행
         $p.executeSubmission("sbm_loadBranches");
-        
+
     } catch (e) {
         console.error('브랜치 목록 로드 실패:', e);
         scwin.showBranchErrorState("브랜치 목록을 불러오는 중 오류가 발생했습니다.");
@@ -2178,7 +2258,7 @@ scwin.loadBranches = function(repoInfo) {
 };
 
 // 브랜치 로딩 상태 표시
-scwin.showBranchLoadingState = function() {
+scwin.showBranchLoadingState = function () {
     try {
         var container = $p.getComponentById("branch_list_container");
         if (container) {
@@ -2187,7 +2267,7 @@ scwin.showBranchLoadingState = function() {
             for (var i = children.length - 1; i >= 0; i--) {
                 children[i].remove();
             }
-            
+
             // 로딩 메시지 표시
             var loadingSpan = $p.dynamicCreate(
                 "branch_loading",
@@ -2206,7 +2286,7 @@ scwin.showBranchLoadingState = function() {
 };
 
 // 브랜치 에러 상태 표시
-scwin.showBranchErrorState = function(message) {
+scwin.showBranchErrorState = function (message) {
     try {
         var container = $p.getComponentById("branch_list_container");
         if (container) {
@@ -2215,7 +2295,7 @@ scwin.showBranchErrorState = function(message) {
             for (var i = children.length - 1; i >= 0; i--) {
                 children[i].remove();
             }
-            
+
             // 에러 메시지 표시
             var errorSpan = $p.dynamicCreate(
                 "branch_error",
@@ -2238,19 +2318,49 @@ scwin.showBranchErrorState = function(message) {
 // ==============================
 
 // 브랜치 목록 조회 성공 콜백
-scwin.sbm_loadBranches_submitdone = function(e) {
+scwin.sbm_loadBranches_submitdone = function (e) {
     console.log('브랜치 목록 조회 성공:', e);
-    
+
     try {
         var response = e.responseJSON || e.response;
-        
+
+        // 401 인증 오류 체크 (백엔드에서 error_code가 AUTH_EXPIRED로 오는 경우)
+        if (response && response.error_code === "AUTH_EXPIRED") {
+            console.warn('GitHub 토큰 만료 감지 - 재인증 필요:', response.error);
+            
+            // 인증 만료 알림 및 재인증 유도
+            $c.win.confirm("GitHub 토큰이 만료되었습니다.\n다시 로그인하시겠습니까?", 
+                function(result) {
+                    if (result) {
+                        // 로그인 페이지로 이동
+                        scwin.redirectToGitHubLogin();
+                    } else {
+                        // 로그인 필요 화면 표시
+                        scwin.showLoginRequiredUI();
+                    }
+                }
+            );
+            return;
+        }
+
         if (response && response.success) {
             var branches = response.data || [];
-            console.log('브랜치 목록:', branches);
             
+            // data가 문자열이면 JSON 파싱
+            if (typeof branches === 'string') {
+                try {
+                    branches = JSON.parse(branches);
+                } catch (parseError) {
+                    console.error('브랜치 데이터 파싱 실패:', parseError);
+                    branches = [];
+                }
+            }
+            
+            console.log('브랜치 목록:', branches);
+
             // 브랜치 목록 화면에 표시
             scwin.renderBranchList(branches);
-            
+
         } else {
             console.error('브랜치 목록 조회 실패:', response.error);
             scwin.showBranchErrorState(response.error || "브랜치 목록을 불러올 수 없습니다.");
@@ -2262,26 +2372,45 @@ scwin.sbm_loadBranches_submitdone = function(e) {
 };
 
 // 브랜치 목록 조회 실패 콜백
-scwin.sbm_loadBranches_submiterror = function(e) {
+scwin.sbm_loadBranches_submiterror = function (e) {
     console.error('브랜치 목록 조회 실패:', e);
     scwin.showBranchErrorState("브랜치 목록을 불러오는 중 오류가 발생했습니다.");
 };
 
 // 브랜치 생성 성공 콜백
-scwin.sbm_createBranch_submitdone = function(e) {
+scwin.sbm_createBranch_submitdone = function (e) {
     console.log('브랜치 생성 성공:', e);
-    
+
     try {
         var response = e.responseJSON || e.response;
-        
+
+        // 401 인증 오류 체크 (백엔드에서 error_code가 AUTH_EXPIRED로 오는 경우)
+        if (response && response.error_code === "AUTH_EXPIRED") {
+            console.warn('GitHub 토큰 만료 감지 (브랜치 생성) - 재인증 필요:', response.error);
+            
+            // 인증 만료 알림 및 재인증 유도
+            $c.win.confirm("GitHub 토큰이 만료되었습니다.\n다시 로그인하시겠습니까?", 
+                function(result) {
+                    if (result) {
+                        // 로그인 페이지로 이동
+                        scwin.redirectToGitHubLogin();
+                    } else {
+                        // 로그인 필요 화면 표시
+                        scwin.showLoginRequiredUI();
+                    }
+                }
+            );
+            return;
+        }
+
         if (response && response.success) {
             $c.win.alert("브랜치가 성공적으로 생성되었습니다.");
-            
+
             // 브랜치 목록 새로고침
             if (scwin.currentRepository) {
                 scwin.loadBranches(scwin.currentRepository);
             }
-            
+
         } else {
             console.error('브랜치 생성 실패:', response.error);
             $c.win.alert("브랜치 생성 실패:\n" + (response.error || "알 수 없는 오류"));
@@ -2293,26 +2422,45 @@ scwin.sbm_createBranch_submitdone = function(e) {
 };
 
 // 브랜치 생성 실패 콜백
-scwin.sbm_createBranch_submiterror = function(e) {
+scwin.sbm_createBranch_submiterror = function (e) {
     console.error('브랜치 생성 실패:', e);
     $c.win.alert("브랜치 생성 중 오류가 발생했습니다.");
 };
 
 // 브랜치 삭제 성공 콜백
-scwin.sbm_deleteBranch_submitdone = function(e) {
+scwin.sbm_deleteBranch_submitdone = function (e) {
     console.log('브랜치 삭제 성공:', e);
-    
+
     try {
         var response = e.responseJSON || e.response;
-        
+
+        // 401 인증 오류 체크 (백엔드에서 error_code가 AUTH_EXPIRED로 오는 경우)
+        if (response && response.error_code === "AUTH_EXPIRED") {
+            console.warn('GitHub 토큰 만료 감지 (브랜치 삭제) - 재인증 필요:', response.error);
+            
+            // 인증 만료 알림 및 재인증 유도
+            $c.win.confirm("GitHub 토큰이 만료되었습니다.\n다시 로그인하시겠습니까?", 
+                function(result) {
+                    if (result) {
+                        // 로그인 페이지로 이동
+                        scwin.redirectToGitHubLogin();
+                    } else {
+                        // 로그인 필요 화면 표시
+                        scwin.showLoginRequiredUI();
+                    }
+                }
+            );
+            return;
+        }
+
         if (response && response.success) {
             $c.win.alert("브랜치가 성공적으로 삭제되었습니다.");
-            
+
             // 브랜치 목록 새로고침
             if (scwin.currentRepository) {
                 scwin.loadBranches(scwin.currentRepository);
             }
-            
+
         } else {
             console.error('브랜치 삭제 실패:', response.error);
             $c.win.alert("브랜치 삭제 실패:\n" + (response.error || "알 수 없는 오류"));
@@ -2324,26 +2472,26 @@ scwin.sbm_deleteBranch_submitdone = function(e) {
 };
 
 // 브랜치 삭제 실패 콜백
-scwin.sbm_deleteBranch_submiterror = function(e) {
+scwin.sbm_deleteBranch_submiterror = function (e) {
     console.error('브랜치 삭제 실패:', e);
     $c.win.alert("브랜치 삭제 중 오류가 발생했습니다.");
 };
 
 // 브랜치 목록 렌더링
-scwin.renderBranchList = function(branches) {
+scwin.renderBranchList = function (branches) {
     try {
         var container = $p.getComponentById("branch_list_container");
         if (!container) {
             console.error("브랜치 목록 컨테이너를 찾을 수 없습니다.");
             return;
         }
-        
+
         // 기존 내용 제거
         var children = container.getChildren();
         for (var i = children.length - 1; i >= 0; i--) {
             children[i].remove();
         }
-        
+
         if (!branches || branches.length === 0) {
             var emptySpan = $p.dynamicCreate(
                 "branch_empty",
@@ -2357,33 +2505,33 @@ scwin.renderBranchList = function(branches) {
             emptySpan.setValue("브랜치가 없습니다.");
             return;
         }
-        
+
         // 브랜치 목록 생성
         for (var i = 0; i < branches.length; i++) {
             var branch = branches[i];
             scwin.createBranchCard(branch, i, container);
         }
-        
+
         console.log("브랜치 목록 렌더링 완료:", branches.length + "개");
-        
+
     } catch (e) {
         console.error("브랜치 목록 렌더링 실패:", e);
     }
 };
 
 // 브랜치 카드 생성
-scwin.createBranchCard = function(branch, index, container) {
+scwin.createBranchCard = function (branch, index, container) {
     try {
         var cardId = "branch_card_" + index;
         var branchName = branch.name || "Unknown";
         var commitSha = branch.commit ? branch.commit.sha : "Unknown";
-        var commitMessage = branch.commit && branch.commit.commit ? branch.commit.commit.message : "No message";
-        var commitAuthor = branch.commit && branch.commit.commit && branch.commit.commit.author ? branch.commit.commit.author.name : "Unknown";
+        var commitMessage = "최신 커밋"; // GitHub API 기본 브랜치 정보에는 커밋 메시지가 없음
+        var commitAuthor = "Unknown"; // GitHub API 기본 브랜치 정보에는 작성자 정보가 없음
         var isProtected = branch.protected || false;
-        
+
         // 기본 브랜치 확인
         var isDefault = (branchName === "main" || branchName === "master");
-        
+
         // 카드 그룹 생성
         var cardGroup = $p.dynamicCreate(
             cardId,
@@ -2394,7 +2542,7 @@ scwin.createBranchCard = function(branch, index, container) {
             },
             container
         );
-        
+
         // 브랜치 정보 헤더
         var headerGroup = $p.dynamicCreate(
             cardId + "_header",
@@ -2405,7 +2553,7 @@ scwin.createBranchCard = function(branch, index, container) {
             },
             cardGroup
         );
-        
+
         // 브랜치 이름
         var nameSpan = $p.dynamicCreate(
             cardId + "_name",
@@ -2416,8 +2564,8 @@ scwin.createBranchCard = function(branch, index, container) {
             },
             headerGroup
         );
-        nameSpan.setValue("🌿 " + branchName);
-        
+        nameSpan.setValue("브랜치: " + branchName);
+
         // 브랜치 상태
         var statusGroup = $p.dynamicCreate(
             cardId + "_status",
@@ -2428,7 +2576,7 @@ scwin.createBranchCard = function(branch, index, container) {
             },
             headerGroup
         );
-        
+
         if (isDefault) {
             var defaultBadge = $p.dynamicCreate(
                 cardId + "_default",
@@ -2441,7 +2589,7 @@ scwin.createBranchCard = function(branch, index, container) {
             );
             defaultBadge.setValue("기본");
         }
-        
+
         if (isProtected) {
             var protectedBadge = $p.dynamicCreate(
                 cardId + "_protected",
@@ -2454,7 +2602,7 @@ scwin.createBranchCard = function(branch, index, container) {
             );
             protectedBadge.setValue("보호됨");
         }
-        
+
         // 커밋 정보
         var commitGroup = $p.dynamicCreate(
             cardId + "_commit",
@@ -2465,7 +2613,7 @@ scwin.createBranchCard = function(branch, index, container) {
             },
             cardGroup
         );
-        
+
         var commitSpan = $p.dynamicCreate(
             cardId + "_commit_info",
             "span",
@@ -2475,8 +2623,8 @@ scwin.createBranchCard = function(branch, index, container) {
             },
             commitGroup
         );
-        commitSpan.setValue("최신 커밋: " + commitSha.substring(0, 7) + " - " + commitMessage + " by " + commitAuthor);
-        
+        commitSpan.setValue("최신 커밋: " + commitSha.substring(0, 7));
+
         // 액션 버튼
         if (!isDefault) {
             var actionGroup = $p.dynamicCreate(
@@ -2488,7 +2636,7 @@ scwin.createBranchCard = function(branch, index, container) {
                 },
                 cardGroup
             );
-            
+
             var deleteBtn = $p.dynamicCreate(
                 cardId + "_delete",
                 "trigger",
@@ -2499,76 +2647,258 @@ scwin.createBranchCard = function(branch, index, container) {
                 actionGroup
             );
             deleteBtn.setValue("삭제");
-            deleteBtn.bind("onclick", function() {
+            deleteBtn.bind("onclick", function () {
                 scwin.deleteBranch(branchName);
             });
         }
-        
+
         console.log("브랜치 카드 생성 완료:", branchName);
-        
+
     } catch (e) {
         console.error("브랜치 카드 생성 실패:", e);
     }
 };
 
 // 브랜치 생성 다이얼로그 표시
-scwin.showCreateBranchDialog = function(repoInfo) {
+scwin.showCreateBranchDialog = function (repoInfo) {
+    debugger;
     try {
-        var branchName = prompt("새 브랜치 이름을 입력하세요:");
-        if (branchName && branchName.trim()) {
-            var fromBranch = prompt("기준 브랜치 이름을 입력하세요:", "main");
-            if (fromBranch && fromBranch.trim()) {
-                scwin.createBranch(repoInfo, branchName.trim(), fromBranch.trim());
-            }
-        }
-    } catch (e) {
-        console.error("브랜치 생성 다이얼로그 표시 실패:", e);
-    }
-};
-
-// 브랜치 생성 실행
-scwin.createBranch = function(repoInfo, branchName, fromBranch) {
-    try {
-        console.log('브랜치 생성 실행:', branchName, 'from', fromBranch);
+        console.log("브랜치 생성 다이얼로그 시작, repoInfo:", repoInfo);
         
-        // 브랜치 생성 파라미터 설정
+        // 저장소 정보 검증
+        if (!repoInfo) {
+            console.error("저장소 정보가 없습니다");
+            $c.win.alert("저장소 정보를 찾을 수 없습니다. 저장소를 먼저 선택해주세요.");
+            return;
+        }
+        
+        if (!repoInfo.owner || !repoInfo.name) {
+            console.error("저장소 정보가 불완전합니다:", repoInfo);
+            $c.win.alert("저장소 정보가 불완전합니다.\n\n저장소 소유자: " + (repoInfo.owner || "없음") + "\n저장소 이름: " + (repoInfo.name || "없음"));
+            return;
+        }
+        
+        console.log("저장소 정보 검증 완료 - " + repoInfo.owner + "/" + repoInfo.name);
+        
+        var branchName = prompt("새 브랜치 이름을 입력하세요:");
+        if (!branchName || !branchName.trim()) {
+            console.log("브랜치명이 입력되지 않음");
+            return;
+        }
+        
+        var fromBranch = prompt("기준 브랜치 이름을 입력하세요:", repoInfo.default_branch || "main");
+        if (!fromBranch || !fromBranch.trim()) {
+            console.log("기준 브랜치명이 입력되지 않음");
+            return;
+        }
+        
+        console.log("브랜치 생성 실행 - 새 브랜치: " + branchName.trim() + ", 기준: " + fromBranch.trim());
+        
+        // createBranch 함수 호출 대신 직접 구현
+        console.log("데이터맵 설정 시작");
         dm_create_branch.set("owner", repoInfo.owner);
         dm_create_branch.set("repo", repoInfo.name);
-        dm_create_branch.set("branchName", branchName);
-        dm_create_branch.set("fromBranch", fromBranch);
+        dm_create_branch.set("branchName", branchName.trim());
+        dm_create_branch.set("fromBranch", fromBranch.trim());
         
-        // 서브미션 실행
+        console.log("데이터맵 설정 완료:", {
+            owner: dm_create_branch.get("owner"),
+            repo: dm_create_branch.get("repo"),
+            branchName: dm_create_branch.get("branchName"),
+            fromBranch: dm_create_branch.get("fromBranch")
+        });
+        
+        console.log("서브미션 실행");
         $p.executeSubmission("sbm_createBranch");
         
     } catch (e) {
-        console.error('브랜치 생성 실행 실패:', e);
-        $c.win.alert("브랜치 생성 중 오류가 발생했습니다: " + e.message);
+        console.error("브랜치 생성 다이얼로그 표시 실패:", e);
+        $c.win.alert("브랜치 생성 다이얼로그 오류: " + e.message);
     }
 };
 
+// createBranch 함수 제거됨 - showCreateBranchDialog에서 직접 처리
+
 // 브랜치 삭제 실행
-scwin.deleteBranch = function(branchName) {
+scwin.deleteBranch = function (branchName) {
     try {
         if (confirm("정말로 '" + branchName + "' 브랜치를 삭제하시겠습니까?")) {
             console.log('브랜치 삭제 실행:', branchName);
-            
+
             var repoInfo = scwin.currentRepository;
             if (!repoInfo) {
                 $c.win.alert("저장소 정보를 찾을 수 없습니다.");
                 return;
             }
-            
+
             // 브랜치 삭제 파라미터 설정
             dm_delete_branch.set("owner", repoInfo.owner);
             dm_delete_branch.set("repo", repoInfo.name);
             dm_delete_branch.set("branchName", branchName);
-            
+
             // 서브미션 실행
             $p.executeSubmission("sbm_deleteBranch");
         }
     } catch (e) {
         console.error('브랜치 삭제 실행 실패:', e);
         $c.win.alert("브랜치 삭제 중 오류가 발생했습니다: " + e.message);
+    }
+};
+
+// ==============================
+// 현재 프로젝트 저장소 확인 로직
+// ==============================
+
+// 현재 프로젝트에 연결된 저장소 확인
+scwin.checkCurrentRepository = function () {
+    try {
+        console.log('현재 프로젝트에 연결된 저장소 확인 시작');
+
+        // 프로젝트 정보가 있는지 확인
+        if (!scwin.currentProjectData || !scwin.currentProjectData.projectId) {
+            console.log('프로젝트 정보가 없습니다. 사용자 ID로 저장소를 확인합니다.');
+            // 프로젝트 정보가 없어도 사용자 ID로 저장소 확인 가능
+        }
+
+        // 현재 저장소 조회 서브미션 실행
+        $p.executeSubmission("sbm_getCurrentRepository");
+
+    } catch (e) {
+        console.error('현재 저장소 확인 실패:', e);
+        // 오류 발생 시 기본 저장소 목록 표시
+        scwin.showRepositorySelectionView();
+    }
+};
+
+// 현재 저장소 조회 성공 콜백
+scwin.sbm_getCurrentRepository_submitdone = function (e) {
+    console.log('현재 저장소 조회 성공:', e);
+
+    try {
+        var response = e.responseJSON || e.response;
+
+        if (response && response.success && response.repository) {
+            var repository = response.repository;
+            console.log('✅ 연결된 저장소 발견! 브랜치 관리 화면으로 이동합니다.');
+            console.log('저장소 정보:', repository);
+
+            // 저장소 정보를 repoInfo 형태로 변환
+            var repoInfo = {
+                id: repository.githubRepositoryId,
+                name: repository.repoName,
+                owner: repository.repoOwner,
+                default_branch: repository.defaultBranch || "main"
+            };
+
+            // 디버그 로그
+            console.log("변환된 repoInfo:", repoInfo);
+            console.log("repoInfo.owner:", repoInfo.owner);
+            console.log("repoInfo.name:", repoInfo.name);
+
+            // 바로 브랜치 관리 화면으로 이동
+            console.log('������ 브랜치 관리 화면으로 자동 이동 시작');
+            scwin.showBranchManagementView(repoInfo);
+
+        } else {
+            console.log('⚠️ 연결된 저장소가 없습니다. 저장소 목록을 표시합니다.');
+            console.log('응답 데이터:', response);
+            // 연결된 저장소가 없으면 저장소 선택 화면 표시
+            scwin.showRepositorySelectionView();
+        }
+    } catch (err) {
+        console.error("현재 저장소 조회 응답 처리 실패:", err);
+        // 오류 발생 시 저장소 선택 화면 표시
+        scwin.showRepositorySelectionView();
+    }
+};
+
+// 현재 저장소 조회 실패 콜백
+scwin.sbm_getCurrentRepository_submiterror = function (e) {
+    console.error('현재 저장소 조회 실패:', e);
+    // 실패 시 저장소 선택 화면 표시
+    scwin.showRepositorySelectionView();
+};
+
+// ==============================
+// 브랜치 생성/삭제 서브미션 콜백 함수들
+// ==============================
+
+// 브랜치 삭제 성공 콜백
+scwin.sbm_deleteBranch_submitdone = function (e) {
+    console.log('브랜치 삭제 성공:', e);
+    
+    try {
+        var response = e.responseJSON || e.response;
+        console.log('브랜치 삭제 응답:', response);
+        
+        if (response && response.success) {
+            $c.win.alert("✅ 브랜치 삭제 성공!");
+            
+            // 브랜치 목록 새로고침
+            setTimeout(function() {
+                scwin.loadBranches();
+            }, 1000);
+            
+        } else if (response && response.error_code === 'AUTH_EXPIRED') {
+            // 토큰 만료 처리
+            console.warn('GitHub 토큰 만료 감지');
+            $c.win.confirm("GitHub 토큰이 만료되었습니다. 다시 로그인하시겠습니까?", function(result) {
+                if (result) {
+                    scwin.redirectToGitHubLogin();
+                }
+            });
+        } else {
+            $c.win.alert("❌ 브랜치 삭제 실패\n\n오류: " + (response?.error || "알 수 없는 오류"));
+        }
+    } catch (err) {
+        console.error("브랜치 삭제 응답 처리 실패:", err);
+        $c.win.alert("❌ 브랜치 삭제 응답 처리 중 오류가 발생했습니다: " + err.message);
+    }
+};
+
+// 브랜치 삭제 실패 콜백
+scwin.sbm_deleteBranch_submiterror = function (e) {
+    console.error('브랜치 삭제 실패:', e);
+    
+    var errorMsg = "브랜치 삭제에 실패했습니다.";
+    if (e.responseJSON && e.responseJSON.error) {
+        errorMsg += "\n\n오류: " + e.responseJSON.error;
+    } else if (e.responseText) {
+        try {
+            var parsed = JSON.parse(e.responseText);
+            if (parsed.error) {
+                errorMsg += "\n\n오류: " + parsed.error;
+            }
+        } catch (parseErr) {
+            errorMsg += "\n\n원본 오류: " + e.responseText;
+        }
+    }
+    
+    $c.win.alert("❌ " + errorMsg);
+};
+
+// 저장소 선택 화면 표시 (기존 로직)
+scwin.showRepositorySelectionView = function () {
+    try {
+        console.log('저장소 선택 화면 표시');
+
+        // 브랜치 관리 섹션 숨기기
+        var branchSection = $p.getComponentById("branch_management_section");
+        if (branchSection) {
+            branchSection.remove();
+        }
+
+        // 저장소 카드 컨테이너 표시
+        var cardsContainer = $p.getComponentById("repo_cards_container");
+        if (cardsContainer) {
+            cardsContainer.show();
+        }
+
+        // 저장소 목록 직접 로드
+        scwin.loadConnectedRepositories();
+
+    } catch (e) {
+        console.error('저장소 선택 화면 표시 실패:', e);
     }
 };
 
@@ -2626,7 +2956,11 @@ scwin.onRepositorySelect = function () {
             dm_github_form.set("currentRepo", repoOwner + "/" + repoName);
 
             // 브랜치 목록 로드
-            scwin.loadBranches(repoOwner, repoName);
+            var repoInfo = {
+                owner: repoOwner,
+                name: repoName
+            };
+            scwin.loadBranches(repoInfo);
 
             // 웹훅 상태 확인
             scwin.checkWebhookStatus(repoOwner, repoName);
@@ -2668,33 +3002,18 @@ scwin.filterRepositories = function (keyword) {
     }
 };
 
-// 브랜치 목록 로드
-scwin.loadBranches = function (owner, repo) {
-    console.log("브랜치 목록 로드:", owner + "/" + repo);
-    scwin.setLoading(true, "브랜치 목록 로딩 중...");
+// 브랜치 목록 로드 (대체 구현) - 중복 함수 제거됨
+scwin.loadBranchesAlternative = function (owner, repo) {
+    console.log("브랜치 목록 로드 (대체):", owner + "/" + repo);
 
-    var requestData = {
+    // 기존 함수 호출 방식으로 변경
+    var repoInfo = {
         owner: owner,
-        repo: repo,
-        includeCommitInfo: true
+        name: repo
     };
 
-    try {
-        $c.sbm.execute(sbm_loadBranches, requestData).then(function (e) {
-            scwin.setLoading(false);
-            console.log("브랜치 목록 로드 완료:", e);
-            scwin.addToHistory("load_branches", repo, "", "성공");
-        }).catch(function (e) {
-            scwin.setLoading(false);
-            console.error("브랜치 목록 로드 실패:", e);
-            var errorMsg = scwin.getErrorMessage(e);
-            $c.win.alert("브랜치 목록을 불러올 수 없습니다.\n" + errorMsg);
-            scwin.addToHistory("load_branches", repo, "", "실패");
-        });
-    } catch (e) {
-        scwin.setLoading(false);
-        console.error("브랜치 목록 로드 오류:", e);
-    }
+    // 첫 번째 함수 호출
+    scwin.loadBranches(repoInfo);
 };
 
 // 웹훅 상태 확인
@@ -2837,9 +3156,9 @@ scwin.deleteBranch = function (branchName) {
 // ===========================
 
 // GitHub 연결 테스트 (서브미션 방식)
-scwin.testGitHubConnection = function() {
+scwin.testGitHubConnection = function () {
     console.log("GitHub 연결 테스트 시작 (서브미션 방식)");
-    
+
     try {
         // 웹스퀘어 서브미션 실행
         $c.sbm.execute(sbm_testGitHubConnection);
@@ -2850,11 +3169,11 @@ scwin.testGitHubConnection = function() {
 };
 
 // GitHub 연결 테스트 완료 핸들러
-scwin.testGitHubConnection_submitdone = function(e) {
+scwin.testGitHubConnection_submitdone = function (e) {
     console.log("GitHub 연결 테스트 완료:", e);
     console.log("responseJSON:", e.responseJSON);
     console.log("responseText:", e.responseText);
-    
+
     try {
         var result = null;
         if (e.responseJSON) {
@@ -2862,7 +3181,7 @@ scwin.testGitHubConnection_submitdone = function(e) {
         } else if (e.responseText) {
             result = JSON.parse(e.responseText);
         }
-        
+
         if (result && result.success) {
             $c.win.alert("✅ GitHub 컨트롤러 연결 성공!\n\n메시지: " + result.message + "\n타임스탬프: " + result.timestamp);
         } else {
@@ -2875,19 +3194,19 @@ scwin.testGitHubConnection_submitdone = function(e) {
 };
 
 // GitHub 연결 테스트 실패 핸들러
-scwin.testGitHubConnection_submiterror = function(e) {
+scwin.testGitHubConnection_submiterror = function (e) {
     console.error("GitHub 연결 테스트 실패:", e);
     $c.win.alert("❌ GitHub 컨트롤러 연결 실패\n\n오류: " + (e.errorMsg || e.message || "알 수 없는 오류"));
 };
 
 // 테스트용 GitHub 인증 시작 (새 창)
-scwin.testGitHubAuthStart = function() {
+scwin.testGitHubAuthStart = function () {
     console.log("테스트용 GitHub 인증 시작 (새 창)");
-    
+
     try {
         var baseUrl = window.location.protocol + "//" + window.location.host;
         var authUrl = baseUrl + "/InsWebApp/github/auth/start";
-        
+
         // 현재 프로젝트 정보가 있으면 OAuth 요청에 포함
         var params = [];
         if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
@@ -2898,52 +3217,52 @@ scwin.testGitHubAuthStart = function() {
             params.push("userId=" + encodeURIComponent(scwin.currentProjectData.userId));
             console.log("사용자 ID를 OAuth에 포함:", scwin.currentProjectData.userId);
         }
-        
+
         // 추가 사용자 ID 찾기 (프로젝트 데이터에 없는 경우)
         if (!scwin.currentProjectData || !scwin.currentProjectData.userId) {
             try {
                 var userId = null;
-                
+
                 // WebSquare 파라미터에서 시도
                 try {
                     userId = $p.getParameter("userId") || $p.getParameter("user_id");
-                } catch(e) {}
-                
+                } catch (e) { }
+
                 // 세션 스토리지에서 시도
                 if (!userId && typeof sessionStorage !== 'undefined') {
                     userId = sessionStorage.getItem("userId") || sessionStorage.getItem("userEmail");
                 }
-                
+
                 // 로컬 스토리지에서 시도
                 if (!userId && typeof localStorage !== 'undefined') {
                     userId = localStorage.getItem("userId") || localStorage.getItem("userEmail");
                 }
-                
+
                 if (userId && userId.trim() && userId !== "user01") {
                     params.push("userId=" + encodeURIComponent(userId));
                     console.log("WebSquare에서 추가로 찾은 사용자 ID를 OAuth에 포함:", userId);
                 }
-            } catch(e) {
+            } catch (e) {
                 console.log("WebSquare 추가 사용자 ID 찾기 실패:", e);
             }
         }
-        
+
         if (params.length > 0) {
             authUrl += "?" + params.join("&");
         }
-        
+
         console.log("인증 URL:", authUrl);
-        
+
         // 콜백 함수 정의
-        var callbackFn = function(result) {
+        var callbackFn = function (result) {
             console.log("GitHub 인증 테스트 콜백 수신:", result);
-            
+
             if (result && result.status === 'success') {
                 console.log("GitHub 인증 성공!");
                 $c.win.alert("GitHub 계정이 성공적으로 연동되었습니다.");
-                
+
                 // 인증 상태 재확인
-                setTimeout(function() {
+                setTimeout(function () {
                     scwin.checkAuthenticationStatus();
                 }, 1000);
             } else {
@@ -2952,33 +3271,33 @@ scwin.testGitHubAuthStart = function() {
                 $c.win.alert("GitHub 계정 연동에 실패했습니다: " + errorMessage);
             }
         };
-        
+
         // 전역 콜백 함수 등록
         window.githubAuthCallback = callbackFn;
-        
+
         console.log("브라우저 팝업으로 GitHub OAuth 시작:", authUrl);
-        
+
         // WebSquare 팝업 대신 직접 브라우저 팝업 사용
         var authWindow = window.open(
             authUrl,
             'github_oauth_popup',
             'width=800,height=650,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
         );
-        
+
         if (authWindow) {
             // 팝업이 닫힐 때까지 주기적으로 확인
-            var checkClosed = setInterval(function() {
+            var checkClosed = setInterval(function () {
                 if (authWindow.closed) {
                     clearInterval(checkClosed);
                     console.log("GitHub OAuth 팝업이 닫혔습니다 - 인증 상태 재확인");
-                    setTimeout(function() {
+                    setTimeout(function () {
                         scwin.checkAuthenticationStatus();
                     }, 1000);
                 }
             }, 1000);
-            
+
             // 5분 후 자동 정리
-            setTimeout(function() {
+            setTimeout(function () {
                 clearInterval(checkClosed);
                 if (authWindow && !authWindow.closed) {
                     authWindow.close();
@@ -2988,7 +3307,7 @@ scwin.testGitHubAuthStart = function() {
             console.error("팝업이 차단되었습니다. 팝업 차단 해제 후 다시 시도해주세요.");
             $c.win.alert("팝업이 차단되었습니다. 브라우저 설정에서 팝업 차단을 해제한 후 다시 시도해주세요.");
         }
-        
+
     } catch (e) {
         console.error("인증 시작 오류:", e);
         $c.win.alert("❌ 인증 시작 중 오류 발생\n\n" + e.message);
@@ -2996,17 +3315,17 @@ scwin.testGitHubAuthStart = function() {
 };
 
 // OAuth 팝업 닫기 액션
-scwin.oauthPopup_closeAction = function() {
+scwin.oauthPopup_closeAction = function () {
     console.log("OAuth 팝업이 닫혔습니다 - 인증 상태 재확인");
-    setTimeout(function() {
+    setTimeout(function () {
         scwin.checkAuthenticationStatus();
     }, 1000);
 };
 
 // 백엔드 GitHub 인증 시작 테스트 (서브미션 방식)
-scwin.testGitHubAuthRequest = function() {
+scwin.testGitHubAuthRequest = function () {
     console.log("백엔드 GitHub 인증 시작 테스트 (서브미션 방식)");
-    
+
     try {
         // 웹스퀘어 서브미션 실행
         $c.sbm.execute(sbm_testGitHubAuthStart);
@@ -3017,11 +3336,11 @@ scwin.testGitHubAuthRequest = function() {
 };
 
 // 백엔드 GitHub 인증 시작 완료 핸들러
-scwin.testGitHubAuthRequest_submitdone = function(e) {
+scwin.testGitHubAuthRequest_submitdone = function (e) {
     console.log("백엔드 GitHub 인증 시작 완료:", e);
     console.log("responseJSON:", e.responseJSON);
     console.log("responseText:", e.responseText);
-    
+
     try {
         // 응답이 리다이렉트인지 확인
         if (e.responseText && e.responseText.includes("github.com")) {
@@ -3034,7 +3353,7 @@ scwin.testGitHubAuthRequest_submitdone = function(e) {
             } else if (e.responseText) {
                 result = JSON.parse(e.responseText);
             }
-            
+
             if (result && result.success) {
                 $c.win.alert("✅ 백엔드 응답 수신:\n\n" + result.message);
             } else {
@@ -3048,7 +3367,7 @@ scwin.testGitHubAuthRequest_submitdone = function(e) {
 };
 
 // 백엔드 GitHub 인증 시작 실패 핸들러
-scwin.testGitHubAuthRequest_submiterror = function(e) {
+scwin.testGitHubAuthRequest_submiterror = function (e) {
     console.error("백엔드 GitHub 인증 시작 실패:", e);
     $c.win.alert("❌ 백엔드 인증 요청 실패\n\n오류: " + (e.errorMsg || e.message || "알 수 없는 오류"));
 };
@@ -3071,6 +3390,116 @@ scwin.redirectToGitHubLogin = function() {
     }
 };
 */
+
+// 현재 프로젝트에 연결된 저장소 확인 (프로젝트 ID 기반)
+scwin.checkCurrentRepository = function () {
+    console.log("=== 현재 프로젝트에 연결된 저장소 확인 ===");
+
+    try {
+        // 현재 프로젝트 ID 가져오기
+        var projectId = scwin.getCurrentProjectId();
+        console.log("현재 프로젝트 ID:", projectId);
+
+        if (!projectId) {
+            console.log("프로젝트 ID가 없으므로 저장소 목록 표시");
+            scwin.loadGitHubRepositories();
+            return;
+        }
+
+        // 프로젝트의 연결된 저장소 조회
+        $.ajax({
+            url: "/InsWebApp/github/project/currentRepository.pwkjson",
+            type: "GET",
+            dataType: "json",
+            data: {
+                projectId: projectId
+            },
+            success: function (result) {
+                console.log("현재 프로젝트 저장소 조회 결과:", result);
+
+                if (result && result.success) {
+                    if (result.hasRepository && result.repository) {
+                        console.log("기존 연결된 저장소 발견:", result.repository.repoOwner + "/" + result.repository.repoName);
+
+                        // 저장소 정보를 전역변수에 저장
+                        scwin.connectedRepository = result.repository;
+
+                        // 바로 브랜치 관리 화면으로 이동
+                        scwin.showBranchManagement(result.repository);
+                    } else {
+                        console.log("연결된 저장소가 없음 - 저장소 목록 표시");
+                        scwin.loadGitHubRepositories();
+                    }
+                } else {
+                    console.error("저장소 조회 실패:", result.error);
+                    scwin.loadGitHubRepositories();
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("현재 프로젝트 저장소 조회 실패:", error);
+                scwin.loadGitHubRepositories();
+            }
+        });
+
+    } catch (e) {
+        console.error("현재 프로젝트 저장소 확인 중 오류:", e);
+        scwin.loadGitHubRepositories();
+    }
+};
+
+// 현재 프로젝트 ID 가져오기 헬퍼 함수
+scwin.getCurrentProjectId = function () {
+    try {
+        // 여러 방법으로 프로젝트 ID 찾기
+        var projectId = null;
+
+        // 1. WebSquare 파라미터에서 찾기
+        try {
+            projectId = $p.getParameter("projectId") || $p.getParameter("project_id");
+        } catch (e) { }
+
+        // 2. 현재 프로젝트 데이터에서 찾기
+        if (!projectId && scwin.currentProjectData) {
+            projectId = scwin.currentProjectData.projectId;
+        }
+
+        // 3. 데이터맵에서 찾기
+        if (!projectId) {
+            try {
+                projectId = dm_github_form.get("projectId");
+            } catch (e) { }
+        }
+
+        // 4. URL 파라미터에서 찾기
+        if (!projectId) {
+            try {
+                var urlParams = new URLSearchParams(window.location.search);
+                projectId = urlParams.get("projectId") || urlParams.get("project_id");
+            } catch (e) { }
+        }
+
+        // 5. 세션 스토리지에서 찾기
+        if (!projectId && typeof sessionStorage !== 'undefined') {
+            try {
+                projectId = sessionStorage.getItem("currentProjectId");
+            } catch (e) { }
+        }
+
+        // 6. 임시 하드코딩 (개발용)
+        if (!projectId) {
+            projectId = "PRJ001"; // 개발용 임시 프로젝트 ID
+            console.log("프로젝트 ID를 찾을 수 없어 임시 ID 사용:", projectId);
+        }
+
+        console.log("최종 프로젝트 ID:", projectId);
+        return projectId;
+
+    } catch (e) {
+        console.error("프로젝트 ID 가져오기 실패:", e);
+        return "PRJ001"; // 기본값
+    }
+};
+
 ]]></script>
 		<style type="text/css"><![CDATA[
 			.github-manager-container {

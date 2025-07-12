@@ -51,7 +51,7 @@
          GitHub 레포지토리 관리 (PROJECT_REPO 테이블 사용)
          ============================== -->
     
-    <!-- 프로젝트의 연결된 레포지토리 정보 조회 -->
+    <!-- 사용자의 연결된 레포지토리 정보 조회 (프로젝트 기반) -->
     <select id="selectProjectRepositoryByUserId" parameterType="String" resultType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo">
         SELECT 
             pr.project_repo_id as projectRepoId,
@@ -64,6 +64,22 @@
         FROM PROJECT_REPO pr
         INNER JOIN PROJECT_USER pu ON pr.project_id = pu.project_id
         WHERE pu.user_id = #{userId}
+        ORDER BY pr.project_repo_id DESC 
+        LIMIT 1
+    </select>
+    
+    <!-- 프로젝트 ID로 연결된 레포지토리 정보 조회 -->
+    <select id="selectProjectRepositoryByProjectId" parameterType="String" resultType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo">
+        SELECT 
+            pr.project_repo_id as projectRepoId,
+            pr.project_id as projectId,
+            pr.github_repository_id as githubRepositoryId,
+            pr.repo_owner as repoOwner,
+            pr.repo_name as repoName,
+            pr.default_branch as defaultBranch,
+            pr.github_app_installation_id as githubAppInstallationId
+        FROM PROJECT_REPO pr
+        WHERE pr.project_id = #{projectId}
         ORDER BY pr.project_repo_id DESC 
         LIMIT 1
     </select>

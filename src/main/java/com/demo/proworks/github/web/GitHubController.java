@@ -1,7 +1,5 @@
 package com.demo.proworks.github.web;
 
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,22 +10,21 @@ import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import com.demo.proworks.github.service.GitHubService;
-import com.demo.proworks.github.vo.GitHubRepositoryListVo;
+import com.demo.proworks.github.vo.BranchParameterVo;
+import com.demo.proworks.github.vo.CreateBranchVo;
 import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
-import com.inswave.elfw.annotation.ElValidator;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
  * GitHub 통합 컨트롤러
@@ -46,6 +43,9 @@ public class GitHubController {
     
     @Autowired
     private com.demo.proworks.github.util.GitHubApiUtil gitHubApiUtil;
+    
+    @Resource(name = "userPersonalTokenServiceImpl")
+    private com.demo.proworks.userpersonaltoken.service.UserPersonalTokenService userPersonalTokenService;
     
     /**
      * 생성자 - 빈 등록 확인용
@@ -507,16 +507,122 @@ public class GitHubController {
         
         try {
             HttpSession session = request.getSession();
-            String userId = (String) session.getAttribute("userId");
+            String userId = null;
             
-            // 서비스를 통해 GitHub 인증 상태 확인
+            // UserHeader에서 userId 가져오기
+            try {
+                Object userheader = session.getAttribute("userheader");
+                if (userheader != null) {
+                    System.out.println("UserHeader 타입: " + userheader.getClass().getName());
+                    
+                    // ProworksUserHeader로 캐스팅하여 직접 접근
+                    if (userheader instanceof com.demo.proworks.cmmn.ProworksUserHeader) {
+                        com.demo.proworks.cmmn.ProworksUserHeader proworksUserHeader = 
+                            (com.demo.proworks.cmmn.ProworksUserHeader) userheader;
+                        
+                        // 상위 클래스의 메서드들을 확인해보자
+                        System.out.println("ProworksUserHeader toString: " + proworksUserHeader.toString());
+                        
+                        // 가능한 userId 필드들을 확인
+                        String testId = proworksUserHeader.getTestId();
+                        System.out.println("testId: " + testId);
+                        
+                        if (testId != null && !testId.trim().isEmpty()) {
+                            userId = testId;
+                            System.out.println("UserHeader에서 testId로 userId 가져옴: " + userId);
+                        }
+                    }
+                    
+                    // Reflection을 통해 getUserId() 메서드 호출 시도
+                    if (userId == null) {
+                        try {
+                            java.lang.reflect.Method getUserIdMethod = userheader.getClass().getMethod("getUserId");
+                            userId = (String) getUserIdMethod.invoke(userheader);
+                            System.out.println("UserHeader에서 Reflection으로 userId 가져옴: " + userId);
+                        } catch (Exception e) {
+                            System.out.println("Reflection으로 getUserId 가져오기 실패: " + e.getMessage());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("UserHeader에서 userId 가져오기 실패: " + e.getMessage());
+            }
+            
+            // 세션에서 직접 userId 가져오기 시도
+            if (userId == null) {
+                userId = (String) session.getAttribute("userId");
+                System.out.println("세션에서 직접 가져온 userId: " + userId);
+            }
+            
+            System.out.println("최종 사용할 userId: " + userId);
+            
+            // 먼저 세션에서 GitHub 인증 상태 확인
             Boolean githubConnected = (Boolean) session.getAttribute("githubConnected");
+            String sessionAccessToken = (String) session.getAttribute("githubAccessToken");
             
-            result.put("authenticated", githubConnected != null ? githubConnected : false);
+            // DB에서 저장된 access token 확인
+            String dbAccessToken = null;
+            Map<String, Object> dbUserInfo = null;
+            
+            if (userId != null) {
+                try {
+                    // 서비스를 통해 DB에서 GitHub 토큰 정보 조회
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo tokenParam = 
+                        new com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo();
+                    tokenParam.setUserId(userId);
+                    
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo tokenInfo = 
+                        userPersonalTokenService.selectUserPersonalTokenByUserId(tokenParam);
+                    
+                    if (tokenInfo != null) {
+                        dbAccessToken = tokenInfo.getAccessToken();
+                        System.out.println("DB에서 GitHub 토큰 발견 (userId: " + userId + ")");
+                        
+                        // DB에서 찾은 토큰으로 GitHub 사용자 정보 조회
+                        try {
+                            Map<String, Object> userInfo = gitHubApiUtil.getUserInfo(dbAccessToken);
+                            dbUserInfo = userInfo;
+                            System.out.println("DB 토큰으로 GitHub 사용자 정보 조회 성공");
+                        } catch (Exception e) {
+                            System.out.println("DB 토큰으로 GitHub 사용자 정보 조회 실패: " + e.getMessage());
+                            // 토큰이 만료된 경우 null로 설정
+                            dbAccessToken = null;
+                        }
+                    } else {
+                        System.out.println("DB에서 GitHub 토큰을 찾을 수 없습니다 (userId: " + userId + ")");
+                    }
+                    
+                } catch (Exception e) {
+                    System.out.println("DB에서 GitHub 토큰 조회 실패: " + e.getMessage());
+                }
+            }
+            
+            // 세션에 토큰이 있거나 DB에서 토큰을 찾은 경우
+            boolean isAuthenticated = false;
+            if (sessionAccessToken != null) {
+                System.out.println("세션에서 access token 발견");
+                isAuthenticated = true;
+            } else if (dbAccessToken != null) {
+                System.out.println("DB에서 access token 발견, 세션에 저장");
+                // DB에서 찾은 토큰을 세션에 저장
+                session.setAttribute("githubAccessToken", dbAccessToken);
+                session.setAttribute("githubConnected", true);
+                
+                // DB에서 조회한 GitHub 사용자 정보도 세션에 저장
+                if (dbUserInfo != null) {
+                    session.setAttribute("githubUsername", dbUserInfo.get("login"));
+                    session.setAttribute("githubAvatarUrl", dbUserInfo.get("avatar_url"));
+                    System.out.println("DB 토큰으로 GitHub 사용자 정보 세션에 저장: " + dbUserInfo.get("login"));
+                }
+                
+                isAuthenticated = true;
+            }
+            
+            result.put("authenticated", isAuthenticated);
             result.put("success", true);
             
             // 인증된 경우 사용자 정보 추가
-            if (githubConnected != null && githubConnected) {
+            if (isAuthenticated) {
                 Map<String, Object> user = new HashMap<>();
                 user.put("login", session.getAttribute("githubUsername"));
                 user.put("avatar_url", session.getAttribute("githubAvatarUrl"));
@@ -704,6 +810,62 @@ public class GitHubController {
         return result;
     }
     
+    /**
+     * 현재 프로젝트의 연결된 저장소 조회
+     */
+    @ElService(key = "project/currentRepository")
+    @ElDescription(sub = "현재 프로젝트 연결된 저장소 조회", desc = "현재 프로젝트에 연결된 저장소 정보를 조회합니다.")
+    @RequestMapping(value = "project/currentRepository")
+    @ResponseBody
+    public Map<String, Object> getCurrentRepository(
+            @RequestParam(value = "projectId", required = true) String projectId,
+            HttpServletRequest request) {
+        
+        System.out.println("=== 현재 프로젝트 연결된 저장소 조회 API 호출 ===");
+        System.out.println("projectId: " + projectId);
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 프로젝트 ID로 연결된 저장소 조회
+            com.demo.proworks.projectrepo.vo.ProjectRepositoryVo repository = 
+                gitHubService.getCurrentRepositoryByProjectId(projectId);
+            
+            if (repository != null) {
+                System.out.println("연결된 저장소 발견: " + repository.getRepoOwner() + "/" + repository.getRepoName());
+                
+                // 저장소 정보를 Map으로 변환
+                Map<String, Object> repoInfo = new HashMap<>();
+                repoInfo.put("projectRepoId", repository.getProjectRepoId());
+                repoInfo.put("projectId", repository.getProjectId());
+                repoInfo.put("githubRepositoryId", repository.getGithubRepositoryId());
+                repoInfo.put("repoOwner", repository.getRepoOwner());
+                repoInfo.put("repoName", repository.getRepoName());
+                repoInfo.put("defaultBranch", repository.getDefaultBranch());
+                repoInfo.put("githubAppInstallationId", repository.getGithubAppInstallationId());
+                
+                result.put("success", true);
+                result.put("hasRepository", true);
+                result.put("repository", repoInfo);
+                result.put("message", "연결된 저장소 정보 조회 완료");
+            } else {
+                System.out.println("연결된 저장소 없음");
+                result.put("success", true);
+                result.put("hasRepository", false);
+                result.put("message", "연결된 저장소 없음");
+            }
+            
+        } catch (Exception e) {
+            System.out.println("현재 프로젝트 연결된 저장소 조회 실패: " + e.getMessage());
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        
+        System.out.println("현재 프로젝트 연결된 저장소 조회 결과: " + result);
+        return result;
+    }
+    
     // ==============================
     // 브랜치 관리 API
     // ==============================
@@ -716,10 +878,11 @@ public class GitHubController {
     @RequestMapping(value = "branches")
     @ResponseBody
     public Map<String, Object> getBranches(
-            @RequestParam(value = "owner", required = true) String owner,
-            @RequestParam(value = "repo", required = true) String repo,
+        BranchParameterVo branchParameterVo,
             HttpServletRequest request) {
         
+        String owner = branchParameterVo.getOwner();
+        String repo = branchParameterVo.getRepo();
         System.out.println("=== 브랜치 목록 조회 API 호출 ===");
         System.out.println("owner: " + owner);
         System.out.println("repo: " + repo);
@@ -753,9 +916,34 @@ public class GitHubController {
                 return result;
             }
             
-            // GitHub API 프록시 호출
-            String accessToken = (String) session.getAttribute("github_access_token");
-            System.out.println("accessToken 존재 여부: " + (accessToken != null));
+            // 세션에서 userId를 가져와서 DB에서 GitHub 토큰 조회
+            String accessToken = null;
+            
+            if (userId != null) {
+                try {
+                    System.out.println("DB에서 GitHub 토큰 조회 시도 (userId: " + userId + ")");
+                    
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo tokenParam = 
+                        new com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo();
+                    tokenParam.setUserId(userId);
+                    
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo tokenInfo = 
+                        userPersonalTokenService.selectUserPersonalTokenByUserId(tokenParam);
+                    
+                    if (tokenInfo != null) {
+                        accessToken = tokenInfo.getAccessToken();
+                        System.out.println("DB에서 GitHub 토큰 발견");
+                    } else {
+                        System.out.println("DB에서 GitHub 토큰을 찾을 수 없습니다 (userId: " + userId + ")");
+                    }
+                    
+                } catch (Exception e) {
+                    System.out.println("DB에서 GitHub 토큰 조회 실패: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            
+            System.out.println("최종 accessToken 존재 여부: " + (accessToken != null));
             
             if (accessToken == null) {
                 result.put("success", false);
@@ -769,6 +957,31 @@ public class GitHubController {
             try {
                 Map<String, Object> apiResponse = gitHubApiUtil.getBranches(accessToken, owner, repo);
                 System.out.println("GitHub API 응답: " + apiResponse);
+                
+                // 401 에러 검사 및 처리
+                if (apiResponse.containsKey("is_auth_error") && (Boolean) apiResponse.get("is_auth_error")) {
+                    logger.warn("GitHub API 401 인증 오류 감지 - 토큰 무효화 처리 (userId: {})", userId);
+                    
+                    // 세션에서 GitHub 관련 정보 제거
+                    session.removeAttribute("githubAccessToken");
+                    session.removeAttribute("githubConnected");
+                    session.removeAttribute("githubUsername");
+                    session.removeAttribute("githubAvatarUrl");
+                    
+                    // DB에서 만료된 토큰 제거
+                    try {
+                        userPersonalTokenService.invalidateUserPersonalTokenByUserId(userId);
+                        logger.info("만료된 GitHub 토큰 DB에서 제거 완료 (userId: {})", userId);
+                    } catch (Exception e) {
+                        logger.error("만료된 GitHub 토큰 DB 제거 실패 (userId: {}): {}", userId, e.getMessage());
+                    }
+                    
+                    result.put("success", false);
+                    result.put("error", "GitHub 토큰이 만료되었습니다. 다시 로그인해 주세요.");
+                    result.put("error_code", "AUTH_EXPIRED");
+                    result.put("auth_error_message", apiResponse.get("auth_error_message"));
+                    return result;
+                }
                 
                 if ((Boolean) apiResponse.get("success")) {
                     result.put("success", true);
@@ -803,11 +1016,13 @@ public class GitHubController {
     @RequestMapping(value = "branches/create", method = RequestMethod.POST)
     @ResponseBody
     public Map<String, Object> createBranch(
-            @RequestParam(value = "owner", required = true) String owner,
-            @RequestParam(value = "repo", required = true) String repo,
-            @RequestParam(value = "branchName", required = true) String branchName,
-            @RequestParam(value = "fromBranch", required = true) String fromBranch,
+            CreateBranchVo createBranchVo,
             HttpServletRequest request) {
+        
+        String owner = createBranchVo.getOwner();
+        String repo = createBranchVo.getRepo();
+        String branchName = createBranchVo.getBranchName();
+        String fromBranch = createBranchVo.getFromBranch();
         
         System.out.println("=== 브랜치 생성 API 호출 ===");
         System.out.println("owner: " + owner);
@@ -818,9 +1033,60 @@ public class GitHubController {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 인증 확인
             HttpSession session = request.getSession();
-            String accessToken = (String) session.getAttribute("github_access_token");
+            String userId = null;
+            
+            // UserHeader에서 userId 가져오기 (getBranches와 동일한 로직)
+            try {
+                Object userHeader = session.getAttribute("userHeader");
+                if (userHeader != null && userHeader instanceof com.demo.proworks.cmmn.ProworksUserHeader) {
+                    com.demo.proworks.cmmn.ProworksUserHeader proworksUserHeader = (com.demo.proworks.cmmn.ProworksUserHeader) userHeader;
+                    userId = proworksUserHeader.getUserId();
+                }
+            } catch (Exception e) {
+                System.out.println("UserHeader에서 userId 가져오기 실패: " + e.getMessage());
+            }
+            
+            if (userId == null) {
+                userId = (String) session.getAttribute("userId");
+            }
+            
+            System.out.println("userId: " + userId);
+            
+            if (userId == null) {
+                result.put("success", false);
+                result.put("error", "로그인이 필요합니다.");
+                return result;
+            }
+            
+            // 세션에서 userId를 가져와서 DB에서 GitHub 토큰 조회
+            String accessToken = null;
+            
+            if (userId != null) {
+                try {
+                    System.out.println("DB에서 GitHub 토큰 조회 시도 (userId: " + userId + ")");
+                    
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo tokenParam = 
+                        new com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo();
+                    tokenParam.setUserId(userId);
+                    
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo tokenInfo = 
+                        userPersonalTokenService.selectUserPersonalTokenByUserId(tokenParam);
+                    
+                    if (tokenInfo != null) {
+                        accessToken = tokenInfo.getAccessToken();
+                        System.out.println("DB에서 GitHub 토큰 발견");
+                    } else {
+                        System.out.println("DB에서 GitHub 토큰을 찾을 수 없습니다 (userId: " + userId + ")");
+                    }
+                    
+                } catch (Exception e) {
+                    System.out.println("DB에서 GitHub 토큰 조회 실패: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            
+            System.out.println("최종 accessToken 존재 여부: " + (accessToken != null));
             
             if (accessToken == null) {
                 result.put("success", false);
@@ -836,6 +1102,31 @@ public class GitHubController {
                 Map<String, Object> branchInfo = gitHubApiUtil.get("/repos/" + owner + "/" + repo + "/branches/" + fromBranch, accessToken);
                 System.out.println("기준 브랜치 정보: " + branchInfo);
                 
+                // 401 에러 검사 및 처리 - 기준 브랜치 조회
+                if (branchInfo.containsKey("is_auth_error") && (Boolean) branchInfo.get("is_auth_error")) {
+                    logger.warn("GitHub API 401 인증 오류 감지 (기준 브랜치 조회) - 토큰 무효화 처리 (userId: {})", userId);
+                    
+                    // 세션에서 GitHub 관련 정보 제거
+                    session.removeAttribute("githubAccessToken");
+                    session.removeAttribute("githubConnected");
+                    session.removeAttribute("githubUsername");
+                    session.removeAttribute("githubAvatarUrl");
+                    
+                    // DB에서 만료된 토큰 제거
+                    try {
+                        userPersonalTokenService.invalidateUserPersonalTokenByUserId(userId);
+                        logger.info("만료된 GitHub 토큰 DB에서 제거 완료 (userId: {})", userId);
+                    } catch (Exception e) {
+                        logger.error("만료된 GitHub 토큰 DB 제거 실패 (userId: {}): {}", userId, e.getMessage());
+                    }
+                    
+                    result.put("success", false);
+                    result.put("error", "GitHub 토큰이 만료되었습니다. 다시 로그인해 주세요.");
+                    result.put("error_code", "AUTH_EXPIRED");
+                    result.put("auth_error_message", branchInfo.get("auth_error_message"));
+                    return result;
+                }
+                
                 if ((Boolean) branchInfo.get("success")) {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> branchData = (Map<String, Object>) branchInfo.get("data");
@@ -848,6 +1139,31 @@ public class GitHubController {
                     // 2. 새 브랜치 생성
                     Map<String, Object> createResponse = gitHubApiUtil.createBranch(accessToken, owner, repo, branchName, sourceSha);
                     System.out.println("브랜치 생성 응답: " + createResponse);
+                    
+                    // 401 에러 검사 및 처리 - 브랜치 생성
+                    if (createResponse.containsKey("is_auth_error") && (Boolean) createResponse.get("is_auth_error")) {
+                        logger.warn("GitHub API 401 인증 오류 감지 (브랜치 생성) - 토큰 무효화 처리 (userId: {})", userId);
+                        
+                        // 세션에서 GitHub 관련 정보 제거
+                        session.removeAttribute("githubAccessToken");
+                        session.removeAttribute("githubConnected");
+                        session.removeAttribute("githubUsername");
+                        session.removeAttribute("githubAvatarUrl");
+                        
+                        // DB에서 만료된 토큰 제거
+                        try {
+                            userPersonalTokenService.invalidateUserPersonalTokenByUserId(userId);
+                            logger.info("만료된 GitHub 토큰 DB에서 제거 완료 (userId: {})", userId);
+                        } catch (Exception e) {
+                            logger.error("만료된 GitHub 토큰 DB 제거 실패 (userId: {}): {}", userId, e.getMessage());
+                        }
+                        
+                        result.put("success", false);
+                        result.put("error", "GitHub 토큰이 만료되었습니다. 다시 로그인해 주세요.");
+                        result.put("error_code", "AUTH_EXPIRED");
+                        result.put("auth_error_message", createResponse.get("auth_error_message"));
+                        return result;
+                    }
                     
                     if ((Boolean) createResponse.get("success")) {
                         result.put("success", true);
@@ -899,9 +1215,60 @@ public class GitHubController {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // 인증 확인
             HttpSession session = request.getSession();
-            String accessToken = (String) session.getAttribute("github_access_token");
+            String userId = null;
+            
+            // UserHeader에서 userId 가져오기 (getBranches와 동일한 로직)
+            try {
+                Object userHeader = session.getAttribute("userHeader");
+                if (userHeader != null && userHeader instanceof com.demo.proworks.cmmn.ProworksUserHeader) {
+                    com.demo.proworks.cmmn.ProworksUserHeader proworksUserHeader = (com.demo.proworks.cmmn.ProworksUserHeader) userHeader;
+                    userId = proworksUserHeader.getUserId();
+                }
+            } catch (Exception e) {
+                System.out.println("UserHeader에서 userId 가져오기 실패: " + e.getMessage());
+            }
+            
+            if (userId == null) {
+                userId = (String) session.getAttribute("userId");
+            }
+            
+            System.out.println("userId: " + userId);
+            
+            if (userId == null) {
+                result.put("success", false);
+                result.put("error", "로그인이 필요합니다.");
+                return result;
+            }
+            
+            // 세션에서 userId를 가져와서 DB에서 GitHub 토큰 조회
+            String accessToken = null;
+            
+            if (userId != null) {
+                try {
+                    System.out.println("DB에서 GitHub 토큰 조회 시도 (userId: " + userId + ")");
+                    
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo tokenParam = 
+                        new com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo();
+                    tokenParam.setUserId(userId);
+                    
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo tokenInfo = 
+                        userPersonalTokenService.selectUserPersonalTokenByUserId(tokenParam);
+                    
+                    if (tokenInfo != null) {
+                        accessToken = tokenInfo.getAccessToken();
+                        System.out.println("DB에서 GitHub 토큰 발견");
+                    } else {
+                        System.out.println("DB에서 GitHub 토큰을 찾을 수 없습니다 (userId: " + userId + ")");
+                    }
+                    
+                } catch (Exception e) {
+                    System.out.println("DB에서 GitHub 토큰 조회 실패: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            
+            System.out.println("최종 accessToken 존재 여부: " + (accessToken != null));
             
             if (accessToken == null) {
                 result.put("success", false);
@@ -922,6 +1289,31 @@ public class GitHubController {
             try {
                 Map<String, Object> deleteResponse = gitHubApiUtil.deleteBranch(accessToken, owner, repo, branchName);
                 System.out.println("브랜치 삭제 응답: " + deleteResponse);
+                
+                // 401 에러 검사 및 처리
+                if (deleteResponse.containsKey("is_auth_error") && (Boolean) deleteResponse.get("is_auth_error")) {
+                    logger.warn("GitHub API 401 인증 오류 감지 (브랜치 삭제) - 토큰 무효화 처리 (userId: {})", userId);
+                    
+                    // 세션에서 GitHub 관련 정보 제거
+                    session.removeAttribute("githubAccessToken");
+                    session.removeAttribute("githubConnected");
+                    session.removeAttribute("githubUsername");
+                    session.removeAttribute("githubAvatarUrl");
+                    
+                    // DB에서 만료된 토큰 제거
+                    try {
+                        userPersonalTokenService.invalidateUserPersonalTokenByUserId(userId);
+                        logger.info("만료된 GitHub 토큰 DB에서 제거 완료 (userId: {})", userId);
+                    } catch (Exception e) {
+                        logger.error("만료된 GitHub 토큰 DB 제거 실패 (userId: {}): {}", userId, e.getMessage());
+                    }
+                    
+                    result.put("success", false);
+                    result.put("error", "GitHub 토큰이 만료되었습니다. 다시 로그인해 주세요.");
+                    result.put("error_code", "AUTH_EXPIRED");
+                    result.put("auth_error_message", deleteResponse.get("auth_error_message"));
+                    return result;
+                }
                 
                 if ((Boolean) deleteResponse.get("success")) {
                     result.put("success", true);
@@ -948,43 +1340,6 @@ public class GitHubController {
         return result;
     }
     
-    /**
-     * 현재 선택된 레포지토리 정보 조회
-     */
-    @ElService(key = "repositories/current")
-    @ElDescription(sub = "현재 레포지토리 조회", desc = "현재 선택된 레포지토리 정보를 조회합니다.")
-    @RequestMapping(value = "repositories/current")
-    @ResponseBody
-    public Map<String, Object> getCurrentRepository(HttpServletRequest request) {
-        logger.info("현재 선택된 레포지토리 조회");
-        
-        Map<String, Object> result = new HashMap<>();
-        
-        try {
-            HttpSession session = request.getSession();
-            String userId = (String) session.getAttribute("userId");
-            
-            if (userId == null) {
-                result.put("success", false);
-                result.put("error", "로그인이 필요합니다.");
-                return result;
-            }
-            
-            // 서비스를 통해 현재 선택된 레포지토리 조회
-            ProjectRepositoryVo currentRepo = gitHubService.getCurrentRepository(userId);
-            
-            result.put("success", true);
-            result.put("repository", currentRepo);
-            result.put("message", currentRepo != null ? "현재 선택된 레포지토리가 있습니다." : "선택된 레포지토리가 없습니다.");
-            
-        } catch (Exception e) {
-            logger.error("현재 선택된 레포지토리 조회 실패", e);
-            result.put("success", false);
-            result.put("error", e.getMessage());
-        }
-        
-        return result;
-    }
 
     // ==============================
     // GitHub 브랜치 관리
@@ -1103,6 +1458,73 @@ public class GitHubController {
             
         } catch (Exception e) {
             logger.error("GitHub 통합 통계 조회 실패", e);
+            result.put("success", false);
+            result.put("error", e.getMessage());
+        }
+        
+        return result;
+    }
+
+    /**
+     * 현재 프로젝트에 연결된 저장소 조회
+     */
+    @ElService(key = "repositories/current")
+    @ElDescription(sub = "현재 연결된 저장소 조회", desc = "현재 프로젝트에 연결된 저장소를 조회합니다.")
+    @RequestMapping(value = "repositories/current")
+    @ResponseBody
+    public Map<String, Object> getCurrentRepository(HttpServletRequest request) {
+        System.out.println("=== 현재 연결된 저장소 조회 API 호출 ===");
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            HttpSession session = request.getSession();
+            String userId = null;
+            
+            // UserHeader에서 userId 가져오기
+            try {
+                Object userheader = session.getAttribute("userheader");
+                if (userheader != null) {
+                    System.out.println("UserHeader 타입: " + userheader.getClass().getName());
+                    
+                    // Reflection을 통해 getUserId() 메서드 호출
+                    try {
+                        java.lang.reflect.Method getUserIdMethod = userheader.getClass().getMethod("getUserId");
+                        userId = (String) getUserIdMethod.invoke(userheader);
+                        System.out.println("UserHeader에서 가져온 userId: " + userId);
+                    } catch (Exception e) {
+                        System.out.println("Reflection으로 userId 가져오기 실패: " + e.getMessage());
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("UserHeader에서 userId 가져오기 실패: " + e.getMessage());
+            }
+            
+            // 세션에서 직접 userId 가져오기 시도
+            if (userId == null) {
+                userId = (String) session.getAttribute("userId");
+                System.out.println("세션에서 직접 가져온 userId: " + userId);
+            }
+            
+            System.out.println("최종 사용할 userId: " + userId);
+            
+            if (userId == null) {
+                System.out.println("userId가 null입니다. 로그인 필요");
+                result.put("success", false);
+                result.put("error", "로그인이 필요합니다.");
+                return result;
+            }
+            
+            // 현재 연결된 저장소 조회
+            Map<String, Object> param = new HashMap<>();
+            param.put("user_id", userId);
+            
+            Map<String, Object> currentRepo = gitHubService.getCurrentRepository(param);
+            result.putAll(currentRepo);
+            
+        } catch (Exception e) {
+            System.out.println("현재 저장소 조회 실패: " + e.getMessage());
+            e.printStackTrace();
             result.put("success", false);
             result.put("error", e.getMessage());
         }

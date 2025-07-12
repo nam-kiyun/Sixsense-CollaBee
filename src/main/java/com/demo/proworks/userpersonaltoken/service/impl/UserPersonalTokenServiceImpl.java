@@ -139,4 +139,21 @@ public class UserPersonalTokenServiceImpl implements UserPersonalTokenService {
 		return userPersonalTokenDAO.deleteUserPersonalToken(userPersonalTokenVo);
 	}
 	
+    /**
+     * 사용자 ID로 깃허브 개인 처리를 위한 PAT토큰을 무효화(삭제) 처리한다.
+     * 401 에러 발생 시 호출되어 만료된 토큰을 제거한다.
+     *
+     * @process
+     * 1. 사용자 ID로 깃허브 개인 처리를 위한 PAT토큰을 삭제 처리한다.
+     * 
+     * @param  userId 사용자 ID
+     * @return 삭제된 행 수
+     * @throws Exception
+     */
+	public int invalidateUserPersonalTokenByUserId(String userId) throws Exception {
+		UserPersonalTokenVo userPersonalTokenVo = new UserPersonalTokenVo();
+		userPersonalTokenVo.setUserId(userId);
+		return userPersonalTokenDAO.deleteUserPersonalToken(userPersonalTokenVo);
+	}
+	
 }
