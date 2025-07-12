@@ -59,13 +59,7 @@
                         <w2:key id="emailHour" name="메일발송시간" dataType="text"/>
                         <w2:key id="emailMinute" name="메일발송분" dataType="text"/>
                     </w2:keyInfo>
-                    <w2:data use="true">
-                        <projectImage>/InsWebApp/assets/images/default_project.png</projectImage>
-                        <projectName>2차 프로젝트</projectName>
-                        <teamLeader>식스센스</teamLeader>
-                        <teamLeaderEmail>sixsense@gmail.com</teamLeaderEmail>
-                        <emailSendTime>오후 6:00</emailSendTime>
-                    </w2:data>
+                    
                 </w2:dataMap>
             </w2:dataCollection>
             <w2:workflowCollection/>
@@ -214,7 +208,7 @@ scwin.setProjectData = function(data) {
         
         // 데이터맵에 데이터 설정
         dataMap.set("projectName", data.projectName || "");
-        dataMap.set("teamLeader", data.userId || "");
+        dataMap.set("teamLeader", data.userName || "");
         dataMap.set("teamLeaderEmail", data.userId || "");
         
         // 이메일 발송 시간 파싱 (HH:MM:SS 형식을 시간과 분으로 분리)
@@ -273,7 +267,7 @@ scwin.setProjectData = function(data) {
             
             // 팀장 업데이트
             if (typeof input_teamLeader !== 'undefined') {
-                input_teamLeader.setValue(data.userId || "");
+                input_teamLeader.setValue(data.userName || "");
                
             }
             

@@ -34,6 +34,9 @@ public class ProjectVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "user_id", physicalName = "userId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userId;
 
+    @ElDtoField(logicalName = "user_name", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String userName;
+
     @ElVoField(physicalName = "projectId")
     public String getProjectId(){
         String ret = this.projectId;
@@ -111,6 +114,17 @@ public class ProjectVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.userId = userId;
     }
 
+    @ElVoField(physicalName = "userName")
+    public String getUserName(){
+        String ret = this.userName;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "userName")
+    public void setUserName(String userName){
+        this.userName = userName;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -121,7 +135,8 @@ public class ProjectVo extends com.demo.proworks.cmmn.ProworksCommVO {
         sb.append("projectImageUrl").append("=").append(projectImageUrl).append(",");
         sb.append("createdAt").append("=").append(createdAt).append(",");
         sb.append("emailSendTime").append("=").append(emailSendTime).append(",");
-        sb.append("userId").append("=").append(userId);
+        sb.append("userId").append("=").append(userId).append(",");
+        sb.append("userName").append("=").append(userName);
         sb.append("]");
         return sb.toString();
 

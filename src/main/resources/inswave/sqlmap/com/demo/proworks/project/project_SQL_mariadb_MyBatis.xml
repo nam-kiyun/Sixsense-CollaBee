@@ -68,11 +68,13 @@
 		resultType="com.demo.proworks.project.vo.ProjectVo">
 		<!-- 프로젝트 정보를 담는 테이블를 상세 조회한다. -->
 		SELECT /* QueryID : com.demo.proworks.project.selectProject */
-		PROJECT_ID as projectId, PROJECT_NAME as projectName, DESCRIPTION as description, PROJECT_IMAGE_URL as projectImageUrl, CREATED_AT as createdAt,
-		EMAIL_SEND_TIME as emailSendTime, USER_ID as userId
-		FROM PROJECT
+		p.PROJECT_ID as projectId, p.PROJECT_NAME as projectName, p.DESCRIPTION as description, 
+		p.PROJECT_IMAGE_URL as projectImageUrl, p.CREATED_AT as createdAt,
+		p.EMAIL_SEND_TIME as emailSendTime, p.USER_ID as userId, u.USER_NAME as userName
+		FROM PROJECT p
+		LEFT JOIN USER u ON p.USER_ID = u.USER_ID
 		WHERE
-		PROJECT_ID = #{projectId}
+		p.PROJECT_ID = #{projectId}
 	</select>
 
 	<select id="selectListProject" parameterType="com.demo.proworks.project.vo.ProjectVo"
