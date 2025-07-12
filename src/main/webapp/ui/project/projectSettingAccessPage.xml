@@ -486,15 +486,16 @@ scwin.btn_addUser_onclick = function(e) {
 // 프로젝트 초대 이메일 발송 함수
 scwin.sendProjectInviteEmail = function(userEmail, projectId) {
     try {
-        // URL-encoded 형식으로 데이터 전송 (EmailVo 매핑)
+        // JSON 데이터로 전송
         $.ajax({
             type: "POST",
             url: "/InsWebApp/send/SendProjectInviteEmail.pwkjson",
-            data: {
-                userId: userEmail,  // 초대받을 사용자 ID (이메일)
-                email: projectId    // 프로젝트 ID를 email 필드에 전송
-            },
-            contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+            data: JSON.stringify({
+                userId: userEmail,    // 초대받을 사용자 ID (이메일)
+                email: userEmail,     // 초대받을 사용자 이메일 (실제 이메일 주소)
+                projectId: projectId  // 프로젝트 ID
+            }),
+            contentType: "application/json; charset=UTF-8",
             dataType: "json",
             success: function(data) {
                 if (data && data.success) {

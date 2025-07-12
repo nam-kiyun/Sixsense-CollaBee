@@ -14,7 +14,8 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import javax.servlet.http.HttpServletRequest;
+import org.springframework.web.bind.annotation.RequestBody;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.demo.proworks.email.vo.EmailVo;
 import com.demo.proworks.project.service.ProjectService;
@@ -86,7 +87,7 @@ public class EmailController {
                 + "</style></head>"
                 + "<body>"
                 + "<div class='header' style='max-width: 607px; margin: 0 auto; display: flex; align-items: center; justify-content: center; background-color: rgb(104, 101, 101); border-radius: 10px 10px 0 0; padding: 30px 20px;'>"
-                + "<img src='https://github.com/dorazi0423/test/blob/main/collabee.png?raw=true' alt='COLLABEE 로고' style='width: 48px; height: 48px; margin-right: 14px; object-fit: contain;' />"
+                + "<img src='https://collabee.s3.ap-northeast-2.amazonaws.com/collabee.png' alt='COLLABEE 로고' style='width: 48px; height: 48px; margin-right: 14px; object-fit: contain;' />"
                 + "<h1 class='email-title' style='margin: 0; font-size: 32px; color: #ffb823; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);'>COLLABEE</h1>"
                 + "</div>"
                 + "<div class='email-container' style='max-width: 600px; margin: 0 auto; background-color: white; border-radius: 0 0 10px 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); padding: 24px;'>"
@@ -161,34 +162,31 @@ public class EmailController {
     @ElService(key = "SendProjectInviteEmail")
     @RequestMapping(value = "SendProjectInviteEmail", method = RequestMethod.POST)
     @ElDescription(sub = "프로젝트 초대 메일 발송", desc = "프로젝트 초대 메일을 발송합니다")
-    public Map<String, Object> sendProjectInviteEmail(EmailVo emailVo) throws Exception {
+    public Map<String, Object> sendProjectInviteEmail(@RequestBody String jsonData) throws Exception {
         Map<String, Object> result = new HashMap<>();
 
         try {
             System.out.println("=== sendProjectInviteEmail 디버깅 ===");
-            System.out.println("받은 EmailVo: " + emailVo.toString());
-            System.out.println("받은 userId: " + emailVo.getUserId());
-            System.out.println("받은 email: " + emailVo.getEmail());
-            System.out.println("받은 projectName: " + emailVo.getProjectName());
+            System.out.println("받은 jsonData: " + jsonData);
             
-            // WebSquare에서 받은 데이터 확인
-            String userId = emailVo.getUserId();     // 초대받을 사용자 ID 또는 projectId
-            String email = emailVo.getEmail();       // 초대받을 사용자 이메일
+            // JSON 문자열을 파싱
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> params = objectMapper.readValue(jsonData, Map.class);
             
-            String targetUserEmail = null;  // 초대받을 사용자 이메일
-            String projectId = null;        // 프로젝트 ID
+            // JSON에서 값 추출
+            String userId = (String) params.get("userId");
+            String email = (String) params.get("email");
+            String projectId = (String) params.get("projectId");
             
-            // 파라미터 추정 (userId가 이메일 형식이면 그것이 초대받을 사용자, 아니면 projectId)
-            if (userId != null && userId.contains("@")) {
-                targetUserEmail = userId;  // userId가 이메일 형식
-                projectId = email;         // email 필드에 projectId가 있을 수 있음
-            } else {
-                targetUserEmail = email;   // email 필드가 실제 이메일
-                projectId = userId;        // userId 필드에 projectId가 있을 수 있음
-            }
+            System.out.println("파싱된 userId: " + userId);
+            System.out.println("파싱된 email: " + email);
+            System.out.println("파싱된 projectId: " + projectId);
             
-            System.out.println("추정된 targetUserEmail: " + targetUserEmail);
-            System.out.println("추정된 projectId: " + projectId);
+            
+            String targetUserEmail = email;     // 초대받을 사용자 이메일
+            
+            System.out.println("targetUserEmail: " + targetUserEmail);
+            System.out.println("projectId: " + projectId);
             
             if (targetUserEmail == null || targetUserEmail.trim().isEmpty()) {
                 result.put("success", false);
@@ -275,7 +273,7 @@ public class EmailController {
                 + "</style></head>"
                 + "<body>"
                 + "<div class='header'>"
-                + "<img src='https://github.com/dorazi0423/test/blob/main/collabee.png?raw=true' alt='COLLABEE 로고' />"
+                + "<img src='https://collabee.s3.ap-northeast-2.amazonaws.com/collabee.png' alt='COLLABEE 로고' />"
                 + "<h1 class='email-title'>COLLABEE</h1>"
                 + "</div>"
                 + "<div class='email-container'>"
