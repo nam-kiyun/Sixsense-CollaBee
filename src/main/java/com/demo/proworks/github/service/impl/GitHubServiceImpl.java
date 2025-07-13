@@ -418,6 +418,25 @@ public class GitHubServiceImpl implements GitHubService {
             
             if (existingRepo != null) {
                 System.out.println("기존 연결된 저장소 발견: " + existingRepo.getRepoOwner() + "/" + existingRepo.getRepoName());
+                
+                // 저장소 변경 여부 확인
+                boolean isRepositoryChanged = !existingRepo.getRepoOwner().equals(param.get("repo_owner")) || 
+                                            !existingRepo.getRepoName().equals(param.get("repo_name"));
+                
+                if (isRepositoryChanged) {
+                    System.out.println("저장소 변경 감지: " + existingRepo.getRepoOwner() + "/" + existingRepo.getRepoName() + 
+                                     " → " + param.get("repo_owner") + "/" + param.get("repo_name"));
+                    
+                    // 🔥 기존 브랜치 데이터 정리
+                    try {
+                        int deletedBranches = gitHubDAO.deleteAllBranchesByProjectRepoId(existingRepo.getProjectRepoId());
+                        System.out.println("기존 브랜치 " + deletedBranches + "개 삭제 완료");
+                    } catch (Exception e) {
+                        System.out.println("기존 브랜치 삭제 실패: " + e.getMessage());
+                        // 브랜치 삭제 실패해도 저장소 업데이트는 계속 진행
+                    }
+                }
+                
                 System.out.println("기존 저장소 정보 업데이트");
                 
                 // 기존 저장소 정보 업데이트
@@ -432,8 +451,9 @@ public class GitHubServiceImpl implements GitHubService {
                 
                 result.put("success", true);
                 result.put("record_id", existingRepo.getProjectRepoId());
-                result.put("message", "레포지토리 연결 정보 업데이트 완료");
+                result.put("message", isRepositoryChanged ? "저장소 변경 및 브랜치 초기화 완료" : "레포지토리 연결 정보 업데이트 완료");
                 result.put("action", "updated");
+                result.put("repository_changed", isRepositoryChanged);
                 
             } else {
                 System.out.println("새로운 저장소 연결");
@@ -568,6 +588,121 @@ public class GitHubServiceImpl implements GitHubService {
     // ==============================
     // GitHub 브랜치 관리 (간소화)
     // ==============================
+    
+    @Override
+    public List<RepositoryBranchVo> getBranchesFromDatabase(Map<String, Object> param) throws Exception {
+        logger.info("DB에서 브랜치 목록 조회 시작: {}", param);
+        
+        List<RepositoryBranchVo> branches = null;
+        
+        try {
+            // DAO를 통해 브랜치 목록 조회
+            branches = gitHubDAO.selectRepositoryBranches(param);
+            
+            if (branches != null) {
+                logger.info("DB에서 브랜치 {} 개 조회 완료", branches.size());
+            } else {
+                logger.info("DB에서 조회된 브랜치 없음");
+                branches = new ArrayList<>(); // null 대신 빈 리스트 반환
+            }
+            
+        } catch (Exception e) {
+            logger.error("DB 브랜치 조회 실패: {}", e.getMessage(), e);
+            throw e;
+        }
+        
+        return branches;
+    }
+    
+    @Override
+    @Transactional
+    public Map<String, Object> syncInitialBranches(Map<String, Object> param) throws Exception {
+        logger.info("저장소 연결 시 초기 브랜치 동기화 시작: {}", param);
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            String accessToken = (String) param.get("access_token");
+            String owner = (String) param.get("owner");
+            String repo = (String) param.get("repo");
+            String projectRepoId = (String) param.get("project_repo_id");
+            
+            if (accessToken == null || owner == null || repo == null || projectRepoId == null) {
+                throw new IllegalArgumentException("필수 파라미터 누락: access_token, owner, repo, project_repo_id");
+            }
+            
+            logger.info("GitHub API로 전체 브랜치 목록 조회: {}/{}", owner, repo);
+            
+            // GitHub API를 통해 전체 브랜치 목록 조회
+            Map<String, Object> apiResponse = gitHubApiUtil.getBranches(accessToken, owner, repo);
+            
+            if (!(Boolean) apiResponse.get("success")) {
+                throw new RuntimeException("GitHub API 브랜치 조회 실패: " + apiResponse.get("data"));
+            }
+            
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> branches = (List<Map<String, Object>>) apiResponse.get("data");
+            
+            int savedCount = 0;
+            int skippedCount = 0;
+            
+            if (branches != null && !branches.isEmpty()) {
+                logger.info("GitHub에서 {} 개의 브랜치 발견", branches.size());
+                
+                for (Map<String, Object> branchData : branches) {
+                    try {
+                        String branchName = (String) branchData.get("name");
+                        Map<String, Object> commit = (Map<String, Object>) branchData.get("commit");
+                        String sha = commit != null ? (String) commit.get("sha") : null;
+                        
+                        // 중복 브랜치 확인
+                        Map<String, Object> existsParam = new HashMap<>();
+                        existsParam.put("project_repo_id", projectRepoId);
+                        existsParam.put("branch_name", branchName);
+                        
+                        if (gitHubDAO.selectBranchExists(existsParam) > 0) {
+                            logger.debug("브랜치가 이미 존재하여 스킵: {}", branchName);
+                            skippedCount++;
+                            continue;
+                        }
+                        
+                        // 새 브랜치 저장
+                        RepositoryBranchVo branchVo = new RepositoryBranchVo();
+                        branchVo.setRepoBranchId(java.util.UUID.randomUUID().toString());
+                        branchVo.setProjectRepoId(projectRepoId);
+                        branchVo.setBranchName(branchName);
+                        branchVo.setBaseSha(sha);
+                        branchVo.setCreatedAt(new java.util.Date());
+                        
+                        gitHubDAO.insertRepositoryBranch(branchVo);
+                        savedCount++;
+                        
+                        logger.debug("브랜치 저장 완료: {} (SHA: {})", branchName, sha);
+                        
+                    } catch (Exception e) {
+                        logger.error("브랜치 저장 실패: {}", branchData.get("name"), e);
+                        // 개별 브랜치 실패는 전체 동기화를 중단하지 않음
+                    }
+                }
+            }
+            
+            logger.info("초기 브랜치 동기화 완료 - 저장: {}개, 스킵: {}개", savedCount, skippedCount);
+            
+            result.put("success", true);
+            result.put("message", "초기 브랜치 동기화 완료");
+            result.put("saved_count", savedCount);
+            result.put("skipped_count", skippedCount);
+            result.put("total_branches", branches != null ? branches.size() : 0);
+            
+        } catch (Exception e) {
+            logger.error("초기 브랜치 동기화 실패", e);
+            result.put("success", false);
+            result.put("error", e.getMessage());
+            // 동기화 실패해도 예외는 던지지 않음 (저장소 연결은 성공)
+        }
+        
+        return result;
+    }
     
     @Override
     @Transactional

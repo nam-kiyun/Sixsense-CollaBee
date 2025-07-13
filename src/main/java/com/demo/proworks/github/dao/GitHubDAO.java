@@ -128,6 +128,14 @@ public interface GitHubDAO {
      * @throws Exception
      */
     int selectBranchExists(Map<String, Object> param) throws Exception;
+    
+    /**
+     * 프로젝트 저장소의 모든 브랜치 삭제 (저장소 변경 시)
+     * @param projectRepoId 프로젝트 저장소 ID
+     * @return 삭제된 브랜치 개수
+     * @throws Exception
+     */
+    int deleteAllBranchesByProjectRepoId(String projectRepoId) throws Exception;
 
     // ==============================
     // GitHub 웹훅 관리

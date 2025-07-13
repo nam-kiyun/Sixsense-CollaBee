@@ -130,6 +130,22 @@ public interface GitHubService {
     // ==============================
     
     /**
+     * 브랜치 목록 조회 (DB 기반)
+     * @param param 조회 조건 (project_repo_id)
+     * @return 브랜치 목록
+     * @throws Exception
+     */
+    List<RepositoryBranchVo> getBranchesFromDatabase(Map<String, Object> param) throws Exception;
+    
+    /**
+     * 저장소 연결 시 초기 브랜치 동기화
+     * @param param 동기화 정보 (access_token, owner, repo, project_repo_id)
+     * @return 동기화 결과
+     * @throws Exception
+     */
+    Map<String, Object> syncInitialBranches(Map<String, Object> param) throws Exception;
+    
+    /**
      * 브랜치 삭제
      * @param param 삭제 정보 (access_token, owner, repo, branch_name)
      * @return 삭제 결과

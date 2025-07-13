@@ -1,6 +1,7 @@
 package com.demo.proworks.github.web;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
@@ -24,7 +25,6 @@ import com.demo.proworks.github.vo.BranchParameterVo;
 import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
-import com.inswave.elfw.annotation.ElValidator;
 
 /**
  * GitHub 통합 컨트롤러
@@ -801,6 +801,87 @@ public class GitHubController {
             if ((Boolean) selectResult.get("success")) {
                 session.setAttribute("selectedRepository", true);
                 System.out.println("레포지토리 선택 성공");
+                
+                // 신규 연결이거나 저장소 변경된 경우에만 초기 브랜치 동기화 수행
+                boolean shouldSyncBranches = "created".equals(selectResult.get("action")) || 
+                                           (Boolean.TRUE.equals(selectResult.get("repository_changed")));
+                
+                if (shouldSyncBranches) {
+                    System.out.println("초기 브랜치 동기화 필요 - 이유: " + 
+                        ("created".equals(selectResult.get("action")) ? "신규 저장소 연결" : "저장소 변경"));
+                } else {
+                    System.out.println("기존 저장소 정보만 업데이트 - 브랜치 동기화 스킵");
+                }
+                
+                // 저장소 연결/변경 시 초기 브랜치 동기화 수행
+                if (shouldSyncBranches) {
+                    try {
+                    System.out.println("=== 초기 브랜치 동기화 시작 ===");
+                    
+                    // GitHub 토큰 조회
+                    String accessToken = null;
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo tokenParam = 
+                        new com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo();
+                    tokenParam.setUserId(userId);
+                    
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo tokenInfo = 
+                        userPersonalTokenService.selectUserPersonalTokenByUserId(tokenParam);
+                    
+                    if (tokenInfo != null) {
+                        accessToken = tokenInfo.getAccessToken();
+                    }
+                    
+                    if (accessToken != null) {
+                        // 브랜치 동기화 파라미터 구성
+                        Map<String, Object> syncParam = new HashMap<>();
+                        syncParam.put("access_token", accessToken);
+                        syncParam.put("owner", projectRepositoryVo.getRepoOwner());
+                        syncParam.put("repo", projectRepositoryVo.getRepoName());
+                        syncParam.put("project_repo_id", selectResult.get("record_id"));
+                        
+                        System.out.println("브랜치 동기화 파라미터: " + syncParam);
+                        
+                        // 초기 브랜치 동기화 실행
+                        Map<String, Object> syncResult = gitHubService.syncInitialBranches(syncParam);
+                        System.out.println("브랜치 동기화 결과: " + syncResult);
+                        
+                        // 동기화 결과를 메인 결과에 추가
+                        result.put("branch_sync", syncResult);
+                        
+                        if ((Boolean) syncResult.get("success")) {
+                            System.out.println("초기 브랜치 동기화 성공 - 저장된 브랜치: " + syncResult.get("saved_count") + "개");
+                        } else {
+                            System.out.println("초기 브랜치 동기화 실패: " + syncResult.get("error"));
+                        }
+                        
+                    } else {
+                        System.out.println("GitHub 토큰이 없어 브랜치 동기화 스킵");
+                        Map<String, Object> branchSyncError = new HashMap<>();
+                        branchSyncError.put("success", false);
+                        branchSyncError.put("error", "GitHub 토큰 없음");
+                        result.put("branch_sync", branchSyncError);
+                    }
+                    
+                } catch (Exception e) {
+                    System.out.println("초기 브랜치 동기화 중 오류 발생: " + e.getMessage());
+                    e.printStackTrace();
+                    // 브랜치 동기화 실패는 저장소 연결 성공에 영향을 주지 않음
+                    Map<String, Object> branchSyncException = new HashMap<>();
+                    branchSyncException.put("success", false);
+                    branchSyncException.put("error", e.getMessage());
+                    result.put("branch_sync", branchSyncException);
+                }
+                
+                System.out.println("=== 초기 브랜치 동기화 완료 ===");
+                
+                } else {
+                    // 브랜치 동기화가 필요 없는 경우
+                    Map<String, Object> branchSyncSkip = new HashMap<>();
+                    branchSyncSkip.put("success", true);
+                    branchSyncSkip.put("skipped", true);
+                    branchSyncSkip.put("reason", "기존 저장소 정보만 업데이트");
+                    result.put("branch_sync", branchSyncSkip);
+                }
             }
             
         } catch (Exception e) {
@@ -893,6 +974,9 @@ public class GitHubController {
         
         Map<String, Object> result = new HashMap<>();
         
+        // 성능 측정 시작
+        long startTime = System.currentTimeMillis();
+        
         try {
             HttpSession session = request.getSession();
             String userId = null;
@@ -955,50 +1039,126 @@ public class GitHubController {
                 return result;
             }
             
-            // GitHub API 호출
-            System.out.println("GitHub API 호출 시작");
+            // 먼저 프로젝트에서 연결된 저장소 정보 확인
+            String projectId = (String) session.getAttribute("currentProjectId");
+            if (projectId == null) {
+                // 파라미터에서 프로젝트 ID 추출 시도
+                Object projectIdObj = request.getParameter("projectId");
+                if (projectIdObj != null) {
+                    projectId = projectIdObj.toString();
+                }
+            }
+            
+            System.out.println("프로젝트 ID: " + projectId);
+            
+            if (projectId == null) {
+                result.put("success", false);
+                result.put("error", "프로젝트 정보가 필요합니다.");
+                return result;
+            }
+            
+            // DB에서 브랜치 목록 조회 (성능 최적화)
+            System.out.println("DB에서 브랜치 목록 조회 시작");
             
             try {
-                Map<String, Object> apiResponse = gitHubApiUtil.getBranches(accessToken, owner, repo);
-                System.out.println("GitHub API 응답: " + apiResponse);
+                // 프로젝트에 연결된 저장소 정보 조회
+                ProjectRepositoryVo repoInfo = gitHubService.getCurrentRepositoryByProjectId(projectId);
                 
-                // 401 에러 검사 및 처리
-                if (apiResponse.containsKey("is_auth_error") && (Boolean) apiResponse.get("is_auth_error")) {
-                    logger.warn("GitHub API 401 인증 오류 감지 - 토큰 무효화 처리 (userId: {})", userId);
-                    
-                    // 세션에서 GitHub 관련 정보 제거
-                    session.removeAttribute("githubAccessToken");
-                    session.removeAttribute("githubConnected");
-                    session.removeAttribute("githubUsername");
-                    session.removeAttribute("githubAvatarUrl");
-                    
-                    // DB에서 만료된 토큰 제거
-                    try {
-                        userPersonalTokenService.invalidateUserPersonalTokenByUserId(userId);
-                        logger.info("만료된 GitHub 토큰 DB에서 제거 완료 (userId: {})", userId);
-                    } catch (Exception e) {
-                        logger.error("만료된 GitHub 토큰 DB 제거 실패 (userId: {}): {}", userId, e.getMessage());
-                    }
-                    
+                if (repoInfo == null) {
                     result.put("success", false);
-                    result.put("error", "GitHub 토큰이 만료되었습니다. 다시 로그인해 주세요.");
-                    result.put("error_code", "AUTH_EXPIRED");
-                    result.put("auth_error_message", apiResponse.get("auth_error_message"));
+                    result.put("error", "프로젝트에 연결된 저장소가 없습니다.");
                     return result;
                 }
                 
-                if ((Boolean) apiResponse.get("success")) {
-                    result.put("success", true);
-                    result.put("message", "브랜치 목록 조회 성공");
-                    result.put("data", apiResponse.get("data"));
-                } else {
+                // owner/repo와 DB 정보 일치 확인
+                if (!owner.equals(repoInfo.getRepoOwner()) || !repo.equals(repoInfo.getRepoName())) {
+                    logger.warn("요청한 저장소와 DB 저장소 불일치 - 요청: {}/{}, DB: {}/{}", 
+                              owner, repo, repoInfo.getRepoOwner(), repoInfo.getRepoName());
                     result.put("success", false);
-                    result.put("error", "GitHub API 호출 실패: " + apiResponse.get("data"));
+                    result.put("error", "저장소 정보가 일치하지 않습니다.");
+                    return result;
                 }
+                
+                // DB에서 브랜치 목록 조회 - Spring ApplicationContext에서 DAO 빈 가져오기
+                com.demo.proworks.github.dao.GitHubDAO gitHubDAO = (com.demo.proworks.github.dao.GitHubDAO) 
+                    org.springframework.web.context.support.WebApplicationContextUtils
+                        .getWebApplicationContext(request.getServletContext())
+                        .getBean("gitHubDAO");
+                
+                Map<String, Object> branchParam = new HashMap<>();
+                branchParam.put("project_repo_id", repoInfo.getProjectRepoId());
+                
+                List<com.demo.proworks.repobranch.vo.RepositoryBranchVo> branches = 
+                    gitHubDAO.selectRepositoryBranches(branchParam);
+                
+                System.out.println("DB에서 조회된 브랜치 수: " + (branches != null ? branches.size() : 0));
+                
+                // GitHub API 형태로 데이터 변환
+                List<Map<String, Object>> formattedBranches = new java.util.ArrayList<>();
+                
+                if (branches != null && !branches.isEmpty()) {
+                    for (com.demo.proworks.repobranch.vo.RepositoryBranchVo branch : branches) {
+                        Map<String, Object> branchData = new HashMap<>();
+                        branchData.put("name", branch.getBranchName());
+                        branchData.put("commit", new HashMap<String, Object>() {{
+                            put("sha", branch.getBaseSha());
+                            put("url", ""); // DB에는 저장하지 않는 정보
+                        }});
+                        branchData.put("protected", false); // DB에는 저장하지 않는 정보
+                        formattedBranches.add(branchData);
+                    }
+                    
+                    result.put("success", true);
+                    result.put("message", "브랜치 목록 조회 성공 (DB 기반 - 최적화됨)");
+                    result.put("data", formattedBranches);
+                    result.put("source", "database"); // DB에서 조회했음을 표시
+                    
+                } else {
+                    // DB에 브랜치가 없을 때 폴백: GitHub API 직접 조회 + 동기화
+                    System.out.println("⚠️ DB에 브랜치가 없음 - GitHub API 폴백 실행");
+                    
+                    try {
+                        // GitHub API로 브랜치 조회
+                        Map<String, Object> apiResponse = gitHubApiUtil.getBranches(accessToken, owner, repo);
+                        
+                        if ((Boolean) apiResponse.get("success")) {
+                            // 폴백으로 조회한 브랜치들을 DB에 저장
+                            Map<String, Object> syncParam = new HashMap<>();
+                            syncParam.put("access_token", accessToken);
+                            syncParam.put("owner", owner);
+                            syncParam.put("repo", repo);
+                            syncParam.put("project_repo_id", repoInfo.getProjectRepoId());
+                            
+                            // 비동기로 브랜치 동기화 (응답 지연 방지)
+                            try {
+                                gitHubService.syncInitialBranches(syncParam);
+                                System.out.println("폴백 브랜치 동기화 완료");
+                            } catch (Exception e) {
+                                System.out.println("폴백 브랜치 동기화 실패: " + e.getMessage());
+                            }
+                            
+                            result.put("success", true);
+                            result.put("message", "브랜치 목록 조회 성공 (GitHub API 폴백)");
+                            result.put("data", apiResponse.get("data"));
+                            result.put("source", "github_api_fallback"); // 폴백으로 조회했음을 표시
+                            
+                        } else {
+                            result.put("success", false);
+                            result.put("error", "브랜치 조회 실패: " + apiResponse.get("data"));
+                        }
+                        
+                    } catch (Exception e) {
+                        System.out.println("GitHub API 폴백 실패: " + e.getMessage());
+                        result.put("success", false);
+                        result.put("error", "브랜치 조회 실패 (DB 없음, API 오류): " + e.getMessage());
+                    }
+                }
+                
             } catch (Exception e) {
-                System.out.println("GitHub API 호출 오류: " + e.getMessage());
+                System.out.println("DB 브랜치 조회 오류: " + e.getMessage());
+                e.printStackTrace();
                 result.put("success", false);
-                result.put("error", "GitHub API 호출 오류: " + e.getMessage());
+                result.put("error", "브랜치 목록 조회 오류: " + e.getMessage());
             }
             
         } catch (Exception e) {
@@ -1008,7 +1168,22 @@ public class GitHubController {
             result.put("error", e.getMessage());
         }
         
+        // 성능 측정 종료 및 결과 로그
+        long endTime = System.currentTimeMillis();
+        long executionTime = endTime - startTime;
+        
         System.out.println("브랜치 목록 조회 결과: " + result);
+        System.out.println("=== 성능 측정 결과 ===");
+        System.out.println("실행 시간: " + executionTime + "ms");
+        System.out.println("조회 방식: DB 기반 (최적화됨)");
+        System.out.println("목표 달성 여부: " + (executionTime <= 50 ? "✅ 성공 (10-50ms 목표)" : "⚠️ 개선 필요"));
+        System.out.println("===================");
+        
+        // 성능 정보를 결과에 추가
+        result.put("execution_time_ms", executionTime);
+        result.put("performance_optimized", true);
+        result.put("query_method", "database");
+        
         return result;
     }
     

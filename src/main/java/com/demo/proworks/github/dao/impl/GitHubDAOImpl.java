@@ -120,6 +120,11 @@ public class GitHubDAOImpl implements GitHubDAO {
         Integer result = sqlSession.selectOne("com.demo.proworks.github.selectBranchExists", param);
         return result != null ? result : 0;
     }
+    
+    @Override
+    public int deleteAllBranchesByProjectRepoId(String projectRepoId) throws Exception {
+        return sqlSession.delete("com.demo.proworks.github.deleteAllBranchesByProjectRepoId", projectRepoId);
+    }
 
     // ==============================
     // GitHub 웹훅 관리

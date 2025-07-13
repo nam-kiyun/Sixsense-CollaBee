@@ -199,6 +199,12 @@
         WHERE project_repo_id = #{project_repo_id}
         AND branch_name = #{branch_name}
     </select>
+    
+    <!-- 프로젝트 저장소의 모든 브랜치 삭제 (저장소 변경 시) -->
+    <delete id="deleteAllBranchesByProjectRepoId" parameterType="String">
+        DELETE FROM REPO_BRANCHES 
+        WHERE project_repo_id = #{projectRepoId}
+    </delete>
 
     <!-- ==============================
          GitHub 웹훅 관리 (GITHUB_WEBHOOK 테이블 사용)
