@@ -92,7 +92,9 @@ public class CommentDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
 //		return insert("com.demo.proworks.comment.insertComment", vo);
 //	}
 	public CommentVo insertComment(CommentVo vo) throws ElException {
+	System.out.println(vo);
 		insert("com.demo.proworks.comment.insertComment", vo);
+		
 		return (CommentVo) selectByPk("com.demo.proworks.comment.selectComment", vo.getCommentId());
 	}
 

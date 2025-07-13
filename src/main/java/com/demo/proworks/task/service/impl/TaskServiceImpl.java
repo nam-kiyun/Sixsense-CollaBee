@@ -1,6 +1,14 @@
 package com.demo.proworks.task.service.impl;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +22,7 @@ import com.demo.proworks.task.vo.TaskVo;
 import com.demo.proworks.taskversion.dao.TaskVersionDAO;
 import com.demo.proworks.taskversion.vo.TaskVersionVo;
 import com.demo.proworks.filesrc.dao.FileSrcDAO;
+import com.demo.proworks.filesrc.vo.FileSrcListVo;
 import com.demo.proworks.filesrc.vo.FileSrcVo;
 import com.demo.proworks.manager.dao.ManagerDAO;
 import com.demo.proworks.manager.vo.ManagerListVo;
@@ -72,43 +81,121 @@ public class TaskServiceImpl implements TaskService {
 		taskVo.setTaskId(updateVo.getTaskId());
 		taskVo.setBoardId(updateVo.getBoardId());
 		taskVo.setProjectUserId(updateVo.getProjectUserId());
-		taskVo.setProjectRepoId(updateVo.getProjectRepoId());
+		taskVo.setProjectRepoId(isEmpty(updateVo.getProjectRepoId()) ? 0 : updateVo.getProjectRepoId());
 		taskVo.setTaskTitle(updateVo.getTaskTitle());
-		taskVo.setPriority(updateVo.getPriority());
-		taskVo.setStartDate(updateVo.getStartDate());
-		taskVo.setEndDate(updateVo.getEndDate());
-		taskVo.setTags(updateVo.getTags());
+		taskVo.setPriority(isEmpty(updateVo.getPriority()) ? null : updateVo.getPriority());
+		taskVo.setStartDate(isEmpty(updateVo.getStartDate()) ? null : updateVo.getStartDate());
+		taskVo.setEndDate(isEmpty(updateVo.getEndDate()) ? null : updateVo.getEndDate());
+		taskVo.setTags(isEmpty(updateVo.getTags()) ? null : updateVo.getTags());
 
-		int taskVersionId = taskDAO.updateTask(taskVo);
+		taskDAO.updateTask(taskVo);
+
+		handleManagerUpdate(updateVo.getTaskId(), updateVo.getManagerVo());
 
 		// Task 내용 저장
 		TaskVersionVo versionVo = new TaskVersionVo();
 
-		versionVo.setTaskVersionId(taskVersionId);
 		versionVo.setTaskId(updateVo.getTaskId());
 		versionVo.setContent(updateVo.getContent());
 
-		taskVersionDAO.insertTaskVersion(versionVo);
+		int taskVersionId = taskVersionDAO.insertTaskVersion(versionVo);
 
-		// File 내용 저장
-		FileSrcVo srcVo = new FileSrcVo();
-
-		// S3 저장하는거...
-		if (updateVo.getFileSrcVo() != null && !updateVo.getFileSrcVo().isEmpty()) {
-			for (FileSrcVo file : updateVo.getFileSrcVo()) {
-				fileSrcDAO.insertFileSrc(file);
+		// fileSrc 저장
+		List<FileSrcVo> fileSrcVos = updateVo.getFileSrcVo();
+		if (fileSrcVos != null && !fileSrcVos.isEmpty()) {
+			for (FileSrcVo vo : fileSrcVos) {
+				vo.setTaskVersionId(taskVersionId); // 여기에 주입!
+				System.out.println(vo);
 			}
-		}
 
-		fileSrcDAO.insertFileSrc(srcVo);
-
-		if (updateVo.getManagerVo() != null && !updateVo.getManagerVo().isEmpty()) {
-			for (ManagerVo manager : updateVo.getManagerVo()) {
-				managerDAO.insertManager(manager);
-			}
+			// 3️⃣ 리스트 insert
+			fileSrcDAO.insertFileSrcList(fileSrcVos);
 		}
 
 		return 1;
+	}
+
+	private boolean isEmpty(Object value) {
+		if (value == null)
+			return true;
+		if (value instanceof String)
+			return ((String) value).trim().isEmpty();
+		if (value instanceof Number) {
+			return ((Number) value).intValue() == 0;
+		}
+		if (value instanceof Collection) {
+			return ((Collection<?>) value).isEmpty();
+		}
+
+		if (value instanceof Map) {
+			return ((Map<?, ?>) value).isEmpty();
+		}
+
+		if (value.getClass().isArray()) {
+			return Array.getLength(value) == 0;
+		}
+		return false;
+	}
+
+	private void handleManagerUpdate(int taskId, List<ManagerVo> currentManagerVo) throws Exception {
+		if (taskId == 0)
+			return;
+
+		ManagerVo baseVo = new ManagerVo();
+		baseVo.setTaskId(taskId);
+
+		currentManagerVo = currentManagerVo.stream()
+				.filter(vo -> vo.getUserId() != null && !vo.getUserId().trim().isEmpty() && vo.getUserId() != "") // 빈
+																													// userId
+																													// 제거
+				.collect(Collectors.toList());
+
+		List<ManagerVo> prevManagerVo = managerDAO.selectManagerByTaskId(baseVo);
+
+		if (prevManagerVo == null || prevManagerVo.size() == 0)
+			prevManagerVo = new ArrayList<>();
+		if (currentManagerVo == null || currentManagerVo.size() == 0)
+			currentManagerVo = new ArrayList<>();
+
+		boolean isCurrentEmpty = currentManagerVo.isEmpty();
+		boolean isPrevEmpty = prevManagerVo.isEmpty();
+
+		// 현재, 과거 둘 다 비어있으면 아무 작업 하지 않고 리턴
+		if (isCurrentEmpty && isPrevEmpty)
+			return;
+
+		// 현재만 비어있으면 해당 taskId 기준으로 전체 삭제 후 리턴
+		if (isCurrentEmpty) {
+			managerDAO.deleteManagerByTaskId(baseVo);
+			return;
+		}
+
+		// 변경사항 반영
+		Map<String, ManagerVo> prevMap = prevManagerVo.stream()
+				.collect(Collectors.toMap(ManagerVo::getUserId, vo -> vo));
+
+		Set<String> prevUserIds = prevMap.keySet();
+		Set<String> currentUserIds = currentManagerVo.stream().map(ManagerVo::getUserId).collect(Collectors.toSet());
+
+		Set<String> toDelete = new HashSet<>(prevUserIds);
+		toDelete.removeAll(currentUserIds);
+
+		for (String userId : toDelete) {
+			ManagerVo target = prevMap.get(userId);
+			if (target != null && target.getManagerId() != 0) {
+				managerDAO.deleteManager(target);
+			}
+		}
+
+		Set<String> toInsert = new HashSet<>(currentUserIds);
+		toInsert.removeAll(prevUserIds);
+
+		for (ManagerVo newVo : currentManagerVo) {
+			if (toInsert.contains(newVo.getUserId())) {
+				newVo.setTaskId(taskId);
+				managerDAO.insertManager(newVo);
+			}
+		}
 	}
 
 	/**
@@ -189,12 +276,14 @@ public class TaskServiceImpl implements TaskService {
 		if (versionVo != null) {
 			resultVO.setTaskVersionId(versionVo.getTaskVersionId());
 			resultVO.setContent(versionVo.getContent());
-		} 
+		}
 
 		// 파일
 		FileSrcVo fileSrcVo = new FileSrcVo();
-		fileSrcVo.setTaskVersionId(updateVo.getTaskVersionId());
+		fileSrcVo.setTaskVersionId(resultVO.getTaskVersionId());
+		System.out.println(updateVo.getTaskVersionId());
 		List<FileSrcVo> fileSrcListVo = fileSrcDAO.selectFileSrcByTaskVersionId(fileSrcVo);
+		System.out.println(fileSrcListVo);
 
 		resultVO.setFileSrcVo(fileSrcListVo);
 

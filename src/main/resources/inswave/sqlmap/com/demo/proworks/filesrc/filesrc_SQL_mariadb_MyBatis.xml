@@ -4,101 +4,121 @@
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <!--
-	@subject     : 파일  관련 처리를 담당하는 Sql Mapper
-	@description : 파일  관련 처리를 담당하는 Sql Mapper
-	@author      : 국다인
-	@since       : 2025/07/01
+	@subject : 파일 관련 처리를 담당하는 Sql Mapper
+	@description : 파일 관련 처리를 담당하는 Sql Mapper
+	@author : 국다인
+	@since : 2025/07/01
 	@modification
 	===========================================================
-	DATE              AUTHOR             DESC
+	DATE AUTHOR DESC
 	===========================================================
-	2025/07/01              국다인             최초 생성
- -->
+	2025/07/01 국다인 최초 생성
+-->
 <mapper namespace="com.demo.proworks.filesrc">
-    <insert id="insertFileSrc" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo">
-    	<!-- 파일 를 등록한다. -->	
-    		
-        INSERT INTO FILESRC   /* QueryID : com.demo.proworks.filesrc.insertFileSrc */
-        ( 
-            FILE_ID
-            <if test="taskVersionId!= null"> , TASK_VERSION_ID </if>
-            <if test="fileName      != null"> , FILE_NAME       </if>
-            <if test="filePath      != null"> , FILE_PATH       </if>
-        )
-        VALUES  
-        ( 
-            #{fileId}
-            <if test="taskVersionId!= null"> , #{taskVersionId} </if>
-            <if test="fileName      != null"> , #{fileName}       </if>
-            <if test="filePath      != null"> , #{filePath}       </if> 
-        )          
-    </insert>	
-	
-    <update id="updateFileSrc" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo">
-    	<!-- 파일 를 갱신한다. -->
-    	
-        UPDATE FILESRC    /* QueryID : com.demo.proworks.filesrc.updateFileSrc */      
-      	  SET  
-                FILE_ID         = #{fileId}                	                       
-            <if test="taskVersionId!= null"> , TASK_VERSION_ID = #{taskVersionId} </if>
-            <if test="fileName      != null"> , FILE_NAME       = #{fileName}       </if>
-            <if test="filePath      != null"> , FILE_PATH       = #{filePath}       </if>                 
-        WHERE   
-                FILE_ID         = #{fileId}        
-    </update>
-	
-    <delete id="deleteFileSrc" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo">
-    	<!-- 파일 를 삭제한다. -->
-    	
-        DELETE FROM FILESRC   /* QueryID : com.demo.proworks.filesrc.deleteFileSrc */ 
-        WHERE   
-                FILE_ID         = #{fileId}                
-    </delete>
-	
-    <select id="selectFileSrc" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo" resultType="com.demo.proworks.filesrc.vo.FileSrcVo">
-    	<!-- 파일 를 상세 조회한다. -->	
-        SELECT     /* QueryID : com.demo.proworks.filesrc.selectFileSrc */
-            FILE_ID as fileId, TASK_VERSION_ID as taskVersionId, FILE_NAME as fileName, FILE_PATH as filePath
-        FROM FILESRC 
-        WHERE 
-                FILE_ID         = #{fileId}        			
-    </select>
-    
-    <select id="selectFileSrcByTaskVersionId" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo" resultType="com.demo.proworks.filesrc.vo.FileSrcVo">
-    	<!-- 파일 를 상세 조회한다. -->	
-        SELECT     /* QueryID : com.demo.proworks.filesrc.selectFileSrc */
-            FILE_ID as fileId, TASK_VERSION_ID as taskVersionId, FILE_NAME as fileName, FILE_PATH as filePath
-        FROM FILESRC 
-        WHERE 
-                TASK_VERSION_ID         = #{taskVersionId}        
-			
-    </select>
-	
-    <select id="selectListFileSrc" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo" resultType="com.demo.proworks.filesrc.vo.FileSrcVo">
-    	<!-- 파일  목록을 조회한다. -->
-           SELECT    /* QueryID : com.demo.proworks.filesrc.selectListFileSrc */
-               FILE_ID as fileId, TASK_VERSION_ID as taskVersionId, FILE_NAME as fileName, FILE_PATH as filePath		       
-           FROM (
-               SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
-               FROM (				
-                   SELECT 
-                       *  		                  
-                   FROM FILESRC
-                   WHERE  1=1    		
-	     																														
-               ) S, (SELECT @ROWNUM := 0) TMP
-           ) A
-            WHERE PAGE = #{pageIndex}
-    </select>
-	
-    <select id="selectListCountFileSrc" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo" resultType="long">
-    <!-- 파일  목록의 카운트를 조회한다. -->
-    
-         SELECT    /* QueryID : com.demo.proworks.filesrc.selectListCountFileSrc */
-             COUNT(*) totcnt  		                  
-         FROM FILESRC
-         WHERE  1=1    		
+	<insert id="insertFileSrcList" parameterType="java.util.List">
+		INSERT INTO FILESRC
+		(
+		TASK_VERSION_ID,
+		FILE_NAME,
+		FILE_PATH
+		)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(
+			#{item.taskVersionId},
+			#{item.fileName},
+			#{item.filePath}
+			)
+		</foreach>
+	</insert>
 
-    </select>
+	<insert id="insertFileSrc" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo">
+		<!-- 파일을 등록한다. -->
+
+		INSERT INTO FILESRC /* QueryID : com.demo.proworks.filesrc.insertFileSrc */
+		(
+		FILE_ID
+		<if test="taskVersionId!= null"> , TASK_VERSION_ID </if>
+		<if test="fileName      != null"> , FILE_NAME       </if>
+		<if test="filePath      != null"> , FILE_PATH       </if>
+		) VALUES ( #{fileId}
+		<if test="taskVersionId!= null"> , #{taskVersionId} </if>
+		<if test="fileName      != null"> , #{fileName}       </if>
+		<if test="filePath      != null"> , #{filePath}       </if>
+		)
+	</insert>
+
+	<update id="updateFileSrc" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo">
+		<!-- 파일 를 갱신한다. -->
+
+		UPDATE FILESRC /* QueryID : com.demo.proworks.filesrc.updateFileSrc */
+		SET
+		FILE_ID = #{fileId}
+		<if test="taskVersionId!= null"> , TASK_VERSION_ID = #{taskVersionId} </if>
+		<if test="fileName      != null"> , FILE_NAME = #{fileName}       </if>
+		<if test="filePath      != null"> , FILE_PATH = #{filePath}       </if>
+		WHERE FILE_ID = #{fileId}
+	</update>
+
+	<delete id="deleteFileSrc" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo">
+		<!-- 파일 를 삭제한다. -->
+
+		DELETE FROM FILESRC /* QueryID : com.demo.proworks.filesrc.deleteFileSrc */
+		WHERE
+		FILE_ID = #{fileId}
+	</delete>
+
+	<select id="selectFileSrc" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo"
+		resultType="com.demo.proworks.filesrc.vo.FileSrcVo">
+		<!-- 파일 를 상세 조회한다. -->
+		SELECT /* QueryID : com.demo.proworks.filesrc.selectFileSrc */
+		FILE_ID as fileId, TASK_VERSION_ID as taskVersionId, FILE_NAME as fileName,
+		FILE_PATH as filePath
+		FROM FILESRC
+		WHERE
+		FILE_ID = #{fileId}
+	</select>
+
+	<select id="selectFileSrcByTaskVersionId" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo"
+		resultType="com.demo.proworks.filesrc.vo.FileSrcVo">
+		<!-- 파일 를 상세 조회한다. -->
+		SELECT /* QueryID : com.demo.proworks.filesrc.selectFileSrc */
+		FILE_ID as fileId, TASK_VERSION_ID as taskVersionId, FILE_NAME as fileName,
+		FILE_PATH as filePath
+		FROM FILESRC
+		WHERE
+		TASK_VERSION_ID = #{taskVersionId}
+
+	</select>
+
+	<select id="selectListFileSrc" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo"
+		resultType="com.demo.proworks.filesrc.vo.FileSrcVo">
+		<!-- 파일 목록을 조회한다. -->
+		SELECT /* QueryID : com.demo.proworks.filesrc.selectListFileSrc */
+		FILE_ID as fileId, TASK_VERSION_ID as taskVersionId, FILE_NAME as
+		fileName, FILE_PATH as filePath
+		FROM (
+		SELECT S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
+		FROM (
+		SELECT
+		*
+		FROM FILESRC
+		WHERE 1=1
+
+		) S,
+		(SELECT @ROWNUM := 0) TMP
+		) A
+		WHERE PAGE = #{pageIndex}
+	</select>
+
+	<select id="selectListCountFileSrc" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo" resultType="long">
+		<!-- 파일 목록의 카운트를 조회한다. -->
+
+		SELECT /* QueryID : com.demo.proworks.filesrc.selectListCountFileSrc */
+		COUNT(*) totcnt
+		FROM FILESRC
+		WHERE 1=1
+
+	</select>
 
 </mapper>

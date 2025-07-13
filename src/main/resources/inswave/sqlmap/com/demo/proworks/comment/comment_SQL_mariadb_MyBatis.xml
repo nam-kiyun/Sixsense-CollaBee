@@ -21,16 +21,13 @@
 
 		INSERT INTO COMMENT /* QueryID : com.demo.proworks.comment.insertComment */
 		(
-		COMMENT_ID
-		<if test="taskId   != null and taskId !=''"> , TASK_ID    </if>
+		<if test="taskId   != null and taskId !=''"> TASK_ID    </if>
 		<if test="userId   != null and userId !=''"> , USER_ID    </if>
 		<if test="message   != null and message !=''"> , MESSAGE    </if>
-		<if test="createdAt!= null and createdAt !=''"> , CREATED_AT </if>
-		) VALUES ( #{commentId}
-		<if test="taskId   != null and taskId !=''"> , #{taskId}    </if>
+		) VALUES ( 
+		<if test="taskId   != null and taskId !=''">  #{taskId}    </if>
 		<if test="userId   != null and userId !=''"> , #{userId}    </if>
 		<if test="message   != null and message !=''"> , #{message}    </if>
-		<if test="createdAt!= null and createdAt !=''"> , #{createdAt} </if>
 		)
 	</insert>
 

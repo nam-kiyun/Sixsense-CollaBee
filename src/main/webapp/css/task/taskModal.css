@@ -40,13 +40,22 @@ body {
 }
 
 .contents-group .contents-header-group .header-title {
-    width: 80%;
+    width: 81%;
     height: 25%;
 	/*background-color: blue;*/
 }
 
 .contents-group .contents-header-group .header-title .header-title-text {
+	width:100%;
     font-size: 25px;
+	padding: 0;
+	border: none;
+}
+
+.contents-group .contents-header-group .header-title .header-title-text:focus {
+	border: none;
+	outline: none;
+	box-shadow: none;
 }
 
 .contents-group .contents-header-group .header-input {
@@ -90,7 +99,7 @@ body {
 .contents-group .contents-main-group {
     width: 100%;
     min-height: 500px;
-    background-color: plum;
+    /*background-color: plum;*/
 }
 
 /* 텍스트 입력하는 곳 */
@@ -142,7 +151,9 @@ body {
 }
 .cke_inner #cke_1_top{ /*에디터 헤더*/
 	/*background-color: orange;*/
-	min-height: 30px !important;
+/*	min-height: 30px !important;*/
+	display: flex;
+	align-items: center;
 }
 .cke_inner #cke_1_contents{ /*에디터 내용*/
 /*	background-color: #D6D85D !important;*/
@@ -172,8 +183,13 @@ body {
 /* 컨텐츠 파일 부분 */
 .contents-group .contents-main-group .contents-file-group {
     width: 100%;
-	min-height: 150px;
-    background-color: skyblue;
+	min-height: 320px;
+	padding: 20px 0;
+/*    background-color: skyblue;*/
+}
+
+#mf_exa_popup_wframe_grd_scrollY_div{
+	display:none;
 }
 
 /* 채팅 컨테이너 */

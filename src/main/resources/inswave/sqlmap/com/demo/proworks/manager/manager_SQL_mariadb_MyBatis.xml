@@ -52,6 +52,15 @@
                 MANAGER_ID      = #{managerId}             
     </delete>
     
+    <delete id="deleteManagerByTaskId" parameterType="com.demo.proworks.manager.vo.ManagerVo">
+    	<!-- 업무 담당자 정보를 삭제한다. -->
+    	
+        DELETE FROM MANAGER   /* QueryID : com.demo.proworks.manager.deleteManager */ 
+        WHERE   
+                TASK_ID      = #{taskId}     
+        
+    </delete>
+    
     <select id="selectManagerByTaskId" parameterType="com.demo.proworks.manager.vo.ManagerVo" resultType="com.demo.proworks.manager.vo.ManagerVo">
     	<!-- 업무 담당자 정보를 상세 조회한다. -->	
         SELECT     /* QueryID : com.demo.proworks.manager.selectManager */

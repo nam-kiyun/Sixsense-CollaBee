@@ -30,6 +30,7 @@ public class FileSrcDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
 	 * @throws ElException
 	 */
 	public List<FileSrcVo> selectFileSrcByTaskVersionId(FileSrcVo vo) throws ElException {
+	System.out.println("vo요 "+vo);
 		return (List<FileSrcVo>) list("com.demo.proworks.filesrc.selectFileSrcByTaskVersionId", vo);
 	}
 
@@ -64,6 +65,17 @@ public class FileSrcDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
 	 */
 	public long selectListCountFileSrc(FileSrcVo vo) throws ElException {
 		return (Long) selectByPk("com.demo.proworks.filesrc.selectListCountFileSrc", vo);
+	}
+
+	/**
+	 * 파일 를 등록한다.
+	 * 
+	 * @param FileSrcVo 파일
+	 * @return 번호
+	 * @throws ElException
+	 */
+	public int insertFileSrcList(List<FileSrcVo> vo) throws ElException {
+		return insert("com.demo.proworks.filesrc.insertFileSrcList", vo);
 	}
 
 	/**

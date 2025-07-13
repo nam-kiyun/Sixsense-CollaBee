@@ -100,5 +100,9 @@ public class ManagerDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
     public int deleteManager(ManagerVo vo) throws ElException {
         return delete("com.demo.proworks.manager.deleteManager", vo);
     }
+    
+    public int deleteManagerByTaskId(ManagerVo vo) throws ElException {
+        return delete("com.demo.proworks.manager.deleteManagerByTaskId", vo);
+    }
 
 }

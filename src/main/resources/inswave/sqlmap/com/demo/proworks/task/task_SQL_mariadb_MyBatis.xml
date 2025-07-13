@@ -46,15 +46,14 @@
 
 		UPDATE TASK /* QueryID : com.demo.proworks.task.updateTask */
 		SET
-		TASK_ID = #{taskId}
-		<if test="boardId       != null"> , BOARD_ID = #{boardId}        </if>
-		<if test="projectUserId!= null"> , PROJECT_USER_ID = #{projectUserId} </if>
-		<if test="projectRepoId!= null"> , PROJECT_REPO_ID = #{projectRepoId} </if>
-		<if test="taskTitle     != null"> , TASK_TITLE = #{taskTitle}      </if>
-		<if test="priority       != null"> , PRIORITY = #{priority}        </if>
-		<if test="startDate     != null"> , START_DATE = #{startDate}      </if>
-		<if test="endDate       != null"> , END_DATE = #{endDate}        </if>
-		<if test="tags           != null"> , TAGS = #{tags}            </if>
+		BOARD_ID = #{boardId}
+		, PROJECT_USER_ID = #{projectUserId}
+		<if test="projectRepoId!= null and projectRepoId!=0"> , PROJECT_REPO_ID = #{projectRepoId} </if>
+		, TASK_TITLE = #{taskTitle}
+		, PRIORITY = #{priority}
+		, START_DATE = #{startDate}
+		, END_DATE = #{endDate}
+		, TAGS = #{tags}
 		WHERE TASK_ID = #{taskId}
 	</update>
 
@@ -81,7 +80,8 @@
 		u.USER_NAME AS userName
 		FROM task t
 		JOIN project_user p ON t.project_user_id = p.project_user_id
-		JOIN user u ON u.user_id = p.user_id
+		JOIN user u ON u.user_id =
+		p.user_id
 		WHERE t.TASK_ID = #{taskId}
 	</select>
 
@@ -90,7 +90,8 @@
 	<select id="selectListTask" parameterType="com.demo.proworks.task.vo.TaskVo" resultType="com.demo.proworks.task.vo.TaskVo">
 		<!-- 업무(Task) 정보 목록을 조회한다. -->
 		SELECT /* QueryID : com.demo.proworks.task.selectListTask */
-		TASK_ID as taskId, BOARD_ID as boardId, PROJECT_USER_ID as projectUserId, PROJECT_REPO_ID as projectRepoId, TASK_TITLE as taskTitle, PRIORITY as
+		TASK_ID as taskId, BOARD_ID as boardId, PROJECT_USER_ID as projectUserId,
+		PROJECT_REPO_ID as projectRepoId, TASK_TITLE as taskTitle, PRIORITY as
 		priority, START_DATE as startDate, END_DATE as endDate, TAGS as tags
 		FROM (
 		SELECT S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
@@ -102,7 +103,8 @@
 
 		) S, (SELECT @ROWNUM := 0) TMP
 		) A
-		WHERE PAGE = #{pageIndex}
+		WHERE
+		PAGE = #{pageIndex}
 	</select>
 
 	<select id="selectListCountTask" parameterType="com.demo.proworks.task.vo.TaskVo" resultType="long">
