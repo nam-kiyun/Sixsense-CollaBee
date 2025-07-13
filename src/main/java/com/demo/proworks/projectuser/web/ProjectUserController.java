@@ -362,5 +362,53 @@ public class ProjectUserController {
         
         return result;
     }
+
+    /**
+     * 프로젝트 사용자의 역할을 변경한다.
+     *
+     * @param request HTTP 요청 객체
+     * @return Map<String, Object> 역할 변경 결과
+     * @throws Exception
+     */
+    @ElService(key = "updateProjectUserRole")    
+    @RequestMapping(value="updateProjectUserRole")
+    @ElDescription(sub = "프로젝트 사용자 역할 변경", desc = "프로젝트 사용자의 역할을 변경한다.")    
+    public Map<String, Object> updateProjectUserRole(HttpServletRequest request) throws Exception {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            String projectId = request.getParameter("projectId");
+            String userId = request.getParameter("userId");
+            String role = request.getParameter("role");
+            
+            if (projectId == null || userId == null || role == null) {
+                result.put("success", false);
+                result.put("message", "필수 파라미터가 누락되었습니다.");
+                return result;
+            }
+            
+            ProjectUserVo projectUserVo = new ProjectUserVo();
+            projectUserVo.setProjectId(projectId);
+            projectUserVo.setUserId(userId);
+            projectUserVo.setRole(role);
+            
+            int updateResult = projectUserService.updateProjectUserRole(projectUserVo);
+            
+            if (updateResult > 0) {
+                result.put("success", true);
+                result.put("message", "역할이 성공적으로 변경되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "역할 변경에 실패했습니다.");
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "역할 변경 중 오류가 발생했습니다: " + e.getMessage());
+        }
+        
+        return result;
+    }
    
 }

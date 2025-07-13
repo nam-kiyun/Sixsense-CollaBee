@@ -132,4 +132,11 @@
         (#{projectId}, #{userId}, #{role})
     </insert>
 
+    <update id="updateProjectUserRole" parameterType="com.demo.proworks.projectuser.vo.ProjectUserVo">
+        <!-- 프로젝트 사용자의 역할을 변경한다. -->
+        UPDATE PROJECT_USER /* QueryID : com.demo.proworks.projectuser.updateProjectUserRole */
+        SET ROLE = #{role}
+        WHERE PROJECT_ID = #{projectId} AND USER_ID = #{userId}
+    </update>
+
 </mapper>

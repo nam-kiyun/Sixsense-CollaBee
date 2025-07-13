@@ -133,4 +133,15 @@ public class ProjectUserDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAb
         return insert("com.demo.proworks.projectuser.insertProjectUserBySearch", vo);
     }
 
+    /**
+     * 프로젝트 사용자의 역할을 변경한다.
+     *  
+     * @param  ProjectUserVo 프로젝트 사용자 정보
+     * @return 번호
+     * @throws ElException
+     */
+    public int updateProjectUserRole(ProjectUserVo vo) throws ElException {
+        return update("com.demo.proworks.projectuser.updateProjectUserRole", vo);
+    }
+
 }

@@ -99,5 +99,14 @@ public interface ProjectUserService {
      * @throws Exception
      */
 	public int inviteUserToProject(ProjectUserVo projectUserVo) throws Exception;
+
+    /**
+     * 프로젝트 사용자의 역할을 변경한다.
+     *
+     * @param  projectUserVo 프로젝트 사용자 정보
+     * @return 번호
+     * @throws Exception
+     */
+	public int updateProjectUserRole(ProjectUserVo projectUserVo) throws Exception;
 	
 }
