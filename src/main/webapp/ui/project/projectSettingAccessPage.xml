@@ -14,32 +14,72 @@
             min-height: 100vh;
         }
         
-        /* 그리드뷰 선택 효과 제거 */
-        #grd_projectUsers .w2grid_row_selected {
-            background-color: transparent !important;
-        }
-        
-        #grd_projectUsers .w2grid_cell_selected {
-            background-color: transparent !important;
-        }
-        
-        #grd_projectUsers .w2grid_row:hover {
-            background-color: #f8f9fa !important;
-        }
-        
+        /* 그리드뷰 선택 효과 완전 제거 */
+        #grd_projectUsers .w2grid_row_selected,
+        #grd_projectUsers .w2grid_row_selected td,
+        #grd_projectUsers .w2grid_row_selected .w2grid_cell,
         #grd_projectUsers .w2grid_body .w2grid_row_selected,
         #grd_projectUsers .w2grid_body .w2grid_row_selected td,
         #grd_projectUsers .w2grid_body .w2grid_row_selected .w2grid_cell,
-        #grd_projectUsers .w2grid_body .w2grid_row.w2grid_row_selected {
+        #grd_projectUsers .w2grid_body .w2grid_row.w2grid_row_selected,
+        #grd_projectUsers .w2grid_body .w2grid_row.w2grid_row_selected td,
+        #grd_projectUsers .w2grid_body .w2grid_row.w2grid_row_selected .w2grid_cell {
             background-color: transparent !important;
             background: transparent !important;
+            background-image: none !important;
         }
         
+        #grd_projectUsers .w2grid_cell_selected,
+        #grd_projectUsers .w2grid_body .w2grid_cell_selected,
+        #grd_projectUsers .w2grid_body .w2grid_cell.w2grid_cell_selected {
+            background-color: transparent !important;
+            background: transparent !important;
+            background-image: none !important;
+        }
+        
+        #grd_projectUsers .w2grid_row_focus,
+        #grd_projectUsers .w2grid_row_focus td,
+        #grd_projectUsers .w2grid_row_focus .w2grid_cell,
         #grd_projectUsers .w2grid_body .w2grid_row_focus,
         #grd_projectUsers .w2grid_body .w2grid_row_focus td,
         #grd_projectUsers .w2grid_body .w2grid_row_focus .w2grid_cell {
             background-color: transparent !important;
             background: transparent !important;
+            background-image: none !important;
+        }
+        
+        /* 웹스퀘어 그리드 기본 선택 스타일 제거 */
+        #grd_projectUsers .w2grid_row.selected,
+        #grd_projectUsers .w2grid_row.selected td,
+        #grd_projectUsers .w2grid_row.selected .w2grid_cell,
+        #grd_projectUsers .w2grid_cell.selected,
+        #grd_projectUsers .w2grid_row.focus,
+        #grd_projectUsers .w2grid_row.focus td,
+        #grd_projectUsers .w2grid_row.focus .w2grid_cell,
+        #grd_projectUsers .w2grid_cell.focus {
+            background-color: transparent !important;
+            background: transparent !important;
+            background-image: none !important;
+        }
+        
+        /* 추가 웹스퀘어 선택 스타일 제거 */
+        #grd_projectUsers .w2grid_body td.w2grid_selected,
+        #grd_projectUsers .w2grid_body .w2grid_selected,
+        #grd_projectUsers .w2grid_body .w2grid_focused,
+        #grd_projectUsers .w2grid_body td.w2grid_focused {
+            background-color: transparent !important;
+            background: transparent !important;
+            background-image: none !important;
+        }
+        
+        /* 호버 효과는 유지 */
+        #grd_projectUsers .w2grid_row:hover {
+            background-color: #f8f9fa !important;
+        }
+        
+        #grd_projectUsers .w2grid_row:hover td,
+        #grd_projectUsers .w2grid_row:hover .w2grid_cell {
+            background-color: #f8f9fa !important;
         }
         
         /* 그리드뷰 스타일 개선 */
@@ -231,10 +271,18 @@ scwin.onpageload = function() {
         isInitializing = false;
         
         
-        // 그리드뷰 이벤트 핸들러 테스트
-        
-        
-        // 그리드 셀 클릭 테스트
+        // 그리드뷰 선택 방지 설정
+        if (grd_projectUsers) {
+            // 그리드뷰 선택 기능 비활성화
+            grd_projectUsers.setUserSelection(false);
+            
+            // 모든 선택 해제
+            try {
+                grd_projectUsers.clearSelection();
+            } catch (e) {
+                // 선택 해제 실패 시 무시
+            }
+        }
         
         if (dl_projectUsers.getTotalRow() > 0) {
             
@@ -1132,6 +1180,58 @@ scwin.changeUserRole = function(userId, userName, newRole) {
         }
     });
 };
+
+// 그리드뷰 셀 클릭 이벤트 (선택 방지)
+scwin.grd_projectUsers_oncellclick = function(e) {
+    // 선택 방지
+    try {
+        // 선택 해제
+        grd_projectUsers.clearSelection();
+        
+        // 포커스 해제
+        if (grd_projectUsers.setFocusedCell) {
+            grd_projectUsers.setFocusedCell(-1, -1);
+        }
+    } catch (ex) {
+        // 오류 시 무시
+    }
+    
+    // 역할 컬럼 클릭 시에만 처리 (select 박스는 정상 작동하도록)
+    if (e.colID === "role") {
+        // select 박스는 정상 작동하도록 이벤트 전파 허용
+        return true;
+    }
+    
+    return false;
+};
+
+// 그리드뷰 선택 이벤트 (선택 방지)
+scwin.grd_projectUsers_onselect = function(e) {
+    // 항상 선택 방지
+    try {
+        // 선택 해제
+        setTimeout(function() {
+            grd_projectUsers.clearSelection();
+        }, 1);
+    } catch (ex) {
+        // 오류 시 무시
+    }
+    
+    // 선택 방지
+    return false;
+};
+
+// 그리드뷰 after change 이벤트 (선택 해제)
+scwin.grd_projectUsers_onafterchange = function(e) {
+    // 변경 후 선택 해제
+    try {
+        setTimeout(function() {
+            grd_projectUsers.clearSelection();
+        }, 1);
+    } catch (ex) {
+        // 오류 시 무시
+    }
+};
 ]]></script>
     </head>
     <body ev:onpageload="scwin.onpageload">
@@ -1226,6 +1326,9 @@ scwin.changeUserRole = function(userId, userName, newRole) {
                 useShiftKey="false"
                 useCtrlKey="false"
                 rowStatusVisible="false"
+                userSelection="false"
+                cellSelection="false"
+                focusMode="none"
                 ev:oncellchange="scwin.grd_projectUsers_oncellchange"
                 ev:oncellclick="scwin.grd_projectUsers_oncellclick"
                 ev:onselect="scwin.grd_projectUsers_onselect"
@@ -1243,9 +1346,9 @@ scwin.changeUserRole = function(userId, userName, newRole) {
                 
                 <w2:gBody id="gBody1">
                     <w2:row id="row2" style="height:52px;">
-                        <w2:column width="330" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#333333;" id="userName" blockSelect="false" readOnly="true"></w2:column>
-                        <w2:column width="389" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#666666;" id="userId" blockSelect="false" readOnly="true"></w2:column>
-                        <w2:column width="323" inputType="select" style="text-align:center;font-size:15px;padding:8px;" id="role" blockSelect="false" allOption="">
+                        <w2:column width="330" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#333333;" id="userName" blockSelect="true" readOnly="true"></w2:column>
+                        <w2:column width="389" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#666666;" id="userId" blockSelect="true" readOnly="true"></w2:column>
+                        <w2:column width="323" inputType="select" style="text-align:center;font-size:15px;padding:8px;" id="role" blockSelect="true" allOption="">
                             <w2:choices>
                                 <w2:itemset nodeset="">
                                     <w2:label ref=""></w2:label>
