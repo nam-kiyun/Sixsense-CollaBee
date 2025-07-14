@@ -1258,7 +1258,7 @@ scwin.grd_projectUsers_onafterchange = function(e) {
             </xf:group>
             
             <!-- 검색 및 추가 영역 -->
-            <xf:group style="background-color:#f8f9fa;border-radius:12px;padding:24px;margin-bottom:32px;" id="grp_searchArea">
+            <xf:group style="background-color:#f8f9fa;border-radius:12px;padding:24px;margin-bottom:32px;max-width:1200px;margin:0 auto 32px auto;width:95%;" id="grp_searchArea">
                 
                 <!-- 검색 바 -->
                 <xf:group style="display:flex;gap:16px;align-items:center;margin-bottom:20px;" id="grp_searchBar">
@@ -1295,7 +1295,7 @@ scwin.grd_projectUsers_onafterchange = function(e) {
             </xf:group>
             
             <!-- 사용자 목록 영역 (그리드뷰) -->
-            <xf:group style="background-color:#ffffff;border:1px solid #e9ecef;border-radius:12px;overflow:hidden;min-height:900px;max-width:1200px;margin:0 auto;width:95%;" id="grp_userListArea">
+            <xf:group style="background-color:#ffffff;border:1px solid #e9ecef;border-radius:12px;overflow:hidden;min-height:500px;max-width:1200px;margin:0 auto;width:95%;" id="grp_userListArea">
             
             <!-- 테이블 헤더 -->
             <xf:group
@@ -1317,11 +1317,11 @@ scwin.grd_projectUsers_onafterchange = function(e) {
             <!-- 프로젝트 멤버 그리드 -->
             <w2:gridView 
                 id="grd_projectUsers" 
-                style="width:100%;height:800px;font-family:Inter,sans-serif;" 
+                style="width:100%;height:400px;font-family:Inter,sans-serif;overflow-x:hidden;" 
                 scrollByColumn="false" 
                 defaultCellHeight="52" 
                 dataList="dl_projectUsers"
-                keepDefaultColumnWidth="true"
+                keepDefaultColumnWidth="false"
                 visibleRowNum="20"
                 useShiftKey="false"
                 useCtrlKey="false"
@@ -1338,17 +1338,17 @@ scwin.grd_projectUsers_onafterchange = function(e) {
                 
                 <w2:header id="header1" style="height:48px;">
                     <w2:row id="row1" style="height:48px;">
-                        <w2:column width="330" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column1" value="이름"></w2:column>
-                        <w2:column width="389" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column2" value="이메일"></w2:column>
-                        <w2:column width="323" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column3" value="역할"></w2:column>
+                        <w2:column width="290" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column1" value="이름"></w2:column>
+                        <w2:column width="500" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column2" value="이메일"></w2:column>
+                        <w2:column width="290" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column3" value="역할"></w2:column>
                     </w2:row>
                 </w2:header>
                 
                 <w2:gBody id="gBody1">
                     <w2:row id="row2" style="height:52px;">
-                        <w2:column width="330" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#333333;" id="userName" blockSelect="true" readOnly="true"></w2:column>
-                        <w2:column width="389" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#666666;" id="userId" blockSelect="true" readOnly="true"></w2:column>
-                        <w2:column width="323" inputType="select" style="text-align:center;font-size:15px;padding:8px;" id="role" blockSelect="true" allOption="">
+                        <w2:column width="290" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#333333;" id="userName" blockSelect="true" readOnly="true"></w2:column>
+                        <w2:column width="500" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#666666;" id="userId" blockSelect="true" readOnly="true"></w2:column>
+                        <w2:column width="290" inputType="select" style="text-align:center;font-size:15px;padding:8px;" id="role" blockSelect="true" allOption="">
                             <w2:choices>
                                 <w2:itemset nodeset="">
                                     <w2:label ref=""></w2:label>
