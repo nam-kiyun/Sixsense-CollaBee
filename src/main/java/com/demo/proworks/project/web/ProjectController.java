@@ -226,6 +226,7 @@ public class ProjectController {
         // POST body 직접 읽기 시도
         String projectId = null;
         String projectName = null;
+        String description = null;
         String emailSendTime = null;
         
         try {
@@ -253,6 +254,8 @@ public class ProjectController {
                                 projectId = value;
                             } else if ("projectName".equals(key)) {
                                 projectName = value;
+                            } else if ("description".equals(key)) {
+                                description = value;
                             } else if ("emailSendTime".equals(key)) {
                                 emailSendTime = value;
                             }
@@ -266,6 +269,7 @@ public class ProjectController {
             // 실패 시 일반 파라미터 방식으로 시도
             projectId = request.getParameter("projectId");
             projectName = request.getParameter("projectName");
+            description = request.getParameter("description");
             emailSendTime = request.getParameter("emailSendTime");
         }
         
@@ -290,6 +294,7 @@ public class ProjectController {
         ProjectVo projectVo = new ProjectVo();
         projectVo.setProjectId(projectId);
         projectVo.setProjectName(projectName);
+        projectVo.setDescription(description);
         projectVo.setEmailSendTime(emailSendTime);
         
     	int updateCount = projectService.updateProject(projectVo);

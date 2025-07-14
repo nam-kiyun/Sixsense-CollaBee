@@ -53,6 +53,7 @@
                     <w2:keyInfo>
                         <w2:key id="projectImage" name="프로젝트이미지" dataType="text"/>
                         <w2:key id="projectName" name="프로젝트명" dataType="text"/>
+                        <w2:key id="description" name="설명" dataType="text"/>
                         <w2:key id="teamLeader" name="팀장" dataType="text"/>
                         <w2:key id="teamLeaderEmail" name="팀장이메일" dataType="text"/>
                         <w2:key id="emailSendTime" name="메일발송시간" dataType="text"/>
@@ -208,6 +209,7 @@ scwin.setProjectData = function(data) {
         
         // 데이터맵에 데이터 설정
         dataMap.set("projectName", data.projectName || "");
+        dataMap.set("description", data.description || "");
         dataMap.set("teamLeader", data.userName || "");
         dataMap.set("teamLeaderEmail", data.userId || "");
         
@@ -262,6 +264,12 @@ scwin.setProjectData = function(data) {
             // 프로젝트명 업데이트
             if (typeof input_projectName !== 'undefined') {
                 input_projectName.setValue(data.projectName || "");
+                
+            }
+            
+            // 설명 업데이트
+            if (typeof textarea_description !== 'undefined') {
+                textarea_description.setValue(data.description || "");
                 
             }
             
@@ -330,6 +338,7 @@ scwin.setDefaultData = function() {
         }
         
         dataMap.set("projectName", "프로젝트명 없음");
+        dataMap.set("description", "");
         dataMap.set("teamLeader", "");
         dataMap.set("teamLeaderEmail", "");
         dataMap.set("emailSendTime", "18:00:00");
@@ -521,6 +530,7 @@ scwin.btn_save_onclick = function(e) {
     
     // 입력 필드에서 직접 현재 값 가져오기
     var projectName = input_projectName.getValue() || dm_projectDetail.get("projectName");
+    var description = textarea_description.getValue() || dm_projectDetail.get("description");
     var emailHour = input_emailHour.getValue() || dm_projectDetail.get("emailHour");
     var emailMinute = input_emailMinute.getValue() || dm_projectDetail.get("emailMinute");
     
@@ -570,6 +580,7 @@ scwin.btn_save_onclick = function(e) {
         data: {
             projectId: scwin.projectId,
             projectName: projectName,
+            description: description,
             emailSendTime: emailSendTime
         },
         beforeSend: function(xhr) {
@@ -866,6 +877,17 @@ scwin.btn_close_onclick = function(e) {
                         style="width:100%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;"
                         ref="dm_projectDetail.projectName" 
                         id="input_projectName"/>
+                </xf:group>
+                
+                <!-- 설명 -->
+                <xf:group style="margin-bottom:24px;" id="grp_description">
+                    <xf:output style="font-size:16px;font-weight:500;color:#333333;font-family:Inter,sans-serif;margin-bottom:8px;display:block;" id="output_descriptionLabel">
+                        <xf:label><![CDATA[설명]]></xf:label>
+                    </xf:output>
+                    <xf:textarea 
+                        style="width:100%;height:120px;border:1px solid #ddd;border-radius:8px;padding:16px;font-size:16px;font-family:Inter,sans-serif;resize:vertical;"
+                        ref="dm_projectDetail.description" 
+                        id="textarea_description"/>
                 </xf:group>
                 
                 <!-- 팀장 정보 -->
