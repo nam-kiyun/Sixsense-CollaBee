@@ -154,7 +154,7 @@
     
     
     <!-- GitHub 브랜치 정보 저장 -->
-    <insert id="insertRepositoryBranch" parameterType="com.demo.proworks.repobranch.vo.RepositoryBranchVo" useGeneratedKeys="true" keyProperty="repo_branch_id">
+    <insert id="insertRepositoryBranch" parameterType="com.demo.proworks.repobranch.vo.RepositoryBranchVo" useGeneratedKeys="true">
         INSERT INTO REPO_BRANCHES (
             project_repo_id,
             branch_name,

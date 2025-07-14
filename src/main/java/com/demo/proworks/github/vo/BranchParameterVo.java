@@ -16,6 +16,9 @@ public class BranchParameterVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "owner", physicalName = "owner", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String owner;
 
+    @ElDtoField(logicalName = "projectId", physicalName = "projectId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String projectId;
+
     @ElDtoField(logicalName = "repo", physicalName = "repo", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String repo;
 
@@ -34,6 +37,17 @@ public class BranchParameterVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElVoField(physicalName = "owner")
     public void setOwner(String owner){
         this.owner = owner;
+    }
+
+    @ElVoField(physicalName = "projectId")
+    public String getProjectId(){
+        String ret = this.projectId;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "projectId")
+    public void setProjectId(String projectId){
+        this.projectId = projectId;
     }
 
     @ElVoField(physicalName = "repo")
@@ -74,6 +88,7 @@ public class BranchParameterVo extends com.demo.proworks.cmmn.ProworksCommVO {
         StringBuilder sb = new StringBuilder();
         sb.append("BranchParameterVo [");
         sb.append("owner").append("=").append(owner).append(",");
+        sb.append("projectId").append("=").append(projectId).append(",");
         sb.append("repo").append("=").append(repo).append(",");
         sb.append("branchName").append("=").append(branchName).append(",");
         sb.append("fromBranch").append("=").append(fromBranch);

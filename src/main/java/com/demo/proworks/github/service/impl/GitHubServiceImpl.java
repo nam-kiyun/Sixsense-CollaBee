@@ -1,29 +1,27 @@
 package com.demo.proworks.github.service.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
 
 import javax.annotation.Resource;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.demo.proworks.github.dao.GitHubDAO;
 import com.demo.proworks.github.service.GitHubService;
 import com.demo.proworks.github.util.GitHubApiUtil;
 import com.demo.proworks.github.util.GitHubSyncUtil;
 import com.demo.proworks.github.util.GitHubWebhookUtil;
-import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
-import com.demo.proworks.githubapptoken.vo.GithubAppTokenVo;
-import com.demo.proworks.repobranch.vo.RepositoryBranchVo;
-import com.demo.proworks.githubwebhook.vo.GithubWebhookVo;
-import com.demo.proworks.githubapptoken.vo.GithubAppTokenVo;
-import com.demo.proworks.github.vo.GitHubRepositoryVo;
 import com.demo.proworks.github.vo.GitHubRepositoryListVo;
+import com.demo.proworks.github.vo.GitHubRepositoryVo;
+import com.demo.proworks.githubwebhook.vo.GithubWebhookVo;
+import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
+import com.demo.proworks.repobranch.vo.RepositoryBranchVo;
 import com.demo.proworks.userpersonaltoken.service.UserPersonalTokenService;
 import com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo;
 
@@ -672,7 +670,7 @@ public class GitHubServiceImpl implements GitHubService {
                         branchVo.setProjectRepoId(projectRepoId);
                         branchVo.setBranchName(branchName);
                         branchVo.setBaseSha(sha);
-                        branchVo.setCreatedAt(new java.util.Date());
+                        branchVo.setCreatedAt(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
                         
                         gitHubDAO.insertRepositoryBranch(branchVo);
                         savedCount++;

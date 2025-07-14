@@ -968,9 +968,11 @@ public class GitHubController {
         
         String owner = branchParameterVo.getOwner();
         String repo = branchParameterVo.getRepo();
+        String projectId = branchParameterVo.getProjectId();
         System.out.println("=== 브랜치 목록 조회 API 호출 ===");
         System.out.println("owner: " + owner);
         System.out.println("repo: " + repo);
+        System.out.println("projectId: " + projectId);
         
         Map<String, Object> result = new HashMap<>();
         
@@ -1039,13 +1041,15 @@ public class GitHubController {
                 return result;
             }
             
-            // 먼저 프로젝트에서 연결된 저장소 정보 확인
-            String projectId = (String) session.getAttribute("currentProjectId");
+            // 프로젝트 ID가 파라미터로 전달되지 않은 경우 세션에서 확인
             if (projectId == null) {
-                // 파라미터에서 프로젝트 ID 추출 시도
-                Object projectIdObj = request.getParameter("projectId");
-                if (projectIdObj != null) {
-                    projectId = projectIdObj.toString();
+                projectId = (String) session.getAttribute("currentProjectId");
+                if (projectId == null) {
+                    // 파라미터에서 프로젝트 ID 추출 시도
+                    Object projectIdObj = request.getParameter("projectId");
+                    if (projectIdObj != null) {
+                        projectId = projectIdObj.toString();
+                    }
                 }
             }
             

@@ -75,6 +75,7 @@
 					<w2:keyInfo>
 						<w2:key id="owner" name="저장소소유자" dataType="text" />
 						<w2:key id="repo" name="저장소이름" dataType="text" />
+						<w2:key id="projectId" name="프로젝트ID" dataType="text" />
 					</w2:keyInfo>
 				</w2:dataMap>
 				
@@ -2238,15 +2239,20 @@ scwin.loadBranches = function (repoInfo) {
         console.log("repoInfo.owner:", repoInfo.owner);
         console.log("repoInfo.name:", repoInfo.name);
 
+        var projectId = scwin.getCurrentProjectId();
+        console.log("projectId:", projectId);
+
         console.log("dm_branch_params 설정 전:", dm_branch_params.getJSON());
         dm_branch_params.set("owner", repoInfo.owner);
         dm_branch_params.set("repo", repoInfo.name);
+        dm_branch_params.set("projectId", projectId);
         console.log("dm_branch_params 설정 후:", dm_branch_params.getJSON());
 
         // 파라미터 확인
         console.log("설정된 파라미터:");
         console.log("owner:", dm_branch_params.get("owner"));
         console.log("repo:", dm_branch_params.get("repo"));
+        console.log("projectId:", dm_branch_params.get("projectId"));
 
         // 서브미션 실행
         $p.executeSubmission("sbm_loadBranches");

@@ -143,14 +143,23 @@ public class GitHubApiUtil {
             
             if (response.length() > 0) {
                 try {
-                    Map<String, Object> jsonResponse = objectMapper.readValue(response.toString(), Map.class);
-                    result.put("data", jsonResponse);
-                    
-                    // 401 에러의 경우 추가 정보 확인
-                    if (responseCode == 401 && jsonResponse.containsKey("message")) {
-                        String errorMessage = (String) jsonResponse.get("message");
-                        result.put("auth_error_message", errorMessage);
-                        logger.warn("GitHub API 401 인증 오류 메시지: {}", errorMessage);
+                    // JSON 응답이 배열인지 객체인지 확인하고 적절하게 파싱
+                    String responseString = response.toString().trim();
+                    if (responseString.startsWith("[")) {
+                        // JSON 배열인 경우 (예: 브랜치 목록)
+                        Object jsonResponse = objectMapper.readValue(responseString, Object.class);
+                        result.put("data", jsonResponse);
+                    } else {
+                        // JSON 객체인 경우
+                        Map<String, Object> jsonResponse = objectMapper.readValue(responseString, Map.class);
+                        result.put("data", jsonResponse);
+                        
+                        // 401 에러의 경우 추가 정보 확인
+                        if (responseCode == 401 && jsonResponse.containsKey("message")) {
+                            String errorMessage = (String) jsonResponse.get("message");
+                            result.put("auth_error_message", errorMessage);
+                            logger.warn("GitHub API 401 인증 오류 메시지: {}", errorMessage);
+                        }
                     }
                 } catch (Exception e) {
                     result.put("data", response.toString());
