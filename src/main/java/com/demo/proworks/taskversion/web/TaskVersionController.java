@@ -67,7 +67,7 @@ public class TaskVersionController {
 		resultVo.setPageSize(20);
 		resultVo.setPageIndex(searchVo.getPageIndex());
 		
-		System.out.println(bucketName);
+		System.out.println(resultVo);
 
 		return resultVo;
 	}

@@ -42,7 +42,7 @@ scwin.onpageload = function () {
     scwin.getTaskVersion(scwin.taskId, 1);
 
     //무한스크롤
-    scwin.currentPage = 0;         // 현재 페이지 번호
+    scwin.currentPage = 1;         // 현재 페이지 번호
     scwin.isLoading = false;       // 중복 로딩 방지
     scwin.lastPageReached = false; // 더 이상 데이터 없음
 
@@ -128,7 +128,6 @@ scwin.sbm_taskVersionList_submitdone = function (e) {
     });
 
     // ✅ 페이지 증가 + 로딩 해제
-    scwin.currentPage += 1;
     scwin.isLoading = false;
     console.log("출력: " + scwin.currentPage);
 };
@@ -175,12 +174,12 @@ scwin.bindInfiniteScroll = function () {
 
 //task 버전들 가져오기
 scwin.loadMoreVersions = function () {
-     console.log("로딩출력: " + scwin.currentPage);
+   
     if (scwin.isLoading || scwin.lastPageReached) return;
 
     scwin.isLoading = true;
-    const nextPage = scwin.currentPage + 1;
-   
+    const nextPage = scwin.currentPage++;
+     console.log("로딩출력: " + nextPage);
 
     const param = {
         taskId: scwin.taskId,
