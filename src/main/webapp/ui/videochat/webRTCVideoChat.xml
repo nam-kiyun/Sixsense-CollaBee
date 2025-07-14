@@ -934,6 +934,14 @@ scwin.initializeChatWebSocket = function() {
                     if (isJoined) {
                         handleUserJoined(data);
                     }
+                    
+                    // 미니 PIP가 활성화된 상태라면 업데이트 (지연 처리)
+                    if (isMiniPipActive) {
+                        setTimeout(() => {
+                            scwin.updateMiniPIP();
+                            console.log('새 사용자 참가로 인한 미니 PIP 업데이트:', data.userName);
+                        }, 1000); // 비디오 연결 완료 후 업데이트
+                    }
                     break;
                     
                 case 'user-left':
@@ -946,6 +954,14 @@ scwin.initializeChatWebSocket = function() {
                     
                     // Simple WebRTC P2P 연결 해제
                     handleUserLeft(data);
+                    
+                    // 미니 PIP가 활성화된 상태라면 업데이트
+                    if (isMiniPipActive) {
+                        setTimeout(() => {
+                            scwin.updateMiniPIP();
+                            console.log('사용자 퇴장으로 인한 미니 PIP 업데이트:', data.userName);
+                        }, 500); // 약간의 지연 후 업데이트
+                    }
                     break;
                     
                 // Simple WebRTC 시그널링 메시지 처리
@@ -3770,6 +3786,12 @@ scwin.addMyVideoToGrid = function(stream) {
         //console.log('✅ 내 비디오를 그리드에 추가 완료');
         //scwin.addChatMessage("시스템", "내 비디오가 메인 화면에 표시됩니다.", false);
         
+        // 미니 PIP가 활성화된 상태라면 업데이트
+        if (isMiniPipActive) {
+            scwin.updateMiniPIP();
+            console.log('내 비디오 추가로 인한 미니 PIP 업데이트');
+        }
+        
     } catch (error) {
         //console.error('❌ 내 비디오 그리드 추가 실패:', error);
     }
@@ -3785,6 +3807,12 @@ scwin.removeMyVideoFromGrid = function() {
         if (myVideoItem) {
             myVideoItem.remove();
             console.log('✅ 내 비디오를 그리드에서 제거 완료');
+            
+            // 미니 PIP가 활성화된 상태라면 업데이트
+            if (isMiniPipActive) {
+                scwin.updateMiniPIP();
+                console.log('내 비디오 제거로 인한 미니 PIP 업데이트');
+            }
         }
     } catch (error) {
         console.error('❌ 내 비디오 그리드 제거 실패:', error);
@@ -3845,6 +3873,12 @@ scwin.removeRemoteUser = function(userId) {
             videoItem.remove();
             //console.log('✅ 원격 비디오 제거 완료:', userName, userId);
             //scwin.addChatMessage("시스템", `${userName}님의 영상 연결이 종료되었습니다.`, false);
+            
+            // 미니 PIP가 활성화된 상태라면 업데이트
+            if (isMiniPipActive) {
+                scwin.updateMiniPIP();
+                console.log('원격 사용자 제거로 인한 미니 PIP 업데이트:', userName);
+            }
         } else {
             //console.warn('⚠️ 제거할 비디오를 찾을 수 없음:', userName, userId);
             //console.warn('현재 그리드 내용:', remoteVideosGrid.innerHTML);
