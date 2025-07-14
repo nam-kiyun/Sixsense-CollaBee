@@ -51,6 +51,110 @@
             .leave-btn { background: #dc3545; }
             .mute-btn { background: #17a2b8; }
             .video-btn { background: #ffc107; color: #000; }
+            .pip-btn { background: #6f42c1; color: white; }
+            .pip-btn.active { background: #5a2a91; }
+            
+            /* 미니 PIP 컨테이너 스타일 */
+            .mini-pip-container {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 320px;
+                max-height: 400px;
+                background: rgba(0, 0, 0, 0.9);
+                border-radius: 12px;
+                border: 2px solid #FFB823;
+                z-index: 1000;
+                display: none;
+                overflow: hidden;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            }
+            
+            .mini-pip-header {
+                background: #FFB823;
+                color: white;
+                padding: 8px 12px;
+                font-size: 14px;
+                font-weight: bold;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .mini-pip-close {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 18px;
+                cursor: pointer;
+                padding: 0;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .mini-pip-close:hover {
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 50%;
+            }
+            
+            .mini-video-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                grid-gap: 8px;
+                padding: 12px;
+                max-height: 350px;
+                overflow-y: auto;
+            }
+            
+            .mini-video-item {
+                position: relative;
+                aspect-ratio: 16/9;
+                background: #2a2a2a;
+                border-radius: 8px;
+                overflow: hidden;
+                border: 1px solid #444;
+            }
+            
+            .mini-video {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                border-radius: 6px;
+            }
+            
+            .mini-video-name {
+                position: absolute;
+                bottom: 4px;
+                left: 4px;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 10px;
+                font-weight: bold;
+            }
+            
+            .mini-video-item.muted .mini-video-name {
+                background: #dc3545;
+            }
+            
+            .mini-video-item.video-off .mini-video {
+                display: none;
+            }
+            
+            .mini-video-off-message {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: white;
+                font-size: 12px;
+                font-weight: bold;
+                text-align: center;
+            }
             .muted { background: #dc3545 !important; }
             .video-off { background: #6c757d !important; }
             .chat-section { flex: 1; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; min-width: 350px; max-width: 400px; padding: 0 !important; margin: 0 !important; gap: 0 !important; height: 100vh; }
@@ -2756,6 +2860,29 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
+// 미니 PIP 관련 이벤트 리스너 설정
+document.addEventListener('DOMContentLoaded', function() {
+    // X 버튼 클릭 이벤트
+    const miniPipCloseBtn = document.getElementById('miniPipCloseBtn');
+    if (miniPipCloseBtn) {
+        miniPipCloseBtn.addEventListener('click', function() {
+            scwin.closeMiniPIP();
+        });
+    }
+});
+
+// 페이지 로드 후에도 이벤트 리스너 설정 (WebSquare 환경 대응)
+setTimeout(function() {
+    const miniPipCloseBtn = document.getElementById('miniPipCloseBtn');
+    if (miniPipCloseBtn && !miniPipCloseBtn.hasAttribute('data-event-added')) {
+        miniPipCloseBtn.addEventListener('click', function() {
+            scwin.closeMiniPIP();
+        });
+        miniPipCloseBtn.setAttribute('data-event-added', 'true');
+        console.log('미니 PIP 닫기 버튼 이벤트 리스너 추가됨');
+    }
+}, 1000);
+
 // 채팅 메시지 전송 (중복 방지)
 let lastSentMessageTime = 0;
 scwin.sendChatMessage = function() {
@@ -3376,23 +3503,218 @@ scwin.toggleVideo = function() {
     }
 };
 
+// 미니 PIP 모드 상태
+let isMiniPipActive = false;
+
+// Picture-in-Picture 토글 (미니 PIP 방식)
+scwin.togglePiP = function() {
+    const miniPipContainer = document.getElementById('miniPipContainer');
+    const mainVideoSection = document.querySelector('.video-section');
+    
+    if (!miniPipContainer) {
+        console.error('미니 PIP 컨테이너를 찾을 수 없습니다.');
+        return;
+    }
+    
+    if (isMiniPipActive) {
+        // 미니 PIP 모드 종료
+        scwin.closeMiniPIP();
+    } else {
+        // 미니 PIP 모드 시작
+        scwin.showMiniPIP();
+    }
+};
+
+// 미니 PIP 표시
+scwin.showMiniPIP = function() {
+    const miniPipContainer = document.getElementById('miniPipContainer');
+    const mainContainer = document.querySelector('.video-chat-container');
+    
+    if (!miniPipContainer || !mainContainer) return;
+    
+    // 전체 화상통화 영역 숨기기 (비디오 + 채팅)
+    mainContainer.style.display = 'none';
+    
+    // 미니 PIP 컨테이너 표시
+    miniPipContainer.style.display = 'block';
+    
+    // X 버튼 이벤트 리스너 강제 추가 (표시할 때마다)
+    const closeBtn = document.getElementById('miniPipCloseBtn');
+    if (closeBtn) {
+        // 기존 이벤트 제거 후 새로 추가
+        closeBtn.onclick = null;
+        closeBtn.onclick = function() {
+            console.log('X 버튼 클릭됨');
+            scwin.closeMiniPIP();
+        };
+        console.log('X 버튼 이벤트 바인딩 완료');
+    }
+    
+    // 모든 비디오를 미니 PIP에 복제
+    scwin.updateMiniPIP();
+    
+    // 상태 업데이트
+    isMiniPipActive = true;
+    scwin.updatePiPButton(true);
+    
+    console.log('미니 PIP 모드 시작');
+};
+
+// 미니 PIP 닫기
+scwin.closeMiniPIP = function() {
+    console.log('closeMiniPIP 함수 호출됨');
+    
+    const miniPipContainer = document.getElementById('miniPipContainer');
+    const mainContainer = document.querySelector('.video-chat-container');
+    
+    console.log('요소 찾기:', {
+        miniPipContainer: !!miniPipContainer,
+        mainContainer: !!mainContainer
+    });
+    
+    if (!miniPipContainer || !mainContainer) {
+        console.error('필요한 요소를 찾을 수 없음');
+        return;
+    }
+    
+    // 미니 PIP 컨테이너 숨기기
+    miniPipContainer.style.display = 'none';
+    console.log('미니 PIP 컨테이너 숨김');
+    
+    // 전체 화상통화 영역 표시 (비디오 + 채팅)
+    mainContainer.style.display = 'flex';
+    console.log('메인 컨테이너 표시');
+    
+    // 미니 비디오 그리드 비우기
+    const miniVideoGrid = document.getElementById('miniVideoGrid');
+    if (miniVideoGrid) {
+        miniVideoGrid.innerHTML = '';
+        console.log('미니 비디오 그리드 비움');
+    }
+    
+    // 상태 업데이트
+    isMiniPipActive = false;
+    scwin.updatePiPButton(false);
+    
+    console.log('미니 PIP 모드 종료 완료');
+};
+
+// PIP 버튼 상태 업데이트
+scwin.updatePiPButton = function(isInPiP) {
+    const pipBtn = document.getElementById('pipBtn');
+    if (pipBtn) {
+        const label = pipBtn.querySelector('xf\\:label');
+        if (label) {
+            label.textContent = isInPiP ? 'EXIT PIP' : 'PIP';
+        }
+        pipBtn.className = isInPiP ? 'control-btn pip-btn active' : 'control-btn pip-btn';
+    }
+};
+
+// 미니 PIP 업데이트 (모든 비디오 복제)
+scwin.updateMiniPIP = function() {
+    const miniVideoGrid = document.getElementById('miniVideoGrid');
+    if (!miniVideoGrid) return;
+    
+    // 기존 미니 비디오들 제거
+    miniVideoGrid.innerHTML = '';
+    
+    // 로컬 비디오 추가
+    const localVideo = document.getElementById('localVideo');
+    if (localVideo && localVideo.srcObject) {
+        scwin.addVideoToMiniPIP('local', localVideo.srcObject, '나 (' + currentUser.userName + ')');
+    }
+    
+    // 원격 비디오들 추가
+    const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+    if (remoteVideosGrid) {
+        const remoteVideoItems = remoteVideosGrid.querySelectorAll('.remote-video-item');
+        
+        remoteVideoItems.forEach(item => {
+            const video = item.querySelector('video');
+            const userName = item.getAttribute('data-username') || item.getAttribute('data-userid') || '참가자';
+            const userId = item.getAttribute('data-userid') || item.getAttribute('data-username') || 'unknown';
+            
+            if (video && video.srcObject) {
+                scwin.addVideoToMiniPIP(userId, video.srcObject, userName);
+            }
+        });
+    }
+    
+    console.log('미니 PIP 업데이트 완료');
+};
+
+// 개별 비디오를 미니 PIP에 추가
+scwin.addVideoToMiniPIP = function(userId, stream, userName) {
+    const miniVideoGrid = document.getElementById('miniVideoGrid');
+    if (!miniVideoGrid || !stream) return;
+    
+    // 미니 비디오 아이템 생성
+    const miniVideoItem = document.createElement('div');
+    miniVideoItem.className = 'mini-video-item';
+    miniVideoItem.setAttribute('data-userid', userId);
+    
+    // 비디오 요소 생성
+    const miniVideo = document.createElement('video');
+    miniVideo.className = 'mini-video';
+    miniVideo.srcObject = stream;
+    miniVideo.autoplay = true;
+    miniVideo.playsInline = true;
+    miniVideo.muted = (userId === 'local'); // 로컬 비디오만 음소거
+    
+    // 사용자 이름 라벨 생성
+    const miniVideoName = document.createElement('div');
+    miniVideoName.className = 'mini-video-name';
+    miniVideoName.textContent = userName;
+    
+    // 비디오 꺼짐 메시지 (필요시 표시)
+    const videoTracks = stream.getVideoTracks();
+    if (videoTracks.length === 0 || !videoTracks[0].enabled) {
+        miniVideo.style.display = 'none';
+        const offMessage = document.createElement('div');
+        offMessage.className = 'mini-video-off-message';
+        offMessage.textContent = '카메라 꺼짐';
+        miniVideoItem.appendChild(offMessage);
+        miniVideoItem.classList.add('video-off');
+    }
+    
+    // 음소거 상태 확인
+    const audioTracks = stream.getAudioTracks();
+    if (audioTracks.length === 0 || !audioTracks[0].enabled) {
+        miniVideoItem.classList.add('muted');
+        miniVideoName.style.background = '#dc3545';
+    }
+    
+    // 요소들 조립
+    miniVideoItem.appendChild(miniVideo);
+    miniVideoItem.appendChild(miniVideoName);
+    
+    // 그리드에 추가
+    miniVideoGrid.appendChild(miniVideoItem);
+    
+    console.log('미니 PIP에 비디오 추가:', userName, userId);
+};
+
 // 버튼 상태 업데이트
 scwin.updateControlButtons = function() {
     const joinBtn = document.getElementById("joinBtn");
     const leaveBtn = document.getElementById("leaveBtn");
     const muteBtn = document.getElementById("muteBtn");
     const videoBtn = document.getElementById("videoBtn");
+    const pipBtn = document.getElementById("pipBtn");
     
     if (isJoined) {
         if (joinBtn) joinBtn.style.display = "none";
         if (leaveBtn) leaveBtn.style.display = "inline-block";
         if (muteBtn) muteBtn.disabled = false;
         if (videoBtn) videoBtn.disabled = false;
+        if (pipBtn) pipBtn.disabled = false;
     } else {
         if (joinBtn) joinBtn.style.display = "inline-block";
         if (leaveBtn) leaveBtn.style.display = "none";
         if (muteBtn) muteBtn.disabled = true;
         if (videoBtn) videoBtn.disabled = true;
+        if (pipBtn) pipBtn.disabled = true;
     }
 };
 
@@ -3583,6 +3905,10 @@ scwin.removeRemoteUser = function(userId) {
                     <xf:trigger id="videoBtn" class="control-btn video-btn" ev:onclick="scwin.toggleVideo">
                         <xf:label>CAM</xf:label>
                     </xf:trigger>
+                    
+                    <xf:trigger id="pipBtn" class="control-btn pip-btn" ev:onclick="scwin.togglePiP">
+                        <xf:label>PIP</xf:label>
+                    </xf:trigger>
                 </xf:group>
             </xf:group>
             
@@ -3646,5 +3972,16 @@ scwin.removeRemoteUser = function(userId) {
                 </div>
             </xf:group>
         </xf:group>
+        
+        <!-- 미니 PIP 컨테이너 -->
+        <div id="miniPipContainer" class="mini-pip-container">
+            <div class="mini-pip-header">
+                <span>화상통화 참가자</span>
+                <button id="miniPipCloseBtn" class="mini-pip-close" onclick="scwin.closeMiniPIP()">×</button>
+            </div>
+            <div id="miniVideoGrid" class="mini-video-grid">
+                <!-- 미니 비디오들이 동적으로 추가됩니다 -->
+            </div>
+        </div>
     </body>
 </html> 
