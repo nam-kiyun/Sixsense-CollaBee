@@ -1209,7 +1209,7 @@ public class GitHubServiceImpl implements GitHubService {
             branchVo.setProjectRepoId(projectRepoId);
             branchVo.setBranchName(branchName);
             
-            int deleteResult = repositoryBranchService.deleteRepositoryBranch(branchVo);
+            int deleteResult = repositoryBranchService.deleteRepositoryBranchByProjectRepoIdAndBranchName(branchVo);
             logger.info("브랜치 데이터베이스 삭제 완료: {} (result: {})", branchName, deleteResult);
             
         } catch (Exception e) {

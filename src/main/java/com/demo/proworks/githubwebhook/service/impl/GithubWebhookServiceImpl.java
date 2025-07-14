@@ -22,6 +22,8 @@ import com.demo.proworks.githubapptoken.service.GithubAppTokenService;
 import com.demo.proworks.githubapptoken.util.GitHubApiClient;
 import com.demo.proworks.projectrepo.service.ProjectRepositoryService;
 import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
+import com.demo.proworks.repobranch.service.RepositoryBranchService;
+import com.demo.proworks.repobranch.vo.RepositoryBranchVo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**  
@@ -53,6 +55,9 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 	
 	@Autowired
 	private ProjectRepositoryService projectRepositoryService;
+	
+	@Autowired
+	private RepositoryBranchService repositoryBranchService;
 	
 	@Value("${webhook.url:https://smee.io/aYKJH3maBXQp0hDE}")
 	private String defaultWebhookUrl;
@@ -403,13 +408,68 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 		String refType = (String) payload.get("ref_type");
 		String ref = (String) payload.get("ref");
 		Map<String, Object> sender = (Map<String, Object>) payload.get("sender");
+		Map<String, Object> repository = (Map<String, Object>) payload.get("repository");
 		
 		String senderLogin = sender != null ? (String) sender.get("login") : "unknown";
+		String repoFullName = repository != null ? (String) repository.get("full_name") : "unknown";
 		
 		System.out.println("🗑️ Deleted " + refType + ": " + ref);
 		System.out.println("👤 Deleter: " + senderLogin);
+		System.out.println("📁 Repository: " + repoFullName);
+		
+		// 브랜치 삭제 이벤트인 경우 DB에서 삭제
+		if ("branch".equals(refType)) {
+			try {
+				deleteBranchFromDatabase(repoFullName, ref);
+				System.out.println("✅ DB에서 브랜치 삭제 완료: " + ref);
+			} catch (Exception e) {
+				System.out.println("❌ DB 브랜치 삭제 실패: " + e.getMessage());
+				e.printStackTrace();
+			}
+		}
 		
 		return "Delete 이벤트 처리 완료: " + refType + " " + ref + " 삭제";
+	}
+	
+	/**
+	 * 데이터베이스에서 브랜치 정보를 삭제하는 메서드
+	 * 
+	 * @param repoFullName 저장소 전체 이름 (예: nam-kiyun/hello-world)
+	 * @param branchName 삭제할 브랜치 이름
+	 * @throws Exception
+	 */
+	private void deleteBranchFromDatabase(String repoFullName, String branchName) throws Exception {
+		// 저장소 전체 이름에서 소유자와 저장소 이름 분리
+		String[] parts = repoFullName.split("/");
+		if (parts.length != 2) {
+			throw new Exception("Invalid repository full name format: " + repoFullName);
+		}
+		
+		String repoOwner = parts[0];
+		String repoName = parts[1];
+		
+		// 프로젝트 저장소 정보 조회
+		ProjectRepositoryVo projectRepoVo = new ProjectRepositoryVo();
+		projectRepoVo.setRepoOwner(repoOwner);
+		projectRepoVo.setRepoName(repoName);
+		
+		ProjectRepositoryVo existingRepo = projectRepositoryService.selectProjectRepositoryByOwnerAndName(projectRepoVo);
+		if (existingRepo == null) {
+			throw new Exception("Repository not found in database: " + repoFullName);
+		}
+		
+		// 브랜치 삭제
+		RepositoryBranchVo branchVo = new RepositoryBranchVo();
+		branchVo.setProjectRepoId(existingRepo.getProjectRepoId());
+		branchVo.setBranchName(branchName);
+		
+		int deletedRows = repositoryBranchService.deleteRepositoryBranchByProjectRepoIdAndBranchName(branchVo);
+		
+		if (deletedRows > 0) {
+			System.out.println("✅ 브랜치 삭제 성공: " + branchName + " (project_repo_id: " + existingRepo.getProjectRepoId() + ")");
+		} else {
+			System.out.println("⚠️ 삭제할 브랜치를 찾을 수 없음: " + branchName);
+		}
 	}
 	
 	private String handleRepositoryEvent(Map<String, Object> payload) {
