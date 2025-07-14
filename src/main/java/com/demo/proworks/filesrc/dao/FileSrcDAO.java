@@ -30,7 +30,6 @@ public class FileSrcDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
 	 * @throws ElException
 	 */
 	public List<FileSrcVo> selectFileSrcByTaskVersionId(FileSrcVo vo) throws ElException {
-	System.out.println("vo요 "+vo);
 		return (List<FileSrcVo>) list("com.demo.proworks.filesrc.selectFileSrcByTaskVersionId", vo);
 	}
 

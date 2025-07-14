@@ -189,6 +189,11 @@ scwin.onpageload = function () {
         scwin.saveTask();
     });
 
+    const btn_version = $p.getComponentById(versionId);
+    btn_version.bind("onclick", function () {
+        scwin.versionPopup();
+    })
+
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     //ifram, contents 높이 조절
@@ -220,6 +225,21 @@ scwin.onpageload = function () {
     currentUser.userName = userInfo.userName;
     currentUser.userImage = userInfo.userImage;
 
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    //문서 내용 불러오기
+    scwin.taskInfo = "";
+    scwin.taskId = 1;
+    scwin.projectId = 7;
+    scwin.getTask(scwin.taskId, scwin.projectId);
+
+    setTimeout(function () {
+        scwin.fileButtonInit();
+    }, 100); // 혹은 300ms까지 조정
+
+    /////////////////////////////////////////////////////////////////////
+
+    // 채팅 불러오기 및 초기 세팅
     scwin.currentPage = 1; // 최초 로딩이 1페이지니까 다음은 2부터 시작
     scwin.isLoading = false; // 중복 호출 방지용 플래그
     scwin.hasMore = true; // 마지막 페이지에 도달하면 false로 바꾸기
@@ -236,16 +256,6 @@ scwin.onpageload = function () {
             scwin.loadMoreData(); // 이전 댓글 불러오기
         }
     });
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    //문서 내용 불러오기
-    scwin.taskInfo = "";
-    scwin.getTask(1, 7);
-
-    setTimeout(function () {
-        scwin.fileButtonInit();
-    }, 100); // 혹은 300ms까지 조정
-
     /////////////////////////////////////////////////////////////////////
     //파일
     scwin.filePageIndex = 1; //현재 파일 페이지
@@ -253,9 +263,84 @@ scwin.onpageload = function () {
     pageList.setCount(1);
 
     scwin.chatDate = new Set();
+
+    scwin.snapShot = false; //버전에서 현재상태 저장여부
+    scwin.originalData = {};
+};
+
+//버전기록 불러와서 바인딩
+scwin.versionLoad = function (data) {
+    if (!scwin.snapShot) {
+        scwin.snapShot = true;
+        scwin.originalData = scwin.currentWorkSnapshot();
+        console.log(scwin.originalData);
+    }
+
+    contents_editor.setHTML(data.taskVersionVo.content);
+    dls_allFile.setJSON(data.taskVersionVo.fileSrcVo);
+    dls_file.setJSON(data.taskVersionVo.fileSrcVo);
+    console.log(data);
+}
+
+//현재 버전상태 가져오기
+scwin.loadOriginalVersion = function () {
+    if (scwin.originalData) {
+        contents_editor.setHTML(scwin.originalData.content);
+        dls_allFile.setJSON(scwin.originalData.fileSrc);
+        dls_file.setJSON(scwin.originalData.fileSrc);
+        scwin.snapShot = false;
+    } else {
+        console.warn("초기 작업 상태가 없습니다");
+    }
+};
+
+//현재 버전상태 저장하기
+scwin.currentWorkSnapshot = function () {
+    return {
+        content: contents_editor.getHTML(),
+        fileSrc: dls_allFile.getAllJSON() // 또는 필요하다면 전체 fileList
+    };
 };
 
 
+
+scwin.versionPopup = function (e) {
+    var param = {
+        "type": "json",
+        "name": "taskInfo",
+        "data": {
+            "taskId": scwin.taskId,
+        },
+    };
+
+    // 팝업 생성 옵션 지정
+    var options = {
+        id: "task_version",
+        type: "wframePopup",
+        width: "330",
+        height: "500",
+        top: "230",
+        left: "1250",
+        popupName: "버전기록",
+        modal: false,
+        closeAction: "scwin.popup_closeAction",
+        customTitleBar: false,
+        dataObject: param,
+    };
+
+    // 팝업 생성
+    $p.openPopup("./versionModal.xml", options);
+};
+
+
+//팝업창 닫기
+scwin.popup_closeAction = function (argRuntimeID, argJsnInfo) {
+    var popObj = $p.getPopupWindow(argRuntimeID);
+    return true; //팝업 닫기 (반환 값이 true인 경우만 팝업이 닫힘)
+};
+
+
+//파일 버튼 생성
 scwin.fileButtonInit = function () {
     const generateUniqueId = (prefix) => {
         return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -303,9 +388,9 @@ scwin.fileButtonInit = function () {
         // 여기서 파일 업로드 또는 에디터 삽입 로직 추가 가능
     });
 
-
-
 }
+
+//task 정보 가져오기
 scwin.getTask = function (taskId, projectId) {
     //  데이터 보내기
     const formData = new FormData();
@@ -352,7 +437,6 @@ scwin.getTask = function (taskId, projectId) {
 
             dls_allFile.setJSON(data.fileSrcVo);
             dls_file.setJSON(data.fileSrcVo);
-
         },
         error: async function (err) {
             await $c.win.alert("저장 실패! 다시 시도해주세요");
@@ -388,7 +472,7 @@ scwin.loadMoreData = function () {
         page: scwin.currentPage
     };
     dma_getComment.setJSON(param);
-    sbm_comment_get.action = "/InsWebApp/comment/1.pwkjson";
+    sbm_comment_get.action = `/InsWebApp/comment/${scwin.taskId}.pwkjson`;
     $c.sbm.execute(sbm_comment_get);
 };
 
@@ -610,7 +694,7 @@ scwin.comment_send_button_onclick = function () {
     if (!message || !chatSocket || chatSocket.readyState !== 1) return;
 
     const param = {
-        taskId: 1,
+        taskId: scwin.taskId,
         userId: currentUser.userId,
         message: message
     }
@@ -743,7 +827,7 @@ scwin.deleteChat = function (chat) {
 
         if (isDateComp) {
             prevComp.remove();
-             scwin.chatDate.delete(labelText);
+            scwin.chatDate.delete(labelText);
         }
     }
     chat.remove();
@@ -952,10 +1036,12 @@ scwin.saveTask = function () {
     formData.append("fileUpload", JSON.stringify(filteredFiles));
 
     allFiles.forEach((file) => {
-        if (!file.path) {
+        if (file.filePath === undefined || file.filePath === null || file.filePath === "") {
             const blob = scwin.base64ToBlob(file.data, file.type);
             formData.append("files", blob, file.fileName);
-
+        } else {
+            const emptyBlob = new Blob([""], { type: file.type || "application/octet-stream" });
+            formData.append("files", emptyBlob, file.fileName);
         }
     });
 

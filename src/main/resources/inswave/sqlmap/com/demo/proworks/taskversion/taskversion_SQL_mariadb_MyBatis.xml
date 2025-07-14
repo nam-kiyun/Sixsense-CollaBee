@@ -67,13 +67,13 @@
     </select>
     
     
-    <select id="selectTaskVersionByTaskId" parameterType="com.demo.proworks.taskversion.vo.TaskVersionVo" resultType="com.demo.proworks.taskversion.vo.TaskVersionVo">
+    <select id="selectTaskVersionByVersionId" parameterType="com.demo.proworks.taskversion.vo.TaskVersionVo" resultType="com.demo.proworks.taskversion.vo.TaskVersionVo">
     	<!-- 버전관리를 위한 Task(업무) 정보를 상세 조회한다. -->	
         SELECT     /* QueryID : com.demo.proworks.taskversion.selectTaskVersion */
             TASK_VERSION_ID as taskVersionId, TASK_ID as taskId, CONTENT as content, CREATED_AT as createdAt
         FROM TASKVERSION 
         WHERE 
-                TASK_ID = #{taskId}
+                TASK_VERSION_ID = #{taskVersionId}
 			
     </select>
 	
@@ -93,7 +93,32 @@
            ) A
             WHERE PAGE = #{pageIndex}
     </select>
-	
+    
+    
+    <select id="selectListTaskVersionByTaskId" parameterType="com.demo.proworks.taskversion.vo.TaskVersionSearchVo" resultType="com.demo.proworks.taskversion.vo.TaskVersionVo">
+    	<!-- 버전관리를 위한 Task(업무) 정보 목록을 조회한다. --> 
+           	SELECT /* QueryID : com.demo.proworks.taskversion.selectListTaskVersionByTaskId */
+			    TASK_VERSION_ID AS taskVersionId,
+			    TASK_ID AS taskId,
+			    CREATED_AT AS createdAt
+			FROM TASKVERSION
+			WHERE TASK_ID = #{taskId}
+			ORDER BY CREATED_AT DESC, TASK_VERSION_ID DESC
+			LIMIT #{pageSize}
+			OFFSET #{startOffset}
+
+    </select>
+    
+	<select id="selectListCountTaskVersionByTaskId" parameterType="com.demo.proworks.taskversion.vo.TaskVersionSearchVo" resultType="long">
+    <!-- 버전관리를 위한 Task(업무) 정보 목록의 카운트를 조회한다. -->
+    
+         SELECT    /* QueryID : com.demo.proworks.taskversion.selectListCountTaskVersionByTaskId */
+             COUNT(*) count  		                  
+         FROM TASKVERSION
+         WHERE TASK_ID = #{taskId}     		
+
+    </select>
+    
     <select id="selectListCountTaskVersion" parameterType="com.demo.proworks.taskversion.vo.TaskVersionVo" resultType="long">
     <!-- 버전관리를 위한 Task(업무) 정보 목록의 카운트를 조회한다. -->
     

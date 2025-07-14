@@ -57,17 +57,16 @@
 			@subject: 특정 Task ID에 해당하는 댓글 목록을 사용자 정보 포함하여 페이징으로 조회
 		-->
 		SELECT /* QueryID : com.demo.proworks.comment.selectListCommentByTaskId */
-		c.comment_id AS commentId,
-		c.task_id AS taskId,
-		c.user_id AS
-		userId,
-		c.message AS message,
-		c.created_at AS createdAt,
-		u.user_name AS userName,
-		u.profile_image_url AS userImage
-		FROM comment c
-		JOIN user u ON
-		c.user_id = u.user_id
+			c.comment_id AS commentId,
+			c.task_id AS taskId,
+			c.user_id AS
+			userId,
+			c.message AS message,
+			c.created_at AS createdAt,
+			u.user_name AS userName,
+			u.profile_image_url AS userImage
+		FROM comment c JOIN user u 
+		ON c.user_id = u.user_id
 		WHERE c.task_id = #{taskId}
 		ORDER BY c.created_at DESC, c.comment_id DESC
 		LIMIT #{pageSize}

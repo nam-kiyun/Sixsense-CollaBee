@@ -59,15 +59,14 @@ public class CommentController {
 		int totalPageCount = (totCnt == 0) ? 0 : (int) Math.ceil((double) totCnt / 10);
 		searchVo.setTaskId(taskId);
 		searchVo.setPageSize(20);
-		searchVo.setStartOffset((page - 1) * 10);
+		searchVo.setStartOffset((page - 1) * 20);
 
 		List<CommentVo> commentList = commentService.selectListCommentByTaskId(searchVo); // 해당 task의 댓글을 조회
-		System.out.println(totCnt);
 
 		CommentListVo listVo = new CommentListVo();
 		listVo.setCommentVoList(commentList);
 		listVo.setTotalCount(totCnt);
-		listVo.setPageSize((int) Math.ceil(totCnt / 10));
+		listVo.setPageSize(20);
 		listVo.setPageIndex((long) page);
 		System.out.println("댓글정보 목록을 조회: " + commentList);
 

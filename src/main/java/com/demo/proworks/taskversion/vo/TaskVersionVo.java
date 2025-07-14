@@ -25,6 +25,9 @@ public class TaskVersionVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "created_at", physicalName = "createdAt", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String createdAt;
 
+    @ElDtoField(logicalName = "파일 ", physicalName = "fileSrcVo", type = "", typeKind = "List", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private java.util.List<com.demo.proworks.filesrc.vo.FileSrcVo> fileSrcVo;
+
     @ElVoField(physicalName = "taskVersionId")
     public int getTaskVersionId(){
         return taskVersionId;
@@ -67,6 +70,16 @@ public class TaskVersionVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.createdAt = createdAt;
     }
 
+    @ElVoField(physicalName = "fileSrcVo")
+    public java.util.List<com.demo.proworks.filesrc.vo.FileSrcVo> getFileSrcVo(){
+        return fileSrcVo;
+    }
+
+    @ElVoField(physicalName = "fileSrcVo")
+    public void setFileSrcVo(java.util.List<com.demo.proworks.filesrc.vo.FileSrcVo> fileSrcVo){
+        this.fileSrcVo = fileSrcVo;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -74,7 +87,8 @@ public class TaskVersionVo extends com.demo.proworks.cmmn.ProworksCommVO {
         sb.append("taskVersionId").append("=").append(taskVersionId).append(",");
         sb.append("taskId").append("=").append(taskId).append(",");
         sb.append("content").append("=").append(content).append(",");
-        sb.append("createdAt").append("=").append(createdAt);
+        sb.append("createdAt").append("=").append(createdAt).append(",");
+        sb.append("fileSrcVo").append("=").append(fileSrcVo);
         sb.append("]");
         return sb.toString();
 
@@ -86,11 +100,19 @@ public class TaskVersionVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @Override
     public void _xStreamEnc() {
+        for( int i=0 ; fileSrcVo != null && i < fileSrcVo.size() ; i++ ) {
+            com.demo.proworks.filesrc.vo.FileSrcVo vo = (com.demo.proworks.filesrc.vo.FileSrcVo)fileSrcVo.get(i);
+            vo._xStreamEnc();	 
+        }
     }
 
 
     @Override
     public void _xStreamDec() {
+        for( int i=0 ; fileSrcVo != null && i < fileSrcVo.size() ; i++ ) {
+            com.demo.proworks.filesrc.vo.FileSrcVo vo = (com.demo.proworks.filesrc.vo.FileSrcVo)fileSrcVo.get(i);
+            vo._xStreamDec();	 
+        }
     }
 
 

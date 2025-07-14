@@ -116,7 +116,6 @@ public class ProworksLoginAdapter extends LoginAdapter {
 			resetFailInfo.setIsActive("");
 			resetFailInfo.setCreatedAt("");
 			resetFailInfo.setLastFailTime("");
-			System.out.println("정보 :"+resetFailInfo);
 			userService.updateUser(resetFailInfo);
 
 		} catch (NumberFormatException e) {
