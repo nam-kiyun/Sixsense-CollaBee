@@ -215,7 +215,7 @@ public class EmailController {
             String subject = "[COLLABEE] " + projectInfo.getProjectName() + " 프로젝트 초대";
 
             // 3. HTML 이메일 내용 작성
-            String content = createProjectInviteEmailContent(projectInfo);
+            String content = createProjectInviteEmailContent(projectInfo, targetUserEmail);
 
             
             JavaMailSenderImpl impl = (JavaMailSenderImpl) mailSender;
@@ -248,9 +248,10 @@ public class EmailController {
      * 프로젝트 초대 이메일 HTML 템플릿을 생성한다
      * 
      * @param projectInfo 프로젝트 정보
+     * @param targetUserEmail 초대받을 사용자 이메일
      * @return String HTML 이메일 내용
      */
-    private String createProjectInviteEmailContent(EmailVo projectInfo) {
+    private String createProjectInviteEmailContent(EmailVo projectInfo, String targetUserEmail) {
         String content = "<html lang='ko'>"
                 + "<head><meta charset='UTF-8'/><title>프로젝트 초대</title>"
                 + "<style>"
@@ -284,7 +285,11 @@ public class EmailController {
                 + "<div class='project-name'>" + projectInfo.getProjectName() + "</div>"
                 + "<div class='project-info'>팀장: " + projectInfo.getUserName() + "</div>"
                 + "<div class='project-info'>초대 시각: " + projectInfo.getEmailSendTime() + "</div>"
-                + "<a href='#' class='join-button'>프로젝트 참여하기</a>"
+                + "<form action='http://localhost:9093/InsWebApp/JoinProject.do' method='POST' style='display:inline;'>"
+                + "<input type='hidden' name='projectId' value='" + projectInfo.getProjectId() + "'>"
+                + "<input type='hidden' name='userId' value='" + targetUserEmail + "'>"
+                + "<button type='submit' class='join-button' style='border:none; cursor:pointer; display: inline-block; padding: 15px 30px; background-color: #ffb823; color: #000 !important; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px;'>프로젝트 참여하기</button>"
+                + "</form>"
                 + "</div>"
                 + "<p class='email-footer'>수락 기능은 곧 추가될 예정입니다.</p>"
                 + "</div>"

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -409,6 +410,82 @@ public class ProjectUserController {
         }
         
         return result;
+    }
+
+    /**
+     * 프로젝트 참여 처리 (이메일 링크를 통한 접근)
+     * 
+     * @param projectId 프로젝트 ID
+     * @param userId 사용자 ID (이메일)
+     * @return 참여 결과
+     * @throws Exception
+     */
+    @ElService(key = "JoinProject")
+    @RequestMapping(value = "JoinProject.do", method = RequestMethod.POST)
+    @ElDescription(sub = "프로젝트 참여 처리", desc = "이메일 폼을 통한 프로젝트 참여 처리를 한다.")
+    public ModelAndView joinProject(ProjectUserVo projectUserVo) throws Exception {
+        
+        ModelAndView mav = new ModelAndView();
+        String message = "";
+        boolean success = false;
+        
+        try {
+            // 1. 파라미터 검증
+            String projectId = projectUserVo.getProjectId();
+            String userId = projectUserVo.getUserId();
+            
+            if (projectId == null || projectId.trim().isEmpty()) {
+                message = "프로젝트 ID가 필요합니다.";
+                mav.setViewName("redirect:/websquare/websquare.html?w2xPath=/InsWebApp/ui/common/errorPage.xml&message=" + java.net.URLEncoder.encode(message, "UTF-8"));
+                return mav;
+            }
+            
+            if (userId == null || userId.trim().isEmpty()) {
+                message = "사용자 ID가 필요합니다.";
+                mav.setViewName("redirect:/websquare/websquare.html?w2xPath=/InsWebApp/ui/common/errorPage.xml&message=" + java.net.URLEncoder.encode(message, "UTF-8"));
+                return mav;
+            }
+            
+            // 2. 사용자 존재 여부 및 프로젝트 멤버 여부 체크
+            ProjectUserVo userInfo = projectUserService.searchUserByUserId(userId, projectId);
+            
+            if (userInfo == null) {
+                message = "존재하지 않는 사용자입니다.";
+                mav.setViewName("redirect:/websquare/websquare.html?w2xPath=/InsWebApp/ui/common/errorPage.xml&message=" + java.net.URLEncoder.encode(message, "UTF-8"));
+                return mav;
+            }
+            
+            if (userInfo.getRole() != null) {
+                message = "이미 프로젝트에 참여한 멤버입니다.";
+                mav.setViewName("redirect:/websquare/websquare.html?w2xPath=/InsWebApp/ui/project/projectSettingMainPage.xml&projectId=" + projectId + "&message=" + java.net.URLEncoder.encode(message, "UTF-8"));
+                return mav;
+            }
+            
+            // 3. 프로젝트 멤버로 추가
+            ProjectUserVo newMember = new ProjectUserVo();
+            newMember.setProjectId(projectId);
+            newMember.setUserId(userId);
+            newMember.setRole("editor"); // 기본 역할을 editor로 설정
+            
+            int insertResult = projectUserService.inviteUserToProject(newMember);
+            
+            if (insertResult > 0) {
+                message = "프로젝트에 성공적으로 참여하였습니다.";
+                success = true;
+                // 성공 시 프로젝트 메인 페이지로 이동
+                //mav.setViewName("redirect:/websquare/websquare.html?w2xPath=/InsWebApp/ui/project/projectSettingMainPage.xml&projectId=" + projectId + "&message=" + java.net.URLEncoder.encode(message, "UTF-8"));
+                mav.setViewName("redirect:/websquare/websquare.html?w2xPath=/InsWebApp/ui/landingPage.xml");
+            } else {
+                message = "프로젝트 참여에 실패하였습니다.";
+                mav.setViewName("redirect:/websquare/websquare.html?w2xPath=/InsWebApp/ui/common/errorPage.xml&message=" + java.net.URLEncoder.encode(message, "UTF-8"));
+            }
+            
+        } catch (Exception e) {
+            message = "프로젝트 참여 처리 중 오류가 발생했습니다: " + e.getMessage();
+            mav.setViewName("redirect:/websquare/websquare.html?w2xPath=/InsWebApp/ui/common/errorPage.xml&message=" + java.net.URLEncoder.encode(message, "UTF-8"));
+        }
+        
+        return mav;
     }
    
 }
