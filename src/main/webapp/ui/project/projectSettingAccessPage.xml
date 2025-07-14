@@ -1295,7 +1295,7 @@ scwin.grd_projectUsers_onafterchange = function(e) {
             </xf:group>
             
             <!-- 사용자 목록 영역 (그리드뷰) -->
-            <xf:group style="background-color:#ffffff;border:1px solid #e9ecef;border-radius:12px;overflow:hidden;min-height:900px;" id="grp_userListArea">
+            <xf:group style="background-color:#ffffff;border:1px solid #e9ecef;border-radius:12px;overflow:hidden;min-height:900px;max-width:1200px;margin:0 auto;width:95%;" id="grp_userListArea">
             
             <!-- 테이블 헤더 -->
             <xf:group
