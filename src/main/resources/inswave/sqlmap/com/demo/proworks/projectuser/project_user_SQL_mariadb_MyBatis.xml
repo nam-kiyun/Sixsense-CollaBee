@@ -99,7 +99,8 @@
              pu.PROJECT_ID as projectId, 
              pu.USER_ID as userId, 
              pu.ROLE as role,
-             u.USER_NAME as userName
+             u.USER_NAME as userName,
+             u.PROFILE_IMAGE_URL as profileImageUrl
          FROM PROJECT_USER pu
          INNER JOIN USER u ON pu.USER_ID = u.USER_ID
          WHERE pu.PROJECT_ID = #{projectId}
