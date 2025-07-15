@@ -56,29 +56,141 @@
             
             /* 미니 PIP 컨테이너 스타일 */
             .mini-pip-container {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                width: 320px;
-                max-height: 400px;
-                background: rgba(0, 0, 0, 0.9);
-                border-radius: 12px;
-                border: 2px solid #FFB823;
-                z-index: 1000;
+                position: fixed !important;
+                bottom: 20px !important;
+                right: 20px !important;
+                width: 320px !important;
+                min-width: 250px !important;
+                max-width: 600px !important;
+                height: 400px !important;
+                min-height: 200px !important;
+                max-height: 80vh !important;
+                background: rgba(0, 0, 0, 0.9) !important;
+                border-radius: 12px !important;
+                border: 2px solid #FFB823 !important;
+                z-index: 9999 !important;
                 display: none;
-                overflow: hidden;
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+                overflow: visible !important;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5) !important;
+                user-select: none !important;
+                transform: translate3d(0, 0, 0) !important;
             }
             
             .mini-pip-header {
-                background: #FFB823;
-                color: white;
-                padding: 8px 12px;
-                font-size: 14px;
-                font-weight: bold;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
+                background: #FFB823 !important;
+                color: white !important;
+                padding: 8px 12px !important;
+                font-size: 14px !important;
+                font-weight: bold !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                cursor: move !important;
+                user-select: none !important;
+                position: relative !important;
+                z-index: 10001 !important;
+            }
+            
+            .mini-pip-header:active {
+                cursor: grabbing !important;
+            }
+            
+            .mini-pip-header:hover {
+                background: #e6a820 !important;
+            }
+            
+            /* 리사이즈 핸들들 */
+            .resize-handle {
+                position: absolute !important;
+                background: #FFB823 !important;
+                opacity: 0.5 !important;
+                transition: opacity 0.2s !important;
+                z-index: 10002 !important;
+                pointer-events: auto !important;
+            }
+            
+            .resize-handle:hover {
+                opacity: 1 !important;
+                background: #e6a820 !important;
+            }
+            
+            /* 모서리 핸들들 */
+            .resize-handle.corner {
+                width: 15px;
+                height: 15px;
+            }
+            
+            .resize-handle.corner.nw {
+                top: 0;
+                left: 0;
+                cursor: nw-resize;
+                border-radius: 12px 0 0 0;
+            }
+            
+            .resize-handle.corner.ne {
+                top: 0;
+                right: 0;
+                cursor: ne-resize;
+                border-radius: 0 12px 0 0;
+            }
+            
+            .resize-handle.corner.sw {
+                bottom: 0;
+                left: 0;
+                cursor: sw-resize;
+                border-radius: 0 0 0 12px;
+            }
+            
+            .resize-handle.corner.se {
+                bottom: 0;
+                right: 0;
+                cursor: se-resize;
+                border-radius: 0 0 12px 0;
+            }
+            
+            /* 가장자리 핸들들 */
+            .resize-handle.edge {
+                background: rgba(255, 184, 35, 0.2);
+            }
+            
+            .resize-handle.edge.top {
+                top: 0;
+                left: 15px;
+                right: 15px;
+                height: 5px;
+                cursor: n-resize;
+            }
+            
+            .resize-handle.edge.bottom {
+                bottom: 0;
+                left: 15px;
+                right: 15px;
+                height: 5px;
+                cursor: s-resize;
+            }
+            
+            .resize-handle.edge.left {
+                left: 0;
+                top: 15px;
+                bottom: 15px;
+                width: 5px;
+                cursor: w-resize;
+            }
+            
+            .resize-handle.edge.right {
+                right: 0;
+                top: 15px;
+                bottom: 15px;
+                width: 5px;
+                cursor: e-resize;
+            }
+            
+            .mini-pip-container.dragging {
+                transition: none;
+            }
+            
+            .mini-pip-container.resizing {
+                transition: none;
             }
             
             .mini-pip-close {
@@ -105,7 +217,7 @@
                 grid-template-columns: repeat(2, 1fr);
                 grid-gap: 8px;
                 padding: 12px;
-                max-height: 350px;
+                height: calc(100% - 40px);
                 overflow-y: auto;
             }
             
@@ -2876,6 +2988,239 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
+// 미니 PIP 드래그 및 리사이즈 변수들
+let isDragging = false;
+let isResizing = false;
+let dragOffset = { x: 0, y: 0 };
+let resizeStart = { x: 0, y: 0, width: 0, height: 0 };
+
+// 미니 PIP 드래그 기능 (강화버전)
+scwin.initializePipDrag = function() {
+    console.log('������ PIP 드래그 초기화 시작');
+    
+    setTimeout(() => {
+        const pipContainer = document.querySelector('.mini-pip-container');
+        const pipHeader = document.querySelector('.mini-pip-header');
+        
+        console.log('������ PIP 요소 찾기:', { 
+            container: !!pipContainer, 
+            header: !!pipHeader 
+        });
+        
+        if (!pipContainer || !pipHeader) {
+            console.warn('⚠️ PIP 요소를 찾을 수 없음');
+            return;
+        }
+        
+        // 기존 이벤트 리스너 제거
+        const clonedHeader = pipHeader.cloneNode(true);
+        pipHeader.parentNode.replaceChild(clonedHeader, pipHeader);
+        
+        clonedHeader.style.cursor = 'move';
+        clonedHeader.addEventListener('mousedown', function(e) {
+            console.log('������ 드래그 시작');
+            
+            // 닫기 버튼 클릭시 제외
+            if (e.target.closest('.mini-pip-close')) {
+                console.log('������ 닫기 버튼 클릭 - 드래그 중단');
+                return;
+            }
+            
+            isDragging = true;
+            pipContainer.classList.add('dragging');
+            
+            const rect = pipContainer.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+            
+            console.log('������ 드래그 오프셋:', dragOffset);
+            
+            document.addEventListener('mousemove', handlePipDrag, true);
+            document.addEventListener('mouseup', handlePipDragEnd, true);
+            e.preventDefault();
+            e.stopPropagation();
+        }, true);
+        
+        console.log('✅ 드래그 이벤트 리스너 등록 완료');
+    }, 500);
+};
+
+// 미니 PIP 리사이즈 기능
+scwin.initializePipResize = function() {
+    const pipContainer = document.querySelector('.mini-pip-container');
+    
+    if (!pipContainer) return;
+    
+    // 기존 리사이즈 핸들 제거
+    const existingHandles = pipContainer.querySelectorAll('.resize-handle');
+    existingHandles.forEach(handle => handle.remove());
+    
+    // 8방향 리사이즈 핸들 생성
+    const handles = [
+        { class: 'corner nw', cursor: 'nw-resize' },
+        { class: 'corner ne', cursor: 'ne-resize' },
+        { class: 'corner sw', cursor: 'sw-resize' },
+        { class: 'corner se', cursor: 'se-resize' },
+        { class: 'edge top', cursor: 'n-resize' },
+        { class: 'edge bottom', cursor: 's-resize' },
+        { class: 'edge left', cursor: 'w-resize' },
+        { class: 'edge right', cursor: 'e-resize' }
+    ];
+    
+    handles.forEach(handleInfo => {
+        const handle = document.createElement('div');
+        handle.className = `resize-handle ${handleInfo.class}`;
+        handle.style.cursor = handleInfo.cursor;
+        
+        handle.addEventListener('mousedown', function(e) {
+            isResizing = true;
+            pipContainer.classList.add('resizing');
+            
+            const rect = pipContainer.getBoundingClientRect();
+            resizeStart.x = e.clientX;
+            resizeStart.y = e.clientY;
+            resizeStart.width = rect.width;
+            resizeStart.height = rect.height;
+            resizeStart.left = rect.left;
+            resizeStart.top = rect.top;
+            resizeStart.direction = handleInfo.class;
+            
+            document.addEventListener('mousemove', handlePipResize);
+            document.addEventListener('mouseup', handlePipResizeEnd);
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        
+        pipContainer.appendChild(handle);
+    });
+};
+
+// 드래그 처리 (강화버전)
+function handlePipDrag(e) {
+    if (!isDragging) return;
+    
+    const pipContainer = document.querySelector('.mini-pip-container');
+    if (!pipContainer) return;
+    
+    const newX = e.clientX - dragOffset.x;
+    const newY = e.clientY - dragOffset.y;
+    
+    // 화면 경계 체크
+    const maxX = window.innerWidth - pipContainer.offsetWidth;
+    const maxY = window.innerHeight - pipContainer.offsetHeight;
+    
+    const constrainedX = Math.max(0, Math.min(newX, maxX));
+    const constrainedY = Math.max(0, Math.min(newY, maxY));
+    
+    // 중요: !important로 스타일 강제 적용
+    pipContainer.style.setProperty('left', constrainedX + 'px', 'important');
+    pipContainer.style.setProperty('top', constrainedY + 'px', 'important');
+    pipContainer.style.setProperty('right', 'auto', 'important');
+    pipContainer.style.setProperty('bottom', 'auto', 'important');
+    
+    console.log('������ 드래그 위치 업데이트:', { x: constrainedX, y: constrainedY });
+}
+
+// 드래그 종료
+function handlePipDragEnd() {
+    console.log('������ 드래그 종료');
+    isDragging = false;
+    const pipContainer = document.querySelector('.mini-pip-container');
+    if (pipContainer) {
+        pipContainer.classList.remove('dragging');
+    }
+    document.removeEventListener('mousemove', handlePipDrag, true);
+    document.removeEventListener('mouseup', handlePipDragEnd, true);
+}
+
+// 리사이즈 처리
+function handlePipResize(e) {
+    if (!isResizing) return;
+    
+    const pipContainer = document.querySelector('.mini-pip-container');
+    if (!pipContainer) return;
+    
+    const deltaX = e.clientX - resizeStart.x;
+    const deltaY = e.clientY - resizeStart.y;
+    const direction = resizeStart.direction;
+    
+    let newWidth = resizeStart.width;
+    let newHeight = resizeStart.height;
+    let newLeft = resizeStart.left;
+    let newTop = resizeStart.top;
+    
+    // 방향에 따른 리사이즈 처리
+    if (direction.includes('right') || direction.includes('se') || direction.includes('ne')) {
+        newWidth = resizeStart.width + deltaX;
+    }
+    if (direction.includes('left') || direction.includes('sw') || direction.includes('nw')) {
+        newWidth = resizeStart.width - deltaX;
+        newLeft = resizeStart.left + deltaX;
+    }
+    if (direction.includes('bottom') || direction.includes('se') || direction.includes('sw')) {
+        newHeight = resizeStart.height + deltaY;
+    }
+    if (direction.includes('top') || direction.includes('ne') || direction.includes('nw')) {
+        newHeight = resizeStart.height - deltaY;
+        newTop = resizeStart.top + deltaY;
+    }
+    
+    // 최소/최대 크기 제한
+    const minWidth = 250;
+    const maxWidth = Math.min(600, window.innerWidth * 0.8);
+    const minHeight = 200;
+    const maxHeight = window.innerHeight * 0.8;
+    
+    if (newWidth < minWidth) {
+        if (direction.includes('left')) {
+            newLeft = resizeStart.left + (resizeStart.width - minWidth);
+        }
+        newWidth = minWidth;
+    }
+    if (newWidth > maxWidth) {
+        if (direction.includes('left')) {
+            newLeft = resizeStart.left + (resizeStart.width - maxWidth);
+        }
+        newWidth = maxWidth;
+    }
+    
+    if (newHeight < minHeight) {
+        if (direction.includes('top')) {
+            newTop = resizeStart.top + (resizeStart.height - minHeight);
+        }
+        newHeight = minHeight;
+    }
+    if (newHeight > maxHeight) {
+        if (direction.includes('top')) {
+            newTop = resizeStart.top + (resizeStart.height - maxHeight);
+        }
+        newHeight = maxHeight;
+    }
+    
+    // 화면 경계 체크
+    newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - newWidth));
+    newTop = Math.max(0, Math.min(newTop, window.innerHeight - newHeight));
+    
+    // 스타일 적용
+    pipContainer.style.width = newWidth + 'px';
+    pipContainer.style.height = newHeight + 'px';
+    pipContainer.style.left = newLeft + 'px';
+    pipContainer.style.top = newTop + 'px';
+    pipContainer.style.right = 'auto';
+    pipContainer.style.bottom = 'auto';
+}
+
+// 리사이즈 종료
+function handlePipResizeEnd() {
+    isResizing = false;
+    const pipContainer = document.querySelector('.mini-pip-container');
+    if (pipContainer) {
+        pipContainer.classList.remove('resizing');
+    }
+    document.removeEventListener('mousemove', handlePipResize);
+    document.removeEventListener('mouseup', handlePipResizeEnd);
+}
+
 // 미니 PIP 관련 이벤트 리스너 설정
 document.addEventListener('DOMContentLoaded', function() {
     // X 버튼 클릭 이벤트
@@ -2885,6 +3230,10 @@ document.addEventListener('DOMContentLoaded', function() {
             scwin.closeMiniPIP();
         });
     }
+    
+    // 드래그 및 리사이즈 초기화
+    scwin.initializePipDrag();
+    scwin.initializePipResize();
 });
 
 // 페이지 로드 후에도 이벤트 리스너 설정 (WebSquare 환경 대응)
@@ -2897,6 +3246,10 @@ setTimeout(function() {
         miniPipCloseBtn.setAttribute('data-event-added', 'true');
         console.log('미니 PIP 닫기 버튼 이벤트 리스너 추가됨');
     }
+    
+    // 드래그 및 리사이즈 초기화 (재시도)
+    scwin.initializePipDrag();
+    scwin.initializePipResize();
 }, 1000);
 
 // 채팅 메시지 전송 (중복 방지)
@@ -3551,23 +3904,343 @@ scwin.showMiniPIP = function() {
     // 전체 화상통화 영역 숨기기 (비디오 + 채팅)
     mainContainer.style.display = 'none';
     
-    // 미니 PIP 컨테이너 표시
-    miniPipContainer.style.display = 'block';
+    // 미니 PIP 컨테이너 표시 (강제로 보이게 설정)
+    miniPipContainer.style.setProperty('display', 'block', 'important');
+    miniPipContainer.style.setProperty('visibility', 'visible', 'important');
+    miniPipContainer.style.setProperty('opacity', '1', 'important');
+    
+    // 위치도 강제로 설정
+    miniPipContainer.style.setProperty('position', 'fixed', 'important');
+    miniPipContainer.style.setProperty('bottom', '20px', 'important');
+    miniPipContainer.style.setProperty('right', '20px', 'important');
+    miniPipContainer.style.setProperty('z-index', '9999', 'important');
+    
+    console.log('������ PIP 컨테이너 상태 확인:', {
+        display: miniPipContainer.style.display,
+        visibility: miniPipContainer.style.visibility,
+        opacity: miniPipContainer.style.opacity,
+        position: miniPipContainer.style.position,
+        bottom: miniPipContainer.style.bottom,
+        right: miniPipContainer.style.right,
+        zIndex: miniPipContainer.style.zIndex,
+        offsetWidth: miniPipContainer.offsetWidth,
+        offsetHeight: miniPipContainer.offsetHeight,
+        getBoundingClientRect: miniPipContainer.getBoundingClientRect()
+    });
     
     // X 버튼 이벤트 리스너 강제 추가 (표시할 때마다)
     const closeBtn = document.getElementById('miniPipCloseBtn');
     if (closeBtn) {
-        // 기존 이벤트 제거 후 새로 추가
+        // 기존 모든 이벤트 제거
         closeBtn.onclick = null;
-        closeBtn.onclick = function() {
-            console.log('X 버튼 클릭됨');
-            scwin.closeMiniPIP();
-        };
-        console.log('X 버튼 이벤트 바인딩 완료');
+        closeBtn.removeAttribute('onclick');
+        
+        // 새로운 X 버튼으로 교체 (완전히 새로운 요소 생성)
+        const newCloseBtn = closeBtn.cloneNode(true);
+        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+        
+        // 새 버튼에 이벤트 추가
+        newCloseBtn.addEventListener('click', function(e) {
+            console.log('✖️ X 버튼 클릭됨');
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // PIP 닫기 기능
+            const miniPipContainer = document.getElementById('miniPipContainer');
+            const mainContainer = document.querySelector('.video-chat-container');
+            
+            if (miniPipContainer) {
+                miniPipContainer.style.setProperty('display', 'none', 'important');
+                console.log('������ PIP 창 숨김');
+                
+                // 추가: PIP 컨테이너 완전 제거 확인
+                console.log('PIP 상태:', {
+                    display: miniPipContainer.style.display,
+                    offsetWidth: miniPipContainer.offsetWidth,
+                    offsetHeight: miniPipContainer.offsetHeight
+                });
+            }
+            if (mainContainer) {
+                mainContainer.style.setProperty('display', 'flex', 'important');
+                console.log('������ 메인 화면 복원');
+                console.log('메인 화면 상태:', {
+                    display: mainContainer.style.display,
+                    offsetWidth: mainContainer.offsetWidth,
+                    offsetHeight: mainContainer.offsetHeight,
+                    className: mainContainer.className
+                });
+            }
+            
+            // 상태 업데이트
+            isMiniPipActive = false;
+            const pipBtn = document.getElementById("pipBtn");
+            if (pipBtn) {
+                pipBtn.classList.remove("active");
+                pipBtn.textContent = "PIP";
+                console.log('������ PIP 버튼 상태 업데이트');
+            }
+            
+            console.log('✅ 미니 PIP 닫기 완료');
+        }, true);
+        
+        console.log('✅ X 버튼 이벤트 바인딩 완료');
+    } else {
+        console.error('❌ X 버튼을 찾을 수 없음');
     }
     
     // 모든 비디오를 미니 PIP에 복제
     scwin.updateMiniPIP();
+    
+    // 드래그 및 리사이즈 기능 즉시 초기화
+    setTimeout(() => {
+        console.log('������ PIP 표시 후 드래그/리사이즈 초기화');
+        
+        // 인라인 드래그 기능 구현
+        const pipContainer = document.querySelector('.mini-pip-container');
+        const pipHeader = document.querySelector('.mini-pip-header');
+        
+        if (!pipContainer || !pipHeader) {
+            console.error('❌ PIP 요소를 찾을 수 없음');
+            return;
+        }
+        
+        // 드래그 변수들
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        
+        // 기존 이벤트 제거 후 새로 추가
+        const newHeader = pipHeader.cloneNode(true);
+        pipHeader.parentNode.replaceChild(newHeader, pipHeader);
+        
+        newHeader.style.cursor = 'move';
+        newHeader.addEventListener('mousedown', function(e) {
+            if (e.target.closest('.mini-pip-close')) return;
+            
+            console.log('������️ 드래그 시작');
+            isDragging = true;
+            
+            const rect = pipContainer.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+            
+            function dragMove(e) {
+                if (!isDragging) return;
+                
+                const newX = e.clientX - dragOffset.x;
+                const newY = e.clientY - dragOffset.y;
+                
+                const maxX = window.innerWidth - pipContainer.offsetWidth;
+                const maxY = window.innerHeight - pipContainer.offsetHeight;
+                
+                const x = Math.max(0, Math.min(newX, maxX));
+                const y = Math.max(0, Math.min(newY, maxY));
+                
+                pipContainer.style.setProperty('left', x + 'px', 'important');
+                pipContainer.style.setProperty('top', y + 'px', 'important');
+                pipContainer.style.setProperty('right', 'auto', 'important');
+                pipContainer.style.setProperty('bottom', 'auto', 'important');
+            }
+            
+            function dragEnd() {
+                console.log('������ 드래그 종료');
+                isDragging = false;
+                document.removeEventListener('mousemove', dragMove);
+                document.removeEventListener('mouseup', dragEnd);
+            }
+            
+            document.addEventListener('mousemove', dragMove);
+            document.addEventListener('mouseup', dragEnd);
+            e.preventDefault();
+        });
+        
+        // 리사이즈 핸들 생성 및 기능 추가
+        const handles = [
+            { class: 'corner se', cursor: 'se-resize', style: 'bottom: 0; right: 0; width: 15px; height: 15px; border-radius: 0 0 12px 0;' },
+            { class: 'corner sw', cursor: 'sw-resize', style: 'bottom: 0; left: 0; width: 15px; height: 15px; border-radius: 0 0 0 12px;' },
+            { class: 'corner ne', cursor: 'ne-resize', style: 'top: 0; right: 0; width: 15px; height: 15px; border-radius: 0 12px 0 0;' },
+            { class: 'corner nw', cursor: 'nw-resize', style: 'top: 0; left: 0; width: 15px; height: 15px; border-radius: 12px 0 0 0;' },
+            { class: 'edge right', cursor: 'e-resize', style: 'right: 0; top: 15px; bottom: 15px; width: 5px;' },
+            { class: 'edge left', cursor: 'w-resize', style: 'left: 0; top: 15px; bottom: 15px; width: 5px;' },
+            { class: 'edge top', cursor: 'n-resize', style: 'top: 0; left: 15px; right: 15px; height: 5px;' },
+            { class: 'edge bottom', cursor: 's-resize', style: 'bottom: 0; left: 15px; right: 15px; height: 5px;' }
+        ];
+        
+        // 기존 핸들 제거
+        pipContainer.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
+        
+        handles.forEach(handleInfo => {
+            const handle = document.createElement('div');
+            handle.className = `resize-handle ${handleInfo.class}`;
+            handle.style.cssText = `
+                position: absolute;
+                background: #FFB823;
+                opacity: 0.5;
+                z-index: 10002;
+                cursor: ${handleInfo.cursor};
+                ${handleInfo.style}
+            `;
+            
+            let isResizing = false;
+            let resizeStart = {};
+            
+            handle.addEventListener('mousedown', function(e) {
+                console.log('������ 리사이즈 시작:', handleInfo.class);
+                isResizing = true;
+                
+                const rect = pipContainer.getBoundingClientRect();
+                resizeStart = {
+                    x: e.clientX,
+                    y: e.clientY,
+                    width: rect.width,
+                    height: rect.height,
+                    left: rect.left,
+                    top: rect.top,
+                    direction: handleInfo.class
+                };
+                
+                function handleResize(e) {
+                    if (!isResizing) return;
+                    
+                    const deltaX = e.clientX - resizeStart.x;
+                    const deltaY = e.clientY - resizeStart.y;
+                    const direction = resizeStart.direction;
+                    
+                    let newWidth = resizeStart.width;
+                    let newHeight = resizeStart.height;
+                    let newLeft = resizeStart.left;
+                    let newTop = resizeStart.top;
+                    
+                    // 방향에 따른 리사이즈 처리
+                    if (direction.includes('right') || direction.includes('se') || direction.includes('ne')) {
+                        newWidth = resizeStart.width + deltaX;
+                    }
+                    if (direction.includes('left') || direction.includes('sw') || direction.includes('nw')) {
+                        newWidth = resizeStart.width - deltaX;
+                        newLeft = resizeStart.left + deltaX;
+                    }
+                    if (direction.includes('bottom') || direction.includes('se') || direction.includes('sw')) {
+                        newHeight = resizeStart.height + deltaY;
+                    }
+                    if (direction.includes('top') || direction.includes('ne') || direction.includes('nw')) {
+                        newHeight = resizeStart.height - deltaY;
+                        newTop = resizeStart.top + deltaY;
+                    }
+                    
+                    // 크기 제한
+                    const minWidth = 250, maxWidth = Math.min(600, window.innerWidth * 0.8);
+                    const minHeight = 200, maxHeight = window.innerHeight * 0.8;
+                    
+                    if (newWidth < minWidth) {
+                        if (direction.includes('left')) newLeft = resizeStart.left + (resizeStart.width - minWidth);
+                        newWidth = minWidth;
+                    }
+                    if (newWidth > maxWidth) {
+                        if (direction.includes('left')) newLeft = resizeStart.left + (resizeStart.width - maxWidth);
+                        newWidth = maxWidth;
+                    }
+                    if (newHeight < minHeight) {
+                        if (direction.includes('top')) newTop = resizeStart.top + (resizeStart.height - minHeight);
+                        newHeight = minHeight;
+                    }
+                    if (newHeight > maxHeight) {
+                        if (direction.includes('top')) newTop = resizeStart.top + (resizeStart.height - maxHeight);
+                        newHeight = maxHeight;
+                    }
+                    
+                    // 화면 경계 체크
+                    newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - newWidth));
+                    newTop = Math.max(0, Math.min(newTop, window.innerHeight - newHeight));
+                    
+                    pipContainer.style.setProperty('width', newWidth + 'px', 'important');
+                    pipContainer.style.setProperty('height', newHeight + 'px', 'important');
+                    pipContainer.style.setProperty('left', newLeft + 'px', 'important');
+                    pipContainer.style.setProperty('top', newTop + 'px', 'important');
+                    pipContainer.style.setProperty('right', 'auto', 'important');
+                    pipContainer.style.setProperty('bottom', 'auto', 'important');
+                }
+                
+                function handleResizeEnd() {
+                    console.log('������ 리사이즈 종료');
+                    isResizing = false;
+                    document.removeEventListener('mousemove', handleResize);
+                    document.removeEventListener('mouseup', handleResizeEnd);
+                }
+                
+                document.addEventListener('mousemove', handleResize);
+                document.addEventListener('mouseup', handleResizeEnd);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            
+            handle.addEventListener('mouseenter', function() {
+                handle.style.opacity = '1';
+            });
+            
+            handle.addEventListener('mouseleave', function() {
+                handle.style.opacity = '0.5';
+            });
+            
+            pipContainer.appendChild(handle);
+        });
+        
+        // X 버튼 이벤트 재바인딩 (리사이즈 핸들 추가 후)
+        const finalCloseBtn = document.getElementById('miniPipCloseBtn');
+        if (finalCloseBtn) {
+            // 기존 이벤트 완전 제거
+            finalCloseBtn.onclick = null;
+            finalCloseBtn.removeAttribute('onclick');
+            
+            // 새로운 이벤트 추가 (최종)
+            finalCloseBtn.addEventListener('click', function(e) {
+                console.log('������ 최종 X 버튼 클릭됨!!!');
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // PIP 닫기
+                const miniPip = document.getElementById('miniPipContainer');
+                const mainCont = document.querySelector('.video-chat-container');
+                
+                if (miniPip) {
+                    miniPip.style.setProperty('display', 'none', 'important');
+                    console.log('������ PIP 창 완전 숨김');
+                }
+                
+                if (mainCont) {
+                    mainCont.style.setProperty('display', 'flex', 'important');
+                    mainCont.style.setProperty('visibility', 'visible', 'important');
+                    console.log('������ 메인 화면 강제 복원');
+                } else {
+                    // 모든 video-chat-container 강제 표시
+                    document.querySelectorAll('.video-chat-container').forEach(cont => {
+                        cont.style.setProperty('display', 'flex', 'important');
+                        cont.style.setProperty('visibility', 'visible', 'important');
+                    });
+                    console.log('������ 모든 메인 컨테이너 강제 표시');
+                }
+                
+                // 상태 업데이트
+                isMiniPipActive = false;
+                const pipButton = document.getElementById("pipBtn");
+                if (pipButton) {
+                    pipButton.classList.remove("active");
+                    pipButton.textContent = "PIP";
+                }
+                
+                console.log('✅ PIP 닫기 완료!!!');
+            }, { capture: true, once: false });
+            
+            // X 버튼 스타일 강화 (다른 요소에 가려지지 않도록)
+            finalCloseBtn.style.setProperty('z-index', '10005', 'important');
+            finalCloseBtn.style.setProperty('position', 'relative', 'important');
+            finalCloseBtn.style.setProperty('pointer-events', 'auto', 'important');
+            
+            console.log('������ 최종 X 버튼 이벤트 바인딩 완료!!!');
+        } else {
+            console.error('❌ 최종 X 버튼을 찾을 수 없음');
+        }
+        
+        console.log('✅ PIP 드래그/리사이즈 기능 활성화 완료');
+    }, 100);
     
     // 상태 업데이트
     isMiniPipActive = true;
@@ -4011,7 +4684,7 @@ scwin.removeRemoteUser = function(userId) {
         <div id="miniPipContainer" class="mini-pip-container">
             <div class="mini-pip-header">
                 <span>화상통화 참가자</span>
-                <button id="miniPipCloseBtn" class="mini-pip-close" onclick="scwin.closeMiniPIP()">×</button>
+                <button id="miniPipCloseBtn" class="mini-pip-close">×</button>
             </div>
             <div id="miniVideoGrid" class="mini-video-grid">
                 <!-- 미니 비디오들이 동적으로 추가됩니다 -->
