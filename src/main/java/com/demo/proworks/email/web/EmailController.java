@@ -6,6 +6,7 @@ import java.util.Random;
 
 import javax.annotation.Resource;
 import javax.mail.internet.MimeMessage;
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -162,7 +163,7 @@ public class EmailController {
     @ElService(key = "SendProjectInviteEmail")
     @RequestMapping(value = "SendProjectInviteEmail", method = RequestMethod.POST)
     @ElDescription(sub = "프로젝트 초대 메일 발송", desc = "프로젝트 초대 메일을 발송합니다")
-    public Map<String, Object> sendProjectInviteEmail(@RequestBody String jsonData) throws Exception {
+    public Map<String, Object> sendProjectInviteEmail(@RequestBody String jsonData, HttpServletRequest request) throws Exception {
         Map<String, Object> result = new HashMap<>();
 
         try {
@@ -214,8 +215,12 @@ public class EmailController {
             String toEmail = targetUserEmail; // 초대받을 사용자 이메일
             String subject = "[COLLABEE] " + projectInfo.getProjectName() + " 프로젝트 초대";
 
-            // 3. HTML 이메일 내용 작성
-            String content = createProjectInviteEmailContent(projectInfo, targetUserEmail);
+            // 3. 동적 서버 URL 생성
+            String baseUrl = request.getScheme() + "://" + request.getServerName() + 
+                           ":" + request.getServerPort() + request.getContextPath();
+            
+            // 4. HTML 이메일 내용 작성
+            String content = createProjectInviteEmailContent(projectInfo, targetUserEmail, baseUrl);
 
             
             JavaMailSenderImpl impl = (JavaMailSenderImpl) mailSender;
@@ -251,7 +256,7 @@ public class EmailController {
      * @param targetUserEmail 초대받을 사용자 이메일
      * @return String HTML 이메일 내용
      */
-    private String createProjectInviteEmailContent(EmailVo projectInfo, String targetUserEmail) {
+    private String createProjectInviteEmailContent(EmailVo projectInfo, String targetUserEmail, String baseUrl) {
         String content = "<html lang='ko'>"
                 + "<head><meta charset='UTF-8'/><title>프로젝트 초대</title>"
                 + "<style>"
@@ -285,7 +290,7 @@ public class EmailController {
                 + "<div class='project-name'>" + projectInfo.getProjectName() + "</div>"
                 + "<div class='project-info'>팀장: " + projectInfo.getUserName() + "</div>"
                 + "<div class='project-info'>초대 시각: " + projectInfo.getEmailSendTime() + "</div>"
-                + "<form action='http://localhost:9093/InsWebApp/JoinProject.do' method='POST' style='display:inline;'>"
+                + "<form action='" + baseUrl + "/JoinProject.do' method='POST' style='display:inline;'>"
                 + "<input type='hidden' name='projectId' value='" + projectInfo.getProjectId() + "'>"
                 + "<input type='hidden' name='userId' value='" + targetUserEmail + "'>"
                 + "<button type='submit' class='join-button' style='border:none; cursor:pointer; display: inline-block; padding: 15px 30px; background-color: #ffb823; color: #000 !important; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px;'>프로젝트 참여하기</button>"
