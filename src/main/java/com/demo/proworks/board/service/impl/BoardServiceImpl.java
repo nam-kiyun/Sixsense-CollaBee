@@ -122,4 +122,23 @@ public class BoardServiceImpl implements BoardService {
 		return boardDAO.deleteBoard(boardVo);
 	}
 	
+	/**
+     * 프로젝트 ID 기준으로 보드 목록을 조회한다. (칸반 보드용)
+     *
+     * @process
+     * 1. 프로젝트 ID를 기준으로 보드 목록을 조회한다.
+     * 2. 결과 List<BoardVo>을(를) 리턴한다.
+     * 
+     * @param  projectId 프로젝트 ID
+     * @return 보드 목록 List<BoardVo>
+     * @throws Exception
+     */
+	public List<BoardVo> selectBoardsByProject(String projectId) throws Exception {
+		System.out.println("BoardServiceImpl.selectBoardsByProject - projectId: " + projectId);
+		List<BoardVo> list = boardDAO.selectBoardsByProject(projectId);
+		System.out.println("BoardServiceImpl - 조회된 보드 개수: " + (list != null ? list.size() : 0));
+		
+		return list;
+	}
+	
 }

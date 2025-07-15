@@ -88,5 +88,19 @@ public class BoardDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstract
     public int deleteBoard(BoardVo vo) throws ElException {
         return delete("com.demo.proworks.board.deleteBoard", vo);
     }
+    
+    /**
+     * 프로젝트 ID 기준으로 보드 목록을 조회한다. (칸반 보드용)
+     *  
+     * @param  projectId 프로젝트 ID
+     * @return List<BoardVo> 보드 목록
+     * @throws ElException
+     */
+    public List<BoardVo> selectBoardsByProject(String projectId) throws ElException {
+        System.out.println("BoardDAO.selectBoardsByProject - projectId: " + projectId);
+        List<BoardVo> result = (List<BoardVo>) list("com.demo.proworks.board.selectBoardsByProject", projectId);
+        System.out.println("BoardDAO - SQL 실행 결과 개수: " + (result != null ? result.size() : 0));
+        return result;
+    }
 
 }

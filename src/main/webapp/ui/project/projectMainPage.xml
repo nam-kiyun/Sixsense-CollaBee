@@ -11,13 +11,39 @@
 				<w2:dataMap baseNode="map" id="dm_taskVo">
 					<w2:keyInfo>
 						<w2:key id="taskTitle" name="업무 제목" dataType="text"></w2:key>
+						<w2:key id="boardId" name="보드 ID" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dm_boardVo">
+					<w2:keyInfo>
+						<w2:key id="boardId" name="boardId" dataType="text"></w2:key>
+						<w2:key id="boardTitle" name="boardTitle" dataType="text"></w2:key>
+						<w2:key id="projectId" name="projectId" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataList baseNode="list" repeatNode="map" id="dlt_boardListVo" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column dataType="text" name="boardId" id="boardId"></w2:column>
+						<w2:column dataType="text" name="boardTitle" id="boardTitle"></w2:column>
+						<w2:column dataType="text" name="projectId" id="projectId"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataMap baseNode="map" id="dm_projectVo">
+					<w2:keyInfo>
+						<w2:key id="projectId" name="projectId" dataType="text"></w2:key>
 					</w2:keyInfo>
 				</w2:dataMap>
 			</w2:dataCollection>
 			<w2:workflowCollection />
-			<xf:submission id="add_task" action="/InsWebApp/task/create.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dm_taskVo","key":"taskVo"}' target="" encoding="UTF-8" instance=""
-				replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.add_task_submitdone"
-				ev:submiterror="" abortTrigger="">
+			<xf:submission id="add_task" action="/InsWebApp/task/create.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dm_taskVo","key":"taskVo"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.add_task_submitdone" ev:submiterror="" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="load_Board" action="/InsWebApp/board/list.pwkjson" method="post" mediatype="application/json" 
+				ref='data:json,{"id":"dm_projectVo","key":"projectVo"}' target='data:json,{"id":"dlt_boardListVo","key":"boardListVo"}' encoding="UTF-8" instance="" replace="" 
+				errorHandler="" customHandler="" mode="asynchronous" processMsg="보드 데이터를 로딩 중입니다..." 
+				ev:submit="scwin.load_Board_submit" ev:submitdone="scwin.load_Board_submitdone" ev:submiterror="scwin.load_Board_submiterror" 
+				abortTrigger="">
 			</xf:submission>
 		</xf:model>
 		<w2:layoutInfo />
@@ -26,6 +52,7 @@
 scwin.onpageload = function () {
     // 페이지 로드 시 데이터 바인딩
     scwin.loadProjectData();
+
 };
 
 // 프로젝트 데이터 로드 함수
@@ -44,6 +71,15 @@ scwin.setProjectData = function(projectData) {
     // 프로젝트 제목 업데이트
     if (projectData && projectData.projectName) {
         txt_title.setValue(projectData.projectName);
+    }
+    
+    // 프로젝트 ID를 dm_projectVo에 설정하고 보드 데이터 로드
+    if (projectData && projectData.projectId) {
+        console.log("프로젝트 ID로 보드 데이터 로드:", projectData.projectId);
+        dm_projectVo.set("projectId", projectData.projectId);
+        $p.executeSubmission("load_Board");  // 보드 데이터 로드 실행
+    } else {
+        console.warn("프로젝트 ID가 없어 보드 데이터를 로드할 수 없습니다:", projectData);
     }
 };
 
@@ -86,10 +122,9 @@ scwin.dynamicInput_onkeydown = function(e) {
     var keyCode = e.keyCode;
 
     if (keyCode === 13) { // Enter 키를 눌렀을 때
-        console.log("저장");
-        
-        // 입력 완료 후 포커스를 잃게 하여 추가 입력을 방지
-        inputComponent.blur();
+        let input = this.getValue();
+        dm_taskVo.set("taskTitle",input);
+        $c.sbm.execute("dm_taskVo");
 
     } else if (keyCode === 27) { // ESC 키를 눌렀을 때
         // 삭제할 대상은 input을 감싸고 있는 부모 컴포넌트(카드 그룹)입니다.
@@ -241,8 +276,812 @@ scwin.popup_closeAction = function (argRuntimeID, argJsnInfo) {
 };
 
 scwin.add_task_submitdone = function (e) {
-
+    debugger;
+    console.log("Task creation successful:", e);
+    
+    // WebSquare 응답 구조에서 태스크 데이터 추출
+    var responseData = e.responseJSON;
+    var taskData = responseData.elData;
+    
+    console.log("응답 데이터 구조:", responseData);
+    console.log("추출된 태스크 데이터:", taskData);
+    
+    if (!taskData || !taskData.taskId) {
+        console.error("태스크 데이터를 찾을 수 없습니다. 응답 구조:", responseData);
+        alert("태스크 생성은 완료되었지만 UI 업데이트에 실패했습니다.");
+        return;
+    }
+    
+    // 실제 DB에서 받은 데이터로 카드 데이터 구성
+    var cardData = {
+        taskId: taskData.taskId,
+        taskTitle: taskData.taskTitle,
+        priority: taskData.priority || "MEDIUM",
+        startDate: taskData.startDate || "",
+        endDate: taskData.endDate || "",
+        tags: taskData.tags || "",
+        projectUserId: taskData.projectUserId || "",
+        taskDescription: "", // 현재 TaskVo에 없는 필드
+        boardId: taskData.boardId // DB에서 받은 실제 boardId 사용
+    };
+    
+    console.log("칸반 카드 생성할 데이터:", cardData);
+    
+    // 해당 보드의 카드 컨테이너에 카드 동적 생성
+    scwin.createKanbanCardInBoard(cardData);
+    
+    // 입력 폼 초기화
+    dm_taskVo.set("taskTitle", "");
+    dm_taskVo.set("boardId", "");
 };
+
+/**
+ * 해당 보드의 카드 컨테이너에 칸반 카드를 동적 생성하는 함수
+ * @param {Object} cardData - 카드 데이터 (taskId, taskTitle, boardId 등)
+ */
+scwin.createKanbanCardInBoard = function(cardData) {
+    console.log("보드별 칸반 카드 생성 시작:", cardData);
+    
+    if (!cardData.boardId) {
+        console.error("boardId가 없어 카드를 생성할 수 없습니다:", cardData);
+        return;
+    }
+    
+    // 해당 보드의 카드 컨테이너 찾기
+    var cardContainerId = "card_container_" + cardData.boardId;
+    var targetContainer = eval(cardContainerId);
+    
+    if (!targetContainer) {
+        console.error("카드 컨테이너를 찾을 수 없습니다:", cardContainerId);
+        return;
+    }
+    
+    console.log("카드 생성 대상 컨테이너:", cardContainerId);
+    
+    // 우선순위에 따른 CSS 클래스 결정
+    var priorityClass = "priority-medium"; // 기본값
+    var priorityText = "보통";
+    if (cardData.priority === "HIGH") {
+        priorityClass = "priority-high";
+        priorityText = "높음";
+    } else if (cardData.priority === "LOW") {
+        priorityClass = "priority-low";
+        priorityText = "낮음";
+    }
+    
+    // 고유한 카드 ID 생성
+    var cardId = "card_" + cardData.taskId;
+    
+    // 1. 메인 카드 그룹 생성
+    var cardGroup = $p.dynamicCreate(
+        cardId,
+        "group",
+        {
+            className: "project-card",
+            "ev:onclick": "scwin.projectCard_onclick",
+            "data-task-id": cardData.taskId,
+            "data-board-id": cardData.boardId,
+            style: "margin-bottom: 8px; padding: 12px; background: white; border: 1px solid #d0d7de; border-radius: 6px; cursor: pointer;"
+        },
+        targetContainer
+    );
+    
+    if (!cardGroup) {
+        console.error("카드 그룹 생성 실패:", cardId);
+        return;
+    }
+    
+    // 2. 카드 헤더 그룹 생성
+    var headerGroup = $p.dynamicCreate(
+        cardId + "_header",
+        "group",
+        {
+            className: "project-card-header",
+            style: "display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;"
+        },
+        cardGroup
+    );
+    
+    // 3. 작업 제목 생성
+    var titleSpan = $p.dynamicCreate(
+        cardId + "_title",
+        "output",
+        {
+            className: "project-name",
+            style: "font-weight: 500; font-size: 14px; color: #24292f; line-height: 1.3;"
+        },
+        headerGroup
+    );
+    if (titleSpan) {
+        titleSpan.setValue(cardData.taskTitle);
+    }
+    
+    // 4. 우선순위 배지 생성
+    var prioritySpan = $p.dynamicCreate(
+        cardId + "_priority",
+        "output",
+        {
+            className: "priority-badge " + priorityClass,
+            style: "font-size: 11px; padding: 2px 6px; border-radius: 12px; font-weight: 500; background: #f6f8fa; color: #656d76;"
+        },
+        headerGroup
+    );
+    if (prioritySpan) {
+        prioritySpan.setValue(priorityText);
+    }
+    
+    // 5. 설명 생성 (있는 경우)
+    if (cardData.taskDescription && cardData.taskDescription.trim()) {
+        var descSpan = $p.dynamicCreate(
+            cardId + "_desc",
+            "output",
+            {
+                className: "project-description",
+                style: "font-size: 12px; color: #656d76; line-height: 1.4; margin-bottom: 8px;"
+            },
+            cardGroup
+        );
+        if (descSpan) {
+            descSpan.setValue(cardData.taskDescription);
+        }
+    }
+    
+    // 6. 메타데이터 그룹 생성
+    var metaGroup = $p.dynamicCreate(
+        cardId + "_meta",
+        "group",
+        {
+            className: "project-meta",
+            style: "display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #656d76;"
+        },
+        cardGroup
+    );
+    
+    // 7. 담당자 정보 (있는 경우)
+    if (cardData.projectUserId) {
+        var assigneeSpan = $p.dynamicCreate(
+            cardId + "_assignee",
+            "output",
+            {
+                className: "assignee-info"
+            },
+            metaGroup
+        );
+        if (assigneeSpan) {
+            assigneeSpan.setValue("담당자: " + cardData.projectUserId);
+        }
+    }
+    
+    // 8. 마감일 (있는 경우)
+    if (cardData.endDate) {
+        var dueDateSpan = $p.dynamicCreate(
+            cardId + "_due_date",
+            "output",
+            {
+                className: "due-date"
+            },
+            metaGroup
+        );
+        if (dueDateSpan) {
+            dueDateSpan.setValue("마감: " + cardData.endDate);
+        }
+    }
+    
+    console.log("칸반 카드 생성 완료:", cardId, "보드:", cardData.boardId);
+    return cardGroup;
+};
+
+/**
+ * 칸반 카드를 동적으로 생성하는 함수 (기존 함수 - 호환성 유지)
+ * @param {Object} cardData - 카드 데이터 (taskId, taskTitle, priority 등)
+ * @param {String} columnType - 컬럼 타입 ("todo", "inprogress", "done")
+ */
+scwin.createKanbanCard = function(cardData, columnType) {
+    console.log("칸반 카드 생성 시작:", cardData, columnType);
+    
+    // 컬럼별 타겟 컨테이너 ID 매핑 (동적 생성된 컨테이너 사용)
+    var containerMap = {
+        "todo": "card_container_BOARD_TODO_001",
+        "inprogress": "card_container_BOARD_PROGRESS_001", 
+        "done": "card_container_BOARD_DONE_001"
+    };
+    
+    // 동적으로 생성된 컨테이너 찾기 (boardId 기반)
+    if (cardData.boardId) {
+        containerMap[columnType] = "card_container_" + cardData.boardId;
+    }
+    
+    var containerId = containerMap[columnType];
+    if (!containerId) {
+        console.error("잘못된 컬럼 타입:", columnType);
+        return;
+    }
+    
+    // 타겟 컨테이너 객체 가져오기
+    var targetContainer = eval(containerId);
+    if (!targetContainer) {
+        console.error("컨테이너를 찾을 수 없습니다:", containerId);
+        return;
+    }
+    
+    // 우선순위에 따른 CSS 클래스 결정
+    var priorityClass = "priority-medium"; // 기본값
+    var priorityText = "보통";
+    if (cardData.priority === "HIGH") {
+        priorityClass = "priority-high";
+        priorityText = "높음";
+    } else if (cardData.priority === "LOW") {
+        priorityClass = "priority-low";
+        priorityText = "낮음";
+    }
+    
+    // 고유한 카드 ID 생성
+    var cardId = "card_" + (cardData.taskId || new Date().getTime());
+    
+    // 1. 메인 카드 그룹 생성
+    var cardGroup = $p.dynamicCreate(
+        cardId,
+        "group",
+        {
+            className: "project-card",
+            "ev:onclick": "scwin.projectCard_onclick",
+            "data-task-id": cardData.taskId,
+            "data-row": "0"
+        },
+        targetContainer
+    );
+    
+    // 2. 카드 헤더 그룹 생성
+    var headerGroup = $p.dynamicCreate(
+        cardId + "_header",
+        "group", 
+        {
+            className: "project-card-header"
+        },
+        cardGroup
+    );
+    
+    // 3. 작업 제목 생성
+    var titleSpan = $p.dynamicCreate(
+        cardId + "_title",
+        "output",
+        {
+            className: "project-name"
+        },
+        headerGroup
+    );
+    if (titleSpan) {
+        titleSpan.setValue(cardData.taskTitle);
+    }
+    
+    // 4. 우선순위 배지 생성
+    var prioritySpan = $p.dynamicCreate(
+        cardId + "_priority",
+        "output",
+        {
+            className: "priority-badge " + priorityClass
+        },
+        headerGroup
+    );
+    if (prioritySpan) {
+        prioritySpan.setValue(priorityText);
+    }
+    
+    // 5. 설명 생성 (있는 경우)
+    if (cardData.taskDescription) {
+        var descSpan = $p.dynamicCreate(
+            cardId + "_desc",
+            "output",
+            {
+                className: "project-description"
+            },
+            cardGroup
+        );
+        if (descSpan) {
+            descSpan.setValue(cardData.taskDescription);
+        }
+    }
+    
+    // 6. 메타데이터 그룹 생성
+    var metaGroup = $p.dynamicCreate(
+        cardId + "_meta",
+        "group",
+        {
+            className: "project-meta"
+        },
+        cardGroup
+    );
+    
+    // 7. 담당자 정보 그룹 생성
+    var assigneeGroup = $p.dynamicCreate(
+        cardId + "_assignee",
+        "group",
+        {
+            className: "assignee"
+        },
+        metaGroup
+    );
+    
+    // 8. 담당자 아바타 생성
+    var avatarSpan = $p.dynamicCreate(
+        cardId + "_avatar",
+        "output",
+        {
+            className: "assignee-avatar"
+        },
+        assigneeGroup
+    );
+    if (avatarSpan) {
+        avatarSpan.setValue("김"); // 임시값, 실제로는 사용자 정보에서 가져와야 함
+    }
+    
+    // 9. 담당자 이름 생성
+    var assigneeNameSpan = $p.dynamicCreate(
+        cardId + "_assignee_name",
+        "output",
+        {},
+        assigneeGroup
+    );
+    if (assigneeNameSpan) {
+        assigneeNameSpan.setValue("김개발"); // 임시값
+    }
+    
+    // 10. 마감일 생성 (있는 경우)
+    if (cardData.endDate) {
+        var dueDateSpan = $p.dynamicCreate(
+            cardId + "_due_date",
+            "output",
+            {
+                className: "due-date"
+            },
+            metaGroup
+        );
+        if (dueDateSpan) {
+            dueDateSpan.setValue(cardData.endDate);
+        }
+    }
+    
+    console.log("칸반 카드 생성 완료:", cardId);
+    return cardGroup;
+};
+
+scwin.load_Board_submitdone = function (e) {
+    console.log("Board data loaded successfully:", e);
+    
+    // 응답에서 보드 데이터 추출
+    var responseData = e.responseJSON;
+    var boardList = responseData.boardVoList;
+    
+    if (!boardList || boardList.length === 0) {
+        console.warn("보드 데이터가 없습니다. 기본 컬럼을 사용합니다.");
+        return;
+    }
+    
+    console.log("로드된 보드 목록:", boardList);
+    
+    // DataList에 보드 데이터 설정
+    dlt_boardListVo.setJSON(boardList);
+    
+    // 동적 칸반 컬럼들 생성
+    scwin.createDynamicKanbanColumns(boardList);
+};
+
+
+/**
+ * 보드 데이터를 기반으로 동적 칸반 컬럼들을 생성하는 함수 (순차 실행)
+ * @param {Array} boardList - 서버에서 받은 보드 목록
+ */
+scwin.createDynamicKanbanColumns = function(boardList) {
+    console.log("동적 칸반 컬럼 생성 시작:", boardList);
+    
+    // 칸반 컨테이너 찾기
+    var kanbanContainer = grp_kanban_board;
+    if (!kanbanContainer) {
+        console.error("칸반 컨테이너를 찾을 수 없습니다");
+        return;
+    }
+    
+    // 기존 동적 컬럼들 제거 (중복 생성 방지)
+    scwin.clearExistingKanbanColumns();
+    
+    // 각 보드에 대해 순차적으로 칸반 컬럼 생성
+    for (let i = 0; i < boardList.length; i++) {
+        const board = boardList[i];
+        console.log(`컬럼 ${i + 1}/${boardList.length} 생성:`, board.boardTitle);
+        
+        scwin.createSingleKanbanColumn(board, i, kanbanContainer);
+    }
+    
+    console.log("동적 칸반 컬럼 생성 완료");
+};
+
+/**
+ * 기존 동적 칸반 컬럼들을 제거하는 함수 (중복 생성 방지)
+ */
+scwin.clearExistingKanbanColumns = function() {
+    console.log("기존 동적 칸반 컬럼 제거 시작");
+    
+    var kanbanContainer = grp_kanban_board;
+    if (!kanbanContainer) {
+        console.error("칸반 컨테이너를 찾을 수 없습니다");
+        return;
+    }
+    
+    // 기존 보드 데이터가 있으면 해당 컬럼들 제거
+    var existingBoardList = dlt_boardListVo.getAllJSON();
+    if (existingBoardList && existingBoardList.length > 0) {
+        for (let i = 0; i < existingBoardList.length; i++) {
+            var board = existingBoardList[i];
+            var columnId = "grp_dynamic_" + board.boardId;
+            
+            try {
+                var existingColumn = eval(columnId);
+                if (existingColumn) {
+                    existingColumn.remove();
+                    console.log("기존 컬럼 제거:", columnId);
+                }
+            } catch (e) {
+                console.log("컬럼이 존재하지 않음:", columnId);
+            }
+        }
+    }
+    
+    // WebSquare ID로 생성된 동적 컴포넌트들도 확인 제거
+    try {
+        var children = kanbanContainer.getChildren();
+        for (let i = children.length - 1; i >= 0; i--) {
+            var child = children[i];
+            var childId = child.getID();
+            
+            // grp_dynamic_ 또는 card_container_로 시작하는 동적 컴포넌트 제거
+            if (childId && (childId.startsWith("grp_dynamic_") || childId.startsWith("card_container_"))) {
+                child.remove();
+                console.log("동적 컴포넌트 제거:", childId);
+            }
+        }
+    } catch (e) {
+        console.log("자식 컴포넌트 제거 중 오류:", e);
+    }
+    
+    console.log("기존 동적 칸반 컬럼 제거 완료");
+};
+
+/**
+ * sleep 유틸리티 함수
+ * @param {Number} ms - 대기 시간 (밀리초)
+ */
+scwin.sleep = function(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+/**
+ * 단일 칸반 컬럼을 생성하는 함수
+ * @param {Object} board - 보드 데이터 (boardId, boardTitle, projectId)
+ * @param {Number} index - 컬럼 순서
+ * @param {Object} container - 부모 컨테이너
+ */
+scwin.createSingleKanbanColumn = function(board, index, container) {
+    console.log("칸반 컬럼 생성:", board.boardTitle);
+    
+    var columnId = "grp_dynamic_" + board.boardId;
+    var cardContainerId = "card_container_" + board.boardId;
+    
+    // 중복 생성 방지 - 이미 존재하는 컬럼인지 확인
+    try {
+        var existingColumn = eval(columnId);
+        if (existingColumn) {
+            console.log("이미 존재하는 컬럼:", columnId, "- 생성 건너뜀");
+            return;
+        }
+    } catch (e) {
+        // 컴포넌트가 존재하지 않음 - 정상적으로 생성 진행
+    }
+    
+    // 1. 메인 컬럼 그룹 생성
+    var columnGroup = $p.dynamicCreate(
+        columnId,
+        "group",
+        {
+            className: "kanban-column",
+            style: "flex: 1; margin: 0 8px; background: #f6f8fa; border-radius: 8px; padding: 16px;",
+            "data-board-id": board.boardId
+        },
+        container
+    );
+    
+    if (!columnGroup) {
+        console.error("메인 컬럼 그룹 생성 실패:", columnId);
+        return;
+    }
+    
+    // 2. 컬럼 헤더 생성
+    var headerGroup = $p.dynamicCreate(
+        columnId + "_header",
+        "group",
+        {
+            className: "kanban-column-header",
+            style: "display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;"
+        },
+        columnGroup
+    );
+    
+    if (!headerGroup) {
+        console.error("헤더 그룹 생성 실패:", columnId);
+        return;
+    }
+    
+    // 3. 컬럼 제목 그룹 생성
+    var titleGroup = $p.dynamicCreate(
+        columnId + "_title_group",
+        "group",
+        {
+            style: "display: flex; align-items: center; gap: 8px;"
+        },
+        headerGroup
+    );
+    
+    // 4. 상태 인디케이터 생성
+    var statusColor = scwin.getBoardStatusColor(board.boardTitle);
+    var statusIndicator = $p.dynamicCreate(
+        columnId + "_status",
+        "output",
+        {
+            className: "status-indicator",
+            style: "width: 8px; height: 8px; border-radius: 50%; background-color: " + statusColor + ";"
+        },
+        titleGroup
+    );
+    
+    // 5. 컬럼 제목 생성
+    var titleSpan = $p.dynamicCreate(
+        columnId + "_title",
+        "output",
+        {
+            className: "column-title",
+            style: "font-weight: 600; font-size: 14px; color: #24292f;"
+        },
+        titleGroup
+    );
+    if (titleSpan) {
+        titleSpan.setValue(board.boardTitle);
+    }
+    
+    // 6. 태스크 카운트 생성
+    var countSpan = $p.dynamicCreate(
+        columnId + "_count",
+        "output",
+        {
+            className: "task-count",
+            style: "background: #d1d9e0; color: #656d76; padding: 2px 6px; border-radius: 12px; font-size: 12px; font-weight: 500;"
+        },
+        titleGroup
+    );
+    if (countSpan) {
+        countSpan.setValue("0"); // 초기값, 나중에 태스크 로드 시 업데이트
+    }
+    
+    // 7. 카드 컨테이너 생성
+    var cardContainer = $p.dynamicCreate(
+        cardContainerId,
+        "group",
+        {
+            className: "kanban-cards-container",
+            style: "display: contents;",
+            "data-board-id": board.boardId
+        },
+        columnGroup
+    );
+    
+    if (!cardContainer) {
+        console.error("카드 컨테이너 생성 실패:", cardContainerId);
+        return;
+    }
+    
+    // 8. Add Card 버튼 생성
+    var addButton = $p.dynamicCreate(
+        columnId + "_add_btn",
+        "trigger",
+        {
+            style: "width: 100%; padding: 8px; margin-top: 8px; background: transparent; border: 1px dashed #d1d9e0; border-radius: 6px; color: #656d76; font-size: 14px; cursor: pointer;",
+            className: "add-card-btn"
+        },
+        columnGroup
+    );
+    
+    if (addButton) {
+        // setValue로 버튼 텍스트 설정
+        addButton.setValue("+ Add card");
+        
+        // boardId 저장
+        addButton.boardId = board.boardId;
+        
+        // onclick 이벤트 바인딩
+        addButton.bind("onclick", function(e) {
+            console.log("Add Card 버튼 클릭, boardId:", addButton.boardId);
+            scwin.dynamicAddCard_onclick_fixed(addButton.boardId);
+        });
+        
+        console.log("Add Card 버튼 생성 성공:", columnId, "boardId:", board.boardId);
+    } else {
+        console.error("Add Card 버튼 생성 실패:", columnId, "부모:", columnGroup);
+    }
+    
+    console.log("칸반 컬럼 생성 완료:", board.boardTitle);
+};
+
+/**
+ * 보드 제목에 따른 상태 색상 반환
+ * @param {String} boardTitle - 보드 제목
+ * @returns {String} 색상 코드
+ */
+scwin.getBoardStatusColor = function(boardTitle) {
+    var title = boardTitle.toLowerCase();
+    
+    if (title.includes('할 일') || title.includes('todo')) {
+        return '#fb8500'; // 주황색
+    } else if (title.includes('진행') || title.includes('progress') || title.includes('진행중')) {
+        return '#d4af37'; // 금색
+    } else if (title.includes('완료') || title.includes('done') || title.includes('완성')) {
+        return '#1f883d'; // 녹색
+    } else {
+        return '#656d76'; // 기본 회색
+    }
+};
+
+/**
+ * 동적 Add Card 버튼 클릭 핸들러
+ */
+scwin.dynamicAddCard_onclick_fixed = function(boardId) {
+    console.log("Add Card 버튼 클릭, boardId:", boardId);
+    
+    if (boardId) {
+        // 해당 보드의 카드 컨테이너 찾기
+        var cardContainerId = "card_container_" + boardId;
+        var parentGroup = eval(cardContainerId);
+        
+        if (!parentGroup) {
+            console.error("카드 컨테이너를 찾을 수 없습니다:", cardContainerId);
+            alert("카드 컨테이너를 찾을 수 없습니다.");
+            return;
+        }
+        
+        console.log("카드 생성 대상 컨테이너:", cardContainerId);
+        
+        // 동적 카드와 input 생성
+        var cardId = "dyn_card_" + new Date().getTime();
+        var cardOptions = {
+            className: "project-card",
+            style: "border-color: #2da44e; background-color: #f6ffed;"
+        };
+        var newCard = $p.dynamicCreate(cardId, "group", cardOptions, parentGroup);
+        
+        if (newCard) {
+            // 동적 input 생성
+            var inputId = "dyn_input_" + new Date().getTime();
+            var newInput = $p.dynamicCreate(inputId, "input", {
+                placeholder: "새 작업명을 입력하세요.",
+                style: "width: 100%; height: 24px;"
+            }, newCard);
+            
+            if (newInput) {
+                // boardId를 input의 data 속성에 저장 (WebSquare 호환)
+                newInput.setUserData("boardId", boardId);
+                
+                // 키보드 이벤트 바인딩 시 boardId를 클로저로 전달
+                newInput.bind("onkeydown", function(e) {
+                    scwin.dynamicInput_onkeydown_with_board.call(this, e, boardId);
+                });
+                
+                // input에 포커스
+                newInput.focus();
+                
+                console.log("동적 input 생성 및 포커스 설정 완료, boardId:", boardId);
+            } else {
+                console.error("input 생성 실패");
+                newCard.remove();
+            }
+        } else {
+            console.error("카드 생성 실패");
+        }
+    } else {
+        console.error("boardId가 없습니다.");
+        alert("보드 정보를 찾을 수 없습니다.");
+    }
+};
+
+/**
+ * 동적 input 키보드 이벤트 핸들러 (boardId 포함)
+ */
+scwin.dynamicInput_onkeydown_with_board = function(e, boardId) {
+    var inputComponent = this;
+    var keyCode = e.keyCode;
+    
+    // boardId 가져오기 (파라미터 우선, 없으면 userData에서 가져오기)
+    var targetBoardId = boardId || inputComponent.getUserData("boardId");
+    
+    console.log("키 입력:", keyCode, "값:", inputComponent.getValue(), "boardId:", targetBoardId);
+
+    if (keyCode === 13) { // Enter 키
+        var input = inputComponent.getValue();
+        if (input && input.trim()) {
+            console.log("Enter 키 - 태스크 생성:", input.trim(), "boardId:", targetBoardId);
+            
+            if (!targetBoardId) {
+                console.error("boardId를 찾을 수 없습니다.");
+                alert("보드 정보를 찾을 수 없습니다.");
+                return;
+            }
+            
+            // dm_taskVo에 데이터 설정
+            dm_taskVo.set("taskTitle", input.trim());
+            dm_taskVo.set("boardId", targetBoardId);
+            
+            // 태스크 생성 API 호출
+            $p.executeSubmission("add_task");
+            
+            // input 카드 제거
+            var cardComponent = inputComponent.getParent();
+            if (cardComponent) {
+                cardComponent.remove();
+            }
+        } else {
+            alert("작업명을 입력해주세요.");
+        }
+    } else if (keyCode === 27) { // ESC 키
+        console.log("ESC 키 - 취소");
+        
+        // 카드 제거
+        var cardComponent = inputComponent.getParent();
+        if (cardComponent) {
+            cardComponent.remove();
+        }
+    }
+};
+
+/**
+ * 보드 로드 서브미션 전 처리 함수
+ */
+scwin.load_Board_submit = function(e) {
+    console.log("보드 데이터 로드 요청 시작");
+    
+    // 프로젝트 ID 확인
+    var projectId = dm_projectVo.get("projectId");
+    if (!projectId) {
+        console.error("프로젝트 ID가 없습니다");
+        alert("프로젝트 ID를 먼저 설정해주세요.");
+        return false; // 서브미션 중단
+    }
+    
+    console.log("프로젝트 ID로 보드 조회:", projectId);
+    return true; // 서브미션 계속 진행
+};
+
+/**
+ * 보드 로드 서브미션 에러 처리 함수
+ */
+scwin.load_Board_submiterror = function(e) {
+    console.error("보드 데이터 로드 실패:", e);
+    
+    var errorMessage = "보드 데이터를 로드하는데 실패했습니다.";
+    
+    // 에러 타입별 처리
+    if (e.responseJSON && e.responseJSON.message) {
+        errorMessage += "\n원인: " + e.responseJSON.message;
+    } else if (e.status) {
+        errorMessage += "\n상태코드: " + e.status;
+        if (e.status === 404) {
+            errorMessage += "\n해당 프로젝트의 보드를 찾을 수 없습니다.";
+        } else if (e.status === 500) {
+            errorMessage += "\n서버 오류가 발생했습니다.";
+        }
+    }
+    
+    alert(errorMessage);
+    
+    // 에러 시 로그만 출력 (정적 컬럼 제거됨)
+    console.log("보드 로드 실패로 동적 컬럼 생성 불가");
+};
+
 ]]></script>
 		<style type="text/css"><![CDATA[
 /* 전체 컨테이너 */
@@ -601,104 +1440,8 @@ scwin.add_task_submitdone = function (e) {
 			</xf:group>
 
 			<!-- 칸반 보드 영역 -->
-			<xf:group class="kanban-container">
-				<!-- 할 일 2 컬럼 -->
-				<xf:group id="grp_todo" class="kanban-column">
-					<xf:group class="kanban-column-header">
-						<xf:group class="column-title">
-							<w2:span class="status-indicator status-todo"></w2:span>
-							할 일 2
-						</xf:group>
-						<w2:span class="task-count">1</w2:span>
-					</xf:group>
-
-					<xf:group id="card_container_todo" style="display: contents;">
-						<xf:group class="project-card" ev:onclick="scwin.projectCard_onclick" data-row="0">
-							<xf:group class="project-card-header">
-								<w2:span class="project-name">소규모 웹 개발</w2:span>
-								<w2:span class="priority-badge priority-high">높음</w2:span>
-							</xf:group>
-							<w2:span class="project-description">고객사 요청사항에 따른 웹사이트 개발</w2:span>
-							<xf:group class="project-meta">
-								<xf:group class="assignee">
-									<w2:span class="assignee-avatar">김</w2:span>
-									<w2:span>김개발</w2:span>
-								</xf:group>
-								<w2:span class="due-date">2025-08-15</w2:span>
-							</xf:group>
-						</xf:group>
-					</xf:group>
-
-					<xf:trigger type="button" class="add-card-btn" ev:onclick="scwin.addCard_onclick('card_container_todo')">
-						<xf:label><![CDATA[+ Add card]]></xf:label>
-					</xf:trigger>
-				</xf:group>
-
-				<!-- 진행중 2 컬럼 -->
-				<xf:group id="grp_inprogress" class="kanban-column">
-					<xf:group class="kanban-column-header">
-						<xf:group class="column-title">
-							<w2:span class="status-indicator status-progress"></w2:span>
-							진행중 2
-						</xf:group>
-						<w2:span class="task-count">1</w2:span>
-					</xf:group>
-
-					<!-- 프로젝트 카드 2 -->
-					<xf:group id="card_container_inprogress" style="display: contents;">
-						<xf:group class="project-card" ev:onclick="scwin.projectCard_onclick" data-row="1">
-							<xf:group class="project-card-header">
-								<w2:span class="project-name">데이터베이스 마이그레이션</w2:span>
-								<w2:span class="priority-badge priority-medium">중간</w2:span>
-							</xf:group>
-							<w2:span class="project-description">레거시 시스템 DB 이관 작업</w2:span>
-							<xf:group class="project-meta">
-								<xf:group class="assignee">
-									<w2:span class="assignee-avatar">이</w2:span>
-									<w2:span>이디비</w2:span>
-								</xf:group>
-								<w2:span class="due-date">2025-09-01</w2:span>
-							</xf:group>
-						</xf:group>
-					</xf:group>
-					<!-- 새 카드 추가 버튼 -->
-					<xf:trigger type="button" class="add-card-btn" ev:onclick="scwin.addCard_onclick('card_container_inprogress')">
-						<xf:label><![CDATA[+ Add card]]></xf:label>
-					</xf:trigger>
-				</xf:group>
-
-				<!-- 완료 2 컬럼 -->
-				<xf:group id="grp_done" class="kanban-column">
-					<xf:group class="kanban-column-header">
-						<xf:group class="column-title">
-							<w2:span class="status-indicator status-done"></w2:span>
-							완료 2
-						</xf:group>
-						<w2:span class="task-count">1</w2:span>
-					</xf:group>
-
-					<!-- 프로젝트 카드 3 -->
-					<xf:group id="card_container_done" style="display: contents;">
-						<xf:group class="project-card" ev:onclick="scwin.projectCard_onclick" data-row="2">
-							<xf:group class="project-card-header">
-								<w2:span class="project-name">API 서버 구축</w2:span>
-								<w2:span class="priority-badge priority-high">높음</w2:span>
-							</xf:group>
-							<w2:span class="project-description">RESTful API 서버 개발 완료</w2:span>
-							<xf:group class="project-meta">
-								<xf:group class="assignee">
-									<w2:span class="assignee-avatar">박</w2:span>
-									<w2:span>박백엔드</w2:span>
-								</xf:group>
-								<w2:span class="due-date">2025-07-20</w2:span>
-							</xf:group>
-						</xf:group>
-					</xf:group>
-					<!-- 새 카드 추가 버튼 -->
-					<xf:trigger type="button" class="add-card-btn" ev:onclick="scwin.addCard_onclick('card_container_done')">
-						<xf:label><![CDATA[+ Add card]]></xf:label>
-					</xf:trigger>
-				</xf:group>
+			<xf:group id="grp_kanban_board" class="kanban-container">
+				<!-- 동적 칸반 컬럼들이 여기에 생성됩니다 -->
 			</xf:group>
 		</xf:group>
 	</body>
