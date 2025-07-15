@@ -612,6 +612,13 @@
 		  <version>1.12.671</version> 
 		</dependency>
 
+		<!--Jsoup html 수정-->
+		<dependency>
+		  <groupId>org.jsoup</groupId>
+		  <artifactId>jsoup</artifactId>
+		  <version>1.8.3</version> 
+		</dependency>
+
 
 		
 		<dependency>

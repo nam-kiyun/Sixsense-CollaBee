@@ -1,39 +1,32 @@
 package com.demo.proworks.task.web;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.jsoup.Jsoup;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.demo.proworks.filesrc.vo.FileSrcVo;
-import com.demo.proworks.manager.vo.ManagerVo;
 import com.demo.proworks.task.service.TaskService;
-import com.demo.proworks.task.vo.TaskVo;
-import com.demo.proworks.task.vo.fileUpdateListVo;
-import com.demo.proworks.task.vo.fileUpdateVo;
-import com.demo.proworks.taskversion.service.TaskVersionService;
-import com.demo.proworks.taskversion.vo.TaskVersionVo;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.demo.proworks.task.vo.TaskListVo;
 import com.demo.proworks.task.vo.TaskUpdateVo;
+import com.demo.proworks.task.vo.TaskVo;
+import com.demo.proworks.taskversion.service.TaskVersionService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
-import com.inswave.elfw.annotation.ElValidator;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
-import org.tmatesoft.svn.core.internal.wc17.SVNRemoteStatusEditor17.FileInfo;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
+import org.jsoup.nodes.Element;
 
 /**
  * @subject : 업무(Task) 정보 관련 처리를 담당하는 컨트롤러
@@ -73,24 +66,44 @@ public class TaskController {
 			@RequestParam(value = "files", required = false) List<MultipartFile> files) throws Exception {
 		ObjectMapper mapper = new ObjectMapper();
 		TaskUpdateVo updateVo = mapper.readValue(taskJson, TaskUpdateVo.class);
-
 		List<FileSrcVo> fileUpdateList = Arrays.asList(mapper.readValue(fileUploadJson, FileSrcVo[].class));
 
+		System.out.println("updateVo.getContent(): " + updateVo.getContent());
+
+		// 1. 파일 업로드
 		for (int i = 0; i < fileUpdateList.size(); i++) {
 			FileSrcVo fileMeta = fileUpdateList.get(i);
 			String path = fileMeta.getFilePath();
 
 			if (path == null || path.trim().isEmpty()) {
 				MultipartFile file = (files != null && files.size() > i) ? files.get(i) : null;
-
 				String uploadedUrl = uploadS3(file);
 				fileMeta.setFilePath(uploadedUrl);
 			} else {
 				System.out.println("기존 파일 사용: " + path);
 			}
 		}
+
 		updateVo.setFileSrcVo(fileUpdateList);
-		// 파일, 매니저, 태그 등 함께 처리
+		System.out.println("===================================================");
+		// 2. HTML 내부 src 교체 (file-data 클래스 기준)
+		String rawHtml = updateVo.getContent(); // HTML 원문 가져오기
+		Document doc = Jsoup.parse(rawHtml);
+		System.out.println("doc.body().html " + doc.body().html());
+		System.out.println("===================================================");
+		Elements fileElements = doc.getElementsByClass("file-data");
+		System.out.println("fileElements: " + fileElements);
+
+		for (int i = 0; i < fileElements.size() && i < fileUpdateList.size(); i++) {
+			Element el = fileElements.get(fileElements.size() - 1 - i); // 순서 반대로 접근
+			String s3Url = fileUpdateList.get(i).getFilePath();
+			el.attr("src", s3Url);
+		}
+
+		// 3. 치환된 HTML로 반영
+		updateVo.setContent(doc.body().html());
+
+		// 4. 기타 처리 및 저장
 		taskService.saveTask(updateVo);
 	}
 
@@ -157,7 +170,6 @@ public class TaskController {
 
 		return selectTaskVo;
 	}
-	
 
 	/**
 	 * 업무(Task) 정보를 등록 처리 한다.

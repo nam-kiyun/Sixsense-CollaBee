@@ -105,8 +105,8 @@
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
         return `https://localhost:${port}`;
     }
-
-    // 다른 IP인 경우 해당 IP 사용
+  
+    // 다른 IP인 경우 해당 IP 사용 
     return `https://${hostname}:${port}`;
 };
 
@@ -122,7 +122,7 @@ let audioProducer = null;
 let consumers = new Map(); // consumerId -> {consumer, remoteVideo}
 let remoteVideos = new Map(); // peerId -> video element info
 
-// 기존 변수들 (채팅용은 그대로 유지)
+// 기존 변수들 (채팅용은 그대로 유지) 
 let localStream = null;
 let chatSocket = null; // 채팅용 WebSocket (그대로 유지)
 let isJoined = false;
@@ -147,7 +147,7 @@ let currentUser = {
 
 //페이지 로드 되었을 때 
 scwin.onpageload = function () {
-    //소켓 초기화
+    //소켓 초기화 
     scwin.initializeChatWebSocket();
 
 
@@ -233,9 +233,9 @@ scwin.onpageload = function () {
     scwin.projectId = 7;
     scwin.getTask(scwin.taskId, scwin.projectId);
 
-    setTimeout(function () {
-        scwin.fileButtonInit();
-    }, 100); // 혹은 300ms까지 조정
+    // setTimeout(function () {
+    //     scwin.fileButtonInit();
+    // }, 100); // 에디터 부분에 파일추가
 
     /////////////////////////////////////////////////////////////////////
 
@@ -266,7 +266,82 @@ scwin.onpageload = function () {
 
     scwin.snapShot = false; //버전에서 현재상태 저장여부
     scwin.originalData = {};
+    scwin.initEditorFileObserver();
+
 };
+
+
+scwin.initEditorFileObserver = function () {
+    const editorComponentId = "contents_editor";
+    const editorComponent = $p.getComponentById(editorComponentId);
+    if (!editorComponent) {
+        console.warn(`[WebSquare AI] Editor component with ID '${editorComponentId}' not found.`);
+        return;
+    }
+
+    let prevNums = [];
+
+    const logRemovedFiles = () => {
+        // Editor 컴포넌트의 현재 HTML 내용을 가져옵니다.
+        // 이 HTML은 iframe 내부의 내용을 반영합니다.
+        const editorHtmlContent = editorComponent.getHTML();
+        const tempContainer = document.createElement("div");
+        tempContainer.innerHTML = editorHtmlContent;
+
+        const fileTags = tempContainer.querySelectorAll(".file-data");
+        const currentNums = Array.from(fileTags)
+            .map(el => parseInt(el.getAttribute("data-num")))
+            .filter(num => !isNaN(num));
+
+        const removedNums = prevNums.filter(num => !currentNums.includes(num));
+
+        if (removedNums.length > 0) {
+            console.log("������️ [WebSquare AI] 삭제된 파일 num:", removedNums);
+            // 필요 시 여기서 동기화 함수 호출 가능
+        }
+        prevNums = currentNums;
+    };
+
+    let editorTargetNode = null;
+    console.log(editorComponent);
+   
+
+ 
+    setTimeout(() => {
+         let iframeDoc = document.querySelector("cke_wysiwyg_frame");
+
+          if (iframeDoc) {
+        const targetNode = iframeDoc;
+        console.log(iframeDoc);
+
+        const observer = new MutationObserver((mutations) => {
+            console.log("에디터 내용 변경 감지됨!", mutations);
+        });
+
+        observer.observe(targetNode, {
+            childList: true,
+            subtree: true,
+            characterData: true
+        });
+    }
+  
+}, 1000); // 필요 시 1500~2000ms로 늘려보기
+
+
+   
+   
+};
+
+// WebSquare 페이지 언로드 시 MutationObserver 해제를 위한 scwin.onbeforepageunload 정의
+scwin.onbeforepageunload = function() {
+    if (scwin.editorFileMutationObserver) {
+        scwin.editorFileMutationObserver.disconnect();
+        console.log("[WebSquare AI] Disconnected editor file observer on page unload.");
+        delete scwin.editorFileMutationObserver;
+        delete scwin.editorFileMutationObserverTargetNode;
+    }
+};
+
 
 //버전기록 불러와서 바인딩
 scwin.versionLoad = function (data) {
@@ -303,39 +378,48 @@ scwin.currentWorkSnapshot = function () {
 };
 
 
-
+//버전관리 모달창 열리는 함수
 scwin.versionPopup = function (e) {
-    var param = {
-        "type": "json",
-        "name": "taskInfo",
-        "data": {
-            "taskId": scwin.taskId,
-        },
-    };
+    const versionPopupId = "task_version";
+    const isOpen = $p.getComponentById(versionPopupId);
 
-    // 팝업 생성 옵션 지정
-    var options = {
-        id: "task_version",
-        type: "wframePopup",
-        width: "330",
-        height: "500",
-        top: "230",
-        left: "1250",
-        popupName: "버전기록",
-        modal: false,
-        closeAction: "scwin.popup_closeAction",
-        customTitleBar: false,
-        dataObject: param,
-    };
+    if (isOpen) {
+        $p.closePopup(versionPopupId);
+    } else {
+        let param = {
+            "type": "json",
+            "name": "taskInfo",
+            "data": {
+                "taskId": scwin.taskId,
+            },
+        };
 
-    // 팝업 생성
-    $p.openPopup("./versionModal.xml", options);
+        // 팝업 생성 옵션 지정
+        let options = {
+            id: versionPopupId,
+            type: "wframePopup",
+            width: "330",
+            height: "500",
+            top: "230",
+            left: "1250",
+            popupName: "버전기록",
+            modal: false,
+            closeAction: "scwin.popup_closeAction",
+            customTitleBar: false,
+            dataObject: param,
+        };
+
+        // 팝업 생성
+        $p.openPopup("./versionModal.xml", options);
+    }
+
+
 };
 
 
 //팝업창 닫기
 scwin.popup_closeAction = function (argRuntimeID, argJsnInfo) {
-    var popObj = $p.getPopupWindow(argRuntimeID);
+    let popObj = $p.getPopupWindow(argRuntimeID);
     return true; //팝업 닫기 (반환 값이 true인 경우만 팝업이 닫힘)
 };
 
@@ -412,7 +496,7 @@ scwin.getTask = function (taskId, projectId) {
 
 
             //담당자(프로젝트 사용자 값 세팅)
-            var userData = [];
+            let userData = [];
             data.projectUserVo.forEach(user => {
                 userData.push({ userId: user.userId, userName: user.userName });
             });
@@ -420,7 +504,7 @@ scwin.getTask = function (taskId, projectId) {
 
             //담당자 존재하면 값 세팅
             if (data.managerVo && data.managerVo.length > 0) {
-                var selectedUserIds = [];
+                let selectedUserIds = [];
                 data.managerVo.forEach(manager => {
                     selectedUserIds.push(manager.userId);
                 });
@@ -435,8 +519,40 @@ scwin.getTask = function (taskId, projectId) {
 
             contents_editor.setHTML(data.content);
 
+
+            const fileList = data.fileSrcVo;
+
+            // HTML 에디터의 기존 내용 가져오기
+            let html = contents_editor.getHTML();
+
+            // DOM 파싱을 위한 임시 컨테이너 생성
+            const container = document.createElement("div");
+            container.innerHTML = html;
+
+            // file-data 클래스를 가진 태그들을 순서대로 가져오기
+            const fileTags = container.querySelectorAll(".file-data");
+
+            // fileList 순서와 fileTags 순서가 일치한다고 가정하고 data-num 추가
+            fileList.forEach((item, index) => {
+                item.num = ++scwin.filePageNum;
+
+                const el = fileTags[fileTags.length - 1 - index];
+
+                if (el) {
+                    el.setAttribute("data-num", item.num);
+                }
+            });
+
+
             dls_allFile.setJSON(data.fileSrcVo);
             dls_file.setJSON(data.fileSrcVo);
+
+            setTimeout(() => {
+                if (contents_editor.getHTML().trim() === "") {
+                    console.log("⚠️ 내용 사라짐. 복구 시도!");
+                    contents_editor.setHTML(scwin.lastEditorHtml);
+                }
+            }, 1500);
         },
         error: async function (err) {
             await $c.win.alert("저장 실패! 다시 시도해주세요");
@@ -1083,23 +1199,19 @@ scwin.sbm_task_get_submiterror = function (e) {
 
 scwin.file_add_onclick = function (e) {
     $p.$("#fileInput").click();
+    $p.$("#fileInput").off("change");
     $p.$("#fileInput").on("change", scwin.fileInput_change);
 };
-
-
-
 
 scwin.file_remove_onclick = function (e) {
     let chkIdxArr = grd.getCheckedIndex("CHK");
     if (chkIdxArr.length === 0)
         return;
-    // dls_allFile.removeRows(chkIdxArr);
-
 
     let checkedItemNums = [];
+
     for (let i = 0; i < chkIdxArr.length; i++) {
-        // dls_file에서 해당 인덱스의 행 데이터(JSON)를 가져옵니다.
-        let rowData = dls_file.getRowJSON(chkIdxArr[i]); // [1]
+        let rowData = dls_file.getRowJSON(chkIdxArr[i]);
         if (rowData && rowData.num) {
             checkedItemNums.push(rowData.num);
         }
@@ -1144,10 +1256,38 @@ scwin.file_remove_onclick = function (e) {
     // ✅ 화면 표시용 데이터 갱신
     dls_file.setJSON(currentPageItems);
 
-
-
-
+    scwin.removeFileHtml(checkedItemNums);
 };
+
+
+scwin.removeFileHtml = function (numList) {
+    if (!Array.isArray(numList) || numList.length === 0) return;
+
+    let html = contents_editor.getHTML();
+    const container = document.createElement("div");
+    container.innerHTML = html;
+
+    numList.forEach(num => {
+        const target = container.querySelector(`.file-data[data-num="${num}"]`);
+        console.log(target);
+        if (target) {
+            const before = target.previousElementSibling;
+            const after = target.nextElementSibling;
+
+            if (before && before.tagName === "P" && before.innerHTML.trim() === "<br>") {
+                before.remove();
+            }
+            if (after && after.tagName === "P" && after.innerHTML.trim() === "<br>") {
+                after.remove();
+            }
+
+            target.remove();
+        }
+    });
+
+    contents_editor.setHTML(container.innerHTML);
+};
+
 
 scwin.fileInput_change = function (e) {
     const fileInput = $p.$("#fileInput").get(0);
@@ -1164,9 +1304,13 @@ scwin.fileInput_change = function (e) {
     for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const reader = new FileReader();
-        console.log(file);
 
         reader.onload = function (event) {
+            const fileDataUrl = event.target.result;
+
+            // HTML 에디터에 삽입
+            scwin.addFileHtml(file.type, file.name, fileDataUrl, scwin.filePageNum + 1);
+
             // 최근순 추가: 앞에 삽입
             newList.unshift({
                 num: ++scwin.filePageNum,
@@ -1205,6 +1349,106 @@ scwin.fileInput_change = function (e) {
 
     }
 };
+
+
+scwin.addFileHtml = function (type, name, url, num) {
+    const html = contents_editor.getHTML();
+    let insertHTML = "";
+
+    if (type.startsWith("image/")) {
+        // 이미지 직접 삽입
+        insertHTML = `<img class="file-data" data-num="${num}" src="${url}" alt="${name}" style="max-width:100%; margin: 10px 0;" />`;
+    } else {
+        // 기타 파일은 버튼 또는 다운로드 링크로 처리
+        const ext = name.split(".").pop().toLowerCase();
+
+        switch (ext) {
+            case "pdf":
+                icon = "/InsWebApp/images/fileIcon/pdf.svg";
+                break;
+            case "hwp":
+            case "hwpx":
+                icon = "/InsWebApp/images/fileIcon/hwp.svg";
+                break;
+            case "xls":
+            case "xlsx":
+            case "csv":
+                icon = "/InsWebApp/images/fileIcon/xls.svg";
+                break;
+            case "doc":
+            case "docx":
+                icon = "/InsWebApp/images/fileIcon/doc.svg";
+                break;
+            case "zip":
+            case "rar":
+            case "7z":
+                icon = "/InsWebApp/images/fileIcon/zip.svg";
+                break;
+            case "txt":
+            case "md":
+            case "log":
+                icon = "/InsWebApp/images/fileIcon/txt.svg";
+                break;
+            case "html":
+            case "htm":
+                icon = "/InsWebApp/images/fileIcon/html.svg";
+                break;
+            case "css":
+                icon = "/InsWebApp/images/fileIcon/css.svg";
+                break;
+            case "js":
+                icon = "/InsWebApp/images/fileIcon/js.svg";
+                break;
+            case "svg":
+                icon = "/InsWebApp/images/fileIcon/svg.svg";
+                break;
+            case "ppt":
+            case "pptx":
+                icon = "/InsWebApp/images/fileIcon/ppt.svg";
+                break;
+            case "json":
+                icon = "/InsWebApp/images/fileIcon/json.svg";
+                break;
+            case "yml":
+            case "yaml":
+                icon = "/InsWebApp/images/fileIcon/yml.svg";
+                break;
+            case "sql":
+                icon = "/InsWebApp/images/fileIcon/sql.svg";
+                break;
+            case "ttf":
+            case "otf":
+            case "woff":
+            case "woff2":
+                icon = "/InsWebApp/images/fileIcon/ttf.svg";
+                break;
+            default:
+                icon = "/InsWebApp/images/fileIcon/etc.svg";
+                break;
+        }
+
+
+
+        insertHTML = `
+            <p><br></p>
+            <a class="file-data" data-num="${num}" href="${url}" target="_blank" contenteditable="false"
+            style="display: flex; align-items: center; gap: 10px;
+                    max-width: 200px; min-width: 100px; padding: 10px;
+                    background-color:#fff1d3; border-radius: 6px;
+                    border: 1px solid #D9D9D9;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+                    text-decoration: none;">
+                <img src="${icon}" alt="${type}" style="width: 50px; height: 50px; border:none; margin:0; padding:0; outline:none;" />
+                <span style="font-size: 15px; color: black;">${name}</span>
+            </a>
+            <p><br></p>
+        `;
+
+    }
+
+    contents_editor.setHTML(html + insertHTML);
+};
+
 
 
 scwin.pageList_onclick = function (index) {
@@ -1333,12 +1577,12 @@ scwin.pageList_onclick = function (index) {
 							<w2:textbox tagname="h3" style="" id="" label="파일" class=""></w2:textbox>
 							<xf:group style="" id="" class="rt">
 								<xf:trigger style="" id="file_add" type="button" class="btn_cm  row_add" ev:onclick="scwin.file_add_onclick">
-									<xf:label><![CDATA[추가]]></xf:label>
+									<xf:label><![CDATA[파일추가]]></xf:label>
 								</xf:trigger>
 								<input style="display:none;" id="fileInput" type="file" class="" onchange="scwin.fileInput_change" multiple=""></input>
 
 								<xf:trigger style="" id="file_remove" type="button" class="btn_cm  row_del" ev:onclick="scwin.file_remove_onclick">
-									<xf:label><![CDATA[삭제]]></xf:label>
+									<xf:label><![CDATA[파일삭제]]></xf:label>
 								</xf:trigger>
 							</xf:group>
 						</xf:group>

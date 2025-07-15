@@ -40,7 +40,7 @@ body {
 }
 
 .contents-group .contents-header-group .header-title {
-    width: 81%;
+    width: 71%;
     height: 25%;
 	/*background-color: blue;*/
 }
@@ -60,10 +60,11 @@ body {
 
 .contents-group .contents-header-group .header-input {
     display: flex;
-    width: 80%;
+    width: 70%;
     height: 25%;
     text-align: center;
     align-items: center;
+	justify-content:space-between;
     gap: 50px;
 	/*background-color: green;*/
 }
