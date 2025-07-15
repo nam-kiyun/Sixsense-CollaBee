@@ -1395,20 +1395,20 @@ scwin.makeProfileImagesRound = function() {
                 
                 <w2:header id="header1" style="height:48px;">
                     <w2:row id="row1" style="height:48px;">
-                        <w2:column width="80" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column1" value="프로필"></w2:column>
-                        <w2:column width="250" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column2" value="이름"></w2:column>
-                        <w2:column width="450" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column3" value="이메일"></w2:column>
-                        <w2:column width="290" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column4" value="역할"></w2:column>
+                        <w2:column width="100%" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column1" value="프로필"></w2:column>
+                        <w2:column width="245%" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column2" value="이름"></w2:column>
+                        <w2:column width="450%" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column3" value="이메일"></w2:column>
+                        <w2:column width="285%" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column4" value="역할"></w2:column>
                     </w2:row>
                 </w2:header>
                 
                 <w2:gBody id="gBody1">
                     <w2:row id="row2" style="height:52px;">
-                        <w2:column width="80" inputType="image" style="text-align:center;padding:4px;" id="profileImageUrl" blockSelect="true" readOnly="true" 
+                        <w2:column width="100%" inputType="image" style="text-align:center;padding:4px;" id="profileImageUrl" blockSelect="true" readOnly="true" 
                                    imageWidth="40" imageHeight="40"></w2:column>
-                        <w2:column width="250" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#333333;" id="userName" blockSelect="true" readOnly="true"></w2:column>
-                        <w2:column width="450" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#666666;" id="userId" blockSelect="true" readOnly="true"></w2:column>
-                        <w2:column width="290" inputType="select" style="text-align:center;font-size:15px;padding:8px;" id="role" blockSelect="true" allOption="">
+                        <w2:column width="245%" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#333333;" id="userName" blockSelect="true" readOnly="true"></w2:column>
+                        <w2:column width="450%" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#666666;" id="userId" blockSelect="true" readOnly="true"></w2:column>
+                        <w2:column width="285%" inputType="select" style="text-align:center;font-size:15px;padding:8px;" id="role" blockSelect="true" allOption="">
                             <w2:choices>
                                 <w2:itemset nodeset="">
                                     <w2:label ref=""></w2:label>
