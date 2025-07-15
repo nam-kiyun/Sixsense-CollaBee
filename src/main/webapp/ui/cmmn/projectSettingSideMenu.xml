@@ -230,7 +230,7 @@ scwin.updateProjectName = function(projectName) {
                         id="grp_activeBar_github"/>
                     
                     <xf:output style="color:#000000;font-size:20px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;" id="output_github">
-                        <xf:label><![CDATA[GitHub 연동]]></xf:label>
+                        <xf:label><![CDATA[로그 확인]]></xf:label>
                     </xf:output>
                 </xf:group>
                 
