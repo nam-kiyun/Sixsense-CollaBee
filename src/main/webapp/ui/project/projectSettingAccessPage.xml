@@ -82,6 +82,26 @@
             background-color: #f8f9fa !important;
         }
         
+        /* 프로필 이미지 둥글게 - 더 구체적인 선택자 */
+        #grd_projectUsers img,
+        #grd_projectUsers .w2grid_cell img,
+        #grd_projectUsers .w2grid_body img,
+        #grd_projectUsers td img {
+            border-radius: 50% !important;
+            object-fit: cover !important;
+            width: 40px !important;
+            height: 40px !important;
+        }
+        
+        /* 웹스퀘어 이미지 컨테이너도 둥글게 */
+        #grd_projectUsers .w2grid_cell[columnid="profileImageUrl"],
+        #grd_projectUsers .w2grid_cell[columnid="profileImageUrl"] > *,
+        #grd_projectUsers td[columnid="profileImageUrl"],
+        #grd_projectUsers td[columnid="profileImageUrl"] > * {
+            border-radius: 50% !important;
+            overflow: hidden !important;
+        }
+        
         /* 그리드뷰 스타일 개선 */
         #grd_projectUsers .w2grid_row {
             border-bottom: 1px solid #f0f0f0 !important;
@@ -318,23 +338,30 @@ scwin.loadProjectUsers = function(projectId) {
                 for (var i = 0; i < projectUserList.length; i++) {
                     var user = projectUserList[i];
                     var rowIndex = dl_projectUsers.insertRow();
+                    // 기본 프로필 이미지 URL
+                    var defaultProfileImage = "https://collabee.s3.ap-northeast-2.amazonaws.com/defaultUserImage.png";
+                    var profileImageUrl = user.profileImageUrl && user.profileImageUrl.trim() !== "" ? user.profileImageUrl : defaultProfileImage;
+                    
                     dl_projectUsers.setCellData(rowIndex, "userId", user.userId || "");
                     dl_projectUsers.setCellData(rowIndex, "userName", user.userName || "");
                     dl_projectUsers.setCellData(rowIndex, "role", user.role || "");
-                    dl_projectUsers.setCellData(rowIndex, "profileImageUrl", user.profileImageUrl || "");
+                    dl_projectUsers.setCellData(rowIndex, "profileImageUrl", profileImageUrl);
                     
                     // 원본 데이터 저장
                     originalData.push({
                         userId: user.userId || "",
                         userName: user.userName || "",
                         role: user.role || "",
-                        profileImageUrl: user.profileImageUrl || ""
+                        profileImageUrl: profileImageUrl
                     });
                 }
                 
                 
                 
-                // DOM 조작 제거, 웹스퀘어 네이티브 이벤트만 사용
+                // 프로필 이미지를 둥글게 만들기
+                setTimeout(function() {
+                    scwin.makeProfileImagesRound();
+                }, 500);
                 
                 if (dl_projectUsers.getTotalRow() === 0) {
                    
@@ -1233,6 +1260,33 @@ scwin.grd_projectUsers_onafterchange = function(e) {
         }, 1);
     } catch (ex) {
         // 오류 시 무시
+    }
+};
+
+// 프로필 이미지를 둥글게 만드는 함수
+scwin.makeProfileImagesRound = function() {
+    try {
+        // 그리드뷰 내의 모든 이미지 찾기
+        var gridElement = document.getElementById('grd_projectUsers');
+        if (gridElement) {
+            var images = gridElement.querySelectorAll('img');
+            for (var i = 0; i < images.length; i++) {
+                var img = images[i];
+                img.style.borderRadius = '50%';
+                img.style.objectFit = 'cover';
+                img.style.width = '40px';
+                img.style.height = '40px';
+            }
+            
+            // 이미지 컨테이너도 둥글게
+            var cells = gridElement.querySelectorAll('td[columnid="profileImageUrl"], .w2grid_cell[columnid="profileImageUrl"]');
+            for (var j = 0; j < cells.length; j++) {
+                cells[j].style.borderRadius = '50%';
+                cells[j].style.overflow = 'hidden';
+            }
+        }
+    } catch (e) {
+        console.log('프로필 이미지 둥글게 만들기 실패:', e);
     }
 };
 ]]></script>
