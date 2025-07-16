@@ -74,6 +74,7 @@ public class ProworksSessionDataAdapter extends SessionDataAdapter {
 
 	        // 필요에 따라 추가 정보 세팅
 	        userHeader.setUserName(resultUser.getUserName());
+	        userHeader.setUserImage(resultUser.getProfileImageUrl());
 		/*
 			EmpService empService = (EmpService)ElBeanUtils.getBean("empServiceImpl");
 			EmpVo empVo = new EmpVo();

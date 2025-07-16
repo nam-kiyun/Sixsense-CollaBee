@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="/InsWebApp/css/task/taskModal.css" type="text/css"?>
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare"
 	xmlns:xf="http://www.w3.org/2002/xforms">
 	<head>
@@ -6,18 +7,1664 @@
 		<w2:buildDate />
 		<w2:MSA />
 		<xf:model>
-			<w2:dataCollection baseNode="map" />
+			<w2:dataCollection baseNode="map">
+				<w2:dataMap baseNode="map" id="dma_comment">
+					<w2:keyInfo>
+						<w2:key dataType="number" name="댓글 아이디" id="commentId"></w2:key>
+						<w2:key dataType="number" name="task 아이디" id="taskId"></w2:key>
+						<w2:key dataType="text" name="사용자 아이디" id="userId"></w2:key>
+						<w2:key dataType="text" name="메세지" id="message"></w2:key>
+						<w2:key dataType="text" name="생성일" id="createdAt"></w2:key>
+						<w2:key dataType="text" name="사용자 이름" id="userName"></w2:key>
+						<w2:key dataType="text" name="이미지" id="userImage"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dma_getComment">
+					<w2:keyInfo>
+						<w2:key dataType="number" name="작업 아이디" id="taskId"></w2:key>
+						<w2:key dataType="number" name="페이지" id="page"></w2:key>
+						<w2:key dataType="number" name="페이지 사이즈" id="pageSize"></w2:key>
+						<w2:key dataType="number" name="시작번호" id="startOffset"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dma_task">
+					<w2:keyInfo>
+						<w2:key dataType="text" name="작업 아이디" id="taskId"></w2:key>
+						<w2:key dataType="text" name="보드 아이디" id="boardId" defaultValue="String"></w2:key>
+						<w2:key dataType="text" name="프로젝트 사용자 아이디" id="projectUserId" defaultValue="String"></w2:key>
+						<w2:key dataType="text" name="프로젝트 저장소 아이디" id="projectRepoId" defaultValue="String"></w2:key>
+						<w2:key dataType="text" name="제목" id="taskTitle" defaultValue="String"></w2:key>
+						<w2:key dataType="text" name="중요도" id="priority" defaultValue="String"></w2:key>
+						<w2:key dataType="text" name="시작일" id="startDate" defaultValue="String"></w2:key>
+						<w2:key dataType="text" name="종료일" id="endDate" defaultValue="String"></w2:key>
+						<w2:key nullYN="" defaultValue="String" dataType="text" name="태그" length="" id="tags" encYN=""></w2:key>
+						<w2:key nullYN="" defaultValue="String" dataType="text" name="버전아이디" length="" id="taskVersionId" encYN=""></w2:key>
+						<w2:key nullYN="" defaultValue="String" dataType="text" name="내용" length="" id="content" encYN=""></w2:key>
+						<w2:key defaultValue="String" dataType="text" name="created_at" id="createdAt"></w2:key>
+						<w2:key dataType="text" name="name13" id="key13"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataList baseNode="list" repeatNode="map" id="dls_manager" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column dataType="text" name="사용자 아이디" id="userId"></w2:column>
+						<w2:column dataType="text" name="사용자 이름" id="userName"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataList baseNode="list" repeatNode="map" id="dls_file" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column dataType="text" name="이름" id="fileName"></w2:column>
+						<w2:column dataType="text" name="크기" id="size"></w2:column>
+						<w2:column dataType="text" name="종류" id="type"></w2:column>
+						<w2:column dataType="" name="내용" id="data"></w2:column>
+						<w2:column dataType="text" name="선택" id="CHK"></w2:column>
+						<w2:column dataType="text" name="name6" id="num"></w2:column>
+						<w2:column dataType="text" name="name7" id="filePath"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataList baseNode="list" repeatNode="map" id="dls_allFile" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column dataType="text" name="name8" id="fileId"></w2:column>
+						<w2:column dataType="text" name="name9" id="taskVersionId"></w2:column>
+						<w2:column dataType="text" name="이름" id="fileName"></w2:column>
+						<w2:column dataType="text" name="name7" id="filePath"></w2:column>
+						<w2:column dataType="text" name="크기" id="size"></w2:column>
+						<w2:column dataType="text" name="종류" id="type"></w2:column>
+						<w2:column dataType="text" name="내용" id="data"></w2:column>
+						<w2:column dataType="text" name="선택" id="CHK"></w2:column>
+						<w2:column dataType="text" name="name6" id="num"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+			</w2:dataCollection>
 			<w2:workflowCollection />
+			<xf:submission id="sbm_comment_create" action="/InsWebApp/comment/create.pwkjson" method="post"
+				mediatype="application/json" ref='data:json,{"id":"dma_comment","key":"elData"}' target="" encoding="UTF-8" instance="" replace=""
+				errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_create_submitdone"
+				ev:submiterror="scwin.sbm_comment_create_submiterror" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_comment_get" action="/InsWebApp/comment/{taskId}.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dma_getComment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
+				customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_get_submitdone"
+				ev:submiterror="scwin.sbm_comment_get_submiterror" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_comment_delete" action="/InsWebApp/comment/delete.pwkjson" method="post"
+				mediatype="application/json" ref='data:json,{"id":"dma_comment","key":"elData"}' target='' encoding="UTF-8" instance="" replace=""
+				errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_delete_submitdone"
+				ev:submiterror="scwin.sbm_comment_delete_submiterror" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_task_get" action="/InsWebApp/task/{taskId}.pwkjson" method="post" mediatype="application/json"
+				ref="" target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
+				ev:submitdone="scwin.sbm_task_get_submitdone" ev:submiterror="scwin.sbm_task_get_submiterror" abortTrigger="">
+			</xf:submission>
 		</xf:model>
 		<w2:layoutInfo />
 		<w2:publicInfo method="" />
-		<script lazy="false" type="text/javascript"><![CDATA[
-scwin.onpageload = function() {
-	
+		<script lazy="false" type="text/javascript"><![CDATA[const getMediasoupServerUrl = () => {
+    const hostname = window.location.hostname;
+    const port = '3002';
+
+    // localhost인 경우 그대로 유지
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return `https://localhost:${port}`;
+    }
+
+    // 다른 IP인 경우 해당 IP 사용 
+    return `https://${hostname}:${port}`;
+};
+
+const MEDIASOUP_SERVER_URL = getMediasoupServerUrl();
+
+// mediasoup 관련 변수들
+let mediasoupSocket = null;
+let device = null;
+let sendTransport = null;
+let recvTransport = null;
+let videoProducer = null;
+let audioProducer = null;
+let consumers = new Map(); // consumerId -> {consumer, remoteVideo}
+let remoteVideos = new Map(); // peerId -> video element info
+
+// 기존 변수들 (채팅용은 그대로 유지) 
+let localStream = null;
+let chatSocket = null; // 채팅용 WebSocket (그대로 유지)
+let isJoined = false;
+let isMuted = false;
+let isVideoOff = false;
+let remoteUserInfo = new Map(); // 원격 사용자 정보 저장
+
+// 사용자 정보 (고유 ID 생성)
+const generateUserId = () => {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    return `user_${timestamp}_${random}`;
+};
+
+//사용자 정보
+let currentUser = {
+    userId: "",
+    userName: "",
+    userImage: "",
+    channelName: "test"
+};
+
+//페이지 로드 되었을 때 
+scwin.onpageload = function () {
+    //소켓 초기화 
+    scwin.initializeChatWebSocket();
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    const generateUniqueId = (prefix) => {
+        return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    };
+    const group = $p.getComponentById("mf_exa_popup_header"); // 헤더의 버튼 영역
+    const close = $p.getComponentById("mf_exa_popup_header_control");
+    const btnGroupId = generateUniqueId("btn_group");
+    const saveId = generateUniqueId("btn_save");
+    const versionId = generateUniqueId("btn_version");
+
+    // 버튼 그룹 생성
+    const btnGroup = $p.dynamicCreate(btnGroupId, "group", {
+        className: "header-btn-group",
+    }, group);
+
+
+    if (btnGroup?.render) {
+        group.insertBefore(btnGroup.render, close);
+    }
+
+
+    // 버튼 생성 → btnGroup에 삽입
+    const save = $p.dynamicCreate(saveId, "button", {
+        className: "btn-save header-btn",
+        label: "저장",
+    }, btnGroup);
+
+    const version = $p.dynamicCreate(versionId, "button", {
+        className: "btn-version",
+    }, btnGroup);
+
+    const btn_save = $p.getComponentById(saveId);
+
+    //task 저장버튼
+    btn_save.bind("onclick", function () {
+        scwin.saveTask();
+    });
+
+    const btn_version = $p.getComponentById(versionId);
+    btn_version.bind("onclick", function () {
+        scwin.versionPopup();
+    })
+
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    //ifram, contents 높이 조절
+    setInterval(() => {
+        const iframe = document.querySelector('.cke_wysiwyg_frame');
+        const contents = $p.getComponentById("cke_1_contents");
+
+        const innerDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+        const body = innerDoc?.body;
+
+        if (iframe && body) {
+            const scrollHeight = body.scrollHeight + 100;
+            body.style.overflow = 'hidden';
+
+            iframe.style.setProperty('height', scrollHeight + 'px', 'important');
+            contents.style.setProperty('height', scrollHeight + 'px', 'important');
+
+            // scwin.smoothResize(iframe, scrollHeight);
+            // scwin.smoothResize(contents, scrollHeight);
+        }
+    }, 300);
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //사용자 정보
+    let userInfo = $p.getParameter("userInfo");
+    scwin.defaultImage = "https://raw.githubusercontent.com/dorazi0423/test/refs/heads/main/group1.png";
+    currentUser.userId = userInfo.userId;
+    currentUser.userName = userInfo.userName;
+    currentUser.userImage = userInfo.userImage;
+
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    //문서 내용 불러오기
+    scwin.taskInfo = "";
+    scwin.taskId = 1;
+    scwin.projectId = 7;
+    scwin.getTask(scwin.taskId, scwin.projectId);
+
+    // setTimeout(function () {
+    //     scwin.fileButtonInit();
+    // }, 100); // 에디터 부분에 파일추가
+
+    /////////////////////////////////////////////////////////////////////
+
+    // 채팅 불러오기 및 초기 세팅
+    scwin.currentPage = 1; // 최초 로딩이 1페이지니까 다음은 2부터 시작
+    scwin.isLoading = false; // 중복 호출 방지용 플래그
+    scwin.hasMore = true; // 마지막 페이지에 도달하면 false로 바꾸기
+    scwin.loadMoreData();
+
+    //무한 스크롤
+    const scrollArea = $p.getComponentById("comment_main_group");
+
+
+    scrollArea.bind("onscroll", function () {
+        const scrollTop = scrollArea.render.scrollTop;
+
+        if (scrollTop <= 50) { // 화면 맨 위 근접했을 때
+            scwin.loadMoreData(); // 이전 댓글 불러오기
+        }
+    });
+    /////////////////////////////////////////////////////////////////////
+    //파일
+    scwin.filePageIndex = 1; //현재 파일 페이지
+    scwin.filePageNum = 0; //파일 순번
+    pageList.setCount(1);
+
+    scwin.chatDate = new Set();
+
+    scwin.snapShot = false; //버전에서 현재상태 저장여부
+    scwin.originalData = {};
+    scwin.changeEditor();
+    scwin.previousHTML = "";
+};
+
+scwin.changeEditor = function () {
+    const editorComponentId = "contents_editor";
+    const editorComponent = $p.getComponentById(editorComponentId);
+
+    if (!editorComponent) {
+        console.warn(`[WebSquare AI] 에디터 컴포넌트 '${editorComponentId}'를 찾을 수 없습니다.`);
+        return;
+    }
+
+
+    // CKEditor 인스턴스 직접 접근
+    const ckInstance = CKEDITOR.instances["mf_exa_popup_wframe_contents_editor_"];
+    Object.keys(CKEDITOR.instances).forEach(key => {
+        console.log("인스턴스 ID:", key);
+    });
+
+    if (!ckInstance) {
+        console.warn("[WebSquare AI] CKEditor 인스턴스를 찾을 수 없습니다.");
+        return;
+    }
+
+    ckInstance.on("instanceReady", function () {
+        scwin.previousHTML = contents_editor.getHTML(); // 초기값 설정
+        console.log(contents_editor.getHTML());
+
+        ckInstance.on("change", function () {
+            const currentHTML = ckInstance.getData();
+
+            if (currentHTML !== scwin.previousHTML) {
+                console.log("이전 내용:", scwin.previousHTML);
+                console.log("현재 내용:", currentHTML);
+
+                const prevNums = scwin.extractFileNums(scwin.previousHTML);
+                const currNums = scwin.extractFileNums(currentHTML);
+
+                const removedNums = prevNums.filter(num => !currNums.includes(num));
+                const restoredNums = currNums.filter(num => !prevNums.includes(num));
+
+                if (removedNums.length > 0) {
+                    console.log("삭제된 파일:", removedNums);
+                    scwin.removeFileGrid(removedNums);
+                }
+                if (restoredNums.length > 0) {
+                    console.log("복구된 파일:", restoredNums);
+                }
+            }
+
+            scwin.previousHTML = currentHTML;
+        });
+    });
+};
+
+scwin.extractFileNums = function (html) {
+    const tempContainer = document.createElement("div");
+    tempContainer.innerHTML = html;
+
+    const fileTags = tempContainer.querySelectorAll(".file-data");
+    return Array.from(fileTags)
+        .map(el => parseInt(el.getAttribute("data-num")))
+        .filter(num => !isNaN(num));
+}
+
+
+//버전기록 불러와서 바인딩
+scwin.versionLoad = function (data) {
+    if (!scwin.snapShot) {
+        scwin.snapShot = true;
+        scwin.originalData = scwin.currentWorkSnapshot();
+    }
+
+    contents_editor.setHTML(data.taskVersionVo.content);
+    dls_allFile.setJSON(data.taskVersionVo.fileSrcVo);
+    dls_file.setJSON(data.taskVersionVo.fileSrcVo);
+}
+
+//현재 버전상태 가져오기
+scwin.loadOriginalVersion = function () {
+    if (scwin.originalData) {
+        contents_editor.setHTML(scwin.originalData.content);
+        dls_allFile.setJSON(scwin.originalData.fileSrc);
+        dls_file.setJSON(scwin.originalData.fileSrc);
+        scwin.snapShot = false;
+    } else {
+        console.warn("초기 작업 상태가 없습니다");
+    }
+};
+
+//현재 버전상태 저장하기
+scwin.currentWorkSnapshot = function () {
+    return {
+        content: contents_editor.getHTML(),
+        fileSrc: dls_allFile.getAllJSON() // 또는 필요하다면 전체 fileList
+    };
+};
+
+
+//버전관리 모달창 열리는 함수
+scwin.versionPopup = function (e) {
+    const versionPopupId = "task_version";
+    const isOpen = $p.getComponentById(versionPopupId);
+
+    if (isOpen) {
+        $p.closePopup(versionPopupId);
+    } else {
+        let param = {
+            "type": "json",
+            "name": "taskInfo",
+            "data": {
+                "taskId": scwin.taskId,
+            },
+        };
+
+        // 팝업 생성 옵션 지정
+        let options = {
+            id: versionPopupId,
+            type: "wframePopup",
+            width: "330",
+            height: "500",
+            top: "230",
+            left: "1250",
+            popupName: "버전기록",
+            modal: false,
+            closeAction: "scwin.popup_closeAction",
+            customTitleBar: false,
+            dataObject: param,
+        };
+
+        // 팝업 생성
+        $p.openPopup("./versionModal.xml", options);
+    }
+
+
+};
+
+
+//팝업창 닫기
+scwin.popup_closeAction = function (argRuntimeID, argJsnInfo) {
+    let popObj = $p.getPopupWindow(argRuntimeID);
+    return true; //팝업 닫기 (반환 값이 true인 경우만 팝업이 닫힘)
+};
+
+
+//파일 버튼 생성
+scwin.fileButtonInit = function () {
+    const generateUniqueId = (prefix) => {
+        return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    };
+
+    const editorHeader = $p.getComponentById("cke_1_top");
+    const btnGroupId = generateUniqueId("btn_group");
+    const fileBtnId = generateUniqueId("btn_fileUpload");
+    const fileInputId = generateUniqueId("input_file");
+
+    // 버튼 그룹 생성
+    const btnGroup = $p.dynamicCreate(btnGroupId, "group", {
+        className: "header-btn-group",
+        style: "width:100px; height: 18px; padding-bottom: 5px;"
+    }, editorHeader);
+
+
+    // "파일 추가" 버튼 생성
+    const fileBtn = $p.dynamicCreate(fileBtnId, "button", {
+        className: "btn-upload header-btn",
+        style: "cursor: pointer;",
+        label: "파일 추가",
+    }, btnGroup);
+
+    // 숨겨진 input[type=file] 생성
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.id = fileInputId;
+    fileInput.multiple = true;
+    fileInput.style.display = "none";
+    document.body.appendChild(fileInput);
+
+    // 버튼 클릭 시 숨겨진 input 트리거
+    const btn_fileUpload = $p.getComponentById(fileBtnId);
+    btn_fileUpload.bind("onclick", function () {
+        document.getElementById(fileInputId).click();
+    });
+
+    // input change 이벤트 처리
+    document.getElementById(fileInputId).addEventListener("change", function () {
+        const files = this.files;
+    });
+
+}
+
+//task 정보 가져오기
+scwin.getTask = function (taskId, projectId) {
+    //  데이터 보내기
+    const formData = new FormData();
+    formData.append("projectId", projectId);
+
+    // 서버로 전송
+    $.ajax({
+        url: `/InsWebApp/task/${taskId}.pwkjson`,
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: async function (res) {
+            const data = res.taskUpdateVo;
+            scwin.taskInfo = data;
+
+            header_title.setValue(data.taskTitle);
+            // projectUserVo 리스트를 세팅
+
+
+            //담당자(프로젝트 사용자 값 세팅)
+            let userData = [];
+            data.projectUserVo.forEach(user => {
+                userData.push({ userId: user.userId, userName: user.userName });
+            });
+            dls_manager.setJSON(userData);
+
+            //담당자 존재하면 값 세팅
+            if (data.managerVo && data.managerVo.length > 0) {
+                let selectedUserIds = [];
+                data.managerVo.forEach(manager => {
+                    selectedUserIds.push(manager.userId);
+                });
+
+                manager_input.setValue(selectedUserIds);
+            }
+
+            data.priority ? priority_select.setValue(data.priority) : "";
+            data.tags ? tags_input.setValue(data.tags) : "";
+            data.startDate ? start_date.setValue(data.startDate) : "";
+            data.endDate ? end_date.setValue(data.endDate) : "";
+
+            contents_editor.setHTML(data.content);
+            scwin.previousHTML = data.content;
+
+
+            const fileList = data.fileSrcVo;
+
+            // HTML 에디터의 기존 내용 가져오기
+            let html = contents_editor.getHTML();
+
+            // DOM 파싱을 위한 임시 컨테이너 생성
+            const container = document.createElement("div");
+            container.innerHTML = html;
+
+            // file-data 클래스를 가진 태그들을 순서대로 가져오기
+            const fileTags = container.querySelectorAll(".file-data");
+
+            // fileList 순서와 fileTags 순서가 일치한다고 가정하고 data-num 추가
+            fileList.forEach((item, index) => {
+                item.num = ++scwin.filePageNum;
+
+                const el = fileTags[fileTags.length - 1 - index];
+
+                if (el) {
+                    el.setAttribute("data-num", item.num);
+                }
+                console.log(contents_editor.getHTML());
+            });
+
+            contents_editor.setHTML(container.innerHTML);
+            dls_allFile.setJSON(data.fileSrcVo);
+            dls_file.setJSON(data.fileSrcVo);
+
+            // setTimeout(() => {
+            //     if (contents_editor.getHTML().trim() === "") {
+            //         console.log("⚠️ 내용 사라짐. 복구 시도!");
+            //         contents_editor.setHTML(scwin.lastEditorHtml);
+            //         scwin.previousHTML = scwin.lastEditorHtml;
+            //     }
+            // }, 1500);
+
+        },
+        error: async function (err) {
+            await $c.win.alert("저장 실패! 다시 시도해주세요");
+        }
+    });
+}
+
+//ifram 부드럽게 전환
+scwin.smoothResize = function (target, newHeight) {
+    const currentHeight = parseInt(target.style.height || 0);
+    const step = (newHeight - currentHeight) / 10;
+    let frame = 0;
+
+    function animate() {
+        frame++;
+        const nextHeight = currentHeight + step * frame;
+        target.style.height = nextHeight + 'px';
+        if (frame < 2) requestAnimationFrame(animate);
+    }
+
+    animate();
+};
+
+
+
+//해당 작업에 대한 채팅 불러오기(20개씩)
+scwin.loadMoreData = function () {
+    if (scwin.isLoading || !scwin.hasMore) return;
+
+    scwin.isLoading = true;
+
+    const param = {
+        page: scwin.currentPage
+    };
+    dma_getComment.setJSON(param);
+    sbm_comment_get.action = `/InsWebApp/comment/${scwin.taskId}.pwkjson`;
+    $c.sbm.execute(sbm_comment_get);
+};
+
+//소켓 초기화
+scwin.initializeChatWebSocket = function () {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.hostname;
+    const port = window.location.port || (protocol === 'wss:' ? '443' : '80');
+
+    // 여러 WebSocket URL 시도
+    const wsUrls = [
+        `${protocol}//${host}:${port}/InsWebApp/chat`,
+        `ws://localhost:9093/InsWebApp/chat`,
+        `wss://localhost:19443/InsWebApp/chat`
+    ];
+
+    let wsUrl = wsUrls[0];
+    console.log("WebSocket 연결 시도:", wsUrl);
+
+    try {
+        chatSocket = new WebSocket(wsUrl);
+
+        chatSocket.onopen = function () {
+            console.log("✅ WebSocket 연결 성공");
+
+            // 채널 참가
+            const joinMessage = {
+                type: 'join',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName
+            };
+            chatSocket.send(JSON.stringify(joinMessage));
+
+            // 채팅 히스토리 요청
+            setTimeout(() => {
+                const historyMessage = {
+                    type: 'history',
+                    channelName: currentUser.channelName,
+                    afterTimestamp: 0
+                };
+                chatSocket.send(JSON.stringify(historyMessage));
+                console.log("채팅 히스토리 요청 전송");
+            }, 1000);
+        };
+
+        chatSocket.onmessage = function (event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log("WebSocket 메시지 수신:", data.type, data);
+
+                switch (data.type) {
+                    // 채팅 메시지 처리 (동일)
+                    case 'message':
+                        if (data.userId !== currentUser.userId) {
+
+                            console.log("다른 사용자 메시지:", data.userName, "->", data.message);
+                            console.log(data);
+                            const todayText = scwin.formatDate(new Date());
+
+                            // chatDate에 오늘 날짜가 없으면 추가
+                            if (!scwin.chatDate.has(todayText)) {
+                                const dateComp = scwin.addChatDate(todayText);
+                                scwin.chatDate.add(todayText);
+                            }
+
+                            scwin.addChatMessage(data.userName, data.message, data.createdAt, false, data.userImage, data.commentId);
+                        } else {
+                            console.log("내 메시지 서버 에코 무시:", data.message);
+                        }
+                        break;
+
+                    case 'history':
+                        if (data.messages && data.messages.length > 0) {
+                            console.log("채팅 히스토리 로드:", data.messages.length, "개");
+
+                            //dlt_chatMessages.removeAll();
+                            //addedMessageIds.clear();
+
+                            // data.messages.forEach(msg => {
+                            //     const isOwn = msg.userId === currentUser.userId;
+                            //     const msgId = msg.messageId || `history_${msg.userId}_${msg.timestamp}`;
+                            //     scwin.addChatMessage(msg.userName, msg.message, isOwn, msgId);
+                            // });
+
+                            //scwin.addChatMessage("시스템", `이전 채팅 ${data.messages.length}개를 불러왔습니다.`, false);
+                        } else {
+                            console.log("채팅 히스토리 없음");
+                        }
+                        break;
+
+                    case 'existing-users':
+                        // 기존 사용자들과 webRTC 연결 시작 (화상통화 중일 때만)
+                        console.log("기존 사용자들:", data.users, "내 화상통화 상태:", isJoined);
+
+                        // 기존 사용자 정보 저장
+                        if (data.userInfos) {
+                            data.userInfos.forEach(user => {
+                                remoteUserInfo.set(user.userId, user);
+                                console.log("기존 사용자 정보 저장:", user.userName, user.userId);
+                            });
+                        }
+
+                        // P2P 관련 코드 제거됨 - mediasoup에서 자동 처리
+                        break;
+
+                    case 'user-joined':
+                        //scwin.addChatMessage("시스템", `${data.userName}님이 참가했습니다.`, false);
+
+                        // 새 사용자 정보 저장
+                        if (data.userId && data.userName) {
+                            remoteUserInfo.set(data.userId, {
+                                userId: data.userId,
+                                userName: data.userName
+                            });
+                            console.log("새 사용자 정보 저장:", data.userName, data.userId);
+                        }
+
+                        // P2P 관련 코드 제거됨 - mediasoup에서 자동 처리
+                        break;
+
+                    case 'user-left':
+                        //scwin.addChatMessage("시스템", `${data.userName}님이 나갔습니다.`, false);
+
+                        if (data.userId) {
+                            remoteUserInfo.delete(data.userId);
+                            console.log("사용자 정보 제거:", data.userName, data.userId);
+                        }
+
+                        scwin.removeRemoteUser(data.userId);
+                        break;
+
+                    // P2P WebRTC 메시지 처리 제거됨 - mediasoup SFU 방식으로 대체됨
+
+                    case 'notification':
+                        //scwin.addChatMessage("시스템", data.message, false);
+                        break;
+                    case 'delete-message':
+                        console.log("삭제 메시지 수신:", data.messageId);
+
+                        const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+                        const children = group.getChildren ? group.getChildren() : [];
+                        // console.log("group: " + group);
+                        // console.log("children: " + children);
+
+
+                        for (let i = 0; i < children.length; i++) {
+                            const comp = children[i];
+                            const compId = comp?.id || "undefined";
+                            const userData = comp?.userData || "없음";
+                            const localMessageId = userData?.commentId;
+                            const match = String(localMessageId) === String(data.commentId);
+
+                            // console.log(`[${i}] 컴포넌트 ID: ${compId}`);
+                            // console.log(` -> userData:`, userData);
+                            // console.log(` -> localMessageId: ${localMessageId} vs 삭제 대상: ${data.commentId}`);
+                            // console.log(` -> 일치 여부: ${match}`);
+                            if (match) {
+                                // console.log(`✅ 매칭 성공 → 컴포넌트 제거: ${compId}`);
+                                scwin.deleteChat(comp);
+                                break;
+                            }
+                        }
+                        break;
+
+                    default:
+                        console.warn("알 수 없는 메시지 타입:", data.type, data);
+                        break;
+                }
+            } catch (error) {
+                console.error("❌ 메시지 처리 오류:", error);
+                //scwin.addChatMessage("시스템", "❌ 메시지 처리 중 오류 발생", false);
+            }
+        };
+
+        chatSocket.onclose = function (event) {
+            console.log("❌ WebSocket 연결 종료:", event.code, event.reason);
+
+            if (event.code !== 1000) {
+                //scwin.addChatMessage("시스템", "⚠️ 서버와의 연결이 끊어졌습니다. 재연결 시도 중...", false);
+
+                setTimeout(() => {
+                    console.log("WebSocket 재연결 시도...");
+                    scwin.initializeChatWebSocket();
+                }, 5000);
+            }
+        };
+
+        chatSocket.onerror = function (error) {
+            console.error("❌ WebSocket 오류:", error);
+            //scwin.addChatMessage("시스템", "❌ 서버 연결 오류 발생", false);
+        };
+
+    } catch (error) {
+        console.error("❌ WebSocket 초기화 실패:", error);
+        //scwin.addChatMessage("시스템", "❌ WebSocket 초기화 실패", false);
+    }
+};
+
+//엔터 누르면 로그인 버튼 클릭
+scwin.input_onkeyup = function (e) {
+    if (e.keyCode === 13) {
+        comment_send_button.addClass("active")
+
+        // 버튼 클릭
+        comment_send_button.click();
+
+        // 짧은 시간 후 active 스타일 제거
+        setTimeout(() => {
+            comment_send_button.removeClass("active");
+        }, 150); // 150ms 정도면 충분
+    }
+};
+
+
+//채팅 전송 버튼 눌렀을 때
+scwin.comment_send_button_onclick = function () {
+    const message = comment_input.getValue().trim();
+    if (!message || !chatSocket || chatSocket.readyState !== 1) return;
+
+    const param = {
+        taskId: scwin.taskId,
+        userId: currentUser.userId,
+        message: message
+    }
+    dma_comment.setJSON(param);
+
+    $c.sbm.execute(sbm_comment_create);
+    comment_input.setValue("");
+};
+
+
+//화면에 댓글 추가
+scwin.addChatMessage = function (userName, message, time = "", isMine = false, image, commentId = 0, insertBeforeComp) {
+    const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+    const generateUniqueId = (prefix) => {
+        return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    };
+    const wrapperId = generateUniqueId("chat_wrapper");
+    const profileId = generateUniqueId("chat_profile");
+    const nameId = generateUniqueId("chat_name");
+    const textId = generateUniqueId("chat_text");
+    const timeId = generateUniqueId("chat_time");
+
+    const messageStyle = `
+        font-size: 15px;
+        word-break: break-word;
+        padding:3px;
+        box-sizing: border-box;
+    `;
+
+
+    const wrapperClass = `comment-wrapper ${isMine ? "mine" : "other"}`;
+
+    const wrapper = $p.dynamicCreate(wrapperId, "span", {
+        className: wrapperClass,
+
+    }, group);
+
+    wrapper.userData = { commentId: commentId };
+    if (insertBeforeComp?.render && wrapper?.render) {
+        group.render.insertBefore(wrapper.render, insertBeforeComp.render);
+    }
+
+
+    const headerRow = $p.dynamicCreate(wrapperId + "_header", "span", {
+        className: "comment-header"
+    }, wrapper);
+
+    const leftGroupId = wrapperId + "_left";
+    const leftGroup = $p.dynamicCreate(leftGroupId, "span", {
+        className: "comment-left"
+    }, headerRow);
+
+    $p.dynamicCreate(profileId, "image", {
+        src: image && image.trim() !== "" ? `${image}` : `${scwin.defaultImage}`,
+        className: "comment-profile"
+    }, leftGroup);
+
+    $p.dynamicCreate(nameId, "span", {
+        label: userName,
+        className: "comment-name"
+    }, leftGroup);
+
+    if (isMine) {
+        const deleteIconId = wrapperId + "_delete";
+        $p.dynamicCreate(deleteIconId, "image", {
+            src: "/InsWebApp/images/trash-solid.svg",
+            className: "comment-delete-button",
+        }, headerRow);
+
+        const deleteIcon = $p.getComponentById(deleteIconId);
+
+        if (deleteIcon) {
+            deleteIcon.bind("onclick", function (e) {
+                const param = { commentId };
+                const chat = $p.getComponentById(wrapperId);
+
+                //만약 이전에 컴포넌트가 날짜라면 함께 삭제하기
+                dma_comment.setJSON(param);
+                scwin.deleteChat(chat);
+                $c.sbm.execute(sbm_comment_delete);
+
+                const payload = {
+                    type: "delete-message",
+                    commentId: commentId,
+                    userId: currentUser.userId,
+                    userName: currentUser.userName,
+                    userImage: currentUser.userImage,
+                    channelName: currentUser.channelName
+                };
+                chatSocket.send(JSON.stringify(payload));
+
+            });
+        }
+    }
+
+    $p.dynamicCreate(textId, "span", {
+        label: message,
+        style: messageStyle
+    }, wrapper);
+
+    $p.dynamicCreate(timeId, "span", {
+        label: time,
+        className: "comment-time"
+    }, wrapper);
+
+    return wrapper;
+
+};
+
+//삭제할 때 날짜와 함께 삭제
+scwin.deleteChat = function (chat) {
+    const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+
+    // 그룹 내부의 자식 컴포넌트 목록 가져오기
+    const children = group.getChildren();
+
+    // 현재 삭제 대상의 인덱스 찾기
+    const idx = children.indexOf(chat);
+
+    if (idx === -1) {
+        console.warn("삭제 대상이 그룹 안에 존재하지 않습니다.");
+        return;
+    }
+
+    if (idx >= 0) {
+        const prevComp = children[idx + 1];
+        const isDateComp = prevComp?.options?.className === "comment-date";
+        const labelText = prevComp?.render?.innerText;
+        console.log(children);
+
+        if (isDateComp) {
+            prevComp.remove();
+            scwin.chatDate.delete(labelText);
+        }
+    }
+    chat.remove();
+};
+
+
+
+//화면에 날짜 표시
+scwin.addChatDate = function (dateText, insertBeforeComp) {
+    const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+    const wrapperId = "chat_date_" + Date.now();
+
+    const dateWrapper = $p.dynamicCreate(wrapperId, "span", {
+        label: dateText,
+        className: "comment-date"
+    }, group);
+
+    if (insertBeforeComp?.render && dateWrapper?.render) {
+        group.render.insertBefore(dateWrapper.render, insertBeforeComp.render);
+    }
+    return dateWrapper;
+};
+
+
+
+//댓글 조회 성공(10개씩)
+scwin.sbm_comment_get_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    const commentList = responseData.elData?.commentVoList ?? [];
+    const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+    let insertBeforeTarget = group.childControlList?.length > 0 ? group.childControlList[group.childControlList.length - 1] : null;
+
+    //날짜 비교후에 이전날짜와 같다면 삭제
+    if (insertBeforeTarget?.options) {
+        const currentDate = insertBeforeTarget?.options.label
+        const nextDate = scwin.formatDate(commentList[0].createdAt);
+        if (currentDate === nextDate) {
+            insertBeforeTarget.remove(); // 기존 날짜 컴포넌트 삭제
+            insertBeforeTarget = group.childControlList?.length > 0
+                ? group.childControlList[group.childControlList.length - 1]
+                : null;
+        }
+    }
+
+    //반복문 돌면서 채팅 내용 삽입
+    for (let i = 0; i < commentList.length; i++) {
+        const comment = commentList[i];
+        const nextComment = commentList[i + 1];
+
+        const currentDate = scwin.formatDate(comment.createdAt);
+        const nextDate = nextComment ? scwin.formatDate(nextComment.createdAt) : null;
+        const isMine = (comment.userId === currentUser.userId);
+
+        if (commentList.length === 0) {
+            scwin.hasMore = false; // 더 이상 불러올 댓글 없음
+            scwin.isLoading = false;
+            return;
+        }
+
+        // 댓글 삽입
+        const commentComp = scwin.addChatMessage(
+            comment.userName,
+            comment.message,
+            scwin.formatTime(comment.createdAt),
+            isMine,
+            comment.userImage,
+            comment.commentId,
+            insertBeforeTarget
+        );
+        insertBeforeTarget = commentComp;
+
+        // 다음 댓글이 없거나 날짜가 다르면 → 지금 날짜를 현재 댓글 앞에 삽입
+        if (currentDate !== nextDate || i === commentList.length - 1) {
+            const dateComp = scwin.addChatDate(currentDate, insertBeforeTarget);
+            insertBeforeTarget = dateComp;
+
+            scwin.chatDate.add(currentDate);
+        }
+    }
+
+    //처음 페이지일 경우에는 스크롤 아래로
+    if (scwin.currentPage === 1) {
+        setTimeout(() => {
+            const scrollArea = $p.getComponentById("comment_main_group");
+            const el = scrollArea.render;
+            el.scrollTop = el.scrollHeight;
+        }, 30);
+    } else {
+        setTimeout(() => {
+            const scrollArea = $p.getComponentById("comment_main_group");
+            const el = scrollArea.render;
+            el.scrollTop = 300;
+        }, 30);
+    }
+
+    scwin.currentPage++; // 다음 호출 시 페이지 증가
+    scwin.isLoading = false;
+
+};
+
+
+
+//댓글 조회 실패
+scwin.sbm_comment_get_submiterror = function (e) {
+    const responseData = e.responseJSON;
+    console.log(responseData);
+};
+
+//댓글 삭제 완료
+scwin.sbm_comment_delete_submitdone = function (e) {
+
+};
+
+//댓글 삭제 실패
+scwin.sbm_comment_delete_submiterror = function (e) {
+
+};
+
+//댓글 생성 완료
+scwin.sbm_comment_create_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    const elData = responseData.elData;
+    const todayText = scwin.formatDate(new Date());
+
+    // chatDate에 오늘 날짜가 없으면 추가
+    if (!scwin.chatDate.has(todayText)) {
+        const dateComp = scwin.addChatDate(todayText);
+        scwin.chatDate.add(todayText);
+    }
+    scwin.addChatMessage(currentUser.userName, elData.message, scwin.formatTime(elData.createdAt), true, currentUser.userImage, elData.commentId);
+
+
+    const payload = {
+        type: "message",
+        userId: currentUser.userId,
+        userName: currentUser.userName,
+        userImage: currentUser.userImage,
+        channelName: currentUser.channelName,
+        createdAt: scwin.formatTime(elData.createdAt),
+        message: elData.message,
+        commentId: elData.commentId
+    };
+
+
+    chatSocket.send(JSON.stringify(payload));
+};
+
+//댓글 생성 실패
+scwin.sbm_comment_create_submiterror = function (e) {
+
+};
+
+
+
+// "2025-07-07 06:03:39.0" → "2025년 07월 07일"
+scwin.formatDate = function (datetimeStr) {
+    const date = new Date(datetimeStr);
+    return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(date.getDate()).padStart(2, "0")}일`;
+};
+
+// "2025-07-07 06:03:39.0" → "오전 6:03"
+scwin.formatTime = function (datetimeStr) {
+    const date = new Date(datetimeStr);
+    let hour = date.getHours();
+    const minute = String(date.getMinutes()).padStart(2, "0");
+    const isAM = hour < 12;
+    if (hour > 12) hour -= 12;
+    if (hour === 0) hour = 12;
+    return `${isAM ? '오전' : '오후'} ${hour}:${minute}`;
+};
+
+
+scwin.saveTask = function () {
+    //  데이터 보내기
+    const formData = new FormData();
+
+    const taskPayload = {
+        taskId: scwin.taskInfo.taskId,
+        boardId: scwin.taskInfo.boardId,
+        projectUserId: scwin.taskInfo.projectUserId,
+        projectRepoId: scwin.taskInfo.projectRepoId,
+        taskTitle: header_title.getValue(),
+        priority: priority_select.getValue(),
+        startDate: start_date.getValue(),
+        endDate: end_date.getValue(),
+        tags: tags_input.getValue(),
+        managerVo: manager_input.getValue().split(" ").filter(userId => userId.trim() !== "").map(userId => ({
+            managerId: "",
+            userId,
+            taskId: scwin.taskInfo.taskId
+        })),
+        content: contents_editor.getHTML()
+    };
+
+    formData.append("taskJson", JSON.stringify(taskPayload));
+
+    const allFiles = dls_allFile.getAllJSON();
+    const filteredFiles = allFiles.map(file => ({
+        fileName: file.fileName,
+        filePath: file.filePath,
+        fileId: file.fileId,
+        taskVersionId: file.taskVersionId
+    }));
+
+    formData.append("fileUpload", JSON.stringify(filteredFiles));
+
+    allFiles.forEach((file) => {
+        if (file.filePath === undefined || file.filePath === null || file.filePath === "") {
+            const blob = scwin.base64ToBlob(file.data, file.type);
+            formData.append("files", blob, file.fileName);
+        } else {
+            const emptyBlob = new Blob([""], { type: file.type || "application/octet-stream" });
+            formData.append("files", emptyBlob, file.fileName);
+        }
+    });
+
+    // 서버로 전송
+    $.ajax({
+        url: "/InsWebApp/task/update.pwkjson",
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: async function (res) {
+            await $c.win.alert("업무 정보가 저장되었습니다");
+        },
+        error: async function (err) {
+            await $c.win.alert("저장 실패! 다시 시도해주세요");
+        }
+    });
+}
+
+scwin.base64ToBlob = function (base64Data, contentType) {
+    const byteString = atob(base64Data.split(',')[1]); // 헤더 제거
+    const byteArray = new Uint8Array([...byteString].map(char => char.charCodeAt(0)));
+    return new Blob([byteArray], { type: contentType });
+}
+
+
+
+scwin.sbm_task_get_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    const taskVo = responseData.taskVo;
+};
+
+scwin.sbm_task_get_submiterror = function (e) {
+    console.log(e.error);
+};
+
+
+scwin.file_add_onclick = function (e) {
+    $p.$("#fileInput").click();
+    $p.$("#fileInput").off("change");
+    $p.$("#fileInput").on("change", scwin.fileInput_change);
+};
+
+scwin.file_remove_onclick = function (e) {
+    let chkIdxArr = grd.getCheckedIndex("CHK");
+    const size = dls_allFile.getRowCount();
+    console.log(size);
+    if (chkIdxArr.length === 0)
+        return;
+
+    let checkedItemNums = [];
+
+    for (let i = 0; i < chkIdxArr.length; i++) {
+        let rowData = dls_file.getRowJSON(chkIdxArr[i]);
+        if (rowData && rowData.num) {
+            checkedItemNums.push(rowData.num);
+        }
+    }
+
+    if (checkedItemNums.length === 0) {
+        alert("선택된 항목에서 유효한 고유 식별자(num)를 찾을 수 없습니다.");
+        return;
+    }
+
+    scwin.removeFileGrid(checkedItemNums, size);
+
+};
+
+scwin.removeFileGrid = function (checkedItemNums, size) {
+    let data = dls_allFile.getAllJSON();
+    const filteredData = data.filter(row => !checkedItemNums.includes(row.num));
+    dls_allFile.setJSON(filteredData);
+
+    const existingList = dls_file.getAllJSON(); // 기존 데이터 추출
+    const paramList = [...existingList]; // 기존 데이터 복사
+    pageList.setCount(paramList.length === 0 ? 1 : (paramList.length / 5) + 1);
+
+    // ✅ 총 페이지 수 계산
+    const totalPages = Math.max(1, Math.ceil(dls_allFile.getRowCount() / 5));
+    pageList.setCount(totalPages);
+
+    // ✅ 현재 페이지가 초과됐으면 마지막 페이지로 보정
+    if (scwin.filePageIndex > totalPages) {
+        scwin.filePageIndex = totalPages;
+    } else if (totalPages === 1) {
+        scwin.filePageIndex = 1;
+    }
+
+    pageList.setSelectedIndex(scwin.filePageIndex);
+
+    // ✅ 페이지에 맞는 데이터 추출
+    const startIndex = (scwin.filePageIndex - 1) * 5;
+    const endIndex = startIndex + 5;
+
+    const fullList = dls_allFile.getAllJSON();
+    const currentPageItems = fullList.slice(startIndex, endIndex);
+
+    // ✅ 화면 표시용 데이터 갱신
+    dls_file.setJSON(currentPageItems);
+
+    scwin.removeFileHtml(checkedItemNums, size);
+}
+
+
+
+
+scwin.removeFileHtml = function (numList, size) {
+    if (!Array.isArray(numList) || numList.length === 0) return;
+
+    let html = contents_editor.getHTML();
+    const container = document.createElement("div");
+    container.innerHTML = html;
+
+    numList.forEach(num => {
+        const target = container.querySelector(`.file-data[data-num="${num}"]`);
+        console.log(size - num);
+
+        if (target) {
+            const before = target.previousElementSibling;
+            const after = target.nextElementSibling;
+
+            if (before && before.tagName === "P" && before.innerHTML.trim() === "<br>") {
+                before.remove();
+            }
+            if (after && after.tagName === "P" && after.innerHTML.trim() === "<br>") {
+                after.remove();
+            }
+
+            target.remove();
+        }
+    });
+
+    contents_editor.setHTML(container.innerHTML);
+};
+
+
+scwin.fileInput_change = function (e) {
+    const fileInput = $p.$("#fileInput").get(0);
+    const files = fileInput.files;
+
+    if (!files || files.length === 0) return;
+
+    const dsAll = $p.getComponentById("dls_allFile");
+    const allList = dsAll.getAllJSON(); // 기존 전체 데이터
+    const newList = [...allList]; // 복사해서 새로운 배열 만들기
+
+    let filesReadCount = 0;
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+
+        reader.onload = function (event) {
+            const fileDataUrl = event.target.result;
+
+            // HTML 에디터에 삽입
+            scwin.addFileHtml(file.type, file.name, fileDataUrl, scwin.filePageNum + 1);
+
+            // 최근순 추가: 앞에 삽입
+            newList.unshift({
+                num: ++scwin.filePageNum,
+                fileName: file.name,
+                size: file.size,
+                type: file.type,
+                data: event.target.result
+            });
+
+            filesReadCount++;
+
+            // 파일 모두 읽은 후 전체 반영 및 페이지 설정
+            if (filesReadCount === files.length) {
+                dsAll.setJSON(newList); // 전체 저장
+
+                // 총 페이지 계산
+                const totalCount = newList.length;
+                const pageSize = 5;
+                const pageCount = Math.ceil(totalCount / pageSize);
+
+                const pageList = $p.getComponentById("pageList");
+                if (pageList) pageList.setCount(pageCount);
+
+                const dsView = $p.getComponentById("dls_file");
+                const currentPage = pageList.getCurrentPage ? pageList.getCurrentPage() : 1;
+                const start = (currentPage - 1) * pageSize;
+                const end = start + pageSize;
+                const viewList = newList.slice(start, end);
+
+                dsView.setJSON(viewList);
+                console.log(dls_allFile.getAllJSON());
+            }
+        };
+
+        reader.readAsDataURL(file);
+
+    }
+};
+
+
+scwin.addFileHtml = function (type, name, url, num) {
+    const html = contents_editor.getHTML();
+    let insertHTML = "";
+
+    if (type.startsWith("image/")) {
+        // 이미지 직접 삽입
+        insertHTML = `<img class="file-data" data-num="${num}" src="${url}" alt="${name}" style="max-width:100%; margin: 10px 0;" />`;
+    } else {
+        // 기타 파일은 버튼 또는 다운로드 링크로 처리
+        const ext = name.split(".").pop().toLowerCase();
+
+        switch (ext) {
+            case "pdf":
+                icon = "/InsWebApp/images/fileIcon/pdf.svg";
+                break;
+            case "hwp":
+            case "hwpx":
+                icon = "/InsWebApp/images/fileIcon/hwp.svg";
+                break;
+            case "xls":
+            case "xlsx":
+            case "csv":
+                icon = "/InsWebApp/images/fileIcon/xls.svg";
+                break;
+            case "doc":
+            case "docx":
+                icon = "/InsWebApp/images/fileIcon/doc.svg";
+                break;
+            case "zip":
+            case "rar":
+            case "7z":
+                icon = "/InsWebApp/images/fileIcon/zip.svg";
+                break;
+            case "txt":
+            case "md":
+            case "log":
+                icon = "/InsWebApp/images/fileIcon/txt.svg";
+                break;
+            case "html":
+            case "htm":
+                icon = "/InsWebApp/images/fileIcon/html.svg";
+                break;
+            case "css":
+                icon = "/InsWebApp/images/fileIcon/css.svg";
+                break;
+            case "js":
+                icon = "/InsWebApp/images/fileIcon/js.svg";
+                break;
+            case "svg":
+                icon = "/InsWebApp/images/fileIcon/svg.svg";
+                break;
+            case "ppt":
+            case "pptx":
+                icon = "/InsWebApp/images/fileIcon/ppt.svg";
+                break;
+            case "json":
+                icon = "/InsWebApp/images/fileIcon/json.svg";
+                break;
+            case "yml":
+            case "yaml":
+                icon = "/InsWebApp/images/fileIcon/yml.svg";
+                break;
+            case "sql":
+                icon = "/InsWebApp/images/fileIcon/sql.svg";
+                break;
+            case "ttf":
+            case "otf":
+            case "woff":
+            case "woff2":
+                icon = "/InsWebApp/images/fileIcon/ttf.svg";
+                break;
+            default:
+                icon = "/InsWebApp/images/fileIcon/etc.svg";
+                break;
+        }
+
+
+
+        insertHTML = `
+            <p><br></p>
+            <a class="file-data" data-num="${num}" href="${url}" target="_blank" contenteditable="false"
+            style="display: flex; align-items: center; gap: 10px;
+                    max-width: 200px; min-width: 100px; padding: 10px;
+                    background-color:#fff1d3; border-radius: 6px;
+                    border: 1px solid #D9D9D9;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+                    text-decoration: none;">
+                <img src="${icon}" alt="${type}" style="width: 50px; height: 50px; border:none; margin:0; padding:0; outline:none;" />
+                <span style="font-size: 15px; color: black;">${name}</span>
+            </a>
+            <p><br></p>
+        `;
+
+    }
+
+    contents_editor.setHTML(html + insertHTML);
+};
+
+
+
+scwin.pageList_onclick = function (index) {
+    const dsAll = $p.getComponentById("dls_allFile");
+    const dsView = $p.getComponentById("dls_file");
+
+    const allList = dsAll.getAllJSON();
+    const pageSize = 5; // 페이지당 보여줄 파일 수
+    const start = (index - 1) * pageSize;
+    const end = start + pageSize;
+
+    const pageData = allList.slice(start, end);
+    dsView.setJSON(pageData);
+    scwin.filePageIndex = index;
+};
+
+scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
+    if (columnId === 'download') {
+        let row = dls_file.getRowJSON(rowIndex);
+        let targetUrl = row.filePath;
+        let fileNanme = row.fileName;
+        console.log(row);
+
+        fetch(targetUrl)
+            .then(res => res.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = fileNanme;
+                a.click();
+                URL.revokeObjectURL(url);
+            })
+            .catch(err => console.error("❌ 다운로드 실패:", err));
+
+    } else {
+
+    }
 };
 ]]></script>
+		<style type="text/css"><![CDATA[]]>
+		</style>
 	</head>
 	<body ev:onpageload="scwin.onpageload">
 
+		<xf:group class="sub_contents modal-container" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true"
+			meta_snippetName="0_01 페이지시작" style="">
+			<xf:group style="" id="" class="contents-group">
+				<xf:group style="" id="" class="contents-header-group">
+					<xf:group style="" id="" class="header-title">
+						<xf:input id="header_title" style="" class="header-title-text  text-left"></xf:input>
+					</xf:group>
+					<xf:group style="" id="" class="header-input">
+						<xf:group style="" id="" class="header-input-box">
+							<w2:textbox id="" label="작성자" style="" class="header-input-text input-text text-bold"></w2:textbox>
+							<w2:textbox id="name_input" label="다인" style="width:148px; height:21px;" class="text-left input-text"></w2:textbox>
+						</xf:group>
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox id="" label="담당자" style="" class="header-input-text input-text text-bold"></w2:textbox>
+							<xf:checkcombobox id="manager_input" chooseOption="" displayMode="label" style="width:148px; height:21px; "
+								submenuSize="auto" allOption="" disabled="false" direction="auto" ref="">
+								<xf:choices>
+									<xf:itemset nodeset="data:dls_manager">
+										<xf:label ref="userName"></xf:label>
+										<xf:value ref="userId"></xf:value>
+									</xf:itemset>
+								</xf:choices>
+							</xf:checkcombobox>
+
+						</xf:group>
+
+					</xf:group>
+					<xf:group class="header-input" id="" style="">
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox class="header-input-text input-text text-bold" id="" label="태그" style=""></w2:textbox>
+
+							<xf:select1 id="tags_input" chooseOption="true" style="width: 148px;height: 21px;" submenuSize="auto" allOption=""
+								disabled="false" direction="auto" appearance="minimal" disabledClass="w2selectbox_disabled" ref="" chooseOptionLabel=""
+								class="input-text">
+								<xf:choices>
+									<xf:item>
+										<xf:label><![CDATA[기획]]></xf:label>
+										<xf:value><![CDATA[plan]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[개발]]></xf:label>
+										<xf:value><![CDATA[dev]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[테스트]]></xf:label>
+										<xf:value><![CDATA[test]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[문서화]]></xf:label>
+										<xf:value><![CDATA[doc]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[분석]]></xf:label>
+										<xf:value><![CDATA[analytics]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[협업]]></xf:label>
+										<xf:value><![CDATA[collabo]]></xf:value>
+									</xf:item>
+								</xf:choices>
+							</xf:select1>
+
+						</xf:group>
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox class="header-input-text input-text text-bold" id="" label="중요도" style=""></w2:textbox>
+							<xf:select1 allOption="" appearance="minimal" chooseOption="true" chooseOptionLabel="" class="input-text" direction="auto"
+								disabled="false" disabledClass="w2selectbox_disabled" id="priority_select" ref="" style="width: 148px;height: 21px;font-size:26em;"
+								submenuSize="auto">
+								<xf:choices>
+									<xf:item>
+										<xf:label><![CDATA[상]]></xf:label>
+										<xf:value><![CDATA[high]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[중]]></xf:label>
+										<xf:value><![CDATA[medium]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[하]]></xf:label>
+										<xf:value><![CDATA[low]]></xf:value>
+									</xf:item>
+								</xf:choices>
+							</xf:select1>
+						</xf:group>
+					</xf:group>
+					<xf:group class="header-input" id="" style="">
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox class="header-input-text input-text text-bold" id="" label="시작일" style=""></w2:textbox>
+							<w2:inputCalendar id="start_date" style="width:148px; height:21px;" calendarValueType="yearMonthDate"></w2:inputCalendar>
+						</xf:group>
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox class="header-input-text input-text text-bold" id="" label="종료일" style=""></w2:textbox>
+							<w2:inputCalendar calendarValueType="yearMonthDate" id="end_date" style="width:148px; height:21px;"></w2:inputCalendar>
+						</xf:group>
+					</xf:group>
+				</xf:group>
+				<xf:group style="" id="" class="contents-main-group">
+					<xf:group style="" id="" class="contents-text-group">
+
+						<w2:editor style="" id="contents_editor"></w2:editor>
+					</xf:group>
+					<xf:group style="" id="" class="contents-file-group">
+						<xf:group meta_snippetCategory="02_타이틀" meta_snippetName="2_02 서브타이틀(h3)" meta_snippetKeyComponent="true" style="" id=""
+							class="titbox">
+							<w2:textbox tagname="h3" style="" id="" label="파일" class=""></w2:textbox>
+							<xf:group style="" id="" class="rt">
+								<xf:trigger style="" id="file_add" type="button" class="btn_cm  row_add" ev:onclick="scwin.file_add_onclick">
+									<xf:label><![CDATA[파일추가]]></xf:label>
+								</xf:trigger>
+								<input style="display:none;" id="fileInput" type="file" class="" onchange="scwin.fileInput_change" multiple=""></input>
+
+								<xf:trigger style="" id="file_remove" type="button" class="btn_cm  row_del" ev:onclick="scwin.file_remove_onclick">
+									<xf:label><![CDATA[파일삭제]]></xf:label>
+								</xf:trigger>
+							</xf:group>
+						</xf:group>
+						<xf:group adaptiveThreshold="" class="gvwbox" id="" meta_snippetCategory="06_그리드" meta_snippetKeyComponent="true"
+							meta_snippetName="6_01 그리드" style="height:237px;overflow:hidden;">
+							<w2:gridView autoFit="allColumn" checkReadOnlyOnPasteEnable="" class="gvw" dataList="data:dls_file"
+								focusMode="row" id="grd" scrollByColumn="false" scrollByColumnAdaptive="false" style="height:253px;overflow:hidden;"
+								rowNumHeaderValue="순번" rowNumVisible="false" disabledScrollHidden="false" fastScroll="true" visibleRowNum="5" ev:oncellclick="scwin.grd_oncellclick">
+								<w2:caption id="caption1" style="" value="this is a grid caption."></w2:caption>
+								<w2:header id="header2" style="">
+									<w2:row id="row3" style="">
+										<w2:column blockSelect="false" displayMode="label" id="column11" inputType="text"
+											removeBorderStyle="false" value="이름" width="70">
+										</w2:column>
+										<w2:column width="70" inputType="text" style="" id="download" value="다운로드" displayMode="label"></w2:column>
+										<w2:column width="70" inputType="checkbox" style="" id="column21" value="내용" displayMode="label">
+										</w2:column>
+									</w2:row>
+								</w2:header>
+								<w2:gBody id="gBody2" style="">
+									<w2:row id="row4" style="">
+										<w2:column blockSelect="false" displayMode="label" id="fileName" inputType="text"
+											removeBorderStyle="false" width="70" value="">
+										</w2:column>
+										<w2:column width="70" inputType="button" style="" id="download" value="" displayMode="label" class="download-button"></w2:column>
+										<w2:column width="70" inputType="checkbox" style="" id="CHK" value="" displayMode="label"></w2:column>
+									</w2:row>
+								</w2:gBody>
+							</w2:gridView>
+						</xf:group>
+						<w2:pageList pageSize="10" displayButtonType="display" id="pageList" displayFormat="#" style="height: 21px;" ev:onclick="scwin.pageList_onclick"></w2:pageList>
+					</xf:group>
+				</xf:group>
+			</xf:group>
+			<xf:group style="" id="" class="comment-group">
+				<w2:textbox id="" label="댓글" style="" class="comment-text"></w2:textbox>
+				<xf:group style="" id="comment_main_group" class="comment-main-group">
+					<!-- <xf:group style="height:120px;background-color: green;display: flex;align-items: center;padding: 0 30px;" id="">
+						<xf:group style="min-width: 40%;max-width: 60%;height: 90px;background: pink;border-radius: 15px;" id="">
+						<xf:group style="width:100%;height:25%;background: blue" id="">
+						<xf:trigger
+						style="width: 30px;height: 30px;border-radius: 50%;background-size: cover;background-position: center;background-image: url('https://github.com/dorazi0423/test/blob/main/group1.png?raw=true');"
+						id="" type="button">
+						<xf:label></xf:label>
+						</xf:trigger>
+						</xf:group>
+						<xf:group id="" style="width:100%;height:50%;">
+						<w2:textbox id="" label="집가고 싶다니깐 정말로 하늘로 날아가고 싶은 집가고 싶다니깐 정말로 하늘로 날아가고 싶은 집가고 싶다니깐 정말로 하늘로 날아가고 싶은 집가고 싶다니깐 정말로 하늘로 날아가고 싶은 집가고 싶다니깐 정말로 
+						하늘로 날아가고 싶은 집가고 싶다니깐 정말로 하늘로 날아가고 싶은" style="width: 100%;height: 100%;"></w2:textbox>
+						</xf:group>
+						<xf:group id="" style="width:100%;height:25%;background-color: yellow"></xf:group>
+						</xf:group>
+						</xf:group> -->
+				</xf:group>
+				<xf:group style="" id="" class="comment-input-group">
+					<xf:group style="" id="" class="comment-box">
+						<xf:input style="" id="comment_input" class="comment-input" ev:onkeyup="scwin.input_onkeyup"></xf:input>
+						<xf:trigger style="" id="comment_send_button" type="button" class="comment-input-button"
+							ev:onclick="scwin.comment_send_button_onclick">
+							<xf:label><![CDATA[]]>
+							</xf:label>
+						</xf:trigger>
+					</xf:group>
+				</xf:group>
+			</xf:group>
+		</xf:group>
 	</body>
 </html>

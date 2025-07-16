@@ -2,6 +2,7 @@ package com.demo.proworks.task.service;
 
 import java.util.List;
 
+import com.demo.proworks.task.vo.TaskUpdateVo;
 import com.demo.proworks.task.vo.TaskVo;
 
 /**  
@@ -17,6 +18,16 @@ import com.demo.proworks.task.vo.TaskVo;
  * 
  */
 public interface TaskService {
+	/**
+	 * 업무(Task) 정보를 갱신 처리 한다.
+	 *
+	 * @process 1. 업무(Task) 정보를 갱신 처리 한다.
+	 * 
+	 * @param taskVo 업무(Task) 정보 TaskVo
+	 * @return 번호
+	 * @throws Exception
+	 */
+	public int saveTask(TaskUpdateVo updateVo) throws Exception;
 	
     /**
      * 업무(Task) 정보 페이징 처리하여 목록을 조회한다.
@@ -43,7 +54,7 @@ public interface TaskService {
      * @return 단건 조회 결과
      * @throws Exception
      */
-	public TaskVo selectTask(TaskVo taskVo) throws Exception;
+	public TaskUpdateVo selectTask(TaskUpdateVo taskVo) throws Exception;
 		
     /**
      * 업무(Task) 정보를 등록 처리 한다.

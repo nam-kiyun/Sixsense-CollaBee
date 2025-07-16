@@ -6,45 +6,52 @@ import com.inswave.elfw.annotation.ElVoField;
 import com.fasterxml.jackson.annotation.JsonFilter;
 
 @JsonFilter("elExcludeFilter")
-@ElDto(FldYn = "", logicalName = "프로젝트에 초대(참가)한 사람들")
+@ElDto(FldYn = "", delimeterYn = "", logicalName = "프로젝트에 초대(참가)한 사람들")
 public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
     private static final long serialVersionUID = 1L;
 
-    @ElDtoField(logicalName = "project_user_id", physicalName = "projectUserId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String projectUserId;
+    public ProjectUserVo(){
+    }
 
-    @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String projectId;
+    @ElDtoField(logicalName = "project_user_id", physicalName = "projectUserId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int projectUserId;
 
-    @ElDtoField(logicalName = "user_id", physicalName = "userId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int projectId;
+
+    @ElDtoField(logicalName = "user_id", physicalName = "userId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userId;
 
-    @ElDtoField(logicalName = "role", physicalName = "role", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "role", physicalName = "role", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String role;
 
+    @ElDtoField(logicalName = "user_name", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String userName;
+
     @ElVoField(physicalName = "projectUserId")
-    public String getProjectUserId(){
+    public int getProjectUserId(){
         return projectUserId;
     }
 
     @ElVoField(physicalName = "projectUserId")
-    public void setProjectUserId(String projectUserId){
+    public void setProjectUserId(int projectUserId){
         this.projectUserId = projectUserId;
     }
 
     @ElVoField(physicalName = "projectId")
-    public String getProjectId(){
+    public int getProjectId(){
         return projectId;
     }
 
     @ElVoField(physicalName = "projectId")
-    public void setProjectId(String projectId){
+    public void setProjectId(int projectId){
         this.projectId = projectId;
     }
 
     @ElVoField(physicalName = "userId")
     public String getUserId(){
-        return userId;
+        String ret = this.userId;
+        return ret;
     }
 
     @ElVoField(physicalName = "userId")
@@ -54,7 +61,8 @@ public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElVoField(physicalName = "role")
     public String getRole(){
-        return role;
+        String ret = this.role;
+        return ret;
     }
 
     @ElVoField(physicalName = "role")
@@ -62,13 +70,43 @@ public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.role = role;
     }
 
+    @ElVoField(physicalName = "userName")
+    public String getUserName(){
+        String ret = this.userName;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "userName")
+    public void setUserName(String userName){
+        this.userName = userName;
+    }
+
     @Override
     public String toString() {
-        return "ProjectUserVo [projectUserId=" + projectUserId + ",projectId=" + projectId + ",userId=" + userId + ",role=" + role + "]";
+        StringBuilder sb = new StringBuilder();
+        sb.append("ProjectUserVo [");
+        sb.append("projectUserId").append("=").append(projectUserId).append(",");
+        sb.append("projectId").append("=").append(projectId).append(",");
+        sb.append("userId").append("=").append(userId).append(",");
+        sb.append("role").append("=").append(role).append(",");
+        sb.append("userName").append("=").append(userName);
+        sb.append("]");
+        return sb.toString();
+
     }
 
     public boolean isFixedLengthVo() {
         return false;
     }
+
+    @Override
+    public void _xStreamEnc() {
+    }
+
+
+    @Override
+    public void _xStreamDec() {
+    }
+
 
 }

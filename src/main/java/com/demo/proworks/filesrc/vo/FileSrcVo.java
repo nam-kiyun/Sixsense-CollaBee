@@ -6,45 +6,49 @@ import com.inswave.elfw.annotation.ElVoField;
 import com.fasterxml.jackson.annotation.JsonFilter;
 
 @JsonFilter("elExcludeFilter")
-@ElDto(FldYn = "", logicalName = "파일 ")
+@ElDto(FldYn = "", delimeterYn = "", logicalName = "파일 ")
 public class FileSrcVo extends com.demo.proworks.cmmn.ProworksCommVO {
     private static final long serialVersionUID = 1L;
 
-    @ElDtoField(logicalName = "file_id", physicalName = "fileId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String fileId;
+    public FileSrcVo(){
+    }
 
-    @ElDtoField(logicalName = "task_version_id", physicalName = "taskVersionId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String taskVersionId;
+    @ElDtoField(logicalName = "file_id", physicalName = "fileId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int fileId;
 
-    @ElDtoField(logicalName = "file_name", physicalName = "fileName", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "task_version_id", physicalName = "taskVersionId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int taskVersionId;
+
+    @ElDtoField(logicalName = "file_name", physicalName = "fileName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String fileName;
 
-    @ElDtoField(logicalName = "file_path", physicalName = "filePath", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "file_path", physicalName = "filePath", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String filePath;
 
     @ElVoField(physicalName = "fileId")
-    public String getFileId(){
+    public int getFileId(){
         return fileId;
     }
 
     @ElVoField(physicalName = "fileId")
-    public void setFileId(String fileId){
+    public void setFileId(int fileId){
         this.fileId = fileId;
     }
 
     @ElVoField(physicalName = "taskVersionId")
-    public String getTaskVersionId(){
+    public int getTaskVersionId(){
         return taskVersionId;
     }
 
     @ElVoField(physicalName = "taskVersionId")
-    public void setTaskVersionId(String taskVersionId){
+    public void setTaskVersionId(int taskVersionId){
         this.taskVersionId = taskVersionId;
     }
 
     @ElVoField(physicalName = "fileName")
     public String getFileName(){
-        return fileName;
+        String ret = this.fileName;
+        return ret;
     }
 
     @ElVoField(physicalName = "fileName")
@@ -54,7 +58,8 @@ public class FileSrcVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElVoField(physicalName = "filePath")
     public String getFilePath(){
-        return filePath;
+        String ret = this.filePath;
+        return ret;
     }
 
     @ElVoField(physicalName = "filePath")
@@ -64,11 +69,29 @@ public class FileSrcVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @Override
     public String toString() {
-        return "FileSrcVo [fileId=" + fileId + ",taskVersionId=" + taskVersionId + ",fileName=" + fileName + ",filePath=" + filePath + "]";
+        StringBuilder sb = new StringBuilder();
+        sb.append("FileSrcVo [");
+        sb.append("fileId").append("=").append(fileId).append(",");
+        sb.append("taskVersionId").append("=").append(taskVersionId).append(",");
+        sb.append("fileName").append("=").append(fileName).append(",");
+        sb.append("filePath").append("=").append(filePath);
+        sb.append("]");
+        return sb.toString();
+
     }
 
     public boolean isFixedLengthVo() {
         return false;
     }
+
+    @Override
+    public void _xStreamEnc() {
+    }
+
+
+    @Override
+    public void _xStreamDec() {
+    }
+
 
 }

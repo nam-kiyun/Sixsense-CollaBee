@@ -63,6 +63,17 @@
         WHERE 
                 PROJECT_USER_ID = #{projectUserId}			
     </select>
+    
+    <select id="selectProjectUserByProjectId" parameterType="com.demo.proworks.projectuser.vo.ProjectUserVo" resultType="com.demo.proworks.projectuser.vo.ProjectUserVo">
+    	<!-- 프로젝트에 초대(참가)한 사람들를 상세 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.projectuser.selectProjectUser */
+            P.PROJECT_USER_ID as projectUserId, P.PROJECT_ID as projectId, P.USER_ID as userId, P.ROLE as role, U.USER_NAME as userName
+        FROM PROJECT_USER P JOIN USER U
+        ON P.USER_ID = U.USER_ID
+        WHERE 
+                PROJECT_ID = #{projectId}
+			
+    </select>
 	
     <select id="selectListProjectUser" parameterType="com.demo.proworks.projectuser.vo.ProjectUserVo" resultType="com.demo.proworks.projectuser.vo.ProjectUserVo">
     	<!-- 프로젝트에 초대(참가)한 사람들 목록을 조회한다. -->
