@@ -6,42 +6,46 @@ import com.inswave.elfw.annotation.ElVoField;
 import com.fasterxml.jackson.annotation.JsonFilter;
 
 @JsonFilter("elExcludeFilter")
-@ElDto(FldYn = "", logicalName = "업무 담당자 정보")
+@ElDto(FldYn = "", delimeterYn = "", logicalName = "업무 담당자 정보")
 public class ManagerVo extends com.demo.proworks.cmmn.ProworksCommVO {
     private static final long serialVersionUID = 1L;
 
-    @ElDtoField(logicalName = "manager_id", physicalName = "managerId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String managerId;
+    public ManagerVo(){
+    }
 
-    @ElDtoField(logicalName = "task_version_id", physicalName = "taskVersionId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String taskVersionId;
+    @ElDtoField(logicalName = "manager_id", physicalName = "managerId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int managerId;
 
-    @ElDtoField(logicalName = "user_id", physicalName = "userId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int taskId;
+
+    @ElDtoField(logicalName = "user_id", physicalName = "userId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userId;
 
     @ElVoField(physicalName = "managerId")
-    public String getManagerId(){
+    public int getManagerId(){
         return managerId;
     }
 
     @ElVoField(physicalName = "managerId")
-    public void setManagerId(String managerId){
+    public void setManagerId(int managerId){
         this.managerId = managerId;
     }
 
-    @ElVoField(physicalName = "taskVersionId")
-    public String getTaskVersionId(){
-        return taskVersionId;
+    @ElVoField(physicalName = "taskId")
+    public int getTaskId(){
+        return taskId;
     }
 
-    @ElVoField(physicalName = "taskVersionId")
-    public void setTaskVersionId(String taskVersionId){
-        this.taskVersionId = taskVersionId;
+    @ElVoField(physicalName = "taskId")
+    public void setTaskId(int taskId){
+        this.taskId = taskId;
     }
 
     @ElVoField(physicalName = "userId")
     public String getUserId(){
-        return userId;
+        String ret = this.userId;
+        return ret;
     }
 
     @ElVoField(physicalName = "userId")
@@ -51,11 +55,28 @@ public class ManagerVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @Override
     public String toString() {
-        return "ManagerVo [managerId=" + managerId + ",taskVersionId=" + taskVersionId + ",userId=" + userId + "]";
+        StringBuilder sb = new StringBuilder();
+        sb.append("ManagerVo [");
+        sb.append("managerId").append("=").append(managerId).append(",");
+        sb.append("taskId").append("=").append(taskId).append(",");
+        sb.append("userId").append("=").append(userId);
+        sb.append("]");
+        return sb.toString();
+
     }
 
     public boolean isFixedLengthVo() {
         return false;
     }
+
+    @Override
+    public void _xStreamEnc() {
+    }
+
+
+    @Override
+    public void _xStreamDec() {
+    }
+
 
 }

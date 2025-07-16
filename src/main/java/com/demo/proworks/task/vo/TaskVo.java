@@ -6,80 +6,87 @@ import com.inswave.elfw.annotation.ElVoField;
 import com.fasterxml.jackson.annotation.JsonFilter;
 
 @JsonFilter("elExcludeFilter")
-@ElDto(FldYn = "", logicalName = "업무(Task) 정보")
+@ElDto(FldYn = "", delimeterYn = "", logicalName = "업무(Task) 정보")
 public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
     private static final long serialVersionUID = 1L;
 
-    @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String taskId;
+    public TaskVo(){
+    }
 
-    @ElDtoField(logicalName = "board_id", physicalName = "boardId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String boardId;
+    @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int taskId;
 
-    @ElDtoField(logicalName = "project_user_id", physicalName = "projectUserId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String projectUserId;
+    @ElDtoField(logicalName = "board_id", physicalName = "boardId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int boardId;
 
-    @ElDtoField(logicalName = "project_repo_id", physicalName = "projectRepoId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String projectRepoId;
+    @ElDtoField(logicalName = "project_user_id", physicalName = "projectUserId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int projectUserId;
 
-    @ElDtoField(logicalName = "task_title", physicalName = "taskTitle", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "project_repo_id", physicalName = "projectRepoId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private int projectRepoId;
+
+    @ElDtoField(logicalName = "task_title", physicalName = "taskTitle", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String taskTitle;
 
-    @ElDtoField(logicalName = "priority", physicalName = "priority", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "priority", physicalName = "priority", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String priority;
 
-    @ElDtoField(logicalName = "start_date", physicalName = "startDate", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "start_date", physicalName = "startDate", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String startDate;
 
-    @ElDtoField(logicalName = "end_date", physicalName = "endDate", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "end_date", physicalName = "endDate", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String endDate;
 
-    @ElDtoField(logicalName = "tags", physicalName = "tags", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "tags", physicalName = "tags", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String tags;
 
+    @ElDtoField(logicalName = "user_name", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String userName;
+
     @ElVoField(physicalName = "taskId")
-    public String getTaskId(){
+    public int getTaskId(){
         return taskId;
     }
 
     @ElVoField(physicalName = "taskId")
-    public void setTaskId(String taskId){
+    public void setTaskId(int taskId){
         this.taskId = taskId;
     }
 
     @ElVoField(physicalName = "boardId")
-    public String getBoardId(){
+    public int getBoardId(){
         return boardId;
     }
 
     @ElVoField(physicalName = "boardId")
-    public void setBoardId(String boardId){
+    public void setBoardId(int boardId){
         this.boardId = boardId;
     }
 
     @ElVoField(physicalName = "projectUserId")
-    public String getProjectUserId(){
+    public int getProjectUserId(){
         return projectUserId;
     }
 
     @ElVoField(physicalName = "projectUserId")
-    public void setProjectUserId(String projectUserId){
+    public void setProjectUserId(int projectUserId){
         this.projectUserId = projectUserId;
     }
 
     @ElVoField(physicalName = "projectRepoId")
-    public String getProjectRepoId(){
+    public int getProjectRepoId(){
         return projectRepoId;
     }
 
     @ElVoField(physicalName = "projectRepoId")
-    public void setProjectRepoId(String projectRepoId){
+    public void setProjectRepoId(int projectRepoId){
         this.projectRepoId = projectRepoId;
     }
 
     @ElVoField(physicalName = "taskTitle")
     public String getTaskTitle(){
-        return taskTitle;
+        String ret = this.taskTitle;
+        return ret;
     }
 
     @ElVoField(physicalName = "taskTitle")
@@ -89,7 +96,8 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElVoField(physicalName = "priority")
     public String getPriority(){
-        return priority;
+        String ret = this.priority;
+        return ret;
     }
 
     @ElVoField(physicalName = "priority")
@@ -99,7 +107,8 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElVoField(physicalName = "startDate")
     public String getStartDate(){
-        return startDate;
+        String ret = this.startDate;
+        return ret;
     }
 
     @ElVoField(physicalName = "startDate")
@@ -109,7 +118,8 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElVoField(physicalName = "endDate")
     public String getEndDate(){
-        return endDate;
+        String ret = this.endDate;
+        return ret;
     }
 
     @ElVoField(physicalName = "endDate")
@@ -119,7 +129,8 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElVoField(physicalName = "tags")
     public String getTags(){
-        return tags;
+        String ret = this.tags;
+        return ret;
     }
 
     @ElVoField(physicalName = "tags")
@@ -127,13 +138,48 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.tags = tags;
     }
 
+    @ElVoField(physicalName = "userName")
+    public String getUserName(){
+        String ret = this.userName;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "userName")
+    public void setUserName(String userName){
+        this.userName = userName;
+    }
+
     @Override
     public String toString() {
-        return "TaskVo [taskId=" + taskId + ",boardId=" + boardId + ",projectUserId=" + projectUserId + ",projectRepoId=" + projectRepoId + ",taskTitle=" + taskTitle + ",priority=" + priority + ",startDate=" + startDate + ",endDate=" + endDate + ",tags=" + tags + "]";
+        StringBuilder sb = new StringBuilder();
+        sb.append("TaskVo [");
+        sb.append("taskId").append("=").append(taskId).append(",");
+        sb.append("boardId").append("=").append(boardId).append(",");
+        sb.append("projectUserId").append("=").append(projectUserId).append(",");
+        sb.append("projectRepoId").append("=").append(projectRepoId).append(",");
+        sb.append("taskTitle").append("=").append(taskTitle).append(",");
+        sb.append("priority").append("=").append(priority).append(",");
+        sb.append("startDate").append("=").append(startDate).append(",");
+        sb.append("endDate").append("=").append(endDate).append(",");
+        sb.append("tags").append("=").append(tags).append(",");
+        sb.append("userName").append("=").append(userName);
+        sb.append("]");
+        return sb.toString();
+
     }
 
     public boolean isFixedLengthVo() {
         return false;
     }
+
+    @Override
+    public void _xStreamEnc() {
+    }
+
+
+    @Override
+    public void _xStreamDec() {
+    }
+
 
 }

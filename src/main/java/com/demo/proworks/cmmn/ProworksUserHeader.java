@@ -73,8 +73,8 @@ public class ProworksUserHeader extends com.inswave.elfw.core.UserHeader {
     @ElDtoField(logicalName = "이름", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userName;
 
-    @ElDtoField(logicalName = "결과", physicalName = "isReulst", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private String isReulst;
+    @ElDtoField(logicalName = "프로필이미지", physicalName = "userImage", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String userImage;
 
     @ElVoField(physicalName = "fldLen")
     public int getFldLen(){
@@ -249,15 +249,15 @@ public class ProworksUserHeader extends com.inswave.elfw.core.UserHeader {
         this.userName = userName;
     }
 
-    @ElVoField(physicalName = "isReulst")
-    public String getIsReulst(){
-        String ret = this.isReulst;
+    @ElVoField(physicalName = "userImage")
+    public String getUserImage(){
+        String ret = this.userImage;
         return ret;
     }
 
-    @ElVoField(physicalName = "isReulst")
-    public void setIsReulst(String isReulst){
-        this.isReulst = isReulst;
+    @ElVoField(physicalName = "userImage")
+    public void setUserImage(String userImage){
+        this.userImage = userImage;
     }
 
     @Override
@@ -280,7 +280,7 @@ public class ProworksUserHeader extends com.inswave.elfw.core.UserHeader {
         sb.append("testDeptName").append("=").append(testDeptName).append(",");
         sb.append("testDeptNo").append("=").append(testDeptNo).append(",");
         sb.append("userName").append("=").append(userName).append(",");
-        sb.append("isReulst").append("=").append(isReulst);
+        sb.append("userImage").append("=").append(userImage);
         sb.append("]");
         return sb.toString();
 

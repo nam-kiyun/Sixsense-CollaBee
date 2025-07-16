@@ -22,7 +22,16 @@ import com.demo.proworks.projectuser.dao.ProjectUserDAO;
  */
 @Repository("projectUserDAO")
 public class ProjectUserDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstractDAO {
-
+/**
+     * 프로젝트에 초대(참가)한 사람들 상세 조회한다.
+     *  
+     * @param  ProjectUserVo 프로젝트에 초대(참가)한 사람들
+     * @return ProjectUserVo 프로젝트에 초대(참가)한 사람들
+     * @throws ElException
+     */
+    public List<ProjectUserVo> selectProjectUserByProjectId(ProjectUserVo vo) throws ElException {
+        return (List<ProjectUserVo>)list("com.demo.proworks.projectuser.selectProjectUserByProjectId", vo);
+    }
     /**
      * 프로젝트에 초대(참가)한 사람들 상세 조회한다.
      *  

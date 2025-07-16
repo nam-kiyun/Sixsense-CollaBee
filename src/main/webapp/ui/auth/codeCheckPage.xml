@@ -153,6 +153,7 @@ scwin.signup_button_onclick = async function (e) {
 scwin.sbm_signup_submitdone = async function (e) {
     const responseData = e.responseJSON;
     console.log(responseData);
+    
     await $c.win.alert("회원가입이 완료되었습니다.", function () {
         $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/loginPage.xml");
     });

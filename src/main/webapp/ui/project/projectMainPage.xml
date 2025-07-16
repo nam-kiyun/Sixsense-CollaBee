@@ -3,61 +3,127 @@
     xmlns:ev="http://www.w3.org/2001/xml-events"
     xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
     <head>
-        <w2:type>COMPONENT</w2:type>
-        <w2:buildDate/>
-        <w2:MSA/>
-        <xf:model>
-            <w2:dataCollection baseNode="map"/>
-            <w2:workflowCollection/>
-        </xf:model>
-        <w2:layoutInfo/>
-        <w2:publicInfo method=""/>
-        <script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
-
+    	<w2:type>COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:MSA />
+    	<xf:model>
+    		<w2:dataCollection baseNode="map" />
+    		<w2:workflowCollection />
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<w2:publicInfo method="" />
+    	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
+    scwin.userId = $p.getParameter("userId");
+    scwin.userName = $p.getParameter("userName");
+    scwin.userImage = $p.getParameter("userImage");
+    console.log(scwin.userId);
+    console.log(scwin.userName);
+    console.log(scwin.userImage);
 };
 
+//task 버튼 눌렀을 때 
 scwin.new_task_onclick = function (e) {
-    //팝업 호출
-    //팝업 화면에 데이터를 전달 (dataObject를 통해 전달 가능)
-    // var jsnPopupData = {
-    //     "type": "json", // 데이터 유형. "json"을 권장
-    //     "name": "exam_param",  // 데이터를 가져오기 위한 파라미터 이름으로 팝업 화면에서 $p.getParameter("exam_param")로 추출할 수 있음
-    //     "data": {
-    //         "Personal_Info": { "Name": "Lee", "Age": 50, "Married": false },
-    //         "Region": "Seoul"
-    //     } // 실제 전달할 데이터
-    // };
+    var param = {
+        "type": "json", 
+        "name": "userInfo", 
+        "data": {
+            "userId": scwin.userId,
+            "userName": scwin.userName,
+            "userImage": scwin.userImage
+        }
+    };
 
     // 팝업 생성 옵션 지정
     var options = {
         id: "exa_popup",
         type: "wframePopup",
-        width: "600",
-        height: "400",
-        top: "100",
-        left: "200px",
-        popupName: "TASK",
+        width: "1300",
+        height: "750",
+        top: "140",
+        left: "350",
+        popupName: "2차프로젝트 / 진행중",
         modal: false,
-        closeAction: "scwin.popup_closeAction", 
-        customTitleBar: false
+        closeAction: "scwin.popup_closeAction",
+        customTitleBar: false,
+        dataObject: param
     };
 
     // 팝업 생성
-    $p.openPopup("./testModal.xml", options);
+    $p.openPopup("./taskModal.xml", options);
 
 };
-// 팝업 생성 옵션의 closeAction 함수 정의 예시
+
+//팝업창 닫기
 scwin.popup_closeAction = function (argRuntimeID, argJsnInfo) {
     var popObj = $p.getPopupWindow(argRuntimeID);
     return true; //팝업 닫기 (반환 값이 true인 경우만 팝업이 닫힘)
 };]]></script>
+    	<style type="text/css"><![CDATA[body{
+    margin: 0;
+    padding: 0;
+}
+.project-container {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.header {
+    height: 10%;
+    background-color: blue;
+}
+
+.main {
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 90%;
+    background-color: azure;
+}
+
+.main .side {
+    width: 18%;
+    height: 100%;
+    background-color: pink;
+}
+
+.main .section {
+    width: 82%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: antiquewhite;
+}
+
+.w2popup_window .w2window_body .w2window_content .w2window_wframe .sub_contents {
+    flex: 1;
+    padding: 20px;
+    /* height: 700px; */
+    overflow: hidden;
+}]]></style>
     </head>
     <body ev:onpageload="scwin.onpageload">
-    	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+    	<xf:group class="sub_contents project-container" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
     		style="">
-    		<xf:trigger type="button" style="width: 80px;height: 23px;" id="new_task" ev:onclick="scwin.new_task_onclick">
-    			<xf:label><![CDATA[TASK 생성]]></xf:label>
-    		</xf:trigger>
+    		<xf:group style="" id="" class="header">
+    			<w2:pageFrame style="" id="" src="/InsWebApp/ui/cmmn/header.xml" class="header"></w2:pageFrame>
+    		</xf:group>
+    		<xf:group style="" id="" class="main">
+    			<xf:group style="" id="" class="side">
+    				<w2:pageFrame style="" id="" src="/InsWebApp/ui/cmmn/sideMenu.xml"></w2:pageFrame>
+    			</xf:group>
+    			<xf:group style="" id="" class="section">
+    				<xf:trigger type="button" style="width: 80px;height: 23px;" id="new_task" ev:onclick="scwin.new_task_onclick">
+    					<xf:label><![CDATA[task 추가]]></xf:label>
+    				</xf:trigger>
+    			</xf:group>
+    		</xf:group>
     	</xf:group>
     </body>
 </html>

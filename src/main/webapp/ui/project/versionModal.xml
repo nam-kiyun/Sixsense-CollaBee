@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="/InsWebApp/css/task/versionModal.css" type="text/css"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+    	<w2:type>COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:MSA />
+    	<xf:model>
+    		<w2:dataCollection baseNode="map">
+    			<w2:dataList baseNode="list" repeatNode="map" id="dtl_taskVersion" saveRemovedData="true">
+    				<w2:columnInfo>
+    					<w2:column dataType="text" name="name1" id="taskVersionId"></w2:column>
+    					<w2:column dataType="text" name="name2" id="taskId"></w2:column>
+    					<w2:column dataType="text" name="name3" id="content"></w2:column>
+    					<w2:column dataType="text" name="name4" id="createdAt"></w2:column>
+    				</w2:columnInfo>
+    			</w2:dataList>
+    			<w2:dataMap baseNode="map" id="dma_taskSearch">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="name1" id="taskId"></w2:key>
+    					<w2:key dataType="text" name="name2" id="page"></w2:key>
+    					<w2:key dataType="text" name="name3" id="pageSize"></w2:key>
+    					<w2:key dataType="text" name="name4" id="startOffset"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
+    		</w2:dataCollection>
+    		<w2:workflowCollection />
+    		<xf:submission id="sbm_taskVersionList" action="/InsWebApp/task/{taskId}/version.pwkjson" method="post"
+    			mediatype="application/json" ref='data:json,{"id":"dma_taskSearch","key":"elData"}' target="" encoding="UTF-8" instance="" replace=""
+    			errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_taskVersionList_submitdone"
+    			ev:submiterror="scwin.sbm_taskVersionList_submiterror" abortTrigger="">
+    		</xf:submission>
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<w2:publicInfo method="" />
+    	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
+    let taskInfo = $p.getParameter("taskInfo");
+    scwin.taskId = taskInfo.taskId;
+    scwin.getTaskVersion(scwin.taskId, 1);
+
+    //무한스크롤
+    scwin.currentPage = 1;         // 현재 페이지 번호
+    scwin.isLoading = false;       // 중복 로딩 방지
+    scwin.lastPageReached = false; // 더 이상 데이터 없음
+
+    scwin.loadMoreVersions();
+    scwin.bindInfiniteScroll();
+};
+
+
+//task 버전 가져오기
+scwin.getTaskVersion = function (taskId, page) {
+    const param = {
+        taskId: taskId,
+        page: page
+    };
+    dma_taskSearch.setJSON(param);
+    sbm_taskVersionList.action = `/InsWebApp/task/${taskId}/version.pwkjson`;
+    $c.sbm.execute(sbm_taskVersionList);
+}
+
+//현재버전
+scwin.addCurrentVersionComponent = function () {
+    const group = $p.getComponentById("version_group");
+
+    const buttonId = "taskVersion_button_current";
+
+    const buttonWrapper = $p.dynamicCreate(buttonId, "button", {
+        className: "version-button current-version-button"
+    }, group);
+
+    const highlightSpan = $p.dynamicCreate("highlight_current", "span", {
+        label: "현재버전",
+        className: "highlight-text"
+    }, buttonWrapper);
+
+    const versionButton = $p.getComponentById(buttonId);
+    versionButton.bind("onclick", () => {
+        $p.parent().scwin.loadOriginalVersion();
+    });
+};
+
+//버전 버튼 생성
+scwin.addVersionComponent = function (versionData) {
+    const group = $p.getComponentById("version_group");
+    const buttonId = `taskVersion_button_${versionData.taskVersionId}`;
+    const versionId = String(versionData.taskVersionId).padStart(2, "0");
+
+    const buttonWrapper = $p.dynamicCreate(buttonId, "button", {
+        className: "version-button"
+    }, group);
+
+    const highlightSpan = $p.dynamicCreate(`highlight_${versionData.taskVersionId}`, "span", {
+        label: `${versionData.createdAt} 버전`,
+        className: "highlight-text"
+    }, buttonWrapper);
+
+    const versionButton = $p.getComponentById(buttonId);
+    versionButton.bind("onclick", () => {
+        scwin.getTaskByTaskVersinId(scwin.taskId, versionData.taskVersionId);
+    });
+
+};
+
+//task 버전 불러옴
+scwin.sbm_taskVersionList_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    const versionList = responseData.elData.taskVersionVoList;
+
+    //데이터 없을 때
+    if (!versionList || versionList.length === 0) {
+        scwin.lastPageReached = true;
+        scwin.isLoading = false;
+        return;
+    }
+
+    // 첫 로딩이라면 현재버전 버튼 추가
+    if (scwin.currentPage === 0) {
+        scwin.addCurrentVersionComponent();
+    }
+
+    // 버전 버튼 생성
+    versionList.forEach((value) => {
+        scwin.addVersionComponent(value);
+    });
+
+    scwin.isLoading = false;
+};
+
+scwin.sbm_taskVersionList_submiterror = function (e) {
+
+};
+
+
+//버전 아이디로 해당 내용과 파일을 return
+scwin.getTaskByTaskVersinId = function (taskId, taskVersionId) {
+
+    // 서버로 전송
+    $.ajax({
+        url: `/InsWebApp/task/${taskId}/version/${taskVersionId}.pwkjson`,
+        type: "GET",
+        processData: false,
+        contentType: false,
+        success: async function (res) {
+            $p.parent().scwin.versionLoad(res);
+        },
+        error: async function (err) {
+            await $c.win.alert("버전 조회 실패");
+        }
+    });
+}
+
+//무한스크롤
+scwin.bindInfiniteScroll = function () {
+    const container = $p.getComponentById("version_group");
+
+    container.bind("onscroll", function () {
+        if (scwin.isLoading || scwin.lastPageReached) return;
+
+        const scrollTop = container.render.scrollTop;
+        const scrollHeight = container.render.scrollHeight;
+        const clientHeight = container.render.clientHeight;
+
+        if (scrollTop + clientHeight >= scrollHeight - 50) {
+            scwin.loadMoreVersions();
+        }
+    });
+};
+
+//task 버전들 가져오기
+scwin.loadMoreVersions = function () {
+   
+    if (scwin.isLoading || scwin.lastPageReached) return;
+
+    scwin.isLoading = true;
+    const nextPage = scwin.currentPage++;
+
+    const param = {
+        taskId: scwin.taskId,
+        page: nextPage
+    };
+
+    dma_taskSearch.setJSON(param);
+    sbm_taskVersionList.action = `/InsWebApp/task/${scwin.taskId}/version.pwkjson`;
+
+    // 콜백에서 현재 페이지 업데이트
+    $c.sbm.execute(sbm_taskVersionList);
+};
+]]></script>
+    	<style type="text/css"><![CDATA[.version-group {
+    width: 100%;
+    height: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    padding: 10px;
+    overflow-y: auto;
+    gap: 20px;
+    box-sizing: border-box;
+    /* background-color: #fff1d3; */
+}
+
+#mf_exa_popup_wframe_task_version_wframe_wq_uuid_267 {
+    padding: 0;
+}
+
+/* #mf_exa_popup_wframe_task_version_header {
+    background-color: #fff1d3;
+}
+
+#mf_exa_popup_wframe_task_version_wframe_wq_uuid_267 {
+    background-color: #fff1d3;
+} */
+
+.version-button {
+    width: 100%;
+    box-sizing: border-box;
+    background-color : #D9D9D9;
+    font-size: 19px;
+    background: none;
+    border: none;
+    position: relative;
+}
+
+
+.version-button .highlight-text {
+    background: transparent;
+    transition: background 0.3s ease;
+    padding: 2px 4px;
+}
+
+.version-button:hover .highlight-text {
+    background: linear-gradient(
+        to bottom,
+        transparent 30%,
+        #fff1d3 30%,     /* 형광펜 색상 */
+        #fff1d3 70%,
+        transparent 70%
+    );
+}]]></style>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group class="sub_contents version-container" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+    		style="">
+    		<xf:group style="" id="version_group" class="version-group"></xf:group>
+    	</xf:group>
+    </body>
+</html>
