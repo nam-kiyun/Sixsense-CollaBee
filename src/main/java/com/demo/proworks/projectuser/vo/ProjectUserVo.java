@@ -13,13 +13,11 @@ public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
     public ProjectUserVo(){
     }
 
-
     @ElDtoField(logicalName = "project_user_id", physicalName = "projectUserId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String projectUserId;
 
     @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String projectId;
-
 
     @ElDtoField(logicalName = "user_id", physicalName = "userId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userId;
@@ -30,7 +28,6 @@ public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "user_name", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userName;
 
-
     @ElDtoField(logicalName = "profile_image_url", physicalName = "profileImageUrl", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String profileImageUrl;
 
@@ -38,11 +35,10 @@ public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
     public String getProjectUserId(){
         String ret = this.projectUserId;
         return ret;
-
     }
 
     @ElVoField(physicalName = "projectUserId")
-    public void setProjectUserId(int projectUserId){
+    public void setProjectUserId(String projectUserId){
         this.projectUserId = projectUserId;
     }
 
@@ -50,11 +46,10 @@ public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
     public String getProjectId(){
         String ret = this.projectId;
         return ret;
-
     }
 
     @ElVoField(physicalName = "projectId")
-    public void setProjectId(int projectId){
+    public void setProjectId(String projectId){
         this.projectId = projectId;
     }
 
@@ -91,7 +86,6 @@ public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.userName = userName;
     }
 
-
     @ElVoField(physicalName = "profileImageUrl")
     public String getProfileImageUrl(){
         String ret = this.profileImageUrl;
@@ -115,6 +109,7 @@ public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
         sb.append("profileImageUrl").append("=").append(profileImageUrl);
         sb.append("]");
         return sb.toString();
+
     }
 
     public boolean isFixedLengthVo() {

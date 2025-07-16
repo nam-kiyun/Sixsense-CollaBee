@@ -2,7 +2,6 @@ package com.demo.proworks.videochat.websocket;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,7 +46,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 	private void initializeObjectMapper() {
 		this.objectMapper = new ObjectMapper();
 
-
+	}
     private void handleJoin(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
         String channelName = chatMessage.getChannelName();
         String userId = chatMessage.getUserId();
@@ -92,7 +91,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         
         // 참가 알림은 저장하지 않고 브로드캐스트만
         broadcastToChannel(channelName, joinNotification, session);
-    }
+    
 
 		// WebSquare의 elExcludeFilter 문제 해결
 		SimpleBeanPropertyFilter filter = SimpleBeanPropertyFilter.serializeAll();
@@ -227,52 +226,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 		}
 	}
 
-	private void handleJoin(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
-		String channelName = chatMessage.getChannelName();
-		String userId = chatMessage.getUserId();
-		String userName = chatMessage.getUserName();
-
-		// 채널에 세션 추가
-		channelSessions.computeIfAbsent(channelName, k -> new CopyOnWriteArrayList<>()).add(session);
-
-		// 사용자 정보 저장
-		sessionUsers.put(session.getId(), chatMessage);
-
-		logger.info("사용자 {}가 채널 {}에 참가했습니다.", userName, channelName);
-
-		// 🎯 새 기능: 참가 시 이전 채팅 히스토리 자동 전송
-		try {
-			List<ChatMessageVo> history = chatService.getChannelMessages(channelName);
-
-			if (!history.isEmpty()) {
-				// 히스토리 응답 메시지 생성
-				Map<String, Object> historyResponse = new ConcurrentHashMap<>();
-				historyResponse.put("type", "history");
-				historyResponse.put("messages", history);
-				historyResponse.put("channelName", channelName);
-
-				String historyJson = objectMapper.writeValueAsString(historyResponse);
-				session.sendMessage(new TextMessage(historyJson));
-
-				// System.out.println("📜 채팅 히스토리 전송: " + channelName + " (" + history.size() +
-				// "개 메시지)");
-			}
-		} catch (Exception e) {
-			// System.err.println("❌ 히스토리 전송 실패: " + e.getMessage());
-		}
-
-		// 참가 알림 메시지 생성 및 브로드캐스트
-		ChatMessageVo joinNotification = new ChatMessageVo();
-		joinNotification.setType("notification");
-		joinNotification.setChannelName(channelName);
-		joinNotification.setUserId("system");
-		joinNotification.setUserName("시스템");
-		joinNotification.setMessage(userName + "님이 채팅방에 참가했습니다.");
-		joinNotification.setTimestamp(System.currentTimeMillis());
-
-		// 참가 알림은 저장하지 않고 브로드캐스트만
-		broadcastToChannel(channelName, joinNotification, session);
-	}
+	
 
 	private void handleMessage(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
 		String channelName = chatMessage.getChannelName();
@@ -352,23 +306,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 		removeSession(session);
 	}
 
-	private void removeSession(WebSocketSession session) {
-		ChatMessageVo userInfo = sessionUsers.remove(session.getId());
-
-		if (userInfo != null) {
-			String channelName = userInfo.getChannelName();
-			List<WebSocketSession> sessions = channelSessions.get(channelName);
-
-			if (sessions != null) {
-				sessions.remove(session);
-
-				// 채널에 세션이 없으면 채널 제거
-				if (sessions.isEmpty()) {
-					channelSessions.remove(channelName);
-				}
-			}
-		}
-	}
+	
 
 	// 🔧 동시 전송 문제 해결을 위한 동기화된 브로드캐스트
 	private synchronized void broadcastToChannel(String channelName, ChatMessageVo message,
