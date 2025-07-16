@@ -164,7 +164,7 @@ public class TaskController {
 			@RequestParam(value = "projectId", required = false) Integer projectId) throws Exception {
 		TaskUpdateVo taskVo = new TaskUpdateVo();
 		taskVo.setTaskId(taskId);
-		taskVo.setProjectId(projectId);
+		taskVo.setProjectId(projectId.toString());
 
 		TaskUpdateVo selectTaskVo = taskService.selectTask(taskVo);
 

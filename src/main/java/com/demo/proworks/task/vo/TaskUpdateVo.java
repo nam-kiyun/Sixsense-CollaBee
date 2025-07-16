@@ -55,8 +55,8 @@ public class TaskUpdateVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "파일 ", physicalName = "fileSrcVo", type = "", typeKind = "List", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private java.util.List<com.demo.proworks.filesrc.vo.FileSrcVo> fileSrcVo;
 
-    @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private int projectId;
+    @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String projectId;
 
     @ElDtoField(logicalName = "프로젝트에 초대(참가)한 사람들", physicalName = "projectUserVo", type = "", typeKind = "List", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private java.util.List<com.demo.proworks.projectuser.vo.ProjectUserVo> projectUserVo;
@@ -212,12 +212,13 @@ public class TaskUpdateVo extends com.demo.proworks.cmmn.ProworksCommVO {
     }
 
     @ElVoField(physicalName = "projectId")
-    public int getProjectId(){
-        return projectId;
+    public String getProjectId(){
+        String ret = this.projectId;
+        return ret;
     }
 
     @ElVoField(physicalName = "projectId")
-    public void setProjectId(int projectId){
+    public void setProjectId(String projectId){
         this.projectId = projectId;
     }
 
