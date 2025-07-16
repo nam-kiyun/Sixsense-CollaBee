@@ -58,6 +58,7 @@
 						<w2:column dataType="" name="내용" id="data"></w2:column>
 						<w2:column dataType="text" name="선택" id="CHK"></w2:column>
 						<w2:column dataType="text" name="name6" id="num"></w2:column>
+						<w2:column dataType="text" name="name7" id="filePath"></w2:column>
 					</w2:columnInfo>
 				</w2:dataList>
 				<w2:dataList baseNode="list" repeatNode="map" id="dls_allFile" saveRemovedData="true">
@@ -105,7 +106,7 @@
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
         return `https://localhost:${port}`;
     }
-  
+
     // 다른 IP인 경우 해당 IP 사용 
     return `https://${hostname}:${port}`;
 };
@@ -266,81 +267,71 @@ scwin.onpageload = function () {
 
     scwin.snapShot = false; //버전에서 현재상태 저장여부
     scwin.originalData = {};
-    scwin.initEditorFileObserver();
-
+    scwin.changeEditor();
+    scwin.previousHTML = "";
 };
 
-
-scwin.initEditorFileObserver = function () {
+scwin.changeEditor = function () {
     const editorComponentId = "contents_editor";
     const editorComponent = $p.getComponentById(editorComponentId);
+
     if (!editorComponent) {
-        console.warn(`[WebSquare AI] Editor component with ID '${editorComponentId}' not found.`);
+        console.warn(`[WebSquare AI] 에디터 컴포넌트 '${editorComponentId}'를 찾을 수 없습니다.`);
         return;
     }
 
-    let prevNums = [];
 
-    const logRemovedFiles = () => {
-        // Editor 컴포넌트의 현재 HTML 내용을 가져옵니다.
-        // 이 HTML은 iframe 내부의 내용을 반영합니다.
-        const editorHtmlContent = editorComponent.getHTML();
-        const tempContainer = document.createElement("div");
-        tempContainer.innerHTML = editorHtmlContent;
+    // CKEditor 인스턴스 직접 접근
+    const ckInstance = CKEDITOR.instances["mf_exa_popup_wframe_contents_editor_"];
+    Object.keys(CKEDITOR.instances).forEach(key => {
+        console.log("인스턴스 ID:", key);
+    });
 
-        const fileTags = tempContainer.querySelectorAll(".file-data");
-        const currentNums = Array.from(fileTags)
-            .map(el => parseInt(el.getAttribute("data-num")))
-            .filter(num => !isNaN(num));
-
-        const removedNums = prevNums.filter(num => !currentNums.includes(num));
-
-        if (removedNums.length > 0) {
-            console.log("������️ [WebSquare AI] 삭제된 파일 num:", removedNums);
-            // 필요 시 여기서 동기화 함수 호출 가능
-        }
-        prevNums = currentNums;
-    };
-
-    let editorTargetNode = null;
-    console.log(editorComponent);
-   
-
- 
-    setTimeout(() => {
-         let iframeDoc = document.querySelector("cke_wysiwyg_frame");
-
-          if (iframeDoc) {
-        const targetNode = iframeDoc;
-        console.log(iframeDoc);
-
-        const observer = new MutationObserver((mutations) => {
-            console.log("에디터 내용 변경 감지됨!", mutations);
-        });
-
-        observer.observe(targetNode, {
-            childList: true,
-            subtree: true,
-            characterData: true
-        });
+    if (!ckInstance) {
+        console.warn("[WebSquare AI] CKEditor 인스턴스를 찾을 수 없습니다.");
+        return;
     }
-  
-}, 1000); // 필요 시 1500~2000ms로 늘려보기
 
+    ckInstance.on("instanceReady", function () {
+        scwin.previousHTML = contents_editor.getHTML(); // 초기값 설정
+        console.log(contents_editor.getHTML());
 
-   
-   
+        ckInstance.on("change", function () {
+            const currentHTML = ckInstance.getData();
+
+            if (currentHTML !== scwin.previousHTML) {
+                console.log("이전 내용:", scwin.previousHTML);
+                console.log("현재 내용:", currentHTML);
+
+                const prevNums = scwin.extractFileNums(scwin.previousHTML);
+                const currNums = scwin.extractFileNums(currentHTML);
+
+                const removedNums = prevNums.filter(num => !currNums.includes(num));
+                const restoredNums = currNums.filter(num => !prevNums.includes(num));
+
+                if (removedNums.length > 0) {
+                    console.log("삭제된 파일:", removedNums);
+                    scwin.removeFileGrid(removedNums);
+                }
+                if (restoredNums.length > 0) {
+                    console.log("복구된 파일:", restoredNums);
+                }
+            }
+
+            scwin.previousHTML = currentHTML;
+        });
+    });
 };
 
-// WebSquare 페이지 언로드 시 MutationObserver 해제를 위한 scwin.onbeforepageunload 정의
-scwin.onbeforepageunload = function() {
-    if (scwin.editorFileMutationObserver) {
-        scwin.editorFileMutationObserver.disconnect();
-        console.log("[WebSquare AI] Disconnected editor file observer on page unload.");
-        delete scwin.editorFileMutationObserver;
-        delete scwin.editorFileMutationObserverTargetNode;
-    }
-};
+scwin.extractFileNums = function (html) {
+    const tempContainer = document.createElement("div");
+    tempContainer.innerHTML = html;
+
+    const fileTags = tempContainer.querySelectorAll(".file-data");
+    return Array.from(fileTags)
+        .map(el => parseInt(el.getAttribute("data-num")))
+        .filter(num => !isNaN(num));
+}
 
 
 //버전기록 불러와서 바인딩
@@ -348,13 +339,11 @@ scwin.versionLoad = function (data) {
     if (!scwin.snapShot) {
         scwin.snapShot = true;
         scwin.originalData = scwin.currentWorkSnapshot();
-        console.log(scwin.originalData);
     }
 
     contents_editor.setHTML(data.taskVersionVo.content);
     dls_allFile.setJSON(data.taskVersionVo.fileSrcVo);
     dls_file.setJSON(data.taskVersionVo.fileSrcVo);
-    console.log(data);
 }
 
 //현재 버전상태 가져오기
@@ -441,8 +430,6 @@ scwin.fileButtonInit = function () {
         style: "width:100px; height: 18px; padding-bottom: 5px;"
     }, editorHeader);
 
-    console.log(editorHeader);
-
 
     // "파일 추가" 버튼 생성
     const fileBtn = $p.dynamicCreate(fileBtnId, "button", {
@@ -468,8 +455,6 @@ scwin.fileButtonInit = function () {
     // input change 이벤트 처리
     document.getElementById(fileInputId).addEventListener("change", function () {
         const files = this.files;
-        console.log("선택된 파일들:", files);
-        // 여기서 파일 업로드 또는 에디터 삽입 로직 추가 가능
     });
 
 }
@@ -518,6 +503,7 @@ scwin.getTask = function (taskId, projectId) {
             data.endDate ? end_date.setValue(data.endDate) : "";
 
             contents_editor.setHTML(data.content);
+            scwin.previousHTML = data.content;
 
 
             const fileList = data.fileSrcVo;
@@ -541,18 +527,21 @@ scwin.getTask = function (taskId, projectId) {
                 if (el) {
                     el.setAttribute("data-num", item.num);
                 }
+                console.log(contents_editor.getHTML());
             });
 
-
+            contents_editor.setHTML(container.innerHTML);
             dls_allFile.setJSON(data.fileSrcVo);
             dls_file.setJSON(data.fileSrcVo);
 
-            setTimeout(() => {
-                if (contents_editor.getHTML().trim() === "") {
-                    console.log("⚠️ 내용 사라짐. 복구 시도!");
-                    contents_editor.setHTML(scwin.lastEditorHtml);
-                }
-            }, 1500);
+            // setTimeout(() => {
+            //     if (contents_editor.getHTML().trim() === "") {
+            //         console.log("⚠️ 내용 사라짐. 복구 시도!");
+            //         contents_editor.setHTML(scwin.lastEditorHtml);
+            //         scwin.previousHTML = scwin.lastEditorHtml;
+            //     }
+            // }, 1500);
+
         },
         error: async function (err) {
             await $c.win.alert("저장 실패! 다시 시도해주세요");
@@ -1021,7 +1010,6 @@ scwin.sbm_comment_get_submitdone = function (e) {
             insertBeforeTarget = dateComp;
 
             scwin.chatDate.add(currentDate);
-            console.log(scwin.chatDate);
         }
     }
 
@@ -1188,8 +1176,6 @@ scwin.base64ToBlob = function (base64Data, contentType) {
 scwin.sbm_task_get_submitdone = function (e) {
     const responseData = e.responseJSON;
     const taskVo = responseData.taskVo;
-
-    console.log(responseData);
 };
 
 scwin.sbm_task_get_submiterror = function (e) {
@@ -1205,6 +1191,8 @@ scwin.file_add_onclick = function (e) {
 
 scwin.file_remove_onclick = function (e) {
     let chkIdxArr = grd.getCheckedIndex("CHK");
+    const size = dls_allFile.getRowCount();
+    console.log(size);
     if (chkIdxArr.length === 0)
         return;
 
@@ -1216,18 +1204,20 @@ scwin.file_remove_onclick = function (e) {
             checkedItemNums.push(rowData.num);
         }
     }
-    console.log(checkedItemNums);
 
     if (checkedItemNums.length === 0) {
         alert("선택된 항목에서 유효한 고유 식별자(num)를 찾을 수 없습니다.");
         return;
     }
 
+    scwin.removeFileGrid(checkedItemNums, size);
+
+};
+
+scwin.removeFileGrid = function (checkedItemNums, size) {
     let data = dls_allFile.getAllJSON();
     const filteredData = data.filter(row => !checkedItemNums.includes(row.num));
     dls_allFile.setJSON(filteredData);
-
-    console.log(data);
 
     const existingList = dls_file.getAllJSON(); // 기존 데이터 추출
     const paramList = [...existingList]; // 기존 데이터 복사
@@ -1256,11 +1246,13 @@ scwin.file_remove_onclick = function (e) {
     // ✅ 화면 표시용 데이터 갱신
     dls_file.setJSON(currentPageItems);
 
-    scwin.removeFileHtml(checkedItemNums);
-};
+    scwin.removeFileHtml(checkedItemNums, size);
+}
 
 
-scwin.removeFileHtml = function (numList) {
+
+
+scwin.removeFileHtml = function (numList, size) {
     if (!Array.isArray(numList) || numList.length === 0) return;
 
     let html = contents_editor.getHTML();
@@ -1269,7 +1261,8 @@ scwin.removeFileHtml = function (numList) {
 
     numList.forEach(num => {
         const target = container.querySelector(`.file-data[data-num="${num}"]`);
-        console.log(target);
+        console.log(size - num);
+
         if (target) {
             const before = target.previousElementSibling;
             const after = target.nextElementSibling;
@@ -1464,6 +1457,30 @@ scwin.pageList_onclick = function (index) {
     dsView.setJSON(pageData);
     scwin.filePageIndex = index;
 };
+
+scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
+    if (columnId === 'download') {
+        let row = dls_file.getRowJSON(rowIndex);
+        let targetUrl = row.filePath;
+        let fileNanme = row.fileName;
+        console.log(row);
+
+        fetch(targetUrl)
+            .then(res => res.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = fileNanme;
+                a.click();
+                URL.revokeObjectURL(url);
+            })
+            .catch(err => console.error("❌ 다운로드 실패:", err));
+
+    } else {
+
+    }
+};
 ]]></script>
 		<style type="text/css"><![CDATA[]]>
 		</style>
@@ -1590,14 +1607,14 @@ scwin.pageList_onclick = function (index) {
 							meta_snippetName="6_01 그리드" style="height:237px;overflow:hidden;">
 							<w2:gridView autoFit="allColumn" checkReadOnlyOnPasteEnable="" class="gvw" dataList="data:dls_file"
 								focusMode="row" id="grd" scrollByColumn="false" scrollByColumnAdaptive="false" style="height:253px;overflow:hidden;"
-								rowNumHeaderValue="순번" rowNumVisible="false" disabledScrollHidden="false" fastScroll="true" visibleRowNum="5">
+								rowNumHeaderValue="순번" rowNumVisible="false" disabledScrollHidden="false" fastScroll="true" visibleRowNum="5" ev:oncellclick="scwin.grd_oncellclick">
 								<w2:caption id="caption1" style="" value="this is a grid caption."></w2:caption>
 								<w2:header id="header2" style="">
 									<w2:row id="row3" style="">
 										<w2:column blockSelect="false" displayMode="label" id="column11" inputType="text"
 											removeBorderStyle="false" value="이름" width="70">
 										</w2:column>
-										<w2:column width="70" inputType="text" style="" id="column22" value="다운로드" displayMode="label"></w2:column>
+										<w2:column width="70" inputType="text" style="" id="download" value="다운로드" displayMode="label"></w2:column>
 										<w2:column width="70" inputType="checkbox" style="" id="column21" value="내용" displayMode="label">
 										</w2:column>
 									</w2:row>
@@ -1607,7 +1624,7 @@ scwin.pageList_onclick = function (index) {
 										<w2:column blockSelect="false" displayMode="label" id="fileName" inputType="text"
 											removeBorderStyle="false" width="70" value="">
 										</w2:column>
-										<w2:column width="70" inputType="text" style="" id="column23" value="" displayMode="label"></w2:column>
+										<w2:column width="70" inputType="button" style="" id="download" value="" displayMode="label" class="download-button"></w2:column>
 										<w2:column width="70" inputType="checkbox" style="" id="CHK" value="" displayMode="label"></w2:column>
 									</w2:row>
 								</w2:gBody>

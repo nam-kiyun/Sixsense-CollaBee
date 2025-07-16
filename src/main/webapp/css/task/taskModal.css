@@ -193,6 +193,29 @@ body {
 	display:none;
 }
 
+.w2grid .gridBodyDefault button{
+	width: 100% !important;
+	height: 50px;
+	background-image: url('/InsWebApp/images/download.svg');
+	background-size: 20px 20px;
+	background-position: center;
+	background-repeat: no-repeat;
+	border: none;
+	outline: none;	
+	background-color: transparent;
+}
+.w2grid .gridBodyDefault button:focus{
+	border: none;
+	outline: none;
+	background-color: transparent;
+}
+.w2grid .gridBodyDefault button:hover{
+	border: none;
+	outline: none;
+	background-color: transparent;
+}
+
+
 /* 채팅 컨테이너 */
 .comment-group {
     width: 35%;
