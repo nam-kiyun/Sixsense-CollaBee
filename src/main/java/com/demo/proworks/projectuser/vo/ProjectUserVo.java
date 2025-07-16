@@ -13,11 +13,13 @@ public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
     public ProjectUserVo(){
     }
 
-    @ElDtoField(logicalName = "project_user_id", physicalName = "projectUserId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private int projectUserId;
 
-    @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private int projectId;
+    @ElDtoField(logicalName = "project_user_id", physicalName = "projectUserId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String projectUserId;
+
+    @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String projectId;
+
 
     @ElDtoField(logicalName = "user_id", physicalName = "userId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userId;
@@ -28,9 +30,15 @@ public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "user_name", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userName;
 
+
+    @ElDtoField(logicalName = "profile_image_url", physicalName = "profileImageUrl", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String profileImageUrl;
+
     @ElVoField(physicalName = "projectUserId")
-    public int getProjectUserId(){
-        return projectUserId;
+    public String getProjectUserId(){
+        String ret = this.projectUserId;
+        return ret;
+
     }
 
     @ElVoField(physicalName = "projectUserId")
@@ -39,8 +47,10 @@ public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
     }
 
     @ElVoField(physicalName = "projectId")
-    public int getProjectId(){
-        return projectId;
+    public String getProjectId(){
+        String ret = this.projectId;
+        return ret;
+
     }
 
     @ElVoField(physicalName = "projectId")
@@ -81,6 +91,18 @@ public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.userName = userName;
     }
 
+
+    @ElVoField(physicalName = "profileImageUrl")
+    public String getProfileImageUrl(){
+        String ret = this.profileImageUrl;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "profileImageUrl")
+    public void setProfileImageUrl(String profileImageUrl){
+        this.profileImageUrl = profileImageUrl;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -89,10 +111,10 @@ public class ProjectUserVo extends com.demo.proworks.cmmn.ProworksCommVO {
         sb.append("projectId").append("=").append(projectId).append(",");
         sb.append("userId").append("=").append(userId).append(",");
         sb.append("role").append("=").append(role).append(",");
-        sb.append("userName").append("=").append(userName);
+        sb.append("userName").append("=").append(userName).append(",");
+        sb.append("profileImageUrl").append("=").append(profileImageUrl);
         sb.append("]");
         return sb.toString();
-
     }
 
     public boolean isFixedLengthVo() {

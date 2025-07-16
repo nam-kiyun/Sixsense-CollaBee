@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import com.inswave.elfw.exception.ElException;
 import com.demo.proworks.project.vo.ProjectVo;
 import com.demo.proworks.project.dao.ProjectDAO;
+import com.demo.proworks.email.vo.EmailVo;
 
 /**  
  * @subject     : 프로젝트 정보 관련 처리를 담당하는 DAO
@@ -87,6 +88,17 @@ public class ProjectDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
      */
     public int deleteProject(ProjectVo vo) throws ElException {
         return delete("com.demo.proworks.project.deleteProject", vo);
+    }
+
+    /**
+     * 프로젝트 초대 이메일을 위한 프로젝트 정보와 팀장 정보를 조회한다.
+     *  
+     * @param  projectId 프로젝트 ID
+     * @return EmailVo 이메일 발송을 위한 프로젝트 정보
+     * @throws ElException
+     */
+    public EmailVo selectProjectForEmail(String projectId) throws ElException {
+        return (EmailVo) selectByPk("com.demo.proworks.project.selectProjectForEmail", projectId);
     }
 
 }

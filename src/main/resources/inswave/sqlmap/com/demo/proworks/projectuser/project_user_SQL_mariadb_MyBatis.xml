@@ -102,4 +102,53 @@
 
     </select>
 
+    <select id="selectProjectUsersByProjectId" parameterType="com.demo.proworks.projectuser.vo.ProjectUserVo" resultType="com.demo.proworks.projectuser.vo.ProjectUserVo">
+    <!-- 특정 프로젝트의 멤버 목록을 사용자 정보와 함께 조회한다. -->
+    
+         SELECT    /* QueryID : com.demo.proworks.projectuser.selectProjectUsersByProjectId */
+             pu.PROJECT_USER_ID as projectUserId, 
+             pu.PROJECT_ID as projectId, 
+             pu.USER_ID as userId, 
+             pu.ROLE as role,
+             u.USER_NAME as userName,
+             u.PROFILE_IMAGE_URL as profileImageUrl
+         FROM PROJECT_USER pu
+         INNER JOIN USER u ON pu.USER_ID = u.USER_ID
+         WHERE pu.PROJECT_ID = #{projectId}
+         ORDER BY pu.ROLE DESC, u.USER_NAME ASC
+    </select>
+
+    <!-- 사용자 검색 관련 쿼리 -->
+    <select id="selectUserByUserId" parameterType="String" resultType="com.demo.proworks.projectuser.vo.ProjectUserVo">
+        <!-- user_id(이메일)로 사용자 정보를 조회한다. -->
+        SELECT /* QueryID : com.demo.proworks.projectuser.selectUserByUserId */
+        USER_ID as userId, USER_NAME as userName
+        FROM USER
+        WHERE USER_ID = #{userId}
+    </select>
+
+    <select id="selectProjectUserByIds" parameterType="com.demo.proworks.projectuser.vo.ProjectUserVo" resultType="com.demo.proworks.projectuser.vo.ProjectUserVo">
+        <!-- 프로젝트 사용자 중복 체크 -->
+        SELECT /* QueryID : com.demo.proworks.projectuser.selectProjectUserByIds */
+        PROJECT_USER_ID as projectUserId, PROJECT_ID as projectId, USER_ID as userId, ROLE as role
+        FROM PROJECT_USER
+        WHERE PROJECT_ID = #{projectId} AND USER_ID = #{userId}
+    </select>
+
+    <insert id="insertProjectUserBySearch" parameterType="com.demo.proworks.projectuser.vo.ProjectUserVo" 
+        useGeneratedKeys="true" keyProperty="projectUserId">
+        <!-- 검색을 통한 프로젝트 사용자 추가 -->
+        INSERT INTO PROJECT_USER /* QueryID : com.demo.proworks.projectuser.insertProjectUserBySearch */
+        (PROJECT_ID, USER_ID, ROLE)
+        VALUES
+        (#{projectId}, #{userId}, #{role})
+    </insert>
+
+    <update id="updateProjectUserRole" parameterType="com.demo.proworks.projectuser.vo.ProjectUserVo">
+        <!-- 프로젝트 사용자의 역할을 변경한다. -->
+        UPDATE PROJECT_USER /* QueryID : com.demo.proworks.projectuser.updateProjectUserRole */
+        SET ROLE = #{role}
+        WHERE PROJECT_ID = #{projectId} AND USER_ID = #{userId}
+    </update>
+
 </mapper>

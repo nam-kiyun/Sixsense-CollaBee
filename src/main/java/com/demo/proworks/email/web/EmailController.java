@@ -6,6 +6,7 @@ import java.util.Random;
 
 import javax.annotation.Resource;
 import javax.mail.internet.MimeMessage;
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -14,8 +15,11 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.demo.proworks.email.vo.EmailVo;
+import com.demo.proworks.project.service.ProjectService;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -38,6 +42,9 @@ public class EmailController {
 
     @Resource(name = "mailSender")
     protected JavaMailSender mailSender;
+    
+    @Resource(name = "projectServiceImpl")
+    private ProjectService projectService;
 	
 	@Value("${spring.mail.username}")
 	private String username;
@@ -81,7 +88,7 @@ public class EmailController {
                 + "</style></head>"
                 + "<body>"
                 + "<div class='header' style='max-width: 607px; margin: 0 auto; display: flex; align-items: center; justify-content: center; background-color: rgb(104, 101, 101); border-radius: 10px 10px 0 0; padding: 30px 20px;'>"
-                + "<img src='https://github.com/dorazi0423/test/blob/main/collabee.png?raw=true' alt='COLLABEE 로고' style='width: 48px; height: 48px; margin-right: 14px; object-fit: contain;' />"
+                + "<img src='https://collabee.s3.ap-northeast-2.amazonaws.com/collabee.png' alt='COLLABEE 로고' style='width: 48px; height: 48px; margin-right: 14px; object-fit: contain;' />"
                 + "<h1 class='email-title' style='margin: 0; font-size: 32px; color: #ffb823; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);'>COLLABEE</h1>"
                 + "</div>"
                 + "<div class='email-container' style='max-width: 600px; margin: 0 auto; background-color: white; border-radius: 0 0 10px 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); padding: 24px;'>"
@@ -144,5 +151,156 @@ public class EmailController {
             code.append(random.nextInt(10));  // 0-9까지의 숫자
         }
         return code.toString();
+    }
+
+    /**
+     * 프로젝트 초대 이메일을 발송한다
+     * 
+     * @param emailVo 이메일 정보 (email, projectId 포함)
+     * @return Map<String, Object> 발송 결과
+     * @throws Exception
+     */
+    @ElService(key = "SendProjectInviteEmail")
+    @RequestMapping(value = "SendProjectInviteEmail", method = RequestMethod.POST)
+    @ElDescription(sub = "프로젝트 초대 메일 발송", desc = "프로젝트 초대 메일을 발송합니다")
+    public Map<String, Object> sendProjectInviteEmail(@RequestBody String jsonData, HttpServletRequest request) throws Exception {
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            
+            
+            // JSON 문자열을 파싱
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Object> params = objectMapper.readValue(jsonData, Map.class);
+            
+            // JSON에서 값 추출
+            String userId = (String) params.get("userId");
+            String email = (String) params.get("email");
+            String projectId = (String) params.get("projectId");
+            
+            
+            
+            
+            String targetUserEmail = email;     // 초대받을 사용자 이메일
+            
+            
+            
+            if (targetUserEmail == null || targetUserEmail.trim().isEmpty()) {
+                result.put("success", false);
+                result.put("message", "초대받을 사용자 이메일이 필요합니다.");
+                return result;
+            }
+            
+            if (projectId == null || projectId.trim().isEmpty()) {
+                result.put("success", false);
+                result.put("message", "프로젝트 ID가 필요합니다.");
+                return result;
+            }
+            
+            // 1. 프로젝트 정보 조회
+            EmailVo projectInfo = projectService.selectProjectForEmail(projectId);
+            
+            if (projectInfo == null) {
+                result.put("success", false);
+                result.put("message", "프로젝트 정보를 찾을 수 없습니다.");
+                return result;
+            }
+
+            // 현재 시간 설정
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String currentTime = sdf.format(new java.util.Date());
+            projectInfo.setEmailSendTime(currentTime);
+
+            // 2. 이메일 정보 설정
+            String toEmail = targetUserEmail; // 초대받을 사용자 이메일
+            String subject = "[COLLABEE] " + projectInfo.getProjectName() + " 프로젝트 초대";
+
+            // 3. 동적 서버 URL 생성
+            String baseUrl = request.getScheme() + "://" + request.getServerName() + 
+                           ":" + request.getServerPort() + request.getContextPath();
+            
+            // 4. HTML 이메일 내용 작성
+            String content = createProjectInviteEmailContent(projectInfo, targetUserEmail, baseUrl);
+
+            
+            JavaMailSenderImpl impl = (JavaMailSenderImpl) mailSender;
+            impl.setUsername(username);
+            impl.setPassword(password);
+
+            // 4. 이메일 발송
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(content, true); // HTML 형식
+
+            mailSender.send(message);
+
+            result.put("success", true);
+            result.put("message", "프로젝트 초대 메일 발송 성공");
+            
+        } catch (Exception e) {
+           
+            result.put("success", false);
+            result.put("message", "프로젝트 초대 메일 발송 실패: " + e.getMessage());
+        }
+
+        return result;
+    }
+
+    /**
+     * 프로젝트 초대 이메일 HTML 템플릿을 생성한다
+     * 
+     * @param projectInfo 프로젝트 정보
+     * @param targetUserEmail 초대받을 사용자 이메일
+     * @return String HTML 이메일 내용
+     */
+    private String createProjectInviteEmailContent(EmailVo projectInfo, String targetUserEmail, String baseUrl) {
+        String content = "<html lang='ko'>"
+                + "<head><meta charset='UTF-8'/><title>프로젝트 초대</title>"
+                + "<style>"
+                + "body { margin: 0; padding: 40px; font-family: 'Arial', sans-serif; text-align: center; }"
+                + ".header { max-width: 607px; margin: 0 auto; display: flex; align-items: center; justify-content: center; background-color: rgb(104, 101, 101); border-radius: 10px 10px 0 0; padding: 30px 20px; }"
+                + ".header img { width: 48px; height: 48px; margin-right: 14px; object-fit: contain; }"
+                + ".email-title { margin: 0; font-size: 32px; color: #ffb823; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3); }"
+                + ".email-container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 0 0 10px 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); padding: 24px; text-align: center; }"
+                + ".email-content { font-size: 15px; line-height: 1.5; margin-top: 10px; }"
+                + ".project-card { margin: 30px 0; text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }"
+                + ".project-image { width: 80px; height: 80px; border-radius: 8px; margin-bottom: 15px; object-fit: cover; }"
+                + ".project-name { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 10px; }"
+                + ".project-info { font-size: 14px; color: #666; margin: 5px 0; }"
+                + ".join-button { display: inline-block; padding: 15px 30px; background-color: #ffb823; color: #000 !important; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px; }"
+                + ".email-footer { text-align: center; font-size: 14px; color: gray; margin-top: 20px; }"
+                + "</style></head>"
+                + "<body>"
+                + "<div class='header'>"
+                + "<img src='https://collabee.s3.ap-northeast-2.amazonaws.com/collabee.png' alt='COLLABEE 로고' />"
+                + "<h1 class='email-title'>COLLABEE</h1>"
+                + "</div>"
+                + "<div class='email-container'>"
+                + "<p class='email-content'>"
+                + "안녕하세요!<br />"
+                + "<strong>" + projectInfo.getProjectName() + "</strong> 프로젝트에 초대되었습니다.<br />"
+                + "아래 프로젝트에 참여해보세요!"
+                + "</p>"
+                + "<div class='project-card'>"
+                + (projectInfo.getProjectImageUrl() != null ? 
+                    "<img src='" + projectInfo.getProjectImageUrl() + "' alt='프로젝트 이미지' class='project-image' />" : "")
+                + "<div class='project-name'>" + projectInfo.getProjectName() + "</div>"
+                + "<div class='project-info'>팀장: " + projectInfo.getUserName() + "</div>"
+                + "<div class='project-info'>초대 시각: " + projectInfo.getEmailSendTime() + "</div>"
+                + "<form action='" + baseUrl + "/JoinProject.do' method='POST' style='display:inline;'>"
+                + "<input type='hidden' name='projectId' value='" + projectInfo.getProjectId() + "'>"
+                + "<input type='hidden' name='userId' value='" + targetUserEmail + "'>"
+                + "<button type='submit' class='join-button' style='border:none; cursor:pointer; display: inline-block; padding: 15px 30px; background-color: #ffb823; color: #000 !important; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px;'>프로젝트 참여하기</button>"
+                + "</form>"
+                + "</div>"
+                + "<p class='email-footer'>수락 기능은 곧 추가될 예정입니다.</p>"
+                + "</div>"
+                + "</body>"
+                + "</html>";
+        
+        return content;
     }
 }
