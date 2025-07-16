@@ -10,9 +10,9 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.demo.proworks.websocket.message.KanbanMessage;
 import com.demo.proworks.redis.service.KanbanRedisService;
+import com.demo.proworks.websocket.message.KanbanMessage;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * 칸반 보드 WebSocket 핸들러 실시간 카드 이동 및 업데이트 처리
@@ -25,9 +25,9 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
-	// Redis 의존성 임시 제거
-	// @Autowired
-	// private KanbanRedisService kanbanRedisService;
+	// Redis 서비스 의존성 주입
+	@Autowired
+	private KanbanRedisService kanbanRedisService;
 
 	// 활성 세션 관리 (세션ID -> WebSocketSession)
 	private final ConcurrentHashMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
@@ -133,16 +133,37 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 	}
 
 	/**
-	 * 카드 이동 처리 Redis 캐시 즉시 업데이트 및 실시간 브로드캐스트
+	 * 카드 이동 처리 (Redis 저장 + 실시간 브로드캐스트)
 	 */
 	private void handleCardMove(WebSocketSession session, KanbanMessage message) {
-		System.out.println("🔄 카드 이동 처리: " + message.getTaskId() + " (" + message.getFromBoardId() + " → "
-				+ message.getToBoardId() + ")");
+		System.out.println("=== 카드 이동 처리 시작 ===");
+		System.out.println("📦 받은 메시지: " + message.getTaskId() + " (" + message.getFromBoardId() + " → " + message.getToBoardId() + ")");
+		System.out.println("👤 사용자: " + message.getUserId());
+		System.out.println("🏷️ 프로젝트: " + message.getProjectId());
 
-		// Redis 관련 코드 임시 제거
-		System.out.println("Redis 없이 카드 이동 처리 테스트");
+		// 메시지 유효성 검증
+		if (message.getTaskId() == null || message.getToBoardId() == null) {
+			System.err.println("❌ 잘못된 카드 이동 메시지: " + message);
+			return;
+		}
 
-		// 3. 모든 클라이언트에게 카드 이동 실시간 브로드캐스트
+		// 1. Redis에 카드 이동 정보 저장 (디바운싱된 메시지)
+		try {
+			kanbanRedisService.saveTaskMove(
+				message.getTaskId(),
+				message.getFromBoardId(),
+				message.getToBoardId(),
+				message.getUserId(),
+				message.getProjectId()
+			);
+			System.out.println("✅ Redis 저장 완료: " + message.getTaskId());
+		} catch (Exception e) {
+			System.err.println("❌ Redis 저장 실패: " + e.getMessage());
+			e.printStackTrace();
+			// Redis 실패해도 실시간 동기화는 계속 진행
+		}
+
+		// 2. 브로드캐스트용 메시지 생성
 		KanbanMessage broadcastMessage = new KanbanMessage();
 		broadcastMessage.setType("CARD_MOVED");
 		broadcastMessage.setTaskId(message.getTaskId());
@@ -152,6 +173,7 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 		broadcastMessage.setProjectId(message.getProjectId());
 		broadcastMessage.setTimestamp(System.currentTimeMillis());
 
+		// 3. 실시간 브로드캐스트
 		broadcastToAll(broadcastMessage);
 		System.out.println("📡 실시간 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
 	}

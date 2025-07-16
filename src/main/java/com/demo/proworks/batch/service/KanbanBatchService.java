@@ -37,10 +37,10 @@ public class KanbanBatchService {
     private int totalFailedTasks = 0;
 
     /**
-     * 5분마다 배치 처리 실행 (Redis 캐싱 최적화로 주기 연장)
+     * 5초마다 배치 처리 실행 (테스트용 - 운영 시 5분으로 변경)
      * Redis 캐시의 태스크 이동 데이터를 데이터베이스에 반영
      */
-    @Scheduled(fixedDelay = 300000) // 5분 간격 (300초)
+    @Scheduled(fixedDelay = 5000) // 5초 간격 (테스트용)
     public void processBatchUpdate() {
         if (isBatchRunning) {
             System.out.println("이전 배치 처리가 아직 진행 중입니다. 건너뜁니다.");
@@ -134,18 +134,40 @@ public class KanbanBatchService {
      */
     private boolean updateTaskInDatabase(KanbanMessage moveMessage) {
         try {
+            System.out.println("=== DB 업데이트 시작 ===");
+            System.out.println("📦 태스크 ID: " + moveMessage.getTaskId());
+            System.out.println("📋 이동: " + moveMessage.getFromBoardId() + " → " + moveMessage.getToBoardId());
+            System.out.println("👤 사용자: " + moveMessage.getUserId());
+            System.out.println("🏷️ 프로젝트: " + moveMessage.getProjectId());
+            
             // TaskVo 객체 생성
             TaskVo taskVo = new TaskVo();
             taskVo.setTaskId(moveMessage.getTaskId());
             taskVo.setBoardId(moveMessage.getToBoardId());
             
-            // TaskService를 통해 데이터베이스 업데이트
-            int updateCount = taskService.updateTask(taskVo);
+            long dbStartTime = System.currentTimeMillis();
             
-            return updateCount > 0;
+            // TaskService를 통해 보드 위치만 데이터베이스 업데이트 (칸반 카드 이동용)
+            int updateCount = taskService.updateTaskBoard(taskVo);
+            
+            long dbEndTime = System.currentTimeMillis();
+            long dbDuration = dbEndTime - dbStartTime;
+            
+            if (updateCount > 0) {
+                System.out.println("✅ DB 업데이트 성공 (" + dbDuration + "ms)");
+                System.out.println("📊 영향받은 행 수: " + updateCount);
+                return true;
+            } else {
+                System.err.println("❌ DB 업데이트 실패 - 영향받은 행 없음");
+                return false;
+            }
             
         } catch (Exception e) {
-            System.err.println("데이터베이스 업데이트 실패: " + e.getMessage());
+            System.err.println("❌ 데이터베이스 업데이트 중 예외 발생:");
+            System.err.println("   - 태스크 ID: " + moveMessage.getTaskId());
+            System.err.println("   - 에러 메시지: " + e.getMessage());
+            System.err.println("   - 에러 타입: " + e.getClass().getSimpleName());
+            e.printStackTrace();
             return false;
         }
     }

@@ -307,7 +307,7 @@ scwin.handleCardMovedMessage = function(message) {
     console.log("ID 비교 결과:", message.userId === currentUserId);
     
     if (message.userId === currentUserId) {
-        console.log("🧪 [테스트 모드] 본인이 이동한 카드도 처리합니다.");
+        console.log("������ [테스트 모드] 본인이 이동한 카드도 처리합니다.");
         // return; // 테스트용으로 주석 처리
     }
     

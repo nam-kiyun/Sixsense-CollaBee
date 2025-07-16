@@ -45,20 +45,33 @@
         )          
     </insert>	
 	
-    <!-- 칸반 카드 업데이트 (실제 DB 테이블 구조에 맞춤) -->
+    <!-- 칸반 카드 전체 정보 업데이트 -->
     <update id="updateTask" parameterType="com.demo.proworks.task.vo.TaskVo">
     	<!-- 업무(Task) 정보를 갱신한다. -->
     	
         UPDATE TASK    /* QueryID : com.demo.proworks.task.updateTask */      
       	  SET  
-                TASK_TITLE = #{taskTitle}
-            <if test="boardId != null and boardId != ''"> , BOARD_ID = #{boardId} </if>
+                <if test="taskTitle != null and taskTitle != ''">TASK_TITLE = #{taskTitle}</if>
+            <if test="boardId != null and boardId != ''">
+                <if test="taskTitle != null and taskTitle != ''">,</if> BOARD_ID = #{boardId} 
+            </if>
             <if test="projectUserId != null and projectUserId != ''"> , PROJECT_USER_ID = #{projectUserId} </if>
             <if test="projectRepoId != null and projectRepoId != ''"> , PROJECT_REPO_ID = #{projectRepoId} </if>
             <if test="priority != null and priority != ''"> , PRIORITY = #{priority} </if>
             <if test="startDate != null and startDate != ''"> , START_DATE = #{startDate} </if>
             <if test="endDate != null and endDate != ''"> , END_DATE = #{endDate} </if>
             <if test="tags != null and tags != ''"> , TAGS = #{tags} </if>
+        WHERE   
+                TASK_ID = #{taskId}        
+    </update>
+    
+    <!-- 칸반 카드 보드 이동만 업데이트 (배치 처리용) -->
+    <update id="updateTaskBoard" parameterType="com.demo.proworks.task.vo.TaskVo">
+    	<!-- 업무(Task)의 보드 위치만 갱신한다. (칸반 카드 이동용) -->
+    	
+        UPDATE TASK    /* QueryID : com.demo.proworks.task.updateTaskBoard */      
+      	  SET  
+                BOARD_ID = #{boardId}
         WHERE   
                 TASK_ID = #{taskId}        
     </update>

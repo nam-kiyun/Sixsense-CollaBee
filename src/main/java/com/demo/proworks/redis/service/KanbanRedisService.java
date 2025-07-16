@@ -1,5 +1,6 @@
 package com.demo.proworks.redis.service;
 
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +66,40 @@ public class KanbanRedisService {
             
         } catch (JsonProcessingException e) {
             System.err.println("태스크 이동 정보 저장 실패: " + e.getMessage());
+        }
+    }
+
+    /**
+     * WebSocket 메시지 기반 태스크 이동 정보 저장 (디바운싱된 메시지용)
+     */
+    public void saveTaskMove(String taskId, String fromBoardId, String toBoardId, 
+                           String userId, String projectId) {
+        try {
+            // KanbanMessage 객체 생성
+            KanbanMessage moveMessage = new KanbanMessage();
+            moveMessage.setType("CARD_MOVE");
+            moveMessage.setTaskId(taskId);
+            moveMessage.setFromBoardId(fromBoardId);
+            moveMessage.setToBoardId(toBoardId);
+            moveMessage.setUserId(userId);
+            moveMessage.setProjectId(projectId);
+            moveMessage.setTimestamp(System.currentTimeMillis());
+            
+            // Redis에 저장
+            String key = TASK_MOVE_KEY + taskId;
+            String json = objectMapper.writeValueAsString(moveMessage);
+            
+            // TTL 5분으로 설정
+            kanbanRedisTemplate.opsForValue().set(key, json, Duration.ofMinutes(5));
+            
+            // 배치 처리 큐에 추가
+            kanbanRedisTemplate.opsForList().leftPush(BATCH_QUEUE_KEY, taskId);
+            
+            System.out.println("📝 Redis에 디바운싱된 태스크 이동 저장: " + taskId + " (" + fromBoardId + " → " + toBoardId + ")");
+            
+        } catch (JsonProcessingException e) {
+            System.err.println("❌ 디바운싱된 태스크 이동 저장 실패: " + e.getMessage());
+            throw new RuntimeException("Redis 저장 실패", e);
         }
     }
 
