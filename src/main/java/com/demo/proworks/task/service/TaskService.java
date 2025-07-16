@@ -81,4 +81,13 @@ public interface TaskService {
      */
 	public int deleteTask(TaskVo taskVo) throws Exception;
 	
+    /**
+     * 프로젝트 ID로 모든 태스크를 조회한다. (칸반 보드용)
+     *
+     * @param  projectId 프로젝트 ID
+     * @return 태스크 목록 List<TaskVo>
+     * @throws Exception
+     */
+	public List<TaskVo> selectTasksByProject(String projectId) throws Exception;
+	
 }

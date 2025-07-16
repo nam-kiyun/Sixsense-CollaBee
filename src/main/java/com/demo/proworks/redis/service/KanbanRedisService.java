@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.demo.proworks.websocket.message.KanbanMessage;
 
 /**
@@ -24,7 +26,15 @@ public class KanbanRedisService {
     @Autowired
     private RedisTemplate<String, Object> kanbanRedisTemplate;
     
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
+    
+    // 생성자에서 ObjectMapper 설정
+    public KanbanRedisService() {
+        this.objectMapper = new ObjectMapper();
+        // @JsonFilter 어노테이션 무시 설정
+        this.objectMapper.configure(MapperFeature.USE_ANNOTATIONS, false);
+        this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
     
     // Redis 키 상수
     private static final String TASK_MOVE_KEY = "kanban:task:move:";
@@ -120,6 +130,72 @@ public class KanbanRedisService {
         }
         
         return null;
+    }
+
+    /**
+     * 프로젝트 보드 목록 캐시에서 조회
+     */
+    public String getCachedBoards(String projectId) {
+        try {
+            String key = PROJECT_BOARDS_CACHE_KEY + projectId;
+            return (String) kanbanRedisTemplate.opsForValue().get(key);
+        } catch (Exception e) {
+            System.err.println("보드 캐시 조회 실패: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * 프로젝트 보드 목록 캐시에 저장
+     */
+    public void cacheBoards(String projectId, String boardsJson) {
+        try {
+            String key = PROJECT_BOARDS_CACHE_KEY + projectId;
+            kanbanRedisTemplate.opsForValue().set(key, boardsJson, Duration.ofSeconds(BOARD_CACHE_TTL));
+            System.out.println("📝 보드 목록 캐시 저장: " + projectId + " (TTL: " + BOARD_CACHE_TTL + "초)");
+        } catch (Exception e) {
+            System.err.println("보드 캐시 저장 실패: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 보드별 태스크 목록 캐시에서 조회
+     */
+    public String getCachedTasks(String boardId) {
+        try {
+            String key = PROJECT_TASKS_CACHE_KEY + boardId;
+            return (String) kanbanRedisTemplate.opsForValue().get(key);
+        } catch (Exception e) {
+            System.err.println("태스크 캐시 조회 실패: " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * 보드별 태스크 목록 캐시에 저장
+     */
+    public void cacheTasks(String boardId, String tasksJson) {
+        try {
+            String key = PROJECT_TASKS_CACHE_KEY + boardId;
+            kanbanRedisTemplate.opsForValue().set(key, tasksJson, Duration.ofSeconds(PROJECT_DATA_CACHE_TTL));
+            System.out.println("📝 태스크 목록 캐시 저장: " + boardId + " (TTL: " + PROJECT_DATA_CACHE_TTL + "초)");
+        } catch (Exception e) {
+            System.err.println("태스크 캐시 저장 실패: " + e.getMessage());
+        }
+    }
+    
+    
+    /**
+     * 특정 보드의 태스크 캐시 무효화
+     */
+    public void invalidateBoardTasksCache(String boardId) {
+        try {
+            String key = PROJECT_TASKS_CACHE_KEY + boardId;
+            kanbanRedisTemplate.delete(key);
+            System.out.println("🗑️ 보드 태스크 캐시 무효화: " + boardId);
+        } catch (Exception e) {
+            System.err.println("보드 태스크 캐시 무효화 실패: " + e.getMessage());
+        }
     }
 
     /**
@@ -298,9 +374,9 @@ public class KanbanRedisService {
     // ================== 프로젝트 데이터 캐싱 메서드 ==================
     
     /**
-     * 프로젝트의 보드 목록을 Redis에 캐싱
+     * 프로젝트의 보드 목록을 Redis에 캐싱 (Map 형태로 저장)
      */
-    public void cacheProjectBoards(String projectId, java.util.List<?> boards) {
+    public void cacheProjectBoards(String projectId, java.util.List<java.util.Map<String, Object>> boards) {
         try {
             String key = PROJECT_BOARDS_CACHE_KEY + projectId;
             String json = objectMapper.writeValueAsString(boards);
@@ -334,9 +410,9 @@ public class KanbanRedisService {
     }
     
     /**
-     * 프로젝트의 태스크 목록을 Redis에 캐싱
+     * 프로젝트의 태스크 목록을 Redis에 캐싱 (Map 형태로 저장)
      */
-    public void cacheProjectTasks(String projectId, java.util.List<?> tasks) {
+    public void cacheProjectTasks(String projectId, java.util.List<java.util.Map<String, Object>> tasks) {
         try {
             String key = PROJECT_TASKS_CACHE_KEY + projectId;
             String json = objectMapper.writeValueAsString(tasks);

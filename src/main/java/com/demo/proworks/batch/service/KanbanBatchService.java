@@ -37,10 +37,10 @@ public class KanbanBatchService {
     private int totalFailedTasks = 0;
 
     /**
-     * 5초마다 배치 처리 실행 (테스트용 - 운영 시 5분으로 변경)
+     * 5분마다 배치 처리 실행 (운영용)
      * Redis 캐시의 태스크 이동 데이터를 데이터베이스에 반영
      */
-    @Scheduled(fixedDelay = 5000) // 5초 간격 (테스트용)
+    @Scheduled(fixedDelay = 300000) // 5분 간격 (300초)
     public void processBatchUpdate() {
         if (isBatchRunning) {
             System.out.println("이전 배치 처리가 아직 진행 중입니다. 건너뜁니다.");
@@ -110,6 +110,11 @@ public class KanbanBatchService {
                     redisService.deleteTaskMove(taskId);
                     successCount++;
                     System.out.println("태스크 업데이트 성공: " + taskId + " -> " + moveMessage.getToBoardId());
+                    
+                    // 태스크 이동 후 Redis 캐시 업데이트
+                    if (moveMessage.getProjectId() != null) {
+                        redisService.updateTaskInCache(moveMessage.getProjectId(), taskId, moveMessage.getToBoardId());
+                    }
                 } else {
                     failCount++;
                     System.err.println("태스크 업데이트 실패: " + taskId);

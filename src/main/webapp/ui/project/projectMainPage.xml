@@ -11,6 +11,7 @@
 				<w2:dataMap baseNode="map" id="dm_search_task">
 					<w2:keyInfo>
 						<w2:key id="boardId" name="보드 ID" dataType="text"></w2:key>
+						<w2:key id="tags" name="태그 필터" dataType="text"></w2:key>
 					</w2:keyInfo>
 				</w2:dataMap>
 				<w2:dataList baseNode="list" repeatNode="map" id="dlt_taskList" saveRemovedData="true">
@@ -871,9 +872,434 @@ scwin.projectCard_onclick = function(e) {
     }
 };
 
-// 필터 버튼 클릭
+// ==================== 태그 필터링 기능 ====================
+
+// 태그 필터링 전역 변수
+scwin.selectedTags = [];
+scwin.isTagFilterVisible = false;
+scwin.allTasksData = {}; // 전체 태스크 데이터를 보드별로 저장
+
+// 필터 버튼 클릭 - 태그 필터링 패널 표시/숨기기
 scwin.filter_onclick = function(e) {
-    alert("필터 기능은 준비 중입니다.");
+    scwin.toggleTagFilterPanel();
+};
+
+/**
+ * 태그 필터링 패널 표시/숨기기
+ */
+scwin.toggleTagFilterPanel = function() {
+    var filterPanel = $p.getComponentById("grp_tag_filter");
+    if (filterPanel) {
+        if (scwin.isTagFilterVisible) {
+            scwin.hideTagFilter();
+        } else {
+            scwin.showTagFilter();
+        }
+    }
+};
+
+/**
+ * 태그 필터링 패널 표시
+ */
+scwin.showTagFilter = function() {
+    try {
+        var filterPanel = $p.getComponentById("grp_tag_filter");
+        if (filterPanel) {
+            filterPanel.show();
+            scwin.isTagFilterVisible = true;
+            
+            // 현재 선택된 태그들을 UI에 반영
+            scwin.updateTagFilterUI();
+            
+            console.log("태그 필터링 패널 표시됨");
+        } else {
+            console.error("태그 필터링 패널을 찾을 수 없습니다.");
+        }
+    } catch (error) {
+        console.error("태그 필터링 패널 표시 중 오류:", error);
+    }
+};
+
+/**
+ * 태그 필터링 패널 숨기기
+ */
+scwin.hideTagFilter = function() {
+    try {
+        var filterPanel = $p.getComponentById("grp_tag_filter");
+        if (filterPanel) {
+            filterPanel.hide();
+            scwin.isTagFilterVisible = false;
+            
+            console.log("태그 필터링 패널 숨겨짐");
+        } else {
+            console.error("태그 필터링 패널을 찾을 수 없습니다.");
+        }
+    } catch (error) {
+        console.error("태그 필터링 패널 숨기기 중 오류:", error);
+    }
+};
+
+/**
+ * 태그 필터 토글 공통 함수
+ */
+scwin.toggleTagFilter = function(tagValue) {
+    console.log("태그 필터 토글:", tagValue);
+    
+    if (tagValue) {
+        var tagIndex = scwin.selectedTags.indexOf(tagValue);
+        
+        if (tagIndex > -1) {
+            // 태그 제거
+            scwin.selectedTags.splice(tagIndex, 1);
+            console.log("태그 제거됨:", tagValue);
+        } else {
+            // 태그 추가
+            scwin.selectedTags.push(tagValue);
+            console.log("태그 추가됨:", tagValue);
+        }
+        
+        console.log("현재 선택된 태그들:", scwin.selectedTags);
+        
+        // UI 업데이트
+        scwin.updateTagFilterUI();
+        
+        // 태스크 필터링 적용
+        scwin.applyTagFilter();
+    }
+};
+
+/**
+ * 개별 태그 토글 함수들
+ */
+scwin.toggleTag_dev = function(e) {
+    scwin.toggleTagFilter("dev");
+};
+
+scwin.toggleTag_test = function(e) {
+    scwin.toggleTagFilter("test");
+};
+
+scwin.toggleTag_doc = function(e) {
+    scwin.toggleTagFilter("doc");
+};
+
+scwin.toggleTag_plan = function(e) {
+    scwin.toggleTagFilter("plan");
+};
+
+scwin.toggleTag_analytics = function(e) {
+    scwin.toggleTagFilter("analytics");
+};
+
+scwin.toggleTag_collabo = function(e) {
+    scwin.toggleTagFilter("collabo");
+};
+
+/**
+ * 모든 태그 선택/해제 토글
+ */
+scwin.selectAllTags = function() {
+    var allTags = ["dev", "test", "doc", "plan", "analytics", "collabo"];
+    
+    // 현재 모든 태그가 선택되어 있는지 확인
+    var isAllSelected = allTags.every(function(tag) {
+        return scwin.selectedTags.indexOf(tag) > -1;
+    });
+    
+    if (isAllSelected) {
+        // 모든 태그가 선택되어 있으면 전체 해제
+        scwin.selectedTags = [];
+        console.log("전체 태그 해제됨");
+    } else {
+        // 일부 또는 전혀 선택되어 있지 않으면 전체 선택
+        scwin.selectedTags = allTags.slice(); // 배열 복사
+        console.log("전체 태그 선택됨:", scwin.selectedTags);
+    }
+    
+    scwin.updateTagFilterUI();
+    scwin.applyTagFilter();
+};
+
+/**
+ * 태그 필터 초기화
+ */
+scwin.clearTagFilter = function() {
+    scwin.selectedTags = [];
+    scwin.updateTagFilterUI();
+    scwin.applyTagFilter();
+    
+    console.log("태그 필터 초기화됨");
+};
+
+/**
+ * 태그 필터 UI 업데이트 (WebSquare trigger 컴포넌트용) - 디버깅 강화
+ */
+scwin.updateTagFilterUI = function() {
+    console.log("====== 태그 UI 업데이트 시작 ======");
+    console.log("현재 선택된 태그:", scwin.selectedTags);
+    console.log("선택된 태그 개수:", scwin.selectedTags.length);
+    
+    var tagButtons = ["btn_tag_dev", "btn_tag_test", "btn_tag_doc", "btn_tag_plan", "btn_tag_analytics", "btn_tag_collabo"];
+    var tagValues = ["dev", "test", "doc", "plan", "analytics", "collabo"];
+    
+    for (var i = 0; i < tagButtons.length; i++) {
+        console.log("\n--- 버튼 " + (i + 1) + "/" + tagButtons.length + " 처리 시작 ---");
+        console.log("버튼 ID:", tagButtons[i]);
+        console.log("태그 값:", tagValues[i]);
+        
+        try {
+            // 선택 상태 확인
+            var isSelected = scwin.selectedTags.indexOf(tagValues[i]) > -1;
+            console.log("선택 상태:", isSelected);
+            
+            // WebSquare 컴포넌트 조회
+            var buttonComponent = eval(tagButtons[i]);
+            console.log("컴포넌트 조회 결과:", buttonComponent);
+            
+            if (buttonComponent) {
+                // WebSquare 컴포넌트의 모든 속성 탐색
+                console.log("=== 컴포넌트 속성 탐색 시작 ===");
+                
+                // 컴포넌트 기본 메서드들 확인
+                console.log("기본 메서드 확인:");
+                console.log("- getID:", buttonComponent.getID ? buttonComponent.getID() : "없음");
+                console.log("- getTagName:", buttonComponent.getTagName ? buttonComponent.getTagName() : "없음");
+                
+                // getStyle로 가져올 수 있는 모든 속성 시도
+                console.log("getStyle 속성 탐색:");
+                var styleProps = ["class", "className", "classList", "cssClass", "style", "css", "attr", "attribute"];
+                for (var j = 0; j < styleProps.length; j++) {
+                    try {
+                        var propValue = buttonComponent.getStyle(styleProps[j]);
+                        console.log("- getStyle('" + styleProps[j] + "'):", JSON.stringify(propValue));
+                    } catch (e) {
+                        console.log("- getStyle('" + styleProps[j] + "') 실패:", e.message);
+                    }
+                }
+                
+                // getAttribute 메서드 확인
+                if (buttonComponent.getAttribute) {
+                    console.log("getAttribute 메서드 탐색:");
+                    var attrProps = ["class", "className", "classList"];
+                    for (var k = 0; k < attrProps.length; k++) {
+                        try {
+                            var attrValue = buttonComponent.getAttribute(attrProps[k]);
+                            console.log("- getAttribute('" + attrProps[k] + "'):", JSON.stringify(attrValue));
+                        } catch (e) {
+                            console.log("- getAttribute('" + attrProps[k] + "') 실패:", e.message);
+                        }
+                    }
+                }
+                
+                // 컴포넌트 속성 직접 접근
+                console.log("컴포넌트 속성 직접 접근:");
+                console.log("- buttonComponent.class:", buttonComponent.class);
+                console.log("- buttonComponent.className:", buttonComponent.className);
+                console.log("- buttonComponent.classList:", buttonComponent.classList);
+                console.log("- buttonComponent.style:", buttonComponent.style);
+                
+                // render 속성 확인
+                if (buttonComponent.render) {
+                    console.log("render 속성 확인:");
+                    console.log("- render.className:", buttonComponent.render.className);
+                    console.log("- render.class:", buttonComponent.render.class);
+                    console.log("- render.classList:", buttonComponent.render.classList);
+                    
+                    // DOM 클래스 기반으로 상태 업데이트
+                    var currentClass = buttonComponent.render.className || "btn-tag";
+                    console.log("현재 DOM 클래스:", currentClass);
+                    
+                    // 클래스 업데이트 로직
+                    var newClass = currentClass;
+                    if (isSelected) {
+                        if (currentClass.indexOf("active") === -1) {
+                            newClass = currentClass + " active";
+                        }
+                    } else {
+                        newClass = currentClass.replace(" active", "").replace("active", "").trim();
+                        if (!newClass) newClass = "btn-tag";
+                    }
+                    
+                    console.log("새 클래스:", newClass);
+                    
+                    // 클래스 업데이트 시도
+                    try {
+                        buttonComponent.render.className = newClass;
+                        console.log("✅ DOM className 업데이트 성공");
+                        
+                        // 검증
+                        setTimeout(function() {
+                            console.log("업데이트 후 확인:", buttonComponent.render.className);
+                        }, 50);
+                        
+                    } catch (updateError) {
+                        console.error("❌ 클래스 업데이트 실패:", updateError);
+                    }
+                } else {
+                    console.log("render 속성 없음");
+                }
+                
+                console.log("=== 컴포넌트 속성 탐색 완료 ===");
+                
+            } else {
+                console.warn("❌ WebSquare 컴포넌트를 찾을 수 없음:", tagButtons[i]);
+            }
+            
+        } catch (error) {
+            console.error("❌ 태그 버튼 UI 업데이트 중 치명적 오류:", tagButtons[i], error);
+        }
+        
+        console.log("--- 버튼 " + (i + 1) + " 처리 완료 ---\n");
+    }
+    
+    console.log("====== 태그 UI 업데이트 완료 ======");
+};
+
+/**
+ * 태그 필터링 적용 (프론트엔드에서 처리)
+ */
+scwin.applyTagFilter = function() {
+    console.log("프론트엔드 태그 필터링 적용 시작:", scwin.selectedTags);
+    
+    // 모든 보드에 대해 필터링 적용
+    scwin.filterAllBoardsLocally();
+};
+
+/**
+ * 모든 보드의 태스크 목록을 로컬에서 필터링
+ */
+scwin.filterAllBoardsLocally = function() {
+    console.log("로컬 필터링 시작");
+    
+    // 보드 목록 가져오기
+    var boardList = $p.getComponentById("dlt_boardListVo");
+    if (boardList && boardList.getRowCount() > 0) {
+        for (var i = 0; i < boardList.getRowCount(); i++) {
+            var boardId = boardList.getCellData(i, "boardId");
+            if (boardId) {
+                scwin.filterBoardTasksLocally(boardId);
+            }
+        }
+    }
+    
+    console.log("로컬 필터링 완료");
+};
+
+/**
+ * 특정 보드의 태스크를 로컬에서 필터링하여 표시
+ */
+scwin.filterBoardTasksLocally = function(boardId) {
+    console.log("보드 로컬 필터링:", boardId);
+    
+    // 해당 보드의 전체 태스크 데이터 가져오기
+    var allTasks = scwin.allTasksData[boardId] || [];
+    
+    // 태그 필터링 적용
+    var filteredTasks = [];
+    
+    if (scwin.selectedTags.length === 0) {
+        // 선택된 태그가 없으면 모든 태스크 표시
+        filteredTasks = allTasks;
+    } else {
+        // 선택된 태그가 있으면 필터링
+        for (var i = 0; i < allTasks.length; i++) {
+            var task = allTasks[i];
+            if (scwin.isTaskMatchesTags(task, scwin.selectedTags)) {
+                filteredTasks.push(task);
+            }
+        }
+    }
+    
+    console.log("보드 " + boardId + " 필터링 결과: " + filteredTasks.length + "개 (전체: " + allTasks.length + "개)");
+    
+    // 필터링된 태스크들을 화면에 표시
+    scwin.displayFilteredTasks(boardId, filteredTasks);
+};
+
+/**
+ * 태스크가 선택된 태그들과 매칭되는지 확인
+ */
+scwin.isTaskMatchesTags = function(task, selectedTags) {
+    var taskTags = task.tags;
+    
+    // 태스크에 태그가 없으면 매칭 안됨
+    if (!taskTags || taskTags.trim() === "") {
+        return false;
+    }
+    
+    // 태스크의 태그들을 배열로 변환
+    var taskTagArray = taskTags.split(",");
+    
+    // 선택된 태그 중 하나라도 매칭되면 true (OR 조건)
+    for (var i = 0; i < selectedTags.length; i++) {
+        var selectedTag = selectedTags[i].trim();
+        for (var j = 0; j < taskTagArray.length; j++) {
+            if (taskTagArray[j].trim() === selectedTag) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
+};
+
+/**
+ * 필터링된 태스크들을 화면에 표시
+ */
+scwin.displayFilteredTasks = function(boardId, filteredTasks) {
+    // 기존 카드들 제거
+    scwin.clearBoardCards(boardId);
+    
+    // 필터링된 태스크들로 카드 생성
+    for (var i = 0; i < filteredTasks.length; i++) {
+        var task = filteredTasks[i];
+        scwin.createKanbanCardInBoard(task);
+    }
+    
+    // 카드 개수 업데이트
+    scwin.updateBoardCardCount(boardId, filteredTasks.length);
+};
+
+/**
+ * 보드의 기존 카드들 제거
+ */
+scwin.clearBoardCards = function(boardId) {
+    var cardContainerId = "card_container_" + boardId;
+    try {
+        var cardContainer = eval(cardContainerId);
+        if (cardContainer) {
+            // 컨테이너의 모든 자식 카드들 제거
+            var children = cardContainer.getChildren();
+            for (var i = children.length - 1; i >= 0; i--) {
+                children[i].remove();
+            }
+        }
+    } catch (error) {
+        console.error("보드 카드 제거 중 오류:", boardId, error);
+    }
+};
+
+/**
+ * 보드 카드 개수 업데이트
+ */
+scwin.updateBoardCardCount = function(boardId, count) {
+    try {
+        var countSpanId = "grp_dynamic_" + boardId + "_count";
+        var countSpan = eval(countSpanId);
+        if (countSpan) {
+            countSpan.setValue(count);
+        }
+    } catch (error) {
+        console.error("카드 개수 업데이트 실패:", boardId, error);
+    }
+};
+
+/**
+ * 전체 태스크 데이터 저장 (초기 로드 시 호출)
+ */
+scwin.storeAllTasksData = function(boardId, tasksArray) {
+    scwin.allTasksData[boardId] = tasksArray || [];
+    console.log("보드 " + boardId + " 전체 태스크 데이터 저장:", tasksArray.length + "개");
 };
 
 // 정렬 버튼 클릭
@@ -1468,10 +1894,10 @@ scwin.createDynamicKanbanColumns = function(boardList) {
 };
 
 /**
- * 태스크 로드 완료 후, 칸반 카드를 생성하는 콜백 함수
+ * 태스크 로드 완료 후, 칸반 카드를 생성하는 콜백 함수 (프론트엔드 필터링 지원)
  */
 scwin.load_Tasks_submitdone = function(e) {
-    console.log("태스크 로드 완료 (수정된 핸들러):", e);
+    console.log("태스크 로드 완료 (프론트엔드 필터링 지원):", e);
     
     // 1. 응답에서 직접 태스크 목록 추출
     var responseData = e.responseJSON;
@@ -1479,33 +1905,45 @@ scwin.load_Tasks_submitdone = function(e) {
     let taskList = responseData.elData.taskVoList;
     console.log("서버로부터 직접 받은 태스크 목록:", taskList);
 
-    // 2. 태스크가 있으면 카드 생성
+    // 2. 태스크가 있으면 데이터 저장 및 카드 생성
     if (taskList && taskList.length > 0) {
-        // 각 태스크에 대해 칸반 카드 생성
-        taskList.forEach(function(taskData) {
-            if (taskData && taskData.boardId) {
-                scwin.createKanbanCardInBoard(taskData);
-            } else {
-                console.warn("boardId가 없는 태스크 데이터는 건너뜁니다:", taskData);
-            }
-        });
-
-        // 3. 태스크 카운트 업데이트
         var boardId = taskList[0].boardId; // 첫 번째 태스크의 boardId를 사용
-        var columnId = "grp_dynamic_" + boardId;
-        var countSpanId = columnId + "_count";
-        try {
-            var countSpan = $p.getComponentById(countSpanId);
-            if (countSpan) {
-                // 카운트는 응답받은 리스트의 길이로 설정
-                countSpan.setValue(taskList.length);
-                console.log(`보드 [${boardId}]의 태스크 카운트를 ${taskList.length}으로 업데이트했습니다.`);
-            }
-        } catch (err) {
-            console.error("태스크 카운트 업데이트 실패:", countSpanId, err);
+        
+        // 2-1. 전체 태스크 데이터를 로컬에 저장 (필터링용)
+        scwin.storeAllTasksData(boardId, taskList);
+        
+        // 2-2. 현재 선택된 태그 필터가 있으면 필터링 적용, 없으면 전체 표시
+        if (scwin.selectedTags.length > 0) {
+            console.log("기존 태그 필터 적용:", scwin.selectedTags);
+            scwin.filterBoardTasksLocally(boardId);
+        } else {
+            // 태그 필터가 없으면 모든 태스크 표시
+            taskList.forEach(function(taskData) {
+                if (taskData && taskData.boardId) {
+                    scwin.createKanbanCardInBoard(taskData);
+                } else {
+                    console.warn("boardId가 없는 태스크 데이터는 건너뜁니다:", taskData);
+                }
+            });
+            
+            // 카운트 업데이트
+            scwin.updateBoardCardCount(boardId, taskList.length);
         }
+        
+        console.log(`보드 [${boardId}]의 태스크 로드 및 처리 완료: ${taskList.length}개`);
     } else {
         console.log("해당 보드에 대한 태스크가 없습니다.");
+        
+        // boardId 추출 (검색 조건에서)
+        var searchCondition = $p.getComponentById("dm_search_task");
+        if (searchCondition) {
+            var boardId = searchCondition.get("boardId");
+            if (boardId) {
+                // 빈 데이터 저장
+                scwin.storeAllTasksData(boardId, []);
+                scwin.updateBoardCardCount(boardId, 0);
+            }
+        }
     }
 };
 
@@ -2547,7 +2985,6 @@ scwin.load_Board_submiterror = function(e) {
 /* 전체 컨테이너 */
 .project-main-container {
     width: 100%;
-    height: 100vh;
     background-color: #fff4d6;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
@@ -2642,19 +3079,23 @@ scwin.load_Board_submiterror = function(e) {
 /* 칸반 보드 컨테이너 */
 .kanban-container {
     display: flex;
-    gap: 20px;
-    padding: 0 40px 40px 40px;
+    gap: 16px;
+    <!-- padding: 0 10% 40px 10%; -->
     overflow-x: auto;
     min-height: calc(100vh - 200px);
     align-items: flex-start;  /* 상단 정렬 */
+    max-width: 80%;
+    margin: 0 2%;
 }
 
 /* 칸반 열 */
 .kanban-column {
-    min-width: 350px;
+    min-width: 280px;
+    max-width: 320px;
+    flex: 1;
     background: #f6f8fa;
     border-radius: 6px;
-    padding: 16px;
+    padding: 12px;
     border: 1px solid #d1d9e0;
 }
 
@@ -2708,8 +3149,8 @@ scwin.load_Board_submiterror = function(e) {
     background: #ffffff;
     border: 1px solid #d1d9e0;
     border-radius: 6px;
-    padding: 16px;
-    margin-bottom: 8px;
+    padding: 12px;
+    margin-bottom: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
 }
@@ -2818,10 +3259,151 @@ scwin.load_Board_submiterror = function(e) {
     background-color: #f6ffed;
 }
 
+/* 태그 필터링 UI 스타일 */
+.tag-filter-container {
+    background: #f6f8fa;
+    border: 1px solid #d1d9e0;
+    border-radius: 8px;
+    margin: 16px auto;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    max-width: 600px;
+    width: 100%;
+}
+
+.tag-filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.filter-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #24292f;
+    background: none;
+    border: none;
+    cursor: default;
+    flex: 1;
+}
+
+.filter-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-filter-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #656d76;
+    padding: 4px 8px;
+    border-radius: 4px;
+    min-width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-filter-close:hover {
+    background-color: #f3f4f6;
+    color: #24292f;
+}
+
+.tag-filter-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tag-filter-actions {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.tag-action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-tag-all, .btn-tag-clear {
+    padding: 6px 12px;
+    border: 1px solid #d1d9e0;
+    border-radius: 6px;
+    background: white;
+    color: #24292f;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s ease;
+}
+
+.btn-tag-all:hover, .btn-tag-clear:hover {
+    background-color: #f6f8fa;
+    border-color: #1f883d;
+}
+
+.tag-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.btn-tag {
+    padding: 8px 12px;
+    border: 1px solid #d1d9e0;
+    border-radius: 16px;
+    background: white;
+    color: #24292f;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-tag:hover {
+    background-color: #f6f8fa;
+    border-color: #1f883d;
+    transform: translateY(-1px);
+}
+
+.btn-tag.active {
+    background-color: #fff4d6;
+    color: #d4af37;
+    border-color: #d4af37;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(212, 175, 55, 0.2);
+}
+
+.btn-tag.active:hover {
+    background-color: #ffefb3;
+    border-color: #b8941f;
+    color: #b8941f;
+    transform: translateY(-1px);
+}
+
 /* 반응형 */
 @media (max-width: 1200px) {
     .kanban-container {
-        padding: 0 20px 40px 20px;
+        padding: 0 5% 40px 5%;
+        max-width: 85%;
+    }
+    
+    .kanban-column {
+        min-width: 260px;
+        max-width: 300px;
     }
     
     .project-header {
@@ -2833,10 +3415,12 @@ scwin.load_Board_submiterror = function(e) {
     .kanban-container {
         flex-direction: column;
         padding: 0 16px 40px 16px;
+        max-width: 95%;
     }
     
     .kanban-column {
         min-width: auto;
+        max-width: none;
     }
     
     .project-header {
@@ -3088,6 +3672,48 @@ scwin.load_Board_submiterror = function(e) {
 					<xf:trigger type="button" class="btn-github" id="btn_settings" ev:onclick="scwin.project_settings_onclick">
 						<xf:label><![CDATA[⚙️ 프로젝트 설정]]></xf:label>
 					</xf:trigger>
+				</xf:group>
+			</xf:group>
+
+			<!-- 태그 필터링 영역 -->
+			<xf:group id="grp_tag_filter" class="tag-filter-container" style="display:none;">
+				<xf:group class="tag-filter-header">
+					<xf:group class="filter-header-left">
+						<xf:trigger type="button" class="btn-tag-all" id="btn_tag_all" ev:onclick="scwin.selectAllTags">
+							<xf:label>전체</xf:label>
+						</xf:trigger>
+						<xf:trigger type="button" class="btn-tag-clear" id="btn_tag_clear" ev:onclick="scwin.clearTagFilter">
+							<xf:label>초기화</xf:label>
+						</xf:trigger>
+					</xf:group>
+					<w2:textbox class="filter-title" readonly="true">🏷️ 태그 필터</w2:textbox>
+					<xf:group class="filter-header-actions">
+						<xf:trigger type="button" class="btn-filter-close" id="btn_filter_close" ev:onclick="scwin.hideTagFilter">
+							<xf:label>✕</xf:label>
+						</xf:trigger>
+					</xf:group>
+				</xf:group>
+				<xf:group class="tag-filter-content">
+					<xf:group class="tag-buttons">
+						<xf:trigger type="button" class="btn-tag" id="btn_tag_dev" ev:onclick="scwin.toggleTag_dev">
+							<xf:label>🔧 개발</xf:label>
+						</xf:trigger>
+						<xf:trigger type="button" class="btn-tag" id="btn_tag_test" ev:onclick="scwin.toggleTag_test">
+							<xf:label>🧪 테스트</xf:label>
+						</xf:trigger>
+						<xf:trigger type="button" class="btn-tag" id="btn_tag_doc" ev:onclick="scwin.toggleTag_doc">
+							<xf:label>📝 문서</xf:label>
+						</xf:trigger>
+						<xf:trigger type="button" class="btn-tag" id="btn_tag_plan" ev:onclick="scwin.toggleTag_plan">
+							<xf:label>📋 계획</xf:label>
+						</xf:trigger>
+						<xf:trigger type="button" class="btn-tag" id="btn_tag_analytics" ev:onclick="scwin.toggleTag_analytics">
+							<xf:label>📊 분석</xf:label>
+						</xf:trigger>
+						<xf:trigger type="button" class="btn-tag" id="btn_tag_collabo" ev:onclick="scwin.toggleTag_collabo">
+							<xf:label>👥 협업</xf:label>
+						</xf:trigger>
+					</xf:group>
 				</xf:group>
 			</xf:group>
 

@@ -182,7 +182,9 @@ public class BoardController {
             
             // 3. 조회 결과를 Redis에 캐싱
             if (boardList != null && !boardList.isEmpty()) {
-                kanbanRedisService.cacheProjectBoards(projectId, boardList);
+                // BoardVo 리스트를 Map 리스트로 변환
+                List<java.util.Map<String, Object>> boardMapList = convertBoardVoListToMapList(boardList);
+                kanbanRedisService.cacheProjectBoards(projectId, boardMapList);
                 System.out.println("💾 DB 조회 결과를 Redis에 캐싱 완료");
             }
             
@@ -207,19 +209,35 @@ public class BoardController {
         for (java.util.Map<String, Object> map : mapList) {
             BoardVo board = new BoardVo();
             
-            // Map에서 BoardVo 필드로 변환
+            // Map에서 BoardVo 필드로 변환 (실제 DB 컬럼명에 맞춤)
             if (map.get("boardId") != null) board.setBoardId(map.get("boardId").toString());
             if (map.get("projectId") != null) board.setProjectId(map.get("projectId").toString());
-            if (map.get("boardName") != null) board.setBoardTitle(map.get("boardName").toString());
-//            if (map.get("boardDesc") != null) board.setBoardDesc(map.get("boardDesc").toString());
-//            if (map.get("boardOrder") != null) board.setBoardOrder(Integer.parseInt(map.get("boardOrder").toString()));
-//            if (map.get("createdAt") != null) board.setCreatedAt(map.get("createdAt").toString());
-//            if (map.get("updatedAt") != null) board.setUpdatedAt(map.get("updatedAt").toString());
+            if (map.get("boardTitle") != null) board.setBoardTitle(map.get("boardTitle").toString());
             
             boardList.add(board);
         }
         
         return boardList;
+    }
+    
+    /**
+     * BoardVo 리스트를 Map 리스트로 변환
+     */
+    private List<java.util.Map<String, Object>> convertBoardVoListToMapList(List<BoardVo> boardList) {
+        List<java.util.Map<String, Object>> mapList = new java.util.ArrayList<>();
+        
+        for (BoardVo board : boardList) {
+            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            
+            // BoardVo 필드를 Map으로 변환 (실제 DB 컬럼명에 맞춤)
+            map.put("boardId", board.getBoardId());
+            map.put("projectId", board.getProjectId());
+            map.put("boardTitle", board.getBoardTitle());
+            
+            mapList.add(map);
+        }
+        
+        return mapList;
     }
    
 }
