@@ -141,4 +141,15 @@ public class TaskVersionDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAb
 		return (Long) selectByPk("com.demo.proworks.taskversion.selectListCountTaskVersionByTaskId", vo);
 	}
 
+	/**
+	 * 프로젝트 ID로 작업 버전들을 삭제한다.
+	 * 
+	 * @param TaskVersionVo 버전관리를 위한 Task(업무) 정보
+	 * @return 번호
+	 * @throws ElException
+	 */
+	public int deleteTaskVersionByProjectId(TaskVersionVo vo) throws ElException {
+		return delete("com.demo.proworks.taskversion.deleteTaskVersionByProjectId", vo);
+	}
+
 }

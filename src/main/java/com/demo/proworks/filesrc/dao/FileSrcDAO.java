@@ -110,4 +110,26 @@ public class FileSrcDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
 		return delete("com.demo.proworks.filesrc.deleteFileSrc", vo);
 	}
 
+	/**
+	 * 프로젝트 ID로 파일들을 삭제한다.
+	 * 
+	 * @param FileSrcVo 파일
+	 * @return 번호
+	 * @throws ElException
+	 */
+	public int deleteFileSrcByProjectId(FileSrcVo vo) throws ElException {
+		return delete("com.demo.proworks.filesrc.deleteFileSrcByProjectId", vo);
+	}
+
+	/**
+	 * 프로젝트 ID로 파일 목록을 조회한다.
+	 * 
+	 * @param FileSrcVo 파일
+	 * @return List<FileSrcVo> 파일 목록
+	 * @throws ElException
+	 */
+	public List<FileSrcVo> selectFileSrcByProjectId(FileSrcVo vo) throws ElException {
+		return (List<FileSrcVo>) list("com.demo.proworks.filesrc.selectFileSrcByProjectId", vo);
+	}
+
 }

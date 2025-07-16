@@ -153,4 +153,15 @@ public class ProjectUserDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAb
         return update("com.demo.proworks.projectuser.updateProjectUserRole", vo);
     }
 
+    /**
+     * 프로젝트 ID로 프로젝트 사용자들을 삭제한다.
+     *  
+     * @param  ProjectUserVo 프로젝트 사용자 정보
+     * @return 번호
+     * @throws ElException
+     */
+    public int deleteProjectUserByProjectId(ProjectUserVo vo) throws ElException {
+        return delete("com.demo.proworks.projectuser.deleteProjectUserByProjectId", vo);
+    }
+
 }

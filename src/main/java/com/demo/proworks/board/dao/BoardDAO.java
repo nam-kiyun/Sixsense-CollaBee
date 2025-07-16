@@ -89,4 +89,15 @@ public class BoardDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstract
         return delete("com.demo.proworks.board.deleteBoard", vo);
     }
 
+    /**
+     * 프로젝트 ID로 보드들을 삭제한다.
+     *  
+     * @param  BoardVo 보드
+     * @return 번호
+     * @throws ElException
+     */
+    public int deleteBoardByProjectId(BoardVo vo) throws ElException {
+        return delete("com.demo.proworks.board.deleteBoardByProjectId", vo);
+    }
+
 }

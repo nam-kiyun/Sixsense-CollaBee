@@ -124,4 +124,15 @@
 
 	</select>
 
+	<delete id="deleteCommentByProjectId" parameterType="com.demo.proworks.comment.vo.CommentVo">
+		<!-- 프로젝트 ID로 댓글들을 삭제한다. -->
+		DELETE FROM COMMENT /* QueryID : com.demo.proworks.comment.deleteCommentByProjectId */
+		WHERE TASK_ID IN (
+			SELECT t.TASK_ID
+			FROM TASK t
+			INNER JOIN BOARD b ON t.BOARD_ID = b.BOARD_ID
+			WHERE b.PROJECT_ID = #{projectId}
+		)
+	</delete>
+
 </mapper>

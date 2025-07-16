@@ -72,6 +72,15 @@ public interface ProjectService {
      * @throws Exception
      */
 	public int deleteProject(ProjectVo projectVo) throws Exception;
+	
+    /**
+     * 프로젝트와 관련된 모든 데이터를 완전히 삭제 처리한다.
+     *
+     * @param  projectId 프로젝트 ID
+     * @return 번호
+     * @throws Exception
+     */
+	public int deleteProjectCompletely(String projectId) throws Exception;
 
     /**
      * 프로젝트 초대 이메일을 위한 프로젝트 정보와 팀장 정보를 조회한다.

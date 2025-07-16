@@ -89,4 +89,15 @@ public class TaskDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstractD
         return delete("com.demo.proworks.task.deleteTask", vo);
     }
 
+    /**
+     * 프로젝트 ID로 작업들을 삭제한다.
+     *  
+     * @param  TaskVo 업무(Task) 정보
+     * @return 번호
+     * @throws ElException
+     */
+    public int deleteTaskByProjectId(TaskVo vo) throws ElException {
+        return delete("com.demo.proworks.task.deleteTaskByProjectId", vo);
+    }
+
 }

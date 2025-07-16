@@ -43,6 +43,9 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "user_name", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userName;
 
+    @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String projectId;
+
     @ElVoField(physicalName = "taskId")
     public int getTaskId(){
         return taskId;
@@ -149,6 +152,17 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.userName = userName;
     }
 
+    @ElVoField(physicalName = "projectId")
+    public String getProjectId(){
+        String ret = this.projectId;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "projectId")
+    public void setProjectId(String projectId){
+        this.projectId = projectId;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -162,7 +176,8 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
         sb.append("startDate").append("=").append(startDate).append(",");
         sb.append("endDate").append("=").append(endDate).append(",");
         sb.append("tags").append("=").append(tags).append(",");
-        sb.append("userName").append("=").append(userName);
+        sb.append("userName").append("=").append(userName).append(",");
+        sb.append("projectId").append("=").append(projectId);
         sb.append("]");
         return sb.toString();
 

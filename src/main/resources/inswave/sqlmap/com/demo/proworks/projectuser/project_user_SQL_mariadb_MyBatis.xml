@@ -151,4 +151,10 @@
         WHERE PROJECT_ID = #{projectId} AND USER_ID = #{userId}
     </update>
 
+    <delete id="deleteProjectUserByProjectId" parameterType="com.demo.proworks.projectuser.vo.ProjectUserVo">
+        <!-- 프로젝트 ID로 프로젝트 사용자들을 삭제한다. -->
+        DELETE FROM PROJECT_USER /* QueryID : com.demo.proworks.projectuser.deleteProjectUserByProjectId */
+        WHERE PROJECT_ID = #{projectId}
+    </delete>
+
 </mapper>

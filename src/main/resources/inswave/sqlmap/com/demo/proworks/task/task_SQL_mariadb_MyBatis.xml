@@ -117,4 +117,14 @@
 
 	</select>
 
+	<delete id="deleteTaskByProjectId" parameterType="com.demo.proworks.task.vo.TaskVo">
+		<!-- 프로젝트 ID로 작업들을 삭제한다. -->
+		DELETE FROM TASK /* QueryID : com.demo.proworks.task.deleteTaskByProjectId */
+		WHERE BOARD_ID IN (
+			SELECT BOARD_ID
+			FROM BOARD
+			WHERE PROJECT_ID = #{projectId}
+		)
+	</delete>
+
 </mapper>
