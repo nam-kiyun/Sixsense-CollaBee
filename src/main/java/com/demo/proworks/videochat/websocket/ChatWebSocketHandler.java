@@ -45,7 +45,12 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
 	private void initializeObjectMapper() {
 		this.objectMapper = new ObjectMapper();
+		// WebSquare의 elExcludeFilter 문제 해결
+		SimpleBeanPropertyFilter filter = SimpleBeanPropertyFilter.serializeAll();
+		FilterProvider filterProvider = new SimpleFilterProvider().addFilter("elExcludeFilter", filter)
+				.setFailOnUnknownId(false); // 알 수 없는 필터 ID에 대해 실패하지 않음
 
+		this.objectMapper.setFilterProvider(filterProvider);
 	}
     private void handleJoin(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
         String channelName = chatMessage.getChannelName();
@@ -93,12 +98,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         broadcastToChannel(channelName, joinNotification, session);
     
 
-		// WebSquare의 elExcludeFilter 문제 해결
-		SimpleBeanPropertyFilter filter = SimpleBeanPropertyFilter.serializeAll();
-		FilterProvider filterProvider = new SimpleFilterProvider().addFilter("elExcludeFilter", filter)
-				.setFailOnUnknownId(false); // 알 수 없는 필터 ID에 대해 실패하지 않음
-
-		this.objectMapper.setFilterProvider(filterProvider);
+		
 
 		// System.out.println("🔧 WebSocket ObjectMapper 초기화 완료 (elExcludeFilter 설정됨)");
 	}
