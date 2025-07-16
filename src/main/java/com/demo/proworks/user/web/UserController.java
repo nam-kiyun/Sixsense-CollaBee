@@ -1,11 +1,15 @@
 package com.demo.proworks.user.web;
 
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpSessionContext;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -78,13 +82,15 @@ public class UserController {
 	@ElService(key = "user/login")
 	@RequestMapping(value = "user/login")
 	@ElDescription(sub = "로그인", desc = "로그인을 처리한다.")
-	public void login(LoginVo loginVo, HttpServletRequest request) throws Exception {
+	public void login(LoginVo loginVo, HttpServletRequest request,HttpSession session) throws Exception {
 		String id = loginVo.getId();
 		String password = loginVo.getPassword();
 
 		LoginInfo info = loginProcess.processLogin(request, id, password);
 		System.out.println(info);
 
+		session.setAttribute("userId", id);
+		System.out.println("==================="+session.getAttribute("userId"));
 		if (info != null) {
 			AppLog.debug("- Login 정보 : " + info.toString());
 		} else {
