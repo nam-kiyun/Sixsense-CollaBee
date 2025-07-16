@@ -46,7 +46,6 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
     @ElDtoField(logicalName = "ICE후보정보", physicalName = "iceCandidate", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String iceCandidate;
 
-
     @ElDtoField(logicalName = "Simple-Peer시그널", physicalName = "signal", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String signal;
 
@@ -58,7 +57,6 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
 
     @ElDtoField(logicalName = "댓글 아이디", physicalName = "commentId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String commentId;
-
 
     @ElVoField(physicalName = "type")
     public String getType(){
@@ -179,7 +177,6 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
         this.iceCandidate = iceCandidate;
     }
 
-
     @ElVoField(physicalName = "signal")
     public String getSignal(){
         String ret = this.signal;
@@ -189,6 +186,7 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
     @ElVoField(physicalName = "signal")
     public void setSignal(String signal){
         this.signal = signal;
+    }
 
     @ElVoField(physicalName = "userImage")
     public String getUserImage(){
@@ -221,7 +219,6 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
     @ElVoField(physicalName = "commentId")
     public void setCommentId(String commentId){
         this.commentId = commentId;
->>>>>>> ee101bbac6f0e1c8d84b778b47160f593a87873d
     }
 
     @Override
@@ -239,7 +236,7 @@ public class ChatMessageVo extends com.inswave.elfw.core.CommVO {
         sb.append("targetUserId").append("=").append(targetUserId).append(",");
         sb.append("sdp").append("=").append(sdp).append(",");
         sb.append("iceCandidate").append("=").append(iceCandidate).append(",");
-        sb.append("signal").append("=").append(signal);
+        sb.append("signal").append("=").append(signal).append(",");
         sb.append("userImage").append("=").append(userImage).append(",");
         sb.append("createdAt").append("=").append(createdAt).append(",");
         sb.append("commentId").append("=").append(commentId);
