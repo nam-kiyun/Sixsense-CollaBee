@@ -40,6 +40,12 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "tags", physicalName = "tags", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String tags;
 
+    @ElDtoField(logicalName = "sortField", physicalName = "sortField", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String sortField;
+
+    @ElDtoField(logicalName = "sortOrder", physicalName = "sortOrder", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String sortOrder;
+
     @ElVoField(physicalName = "taskId")
     public String getTaskId(){
         String ret = this.taskId;
@@ -139,6 +145,28 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.tags = tags;
     }
 
+    @ElVoField(physicalName = "sortField")
+    public String getSortField(){
+        String ret = this.sortField;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "sortField")
+    public void setSortField(String sortField){
+        this.sortField = sortField;
+    }
+
+    @ElVoField(physicalName = "sortOrder")
+    public String getSortOrder(){
+        String ret = this.sortOrder;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "sortOrder")
+    public void setSortOrder(String sortOrder){
+        this.sortOrder = sortOrder;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -151,7 +179,9 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
         sb.append("priority").append("=").append(priority).append(",");
         sb.append("startDate").append("=").append(startDate).append(",");
         sb.append("endDate").append("=").append(endDate).append(",");
-        sb.append("tags").append("=").append(tags);
+        sb.append("tags").append("=").append(tags).append(",");
+        sb.append("sortField").append("=").append(sortField).append(",");
+        sb.append("sortOrder").append("=").append(sortOrder);
         sb.append("]");
         return sb.toString();
 

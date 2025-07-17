@@ -87,6 +87,20 @@ public class TaskController {
      * Redis 캐싱을 적용한 태스크 목록 조회 (칸반보드용)
      */
     private TaskListVo selectTasksWithRedisCache(TaskVo taskVo) throws Exception {
+        // 정렬 파라미터 추출
+        String sortField = taskVo.getSortField();
+        String sortOrder = taskVo.getSortOrder();
+        
+        System.out.println("🔄 정렬 파라미터 확인 - sortField: " + sortField + ", sortOrder: " + sortOrder);
+        
+        // 기본값 설정
+        if (sortField == null || sortField.trim().isEmpty()) {
+            sortField = "startDate";
+        }
+        if (sortOrder == null || sortOrder.trim().isEmpty()) {
+            sortOrder = "asc";
+        }
+        
         // boardId를 통해 projectId 찾기
         String projectId = null;
         if (taskVo.getBoardId() != null) {
@@ -117,17 +131,13 @@ public class TaskController {
         }
         
         try {
-            // 1. 테스트를 위해 Redis 캐시 무효화 (임시)
-            System.out.println("🔄 테스트를 위해 Redis 캐시 무효화 진행");
-            kanbanRedisService.invalidateProjectCache(projectId);
-            
-            // 2. Redis 캐시에서 프로젝트의 전체 태스크 목록 조회
-            List<java.util.Map<String, Object>> cachedTasks = kanbanRedisService.getProjectTasksFromCache(projectId);
+            // 1. Redis 캐시에서 프로젝트의 전체 태스크 목록 조회 (정렬 적용)
+            List<java.util.Map<String, Object>> cachedTasks = kanbanRedisService.getProjectTasksFromCacheWithSort(projectId, sortField, sortOrder);
             
             if (cachedTasks != null) {
-                System.out.println("✅ Redis 캐시에서 태스크 목록 조회 성공: " + cachedTasks.size() + "개");
+                System.out.println("✅ Redis 캐시에서 정렬된 태스크 목록 조회 성공: " + cachedTasks.size() + "개 (정렬: " + sortField + " " + sortOrder + ")");
                 
-                // 캐시된 데이터를 TaskVo로 변환하고 필터링
+                // 캐시된 데이터를 TaskVo로 변환하고 필터링 (이미 정렬됨)
                 List<TaskVo> taskList = convertAndFilterTasks(cachedTasks, taskVo);
                 
                 System.out.println("📊 Redis 캐시에서 필터링된 태스크 개수: " + taskList.size() + "개 (boardId: " + taskVo.getBoardId() + ")");
@@ -137,6 +147,12 @@ public class TaskController {
                 retTaskList.setTotalCount(taskList.size());
                 retTaskList.setPageSize(taskVo.getPageSize());
                 retTaskList.setPageIndex(taskVo.getPageIndex());
+                
+                // 최종 응답 데이터 로깅
+                System.out.println("📤 클라이언트로 전송할 최종 응답 데이터 (boardId: " + taskVo.getBoardId() + "):");
+                for (TaskVo task : taskList) {
+                    System.out.println("  - taskId: " + task.getTaskId() + ", boardId: " + task.getBoardId() + ", title: " + task.getTaskTitle());
+                }
                 
                 return retTaskList;
             }
@@ -156,12 +172,16 @@ public class TaskController {
                 }
             }
             
-            // 4. 프로젝트 전체 태스크를 Redis에 캐싱
+            // 4. 프로젝트 전체 태스크를 정렬 후 Redis에 캐싱
             if (allProjectTasks != null && !allProjectTasks.isEmpty()) {
-                // TaskVo 리스트를 Map 리스트로 변환
+                // 4-1. 정렬 적용
+                allProjectTasks = sortTaskList(allProjectTasks, sortField, sortOrder);
+                System.out.println("🔄 DB 조회 데이터 정렬 완료: " + sortField + " " + sortOrder);
+                
+                // 4-2. TaskVo 리스트를 Map 리스트로 변환
                 List<java.util.Map<String, Object>> taskMapList = convertTaskVoListToMapList(allProjectTasks);
                 kanbanRedisService.cacheProjectTasks(projectId, taskMapList);
-                System.out.println("💾 프로젝트 전체 태스크를 Redis에 캐싱 완료: " + allProjectTasks.size() + "개");
+                System.out.println("💾 정렬된 프로젝트 전체 태스크를 Redis에 캐싱 완료: " + allProjectTasks.size() + "개");
             }
             
             // 5. 현재 요청한 보드의 태스크만 필터링하여 반환
@@ -291,7 +311,101 @@ public class TaskController {
         return mapList;
     }
     
+    /**
+     * TaskVo 리스트를 정렬합니다.
+     */
+    private List<TaskVo> sortTaskList(List<TaskVo> taskList, String sortField, String sortOrder) {
+        if (taskList == null || taskList.isEmpty()) {
+            return taskList;
+        }
         
+        System.out.println("🔄 TaskController에서 정렬 시작 - 필드: " + sortField + ", 순서: " + sortOrder + ", 개수: " + taskList.size());
+        
+        taskList.sort((a, b) -> {
+            String valueA = null;
+            String valueB = null;
+            
+            // 정렬 필드에 따라 값 추출
+            if ("startDate".equals(sortField)) {
+                valueA = a.getStartDate();
+                valueB = b.getStartDate();
+            } else if ("endDate".equals(sortField)) {
+                valueA = a.getEndDate();
+                valueB = b.getEndDate();
+            } else {
+                // 기본값으로 startDate 사용
+                valueA = a.getStartDate();
+                valueB = b.getStartDate();
+            }
+            
+            // null/empty 처리
+            if ((valueA == null || valueA.trim().isEmpty()) && (valueB == null || valueB.trim().isEmpty())) {
+                return 0;
+            }
+            if (valueA == null || valueA.trim().isEmpty()) {
+                return 1; // null은 뒤로
+            }
+            if (valueB == null || valueB.trim().isEmpty()) {
+                return -1; // null은 뒤로
+            }
+            
+            try {
+                // 날짜 문자열을 Date 객체로 변환하여 비교
+                java.util.Date dateA = parseDate(valueA);
+                java.util.Date dateB = parseDate(valueB);
+                
+                int comparison = dateA.compareTo(dateB);
+                
+                // 내림차순인 경우 결과를 뒤집음
+                return "desc".equals(sortOrder) ? -comparison : comparison;
+                
+            } catch (Exception e) {
+                System.err.println("날짜 비교 중 오류 발생: " + e.getMessage());
+                // 문자열 비교로 폴백
+                int comparison = valueA.compareTo(valueB);
+                return "desc".equals(sortOrder) ? -comparison : comparison;
+            }
+        });
+        
+        System.out.println("✅ TaskController 정렬 완료: " + taskList.size() + "개");
+        return taskList;
+    }
+    
+    /**
+     * 날짜 문자열을 Date 객체로 변환합니다.
+     */
+    private java.util.Date parseDate(String dateString) {
+        if (dateString == null || dateString.trim().isEmpty()) {
+            return new java.util.Date(0); // 기본값
+        }
+        
+        try {
+            // 다양한 날짜 형식 지원
+            java.text.SimpleDateFormat[] formats = {
+                new java.text.SimpleDateFormat("yyyy-MM-dd"),
+                new java.text.SimpleDateFormat("yyyy/MM/dd"),
+                new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss"),
+                new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
+            };
+            
+            for (java.text.SimpleDateFormat format : formats) {
+                try {
+                    return format.parse(dateString.trim());
+                } catch (java.text.ParseException e) {
+                    // 다음 형식 시도
+                }
+            }
+            
+            // 모든 형식 실패 시 기본값
+            System.err.println("날짜 파싱 실패: " + dateString);
+            return new java.util.Date(0);
+            
+        } catch (Exception e) {
+            System.err.println("날짜 파싱 중 예외 발생: " + e.getMessage());
+            return new java.util.Date(0);
+        }
+    }
+    
     /**
      * 업무(Task) 정보을 단건 조회 처리 한다.
      *

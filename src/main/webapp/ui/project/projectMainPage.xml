@@ -12,6 +12,8 @@
 					<w2:keyInfo>
 						<w2:key id="boardId" name="보드 ID" dataType="text"></w2:key>
 						<w2:key id="tags" name="태그 필터" dataType="text"></w2:key>
+						<w2:key id="sortField" name="정렬 필드" dataType="text"></w2:key>
+						<w2:key id="sortOrder" name="정렬 순서" dataType="text"></w2:key>
 					</w2:keyInfo>
 				</w2:dataMap>
 				<w2:dataList baseNode="list" repeatNode="map" id="dlt_taskList" saveRemovedData="true">
@@ -79,6 +81,9 @@ scwin.onpageload = function () {
     
     // WebSocket 연결 초기화
     scwin.initWebSocket();
+    
+    // 정렬 기본값 설정
+    scwin.initSortControls();
 };
 
 // 프로젝트 데이터 로드 함수
@@ -874,10 +879,14 @@ scwin.projectCard_onclick = function(e) {
 
 // ==================== 태그 필터링 기능 ====================
 
-// 태그 필터링 전역 변수
+// 태그 필터링 및 정렬 전역 변수
 scwin.selectedTags = [];
 scwin.isTagFilterVisible = false;
 scwin.allTasksData = {}; // 전체 태스크 데이터를 보드별로 저장
+
+// 정렬 관련 전역 변수
+scwin.currentSortField = "startDate"; // 기본값: 시작일
+scwin.currentSortOrder = "asc"; // 기본값: 오름차순
 
 // 필터 버튼 클릭 - 태그 필터링 패널 표시/숨기기
 scwin.filter_onclick = function(e) {
@@ -1161,59 +1170,26 @@ scwin.updateTagFilterUI = function() {
 scwin.applyTagFilter = function() {
     console.log("프론트엔드 태그 필터링 적용 시작:", scwin.selectedTags);
     
-    // 모든 보드에 대해 필터링 적용
-    scwin.filterAllBoardsLocally();
+    // 모든 보드에 대해 필터링과 정렬 적용
+    scwin.applySortAndFilter();
 };
 
 /**
- * 모든 보드의 태스크 목록을 로컬에서 필터링
+ * 모든 보드의 태스크 목록을 로컬에서 필터링 (더 이상 사용되지 않음)
+ * @deprecated applySortAndFilter 사용
  */
 scwin.filterAllBoardsLocally = function() {
-    console.log("로컬 필터링 시작");
-    
-    // 보드 목록 가져오기
-    var boardList = $p.getComponentById("dlt_boardListVo");
-    if (boardList && boardList.getRowCount() > 0) {
-        for (var i = 0; i < boardList.getRowCount(); i++) {
-            var boardId = boardList.getCellData(i, "boardId");
-            if (boardId) {
-                scwin.filterBoardTasksLocally(boardId);
-            }
-        }
-    }
-    
-    console.log("로컬 필터링 완료");
+    console.log("⚠️ filterAllBoardsLocally는 더 이상 사용되지 않습니다. applySortAndFilter를 사용하세요.");
+    scwin.applySortAndFilter();
 };
 
 /**
- * 특정 보드의 태스크를 로컬에서 필터링하여 표시
+ * 특정 보드의 태스크를 로컬에서 필터링하여 표시 (더 이상 사용되지 않음)
+ * @deprecated sortAndFilterBoardTasks 사용
  */
 scwin.filterBoardTasksLocally = function(boardId) {
-    console.log("보드 로컬 필터링:", boardId);
-    
-    // 해당 보드의 전체 태스크 데이터 가져오기
-    var allTasks = scwin.allTasksData[boardId] || [];
-    
-    // 태그 필터링 적용
-    var filteredTasks = [];
-    
-    if (scwin.selectedTags.length === 0) {
-        // 선택된 태그가 없으면 모든 태스크 표시
-        filteredTasks = allTasks;
-    } else {
-        // 선택된 태그가 있으면 필터링
-        for (var i = 0; i < allTasks.length; i++) {
-            var task = allTasks[i];
-            if (scwin.isTaskMatchesTags(task, scwin.selectedTags)) {
-                filteredTasks.push(task);
-            }
-        }
-    }
-    
-    console.log("보드 " + boardId + " 필터링 결과: " + filteredTasks.length + "개 (전체: " + allTasks.length + "개)");
-    
-    // 필터링된 태스크들을 화면에 표시
-    scwin.displayFilteredTasks(boardId, filteredTasks);
+    console.log("⚠️ filterBoardTasksLocally는 더 이상 사용되지 않습니다. sortAndFilterBoardTasks를 사용하세요.");
+    scwin.sortAndFilterBoardTasks(boardId);
 };
 
 /**
@@ -1302,9 +1278,154 @@ scwin.storeAllTasksData = function(boardId, tasksArray) {
     console.log("보드 " + boardId + " 전체 태스크 데이터 저장:", tasksArray.length + "개");
 };
 
-// 정렬 버튼 클릭
-scwin.sort_onclick = function(e) {
-    alert("정렬 기능은 준비 중입니다.");
+// ==================== 정렬 기능 ====================
+
+/**
+ * 정렬 컨트롤 초기화 및 이벤트 바인딩
+ */
+scwin.initSortControls = function() {
+    try {
+        // 기본값 설정
+        if (sel_sort_field) {
+            sel_sort_field.setValue(scwin.currentSortField);
+            sel_sort_field.bind("onchange", scwin.onSortFieldChange);
+        }
+        
+        if (sel_sort_order) {
+            sel_sort_order.setValue(scwin.currentSortOrder);
+            sel_sort_order.bind("onchange", scwin.onSortOrderChange);
+        }
+        
+        console.log("정렬 컨트롤 초기화 완료 - 필드:", scwin.currentSortField, "순서:", scwin.currentSortOrder);
+    } catch (error) {
+        console.error("정렬 컨트롤 초기화 실패:", error);
+    }
+};
+
+/**
+ * 정렬 필드 변경 이벤트
+ */
+scwin.onSortFieldChange = function(e) {
+    scwin.currentSortField = sel_sort_field.getValue();
+    console.log("정렬 필드 변경:", scwin.currentSortField);
+    scwin.applySortAndFilter();
+};
+
+/**
+ * 정렬 순서 변경 이벤트
+ */
+scwin.onSortOrderChange = function(e) {
+    scwin.currentSortOrder = sel_sort_order.getValue();
+    console.log("정렬 순서 변경:", scwin.currentSortOrder);
+    scwin.applySortAndFilter();
+};
+
+/**
+ * 태스크 목록 정렬 (더 이상 사용되지 않음 - 서버에서 정렬 처리)
+ * @deprecated 서버에서 정렬을 처리하므로 이 함수는 더 이상 사용되지 않습니다.
+ */
+/*
+scwin.sortTasks = function(tasks) {
+    console.log("⚠️ 이 함수는 더 이상 사용되지 않습니다. 서버에서 정렬을 처리합니다.");
+    return tasks; // 서버에서 이미 정렬된 데이터를 그대로 반환
+};
+*/
+
+/**
+ * 정렬과 필터링을 모두 적용 (서버에서 정렬된 데이터 요청)
+ */
+scwin.applySortAndFilter = function() {
+    console.log("🔄 서버에서 정렬된 데이터 요청 시작");
+    
+    // 모든 보드에 대해 서버에서 정렬된 데이터 요청
+    var boardList = $p.getComponentById("dlt_boardListVo");
+    if (boardList && boardList.getRowCount() > 0) {
+        console.log("📋 처리할 보드 개수:", boardList.getRowCount());
+        
+        for (var i = 0; i < boardList.getRowCount(); i++) {
+            var boardId = boardList.getCellData(i, "boardId");
+            var boardTitle = boardList.getCellData(i, "boardTitle");
+            
+            if (boardId) {
+                console.log("🎯 보드 " + boardId + " (" + boardTitle + ")에 대한 정렬된 데이터 요청");
+                
+                // 서버에 정렬 파라미터와 함께 요청
+                scwin.loadTasksWithSort(boardId);
+            }
+        }
+    } else {
+        console.warn("⚠️ 보드 리스트가 없거나 비어있습니다");
+    }
+    
+    console.log("✅ 모든 보드에 대한 정렬 데이터 요청 완료");
+};
+
+/**
+ * 특정 보드에 대해 정렬된 태스크 데이터를 서버에서 로드
+ */
+scwin.loadTasksWithSort = function(boardId) {
+    console.log("🔄 보드 " + boardId + " 정렬된 데이터 요청 - sortField: " + scwin.currentSortField + ", sortOrder: " + scwin.currentSortOrder);
+    
+    // 검색 조건에 정렬 파라미터 추가
+    dm_search_task.set("boardId", boardId);
+    dm_search_task.set("sortField", scwin.currentSortField);
+    dm_search_task.set("sortOrder", scwin.currentSortOrder);
+    
+    // 서버 요청 (기존 load_Tasks submission 사용)
+    $p.executeSubmission("load_Tasks");
+};
+
+/**
+ * 특정 보드의 태스크에 태그 필터링만 적용 (정렬은 서버에서 처리됨)
+ */
+scwin.sortAndFilterBoardTasks = function(boardId) {
+    console.log("🎯 보드 태그 필터링 시작:", boardId);
+    
+    // 해당 보드의 전체 태스크 데이터 가져오기 (이미 서버에서 정렬된 상태)
+    var allTasks = scwin.allTasksData[boardId] || [];
+    console.log("📊 보드 " + boardId + " 서버 정렬된 태스크:", allTasks.length + "개");
+    
+    // 원본 태스크 데이터가 없는 경우 경고
+    if (allTasks.length === 0) {
+        console.warn("⚠️ 보드 " + boardId + "에 대한 태스크 데이터가 없습니다!");
+        console.warn("📊 전체 allTasksData:", scwin.allTasksData);
+        // 빈 데이터라도 화면에 표시 (기존 카드 제거를 위해)
+        scwin.displayFilteredTasks(boardId, []);
+        return;
+    }
+    
+    // 디버깅: 태스크 상세 정보 출력 (서버에서 이미 정렬된 상태)
+    console.log("📋 보드 " + boardId + " 서버 정렬된 태스크 목록:");
+    for (var idx = 0; idx < Math.min(allTasks.length, 3); idx++) {
+        var task = allTasks[idx];
+        console.log("  " + (idx + 1) + ". " + task.taskTitle + " (시작일: " + task.startDate + ", 종료일: " + task.endDate + ")");
+    }
+    if (allTasks.length > 3) {
+        console.log("  ... 총 " + allTasks.length + "개 (서버에서 정렬됨)");
+    }
+    
+    // 태그 필터링만 적용 (정렬은 이미 서버에서 처리됨)
+    var filteredTasks = [];
+    if (scwin.selectedTags.length === 0) {
+        // 선택된 태그가 없으면 모든 태스크 표시 (서버 정렬 순서 유지)
+        filteredTasks = allTasks;
+        console.log("🏷️ 태그 필터 없음 - 서버 정렬된 모든 태스크 표시");
+    } else {
+        // 선택된 태그가 있으면 필터링 (서버 정렬 순서 유지)
+        console.log("🏷️ 태그 필터링 적용:", scwin.selectedTags);
+        for (var i = 0; i < allTasks.length; i++) {
+            var task = allTasks[i];
+            if (scwin.isTaskMatchesTags(task, scwin.selectedTags)) {
+                filteredTasks.push(task);
+            }
+        }
+        console.log("🏷️ 태그 필터링 결과:", filteredTasks.length + "개 (서버 정렬 순서 유지)");
+    }
+    
+    console.log("✅ 보드 " + boardId + " 처리 완료: " + filteredTasks.length + "개 (서버 정렬 적용됨)");
+    
+    // 화면에 표시 (이미 서버에서 정렬된 데이터)
+    scwin.displayFilteredTasks(boardId, filteredTasks);
 };
 
 // 목록 보기 버튼 클릭
@@ -1912,23 +2033,8 @@ scwin.load_Tasks_submitdone = function(e) {
         // 2-1. 전체 태스크 데이터를 로컬에 저장 (필터링용)
         scwin.storeAllTasksData(boardId, taskList);
         
-        // 2-2. 현재 선택된 태그 필터가 있으면 필터링 적용, 없으면 전체 표시
-        if (scwin.selectedTags.length > 0) {
-            console.log("기존 태그 필터 적용:", scwin.selectedTags);
-            scwin.filterBoardTasksLocally(boardId);
-        } else {
-            // 태그 필터가 없으면 모든 태스크 표시
-            taskList.forEach(function(taskData) {
-                if (taskData && taskData.boardId) {
-                    scwin.createKanbanCardInBoard(taskData);
-                } else {
-                    console.warn("boardId가 없는 태스크 데이터는 건너뜁니다:", taskData);
-                }
-            });
-            
-            // 카운트 업데이트
-            scwin.updateBoardCardCount(boardId, taskList.length);
-        }
+        // 2-2. 필터링과 정렬을 모두 적용하여 태스크 표시
+        scwin.sortAndFilterBoardTasks(boardId);
         
         console.log(`보드 [${boardId}]의 태스크 로드 및 처리 완료: ${taskList.length}개`);
     } else {
@@ -1939,9 +2045,9 @@ scwin.load_Tasks_submitdone = function(e) {
         if (searchCondition) {
             var boardId = searchCondition.get("boardId");
             if (boardId) {
-                // 빈 데이터 저장
+                // 빈 데이터 저장 및 정렬/필터링 적용
                 scwin.storeAllTasksData(boardId, []);
-                scwin.updateBoardCardCount(boardId, 0);
+                scwin.sortAndFilterBoardTasks(boardId);
             }
         }
     }
@@ -3394,6 +3500,45 @@ scwin.load_Board_submiterror = function(e) {
     transform: translateY(-1px);
 }
 
+/* 정렬 컨트롤 스타일 */
+.sort-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sort-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #24292f;
+    background: none;
+    border: none;
+    cursor: default;
+}
+
+.sort-dropdown {
+    padding: 4px 8px;
+    border: 1px solid #d1d9e0;
+    border-radius: 6px;
+    background: white;
+    color: #24292f;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-width: 80px;
+}
+
+.sort-dropdown:hover {
+    border-color: #1f883d;
+    background-color: #f6f8fa;
+}
+
+.sort-dropdown:focus {
+    outline: none;
+    border-color: #1f883d;
+    box-shadow: 0 0 0 2px rgba(31, 136, 61, 0.1);
+}
+
 /* 반응형 */
 @media (max-width: 1200px) {
     .kanban-container {
@@ -3687,6 +3832,33 @@ scwin.load_Board_submiterror = function(e) {
 						</xf:trigger>
 					</xf:group>
 					<w2:textbox class="filter-title" readonly="true">🏷️ 태그 필터</w2:textbox>
+					<xf:group class="sort-controls">
+						<w2:textbox class="sort-label" readonly="true">📅 정렬:</w2:textbox>
+						<w2:select1 id="sel_sort_field" class="sort-dropdown">
+							<w2:choices>
+								<w2:item>
+									<w2:label>시작일</w2:label>
+									<w2:value>startDate</w2:value>
+								</w2:item>
+								<w2:item>
+									<w2:label>종료일</w2:label>
+									<w2:value>endDate</w2:value>
+								</w2:item>
+							</w2:choices>
+						</w2:select1>
+						<w2:select1 id="sel_sort_order" class="sort-dropdown">
+							<w2:choices>
+								<w2:item>
+									<w2:label>오름차순</w2:label>
+									<w2:value>asc</w2:value>
+								</w2:item>
+								<w2:item>
+									<w2:label>내림차순</w2:label>
+									<w2:value>desc</w2:value>
+								</w2:item>
+							</w2:choices>
+						</w2:select1>
+					</xf:group>
 					<xf:group class="filter-header-actions">
 						<xf:trigger type="button" class="btn-filter-close" id="btn_filter_close" ev:onclick="scwin.hideTagFilter">
 							<xf:label>✕</xf:label>

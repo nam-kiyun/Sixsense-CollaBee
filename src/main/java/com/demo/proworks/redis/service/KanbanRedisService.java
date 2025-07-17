@@ -446,6 +446,218 @@ public class KanbanRedisService {
     }
     
     /**
+     * 정렬이 적용된 프로젝트 태스크 목록을 Redis 캐시에서 조회
+     * Redis에 저장된 임시 이동 데이터를 먼저 적용한 후 정렬 수행
+     */
+    public java.util.List<java.util.Map<String, Object>> getProjectTasksFromCacheWithSort(String projectId, String sortField, String sortOrder) {
+        System.out.println("🔄 Redis에서 정렬된 태스크 목록 조회 시작 - 프로젝트: " + projectId + ", 정렬: " + sortField + " " + sortOrder);
+        
+        java.util.List<java.util.Map<String, Object>> tasks = getProjectTasksFromCache(projectId);
+        
+        if (tasks != null && !tasks.isEmpty()) {
+            System.out.println("📊 정렬 전 태스크 상태 (처음 5개):");
+            for (int i = 0; i < Math.min(5, tasks.size()); i++) {
+                java.util.Map<String, Object> task = tasks.get(i);
+                System.out.println("  - taskId: " + task.get("taskId") + ", boardId: " + task.get("boardId") + ", title: " + task.get("taskTitle"));
+            }
+            
+            // 1. Redis 임시 이동 데이터를 먼저 적용
+            java.util.List<java.util.Map<String, Object>> updatedTasks = applyPendingMovesToTasks(tasks);
+            System.out.println("✅ Redis 임시 이동 데이터 적용 완료: " + updatedTasks.size() + "개");
+            
+            System.out.println("📊 임시 이동 적용 후 태스크 상태 (처음 5개):");
+            for (int i = 0; i < Math.min(5, updatedTasks.size()); i++) {
+                java.util.Map<String, Object> task = updatedTasks.get(i);
+                System.out.println("  - taskId: " + task.get("taskId") + ", boardId: " + task.get("boardId") + ", title: " + task.get("taskTitle"));
+            }
+            
+            // 2. 업데이트된 데이터를 정렬
+            tasks = sortTaskMapList(updatedTasks, sortField, sortOrder);
+            System.out.println("✅ Redis 캐시 데이터 정렬 완료: " + tasks.size() + "개");
+            
+            System.out.println("📊 정렬 후 최종 태스크 상태 (처음 5개):");
+            for (int i = 0; i < Math.min(5, tasks.size()); i++) {
+                java.util.Map<String, Object> task = tasks.get(i);
+                System.out.println("  - taskId: " + task.get("taskId") + ", boardId: " + task.get("boardId") + ", title: " + task.get("taskTitle"));
+            }
+        }
+        
+        return tasks;
+    }
+    
+    /**
+     * Redis에 저장된 대기 중인 임시 이동 데이터를 태스크 목록에 적용
+     */
+    private java.util.List<java.util.Map<String, Object>> applyPendingMovesToTasks(java.util.List<java.util.Map<String, Object>> tasks) {
+        try {
+            System.out.println("🔄 Redis 임시 이동 데이터 적용 시작");
+            System.out.println("🔍 검색할 Redis 키 패턴: " + TASK_MOVE_KEY + "*");
+            
+            // Redis에서 모든 임시 이동 키 조회
+            java.util.Set<String> moveKeys = kanbanRedisTemplate.keys(TASK_MOVE_KEY + "*");
+            
+            if (moveKeys == null || moveKeys.isEmpty()) {
+                System.out.println("⚠️ Redis에 임시 이동 데이터가 없음 - 패턴: " + TASK_MOVE_KEY + "*");
+                
+                // Redis에 실제로 어떤 키들이 있는지 확인
+                java.util.Set<String> allKeys = kanbanRedisTemplate.keys("kanban:*");
+                System.out.println("🔍 Redis에 존재하는 kanban 관련 키들: " + (allKeys != null ? allKeys.size() : 0) + "개");
+                if (allKeys != null) {
+                    for (String key : allKeys) {
+                        System.out.println("  - " + key);
+                    }
+                }
+                
+                return tasks;
+            }
+            
+            System.out.println("📋 발견된 임시 이동 데이터: " + moveKeys.size() + "개");
+            for (String key : moveKeys) {
+                System.out.println("  - Redis 키: " + key);
+            }
+            
+            int appliedCount = 0;
+            
+            // 각 임시 이동 데이터를 태스크에 적용
+            for (String moveKey : moveKeys) {
+                try {
+                    System.out.println("🔍 Redis 키에서 데이터 조회: " + moveKey);
+                    String moveJson = (String) kanbanRedisTemplate.opsForValue().get(moveKey);
+                    
+                    if (moveJson != null) {
+                        System.out.println("📄 Redis에서 조회한 JSON: " + moveJson);
+                        KanbanMessage moveMessage = objectMapper.readValue(moveJson, KanbanMessage.class);
+                        System.out.println("📋 파싱된 이동 메시지: taskId=" + moveMessage.getTaskId() + 
+                                        ", from=" + moveMessage.getFromBoardId() + 
+                                        ", to=" + moveMessage.getToBoardId());
+                        
+                        // 해당 태스크를 찾아서 boardId 업데이트
+                        boolean taskFound = false;
+                        for (java.util.Map<String, Object> task : tasks) {
+                            if (moveMessage.getTaskId().equals(task.get("taskId"))) {
+                                String oldBoardId = (String) task.get("boardId");
+                                task.put("boardId", moveMessage.getToBoardId());
+                                
+                                System.out.println("🔄 임시 이동 적용 성공: taskId=" + moveMessage.getTaskId() + 
+                                                ", " + oldBoardId + " → " + moveMessage.getToBoardId());
+                                appliedCount++;
+                                taskFound = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!taskFound) {
+                            System.out.println("⚠️ 해당 taskId를 태스크 목록에서 찾을 수 없음: " + moveMessage.getTaskId());
+                        }
+                        
+                    } else {
+                        System.out.println("⚠️ Redis 키에 데이터가 없음: " + moveKey);
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ 개별 임시 이동 데이터 적용 실패 (" + moveKey + "): " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            
+            System.out.println("✅ Redis 임시 이동 데이터 적용 완료 - 적용된 개수: " + appliedCount + "/" + moveKeys.size());
+            return tasks;
+            
+        } catch (Exception e) {
+            System.err.println("❌ Redis 임시 이동 데이터 적용 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            return tasks; // 오류 시 원본 데이터 반환
+        }
+    }
+    
+    /**
+     * Map 형태의 태스크 리스트를 정렬합니다.
+     */
+    private java.util.List<java.util.Map<String, Object>> sortTaskMapList(java.util.List<java.util.Map<String, Object>> tasks, String sortField, String sortOrder) {
+        if (tasks == null || tasks.isEmpty()) {
+            return tasks;
+        }
+        
+        System.out.println("🔄 KanbanRedisService에서 정렬 시작 - 필드: " + sortField + ", 순서: " + sortOrder + ", 개수: " + tasks.size());
+        
+        tasks.sort((a, b) -> {
+            Object valueA = a.get(sortField);
+            Object valueB = b.get(sortField);
+            
+            // null 처리
+            if (valueA == null && valueB == null) return 0;
+            if (valueA == null) return 1; // null은 뒤로
+            if (valueB == null) return -1; // null은 뒤로
+            
+            try {
+                String strA = valueA.toString().trim();
+                String strB = valueB.toString().trim();
+                
+                // 빈 문자열 처리
+                if (strA.isEmpty() && strB.isEmpty()) return 0;
+                if (strA.isEmpty()) return 1;
+                if (strB.isEmpty()) return -1;
+                
+                // 날짜 형식 파싱 시도
+                java.util.Date dateA = parseDate(strA);
+                java.util.Date dateB = parseDate(strB);
+                
+                int comparison = dateA.compareTo(dateB);
+                
+                // 내림차순인 경우 결과를 뒤집음
+                return "desc".equals(sortOrder) ? -comparison : comparison;
+                
+            } catch (Exception e) {
+                System.err.println("Redis 정렬 중 오류 발생: " + e.getMessage());
+                // 문자열 비교로 폴백
+                String strA = valueA.toString();
+                String strB = valueB.toString();
+                int comparison = strA.compareTo(strB);
+                return "desc".equals(sortOrder) ? -comparison : comparison;
+            }
+        });
+        
+        System.out.println("✅ KanbanRedisService 정렬 완료: " + tasks.size() + "개");
+        return tasks;
+    }
+    
+    /**
+     * 날짜 문자열을 Date 객체로 변환합니다.
+     */
+    private java.util.Date parseDate(String dateString) {
+        if (dateString == null || dateString.trim().isEmpty()) {
+            return new java.util.Date(0); // 기본값 (1970-01-01)
+        }
+        
+        try {
+            // 다양한 날짜 형식 지원
+            java.text.SimpleDateFormat[] formats = {
+                new java.text.SimpleDateFormat("yyyy-MM-dd"),
+                new java.text.SimpleDateFormat("yyyy/MM/dd"),
+                new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss"),
+                new java.text.SimpleDateFormat("yyyy/MM/dd HH:mm:ss"),
+                new java.text.SimpleDateFormat("MM/dd/yyyy"),
+                new java.text.SimpleDateFormat("dd/MM/yyyy")
+            };
+            
+            for (java.text.SimpleDateFormat format : formats) {
+                try {
+                    return format.parse(dateString.trim());
+                } catch (java.text.ParseException e) {
+                    // 다음 형식 시도
+                }
+            }
+            
+            // 모든 형식 실패 시 기본값
+            System.err.println("Redis에서 날짜 파싱 실패: " + dateString);
+            return new java.util.Date(0);
+            
+        } catch (Exception e) {
+            System.err.println("Redis 날짜 파싱 중 예외 발생: " + e.getMessage());
+            return new java.util.Date(0);
+        }
+    }
+    
+    /**
      * 특정 태스크를 Redis 캐시에서 업데이트 (실시간 반영)
      */
     @SuppressWarnings("unchecked")
