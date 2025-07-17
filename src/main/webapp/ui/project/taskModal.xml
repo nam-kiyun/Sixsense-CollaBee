@@ -211,9 +211,6 @@ scwin.onpageload = function () {
 
             iframe.style.setProperty('height', scrollHeight + 'px', 'important');
             contents.style.setProperty('height', scrollHeight + 'px', 'important');
-
-            // scwin.smoothResize(iframe, scrollHeight);
-            // scwin.smoothResize(contents, scrollHeight);
         }
     }, 300);
 
@@ -280,7 +277,6 @@ scwin.changeEditor = function () {
         return;
     }
 
-
     // CKEditor 인스턴스 직접 접근
     const ckInstance = CKEDITOR.instances["mf_exa_popup_wframe_contents_editor_"];
     Object.keys(CKEDITOR.instances).forEach(key => {
@@ -294,14 +290,27 @@ scwin.changeEditor = function () {
 
     ckInstance.on("instanceReady", function () {
         scwin.previousHTML = contents_editor.getHTML(); // 초기값 설정
-        console.log(contents_editor.getHTML());
 
         ckInstance.on("change", function () {
+            console.log("바뀜");
             const currentHTML = ckInstance.getData();
+            console.log("지금 전체 파일");
+            console.log(dls_allFile.getAllJSON());
+            console.log("화면 파일");
+            console.log(dls_file.getAllJSON());
+            console.log(scwin.previousHTML);
+            console.log(currentHTML);
 
             if (currentHTML !== scwin.previousHTML) {
+
                 console.log("이전 내용:", scwin.previousHTML);
                 console.log("현재 내용:", currentHTML);
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(currentHTML, "text/html");
+
+                // 이제 doc.body는 HTML을 DOM 구조로 표현한 객체!
+                console.log("변환된 DOM:", doc.body);
 
                 const prevNums = scwin.extractFileNums(scwin.previousHTML);
                 const currNums = scwin.extractFileNums(currentHTML);
@@ -353,8 +362,6 @@ scwin.loadOriginalVersion = function () {
         dls_allFile.setJSON(scwin.originalData.fileSrc);
         dls_file.setJSON(scwin.originalData.fileSrc);
         scwin.snapShot = false;
-    } else {
-        console.warn("초기 작업 상태가 없습니다");
     }
 };
 
@@ -362,7 +369,7 @@ scwin.loadOriginalVersion = function () {
 scwin.currentWorkSnapshot = function () {
     return {
         content: contents_editor.getHTML(),
-        fileSrc: dls_allFile.getAllJSON() // 또는 필요하다면 전체 fileList
+        fileSrc: dls_allFile.getAllJSON()
     };
 };
 
@@ -401,8 +408,6 @@ scwin.versionPopup = function (e) {
         // 팝업 생성
         $p.openPopup("./versionModal.xml", options);
     }
-
-
 };
 
 
@@ -527,7 +532,6 @@ scwin.getTask = function (taskId, projectId) {
                 if (el) {
                     el.setAttribute("data-num", item.num);
                 }
-                console.log(contents_editor.getHTML());
             });
 
             contents_editor.setHTML(container.innerHTML);
@@ -548,23 +552,6 @@ scwin.getTask = function (taskId, projectId) {
         }
     });
 }
-
-//ifram 부드럽게 전환
-scwin.smoothResize = function (target, newHeight) {
-    const currentHeight = parseInt(target.style.height || 0);
-    const step = (newHeight - currentHeight) / 10;
-    let frame = 0;
-
-    function animate() {
-        frame++;
-        const nextHeight = currentHeight + step * frame;
-        target.style.height = nextHeight + 'px';
-        if (frame < 2) requestAnimationFrame(animate);
-    }
-
-    animate();
-};
-
 
 
 //해당 작업에 대한 채팅 불러오기(20개씩)
@@ -807,7 +794,7 @@ scwin.comment_send_button_onclick = function () {
 
     $c.sbm.execute(sbm_comment_create);
     comment_input.setValue("");
-    
+
     setTimeout(() => {
         comment_input.focus();
     }, 30);
@@ -844,7 +831,6 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
     if (insertBeforeComp?.render && wrapper?.render) {
         group.render.insertBefore(wrapper.render, insertBeforeComp.render);
     }
-
 
     const headerRow = $p.dynamicCreate(wrapperId + "_header", "span", {
         className: "comment-header"
@@ -1207,7 +1193,7 @@ scwin.file_add_onclick = function (e) {
 scwin.file_remove_onclick = function (e) {
     let chkIdxArr = grd.getCheckedIndex("CHK");
     const size = dls_allFile.getRowCount();
-    console.log(size);
+
     if (chkIdxArr.length === 0)
         return;
 
@@ -1315,9 +1301,17 @@ scwin.fileInput_change = function (e) {
 
         reader.onload = function (event) {
             const fileDataUrl = event.target.result;
+            let param = {
+                name: file.name,
+                url: fileDataUrl,
+                type: file.type,
+                num: scwin.filePageNum + 1,
+                data: event.target.result,
+                size: file.size,
+            }
 
             // HTML 에디터에 삽입
-            scwin.addFileHtml(file.type, file.name, fileDataUrl, scwin.filePageNum + 1);
+            scwin.addFileHtml(param);
 
             // 최근순 추가: 앞에 삽입
             newList.unshift({
@@ -1354,13 +1348,24 @@ scwin.fileInput_change = function (e) {
         };
 
         reader.readAsDataURL(file);
-
     }
+
+    setTimeout(function () {
+        scwin.previousHTML = contents_editor.getHTML();
+    }, 30); //파일 변화 추적
 };
 
 
-scwin.addFileHtml = function (type, name, url, num) {
+scwin.addFileHtml = function (file) {
     const html = contents_editor.getHTML();
+    const {
+        num,
+        name,
+        size,
+        type,
+        data,
+        url
+    } = file;
     let insertHTML = "";
 
     if (type.startsWith("image/")) {
