@@ -227,7 +227,7 @@ scwin.onpageload = function () {
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //문서 내용 불러오기
     scwin.taskInfo = "";
-    scwin.taskId = 1;
+    scwin.taskId = 2;
     scwin.projectId = 7;
     scwin.getTask(scwin.taskId, scwin.projectId);
 
@@ -324,6 +324,27 @@ scwin.changeEditor = function () {
                 }
                 if (restoredNums.length > 0) {
                     console.log("복구된 파일:", restoredNums);
+
+                    const restoredFiles = [];
+
+                    // DOM에서 .file-data 태그들을 다시 훑음
+                    const tags = doc.body.querySelectorAll(".file-data");
+
+                    for (let tag of tags) {
+                        const num = Number(tag.getAttribute("data-num"));
+                        if (restoredNums.includes(num)) {
+                            restoredFiles.push({
+                                name: tag.getAttribute("data-name") || "파일",
+                                size: Number(tag.getAttribute("data-size")) || 0,
+                                type: tag.getAttribute("data-type") || "application/octet-stream",
+                                data: tag.getAttribute("href") || tag.getAttribute("src") || "",
+                                num
+                            });
+                        }
+                    }
+
+                    // 그리드에 복구된 파일들 추가
+                    scwin.addFileGrid(restoredFiles);
                 }
             }
 
@@ -1282,78 +1303,87 @@ scwin.removeFileHtml = function (numList, size) {
     contents_editor.setHTML(container.innerHTML);
 };
 
-
 scwin.fileInput_change = function (e) {
     const fileInput = $p.$("#fileInput").get(0);
     const files = fileInput.files;
-
     if (!files || files.length === 0) return;
 
-    const dsAll = $p.getComponentById("dls_allFile");
-    const allList = dsAll.getAllJSON(); // 기존 전체 데이터
-    const newList = [...allList]; // 복사해서 새로운 배열 만들기
-
+    const filesArray = Array.from(files);
     let filesReadCount = 0;
+    const tempGridList = [];
 
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+    for (let i = 0; i < filesArray.length; i++) {
+        const file = filesArray[i];
         const reader = new FileReader();
 
         reader.onload = function (event) {
             const fileDataUrl = event.target.result;
-            let param = {
+
+            const param = {
                 name: file.name,
                 url: fileDataUrl,
                 type: file.type,
                 num: scwin.filePageNum + 1,
-                data: event.target.result,
-                size: file.size,
-            }
+                data: fileDataUrl,
+                size: file.size
+            };
 
-            // HTML 에디터에 삽입
+            //1. 에디터에 삽입 (업로드 시에만 실행됨)
             scwin.addFileHtml(param);
 
-            // 최근순 추가: 앞에 삽입
-            newList.unshift({
-                num: ++scwin.filePageNum,
-                fileName: file.name,
-                size: file.size,
-                type: file.type,
-                data: event.target.result
-            });
-
+            //2. 그리드용 파일 리스트에 넣어두기 (나중에 bulk 추가)
+            tempGridList.push(param);
             filesReadCount++;
 
-            // 파일 모두 읽은 후 전체 반영 및 페이지 설정
-            if (filesReadCount === files.length) {
-                dsAll.setJSON(newList); // 전체 저장
-
-                // 총 페이지 계산
-                const totalCount = newList.length;
-                const pageSize = 5;
-                const pageCount = Math.ceil(totalCount / pageSize);
-
-                const pageList = $p.getComponentById("pageList");
-                if (pageList) pageList.setCount(pageCount);
-
-                const dsView = $p.getComponentById("dls_file");
-                const currentPage = pageList.getCurrentPage ? pageList.getCurrentPage() : 1;
-                const start = (currentPage - 1) * pageSize;
-                const end = start + pageSize;
-                const viewList = newList.slice(start, end);
-
-                dsView.setJSON(viewList);
-                console.log(dls_allFile.getAllJSON());
+            //3. 모든 파일 읽은 후 그리드 반영
+            if (filesReadCount === filesArray.length) {
+                scwin.addFileGrid(tempGridList); // 그리드 추가는 여기서!
+                setTimeout(() => {
+                    scwin.previousHTML = contents_editor.getHTML(); // 삽입 후 상태 저장
+                }, 30);
             }
         };
 
         reader.readAsDataURL(file);
     }
-
-    setTimeout(function () {
-        scwin.previousHTML = contents_editor.getHTML();
-    }, 30); //파일 변화 추적
 };
+
+
+//파일 그리드에 파일 추가
+scwin.addFileGrid = function (files) {
+    const dsAll = $p.getComponentById("dls_allFile");
+    const allList = dsAll.getAllJSON();
+    const newList = [...allList];
+
+    for (let file of files) {
+        newList.unshift({
+            num: ++scwin.filePageNum,
+            fileName: file.name,
+            size: file.size,
+            type: file.type,
+            data: file.data
+        });
+    }
+
+    dsAll.setJSON(newList);
+
+    // 페이징 및 화면 갱신
+    const totalCount = newList.length;
+    const pageSize = 5;
+    const pageCount = Math.ceil(totalCount / pageSize);
+
+    const pageList = $p.getComponentById("pageList");
+    if (pageList) pageList.setCount(pageCount);
+
+    const dsView = $p.getComponentById("dls_file");
+    const currentPage = pageList.getCurrentPage ? pageList.getCurrentPage() : 1;
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    const viewList = newList.slice(start, end);
+
+    dsView.setJSON(viewList);
+};
+
 
 
 scwin.addFileHtml = function (file) {
@@ -1370,7 +1400,17 @@ scwin.addFileHtml = function (file) {
 
     if (type.startsWith("image/")) {
         // 이미지 직접 삽입
-        insertHTML = `<img class="file-data" data-num="${num}" src="${url}" alt="${name}" style="max-width:100%; margin: 10px 0;" />`;
+        insertHTML = `<img class="file-data" 
+                            data-num="${num}"  
+                            data-size="${size}"
+                            data = "${data}"
+                            data-name = "${name}"
+                            data-path = "${url}"  
+                            data-type="${type}"
+                            src="${url}" 
+                            alt="${name}"
+                            style="max-width:100%; 
+                            margin: 10px 0;" />`;
     } else {
         // 기타 파일은 버튼 또는 다운로드 링크로 처리
         const ext = name.split(".").pop().toLowerCase();
@@ -1444,13 +1484,22 @@ scwin.addFileHtml = function (file) {
 
         insertHTML = `
             <p><br></p>
-            <a class="file-data" data-num="${num}" href="${url}" target="_blank" contenteditable="false"
-            style="display: flex; align-items: center; gap: 10px;
-                    max-width: 200px; min-width: 100px; padding: 10px;
-                    background-color:#fff1d3; border-radius: 6px;
-                    border: 1px solid #D9D9D9;
-                    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-                    text-decoration: none;">
+            <a class="file-data" 
+                data-num="${num}"  
+                data-size="${size}"
+                data = "${data}"
+                data-name = "${name}"
+                data-path = "${url}"  
+                data-type="${type}"
+                href="${url}" 
+                target="_blank" 
+                contenteditable="false"
+                style="display: flex; align-items: center; gap: 10px;
+                        max-width: 200px; min-width: 100px; padding: 10px;
+                        background-color:#fff1d3; border-radius: 6px;
+                        border: 1px solid #D9D9D9;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+                        text-decoration: none;">
                 <img src="${icon}" alt="${type}" style="width: 50px; height: 50px; border:none; margin:0; padding:0; outline:none;" />
                 <span style="font-size: 15px; color: black;">${name}</span>
             </a>
@@ -1462,8 +1511,7 @@ scwin.addFileHtml = function (file) {
     contents_editor.setHTML(html + insertHTML);
 };
 
-
-
+//파일 페이지 번호 클릭
 scwin.pageList_onclick = function (index) {
     const dsAll = $p.getComponentById("dls_allFile");
     const dsView = $p.getComponentById("dls_file");
@@ -1478,6 +1526,7 @@ scwin.pageList_onclick = function (index) {
     scwin.filePageIndex = index;
 };
 
+//파일 그리드 셀 클릭
 scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
     if (columnId === 'download') {
         let row = dls_file.getRowJSON(rowIndex);
