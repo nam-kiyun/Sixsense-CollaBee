@@ -46,6 +46,9 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "sortOrder", physicalName = "sortOrder", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String sortOrder;
 
+    @ElDtoField(logicalName = "user_name", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String userName;
+
     @ElVoField(physicalName = "taskId")
     public String getTaskId(){
         String ret = this.taskId;
@@ -167,6 +170,17 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.sortOrder = sortOrder;
     }
 
+    @ElVoField(physicalName = "userName")
+    public String getUserName(){
+        String ret = this.userName;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "userName")
+    public void setUserName(String userName){
+        this.userName = userName;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -182,6 +196,7 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
         sb.append("tags").append("=").append(tags).append(",");
         sb.append("sortField").append("=").append(sortField).append(",");
         sb.append("sortOrder").append("=").append(sortOrder);
+        sb.append("userName").append("=").append(userName);
         sb.append("]");
         return sb.toString();
 

@@ -6,34 +6,41 @@ import com.inswave.elfw.annotation.ElVoField;
 import com.fasterxml.jackson.annotation.JsonFilter;
 
 @JsonFilter("elExcludeFilter")
-@ElDto(FldYn = "", logicalName = "프로젝트 정보")
+@ElDto(FldYn = "", delimeterYn = "", logicalName = "프로젝트 정보")
 public class ProjectVo extends com.demo.proworks.cmmn.ProworksCommVO {
     private static final long serialVersionUID = 1L;
 
-    @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    public ProjectVo(){
+    }
+
+    @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String projectId;
 
-    @ElDtoField(logicalName = "project_name", physicalName = "projectName", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "project_name", physicalName = "projectName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String projectName;
 
-    @ElDtoField(logicalName = "description", physicalName = "description", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "description", physicalName = "description", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String description;
 
-    @ElDtoField(logicalName = "project_image_url", physicalName = "projectImageUrl", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "project_image_url", physicalName = "projectImageUrl", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String projectImageUrl;
 
-    @ElDtoField(logicalName = "created_at", physicalName = "createdAt", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "created_at", physicalName = "createdAt", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String createdAt;
 
-    @ElDtoField(logicalName = "email_send_time", physicalName = "emailSendTime", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "email_send_time", physicalName = "emailSendTime", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String emailSendTime;
 
-    @ElDtoField(logicalName = "user_id", physicalName = "userId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "user_id", physicalName = "userId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userId;
+
+    @ElDtoField(logicalName = "user_name", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String userName;
 
     @ElVoField(physicalName = "projectId")
     public String getProjectId(){
-        return projectId;
+        String ret = this.projectId;
+        return ret;
     }
 
     @ElVoField(physicalName = "projectId")
@@ -43,7 +50,8 @@ public class ProjectVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElVoField(physicalName = "projectName")
     public String getProjectName(){
-        return projectName;
+        String ret = this.projectName;
+        return ret;
     }
 
     @ElVoField(physicalName = "projectName")
@@ -53,7 +61,8 @@ public class ProjectVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElVoField(physicalName = "description")
     public String getDescription(){
-        return description;
+        String ret = this.description;
+        return ret;
     }
 
     @ElVoField(physicalName = "description")
@@ -63,7 +72,8 @@ public class ProjectVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElVoField(physicalName = "projectImageUrl")
     public String getProjectImageUrl(){
-        return projectImageUrl;
+        String ret = this.projectImageUrl;
+        return ret;
     }
 
     @ElVoField(physicalName = "projectImageUrl")
@@ -73,7 +83,8 @@ public class ProjectVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElVoField(physicalName = "createdAt")
     public String getCreatedAt(){
-        return createdAt;
+        String ret = this.createdAt;
+        return ret;
     }
 
     @ElVoField(physicalName = "createdAt")
@@ -83,7 +94,8 @@ public class ProjectVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElVoField(physicalName = "emailSendTime")
     public String getEmailSendTime(){
-        return emailSendTime;
+        String ret = this.emailSendTime;
+        return ret;
     }
 
     @ElVoField(physicalName = "emailSendTime")
@@ -93,7 +105,8 @@ public class ProjectVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElVoField(physicalName = "userId")
     public String getUserId(){
-        return userId;
+        String ret = this.userId;
+        return ret;
     }
 
     @ElVoField(physicalName = "userId")
@@ -101,13 +114,46 @@ public class ProjectVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.userId = userId;
     }
 
+    @ElVoField(physicalName = "userName")
+    public String getUserName(){
+        String ret = this.userName;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "userName")
+    public void setUserName(String userName){
+        this.userName = userName;
+    }
+
     @Override
     public String toString() {
-        return "ProjectVo [projectId=" + projectId + ",projectName=" + projectName + ",description=" + description + ",projectImageUrl=" + projectImageUrl + ",createdAt=" + createdAt + ",emailSendTime=" + emailSendTime + ",userId=" + userId + "]";
+        StringBuilder sb = new StringBuilder();
+        sb.append("ProjectVo [");
+        sb.append("projectId").append("=").append(projectId).append(",");
+        sb.append("projectName").append("=").append(projectName).append(",");
+        sb.append("description").append("=").append(description).append(",");
+        sb.append("projectImageUrl").append("=").append(projectImageUrl).append(",");
+        sb.append("createdAt").append("=").append(createdAt).append(",");
+        sb.append("emailSendTime").append("=").append(emailSendTime).append(",");
+        sb.append("userId").append("=").append(userId).append(",");
+        sb.append("userName").append("=").append(userName);
+        sb.append("]");
+        return sb.toString();
+
     }
 
     public boolean isFixedLengthVo() {
         return false;
     }
+
+    @Override
+    public void _xStreamEnc() {
+    }
+
+
+    @Override
+    public void _xStreamDec() {
+    }
+
 
 }
