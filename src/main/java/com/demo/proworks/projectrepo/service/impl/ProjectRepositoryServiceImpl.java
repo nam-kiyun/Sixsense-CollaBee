@@ -121,5 +121,20 @@ public class ProjectRepositoryServiceImpl implements ProjectRepositoryService {
 	public int deleteProjectRepository(ProjectRepositoryVo projectRepositoryVo) throws Exception {
 		return projectRepositoryDAO.deleteProjectRepository(projectRepositoryVo);
 	}
+
+    /**
+     * 저장소 소유자와 이름으로 프로젝트 레포지토리를 조회한다.
+     *
+     * @process
+     * 1. 저장소 소유자와 이름으로 프로젝트 레포지토리를 조회한다.
+     * 2. 결과 ProjectRepositoryVo를 리턴한다.
+     * 
+     * @param  projectRepositoryVo 프로젝트와 연결된 레포지토리 정보 ProjectRepositoryVo
+     * @return 단건 조회 결과
+     * @throws Exception
+     */
+	public ProjectRepositoryVo selectProjectRepositoryByOwnerAndName(ProjectRepositoryVo projectRepositoryVo) throws Exception {
+		return projectRepositoryDAO.selectProjectRepositoryByOwnerAndName(projectRepositoryVo);
+	}
 	
 }

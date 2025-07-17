@@ -72,4 +72,34 @@ public interface GithubAppTokenService {
      */
 	public int deleteGithubAppToken(GithubAppTokenVo githubAppTokenVo) throws Exception;
 	
+	/**
+     * GitHub App Installation Token을 생성한다.
+     *
+     * @param userAccessToken 사용자 액세스 토큰
+     * @param repoOwner 레포지토리 소유자
+     * @return Installation Token
+     * @throws Exception
+     */
+	public String generateInstallationToken(String userAccessToken, String repoOwner) throws Exception;
+	
+	/**
+     * 프로젝트 레포지토리 ID로 유효한 App Token을 조회한다.
+     *
+     * @param projectRepoId 프로젝트 레포지토리 ID
+     * @return App Token 또는 null
+     * @throws Exception
+     */
+	public String getValidAppToken(String projectRepoId) throws Exception;
+	
+	/**
+     * App Token을 갱신하거나 새로 생성한다.
+     *
+     * @param projectRepoId 프로젝트 레포지토리 ID
+     * @param userAccessToken 사용자 액세스 토큰
+     * @param repoOwner 레포지토리 소유자
+     * @return 갱신된 App Token
+     * @throws Exception
+     */
+	public String refreshAppToken(String projectRepoId, String userAccessToken, String repoOwner) throws Exception;
+	
 }

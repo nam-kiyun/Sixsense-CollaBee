@@ -94,4 +94,24 @@
 
     </select>
 
+    <!-- 프로젝트 저장소 ID와 브랜치명으로 브랜치 조회 -->
+    <select id="selectRepositoryBranchByProjectRepoIdAndBranchName" parameterType="com.demo.proworks.repobranch.vo.RepositoryBranchVo" resultType="com.demo.proworks.repobranch.vo.RepositoryBranchVo">
+        SELECT   /* QueryID : com.demo.proworks.repobranch.selectRepositoryBranchByProjectRepoIdAndBranchName */
+            REPO_BRANCH_ID as repoBranchId,
+            PROJECT_REPO_ID as projectRepoId,
+            BRANCH_NAME as branchName,
+            CREATED_AT as createdAt,
+            BASE_SHA as baseSha
+        FROM REPO_BRANCHES 
+        WHERE PROJECT_REPO_ID = #{projectRepoId}
+        AND BRANCH_NAME = #{branchName}
+    </select>
+
+    <!-- 프로젝트 저장소 ID와 브랜치명으로 브랜치 삭제 -->
+    <delete id="deleteRepositoryBranchByProjectRepoIdAndBranchName" parameterType="com.demo.proworks.repobranch.vo.RepositoryBranchVo">
+        DELETE FROM REPO_BRANCHES   /* QueryID : com.demo.proworks.repobranch.deleteRepositoryBranchByProjectRepoIdAndBranchName */
+        WHERE PROJECT_REPO_ID = #{projectRepoId}
+        AND BRANCH_NAME = #{branchName}
+    </delete>
+
 </mapper>

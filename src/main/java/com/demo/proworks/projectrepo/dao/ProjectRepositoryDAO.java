@@ -89,4 +89,15 @@ public class ProjectRepositoryDAO extends com.demo.proworks.cmmn.dao.ProworksDef
         return delete("com.demo.proworks.projectrepo.deleteProjectRepository", vo);
     }
 
+    /**
+     * 저장소 소유자와 이름으로 프로젝트 레포지토리를 조회한다.
+     *  
+     * @param  ProjectRepositoryVo 프로젝트와 연결된 레포지토리 정보
+     * @return ProjectRepositoryVo 프로젝트와 연결된 레포지토리 정보
+     * @throws ElException
+     */
+    public ProjectRepositoryVo selectProjectRepositoryByOwnerAndName(ProjectRepositoryVo vo) throws ElException {
+        return (ProjectRepositoryVo) selectByPk("com.demo.proworks.github.selectProjectRepositoryByOwnerAndName", vo);
+    }
+
 }

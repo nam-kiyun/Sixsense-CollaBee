@@ -10,6 +10,10 @@ import org.springframework.stereotype.Service;
 import com.demo.proworks.board.service.BoardService;
 import com.demo.proworks.board.vo.BoardVo;
 import com.demo.proworks.board.dao.BoardDAO;
+import com.demo.proworks.redis.service.KanbanRedisService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 
 /**  
  * @subject     : 보드 관련 처리를 담당하는 ServiceImpl
@@ -28,9 +32,22 @@ public class BoardServiceImpl implements BoardService {
 
     @Resource(name="boardDAO")
     private BoardDAO boardDAO;
+    
+    @Resource(name="kanbanRedisService")
+    private KanbanRedisService kanbanRedisService;
 	
 	@Resource(name = "messageSource")
 	private MessageSource messageSource;
+	
+	private final ObjectMapper objectMapper;
+	
+	// 생성자에서 ObjectMapper 설정
+	public BoardServiceImpl() {
+		this.objectMapper = new ObjectMapper();
+		// @JsonFilter 어노테이션 무시 설정
+		this.objectMapper.configure(MapperFeature.USE_ANNOTATIONS, false);
+		this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+	}
 
     /**
      * 보드 목록을 조회합니다.
@@ -91,7 +108,19 @@ public class BoardServiceImpl implements BoardService {
      * @throws Exception
      */
 	public int insertBoard(BoardVo boardVo) throws Exception {
-		return boardDAO.insertBoard(boardVo);	
+		int result = boardDAO.insertBoard(boardVo);
+		
+		// 새 보드 생성 시 Redis 캐시 무효화
+		if (result > 0 && boardVo.getProjectId() != null && kanbanRedisService.isRedisConnected()) {
+			try {
+				kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
+				System.out.println("🗑️ 새 보드 생성으로 인한 프로젝트 캐시 무효화: " + boardVo.getProjectId());
+			} catch (Exception e) {
+				System.err.println("❌ 캐시 무효화 실패: " + e.getMessage());
+			}
+		}
+		
+		return result;	
 	}
 	
     /**
@@ -104,8 +133,20 @@ public class BoardServiceImpl implements BoardService {
      * @return 번호
      * @throws Exception
      */
-	public int updateBoard(BoardVo boardVo) throws Exception {				
-		return boardDAO.updateBoard(boardVo);	   		
+	public int updateBoard(BoardVo boardVo) throws Exception {
+		int result = boardDAO.updateBoard(boardVo);
+		
+		// 보드 정보 갱신 시 Redis 캐시 무효화
+		if (result > 0 && boardVo.getProjectId() != null && kanbanRedisService.isRedisConnected()) {
+			try {
+				kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
+				System.out.println("🗑️ 보드 정보 갱신으로 인한 프로젝트 캐시 무효화: " + boardVo.getProjectId());
+			} catch (Exception e) {
+				System.err.println("❌ 캐시 무효화 실패: " + e.getMessage());
+			}
+		}
+		
+		return result;	   		
 	}
 
     /**
@@ -119,7 +160,107 @@ public class BoardServiceImpl implements BoardService {
      * @throws Exception
      */
 	public int deleteBoard(BoardVo boardVo) throws Exception {
-		return boardDAO.deleteBoard(boardVo);
+		int result = boardDAO.deleteBoard(boardVo);
+		
+		// 보드 삭제 시 Redis 캐시 무효화
+		if (result > 0 && boardVo.getProjectId() != null && kanbanRedisService.isRedisConnected()) {
+			try {
+				kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
+				System.out.println("🗑️ 보드 삭제로 인한 프로젝트 캐시 무효화: " + boardVo.getProjectId());
+			} catch (Exception e) {
+				System.err.println("❌ 캐시 무효화 실패: " + e.getMessage());
+			}
+		}
+		
+		return result;
+	}
+	
+	/**
+     * 프로젝트 ID 기준으로 보드 목록을 조회한다. (칸반 보드용)
+     * Redis 캐싱을 통해 성능 최적화
+     *
+     * @process
+     * 1. Redis 캐시에서 프로젝트 보드 목록 조회 시도
+     * 2. 캐시에 없으면 데이터베이스에서 조회 후 캐시에 저장
+     * 3. 결과 List<BoardVo>을(를) 리턴한다.
+     * 
+     * @param  projectId 프로젝트 ID
+     * @return 보드 목록 List<BoardVo>
+     * @throws Exception
+     */
+	@SuppressWarnings("unchecked")
+	public List<BoardVo> selectBoardsByProject(String projectId) throws Exception {
+		System.out.println("BoardServiceImpl.selectBoardsByProject - projectId: " + projectId);
+		
+		// 1. Redis 캐시에서 프로젝트 보드 목록 조회
+		if (projectId != null && kanbanRedisService.isRedisConnected()) {
+			try {
+				List<java.util.Map<String, Object>> cachedBoards = kanbanRedisService.getProjectBoardsFromCache(projectId);
+				
+				if (cachedBoards != null && !cachedBoards.isEmpty()) {
+					// 캐시된 데이터를 BoardVo 리스트로 변환
+					List<BoardVo> boardList = new java.util.ArrayList<>();
+					for (java.util.Map<String, Object> boardMap : cachedBoards) {
+						BoardVo board = convertMapToBoardVo(boardMap);
+						boardList.add(board);
+					}
+					
+					System.out.println("✅ Redis 캐시에서 보드 목록 조회 성공: " + projectId + " (" + boardList.size() + "개)");
+					return boardList;
+				}
+			} catch (Exception e) {
+				System.err.println("❌ Redis 캐시 조회 실패, DB 조회로 대체: " + e.getMessage());
+			}
+		}
+		
+		// 2. 캐시에 없거나 Redis 연결 실패 시 DB에서 조회
+		List<BoardVo> list = boardDAO.selectBoardsByProject(projectId);
+		System.out.println("BoardServiceImpl - 조회된 보드 개수: " + (list != null ? list.size() : 0));
+		
+		// 3. DB 조회 결과를 Redis 캐시에 저장
+		if (projectId != null && kanbanRedisService.isRedisConnected() && list != null && !list.isEmpty()) {
+			try {
+				// BoardVo 리스트를 Map 리스트로 변환하여 캐시에 저장
+				List<java.util.Map<String, Object>> boardMapList = new java.util.ArrayList<>();
+				for (BoardVo board : list) {
+					java.util.Map<String, Object> boardMap = convertBoardVoToMap(board);
+					boardMapList.add(boardMap);
+				}
+				
+				kanbanRedisService.cacheProjectBoards(projectId, boardMapList);
+				System.out.println("🔧 DB 조회 결과를 Redis 캐시에 저장: " + projectId + " (" + list.size() + "개)");
+			} catch (Exception e) {
+				System.err.println("❌ Redis 캐시 저장 실패: " + e.getMessage());
+			}
+		}
+		
+		return list;
+	}
+	
+	/**
+	 * BoardVo를 Map으로 변환 (Redis 캐시 저장용)
+	 */
+	private java.util.Map<String, Object> convertBoardVoToMap(BoardVo boardVo) {
+		java.util.Map<String, Object> boardMap = new java.util.HashMap<>();
+		
+		boardMap.put("boardId", boardVo.getBoardId());
+		boardMap.put("boardTitle", boardVo.getBoardTitle());
+		boardMap.put("projectId", boardVo.getProjectId());
+		
+		return boardMap;
+	}
+	
+	/**
+	 * Map을 BoardVo로 변환 (Redis 캐시 조회용)
+	 */
+	private BoardVo convertMapToBoardVo(java.util.Map<String, Object> boardMap) {
+		BoardVo boardVo = new BoardVo();
+		
+		boardVo.setBoardId((String) boardMap.get("boardId"));
+		boardVo.setBoardTitle((String) boardMap.get("boardTitle"));
+		boardVo.setProjectId((String) boardMap.get("projectId"));
+		
+		return boardVo;
 	}
 	
 }

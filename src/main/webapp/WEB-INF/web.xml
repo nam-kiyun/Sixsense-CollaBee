@@ -74,7 +74,7 @@
 	</context-param>
 
 	<listener>
-		<listener-class>com.demo.proworks.cmmn.ProworksContextLoaderListener</listener-class>
+		<listener-class>com.inswave.elfw.core.ElContextLoaderListener</listener-class>
 	</listener>
 
 	<servlet>
@@ -119,12 +119,22 @@
 		<servlet-name>action</servlet-name>
 		<url-pattern>*.fld</url-pattern>
 	</servlet-mapping>
+
+	<!-- GitHub 관련 경로 추가 -->
+	<servlet-mapping>
+		<servlet-name>action</servlet-name>
+		<url-pattern>/github/*</url-pattern>
+	</servlet-mapping>
   
 	<!-- WebSocket 경로 추가 -->
 	<servlet-mapping>
 		<servlet-name>action</servlet-name>
 		<url-pattern>/chat</url-pattern>
-	</servlet-mapping>			
+	</servlet-mapping>		
+	<servlet-mapping>
+		<servlet-name>action</servlet-name>
+		<url-pattern>/kanban</url-pattern>
+	</servlet-mapping>		
 	<!-- servlet>
 		<servlet-name>CXFServlet</servlet-name>
 		<servlet-class>

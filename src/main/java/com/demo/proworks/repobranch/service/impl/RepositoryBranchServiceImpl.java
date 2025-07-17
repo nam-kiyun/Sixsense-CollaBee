@@ -121,5 +121,34 @@ public class RepositoryBranchServiceImpl implements RepositoryBranchService {
 	public int deleteRepositoryBranch(RepositoryBranchVo repositoryBranchVo) throws Exception {
 		return repositoryBranchDAO.deleteRepositoryBranch(repositoryBranchVo);
 	}
+
+    /**
+     * 프로젝트 저장소 ID와 브랜치명으로 브랜치 조회
+     *
+     * @process
+     * 1. 프로젝트 저장소 ID와 브랜치명으로 브랜치를 조회한다.
+     * 2. 결과 RepositoryBranchVo을(를) 리턴한다.
+     * 
+     * @param  repositoryBranchVo 리포지토리 브랜치 정보 RepositoryBranchVo
+     * @return RepositoryBranchVo 리포지토리 브랜치 정보
+     * @throws Exception
+     */
+	public RepositoryBranchVo selectRepositoryBranchByProjectRepoIdAndBranchName(RepositoryBranchVo repositoryBranchVo) throws Exception {
+		return repositoryBranchDAO.selectRepositoryBranchByProjectRepoIdAndBranchName(repositoryBranchVo);
+	}
+
+    /**
+     * 프로젝트 저장소 ID와 브랜치명으로 브랜치 삭제
+     *
+     * @process
+     * 1. 프로젝트 저장소 ID와 브랜치명으로 브랜치를 삭제한다.
+     * 
+     * @param  repositoryBranchVo 리포지토리 브랜치 정보 RepositoryBranchVo
+     * @return 번호
+     * @throws Exception
+     */
+	public int deleteRepositoryBranchByProjectRepoIdAndBranchName(RepositoryBranchVo repositoryBranchVo) throws Exception {
+		return repositoryBranchDAO.deleteRepositoryBranchByProjectRepoIdAndBranchName(repositoryBranchVo);
+	}
 	
 }

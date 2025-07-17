@@ -77,6 +77,17 @@ public class TaskDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstractD
     public int updateTask(TaskVo vo) throws ElException {
         return update("com.demo.proworks.task.updateTask", vo);
     }
+    
+    /**
+     * 업무(Task)의 보드 위치만 갱신한다. (칸반 카드 이동용)
+     *  
+     * @param  TaskVo 업무(Task) 정보 (taskId, boardId만 필요)
+     * @return 번호
+     * @throws ElException
+     */
+    public int updateTaskBoard(TaskVo vo) throws ElException {
+        return update("com.demo.proworks.task.updateTaskBoard", vo);
+    }
 
     /**
      * 업무(Task) 정보를 삭제한다.

@@ -71,5 +71,23 @@ public interface RepositoryBranchService {
      * @throws Exception
      */
 	public int deleteRepositoryBranch(RepositoryBranchVo repositoryBranchVo) throws Exception;
+
+    /**
+     * 프로젝트 저장소 ID와 브랜치명으로 브랜치 조회
+     *
+     * @param  repositoryBranchVo 리포지토리 브랜치 정보 RepositoryBranchVo
+     * @return RepositoryBranchVo 리포지토리 브랜치 정보
+     * @throws Exception
+     */
+	public RepositoryBranchVo selectRepositoryBranchByProjectRepoIdAndBranchName(RepositoryBranchVo repositoryBranchVo) throws Exception;
+
+    /**
+     * 프로젝트 저장소 ID와 브랜치명으로 브랜치 삭제
+     *
+     * @param  repositoryBranchVo 리포지토리 브랜치 정보 RepositoryBranchVo
+     * @return 번호
+     * @throws Exception
+     */
+	public int deleteRepositoryBranchByProjectRepoIdAndBranchName(RepositoryBranchVo repositoryBranchVo) throws Exception;
 	
 }

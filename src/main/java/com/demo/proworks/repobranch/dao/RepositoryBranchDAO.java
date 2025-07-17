@@ -89,4 +89,26 @@ public class RepositoryBranchDAO extends com.demo.proworks.cmmn.dao.ProworksDefa
         return delete("com.demo.proworks.repobranch.deleteRepositoryBranch", vo);
     }
 
+    /**
+     * 프로젝트 저장소 ID와 브랜치명으로 브랜치 조회
+     *  
+     * @param  RepositoryBranchVo 리포지토리 브랜치 정보
+     * @return RepositoryBranchVo 리포지토리 브랜치 정보
+     * @throws ElException
+     */
+    public RepositoryBranchVo selectRepositoryBranchByProjectRepoIdAndBranchName(RepositoryBranchVo vo) throws ElException {
+        return (RepositoryBranchVo) selectByPk("com.demo.proworks.repobranch.selectRepositoryBranchByProjectRepoIdAndBranchName", vo);
+    }
+
+    /**
+     * 프로젝트 저장소 ID와 브랜치명으로 브랜치 삭제
+     *  
+     * @param  RepositoryBranchVo 리포지토리 브랜치 정보
+     * @return 번호
+     * @throws ElException
+     */
+    public int deleteRepositoryBranchByProjectRepoIdAndBranchName(RepositoryBranchVo vo) throws ElException {
+        return delete("com.demo.proworks.repobranch.deleteRepositoryBranchByProjectRepoIdAndBranchName", vo);
+    }
+
 }

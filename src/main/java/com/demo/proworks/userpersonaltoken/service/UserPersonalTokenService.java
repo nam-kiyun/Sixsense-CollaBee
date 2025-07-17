@@ -44,6 +44,15 @@ public interface UserPersonalTokenService {
      * @throws Exception
      */
 	public UserPersonalTokenVo selectUserPersonalToken(UserPersonalTokenVo userPersonalTokenVo) throws Exception;
+	
+    /**
+     * 사용자 ID로 깃허브 개인 처리를 위한 PAT토큰을 조회한다.
+     *
+     * @param  userPersonalTokenVo 깃허브 개인 처리를 위한 PAT토큰 UserPersonalTokenVo (userId 필드 사용)
+     * @return 단건 조회 결과
+     * @throws Exception
+     */
+	public UserPersonalTokenVo selectUserPersonalTokenByUserId(UserPersonalTokenVo userPersonalTokenVo) throws Exception;
 		
     /**
      * 깃허브 개인 처리를 위한 PAT토큰를 등록 처리 한다.
@@ -71,5 +80,15 @@ public interface UserPersonalTokenService {
      * @throws Exception
      */
 	public int deleteUserPersonalToken(UserPersonalTokenVo userPersonalTokenVo) throws Exception;
+	
+    /**
+     * 사용자 ID로 깃허브 개인 처리를 위한 PAT토큰을 무효화(삭제) 처리한다.
+     * 401 에러 발생 시 호출되어 만료된 토큰을 제거한다.
+     *
+     * @param  userId 사용자 ID
+     * @return 삭제된 행 수
+     * @throws Exception
+     */
+	public int invalidateUserPersonalTokenByUserId(String userId) throws Exception;
 	
 }
