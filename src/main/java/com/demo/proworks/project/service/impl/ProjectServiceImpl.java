@@ -12,6 +12,16 @@ import com.demo.proworks.project.service.ProjectService;
 import com.demo.proworks.project.vo.ProjectVo;
 import com.demo.proworks.project.dao.ProjectDAO;
 import com.demo.proworks.email.vo.EmailVo;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import javax.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import com.demo.proworks.projectuser.dao.ProjectUserDAO;
 import com.demo.proworks.board.dao.BoardDAO;
 import com.demo.proworks.task.dao.TaskDAO;
@@ -40,7 +50,10 @@ import com.amazonaws.services.s3.model.DeleteObjectRequest;
  * 
  */
 @Service("projectServiceImpl")
+@EnableScheduling
 public class ProjectServiceImpl implements ProjectService {
+
+    private Set<String> sentTodayTasks = new HashSet<>();
 
     @Resource(name="projectDAO")
     private ProjectDAO projectDAO;
@@ -68,6 +81,15 @@ public class ProjectServiceImpl implements ProjectService {
 	
 	@Resource(name = "amazonS3")
 	private AmazonS3 amazonS3;
+	
+	@Resource(name = "mailSender")
+	private JavaMailSender mailSender;
+	
+	@Value("${spring.mail.username}")
+	private String username;
+	
+	@Value("${spring.mail.password}")
+	private String password;
 
     /**
      * 프로젝트 정보 목록을 조회합니다.
@@ -172,6 +194,11 @@ public class ProjectServiceImpl implements ProjectService {
      */
 	public EmailVo selectProjectForEmail(String projectId) throws Exception {
 		return projectDAO.selectProjectForEmail(projectId);
+	}
+	
+	@Override
+	public List<EmailVo> selectProjectsForEmailSend() throws Exception {
+		return projectDAO.selectProjectsForEmailSend();
 	}
 	
 	/**
@@ -309,6 +336,137 @@ public class ProjectServiceImpl implements ProjectService {
 			// S3 삭제 실패는 로그만 남기고 계속 진행
 			System.err.println("S3 파일 삭제 처리 실패: " + e.getMessage());
 		}
+	}
+	
+	@Override
+	@Scheduled(cron = "0 */10 * * * *")
+	public void sendTaskReminder() throws Exception {
+		try {
+			Calendar cal = Calendar.getInstance();
+			int currentHour = cal.get(Calendar.HOUR_OF_DAY);
+			
+			List<EmailVo> projects = selectProjectsForEmailSend();
+			
+			for (EmailVo project : projects) {
+				String emailSendTime = project.getEmailSendTime();
+				if (emailSendTime != null && !emailSendTime.isEmpty()) {
+					try {
+						String[] timeParts = emailSendTime.split(":");
+						if (timeParts.length >= 2) {
+							int emailHour = Integer.parseInt(timeParts[0]);
+							
+							if (emailHour == currentHour) {
+								sendTodoTasksToUsers(project.getProjectId());
+							}
+						}
+					} catch (Exception e) {
+						System.err.println("시간 파싱 오류: " + emailSendTime + ", 오류: " + e.getMessage());
+					}
+				}
+			}
+			
+			if (currentHour == 0) {
+				sentTodayTasks.clear();
+			}
+			
+		} catch (Exception e) {
+			System.err.println("작업 알림 메일 발송 중 오류 발생: " + e.getMessage());
+		}
+	}
+	
+	private void sendTodoTasksToUsers(String projectId) {
+		try {
+			List<TaskVo> todoTasks = taskDAO.selectTodoTasksByProjectId(projectId);
+			
+			for (TaskVo task : todoTasks) {
+				String taskKey = projectId + "_" + task.getTaskId() + "_" + getCurrentDateString();
+				
+				if (!sentTodayTasks.contains(taskKey)) {
+					sendTaskReminderEmail(task);
+					sentTodayTasks.add(taskKey);
+				}
+			}
+		} catch (Exception e) {
+			System.err.println("할 일 작업 메일 발송 중 오류: " + e.getMessage());
+		}
+	}
+	
+	private void sendTaskReminderEmail(TaskVo task) {
+		try {
+			String userEmail = taskDAO.selectUserEmailByProjectUserId(task.getProjectUserId());
+			String userName = task.getUserName();
+			
+			if (userEmail == null || userEmail.isEmpty()) {
+				System.err.println("사용자 이메일을 찾을 수 없습니다. Task ID: " + task.getTaskId());
+				return;
+			}
+			
+			String subject = "[COLLABEE] 오늘의 할 일: " + task.getTaskTitle();
+			String content = createTaskReminderEmailContent(task, userName);
+			
+			JavaMailSenderImpl impl = (JavaMailSenderImpl) mailSender;
+			impl.setUsername(username);
+			impl.setPassword(password);
+			
+			MimeMessage message = mailSender.createMimeMessage();
+			MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+			
+			helper.setTo(userEmail);
+			helper.setSubject(subject);
+			helper.setText(content, true);
+			
+			mailSender.send(message);
+			
+			System.out.println("작업 알림 메일 발송 완료: " + userEmail + ", 작업: " + task.getTaskTitle());
+			
+		} catch (Exception e) {
+			System.err.println("작업 알림 메일 발송 실패: " + e.getMessage());
+		}
+	}
+	
+	private String createTaskReminderEmailContent(TaskVo task, String userName) {
+		String content = "<html lang='ko'>"
+				+ "<head><meta charset='UTF-8'/><title>작업 알림</title>"
+				+ "<style>"
+				+ "body { margin: 0; padding: 40px; font-family: 'Arial', sans-serif; text-align: center; }"
+				+ ".header { max-width: 607px; margin: 0 auto; display: flex; align-items: center; justify-content: center; background-color: rgb(104, 101, 101); border-radius: 10px 10px 0 0; padding: 30px 20px; }"
+				+ ".header img { width: 48px; height: 48px; margin-right: 14px; object-fit: contain; }"
+				+ ".email-title { margin: 0; font-size: 32px; color: #ffb823; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3); }"
+				+ ".email-container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 0 0 10px 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); padding: 24px; text-align: center; }"
+				+ ".email-content { font-size: 15px; line-height: 1.5; margin-top: 10px; }"
+				+ ".task-card { margin: 30px 0; text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }"
+				+ ".task-title { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 10px; }"
+				+ ".task-info { font-size: 14px; color: #666; margin: 5px 0; }"
+				+ ".email-footer { text-align: center; font-size: 14px; color: gray; margin-top: 20px; }"
+				+ "</style></head>"
+				+ "<body>"
+				+ "<div class='header'>"
+				+ "<img src='https://collabee.s3.ap-northeast-2.amazonaws.com/collabee.png' alt='COLLABEE 로고' />"
+				+ "<h1 class='email-title'>COLLABEE</h1>"
+				+ "</div>"
+				+ "<div class='email-container'>"
+				+ "<p class='email-content'>"
+				+ "안녕하세요, " + userName + "님!<br />"
+				+ "오늘 처리하실 작업이 있습니다.<br />"
+				+ "아래 작업을 확인해보세요."
+				+ "</p>"
+				+ "<div class='task-card'>"
+				+ "<div class='task-title'>" + task.getTaskTitle() + "</div>"
+				+ "<div class='task-info'>우선순위: " + (task.getPriority() != null ? task.getPriority() : "보통") + "</div>"
+				+ "<div class='task-info'>시작일: " + (task.getStartDate() != null ? task.getStartDate() : "미정") + "</div>"
+				+ "<div class='task-info'>종료일: " + (task.getEndDate() != null ? task.getEndDate() : "미정") + "</div>"
+				+ "</div>"
+				+ "<p class='email-footer'>좋은 하루 되세요!</p>"
+				+ "</div>"
+				+ "</body>"
+				+ "</html>";
+		
+		return content;
+	}
+	
+	private String getCurrentDateString() {
+		java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+		return sdf.format(new java.util.Date());
 	}
 	
 }

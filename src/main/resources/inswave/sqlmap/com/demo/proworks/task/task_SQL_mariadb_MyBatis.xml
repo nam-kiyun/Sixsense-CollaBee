@@ -127,4 +127,35 @@
 		)
 	</delete>
 
+	<select id="selectTodoTasksByProjectId" parameterType="String" resultType="com.demo.proworks.task.vo.TaskVo">
+		<!-- 프로젝트 ID에 해당하는 "할 일" 상태의 작업들을 조회한다. -->
+		SELECT /* QueryID : com.demo.proworks.task.selectTodoTasksByProjectId */
+			t.TASK_ID as taskId,
+			t.BOARD_ID as boardId,
+			t.PROJECT_USER_ID as projectUserId,
+			t.PROJECT_REPO_ID as projectRepoId,
+			t.TASK_TITLE as taskTitle,
+			t.PRIORITY as priority,
+			t.START_DATE as startDate,
+			t.END_DATE as endDate,
+			t.TAGS as tags,
+			u.USER_NAME as userName,
+			b.PROJECT_ID as projectId
+		FROM TASK t
+		JOIN BOARD b ON t.BOARD_ID = b.BOARD_ID
+		JOIN PROJECT_USER pu ON t.PROJECT_USER_ID = pu.PROJECT_USER_ID
+		JOIN USER u ON pu.USER_ID = u.USER_ID
+		WHERE b.PROJECT_ID = #{projectId}
+		AND b.BOARD_TITLE = '할 일'
+	</select>
+
+	<select id="selectUserEmailByProjectUserId" parameterType="int" resultType="String">
+		<!-- 프로젝트 사용자 ID로 사용자 이메일을 조회한다. -->
+		SELECT /* QueryID : com.demo.proworks.task.selectUserEmailByProjectUserId */
+			u.USER_ID as userEmail
+		FROM PROJECT_USER pu
+		JOIN USER u ON pu.USER_ID = u.USER_ID
+		WHERE pu.PROJECT_USER_ID = #{projectUserId}
+	</select>
+
 </mapper>

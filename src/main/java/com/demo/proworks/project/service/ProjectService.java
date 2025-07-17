@@ -90,5 +90,20 @@ public interface ProjectService {
      * @throws Exception
      */
 	public EmailVo selectProjectForEmail(String projectId) throws Exception;
+
+    /**
+     * 이메일 발송이 설정된 모든 프로젝트를 조회한다.
+     *
+     * @return List<EmailVo> 이메일 발송을 위한 프로젝트 정보 목록
+     * @throws Exception
+     */
+    public List<EmailVo> selectProjectsForEmailSend() throws Exception;
+
+    /**
+     * 스케줄러에서 할 일 메일을 발송한다.
+     *
+     * @throws Exception
+     */
+    public void sendTaskReminder() throws Exception;
 	
 }

@@ -100,4 +100,26 @@ public class TaskDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstractD
         return delete("com.demo.proworks.task.deleteTaskByProjectId", vo);
     }
 
+    /**
+     * 프로젝트 ID에 해당하는 "할 일" 상태의 작업들을 조회한다.
+     *
+     * @param  projectId 프로젝트 ID
+     * @return List<TaskVo> 할 일 상태의 작업 목록
+     * @throws ElException
+     */
+    public List<TaskVo> selectTodoTasksByProjectId(String projectId) throws ElException {
+        return (List<TaskVo>) list("com.demo.proworks.task.selectTodoTasksByProjectId", projectId);
+    }
+
+    /**
+     * 프로젝트 사용자 ID로 사용자 이메일을 조회한다.
+     *
+     * @param  projectUserId 프로젝트 사용자 ID
+     * @return String 사용자 이메일
+     * @throws ElException
+     */
+    public String selectUserEmailByProjectUserId(int projectUserId) throws ElException {
+        return (String) selectByPk("com.demo.proworks.task.selectUserEmailByProjectUserId", projectUserId);
+    }
+
 }

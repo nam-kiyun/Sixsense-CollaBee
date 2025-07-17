@@ -128,6 +128,21 @@
 		WHERE p.PROJECT_ID = #{projectId}
 	</select>
 
+	<select id="selectProjectsForEmailSend" resultType="com.demo.proworks.email.vo.EmailVo">
+		<!-- 이메일 발송이 설정된 모든 프로젝트를 조회한다. -->
+		SELECT /* QueryID : com.demo.proworks.project.selectProjectsForEmailSend */
+			p.PROJECT_ID as projectId,
+			p.PROJECT_NAME as projectName,
+			p.PROJECT_IMAGE_URL as projectImageUrl,
+			p.EMAIL_SEND_TIME as emailSendTime,
+			p.USER_ID as userId,
+			u.USER_NAME as userName
+		FROM PROJECT p
+		JOIN USER u ON p.USER_ID = u.USER_ID
+		WHERE p.EMAIL_SEND_TIME IS NOT NULL
+		AND p.EMAIL_SEND_TIME != ''
+	</select>
+
 </mapper>
 
 

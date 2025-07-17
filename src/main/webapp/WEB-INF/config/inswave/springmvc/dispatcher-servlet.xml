@@ -17,12 +17,13 @@
     <context:component-scan base-package="com.demo" use-default-filters="false">
         <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
         <context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.RestController"/>
-        <context:include-filter type="annotation" expression="org.springframework.stereotype.Service"/>
+        <!-- <context:include-filter type="annotation" expression="org.springframework.stereotype.Service"/> -->
         <context:include-filter type="annotation" expression="org.springframework.stereotype.Component"/>
         <context:include-filter type="annotation" expression="org.springframework.context.annotation.Configuration"/>
         <!-- Configuration 제거 - XML로 대체 -->
         <!-- context:exclude-filter type="annotation" expression="org.springframework.stereotype.Service"/>
         <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository"/ -->
+        <context:exclude-filter type="assignable" expression="com.demo.proworks.project.service.impl.ProjectServiceImpl"/>
     </context:component-scan>
    
     <!-- EL Controller Interceptor -->
