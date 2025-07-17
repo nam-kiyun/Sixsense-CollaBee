@@ -117,7 +117,7 @@ scwin.sbm_taskVersionList_submitdone = function (e) {
     }
 
     // 첫 로딩이라면 현재버전 버튼 추가
-    if (scwin.currentPage === 0) {
+    if (scwin.currentPage === 2) {
         scwin.addCurrentVersionComponent();
     }
 

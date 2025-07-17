@@ -807,10 +807,10 @@ scwin.comment_send_button_onclick = function () {
 
     $c.sbm.execute(sbm_comment_create);
     comment_input.setValue("");
+    
     setTimeout(() => {
         comment_input.focus();
     }, 30);
-
 };
 
 
@@ -838,7 +838,6 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
 
     const wrapper = $p.dynamicCreate(wrapperId, "span", {
         className: wrapperClass,
-
     }, group);
 
     wrapper.userData = { commentId: commentId };
@@ -923,7 +922,6 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
     }
 
     return wrapper;
-
 };
 
 //삭제할 때 날짜와 함께 삭제
@@ -945,7 +943,6 @@ scwin.deleteChat = function (chat) {
         const prevComp = children[idx + 1];
         const isDateComp = prevComp?.options?.className === "comment-date";
         const labelText = prevComp?.render?.innerText;
-        console.log(children);
 
         if (isDateComp) {
             prevComp.remove();
