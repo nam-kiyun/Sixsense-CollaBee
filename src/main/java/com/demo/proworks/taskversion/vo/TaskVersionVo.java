@@ -13,11 +13,11 @@ public class TaskVersionVo extends com.demo.proworks.cmmn.ProworksCommVO {
     public TaskVersionVo(){
     }
 
-    @ElDtoField(logicalName = "task_version_id", physicalName = "taskVersionId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private int taskVersionId;
+    @ElDtoField(logicalName = "task_version_id", physicalName = "taskVersionId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String taskVersionId;
 
-    @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private int taskId;
+    @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String taskId;
 
     @ElDtoField(logicalName = "content", physicalName = "content", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String content;
@@ -29,22 +29,24 @@ public class TaskVersionVo extends com.demo.proworks.cmmn.ProworksCommVO {
     private java.util.List<com.demo.proworks.filesrc.vo.FileSrcVo> fileSrcVo;
 
     @ElVoField(physicalName = "taskVersionId")
-    public int getTaskVersionId(){
-        return taskVersionId;
+    public String getTaskVersionId(){
+        String ret = this.taskVersionId;
+        return ret;
     }
 
     @ElVoField(physicalName = "taskVersionId")
-    public void setTaskVersionId(int taskVersionId){
+    public void setTaskVersionId(String taskVersionId){
         this.taskVersionId = taskVersionId;
     }
 
     @ElVoField(physicalName = "taskId")
-    public int getTaskId(){
-        return taskId;
+    public String getTaskId(){
+        String ret = this.taskId;
+        return ret;
     }
 
     @ElVoField(physicalName = "taskId")
-    public void setTaskId(int taskId){
+    public void setTaskId(String taskId){
         this.taskId = taskId;
     }
 

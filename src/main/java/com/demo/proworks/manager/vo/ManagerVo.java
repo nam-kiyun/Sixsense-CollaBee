@@ -13,32 +13,34 @@ public class ManagerVo extends com.demo.proworks.cmmn.ProworksCommVO {
     public ManagerVo(){
     }
 
-    @ElDtoField(logicalName = "manager_id", physicalName = "managerId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private int managerId;
+    @ElDtoField(logicalName = "manager_id", physicalName = "managerId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String managerId;
 
-    @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private int taskId;
+    @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String taskId;
 
     @ElDtoField(logicalName = "user_id", physicalName = "userId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userId;
 
     @ElVoField(physicalName = "managerId")
-    public int getManagerId(){
-        return managerId;
+    public String getManagerId(){
+        String ret = this.managerId;
+        return ret;
     }
 
     @ElVoField(physicalName = "managerId")
-    public void setManagerId(int managerId){
+    public void setManagerId(String managerId){
         this.managerId = managerId;
     }
 
     @ElVoField(physicalName = "taskId")
-    public int getTaskId(){
-        return taskId;
+    public String getTaskId(){
+        String ret = this.taskId;
+        return ret;
     }
 
     @ElVoField(physicalName = "taskId")
-    public void setTaskId(int taskId){
+    public void setTaskId(String taskId){
         this.taskId = taskId;
     }
 

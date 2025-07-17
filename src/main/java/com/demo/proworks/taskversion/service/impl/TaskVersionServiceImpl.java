@@ -121,7 +121,7 @@ public class TaskVersionServiceImpl implements TaskVersionService {
 	 * @return 번호
 	 * @throws Exception
 	 */
-	public int insertTaskVersion(TaskVersionVo taskVersionVo) throws Exception {
+	public String insertTaskVersion(TaskVersionVo taskVersionVo) throws Exception {
 		return taskVersionDAO.insertTaskVersion(taskVersionVo);
 	}
 

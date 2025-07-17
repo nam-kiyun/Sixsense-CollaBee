@@ -85,7 +85,7 @@ public class TaskVersionController {
 	public TaskVersionVo selectTaskVersionByTaskVersionId(@PathVariable int taskId, @PathVariable int taskVersionId)
 			throws Exception {
 		TaskVersionVo versionVo = new TaskVersionVo();
-		versionVo.setTaskVersionId(taskVersionId);
+		versionVo.setTaskVersionId(String.valueOf(taskVersionId));
 		versionVo = taskVersionService.selectTaskVersionByVersionId(versionVo);
 		return versionVo;
 	}

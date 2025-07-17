@@ -1,5 +1,7 @@
 @charset "UTF-8";
-
+body{
+	overflow: hidden;
+}
 .button-group{
     display: flex;
     flex-direction: row;

@@ -163,7 +163,7 @@ public class TaskController {
 	public TaskUpdateVo selectTask(@PathVariable("taskId") int taskId,
 			@RequestParam(value = "projectId", required = false) Integer projectId) throws Exception {
 		TaskUpdateVo taskVo = new TaskUpdateVo();
-		taskVo.setTaskId(taskId);
+		taskVo.setTaskId(String.valueOf(taskId));
 		taskVo.setProjectId(projectId.toString());
 
 		TaskUpdateVo selectTaskVo = taskService.selectTask(taskVo);
