@@ -107,8 +107,6 @@ public class TaskVersionServiceImpl implements TaskVersionService {
 	 */
 	public TaskVersionVo selectTaskVersion(TaskVersionVo taskVersionVo) throws Exception {
 		TaskVersionVo resultVO = taskVersionDAO.selectTaskVersion(taskVersionVo);
-		System.out.println(resultVO.toString());
-
 		return resultVO;
 	}
 
@@ -164,8 +162,8 @@ public class TaskVersionServiceImpl implements TaskVersionService {
 		TaskVersionVo resultVO = taskVersionDAO.selectTaskVersionByVersionId(taskVersionVo);
 		FileSrcVo srcVo = new FileSrcVo();
 		srcVo.setTaskVersionId(taskVersionVo.getTaskVersionId());
+		
 		List<FileSrcVo> listVo = fileSrcDAO.selectFileSrcByTaskVersionId(srcVo);
-		System.out.println(listVo);
 		resultVO.setFileSrcVo(listVo);
 		
 		return resultVO;

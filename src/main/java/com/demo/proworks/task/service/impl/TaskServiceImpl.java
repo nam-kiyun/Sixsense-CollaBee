@@ -104,11 +104,9 @@ public class TaskServiceImpl implements TaskService {
 		List<FileSrcVo> fileSrcVos = updateVo.getFileSrcVo();
 		if (fileSrcVos != null && !fileSrcVos.isEmpty()) {
 			for (FileSrcVo vo : fileSrcVos) {
-				vo.setTaskVersionId(taskVersionId); // 여기에 주입!
-				System.out.println(vo);
+				vo.setTaskVersionId(taskVersionId);
 			}
 
-			// 3️⃣ 리스트 insert
 			fileSrcDAO.insertFileSrcList(fileSrcVos);
 		}
 
@@ -279,10 +277,8 @@ public class TaskServiceImpl implements TaskService {
 		// 파일
 		FileSrcVo fileSrcVo = new FileSrcVo();
 		fileSrcVo.setTaskVersionId(resultVO.getTaskVersionId());
-		System.out.println(updateVo.getTaskVersionId());
-		List<FileSrcVo> fileSrcListVo = fileSrcDAO.selectFileSrcByTaskVersionId(fileSrcVo);
-		System.out.println(fileSrcListVo);
 
+		List<FileSrcVo> fileSrcListVo = fileSrcDAO.selectFileSrcByTaskVersionId(fileSrcVo);
 		resultVO.setFileSrcVo(fileSrcListVo);
 
 		// 프로젝트 구성원
