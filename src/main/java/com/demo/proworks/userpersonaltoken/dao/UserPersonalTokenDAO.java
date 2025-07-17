@@ -35,6 +35,17 @@ public class UserPersonalTokenDAO extends com.demo.proworks.cmmn.dao.ProworksDef
     }
 
     /**
+     * 사용자 ID로 깃허브 개인 처리를 위한 PAT토큰을 조회한다.
+     *  
+     * @param  UserPersonalTokenVo 깃허브 개인 처리를 위한 PAT토큰 (userId 필드 사용)
+     * @return UserPersonalTokenVo 깃허브 개인 처리를 위한 PAT토큰
+     * @throws ElException
+     */
+    public UserPersonalTokenVo selectUserPersonalTokenByUserId(UserPersonalTokenVo vo) throws ElException {
+        return (UserPersonalTokenVo) selectByPk("com.demo.proworks.userpersonaltoken.selectUserPersonalTokenByUserId", vo);
+    }
+
+    /**
      * 페이징을 처리하여 깃허브 개인 처리를 위한 PAT토큰 목록조회를 한다.
      *  
      * @param  UserPersonalTokenVo 깃허브 개인 처리를 위한 PAT토큰

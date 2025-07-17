@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.demo.proworks.project.service.ProjectService;
 import com.demo.proworks.project.vo.ProjectVo;
 import com.demo.proworks.project.dao.ProjectDAO;
+import com.demo.proworks.board.service.BoardService;
+import com.demo.proworks.board.vo.BoardVo;
 import com.demo.proworks.email.vo.EmailVo;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -57,6 +59,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Resource(name="projectDAO")
     private ProjectDAO projectDAO;
+    
+    @Resource(name="boardServiceImpl")
+    private BoardService boardService;
 	
 	@Resource(name = "messageSource")
 	private MessageSource messageSource;
@@ -141,16 +146,76 @@ public class ProjectServiceImpl implements ProjectService {
 
     /**
      * 프로젝트 정보를 등록 처리 한다.
+     * 프로젝트 생성 시 기본 보드 3개 (할 일, 진행중, 완료)를 자동으로 생성한다.
      *
      * @process
      * 1. 프로젝트 정보를 등록 처리 한다.
+     * 2. 생성된 프로젝트 ID로 기본 보드 3개를 생성한다.
+     * 3. 트랜잭션으로 처리하여 실패 시 전체 롤백한다.
      * 
      * @param  projectVo 프로젝트 정보 ProjectVo
      * @return 번호
      * @throws Exception
      */
+	@Transactional
 	public int insertProject(ProjectVo projectVo) throws Exception {
-		return projectDAO.insertProject(projectVo);	
+		System.out.println("ProjectServiceImpl.insertProject - 프로젝트 생성 시작: " + projectVo.getProjectName());
+		
+		// 1. 프로젝트 생성
+		System.out.println("🔧 프로젝트 생성 전 - projectId: " + projectVo.getProjectId());
+		int result = projectDAO.insertProject(projectVo);
+		System.out.println("🔧 프로젝트 생성 후 - projectId: " + projectVo.getProjectId() + ", result: " + result);
+		
+		if (result > 0) {
+			System.out.println("✅ 프로젝트 생성 성공 - projectId: " + projectVo.getProjectId());
+			
+			// 2. 생성된 프로젝트 ID로 기본 보드 3개 생성
+			String createdProjectId = projectVo.getProjectId();
+			if (createdProjectId != null && !createdProjectId.trim().isEmpty()) {
+				createDefaultBoards(createdProjectId);
+				System.out.println("✅ 기본 보드 3개 생성 완료 - projectId: " + createdProjectId);
+			} else {
+				System.err.println("❌ 생성된 프로젝트 ID가 null이거나 빈 문자열입니다: " + createdProjectId);
+				throw new Exception("프로젝트 ID를 가져올 수 없습니다.");
+			}
+		} else {
+			System.err.println("❌ 프로젝트 생성 실패 - result: " + result);
+			throw new Exception("프로젝트 생성에 실패했습니다.");
+		}
+		
+		return result;	
+	}
+	
+	/**
+	 * 프로젝트 생성 시 기본 보드 3개를 자동으로 생성한다.
+	 * 
+	 * @param projectId 생성된 프로젝트 ID
+	 * @throws Exception
+	 */
+	private void createDefaultBoards(String projectId) throws Exception {
+		System.out.println("ProjectServiceImpl.createDefaultBoards - 기본 보드 생성 시작: " + projectId);
+		
+		// 기본 보드 정보 정의
+		String[] defaultBoardTitles = {"할 일", "진행중", "완료"};
+		
+		for (String boardTitle : defaultBoardTitles) {
+			BoardVo boardVo = new BoardVo();
+			boardVo.setProjectId(projectId);
+			boardVo.setBoardTitle(boardTitle);
+			
+			System.out.println("🔧 기본 보드 생성 중: " + boardTitle + " (projectId: " + projectId + ")");
+			
+			int boardResult = boardService.insertBoard(boardVo);
+			
+			if (boardResult > 0) {
+				System.out.println("✅ 기본 보드 생성 성공: " + boardTitle + " (boardId: " + boardVo.getBoardId() + ", result: " + boardResult + ")");
+			} else {
+				System.err.println("❌ 기본 보드 생성 실패: " + boardTitle + " (result: " + boardResult + ")");
+				throw new Exception("기본 보드 생성에 실패했습니다: " + boardTitle);
+			}
+		}
+		
+		System.out.println("✅ 모든 기본 보드 생성 완료");
 	}
 	
     /**
@@ -195,6 +260,7 @@ public class ProjectServiceImpl implements ProjectService {
 	public EmailVo selectProjectForEmail(String projectId) throws Exception {
 		return projectDAO.selectProjectForEmail(projectId);
 	}
+	
 	
 	@Override
 	public List<EmailVo> selectProjectsForEmailSend() throws Exception {
@@ -467,6 +533,22 @@ public class ProjectServiceImpl implements ProjectService {
 	private String getCurrentDateString() {
 		java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
 		return sdf.format(new java.util.Date());
+	}
+	
+
+	/**
+     * 사용자가 참여한 프로젝트 목록을 조회합니다.
+     *
+     * @process
+     * 1. userId로 project_user 테이블에서 참여한 project_id들을 조회한다.
+     * 2. 조회된 project_id들로 project 테이블에서 프로젝트 상세 정보를 조회한다.
+     * 
+     * @param  userId 사용자 ID
+     * @return List<ProjectVo> 사용자가 참여한 프로젝트 목록
+     * @throws Exception
+     */
+	public List<ProjectVo> selectUserParticipatedProjects(String userId) throws Exception {
+		return projectDAO.selectUserParticipatedProjects(userId);
 	}
 	
 }

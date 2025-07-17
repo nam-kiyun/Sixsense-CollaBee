@@ -71,5 +71,14 @@ public interface ProjectRepositoryService {
      * @throws Exception
      */
 	public int deleteProjectRepository(ProjectRepositoryVo projectRepositoryVo) throws Exception;
+
+    /**
+     * 저장소 소유자와 이름으로 프로젝트 레포지토리를 조회한다.
+     *
+     * @param  projectRepositoryVo 프로젝트와 연결된 레포지토리 정보 ProjectRepositoryVo
+     * @return 단건 조회 결과
+     * @throws Exception
+     */
+	public ProjectRepositoryVo selectProjectRepositoryByOwnerAndName(ProjectRepositoryVo projectRepositoryVo) throws Exception;
 	
 }

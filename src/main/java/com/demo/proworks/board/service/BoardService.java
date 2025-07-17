@@ -72,4 +72,13 @@ public interface BoardService {
      */
 	public int deleteBoard(BoardVo boardVo) throws Exception;
 	
+	/**
+     * 프로젝트 ID 기준으로 보드 목록을 조회한다. (칸반 보드용)
+     *
+     * @param  projectId 프로젝트 ID
+     * @return 보드 목록 List<BoardVo>
+     * @throws Exception
+     */
+	public List<BoardVo> selectBoardsByProject(String projectId) throws Exception;
+	
 }

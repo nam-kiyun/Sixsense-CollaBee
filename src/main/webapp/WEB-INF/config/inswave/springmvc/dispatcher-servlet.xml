@@ -39,7 +39,11 @@
 	
 	<!-- Chat Controller -->
 	<bean id="chatController" class="com.demo.proworks.videochat.web.ChatController"/>
- 
+	
+	<!-- GitHub Controller -->
+	<bean id="gitHubController" class="com.demo.proworks.github.web.GitHubController">
+	</bean>
+	
 	<!-- Redis Configuration -->
 	<bean id="redisConfig" class="com.demo.proworks.videochat.config.RedisConfig"/>
 	
@@ -63,6 +67,21 @@
 			<list>
 				<bean class="com.inswave.elfw.resolver.ElModelAttributeMethodProcessor">		
 				</bean>	
+			</list>
+		</property>
+		<property name="messageConverters">
+			<list>
+				<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+					<property name="objectMapper" ref="jsonMapper"/>
+				</bean>
+				<bean class="org.springframework.http.converter.StringHttpMessageConverter">
+					<property name="supportedMediaTypes">
+						<list>
+							<value>text/plain;charset=UTF-8</value>
+							<value>text/html;charset=UTF-8</value>
+						</list>
+					</property>
+				</bean>
 			</list>
 		</property>        
     </bean>

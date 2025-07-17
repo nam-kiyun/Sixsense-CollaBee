@@ -87,6 +87,19 @@
          WHERE  1=1    		
 
     </select>
+    
+    <select id="selectBoardsByProject" parameterType="string" resultType="com.demo.proworks.board.vo.BoardVo">
+    	<!-- 프로젝트 ID 기준으로 보드 목록을 조회한다. (칸반 보드용) -->
+        SELECT     /* QueryID : com.demo.proworks.board.selectBoardsByProject */
+            BOARD_ID as boardId, 
+            PROJECT_ID as projectId, 
+            BOARD_TITLE as boardTitle
+        FROM BOARD 
+        WHERE 
+            PROJECT_ID = #{projectId}
+        ORDER BY 
+            BOARD_ID ASC
+    </select>
 
     <delete id="deleteBoardByProjectId" parameterType="com.demo.proworks.board.vo.BoardVo">
     	<!-- 프로젝트 ID로 보드들을 삭제한다. -->

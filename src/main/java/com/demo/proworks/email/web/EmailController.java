@@ -105,13 +105,8 @@ public class EmailController {
                 + "</body>"
                 + "</html>";
 
-        System.out.println("발송할 이메일: " + email);
+ 
         JavaMailSenderImpl impl = (JavaMailSenderImpl) mailSender;
-		System.out.println("📨 SMTP Host: " + impl.getHost());
-		System.out.println("📨 SMTP Port: " + impl.getPort());
-		System.out.println("📨 Username: " + impl.getUsername());
-		System.out.println("📨 Properties: " + impl.getJavaMailProperties());
-		System.out.println("📨 Password: " + impl.getPassword());
 		
 		impl.setUsername(username);
 		impl.setPassword(password);
@@ -131,7 +126,6 @@ public class EmailController {
             result.put("message", "메일 발송 성공");
             result.put("code", code);
         } catch (Exception e) {
-        	System.out.println(e);
             result.put("success", false);
             result.put("message", "메일 발송 실패: " + e.getMessage());
         }

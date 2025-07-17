@@ -106,4 +106,13 @@ public interface ProjectService {
      */
     public void sendTaskReminder() throws Exception;
 	
+	/**
+     * 사용자가 참여한 프로젝트 목록을 조회한다.
+     *
+     * @param  userId 사용자 ID
+     * @return 사용자가 참여한 프로젝트 목록 List<ProjectVo>
+     * @throws Exception
+     */
+	public List<ProjectVo> selectUserParticipatedProjects(String userId) throws Exception;
+	
 }

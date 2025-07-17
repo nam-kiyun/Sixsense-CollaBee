@@ -61,7 +61,16 @@
             PROJECT_USER_ID as projectUserId, PROJECT_ID as projectId, USER_ID as userId, ROLE as role
         FROM PROJECT_USER 
         WHERE 
-                PROJECT_USER_ID = #{projectUserId}			
+            <if test="projectUserId != null and projectUserId != ''">
+                PROJECT_USER_ID = #{projectUserId}
+            </if>
+            <if test="projectId != null and projectId != '' and userId != null and userId != ''">
+                <if test="projectUserId != null and projectUserId != ''"> OR </if>
+                (PROJECT_ID = #{projectId} AND USER_ID = #{userId})
+            </if>
+            <if test="(projectUserId == null or projectUserId == '') and (projectId == null or projectId == '' or userId == null or userId == '')">
+                1=0  <!-- No valid search criteria provided -->
+            </if>			
     </select>
     
     <select id="selectProjectUserByProjectId" parameterType="com.demo.proworks.projectuser.vo.ProjectUserVo" resultType="com.demo.proworks.projectuser.vo.ProjectUserVo">

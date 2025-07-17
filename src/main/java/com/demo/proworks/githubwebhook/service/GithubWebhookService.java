@@ -1,6 +1,7 @@
 package com.demo.proworks.githubwebhook.service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.demo.proworks.githubwebhook.vo.GithubWebhookVo;
 
@@ -71,5 +72,57 @@ public interface GithubWebhookService {
      * @throws Exception
      */
 	public int deleteGithubWebhook(GithubWebhookVo githubWebhookVo) throws Exception;
+	
+	/**
+     * GitHub API를 통해 웹훅을 생성한다.
+     *
+     * @param projectRepoId 프로젝트 레포지토리 ID
+     * @param repoFullName 레포지토리 전체 이름 (owner/repo)
+     * @param webhookUrl 웹훅 URL
+     * @param userAccessToken 사용자 액세스 토큰
+     * @return 생성된 웹훅 정보
+     * @throws Exception
+     */
+	public GithubWebhookVo createWebhookViaAPI(String projectRepoId, String repoFullName, String webhookUrl, String userAccessToken) throws Exception;
+	
+	/**
+     * 프로젝트 레포지토리 ID로 웹훅을 조회한다.
+     *
+     * @param projectRepoId 프로젝트 레포지토리 ID
+     * @return 웹훅 정보
+     * @throws Exception
+     */
+	public GithubWebhookVo getWebhookByProjectRepoId(String projectRepoId) throws Exception;
+	
+	/**
+     * GitHub API를 통해 웹훅을 삭제한다.
+     *
+     * @param projectRepoId 프로젝트 레포지토리 ID
+     * @param userAccessToken 사용자 액세스 토큰
+     * @return 삭제 성공 여부
+     * @throws Exception
+     */
+	public boolean deleteWebhookViaAPI(String projectRepoId, String userAccessToken) throws Exception;
+	
+	/**
+     * 웹훅 이벤트를 처리한다.
+     *
+     * @param eventType 이벤트 타입
+     * @param payload 이벤트 페이로드
+     * @param signature 서명
+     * @return 처리 결과
+     * @throws Exception
+     */
+	public String processWebhookEvent(String eventType, String payload, String signature) throws Exception;
+	
+	/**
+     * 웹훅 상태를 확인한다.
+     *
+     * @param projectRepoId 프로젝트 레포지토리 ID
+     * @param userAccessToken 사용자 액세스 토큰
+     * @return 웹훅 상태 정보
+     * @throws Exception
+     */
+	public Map<String, Object> getWebhookStatus(String projectRepoId, String userAccessToken) throws Exception;
 	
 }

@@ -67,8 +67,6 @@ public class TaskVersionController {
 		resultVo.setPageSize(20);
 		resultVo.setPageIndex(searchVo.getPageIndex());
 		
-		System.out.println(resultVo);
-
 		return resultVo;
 	}
 
@@ -85,7 +83,7 @@ public class TaskVersionController {
 	public TaskVersionVo selectTaskVersionByTaskVersionId(@PathVariable int taskId, @PathVariable int taskVersionId)
 			throws Exception {
 		TaskVersionVo versionVo = new TaskVersionVo();
-		versionVo.setTaskVersionId(taskVersionId);
+		versionVo.setTaskVersionId(String.valueOf(taskVersionId));
 		versionVo = taskVersionService.selectTaskVersionByVersionId(versionVo);
 		return versionVo;
 	}

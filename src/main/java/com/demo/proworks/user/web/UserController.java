@@ -1,11 +1,15 @@
 package com.demo.proworks.user.web;
 
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpSessionContext;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -78,13 +82,14 @@ public class UserController {
 	@ElService(key = "user/login")
 	@RequestMapping(value = "user/login")
 	@ElDescription(sub = "로그인", desc = "로그인을 처리한다.")
-	public void login(LoginVo loginVo, HttpServletRequest request) throws Exception {
+	public void login(LoginVo loginVo, HttpServletRequest request,HttpSession session) throws Exception {
 		String id = loginVo.getId();
 		String password = loginVo.getPassword();
 
 		LoginInfo info = loginProcess.processLogin(request, id, password);
-		System.out.println(info);
 
+		session.setAttribute("userId", id);
+		System.out.println("==================="+session.getAttribute("userId"));
 		if (info != null) {
 			AppLog.debug("- Login 정보 : " + info.toString());
 		} else {
@@ -125,8 +130,6 @@ public class UserController {
 
 			Map<String, Object> result = new HashMap<>();
 			result.put("verified", success);
-
-			System.out.println("결과값:     " + success);
 
 			return result;
 
@@ -275,12 +278,7 @@ public class UserController {
 //
 //			String fileUrl = "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/" + s3Key;
 //			userVo.setProfileImageUrl(fileUrl);
-//			System.out.println("저장완료: " + fileUrl);
-//		} else {
-//			System.out.println("첨부된 파일이 없습니다.");
 //		}
-
-		System.out.println("사용자 정보 (FormData): " + userVo.toString());
 
 		userService.updateUser(userVo);
 	}
@@ -299,4 +297,34 @@ public class UserController {
 
 	}
 
+	/**
+	 * 세션에서 사용자 정보를 가져온다.
+	 *
+	 * @param session HttpSession
+	 * @return 사용자 정보
+	 * @throws Exception
+	 */
+	@ElService(key = "user/sessionInfo")
+	@RequestMapping(value = "user/sessionInfo")
+	@ElDescription(sub = "세션 사용자 정보 조회", desc = "세션에서 사용자 정보를 조회한다.")
+	public UserVo getUserFromSession(HttpSession session) throws Exception {
+		System.out.println(1111111);
+		String userId = (String) session.getAttribute("userId");
+		
+		if (userId == null) {
+			throw new IllegalArgumentException("세션에 사용자 정보가 없습니다.");
+		}
+		
+		UserVo userVo = new UserVo();
+		userVo.setUserId(userId);
+		
+		UserVo userInfo = userService.selectUser(userVo);
+		
+		if (userInfo == null) {
+			throw new IllegalArgumentException("사용자 정보를 찾을 수 없습니다.");
+		}
+		
+		return userInfo;
+	}
+	
 }

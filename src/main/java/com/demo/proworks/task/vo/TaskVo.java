@@ -13,17 +13,17 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
     public TaskVo(){
     }
 
-    @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private int taskId;
+    @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String taskId;
 
-    @ElDtoField(logicalName = "board_id", physicalName = "boardId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private int boardId;
+    @ElDtoField(logicalName = "board_id", physicalName = "boardId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String boardId;
 
-    @ElDtoField(logicalName = "project_user_id", physicalName = "projectUserId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private int projectUserId;
+    @ElDtoField(logicalName = "project_user_id", physicalName = "projectUserId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String projectUserId;
 
-    @ElDtoField(logicalName = "project_repo_id", physicalName = "projectRepoId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private int projectRepoId;
+    @ElDtoField(logicalName = "project_repo_id", physicalName = "projectRepoId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String projectRepoId;
 
     @ElDtoField(logicalName = "task_title", physicalName = "taskTitle", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String taskTitle;
@@ -40,6 +40,12 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "tags", physicalName = "tags", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String tags;
 
+    @ElDtoField(logicalName = "sortField", physicalName = "sortField", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String sortField;
+
+    @ElDtoField(logicalName = "sortOrder", physicalName = "sortOrder", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String sortOrder;
+
     @ElDtoField(logicalName = "user_name", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userName;
 
@@ -47,42 +53,46 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
     private String projectId;
 
     @ElVoField(physicalName = "taskId")
-    public int getTaskId(){
-        return taskId;
+    public String getTaskId(){
+        String ret = this.taskId;
+        return ret;
     }
 
     @ElVoField(physicalName = "taskId")
-    public void setTaskId(int taskId){
+    public void setTaskId(String taskId){
         this.taskId = taskId;
     }
 
     @ElVoField(physicalName = "boardId")
-    public int getBoardId(){
-        return boardId;
+    public String getBoardId(){
+        String ret = this.boardId;
+        return ret;
     }
 
     @ElVoField(physicalName = "boardId")
-    public void setBoardId(int boardId){
+    public void setBoardId(String boardId){
         this.boardId = boardId;
     }
 
     @ElVoField(physicalName = "projectUserId")
-    public int getProjectUserId(){
-        return projectUserId;
+    public String getProjectUserId(){
+        String ret = this.projectUserId;
+        return ret;
     }
 
     @ElVoField(physicalName = "projectUserId")
-    public void setProjectUserId(int projectUserId){
+    public void setProjectUserId(String projectUserId){
         this.projectUserId = projectUserId;
     }
 
     @ElVoField(physicalName = "projectRepoId")
-    public int getProjectRepoId(){
-        return projectRepoId;
+    public String getProjectRepoId(){
+        String ret = this.projectRepoId;
+        return ret;
     }
 
     @ElVoField(physicalName = "projectRepoId")
-    public void setProjectRepoId(int projectRepoId){
+    public void setProjectRepoId(String projectRepoId){
         this.projectRepoId = projectRepoId;
     }
 
@@ -139,6 +149,28 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElVoField(physicalName = "tags")
     public void setTags(String tags){
         this.tags = tags;
+    }
+
+    @ElVoField(physicalName = "sortField")
+    public String getSortField(){
+        String ret = this.sortField;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "sortField")
+    public void setSortField(String sortField){
+        this.sortField = sortField;
+    }
+
+    @ElVoField(physicalName = "sortOrder")
+    public String getSortOrder(){
+        String ret = this.sortOrder;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "sortOrder")
+    public void setSortOrder(String sortOrder){
+        this.sortOrder = sortOrder;
     }
 
     @ElVoField(physicalName = "userName")

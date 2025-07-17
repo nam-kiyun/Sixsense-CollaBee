@@ -15,8 +15,9 @@
 	2025/07/01 남기윤 최초 생성
 -->
 <mapper namespace="com.demo.proworks.task">
-	<insert id="insertTask" parameterType="com.demo.proworks.task.vo.TaskVo">
-		<!-- 업무(Task) 정보를 등록한다. -->
+
+	<!-- <insert id="insertTask" parameterType="com.demo.proworks.task.vo.TaskVo">
+		    업무(Task) 정보를 등록한다.
 
 		INSERT INTO TASK /* QueryID : com.demo.proworks.task.insertTask */
 		(
@@ -39,7 +40,7 @@
 		<if test="endDate       != null"> , #{endDate}        </if>
 		<if test="tags           != null"> , #{tags}            </if>
 		)
-	</insert>
+	</insert> -->
 
 	<update id="updateTask" parameterType="com.demo.proworks.task.vo.TaskVo">
 		<!-- 업무(Task) 정보를 갱신한다. -->
@@ -56,14 +57,6 @@
 		, TAGS = #{tags}
 		WHERE TASK_ID = #{taskId}
 	</update>
-
-	<delete id="deleteTask" parameterType="com.demo.proworks.task.vo.TaskVo">
-		<!-- 업무(Task) 정보를 삭제한다. -->
-
-		DELETE FROM TASK /* QueryID : com.demo.proworks.task.deleteTask */
-		WHERE
-		TASK_ID = #{taskId}
-	</delete>
 
 	<select id="selectTask" parameterType="com.demo.proworks.task.vo.TaskVo" resultType="com.demo.proworks.task.vo.TaskVo">
 		<!-- 업무(Task) 정보를 상세 조회하며 사용자 이름도 함께 조회 -->

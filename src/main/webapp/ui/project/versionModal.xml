@@ -117,7 +117,7 @@ scwin.sbm_taskVersionList_submitdone = function (e) {
     }
 
     // 첫 로딩이라면 현재버전 버튼 추가
-    if (scwin.currentPage === 0) {
+    if (scwin.currentPage === 2) {
         scwin.addCurrentVersionComponent();
     }
 
@@ -225,7 +225,6 @@ scwin.loadMoreVersions = function () {
     position: relative;
 }
 
-
 .version-button .highlight-text {
     background: transparent;
     transition: background 0.3s ease;
@@ -240,6 +239,19 @@ scwin.loadMoreVersions = function () {
         #fff1d3 70%,
         transparent 70%
     );
+}
+
+.version-group::-webkit-scrollbar {
+    width: 8px;
+}
+
+.version-group::-webkit-scrollbar-track {
+    background: white; /* 트랙 배경 */
+}
+
+.version-group::-webkit-scrollbar-thumb {
+    background-color: #ffb823; /* 스크롤 핸들 */
+    border-radius: 10px;
 }]]></style>
     </head>
     <body ev:onpageload="scwin.onpageload">

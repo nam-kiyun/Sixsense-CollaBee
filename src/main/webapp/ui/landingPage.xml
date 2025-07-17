@@ -112,440 +112,150 @@ scwin.onpageload = function() {
 ]]></script>
 		<!--<link rel="stylesheet" href="../css/landingPage.css" />-->
 		<style>
-			@keyframes cardFloat {
-				0%, 100% { 
-					transform: translateY(0px); 
-				}
-				50% { 
-					transform: translateY(-15px); 
-				}
-			}
-			
-			/* 데스크톱에서만 플로팅 카드 표시 */
-			@media (min-width: 1025px) {
-				#Group_card1, #Group_card2, #Group_card3, #hero_right {
-					display: block !important;
-					visibility: visible !important;
-					opacity: 1 !important;
-				}
-			}
-			
-			/* 기본 transition 모든 요소에 적용 */
-			* {
-				transition: all 0.3s ease !important;
-			}
-			
+			@keyframes cardFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
+
+			/* 데스크톱에서만 플로팅 카드 표시 */ @media (min-width: 1025px) { #Group_card1, #Group_card2, #Group_card3, #hero_right { display: block
+			!important; visibility: visible !important; opacity: 1 !important; } }
+
+			/* 기본 transition 모든 요소에 적용 */ * { transition: all 0.3s ease !important; }
+
 			/* WebSquare 전용 강력한 hover 선택자들 */
-			
-			/* 첫번째 무료로 시작하기 버튼 (gradient) - 모든 가능한 선택자 */
-			#btn_start_free_1:hover,
-			*[id="btn_start_free_1"]:hover,
-			*[style*="linear-gradient"]:hover,
-			*[style*="gradient"]:hover,
-			button[style*="linear-gradient"]:hover,
-			input[style*="linear-gradient"]:hover,
-			div[style*="linear-gradient"]:hover,
-			span[style*="linear-gradient"]:hover {
-				transform: translateY(-3px) !important;
-				box-shadow: 0 12px 35px rgba(245, 158, 11, 0.6) !important;
-				background: linear-gradient(45deg, #FFB823, #f59e0b) !important;
-			}
-			
-			/* 세번째 무료로 시작하기 버튼 (흰색) - 모든 가능한 선택자 */
-			#btn_start_free_2:hover,
-			*[id="btn_start_free_2"]:hover,
-			*[style*="background: white"]:hover,
-			*[style*="background:white"]:hover,
-			button[style*="background: white"]:hover,
-			input[style*="background: white"]:hover,
-			div[style*="background: white"]:hover,
-			span[style*="background: white"]:hover {
-				transform: translateY(-3px) !important;
-				box-shadow: 0 12px 35px rgba(0,0,0,0.3) !important;
-				background: #f8f9fa !important;
-			}
-			
-			/* 기능 카드들 hover - ID와 속성 선택자 모두 */
-			*[id="feature_card1"]:hover,
-			*[id="feature_card2"]:hover,
-			*[id="feature_card3"]:hover,
-			*[id="feature_card4"]:hover,
-			*[id="feature_card5"]:hover,
-			*[id="feature_card6"]:hover,
-			div[id="feature_card1"]:hover,
-			div[id="feature_card2"]:hover,
-			div[id="feature_card3"]:hover,
-			div[id="feature_card4"]:hover,
-			div[id="feature_card5"]:hover,
-			div[id="feature_card6"]:hover {
-				transform: translateY(-10px) !important;
-				box-shadow: 0 20px 50px rgba(0,0,0,0.15) !important;
-				background: white !important;
-			}
-			
-			/* 기능 카드 아이콘 hover */
-			*[id="feature_card1"]:hover *[class*="fa-"],
-			*[id="feature_card2"]:hover *[class*="fa-"],
-			*[id="feature_card3"]:hover *[class*="fa-"],
-			*[id="feature_card4"]:hover *[class*="fa-"],
-			*[id="feature_card5"]:hover *[class*="fa-"],
-			*[id="feature_card6"]:hover *[class*="fa-"] {
-				transform: scale(1.1) !important;
-			}
-			
-			/* 헤더 버튼들 hover */
-			*[id="btn_login"]:hover,
-			*[id="btn_signup"]:hover,
-			button[id="btn_login"]:hover,
-			button[id="btn_signup"]:hover,
-			input[id="btn_login"]:hover,
-			input[id="btn_signup"]:hover {
-				transform: translateY(-2px) !important;
-				box-shadow: 0 4px 15px rgba(255, 184, 35, 0.4) !important;
-				background-color: #FFB823 !important;
-			}
-			
-			/* 플로팅 카드들 hover */
-			*[id="Group_card1"]:hover,
-			*[id="Group_card2"]:hover,
-			*[id="Group_card3"]:hover,
-			div[id="Group_card1"]:hover,
-			div[id="Group_card2"]:hover,
-			div[id="Group_card3"]:hover {
-				transform: translateY(-20px) scale(1.05) !important;
-				box-shadow: 0 15px 40px rgba(245, 158, 11, 0.3) !important;
-				animation-play-state: paused !important;
-			}
-			
-			/* 추가: 버튼 같은 요소들에 cursor pointer */
-			#btn_start_free_1,
-			#btn_start_free_2,
-			*[id="btn_start_free_1"],
-			*[id="btn_start_free_2"],
-			*[style*="cursor: pointer"],
-			*[style*="linear-gradient"],
-			*[style*="background: white"],
-			*[id*="btn_"],
-			*[id*="feature_card"] {
-				cursor: pointer !important;
-			}
-			
-			/* 플로팅 카드들은 기본 커서로 설정 */
-			*[id*="Group_card"],
-			#Group_card1,
-			#Group_card2,
-			#Group_card3 {
-				cursor: default !important;
-			}
-			
+
+			/* 첫번째 무료로 시작하기 버튼 (gradient) - 모든 가능한 선택자 */ #btn_start_free_1:hover, *[id="btn_start_free_1"]:hover,
+			*[style*="linear-gradient"]:hover, *[style*="gradient"]:hover, button[style*="linear-gradient"]:hover,
+			input[style*="linear-gradient"]:hover, div[style*="linear-gradient"]:hover, span[style*="linear-gradient"]:hover { transform:
+			translateY(-3px) !important; box-shadow: 0 12px 35px rgba(245, 158, 11, 0.6) !important; background: linear-gradient(45deg,
+			#FFB823, #f59e0b) !important; }
+
+			/* 세번째 무료로 시작하기 버튼 (흰색) - 모든 가능한 선택자 */ #btn_start_free_2:hover, *[id="btn_start_free_2"]:hover, *[style*="background:
+			white"]:hover, *[style*="background:white"]:hover, button[style*="background: white"]:hover, input[style*="background:
+			white"]:hover, div[style*="background: white"]:hover, span[style*="background: white"]:hover { transform: translateY(-3px)
+			!important; box-shadow: 0 12px 35px rgba(0,0,0,0.3) !important; background: #f8f9fa !important; }
+
+			/* 기능 카드들 hover - ID와 속성 선택자 모두 */ *[id="feature_card1"]:hover, *[id="feature_card2"]:hover, *[id="feature_card3"]:hover,
+			*[id="feature_card4"]:hover, *[id="feature_card5"]:hover, *[id="feature_card6"]:hover, div[id="feature_card1"]:hover,
+			div[id="feature_card2"]:hover, div[id="feature_card3"]:hover, div[id="feature_card4"]:hover, div[id="feature_card5"]:hover,
+			div[id="feature_card6"]:hover { transform: translateY(-10px) !important; box-shadow: 0 20px 50px rgba(0,0,0,0.15) !important;
+			background: white !important; }
+
+			/* 기능 카드 아이콘 hover */ *[id="feature_card1"]:hover *[class*="fa-"], *[id="feature_card2"]:hover *[class*="fa-"],
+			*[id="feature_card3"]:hover *[class*="fa-"], *[id="feature_card4"]:hover *[class*="fa-"], *[id="feature_card5"]:hover
+			*[class*="fa-"], *[id="feature_card6"]:hover *[class*="fa-"] { transform: scale(1.1) !important; }
+
+			/* 헤더 버튼들 hover */ *[id="btn_login"]:hover, *[id="btn_signup"]:hover, button[id="btn_login"]:hover,
+			button[id="btn_signup"]:hover, input[id="btn_login"]:hover, input[id="btn_signup"]:hover { transform: translateY(-2px)
+			!important; box-shadow: 0 4px 15px rgba(255, 184, 35, 0.4) !important; background-color: #FFB823 !important; }
+
+			/* 플로팅 카드들 hover */ *[id="Group_card1"]:hover, *[id="Group_card2"]:hover, *[id="Group_card3"]:hover,
+			div[id="Group_card1"]:hover, div[id="Group_card2"]:hover, div[id="Group_card3"]:hover { transform: translateY(-20px) scale(1.05)
+			!important; box-shadow: 0 15px 40px rgba(245, 158, 11, 0.3) !important; animation-play-state: paused !important; }
+
+			/* 추가: 버튼 같은 요소들에 cursor pointer */ #btn_start_free_1, #btn_start_free_2, *[id="btn_start_free_1"], *[id="btn_start_free_2"],
+			*[style*="cursor: pointer"], *[style*="linear-gradient"], *[style*="background: white"], *[id*="btn_"], *[id*="feature_card"] {
+			cursor: pointer !important; }
+
+			/* 플로팅 카드들은 기본 커서로 설정 */ *[id*="Group_card"], #Group_card1, #Group_card2, #Group_card3 { cursor: default !important; }
+
 			/* === 반응형 텍스트 처리 === */
-			
-			/* 히어로 섹션 텍스트 - 줄바꿈 방지하고 크기만 조절 */
-			.main-title,
-			*[class="main-title"],
-			*[class*="main-title"],
-			*[style*="color:#0000FF"],
-			*[style*="초급 개발자를"] {
-				white-space: nowrap !important;
-				font-size: clamp(3rem, 5vw, 3rem) !important;
-				word-break: keep-all !important;
-				overflow: hidden !important;
-				text-overflow: ellipsis !important;
-				margin-left: 0px !important; 
-			}
-			
-			.sub-title,
-			*[class="sub-title"],
-			*[class*="sub-title"],
-			*[style*="color:#FFC107"],
-			*[style*="올인원 협업"] {
-				white-space: nowrap !important;
-				font-size: clamp(3rem, 5vw, 3rem) !important;
-				word-break: keep-all !important;
-				overflow: hidden !important;
-				text-overflow: ellipsis !important;
-				margin-left: 0px !important; 
-			}
-			
-			/* 첫번째 버튼 왼쪽 정렬 */
-			#btn_start_free_1,
-			*[id="btn_start_free_1"],
-			*[style*="linear-gradient"] {
-				margin-left: 0px !important; /* 제목들과 같은 라인에서 시작 */
-			}
-			
-			.description,
-			*[class="description"],
-			*[class*="description"],
-			*[style*="일정 관리부터"] {
-				white-space: nowrap !important;
-				font-size: clamp(1.2rem, 3vw, 1.5rem) !important;
-				word-break: keep-all !important;
-				overflow: hidden !important;
-				text-overflow: ellipsis !important;
-				margin-left: 0px !important; /* 제목들과 같은 라인에서 시작 */
-			}
-			
-			/* CTA 섹션 텍스트 - 줄바꿈 방지하고 크기만 조절 */
-			.cta-title,
-			*[class="cta-title"],
-			*[class*="cta-title"],
-			*[style*="지금 바로"],
-			*[style*="협업을 시작"] {
-				white-space: nowrap !important;
-				font-size: clamp(2rem, 5vw, 2.5rem) !important;
-				word-break: keep-all !important;
-				overflow: hidden !important;
-				text-overflow: ellipsis !important;
-			}
-			
-			.cta-description,
-			*[class="cta-description"],
-			*[class*="cta-description"],
-			*[style*="무료로 시작하고"] {
-				white-space: nowrap !important;
-				font-size: clamp(1.3rem, 3.5vw, 1.5rem) !important;
-				word-break: keep-all !important;
-				overflow: visible !important;
-				text-overflow: unset !important;
-				line-height: 1.4 !important;
-				width: auto !important;
-				max-width: none !important;
-			}
-			
+
+			/* 히어로 섹션 텍스트 - 줄바꿈 방지하고 크기만 조절 */ .main-title, *[class="main-title"], *[class*="main-title"], *[style*="color:#0000FF"],
+			*[style*="초급 개발자를"] { white-space: nowrap !important; font-size: clamp(3rem, 5vw, 3rem) !important; word-break: keep-all
+			!important; overflow: hidden !important; text-overflow: ellipsis !important; margin-left: 0px !important; }
+
+			.sub-title, *[class="sub-title"], *[class*="sub-title"], *[style*="color:#FFC107"], *[style*="올인원 협업"] { white-space: nowrap
+			!important; font-size: clamp(3rem, 5vw, 3rem) !important; word-break: keep-all !important; overflow: hidden !important;
+			text-overflow: ellipsis !important; margin-left: 0px !important; }
+
+			/* 첫번째 버튼 왼쪽 정렬 */ #btn_start_free_1, *[id="btn_start_free_1"], *[style*="linear-gradient"] { margin-left: 0px !important; /*
+			제목들과 같은 라인에서 시작 */ }
+
+			.description, *[class="description"], *[class*="description"], *[style*="일정 관리부터"] { white-space: nowrap !important; font-size:
+			clamp(1.2rem, 3vw, 1.5rem) !important; word-break: keep-all !important; overflow: hidden !important; text-overflow: ellipsis
+			!important; margin-left: 0px !important; /* 제목들과 같은 라인에서 시작 */ }
+
+			/* CTA 섹션 텍스트 - 줄바꿈 방지하고 크기만 조절 */ .cta-title, *[class="cta-title"], *[class*="cta-title"], *[style*="지금 바로"], *[style*="협업을
+			시작"] { white-space: nowrap !important; font-size: clamp(2rem, 5vw, 2.5rem) !important; word-break: keep-all !important;
+			overflow: hidden !important; text-overflow: ellipsis !important; }
+
+			.cta-description, *[class="cta-description"], *[class*="cta-description"], *[style*="무료로 시작하고"] { white-space: nowrap
+			!important; font-size: clamp(1.3rem, 3.5vw, 1.5rem) !important; word-break: keep-all !important; overflow: visible !important;
+			text-overflow: unset !important; line-height: 1.4 !important; width: auto !important; max-width: none !important; }
+
 			/* === 모바일 반응형 처리 === */
-			
-			/* 태블릿 크기에서 플로팅 카드 숨기기 */
-			@media (max-width: 1024px) {
-				#Group_card1, 
-				#Group_card2, 
-				#Group_card3,
-				#hero_right,
-				*[id="Group_card1"],
-				*[id="Group_card2"],
-				*[id="Group_card3"],
-				*[id="hero_right"],
-				.floating-card,
-				*[class*="floating-card"] {
-					display: none !important;
-					visibility: hidden !important;
-					opacity: 0 !important;
-					height: 0 !important;
-					width: 0 !important;
-					overflow: hidden !important;
-					position: absolute !important;
-					left: -9999px !important;
-					top: -9999px !important;
-				}
-				
-				/* 히어로 섹션 레이아웃 조정 */
-				#group_hero,
-				*[id="group_hero"] {
-					flex-direction: column !important;
-					text-align: center !important;
-					padding: 40px 20px !important;
-					min-height: auto !important;
-					justify-content: center !important;
-					overflow: hidden !important;
-				}
-				
-				#hero_left,
-				*[id="hero_left"] {
-					padding-right: 0 !important;
-					padding-left: 0 !important;
-					width: 100% !important;
-					margin-bottom: 0 !important;
-					flex: none !important;
-					max-width: 100% !important;
-					text-align: center !important;
-					overflow: hidden !important;
-				}
-				
-				/* CTA 섹션 레이아웃 조정 */
-				#group_cta,
-				*[id="group_cta"] {
-					overflow: hidden !important;
-					padding: 60px 15px !important;
-				}
-			}
-			
-			/* 모바일 크기에서 추가 텍스트 크기 조정 */
-			@media (max-width: 768px) {
-				.main-title,
-				*[class*="main-title"],
-				*[style*="color:#0000FF"],
-				*[style*="초급 개발자를"] {
-					font-size: clamp(2.8rem, 6.5vw, 3.5rem) !important; /* 모바일에서 제목 크기 키움 */
-					margin-left: 0px !important; /* 다른 요소들과 같은 라인 */
-				}
-				
-				.sub-title,
-				*[class*="sub-title"],
-				*[style*="color:#FFC107"],
-				*[style*="올인원 협업"] {
-					font-size: clamp(2.8rem, 6.5vw, 3.5rem) !important; /* 모바일에서 제목 크기 키움 */
-					margin-left: 0px !important; /* 다른 요소들과 같은 라인 */
-				}
-				
-				/* 모바일에서 버튼 margin 조정 */
-				#btn_start_free_1,
-				*[id="btn_start_free_1"],
-				*[style*="linear-gradient"] {
-					margin-left: 0px !important; /* 제목들과 같은 라인 */
-				}
-				
-				/* 모바일에서 설명 텍스트도 조정 */
-				.description,
-				*[class*="description"],
-				*[style*="일정 관리부터"] {
-					margin-left: 0px !important; /* 제목들과 같은 라인 */
-					font-size: clamp(1.4rem, 4vw, 1.8rem) !important; /* 모바일에서 글자 크기 키움 */
-				}
-				
-				/* 모바일에서 설명 텍스트는 줄바꿈 허용 */
-				.description,
-				*[class*="description"],
-				*[style*="일정 관리부터"] {
-					white-space: normal !important;
-					font-size: clamp(1.1rem, 3vw, 1.4rem) !important;
-					line-height: 1.4 !important;
-					word-break: keep-all !important;
-					overflow: visible !important;
-					text-overflow: unset !important;
-				}
-				
-				/* 모바일에서 CTA 텍스트도 줄바꿈 허용 */
-				.cta-title,
-				*[class*="cta-title"],
-				*[style*="지금 바로"],
-				*[style*="협업을 시작"] {
-					white-space: normal !important;
-					font-size: clamp(1.8rem, 4.5vw, 2.2rem) !important;
-					line-height: 1.3 !important;
-					word-break: keep-all !important;
-					overflow: visible !important;
-					text-overflow: unset !important;
-				}
-				
-				.cta-description,
-				*[class*="cta-description"],
-				*[style*="무료로 시작하고"] {
-					white-space: normal !important;
-					font-size: clamp(1.1rem, 3vw, 1.3rem) !important;
-					line-height: 1.4 !important;
-					word-break: keep-all !important;
-					overflow: visible !important;
-					text-overflow: unset !important;
-					width: auto !important;
-					max-width: none !important;
-				}
-			}
-			
-			/* 아주 작은 모바일에서 최소 크기 보장 */
-			@media (max-width: 480px) {
-				/* 모든 요소 강제로 왼쪽 정렬 */
-				* {
-					margin-left: 0 !important;
-				}
-				
-				/* 특정 요소들만 타겟 */
-				xf\\:output[style*="margin-left"],
-				*[style*="margin-left"] {
-					margin-left: 0px !important;
-				}
-				/* 작은 모바일에서 컨테이너를 완전히 왼쪽으로 */
-				#group_hero,
-				*[id="group_hero"] {
-					padding-left: 10px !important;
-					padding-right: 10px !important;
-				}
-				
-				#hero_left,
-				*[id="hero_left"] {
-					padding-left: 0 !important;
-					padding-right: 0 !important;
-					margin-left: 0 !important;
-					text-align: left !important;
-				}
-				
-				/* 인라인 스타일 강제 오버라이드 */
-				*[style*="margin-left: 50px"][style*="color:#0000FF"],
-				*[style*="margin-left: 50px"][style*="color:#FFC107"],
-				*[style*="linear-gradient"] {
-					margin-left: 0px !important;
-					margin-right: auto !important;
-					transform: translateX(0) !important;
-				}
-				.main-title,
-				*[class*="main-title"],
-				*[style*="color:#0000FF"],
-				*[style*="초급 개발자를"],
-				*[style*="margin-left: 50px"] {
-					font-size: clamp(2.4rem, 5.5vw, 3rem) !important; /* 작은 모바일에서도 제목 크기 키움 */
-					margin-left: 0px !important;
-					margin-right: auto !important;
-					text-align: left !important;
-				}
-				
-				.sub-title,
-				*[class*="sub-title"],
-				*[style*="color:#FFC107"],
-				*[style*="올인원 협업"],
-				*[style*="margin-left: 50px"] {
-					font-size: clamp(2.4rem, 5.5vw, 3rem) !important; /* 작은 모바일에서도 제목 크기 키움 */
-					margin-left: 0px !important;
-					margin-right: auto !important;
-					text-align: left !important;
-				}
-				
-				/* 작은 모바일에서 버튼 margin 조정 */
-				#btn_start_free_1,
-				*[id="btn_start_free_1"],
-				*[style*="linear-gradient"] {
-					margin-left: 0px !important;
-					margin-right: auto !important;
-					display: block !important;
-					width: fit-content !important;
-				}
-				
-				/* 작은 모바일에서도 설명 텍스트 줄바꿈 허용 */
-				.description,
-				*[class*="description"],
-				*[style*="일정 관리부터"] {
-					white-space: normal !important;
-					font-size: clamp(1rem, 2.5vw, 1.2rem) !important;
-					line-height: 1.4 !important;
-					word-break: keep-all !important;
-					overflow: visible !important;
-					text-overflow: unset !important;
-					margin-left: 0px !important; /* 작은 모바일에서는 왼쪽 끝 */
-				}
-				
-				/* 작은 모바일에서도 CTA 텍스트 줄바꿈 허용 */
-				.cta-title,
-				*[class*="cta-title"],
-				*[style*="지금 바로"],
-				*[style*="협업을 시작"] {
-					white-space: normal !important;
-					font-size: clamp(1.5rem, 4vw, 1.8rem) !important;
-					line-height: 1.3 !important;
-					word-break: keep-all !important;
-					overflow: visible !important;
-					text-overflow: unset !important;
-				}
-				
-				.cta-description,
-				*[class*="cta-description"],
-				*[style*="무료로 시작하고"] {
-					white-space: normal !important;
-					font-size: clamp(1rem, 2.5vw, 1.1rem) !important;
-					line-height: 1.4 !important;
-					word-break: keep-all !important;
-					overflow: visible !important;
-					text-overflow: unset !important;
-				}
-			}
-		</style>
+
+			/* 태블릿 크기에서 플로팅 카드 숨기기 */ @media (max-width: 1024px) { #Group_card1, #Group_card2, #Group_card3, #hero_right,
+			*[id="Group_card1"], *[id="Group_card2"], *[id="Group_card3"], *[id="hero_right"], .floating-card, *[class*="floating-card"] {
+			display: none !important; visibility: hidden !important; opacity: 0 !important; height: 0 !important; width: 0 !important;
+			overflow: hidden !important; position: absolute !important; left: -9999px !important; top: -9999px !important; }
+
+			/* 히어로 섹션 레이아웃 조정 */ #group_hero, *[id="group_hero"] { flex-direction: column !important; text-align: center !important;
+			padding: 40px 20px !important; min-height: auto !important; justify-content: center !important; overflow: hidden !important; }
+
+			#hero_left, *[id="hero_left"] { padding-right: 0 !important; padding-left: 0 !important; width: 100% !important; margin-bottom:
+			0 !important; flex: none !important; max-width: 100% !important; text-align: center !important; overflow: hidden !important; }
+
+			/* CTA 섹션 레이아웃 조정 */ #group_cta, *[id="group_cta"] { overflow: hidden !important; padding: 60px 15px !important; } }
+
+			/* 모바일 크기에서 추가 텍스트 크기 조정 */ @media (max-width: 768px) { .main-title, *[class*="main-title"], *[style*="color:#0000FF"],
+			*[style*="초급 개발자를"] { font-size: clamp(2.8rem, 6.5vw, 3.5rem) !important; /* 모바일에서 제목 크기 키움 */ margin-left: 0px !important; /*
+			다른 요소들과 같은 라인 */ }
+
+			.sub-title, *[class*="sub-title"], *[style*="color:#FFC107"], *[style*="올인원 협업"] { font-size: clamp(2.8rem, 6.5vw, 3.5rem)
+			!important; /* 모바일에서 제목 크기 키움 */ margin-left: 0px !important; /* 다른 요소들과 같은 라인 */ }
+
+			/* 모바일에서 버튼 margin 조정 */ #btn_start_free_1, *[id="btn_start_free_1"], *[style*="linear-gradient"] { margin-left: 0px !important;
+			/* 제목들과 같은 라인 */ }
+
+			/* 모바일에서 설명 텍스트도 조정 */ .description, *[class*="description"], *[style*="일정 관리부터"] { margin-left: 0px !important; /* 제목들과 같은 라인
+			*/ font-size: clamp(1.4rem, 4vw, 1.8rem) !important; /* 모바일에서 글자 크기 키움 */ }
+
+			/* 모바일에서 설명 텍스트는 줄바꿈 허용 */ .description, *[class*="description"], *[style*="일정 관리부터"] { white-space: normal !important;
+			font-size: clamp(1.1rem, 3vw, 1.4rem) !important; line-height: 1.4 !important; word-break: keep-all !important; overflow:
+			visible !important; text-overflow: unset !important; }
+
+			/* 모바일에서 CTA 텍스트도 줄바꿈 허용 */ .cta-title, *[class*="cta-title"], *[style*="지금 바로"], *[style*="협업을 시작"] { white-space: normal
+			!important; font-size: clamp(1.8rem, 4.5vw, 2.2rem) !important; line-height: 1.3 !important; word-break: keep-all !important;
+			overflow: visible !important; text-overflow: unset !important; }
+
+			.cta-description, *[class*="cta-description"], *[style*="무료로 시작하고"] { white-space: normal !important; font-size: clamp(1.1rem,
+			3vw, 1.3rem) !important; line-height: 1.4 !important; word-break: keep-all !important; overflow: visible !important;
+			text-overflow: unset !important; width: auto !important; max-width: none !important; } }
+
+			/* 아주 작은 모바일에서 최소 크기 보장 */ @media (max-width: 480px) { /* 모든 요소 강제로 왼쪽 정렬 */ * { margin-left: 0 !important; }
+
+			/* 특정 요소들만 타겟 */ xf\\:output[style*="margin-left"], *[style*="margin-left"] { margin-left: 0px !important; } /* 작은 모바일에서 컨테이너를
+			완전히 왼쪽으로 */ #group_hero, *[id="group_hero"] { padding-left: 10px !important; padding-right: 10px !important; }
+
+			#hero_left, *[id="hero_left"] { padding-left: 0 !important; padding-right: 0 !important; margin-left: 0 !important; text-align:
+			left !important; }
+
+			/* 인라인 스타일 강제 오버라이드 */ *[style*="margin-left: 50px"][style*="color:#0000FF"], *[style*="margin-left:
+			50px"][style*="color:#FFC107"], *[style*="linear-gradient"] { margin-left: 0px !important; margin-right: auto !important;
+			transform: translateX(0) !important; } .main-title, *[class*="main-title"], *[style*="color:#0000FF"], *[style*="초급 개발자를"],
+			*[style*="margin-left: 50px"] { font-size: clamp(2.4rem, 5.5vw, 3rem) !important; /* 작은 모바일에서도 제목 크기 키움 */ margin-left: 0px
+			!important; margin-right: auto !important; text-align: left !important; }
+
+			.sub-title, *[class*="sub-title"], *[style*="color:#FFC107"], *[style*="올인원 협업"], *[style*="margin-left: 50px"] { font-size:
+			clamp(2.4rem, 5.5vw, 3rem) !important; /* 작은 모바일에서도 제목 크기 키움 */ margin-left: 0px !important; margin-right: auto !important;
+			text-align: left !important; }
+
+			/* 작은 모바일에서 버튼 margin 조정 */ #btn_start_free_1, *[id="btn_start_free_1"], *[style*="linear-gradient"] { margin-left: 0px
+			!important; margin-right: auto !important; display: block !important; width: fit-content !important; }
+
+			/* 작은 모바일에서도 설명 텍스트 줄바꿈 허용 */ .description, *[class*="description"], *[style*="일정 관리부터"] { white-space: normal !important;
+			font-size: clamp(1rem, 2.5vw, 1.2rem) !important; line-height: 1.4 !important; word-break: keep-all !important; overflow:
+			visible !important; text-overflow: unset !important; margin-left: 0px !important; /* 작은 모바일에서는 왼쪽 끝 */ }
+
+			/* 작은 모바일에서도 CTA 텍스트 줄바꿈 허용 */ .cta-title, *[class*="cta-title"], *[style*="지금 바로"], *[style*="협업을 시작"] { white-space: normal
+			!important; font-size: clamp(1.5rem, 4vw, 1.8rem) !important; line-height: 1.3 !important; word-break: keep-all !important;
+			overflow: visible !important; text-overflow: unset !important; }
+
+			.cta-description, *[class*="cta-description"], *[style*="무료로 시작하고"] { white-space: normal !important; font-size: clamp(1rem,
+			2.5vw, 1.1rem) !important; line-height: 1.4 !important; word-break: keep-all !important; overflow: visible !important;
+			text-overflow: unset !important; } }
+			<![CDATA[body{
+    overflow: hidden;
+}]]></style>
     </head>
     <body ev:onpageload="scwin.onpageload" style="background-color: #FFF4D6 !important;min-height: 100vh;margin: 0;padding: 0;overflow-x: hidden;width: 100%;">
     	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
