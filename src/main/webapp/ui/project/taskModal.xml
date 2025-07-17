@@ -1665,16 +1665,20 @@ scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
 						<w2:editor style="" id="contents_editor"></w2:editor>
 					</xf:group>
 					<xf:group style="" id="" class="contents-file-group">
-						<xf:group meta_snippetCategory="02_타이틀" meta_snippetName="2_02 서브타이틀(h3)" meta_snippetKeyComponent="true" style="" id=""
-							class="titbox">
-							<w2:textbox tagname="h3" style="" id="" label="파일" class=""></w2:textbox>
+						<xf:group meta_snippetCategory="02_타이틀" meta_snippetName="2_02 서브타이틀(h3)" meta_snippetKeyComponent="true" style=""
+							id="" class="titbox" tagname="a">
+							<w2:textbox id="" label="파일" style="width: 150px;height: 23px;" tagname="h3"></w2:textbox>
 							<xf:group style="" id="" class="rt">
-								<xf:trigger style="" id="file_add" type="button" class="btn_cm  row_add" ev:onclick="scwin.file_add_onclick">
+								<xf:trigger style="" id="file_add" type="button" class="btn_cm  row_add"
+									ev:onclick="scwin.file_add_onclick">
 									<xf:label><![CDATA[파일추가]]></xf:label>
 								</xf:trigger>
-								<input style="display:none;" id="fileInput" type="file" class="" onchange="scwin.fileInput_change" multiple=""></input>
+								<input style="display:none;" id="fileInput" type="file" class="" onchange="scwin.fileInput_change"
+									multiple="">
+								</input>
 
-								<xf:trigger style="" id="file_remove" type="button" class="btn_cm  row_del" ev:onclick="scwin.file_remove_onclick">
+								<xf:trigger style="" id="file_remove" type="button" class="btn_cm  row_del"
+									ev:onclick="scwin.file_remove_onclick">
 									<xf:label><![CDATA[파일삭제]]></xf:label>
 								</xf:trigger>
 							</xf:group>

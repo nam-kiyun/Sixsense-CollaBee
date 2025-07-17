@@ -126,7 +126,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: lightgray;
+/*    background-color: lightgray;*/
 	flex-direction: column;
 }
 .contents-group .contents-main-group .contents-text-group .editor-group{
@@ -159,18 +159,37 @@ body {
 #cke_mf_exa_popup_wframe_contents_editor_{
 	width:10%;
 	margin:0;
-	/*background-color:green;*/
+	background-color: white !important;
 }
 .cke_inner, .cke_reset{
 	display: flex !important;
 	flex-direction: column !important;
 	height: 100% !important;
+	border-radius: 8px;
 }
 .cke_inner #cke_1_top{ /*에디터 헤더*/
 	/*background-color: orange;*/
 /*	min-height: 30px !important;*/
 	display: flex;
 	align-items: center;
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	background-color: white;
+	border-top-right-radius: 8px;
+	border-top-left-radius: 8px;
+}
+.cke_inner #cke_1_top:hover{ /*에디터 헤더*/
+	/*background-color: orange;*/
+/*	min-height: 30px !important;*/
+	display: flex;
+	align-items: center;
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	background-color: white;
+	border-top-right-radius: 8px;
+	border-top-left-radius: 8px;
 }
 .cke_inner #cke_1_contents{ /*에디터 내용*/
 /*	background-color: #D6D85D !important;*/
@@ -181,6 +200,9 @@ body {
 .cke_inner .cke_bottom{ /*에디터 bottom*/
 /*	background-color: #D6D85D;*/
 	min-height: 3px !important;
+	background-color: white;
+	border-bottom-left-radius: 8px !important;
+	border-bottom-right-radius: 8px !important;
 }
 
 .cke_wysiwyg_frame {
