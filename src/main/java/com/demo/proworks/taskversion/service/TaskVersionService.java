@@ -52,7 +52,7 @@ public interface TaskVersionService {
 	 * @return 번호
 	 * @throws Exception
 	 */
-	public int insertTaskVersion(TaskVersionVo taskVersionVo) throws Exception;
+	public String insertTaskVersion(TaskVersionVo taskVersionVo) throws Exception;
 
 	/**
 	 * 버전관리를 위한 Task(업무) 정보를 갱신 처리 한다.

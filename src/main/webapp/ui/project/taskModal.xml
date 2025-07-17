@@ -211,9 +211,6 @@ scwin.onpageload = function () {
 
             iframe.style.setProperty('height', scrollHeight + 'px', 'important');
             contents.style.setProperty('height', scrollHeight + 'px', 'important');
-
-            // scwin.smoothResize(iframe, scrollHeight);
-            // scwin.smoothResize(contents, scrollHeight);
         }
     }, 300);
 
@@ -280,7 +277,6 @@ scwin.changeEditor = function () {
         return;
     }
 
-
     // CKEditor 인스턴스 직접 접근
     const ckInstance = CKEDITOR.instances["mf_exa_popup_wframe_contents_editor_"];
     Object.keys(CKEDITOR.instances).forEach(key => {
@@ -294,14 +290,27 @@ scwin.changeEditor = function () {
 
     ckInstance.on("instanceReady", function () {
         scwin.previousHTML = contents_editor.getHTML(); // 초기값 설정
-        console.log(contents_editor.getHTML());
 
         ckInstance.on("change", function () {
+            console.log("바뀜");
             const currentHTML = ckInstance.getData();
+            console.log("지금 전체 파일");
+            console.log(dls_allFile.getAllJSON());
+            console.log("화면 파일");
+            console.log(dls_file.getAllJSON());
+            console.log(scwin.previousHTML);
+            console.log(currentHTML);
 
             if (currentHTML !== scwin.previousHTML) {
+
                 console.log("이전 내용:", scwin.previousHTML);
                 console.log("현재 내용:", currentHTML);
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(currentHTML, "text/html");
+
+                // 이제 doc.body는 HTML을 DOM 구조로 표현한 객체!
+                console.log("변환된 DOM:", doc.body);
 
                 const prevNums = scwin.extractFileNums(scwin.previousHTML);
                 const currNums = scwin.extractFileNums(currentHTML);
@@ -353,8 +362,6 @@ scwin.loadOriginalVersion = function () {
         dls_allFile.setJSON(scwin.originalData.fileSrc);
         dls_file.setJSON(scwin.originalData.fileSrc);
         scwin.snapShot = false;
-    } else {
-        console.warn("초기 작업 상태가 없습니다");
     }
 };
 
@@ -362,7 +369,7 @@ scwin.loadOriginalVersion = function () {
 scwin.currentWorkSnapshot = function () {
     return {
         content: contents_editor.getHTML(),
-        fileSrc: dls_allFile.getAllJSON() // 또는 필요하다면 전체 fileList
+        fileSrc: dls_allFile.getAllJSON()
     };
 };
 
@@ -401,8 +408,6 @@ scwin.versionPopup = function (e) {
         // 팝업 생성
         $p.openPopup("./versionModal.xml", options);
     }
-
-
 };
 
 
@@ -527,7 +532,6 @@ scwin.getTask = function (taskId, projectId) {
                 if (el) {
                     el.setAttribute("data-num", item.num);
                 }
-                console.log(contents_editor.getHTML());
             });
 
             contents_editor.setHTML(container.innerHTML);
@@ -548,23 +552,6 @@ scwin.getTask = function (taskId, projectId) {
         }
     });
 }
-
-//ifram 부드럽게 전환
-scwin.smoothResize = function (target, newHeight) {
-    const currentHeight = parseInt(target.style.height || 0);
-    const step = (newHeight - currentHeight) / 10;
-    let frame = 0;
-
-    function animate() {
-        frame++;
-        const nextHeight = currentHeight + step * frame;
-        target.style.height = nextHeight + 'px';
-        if (frame < 2) requestAnimationFrame(animate);
-    }
-
-    animate();
-};
-
 
 
 //해당 작업에 대한 채팅 불러오기(20개씩)
@@ -777,7 +764,7 @@ scwin.initializeChatWebSocket = function () {
     }
 };
 
-//엔터 누르면 로그인 버튼 클릭
+//엔터 누르면 채팅 전송
 scwin.input_onkeyup = function (e) {
     if (e.keyCode === 13) {
         comment_send_button.addClass("active")
@@ -807,6 +794,10 @@ scwin.comment_send_button_onclick = function () {
 
     $c.sbm.execute(sbm_comment_create);
     comment_input.setValue("");
+
+    setTimeout(() => {
+        comment_input.focus();
+    }, 30);
 };
 
 
@@ -834,14 +825,12 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
 
     const wrapper = $p.dynamicCreate(wrapperId, "span", {
         className: wrapperClass,
-
     }, group);
 
     wrapper.userData = { commentId: commentId };
     if (insertBeforeComp?.render && wrapper?.render) {
         group.render.insertBefore(wrapper.render, insertBeforeComp.render);
     }
-
 
     const headerRow = $p.dynamicCreate(wrapperId + "_header", "span", {
         className: "comment-header"
@@ -905,8 +894,20 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
         className: "comment-time"
     }, wrapper);
 
-    return wrapper;
+    if (!insertBeforeComp) {
+        setTimeout(() => {
+            const scrollArea = $p.getComponentById("comment_main_group");
+            const el = scrollArea.render;
 
+            const isAtBottom = el.scrollTop >= el.scrollHeight - el.clientHeight - 200;
+
+            if (isAtBottom) {
+                el.scrollTop = el.scrollHeight; // 하단 고정
+            }
+        }, 50);
+    }
+
+    return wrapper;
 };
 
 //삭제할 때 날짜와 함께 삭제
@@ -928,7 +929,6 @@ scwin.deleteChat = function (chat) {
         const prevComp = children[idx + 1];
         const isDateComp = prevComp?.options?.className === "comment-date";
         const labelText = prevComp?.render?.innerText;
-        console.log(children);
 
         if (isDateComp) {
             prevComp.remove();
@@ -963,34 +963,36 @@ scwin.sbm_comment_get_submitdone = function (e) {
     const responseData = e.responseJSON;
     const commentList = responseData.elData?.commentVoList ?? [];
     const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
-    let insertBeforeTarget = group.childControlList?.length > 0 ? group.childControlList[group.childControlList.length - 1] : null;
+    let firstChild = group.render?.children[0] ?? null;
+    let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
+
+
+    if (commentList.length === 0) {
+        scwin.hasMore = false; // 더 이상 불러올 댓글 없음
+        scwin.isLoading = false;
+        return;
+    }
 
     //날짜 비교후에 이전날짜와 같다면 삭제
     if (insertBeforeTarget?.options) {
         const currentDate = insertBeforeTarget?.options.label
         const nextDate = scwin.formatDate(commentList[0].createdAt);
+
         if (currentDate === nextDate) {
             insertBeforeTarget.remove(); // 기존 날짜 컴포넌트 삭제
-            insertBeforeTarget = group.childControlList?.length > 0
-                ? group.childControlList[group.childControlList.length - 1]
-                : null;
+            firstChild = group.render?.children[0] ?? null;
+            insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
         }
     }
+
 
     //반복문 돌면서 채팅 내용 삽입
     for (let i = 0; i < commentList.length; i++) {
         const comment = commentList[i];
         const nextComment = commentList[i + 1];
-
         const currentDate = scwin.formatDate(comment.createdAt);
         const nextDate = nextComment ? scwin.formatDate(nextComment.createdAt) : null;
         const isMine = (comment.userId === currentUser.userId);
-
-        if (commentList.length === 0) {
-            scwin.hasMore = false; // 더 이상 불러올 댓글 없음
-            scwin.isLoading = false;
-            return;
-        }
 
         // 댓글 삽입
         const commentComp = scwin.addChatMessage(
@@ -1030,7 +1032,6 @@ scwin.sbm_comment_get_submitdone = function (e) {
 
     scwin.currentPage++; // 다음 호출 시 페이지 증가
     scwin.isLoading = false;
-
 };
 
 
@@ -1192,7 +1193,7 @@ scwin.file_add_onclick = function (e) {
 scwin.file_remove_onclick = function (e) {
     let chkIdxArr = grd.getCheckedIndex("CHK");
     const size = dls_allFile.getRowCount();
-    console.log(size);
+
     if (chkIdxArr.length === 0)
         return;
 
@@ -1300,9 +1301,17 @@ scwin.fileInput_change = function (e) {
 
         reader.onload = function (event) {
             const fileDataUrl = event.target.result;
+            let param = {
+                name: file.name,
+                url: fileDataUrl,
+                type: file.type,
+                num: scwin.filePageNum + 1,
+                data: event.target.result,
+                size: file.size,
+            }
 
             // HTML 에디터에 삽입
-            scwin.addFileHtml(file.type, file.name, fileDataUrl, scwin.filePageNum + 1);
+            scwin.addFileHtml(param);
 
             // 최근순 추가: 앞에 삽입
             newList.unshift({
@@ -1339,13 +1348,24 @@ scwin.fileInput_change = function (e) {
         };
 
         reader.readAsDataURL(file);
-
     }
+
+    setTimeout(function () {
+        scwin.previousHTML = contents_editor.getHTML();
+    }, 30); //파일 변화 추적
 };
 
 
-scwin.addFileHtml = function (type, name, url, num) {
+scwin.addFileHtml = function (file) {
     const html = contents_editor.getHTML();
+    const {
+        num,
+        name,
+        size,
+        type,
+        data,
+        url
+    } = file;
     let insertHTML = "";
 
     if (type.startsWith("image/")) {

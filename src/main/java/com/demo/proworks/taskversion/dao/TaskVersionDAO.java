@@ -91,7 +91,7 @@ public class TaskVersionDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAb
 //    public int insertTaskVersion(TaskVersionVo vo) throws ElException {    	
 //        return insert("com.demo.proworks.taskversion.insertTaskVersion", vo);
 //    }
-	public int insertTaskVersion(TaskVersionVo vo) throws ElException {
+	public String insertTaskVersion(TaskVersionVo vo) throws ElException {
 		insert("com.demo.proworks.taskversion.insertTaskVersion", vo);
 		return vo.getTaskVersionId();
 	}

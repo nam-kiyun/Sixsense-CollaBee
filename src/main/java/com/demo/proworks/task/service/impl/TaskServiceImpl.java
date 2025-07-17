@@ -81,7 +81,7 @@ public class TaskServiceImpl implements TaskService {
 		taskVo.setTaskId(updateVo.getTaskId());
 		taskVo.setBoardId(updateVo.getBoardId());
 		taskVo.setProjectUserId(updateVo.getProjectUserId());
-		taskVo.setProjectRepoId(isEmpty(updateVo.getProjectRepoId()) ? 0 : updateVo.getProjectRepoId());
+		taskVo.setProjectRepoId(isEmpty(updateVo.getProjectRepoId()) ? "0" : updateVo.getProjectRepoId());
 		taskVo.setTaskTitle(updateVo.getTaskTitle());
 		taskVo.setPriority(isEmpty(updateVo.getPriority()) ? null : updateVo.getPriority());
 		taskVo.setStartDate(isEmpty(updateVo.getStartDate()) ? null : updateVo.getStartDate());
@@ -98,17 +98,15 @@ public class TaskServiceImpl implements TaskService {
 		versionVo.setTaskId(updateVo.getTaskId());
 		versionVo.setContent(updateVo.getContent());
 
-		int taskVersionId = taskVersionDAO.insertTaskVersion(versionVo);
+		String taskVersionId = taskVersionDAO.insertTaskVersion(versionVo);
 
 		// fileSrc 저장
 		List<FileSrcVo> fileSrcVos = updateVo.getFileSrcVo();
 		if (fileSrcVos != null && !fileSrcVos.isEmpty()) {
 			for (FileSrcVo vo : fileSrcVos) {
-				vo.setTaskVersionId(taskVersionId); // 여기에 주입!
-				System.out.println(vo);
+				vo.setTaskVersionId(taskVersionId);
 			}
 
-			// 3️⃣ 리스트 insert
 			fileSrcDAO.insertFileSrcList(fileSrcVos);
 		}
 
@@ -137,17 +135,15 @@ public class TaskServiceImpl implements TaskService {
 		return false;
 	}
 
-	private void handleManagerUpdate(int taskId, List<ManagerVo> currentManagerVo) throws Exception {
-		if (taskId == 0)
+	private void handleManagerUpdate(String taskId, List<ManagerVo> currentManagerVo) throws Exception {
+		if (taskId == "0" || taskId == null || taskId == "undefined")
 			return;
 
 		ManagerVo baseVo = new ManagerVo();
 		baseVo.setTaskId(taskId);
 
 		currentManagerVo = currentManagerVo.stream()
-				.filter(vo -> vo.getUserId() != null && !vo.getUserId().trim().isEmpty() && vo.getUserId() != "") // 빈
-																													// userId
-																													// 제거
+				.filter(vo -> vo.getUserId() != null && !vo.getUserId().trim().isEmpty() && vo.getUserId() != "") 
 				.collect(Collectors.toList());
 
 		List<ManagerVo> prevManagerVo = managerDAO.selectManagerByTaskId(baseVo);
@@ -182,7 +178,7 @@ public class TaskServiceImpl implements TaskService {
 
 		for (String userId : toDelete) {
 			ManagerVo target = prevMap.get(userId);
-			if (target != null && target.getManagerId() != 0) {
+			if (target != null && target.getManagerId() != "0") {
 				managerDAO.deleteManager(target);
 			}
 		}
@@ -281,10 +277,8 @@ public class TaskServiceImpl implements TaskService {
 		// 파일
 		FileSrcVo fileSrcVo = new FileSrcVo();
 		fileSrcVo.setTaskVersionId(resultVO.getTaskVersionId());
-		System.out.println(updateVo.getTaskVersionId());
-		List<FileSrcVo> fileSrcListVo = fileSrcDAO.selectFileSrcByTaskVersionId(fileSrcVo);
-		System.out.println(fileSrcListVo);
 
+		List<FileSrcVo> fileSrcListVo = fileSrcDAO.selectFileSrcByTaskVersionId(fileSrcVo);
 		resultVO.setFileSrcVo(fileSrcListVo);
 
 		// 프로젝트 구성원

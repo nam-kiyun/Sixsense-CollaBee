@@ -68,7 +68,6 @@ public class TaskController {
 		TaskUpdateVo updateVo = mapper.readValue(taskJson, TaskUpdateVo.class);
 		List<FileSrcVo> fileUpdateList = Arrays.asList(mapper.readValue(fileUploadJson, FileSrcVo[].class));
 
-		System.out.println("updateVo.getContent(): " + updateVo.getContent());
 
 		// 1. 파일 업로드
 		for (int i = 0; i < fileUpdateList.size(); i++) {
@@ -79,20 +78,15 @@ public class TaskController {
 				MultipartFile file = (files != null && files.size() > i) ? files.get(i) : null;
 				String uploadedUrl = uploadS3(file);
 				fileMeta.setFilePath(uploadedUrl);
-			} else {
-				System.out.println("기존 파일 사용: " + path);
 			}
 		}
 
 		updateVo.setFileSrcVo(fileUpdateList);
-		System.out.println("===================================================");
-		// 2. HTML 내부 src 교체 (file-data 클래스 기준)
-		String rawHtml = updateVo.getContent(); // HTML 원문 가져오기
+
+		// 2. HTML 내부 src 교체
+		String rawHtml = updateVo.getContent();
 		Document doc = Jsoup.parse(rawHtml);
-		System.out.println("doc.body().html " + doc.body().html());
-		System.out.println("===================================================");
 		Elements fileElements = doc.getElementsByClass("file-data");
-		System.out.println("fileElements: " + fileElements);
 
 		for (int i = 0; i < fileElements.size() && i < fileUpdateList.size(); i++) {
 			Element el = fileElements.get(fileElements.size() - 1 - i); // 순서 반대로 접근
@@ -163,7 +157,7 @@ public class TaskController {
 	public TaskUpdateVo selectTask(@PathVariable("taskId") int taskId,
 			@RequestParam(value = "projectId", required = false) Integer projectId) throws Exception {
 		TaskUpdateVo taskVo = new TaskUpdateVo();
-		taskVo.setTaskId(taskId);
+		taskVo.setTaskId(String.valueOf(taskId));
 		taskVo.setProjectId(projectId.toString());
 
 		TaskUpdateVo selectTaskVo = taskService.selectTask(taskVo);

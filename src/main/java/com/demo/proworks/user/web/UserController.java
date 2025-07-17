@@ -83,7 +83,6 @@ public class UserController {
 		String password = loginVo.getPassword();
 
 		LoginInfo info = loginProcess.processLogin(request, id, password);
-		System.out.println(info);
 
 		if (info != null) {
 			AppLog.debug("- Login 정보 : " + info.toString());
@@ -125,8 +124,6 @@ public class UserController {
 
 			Map<String, Object> result = new HashMap<>();
 			result.put("verified", success);
-
-			System.out.println("결과값:     " + success);
 
 			return result;
 
@@ -275,12 +272,7 @@ public class UserController {
 //
 //			String fileUrl = "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/" + s3Key;
 //			userVo.setProfileImageUrl(fileUrl);
-//			System.out.println("저장완료: " + fileUrl);
-//		} else {
-//			System.out.println("첨부된 파일이 없습니다.");
 //		}
-
-		System.out.println("사용자 정보 (FormData): " + userVo.toString());
 
 		userService.updateUser(userVo);
 	}
