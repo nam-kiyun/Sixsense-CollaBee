@@ -3338,13 +3338,66 @@ scwin.btn_settings_onclick = function (e) {
 
 //task 버튼 눌렀을 때 
 scwin.new_task_onclick = function (e) {
+    // 클릭된 카드에서 taskId와 projectId 추출
+    var taskId = null;
+    var projectId = null;
+    
+    if (e && e.target) {
+        // 클릭된 요소나 부모 요소에서 data-task-id 찾기
+        var currentElement = e.target;
+        while (currentElement && !taskId) {
+            if (currentElement.getAttribute && currentElement.getAttribute("data-task-id")) {
+                taskId = currentElement.getAttribute("data-task-id");
+                break;
+            }
+            currentElement = currentElement.parentElement;
+        }
+    }
+    
+    // 프로젝트 ID 가져오기
+    if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
+        projectId = scwin.currentProjectData.projectId;
+    }
+    
+    // 보드 타이틀 가져오기
+    var boardTitle = "알 수 없음";
+    if (e && e.target) {
+        var currentElement = e.target;
+        while (currentElement && boardTitle === "알 수 없음") {
+            if (currentElement.getAttribute && currentElement.getAttribute("data-board-id")) {
+                var boardId = currentElement.getAttribute("data-board-id");
+                boardTitle = scwin.getBoardTitle(boardId);
+                break;
+            }
+            currentElement = currentElement.parentElement;
+        }
+    }
+    
+    // 프로젝트 이름 가져오기
+    var projectName = "프로젝트";
+    if (scwin.currentProjectData && scwin.currentProjectData.projectName) {
+        projectName = scwin.currentProjectData.projectName;
+    }
+    
+    // 팝업 이름 동적 생성
+    var popupName = projectName + " / " + boardTitle;
+    
+    console.log("모달 열기 - taskId:", taskId, "projectId:", projectId, "popupName:", popupName);
+    
+    // 사용자 정보 가져오기 (세션에는 userId만 있음)
+    var userId = WebSquare.session.getAttribute("userId");
+    var userName = userId || "사용자"; // userId를 userName으로 사용
+    var userImage = "/InsWebApp/images/default-avatar.png"; // 기본 아바타 이미지
+    
     var param = {
         "type": "json", 
         "name": "userInfo", 
         "data": {
-            "userId": WebSquare.session.getAttribute("userId"),
-            "userName": scwin.userName,
-            "userImage": scwin.userImage
+            "userId": userId,
+            "userName": userName,
+            "userImage": userImage,
+            "taskId": taskId,
+            "projectId": projectId
         }
     };
 
@@ -3356,7 +3409,7 @@ scwin.new_task_onclick = function (e) {
         height: "750",
         top: "140",
         left: "350",
-        popupName: "2차프로젝트 / 진행중",
+        popupName: popupName,
         modal: false,
         closeAction: "scwin.popup_closeAction",
         customTitleBar: false,
