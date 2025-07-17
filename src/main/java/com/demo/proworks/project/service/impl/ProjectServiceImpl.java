@@ -14,6 +14,30 @@ import com.demo.proworks.project.dao.ProjectDAO;
 import com.demo.proworks.board.service.BoardService;
 import com.demo.proworks.board.vo.BoardVo;
 import com.demo.proworks.email.vo.EmailVo;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import javax.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import com.demo.proworks.projectuser.dao.ProjectUserDAO;
+import com.demo.proworks.board.dao.BoardDAO;
+import com.demo.proworks.task.dao.TaskDAO;
+import com.demo.proworks.taskversion.dao.TaskVersionDAO;
+import com.demo.proworks.comment.dao.CommentDAO;
+import com.demo.proworks.filesrc.dao.FileSrcDAO;
+import com.demo.proworks.projectuser.vo.ProjectUserVo;
+import com.demo.proworks.board.vo.BoardVo;
+import com.demo.proworks.task.vo.TaskVo;
+import com.demo.proworks.taskversion.vo.TaskVersionVo;
+import com.demo.proworks.comment.vo.CommentVo;
+import com.demo.proworks.filesrc.vo.FileSrcVo;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.DeleteObjectRequest;
 
 /**  
  * @subject     : 프로젝트 정보 관련 처리를 담당하는 ServiceImpl
@@ -28,7 +52,10 @@ import com.demo.proworks.email.vo.EmailVo;
  * 
  */
 @Service("projectServiceImpl")
+@EnableScheduling
 public class ProjectServiceImpl implements ProjectService {
+
+    private Set<String> sentTodayTasks = new HashSet<>();
 
     @Resource(name="projectDAO")
     private ProjectDAO projectDAO;
@@ -38,6 +65,36 @@ public class ProjectServiceImpl implements ProjectService {
 	
 	@Resource(name = "messageSource")
 	private MessageSource messageSource;
+	
+	@Resource(name = "projectUserDAO")
+	private ProjectUserDAO projectUserDAO;
+	
+	@Resource(name = "boardDAO")
+	private BoardDAO boardDAO;
+	
+	@Resource(name = "taskDAO")
+	private TaskDAO taskDAO;
+	
+	@Resource(name = "taskVersionDAO")
+	private TaskVersionDAO taskVersionDAO;
+	
+	@Resource(name = "commentDAO")
+	private CommentDAO commentDAO;
+	
+	@Resource(name = "fileSrcDAO")
+	private FileSrcDAO fileSrcDAO;
+	
+	@Resource(name = "amazonS3")
+	private AmazonS3 amazonS3;
+	
+	@Resource(name = "mailSender")
+	private JavaMailSender mailSender;
+	
+	@Value("${spring.mail.username}")
+	private String username;
+	
+	@Value("${spring.mail.password}")
+	private String password;
 
     /**
      * 프로젝트 정보 목록을 조회합니다.
@@ -204,6 +261,280 @@ public class ProjectServiceImpl implements ProjectService {
 		return projectDAO.selectProjectForEmail(projectId);
 	}
 	
+	@Override
+	public List<EmailVo> selectProjectsForEmailSend() throws Exception {
+		return projectDAO.selectProjectsForEmailSend();
+	}
+	
+	/**
+     * 프로젝트와 관련된 모든 데이터를 완전히 삭제 처리한다.
+     *
+     * @process
+     * 1. 프로젝트 관련 파일들을 S3에서 삭제한다.
+     * 2. 데이터베이스에서 다음 순서로 삭제한다:
+     *    - FILESRC (파일 정보)
+     *    - COMMENT (댓글)
+     *    - TASK_VERSION (작업 버전)
+     *    - TASK (작업)
+     *    - BOARD (보드)
+     *    - PROJECT_USER (프로젝트 멤버)
+     *    - PROJECT (프로젝트)
+     * 
+     * @param  projectId 프로젝트 ID
+     * @return 삭제된 프로젝트 수
+     * @throws Exception
+     */
+	@Transactional
+	public int deleteProjectCompletely(String projectId) throws Exception {
+		try {
+			// 1. 프로젝트 관련 파일들을 S3에서 삭제
+			deleteS3Files(projectId);
+			
+			// 2. 데이터베이스에서 순서대로 삭제
+			
+			// 2-1. FILESRC 삭제
+			FileSrcVo fileSrcVo = new FileSrcVo();
+			fileSrcVo.setProjectId(projectId);
+			fileSrcDAO.deleteFileSrcByProjectId(fileSrcVo);
+			
+			// 2-2. COMMENT 삭제
+			CommentVo commentVo = new CommentVo();
+			commentVo.setProjectId(projectId);
+			commentDAO.deleteCommentByProjectId(commentVo);
+			
+			// 2-3. TASK_VERSION 삭제
+			TaskVersionVo taskVersionVo = new TaskVersionVo();
+			taskVersionVo.setProjectId(projectId);
+			taskVersionDAO.deleteTaskVersionByProjectId(taskVersionVo);
+			
+			// 2-4. TASK 삭제
+			TaskVo taskVo = new TaskVo();
+			taskVo.setProjectId(projectId);
+			taskDAO.deleteTaskByProjectId(taskVo);
+			
+			// 2-5. BOARD 삭제
+			BoardVo boardVo = new BoardVo();
+			boardVo.setProjectId(projectId);
+			boardDAO.deleteBoardByProjectId(boardVo);
+			
+			// 2-6. PROJECT_USER 삭제
+			ProjectUserVo projectUserVo = new ProjectUserVo();
+			projectUserVo.setProjectId(projectId);
+			projectUserDAO.deleteProjectUserByProjectId(projectUserVo);
+			
+			// 2-7. PROJECT 삭제
+			ProjectVo projectVo = new ProjectVo();
+			projectVo.setProjectId(projectId);
+			int deletedCount = projectDAO.deleteProject(projectVo);
+			
+			return deletedCount;
+			
+		} catch (Exception e) {
+			throw new Exception("프로젝트 삭제 중 오류가 발생했습니다: " + e.getMessage(), e);
+		}
+	}
+	
+	/**
+     * S3에서 프로젝트 관련 파일들을 삭제한다.
+     *
+     * @param  projectId 프로젝트 ID
+     * @throws Exception
+     */
+	private void deleteS3Files(String projectId) throws Exception {
+		try {
+			String bucketName = "collabee";
+			
+			// 1. 프로젝트 이미지 URL 조회 및 삭제
+			try {
+				ProjectVo projectVo = new ProjectVo();
+				projectVo.setProjectId(projectId);
+				ProjectVo existingProject = projectDAO.selectProject(projectVo);
+				
+				if (existingProject != null && existingProject.getProjectImageUrl() != null) {
+					String imageUrl = existingProject.getProjectImageUrl();
+					
+					// 기본 이미지가 아닌 경우에만 삭제
+					if (!imageUrl.contains("default_project_image.jpg")) {
+						// S3 Key 추출: https://collabee.s3.ap-northeast-2.amazonaws.com/projectImage/project_15_xxxxx.png
+						// -> projectImage/project_15_xxxxx.png
+						String s3Key = imageUrl.substring(imageUrl.indexOf(".com/") + 5);
+						
+						System.out.println("프로젝트 이미지 S3 삭제: " + s3Key);
+						amazonS3.deleteObject(bucketName, s3Key);
+					}
+				}
+			} catch (Exception e) {
+				System.err.println("프로젝트 이미지 S3 삭제 실패: " + e.getMessage());
+			}
+			
+			// 2. 작업 관련 파일들 조회 및 삭제
+			try {
+				// FileSrc 테이블에서 파일 경로들 조회
+				FileSrcVo fileSrcVo = new FileSrcVo();
+				fileSrcVo.setProjectId(projectId);
+				
+				// 프로젝트 관련 파일들 조회 (SQL에서 JOIN으로 조회)
+				List<FileSrcVo> fileSrcList = fileSrcDAO.selectFileSrcByProjectId(fileSrcVo);
+				
+				if (fileSrcList != null && !fileSrcList.isEmpty()) {
+					for (FileSrcVo fileSrc : fileSrcList) {
+						if (fileSrc.getFilePath() != null && !fileSrc.getFilePath().trim().isEmpty()) {
+							try {
+								// S3 Key 추출: https://collabee.s3.ap-northeast-2.amazonaws.com/projectFiles/15/xxxxx.pdf
+								// -> projectFiles/15/xxxxx.pdf
+								String filePath = fileSrc.getFilePath();
+								String s3Key = filePath.substring(filePath.indexOf(".com/") + 5);
+								
+								System.out.println("작업 파일 S3 삭제: " + s3Key);
+								amazonS3.deleteObject(bucketName, s3Key);
+							} catch (Exception e) {
+								System.err.println("작업 파일 S3 삭제 실패: " + fileSrc.getFilePath() + " - " + e.getMessage());
+							}
+						}
+					}
+				}
+			} catch (Exception e) {
+				System.err.println("작업 파일들 S3 삭제 실패: " + e.getMessage());
+			}
+			
+		} catch (Exception e) {
+			// S3 삭제 실패는 로그만 남기고 계속 진행
+			System.err.println("S3 파일 삭제 처리 실패: " + e.getMessage());
+		}
+	}
+	
+	@Override
+	@Scheduled(cron = "0 */10 * * * *")
+	public void sendTaskReminder() throws Exception {
+		try {
+			Calendar cal = Calendar.getInstance();
+			int currentHour = cal.get(Calendar.HOUR_OF_DAY);
+			
+			List<EmailVo> projects = selectProjectsForEmailSend();
+			
+			for (EmailVo project : projects) {
+				String emailSendTime = project.getEmailSendTime();
+				if (emailSendTime != null && !emailSendTime.isEmpty()) {
+					try {
+						String[] timeParts = emailSendTime.split(":");
+						if (timeParts.length >= 2) {
+							int emailHour = Integer.parseInt(timeParts[0]);
+							
+							if (emailHour == currentHour) {
+								sendTodoTasksToUsers(project.getProjectId());
+							}
+						}
+					} catch (Exception e) {
+						System.err.println("시간 파싱 오류: " + emailSendTime + ", 오류: " + e.getMessage());
+					}
+				}
+			}
+			
+			if (currentHour == 0) {
+				sentTodayTasks.clear();
+			}
+			
+		} catch (Exception e) {
+			System.err.println("작업 알림 메일 발송 중 오류 발생: " + e.getMessage());
+		}
+	}
+	
+	private void sendTodoTasksToUsers(String projectId) {
+		try {
+			List<TaskVo> todoTasks = taskDAO.selectTodoTasksByProjectId(projectId);
+			
+			for (TaskVo task : todoTasks) {
+				String taskKey = projectId + "_" + task.getTaskId() + "_" + getCurrentDateString();
+				
+				if (!sentTodayTasks.contains(taskKey)) {
+					sendTaskReminderEmail(task);
+					sentTodayTasks.add(taskKey);
+				}
+			}
+		} catch (Exception e) {
+			System.err.println("할 일 작업 메일 발송 중 오류: " + e.getMessage());
+		}
+	}
+	
+	private void sendTaskReminderEmail(TaskVo task) {
+		try {
+			String userEmail = taskDAO.selectUserEmailByProjectUserId(task.getProjectUserId());
+			String userName = task.getUserName();
+			
+			if (userEmail == null || userEmail.isEmpty()) {
+				System.err.println("사용자 이메일을 찾을 수 없습니다. Task ID: " + task.getTaskId());
+				return;
+			}
+			
+			String subject = "[COLLABEE] 오늘의 할 일: " + task.getTaskTitle();
+			String content = createTaskReminderEmailContent(task, userName);
+			
+			JavaMailSenderImpl impl = (JavaMailSenderImpl) mailSender;
+			impl.setUsername(username);
+			impl.setPassword(password);
+			
+			MimeMessage message = mailSender.createMimeMessage();
+			MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+			
+			helper.setTo(userEmail);
+			helper.setSubject(subject);
+			helper.setText(content, true);
+			
+			mailSender.send(message);
+			
+			System.out.println("작업 알림 메일 발송 완료: " + userEmail + ", 작업: " + task.getTaskTitle());
+			
+		} catch (Exception e) {
+			System.err.println("작업 알림 메일 발송 실패: " + e.getMessage());
+		}
+	}
+	
+	private String createTaskReminderEmailContent(TaskVo task, String userName) {
+		String content = "<html lang='ko'>"
+				+ "<head><meta charset='UTF-8'/><title>작업 알림</title>"
+				+ "<style>"
+				+ "body { margin: 0; padding: 40px; font-family: 'Arial', sans-serif; text-align: center; }"
+				+ ".header { max-width: 607px; margin: 0 auto; display: flex; align-items: center; justify-content: center; background-color: rgb(104, 101, 101); border-radius: 10px 10px 0 0; padding: 30px 20px; }"
+				+ ".header img { width: 48px; height: 48px; margin-right: 14px; object-fit: contain; }"
+				+ ".email-title { margin: 0; font-size: 32px; color: #ffb823; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3); }"
+				+ ".email-container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 0 0 10px 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); padding: 24px; text-align: center; }"
+				+ ".email-content { font-size: 15px; line-height: 1.5; margin-top: 10px; }"
+				+ ".task-card { margin: 30px 0; text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }"
+				+ ".task-title { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 10px; }"
+				+ ".task-info { font-size: 14px; color: #666; margin: 5px 0; }"
+				+ ".email-footer { text-align: center; font-size: 14px; color: gray; margin-top: 20px; }"
+				+ "</style></head>"
+				+ "<body>"
+				+ "<div class='header'>"
+				+ "<img src='https://collabee.s3.ap-northeast-2.amazonaws.com/collabee.png' alt='COLLABEE 로고' />"
+				+ "<h1 class='email-title'>COLLABEE</h1>"
+				+ "</div>"
+				+ "<div class='email-container'>"
+				+ "<p class='email-content'>"
+				+ "안녕하세요, " + userName + "님!<br />"
+				+ "오늘 처리하실 작업이 있습니다.<br />"
+				+ "아래 작업을 확인해보세요."
+				+ "</p>"
+				+ "<div class='task-card'>"
+				+ "<div class='task-title'>" + task.getTaskTitle() + "</div>"
+				+ "<div class='task-info'>우선순위: " + (task.getPriority() != null ? task.getPriority() : "보통") + "</div>"
+				+ "<div class='task-info'>시작일: " + (task.getStartDate() != null ? task.getStartDate() : "미정") + "</div>"
+				+ "<div class='task-info'>종료일: " + (task.getEndDate() != null ? task.getEndDate() : "미정") + "</div>"
+				+ "</div>"
+				+ "<p class='email-footer'>좋은 하루 되세요!</p>"
+				+ "</div>"
+				+ "</body>"
+				+ "</html>";
+		
+		return content;
+	}
+	
+	private String getCurrentDateString() {
+		java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+		return sdf.format(new java.util.Date());
+	}
+	
+
 	/**
      * 사용자가 참여한 프로젝트 목록을 조회합니다.
      *
@@ -220,3 +551,4 @@ public class ProjectServiceImpl implements ProjectService {
 	}
 	
 }
+

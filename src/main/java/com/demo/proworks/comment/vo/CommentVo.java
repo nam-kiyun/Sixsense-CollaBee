@@ -34,6 +34,9 @@ public class CommentVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "profile_image_url", physicalName = "userImage", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userImage;
 
+    @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String projectId;
+
     @ElVoField(physicalName = "commentId")
     public int getCommentId(){
         return commentId;
@@ -107,6 +110,17 @@ public class CommentVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElVoField(physicalName = "userImage")
     public void setUserImage(String userImage){
         this.userImage = userImage;
+    }
+
+    @ElVoField(physicalName = "projectId")
+    public String getProjectId(){
+        String ret = this.projectId;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "projectId")
+    public void setProjectId(String projectId){
+        this.projectId = projectId;
     }
 
     @Override

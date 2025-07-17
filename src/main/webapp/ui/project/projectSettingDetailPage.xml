@@ -789,21 +789,64 @@ scwin.executeProjectDelete = function(projectName) {
     // 모달 닫기
     scwin.closeDeleteConfirmModal();
     
-    // 삭제 완료 메시지
-    alert("'" + projectName + "' 프로젝트가 삭제되었습니다.\n메인 페이지로 이동합니다.");
+    // 삭제 중 표시
+    var deletingMessage = "프로젝트를 삭제하는 중입니다...";
     
-    // 실제로는 서버에 삭제 요청 후 메인 페이지로 이동
+    // 서버에 삭제 요청
+    var requestData = "projectId=" + encodeURIComponent(scwin.projectId) + "&projectName=" + encodeURIComponent(projectName);
     
-    
-    // 부모 창으로 대시보드 이동
-    try {
-        var parentFrame = $p.parent();
-        if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
-            parentFrame.scwin.changeMenu("dashboard");
+    $.ajax({
+        url: '/InsWebApp/ProjectDel.pwkjson',
+        type: 'POST',
+        data: requestData,
+        contentType: 'application/x-www-form-urlencoded',
+        success: function(response) {
+            
+            
+            // 응답 처리
+            var isSuccess = false;
+            var message = "";
+            
+            try {
+                if (response && typeof response === 'object') {
+                    if (response.success === true) {
+                        isSuccess = true;
+                        message = response.message || "프로젝트가 성공적으로 삭제되었습니다.";
+                    } else {
+                        isSuccess = false;
+                        message = response.message || "프로젝트 삭제에 실패했습니다.";
+                    }
+                } else {
+                    // 응답이 없거나 예상과 다른 경우
+                    isSuccess = false;
+                    message = "서버 응답을 처리할 수 없습니다.";
+                }
+            } catch (e) {
+                isSuccess = false;
+                message = "응답 처리 중 오류가 발생했습니다.";
+            }
+            
+            if (isSuccess) {
+                alert("'" + projectName + "' 프로젝트가 삭제되었습니다.\n메인 페이지로 이동합니다.");
+                
+                // 부모 창으로 대시보드 이동
+                try {
+                    var parentFrame = $p.parent();
+                    if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
+                        parentFrame.scwin.changeMenu("dashboard");
+                    }
+                } catch(e) {
+                    
+                }
+            } else {
+                alert("프로젝트 삭제에 실패했습니다: " + message);
+            }
+        },
+        error: function(xhr, status, error) {
+            
+            alert("프로젝트 삭제 중 오류가 발생했습니다. 다시 시도해주세요.");
         }
-    } catch(e) {
-        
-    }
+    });
 };
 
 // X 버튼 클릭 (프로젝트 페이지로 돌아가기)

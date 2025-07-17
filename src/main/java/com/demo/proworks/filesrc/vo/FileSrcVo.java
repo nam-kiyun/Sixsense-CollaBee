@@ -25,6 +25,9 @@ public class FileSrcVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "file_path", physicalName = "filePath", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String filePath;
 
+    @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String projectId;
+
     @ElVoField(physicalName = "fileId")
     public String getFileId(){
         String ret = this.fileId;
@@ -67,6 +70,17 @@ public class FileSrcVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElVoField(physicalName = "filePath")
     public void setFilePath(String filePath){
         this.filePath = filePath;
+    }
+
+    @ElVoField(physicalName = "projectId")
+    public String getProjectId(){
+        String ret = this.projectId;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "projectId")
+    public void setProjectId(String projectId){
+        this.projectId = projectId;
     }
 
     @Override

@@ -101,4 +101,10 @@
             BOARD_ID ASC
     </select>
 
+    <delete id="deleteBoardByProjectId" parameterType="com.demo.proworks.board.vo.BoardVo">
+    	<!-- 프로젝트 ID로 보드들을 삭제한다. -->
+        DELETE FROM BOARD /* QueryID : com.demo.proworks.board.deleteBoardByProjectId */
+        WHERE PROJECT_ID = #{projectId}
+    </delete>
+
 </mapper>

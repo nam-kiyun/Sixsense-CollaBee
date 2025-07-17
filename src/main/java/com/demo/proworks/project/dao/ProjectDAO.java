@@ -102,6 +102,18 @@ public class ProjectDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
     }
 
     /**
+
+     * 이메일 발송이 설정된 모든 프로젝트를 조회한다.
+     *
+     * @return List<EmailVo> 이메일 발송을 위한 프로젝트 정보 목록
+     * @throws ElException
+     */
+    public List<EmailVo> selectProjectsForEmailSend() throws ElException {
+        return (List<EmailVo>) list("com.demo.proworks.project.selectProjectsForEmailSend", null);
+    }
+
+
+
      * 사용자가 참여한 프로젝트 목록을 조회한다.
      *  
      * @param  userId 사용자 ID

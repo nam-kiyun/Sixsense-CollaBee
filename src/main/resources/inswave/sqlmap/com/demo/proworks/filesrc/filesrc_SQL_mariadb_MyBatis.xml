@@ -121,4 +121,30 @@
 
 	</select>
 
+	<delete id="deleteFileSrcByProjectId" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo">
+		<!-- 프로젝트 ID로 파일들을 삭제한다. -->
+		DELETE FROM FILESRC /* QueryID : com.demo.proworks.filesrc.deleteFileSrcByProjectId */
+		WHERE TASK_VERSION_ID IN (
+			SELECT tv.TASK_VERSION_ID
+			FROM TASKVERSION tv
+			INNER JOIN TASK t ON tv.TASK_ID = t.TASK_ID
+			INNER JOIN BOARD b ON t.BOARD_ID = b.BOARD_ID
+			WHERE b.PROJECT_ID = #{projectId}
+		)
+	</delete>
+
+	<select id="selectFileSrcByProjectId" parameterType="com.demo.proworks.filesrc.vo.FileSrcVo" resultType="com.demo.proworks.filesrc.vo.FileSrcVo">
+		<!-- 프로젝트 ID로 파일 목록을 조회한다. -->
+		SELECT /* QueryID : com.demo.proworks.filesrc.selectFileSrcByProjectId */
+			f.FILE_ID as fileId, 
+			f.TASK_VERSION_ID as taskVersionId, 
+			f.FILE_NAME as fileName,
+			f.FILE_PATH as filePath
+		FROM FILESRC f
+		INNER JOIN TASKVERSION tv ON f.TASK_VERSION_ID = tv.TASK_VERSION_ID
+		INNER JOIN TASK t ON tv.TASK_ID = t.TASK_ID
+		INNER JOIN BOARD b ON t.BOARD_ID = b.BOARD_ID
+		WHERE b.PROJECT_ID = #{projectId}
+	</select>
+
 </mapper>

@@ -28,6 +28,9 @@ public class TaskVersionVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "파일 ", physicalName = "fileSrcVo", type = "", typeKind = "List", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private java.util.List<com.demo.proworks.filesrc.vo.FileSrcVo> fileSrcVo;
 
+    @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String projectId;
+
     @ElVoField(physicalName = "taskVersionId")
     public String getTaskVersionId(){
         String ret = this.taskVersionId;
@@ -80,6 +83,17 @@ public class TaskVersionVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElVoField(physicalName = "fileSrcVo")
     public void setFileSrcVo(java.util.List<com.demo.proworks.filesrc.vo.FileSrcVo> fileSrcVo){
         this.fileSrcVo = fileSrcVo;
+    }
+
+    @ElVoField(physicalName = "projectId")
+    public String getProjectId(){
+        String ret = this.projectId;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "projectId")
+    public void setProjectId(String projectId){
+        this.projectId = projectId;
     }
 
     @Override

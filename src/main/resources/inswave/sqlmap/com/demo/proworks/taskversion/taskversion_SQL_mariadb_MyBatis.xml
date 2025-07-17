@@ -129,4 +129,15 @@
 
     </select>
 
+    <delete id="deleteTaskVersionByProjectId" parameterType="com.demo.proworks.taskversion.vo.TaskVersionVo">
+    <!-- 프로젝트 ID로 작업 버전들을 삭제한다. -->
+        DELETE FROM TASKVERSION /* QueryID : com.demo.proworks.taskversion.deleteTaskVersionByProjectId */
+        WHERE TASK_ID IN (
+            SELECT t.TASK_ID
+            FROM TASK t
+            INNER JOIN BOARD b ON t.BOARD_ID = b.BOARD_ID
+            WHERE b.PROJECT_ID = #{projectId}
+        )
+    </delete>
+
 </mapper>

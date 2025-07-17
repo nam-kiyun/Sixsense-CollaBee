@@ -347,8 +347,73 @@ public class ProjectController {
     @ElService(key = "ProjectDel")    
     @RequestMapping(value="ProjectDel")
     @ElDescription(sub = "프로젝트 정보를 담는 테이블 삭제처리", desc = "프로젝트 정보를 담는 테이블를 삭제 처리한다.")    
-    public void deleteProject(ProjectVo projectVo) throws Exception {
-        projectService.deleteProject(projectVo);
+    public Map<String, Object> deleteProject(HttpServletRequest request) throws Exception {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // POST body에서 projectId 추출
+            String projectId = null;
+            String projectName = null;
+            
+            java.io.BufferedReader reader = request.getReader();
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+            String body = sb.toString();
+            
+            // URL 디코딩 및 파싱
+            if (body.contains("projectId=")) {
+                String[] pairs = body.split("&");
+                for (String pair : pairs) {
+                    if (pair.contains("=")) {
+                        String[] keyValue = pair.split("=", 2);
+                        if (keyValue.length == 2) {
+                            String key = keyValue[0];
+                            String value = java.net.URLDecoder.decode(keyValue[1], "UTF-8");
+                            
+                            if ("projectId".equals(key)) {
+                                projectId = value;
+                            } else if ("projectName".equals(key)) {
+                                projectName = value;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 파라미터 유효성 검사
+            if (projectId == null || projectId.trim().isEmpty()) {
+                result.put("success", false);
+                result.put("message", "프로젝트 ID가 필요합니다.");
+                return result;
+            }
+            
+            // 프로젝트 존재 확인
+            ProjectVo checkVo = new ProjectVo();
+            checkVo.setProjectId(projectId);
+            ProjectVo existingProject = projectService.selectProject(checkVo);
+            
+            if (existingProject == null) {
+                result.put("success", false);
+                result.put("message", "존재하지 않는 프로젝트입니다.");
+                return result;
+            }
+            
+            // 프로젝트 완전 삭제 수행
+            projectService.deleteProjectCompletely(projectId);
+            
+            result.put("success", true);
+            result.put("message", "프로젝트가 성공적으로 삭제되었습니다.");
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "프로젝트 삭제 중 오류가 발생했습니다: " + e.getMessage());
+        }
+        
+        return result;
     }
     
     /**
