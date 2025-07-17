@@ -297,4 +297,34 @@ public class UserController {
 
 	}
 
+	/**
+	 * 세션에서 사용자 정보를 가져온다.
+	 *
+	 * @param session HttpSession
+	 * @return 사용자 정보
+	 * @throws Exception
+	 */
+	@ElService(key = "user/sessionInfo")
+	@RequestMapping(value = "user/sessionInfo")
+	@ElDescription(sub = "세션 사용자 정보 조회", desc = "세션에서 사용자 정보를 조회한다.")
+	public UserVo getUserFromSession(HttpSession session) throws Exception {
+		System.out.println(1111111);
+		String userId = (String) session.getAttribute("userId");
+		
+		if (userId == null) {
+			throw new IllegalArgumentException("세션에 사용자 정보가 없습니다.");
+		}
+		
+		UserVo userVo = new UserVo();
+		userVo.setUserId(userId);
+		
+		UserVo userInfo = userService.selectUser(userVo);
+		
+		if (userInfo == null) {
+			throw new IllegalArgumentException("사용자 정보를 찾을 수 없습니다.");
+		}
+		
+		return userInfo;
+	}
+	
 }
