@@ -220,7 +220,7 @@ scwin.wfr_header_onready = function() {
                 </xf:group>
                 
                 <!-- 설정 콘텐츠 -->
-                <xf:group style="width:calc(100% - 303px);background-color:#f5f5f5;border-left:1px solid #000000;height:100%;overflow-y:auto;" id="grp_settingContent">
+                <xf:group style="width:calc(100% - 303px);background-color:#f5f5f5;border-left:1px solid #000000;height:100%;" id="grp_settingContent">
                     <w2:wframe id="wfr_settingContent" style="width:100%;height:100%;" src="/InsWebApp/ui/project/projectSettingDetailPage.xml" ev:onready="scwin.wfr_settingContent_onready"/>
                 </xf:group>
                 

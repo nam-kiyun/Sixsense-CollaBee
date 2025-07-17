@@ -129,6 +129,139 @@
             outline: none !important;
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25) !important;
         }
+        
+        /* 그리드뷰 스크롤바 설정 */
+        #grd_projectUsers,
+        #grd_projectUsers .w2grid,
+        #grd_projectUsers .w2grid_header,
+        #grd_projectUsers .w2grid_body,
+        #grd_projectUsers .w2grid_body_container {
+            overflow-x: auto !important;
+        }
+        
+        /* 그리드뷰 컨테이너 스크롤바 스타일 */
+        #grd_projectUsers .w2grid_body_container::-webkit-scrollbar {
+            width: 8px !important;
+            height: 8px !important;
+        }
+        
+        #grd_projectUsers .w2grid_body_container::-webkit-scrollbar-track {
+            background: #f1f1f1 !important;
+        }
+        
+        #grd_projectUsers .w2grid_body_container::-webkit-scrollbar-thumb {
+            background: #c1c1c1 !important;
+            border-radius: 4px !important;
+        }
+        
+        #grd_projectUsers .w2grid_body_container::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1 !important;
+        }
+        
+        /* 그리드뷰 컬럼 최소 너비 및 텍스트 표시 개선 */
+        #grd_projectUsers .w2grid_cell {
+            white-space: nowrap !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            min-width: 120px !important;
+        }
+
+        /* 그리드뷰 컨테이너 최대 너비 활용 */
+        #grd_projectUsers {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* 그리드뷰 스크롤 최적화 */
+        #grd_projectUsers .w2grid_header {
+            width: 100% !important;
+        }
+
+        #grd_projectUsers .w2grid_body {
+            width: 100% !important;
+        }
+        
+        /* 이메일 컬럼 특별 처리 */
+        #grd_projectUsers .w2grid_cell[columnid="userId"] {
+            min-width: 350px !important;
+            width: 350px !important;
+            max-width: none !important;
+        }
+        
+        /* 이름 컬럼 특별 처리 */
+        #grd_projectUsers .w2grid_cell[columnid="userName"] {
+            min-width: 200px !important;
+            width: 200px !important;
+            max-width: none !important;
+        }
+        
+        /* 역할 컬럼 특별 처리 */
+        #grd_projectUsers .w2grid_cell[columnid="role"] {
+            min-width: 150px !important;
+            width: 150px !important;
+            max-width: none !important;
+        }
+        
+        /* 프로필 이미지 컬럼 특별 처리 */
+        #grd_projectUsers .w2grid_cell[columnid="profileImageUrl"] {
+            min-width: 120px !important;
+            width: 120px !important;
+            max-width: none !important;
+        }
+        
+        /* 그리드뷰 전체 테이블 너비 고정 */
+        #grd_projectUsers table {
+            width: 820px !important;
+            table-layout: fixed !important;
+        }
+        
+        /* 그리드뷰 헤더 컬럼 너비 고정 */
+        #grd_projectUsers .w2grid_header table {
+            width: 820px !important;
+            table-layout: fixed !important;
+        }
+        
+        /* 그리드뷰 헤더 컬럼 개별 너비 설정 */
+        #grd_projectUsers .w2grid_header th:nth-child(1) {
+            width: 120px !important;
+            min-width: 120px !important;
+        }
+        
+        #grd_projectUsers .w2grid_header th:nth-child(2) {
+            width: 200px !important;
+            min-width: 200px !important;
+        }
+        
+        #grd_projectUsers .w2grid_header th:nth-child(3) {
+            width: 350px !important;
+            min-width: 350px !important;
+        }
+        
+        #grd_projectUsers .w2grid_header th:nth-child(4) {
+            width: 150px !important;
+            min-width: 150px !important;
+        }
+        
+        /* 그리드뷰 바디 컬럼 개별 너비 설정 */
+        #grd_projectUsers .w2grid_body td:nth-child(1) {
+            width: 120px !important;
+            min-width: 120px !important;
+        }
+        
+        #grd_projectUsers .w2grid_body td:nth-child(2) {
+            width: 200px !important;
+            min-width: 200px !important;
+        }
+        
+        #grd_projectUsers .w2grid_body td:nth-child(3) {
+            width: 350px !important;
+            min-width: 350px !important;
+        }
+        
+        #grd_projectUsers .w2grid_body td:nth-child(4) {
+            width: 150px !important;
+            min-width: 150px !important;
+        }
         ]]>
         </style>
         <xf:model>
@@ -264,10 +397,39 @@ scwin.onpageload = function() {
     // 초기화 시작
     isInitializing = true;
     
-    // URL 파라미터에서 project_id 받기
-    var projectId = $p.getParameter("project_id");
+    // 여러 방법으로 project_id 파라미터 가져오기 (DetailPage와 동일한 방식)
+    var projectId = $p.getParameter("projectId");
     
-   
+    // URL에서 직접 파라미터 추출
+    if (!projectId) {
+        var urlParams = new URLSearchParams(window.location.search);
+        projectId = urlParams.get('projectId');
+    }
+    
+    // URL에서 project_id로도 시도
+    if (!projectId) {
+        projectId = $p.getParameter("project_id");
+    }
+    
+    if (!projectId) {
+        var urlParams = new URLSearchParams(window.location.search);
+        projectId = urlParams.get('project_id');
+    }
+    
+    // 부모 프레임에서 파라미터 가져오기
+    if (!projectId) {
+        try {
+            var parentFrame = $p.parent();
+            if (parentFrame && parentFrame.scwin && parentFrame.scwin.projectId) {
+                projectId = parentFrame.scwin.projectId;
+            }
+        } catch(e) {
+            console.log("부모 프레임에서 프로젝트 ID 가져오기 실패:", e);
+        }
+    }
+    
+    
+    console.log("AccessPage - 최종 projectId:", projectId);
     
     if (projectId) {
         dm_search.set("projectId", projectId);
@@ -1293,7 +1455,7 @@ scwin.makeProfileImagesRound = function() {
     </head>
     <body ev:onpageload="scwin.onpageload">
         <!-- 액세스 페이지 컨테이너 -->
-        <xf:group style="padding:40px;background-color:#ffffff;min-height:calc(100vh - 80px);height:auto;position:relative;" id="grp_accessContainer">
+        <xf:group style="padding:40px;background-color:#ffffff;min-height:100vh;height:100vh;position:relative;display:flex;flex-direction:column;" id="grp_accessContainer">
             
             <!-- X 버튼 (오른쪽 상단) -->
             <xf:trigger 
@@ -1352,7 +1514,7 @@ scwin.makeProfileImagesRound = function() {
             </xf:group>
             
             <!-- 사용자 목록 영역 (그리드뷰) -->
-            <xf:group style="background-color:#ffffff;border:1px solid #e9ecef;border-radius:12px;overflow:hidden;min-height:500px;max-width:1200px;margin:0 auto;width:95%;" id="grp_userListArea">
+            <xf:group style="background-color:#ffffff;border:1px solid #e9ecef;border-radius:12px;overflow:hidden;flex:1;max-width:1200px;margin:0 auto;width:95%;min-width:820px;" id="grp_userListArea">
             
             <!-- 테이블 헤더 -->
             <xf:group
@@ -1374,11 +1536,12 @@ scwin.makeProfileImagesRound = function() {
             <!-- 프로젝트 멤버 그리드 -->
             <w2:gridView 
                 id="grd_projectUsers" 
-                style="width:100%;height:400px;font-family:Inter,sans-serif;overflow-x:hidden;" 
+                style="width:100%;height:calc(100vh - 400px);min-height:500px;font-family:Inter,sans-serif;overflow-x:auto;overflow-y:auto;" 
                 scrollByColumn="false" 
-                defaultCellHeight="52" 
+                defaultCellHeight="56" 
                 dataList="dl_projectUsers"
-                keepDefaultColumnWidth="false"
+                keepDefaultColumnWidth="true"
+                autoColumnWidth="false"
                 visibleRowNum="20"
                 useShiftKey="false"
                 useCtrlKey="false"
@@ -1386,6 +1549,8 @@ scwin.makeProfileImagesRound = function() {
                 userSelection="false"
                 cellSelection="false"
                 focusMode="none"
+                fitToWidth="false"
+                minColumnWidth="120"
                 ev:oncellchange="scwin.grd_projectUsers_oncellchange"
                 ev:oncellclick="scwin.grd_projectUsers_oncellclick"
                 ev:onselect="scwin.grd_projectUsers_onselect"
@@ -1395,20 +1560,20 @@ scwin.makeProfileImagesRound = function() {
                 
                 <w2:header id="header1" style="height:48px;">
                     <w2:row id="row1" style="height:48px;">
-                        <w2:column width="140" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column1" value="프로필"></w2:column>
-                        <w2:column width="270" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column2" value="이름"></w2:column>
-                        <w2:column width="460" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column3" value="이메일"></w2:column>
-                        <w2:column width="330" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column4" value="역할"></w2:column>
+                        <w2:column width="140px" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column1" value="프로필"></w2:column>
+                        <w2:column width="230px" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column2" value="이름"></w2:column>
+                        <w2:column width="500px" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column3" value="이메일"></w2:column>
+                        <w2:column width="220px" inputType="text" style="text-align:center;font-weight:600;background-color:#f8f9fa;font-size:16px;padding:12px 8px;" id="column4" value="역할"></w2:column>
                     </w2:row>
                 </w2:header>
                 
                 <w2:gBody id="gBody1">
-                    <w2:row id="row2" style="height:52px;">
-                        <w2:column width="140" inputType="image" style="text-align:center;padding:4px;" id="profileImageUrl" blockSelect="true" readOnly="true" 
+                    <w2:row id="row2" style="height:56px;">
+                        <w2:column width="140px" inputType="image" style="text-align:center;padding:4px;" id="profileImageUrl" blockSelect="true" readOnly="true" 
                                    imageWidth="40" imageHeight="40"></w2:column>
-                        <w2:column width="270" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#333333;" id="userName" blockSelect="true" readOnly="true"></w2:column>
-                        <w2:column width="460" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#666666;" id="userId" blockSelect="true" readOnly="true"></w2:column>
-                        <w2:column width="330" inputType="select" style="text-align:center;font-size:15px;padding:8px;" id="role" blockSelect="true" allOption="">
+                        <w2:column width="220px" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#333333;white-space:nowrap;overflow:visible;text-overflow:clip;" id="userName" blockSelect="true" readOnly="true"></w2:column>
+                        <w2:column width="500px" inputType="text" style="text-align:center;font-size:15px;padding:16px 8px;color:#666666;white-space:nowrap;overflow:visible;text-overflow:clip;" id="userId" blockSelect="true" readOnly="true"></w2:column>
+                        <w2:column width="220px" inputType="select" style="text-align:center;font-size:15px;padding:8px;" id="role" blockSelect="true" allOption="">
                             <w2:choices>
                                 <w2:itemset nodeset="">
                                     <w2:label ref=""></w2:label>
