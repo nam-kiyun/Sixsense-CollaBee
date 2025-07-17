@@ -849,37 +849,12 @@ scwin.executeProjectDelete = function(projectName) {
     });
 };
 
-// X 버튼 클릭 (프로젝트 페이지로 돌아가기)
-scwin.btn_close_onclick = function(e) {
-    
-    
-    // 변경사항 확인 (실제로는 폼 데이터 변경 여부 체크)
-    if (confirm("설정 페이지를 닫고 프로젝트 페이지로 돌아가시겠습니까?")) {
-        try {
-            // 부모 창의 메뉴 변경 함수 호출하여 프로젝트 페이지로 이동
-            var parentFrame = $p.parent();
-            if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
-                parentFrame.scwin.changeMenu("project1"); // 또는 현재 프로젝트에 맞는 메뉴
-            }
-        } catch(e) {
-           
-        }
-    }
-};
 ]]></script>
     </head>
     <body ev:onpageload="scwin.onpageload">
         <!-- 세부사항 페이지 컨테이너 -->
         <xf:group style="padding:40px;background-color:#ffffff;min-height:calc(100vh - 80px);position:relative;" id="grp_detailContainer">
             
-            <!-- X 버튼 (오른쪽 상단) -->
-            <xf:trigger 
-                style="position:absolute;top:20px;right:20px;width:32px;height:32px;background-color:transparent;border:none;font-size:24px;color:#999999;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;"
-                id="btn_close" 
-                type="button" 
-                ev:onclick="scwin.btn_close_onclick">
-                <xf:label><![CDATA[✕]]></xf:label>
-            </xf:trigger>
             
             <!-- 페이지 제목 -->
             

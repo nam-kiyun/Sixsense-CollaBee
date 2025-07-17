@@ -142,7 +142,7 @@
 		AND b.BOARD_TITLE = '할 일'
 	</select>
 
-	<select id="selectUserEmailByProjectUserId" parameterType="int" resultType="String">
+	<select id="selectUserEmailByProjectUserId" parameterType="String" resultType="String">
 		<!-- 프로젝트 사용자 ID로 사용자 이메일을 조회한다. -->
 		SELECT /* QueryID : com.demo.proworks.task.selectUserEmailByProjectUserId */
 			u.USER_ID as userEmail
