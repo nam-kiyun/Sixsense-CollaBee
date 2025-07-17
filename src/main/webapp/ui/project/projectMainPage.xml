@@ -866,10 +866,6 @@ scwin.dynamicInput_onkeydown = function(e) {
     }
 };
 
-// 프로젝트 설정 버튼 클릭
-scwin.project_settings_onclick = function(e) {
-    alert("프로젝트 설정 기능은 준비 중입니다.");
-};
 
 // 프로젝트 카드 클릭 이벤트
 scwin.projectCard_onclick = function(e) {
@@ -1339,19 +1335,19 @@ scwin.sortTasks = function(tasks) {
  * 정렬과 필터링을 모두 적용 (서버에서 정렬된 데이터 요청)
  */
 scwin.applySortAndFilter = function() {
-    console.log("🔄 서버에서 정렬된 데이터 요청 시작");
+    console.log("������ 서버에서 정렬된 데이터 요청 시작");
     
     // 모든 보드에 대해 서버에서 정렬된 데이터 요청
     var boardList = $p.getComponentById("dlt_boardListVo");
     if (boardList && boardList.getRowCount() > 0) {
-        console.log("📋 처리할 보드 개수:", boardList.getRowCount());
+        console.log("������ 처리할 보드 개수:", boardList.getRowCount());
         
         for (var i = 0; i < boardList.getRowCount(); i++) {
             var boardId = boardList.getCellData(i, "boardId");
             var boardTitle = boardList.getCellData(i, "boardTitle");
             
             if (boardId) {
-                console.log("🎯 보드 " + boardId + " (" + boardTitle + ")에 대한 정렬된 데이터 요청");
+                console.log("������ 보드 " + boardId + " (" + boardTitle + ")에 대한 정렬된 데이터 요청");
                 
                 // 서버에 정렬 파라미터와 함께 요청
                 scwin.loadTasksWithSort(boardId);
@@ -1368,7 +1364,7 @@ scwin.applySortAndFilter = function() {
  * 특정 보드에 대해 정렬된 태스크 데이터를 서버에서 로드
  */
 scwin.loadTasksWithSort = function(boardId) {
-    console.log("🔄 보드 " + boardId + " 정렬된 데이터 요청 - sortField: " + scwin.currentSortField + ", sortOrder: " + scwin.currentSortOrder);
+    console.log("������ 보드 " + boardId + " 정렬된 데이터 요청 - sortField: " + scwin.currentSortField + ", sortOrder: " + scwin.currentSortOrder);
     
     // 검색 조건에 정렬 파라미터 추가
     dm_search_task.set("boardId", boardId);
@@ -1383,23 +1379,23 @@ scwin.loadTasksWithSort = function(boardId) {
  * 특정 보드의 태스크에 태그 필터링만 적용 (정렬은 서버에서 처리됨)
  */
 scwin.sortAndFilterBoardTasks = function(boardId) {
-    console.log("🎯 보드 태그 필터링 시작:", boardId);
+    console.log("������ 보드 태그 필터링 시작:", boardId);
     
     // 해당 보드의 전체 태스크 데이터 가져오기 (이미 서버에서 정렬된 상태)
     var allTasks = scwin.allTasksData[boardId] || [];
-    console.log("📊 보드 " + boardId + " 서버 정렬된 태스크:", allTasks.length + "개");
+    console.log("������ 보드 " + boardId + " 서버 정렬된 태스크:", allTasks.length + "개");
     
     // 원본 태스크 데이터가 없는 경우 경고
     if (allTasks.length === 0) {
         console.warn("⚠️ 보드 " + boardId + "에 대한 태스크 데이터가 없습니다!");
-        console.warn("📊 전체 allTasksData:", scwin.allTasksData);
+        console.warn("������ 전체 allTasksData:", scwin.allTasksData);
         // 빈 데이터라도 화면에 표시 (기존 카드 제거를 위해)
         scwin.displayFilteredTasks(boardId, []);
         return;
     }
     
     // 디버깅: 태스크 상세 정보 출력 (서버에서 이미 정렬된 상태)
-    console.log("📋 보드 " + boardId + " 서버 정렬된 태스크 목록:");
+    console.log("������ 보드 " + boardId + " 서버 정렬된 태스크 목록:");
     for (var idx = 0; idx < Math.min(allTasks.length, 3); idx++) {
         var task = allTasks[idx];
         console.log("  " + (idx + 1) + ". " + task.taskTitle + " (시작일: " + task.startDate + ", 종료일: " + task.endDate + ")");
@@ -1413,17 +1409,17 @@ scwin.sortAndFilterBoardTasks = function(boardId) {
     if (scwin.selectedTags.length === 0) {
         // 선택된 태그가 없으면 모든 태스크 표시 (서버 정렬 순서 유지)
         filteredTasks = allTasks;
-        console.log("🏷️ 태그 필터 없음 - 서버 정렬된 모든 태스크 표시");
+        console.log("������️ 태그 필터 없음 - 서버 정렬된 모든 태스크 표시");
     } else {
         // 선택된 태그가 있으면 필터링 (서버 정렬 순서 유지)
-        console.log("🏷️ 태그 필터링 적용:", scwin.selectedTags);
+        console.log("������️ 태그 필터링 적용:", scwin.selectedTags);
         for (var i = 0; i < allTasks.length; i++) {
             var task = allTasks[i];
             if (scwin.isTaskMatchesTags(task, scwin.selectedTags)) {
                 filteredTasks.push(task);
             }
         }
-        console.log("🏷️ 태그 필터링 결과:", filteredTasks.length + "개 (서버 정렬 순서 유지)");
+        console.log("������️ 태그 필터링 결과:", filteredTasks.length + "개 (서버 정렬 순서 유지)");
     }
     
     console.log("✅ 보드 " + boardId + " 처리 완료: " + filteredTasks.length + "개 (서버 정렬 적용됨)");
@@ -3311,6 +3307,10 @@ scwin.load_Board_submiterror = function(e) {
     console.log("보드 로드 실패로 동적 컬럼 생성 불가");
 };
 
+
+scwin.btn_settings_onclick = function (e) {
+    $p.url("/InsWebApp/ui/project/projectSettingMainPage.xml");
+};
 ]]></script>
 		<style type="text/css"><![CDATA[
 /* 전체 컨테이너 */
@@ -4039,7 +4039,7 @@ scwin.load_Board_submiterror = function(e) {
 						<xf:label><![CDATA[+ 새 작업]]></xf:label>
 					</xf:trigger>
 
-					<xf:trigger type="button" class="btn-github" id="btn_settings" ev:onclick="scwin.project_settings_onclick">
+					<xf:trigger type="button" class="btn-github" id="btn_settings" ev:onclick="scwin.btn_settings_onclick">
 						<xf:label><![CDATA[⚙️ 프로젝트 설정]]></xf:label>
 					</xf:trigger>
 				</xf:group>
