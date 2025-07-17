@@ -227,7 +227,7 @@ scwin.onpageload = function () {
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //문서 내용 불러오기
     scwin.taskInfo = "";
-    scwin.taskId = 2;
+    scwin.taskId = 1;
     scwin.projectId = 7;
     scwin.getTask(scwin.taskId, scwin.projectId);
 
