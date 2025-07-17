@@ -266,19 +266,19 @@ public class UserController {
 		}
 
 		// 2. S3 업로드
-//		if (file != null && !file.isEmpty()) {
-//			String originalName = file.getOriginalFilename();
-//			String s3Key = "userImage/" + System.currentTimeMillis() + "_" + originalName;
-//
-//			ObjectMetadata metadata = new ObjectMetadata();
-//			metadata.setContentLength(file.getSize());
-//			metadata.setContentType(file.getContentType());
-//
-//			amazonS3.putObject(new PutObjectRequest(bucketName, s3Key, file.getInputStream(), metadata));
-//
-//			String fileUrl = "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/" + s3Key;
-//			userVo.setProfileImageUrl(fileUrl);
-//		}
+		if (file != null && !file.isEmpty()) {
+			String originalName = file.getOriginalFilename();
+			String s3Key = "userImage/" + System.currentTimeMillis() + "_" + originalName;
+
+			ObjectMetadata metadata = new ObjectMetadata();
+			metadata.setContentLength(file.getSize());
+			metadata.setContentType(file.getContentType());
+
+			amazonS3.putObject(new PutObjectRequest(bucketName, s3Key, file.getInputStream(), metadata));
+
+			String fileUrl = "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/" + s3Key;
+			userVo.setProfileImageUrl(fileUrl);
+		}
 
 		userService.updateUser(userVo);
 	}
