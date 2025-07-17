@@ -67,18 +67,9 @@ public class ProjectController {
     @RequestMapping(value="ProjectList")    
     @ElDescription(sub="프로젝트 정보를 담는 테이블 목록조회",desc="페이징을 처리하여 프로젝트 정보를 담는 테이블 목록 조회를 한다.")               
     public ProjectListVo selectListProject(ProjectVo projectVo) throws Exception {    	   	
-        
-        // userId가 있으면 사용자 참여 프로젝트 조회, 없으면 전체 조회
-        List<ProjectVo> projectList;
-        if (projectVo.getUserId() != null && !projectVo.getUserId().trim().isEmpty()) {
-            System.out.println("사용자 참여 프로젝트 조회: " + projectVo.getUserId());
-            projectList = projectService.selectUserParticipatedProjects(projectVo.getUserId());
-        } else {
-            System.out.println("전체 프로젝트 조회");
-            projectList = projectService.selectListProject(projectVo);
-        }
-        
-        long totCnt = projectList != null ? projectList.size() : 0;
+
+        List<ProjectVo> projectList = projectService.selectListProject(projectVo);                  
+        long totCnt = projectService.selectListCountProject(projectVo);
 	
 		ProjectListVo retProjectList = new ProjectListVo();
 		retProjectList.setProjectVoList(projectList); 

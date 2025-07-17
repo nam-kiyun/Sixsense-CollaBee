@@ -77,21 +77,11 @@ public interface TaskService {
     /**
      * 업무(Task)의 보드 위치만 갱신 처리 한다. (칸반 카드 이동용)
      *
-     * @param  taskId 업무(Task) ID
-     * @param  boardId 새로운 보드 ID
+     * @param  taskVo 업무(Task) 정보 TaskVo (taskId, boardId만 필요)
      * @return 번호
      * @throws Exception
      */
-	public int updateTaskBoard(String taskId, String boardId) throws Exception;
-	
-    /**
-     * 업무(Task) ID로 단건 정보를 조회한다.
-     *
-     * @param  taskId 업무(Task) ID
-     * @return TaskVo 업무(Task) 정보
-     * @throws Exception
-     */
-	public TaskVo selectTaskById(String taskId) throws Exception;
+	public int updateTaskBoard(TaskVo taskVo) throws Exception;
 	
     /**
      * 업무(Task) 정보를 삭제 처리 한다.

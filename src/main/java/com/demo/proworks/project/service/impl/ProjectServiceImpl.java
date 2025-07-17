@@ -204,19 +204,4 @@ public class ProjectServiceImpl implements ProjectService {
 		return projectDAO.selectProjectForEmail(projectId);
 	}
 	
-	/**
-     * 사용자가 참여한 프로젝트 목록을 조회합니다.
-     *
-     * @process
-     * 1. userId로 project_user 테이블에서 참여한 project_id들을 조회한다.
-     * 2. 조회된 project_id들로 project 테이블에서 프로젝트 상세 정보를 조회한다.
-     * 
-     * @param  userId 사용자 ID
-     * @return List<ProjectVo> 사용자가 참여한 프로젝트 목록
-     * @throws Exception
-     */
-	public List<ProjectVo> selectUserParticipatedProjects(String userId) throws Exception {
-		return projectDAO.selectUserParticipatedProjects(userId);
-	}
-	
 }

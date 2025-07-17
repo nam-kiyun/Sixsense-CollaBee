@@ -101,15 +101,4 @@ public class ProjectDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
         return (EmailVo) selectByPk("com.demo.proworks.project.selectProjectForEmail", projectId);
     }
 
-    /**
-     * 사용자가 참여한 프로젝트 목록을 조회한다.
-     *  
-     * @param  userId 사용자 ID
-     * @return List<ProjectVo> 사용자가 참여한 프로젝트 목록
-     * @throws ElException
-     */
-    public List<ProjectVo> selectUserParticipatedProjects(String userId) throws ElException {
-        return (List<ProjectVo>) list("com.demo.proworks.project.selectUserParticipatedProjects", userId);
-    }
-
 }
