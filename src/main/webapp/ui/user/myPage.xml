@@ -118,7 +118,7 @@ scwin.update_button_onclick = function (e) {
     const formData = new FormData();
 
     // 빈 값으로 필드 세팅
-    formData.append("userId", scwin.userId);
+    formData.append("userId", email_input.getValue());
     formData.append("userName", name_input.getValue());
     formData.append("password", password_input.getValue());
     formData.append("fileData", scwin.file);
@@ -140,6 +140,7 @@ scwin.update_button_onclick = function (e) {
 };
 scwin.sbm_getUserInfo_submitdone = function (e) {
     const responseData = e.responseJSON.userVo;
+    console.log(responseData);
 
     name_input.setValue(responseData.userName);
     email_input.setValue(responseData.userId);
@@ -150,58 +151,7 @@ scwin.sbm_getUserInfo_submitdone = function (e) {
 
     header.getWindow().output_userName.setValue(responseData.userName);
     header.getWindow().img_userIcon.setSrc(responseData.profileImageUrl);
-    
-    scwin.updateUserInfoInComponents();
-};
-
-// 헤더 로드 대기 함수
-scwin.waitForHeaderLoad = function () {
-    return new Promise((resolve) => {
-        const checkHeader = () => {
-            if (wfr_header && wfr_header.getWindow && wfr_header.getWindow().dm_header) {
-                resolve();
-            } else {
-                setTimeout(checkHeader, 100);
-            }
-        };
-        checkHeader();
-    });
-};
-
-// 헤더 컴포넌트에 사용자 정보 전달
-scwin.updateUserInfoInComponents = async function () {
-    try {
-        // 헤더 컴포넌트가 완전히 로드될 때까지 대기
-        await scwin.waitForHeaderLoad();
-
-        // 헤더 컴포넌트에 사용자 정보 전달
-        try {
-            if (wfr_header && wfr_header.getWindow) {
-                const headerWindow = wfr_header.getWindow();
-                if (headerWindow && headerWindow.dm_header) {
-                    const userName = dm_userInfo.get("userName");
-                    headerWindow.dm_header.set("userName", userName);
-                    console.log("헤더에 사용자 정보 전달 성공:", userName);
-
-                    // 헤더의 output_userName 컴포넌트 직접 업데이트
-                    if (headerWindow.output_userName) {
-                        headerWindow.output_userName.setValue(userName);
-                        console.log("헤더 사용자명 컴포넌트 직접 업데이트 완료:", userName);
-                    }
-                } else {
-                    console.log("헤더 dm_header를 찾을 수 없습니다.");
-                }
-            } else {
-                console.log("헤더 컴포넌트를 찾을 수 없습니다.");
-            }
-        } catch (e) {
-            console.log("헤더 업데이트 오류:", e);
-        }
-    } catch (e) {
-        console.log("오류발생: ", e);
-    }
-}
-]]></script>
+};]]></script>
     	<style type="text/css"><![CDATA[body {
     margin: 0;
     padding: 0;
