@@ -777,7 +777,7 @@ scwin.initializeChatWebSocket = function () {
     }
 };
 
-//엔터 누르면 로그인 버튼 클릭
+//엔터 누르면 채팅 전송
 scwin.input_onkeyup = function (e) {
     if (e.keyCode === 13) {
         comment_send_button.addClass("active")
@@ -807,6 +807,10 @@ scwin.comment_send_button_onclick = function () {
 
     $c.sbm.execute(sbm_comment_create);
     comment_input.setValue("");
+    setTimeout(() => {
+        comment_input.focus();
+    }, 30);
+
 };
 
 
@@ -905,6 +909,19 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
         className: "comment-time"
     }, wrapper);
 
+    if (!insertBeforeComp) {
+        setTimeout(() => {
+            const scrollArea = $p.getComponentById("comment_main_group");
+            const el = scrollArea.render;
+
+            const isAtBottom = el.scrollTop >= el.scrollHeight - el.clientHeight - 200;
+
+            if (isAtBottom) {
+                el.scrollTop = el.scrollHeight; // 하단 고정
+            }
+        }, 50);
+    }
+
     return wrapper;
 
 };
@@ -963,34 +980,36 @@ scwin.sbm_comment_get_submitdone = function (e) {
     const responseData = e.responseJSON;
     const commentList = responseData.elData?.commentVoList ?? [];
     const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
-    let insertBeforeTarget = group.childControlList?.length > 0 ? group.childControlList[group.childControlList.length - 1] : null;
+    let firstChild = group.render?.children[0] ?? null;
+    let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
+
+
+    if (commentList.length === 0) {
+        scwin.hasMore = false; // 더 이상 불러올 댓글 없음
+        scwin.isLoading = false;
+        return;
+    }
 
     //날짜 비교후에 이전날짜와 같다면 삭제
     if (insertBeforeTarget?.options) {
         const currentDate = insertBeforeTarget?.options.label
         const nextDate = scwin.formatDate(commentList[0].createdAt);
+
         if (currentDate === nextDate) {
             insertBeforeTarget.remove(); // 기존 날짜 컴포넌트 삭제
-            insertBeforeTarget = group.childControlList?.length > 0
-                ? group.childControlList[group.childControlList.length - 1]
-                : null;
+            firstChild = group.render?.children[0] ?? null;
+            insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
         }
     }
+
 
     //반복문 돌면서 채팅 내용 삽입
     for (let i = 0; i < commentList.length; i++) {
         const comment = commentList[i];
         const nextComment = commentList[i + 1];
-
         const currentDate = scwin.formatDate(comment.createdAt);
         const nextDate = nextComment ? scwin.formatDate(nextComment.createdAt) : null;
         const isMine = (comment.userId === currentUser.userId);
-
-        if (commentList.length === 0) {
-            scwin.hasMore = false; // 더 이상 불러올 댓글 없음
-            scwin.isLoading = false;
-            return;
-        }
 
         // 댓글 삽입
         const commentComp = scwin.addChatMessage(
@@ -1030,7 +1049,6 @@ scwin.sbm_comment_get_submitdone = function (e) {
 
     scwin.currentPage++; // 다음 호출 시 페이지 증가
     scwin.isLoading = false;
-
 };
 
 
