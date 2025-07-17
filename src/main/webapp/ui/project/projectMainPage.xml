@@ -33,6 +33,7 @@
 					<w2:keyInfo>
 						<w2:key id="taskTitle" name="업무 제목" dataType="text"></w2:key>
 						<w2:key id="boardId" name="보드 ID" dataType="text"></w2:key>
+						<w2:key id="taskId" name="업무 ID" dataType="text"></w2:key>
 					</w2:keyInfo>
 				</w2:dataMap>
 				<w2:dataMap baseNode="map" id="dm_boardVo">
@@ -70,6 +71,10 @@
 				ref='data:json,{"id":"dm_search_task","key":"taskVo"}' target='data:json,{"id":"dlt_taskList","key":"taskVoList"}' encoding="UTF-8" instance="" replace="none"
 				errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.load_Tasks_submitdone"
 				ev:submiterror="" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="update_task_board" action="/InsWebApp/task/updateBoard.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dm_taskVo","key":"taskVo"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.update_task_board_submitdone" ev:submiterror="scwin.update_task_board_submiterror" abortTrigger="">
 			</xf:submission>
 		</xf:model>
 		<w2:layoutInfo />
@@ -820,6 +825,9 @@ scwin.addCard_onclick = function(parentId) {
         style: "border-color: #2da44e; background-color: #f6ffed;"
     };
     var newCard = $p.dynamicCreate(cardId, "group", cardOptions, parentGroup);
+
+    // 생성된 카드에 onclick 이벤트 핸들러를 연결합니다.
+    newCard.bind("onclick", scwin.new_task_onclick);
 
     // 생성된 input 컴포넌트 객체를 변수에 할당합니다.
     var newInput = $p.dynamicCreate("dyn_input_" + new Date().getTime(), "input", {
@@ -1642,6 +1650,9 @@ scwin.createKanbanCardInBoard = function(cardData) {
         return;
     }
     
+    // 생성된 카드에 onclick 이벤트 핸들러를 연결합니다.
+    cardGroup.bind("onclick", scwin.new_task_onclick);
+    
     // WebSquare 컴포넌트 렌더링 완료 후 이벤트 바인딩 (async/await 사용)
     scwin.setupDragEventsAsync(cardGroup, cardData, cardId);
     
@@ -1822,8 +1833,9 @@ scwin.createKanbanCard = function(cardData, columnType) {
         "group",
         {
             className: "project-card",
-            "ev:onclick": "scwin.projectCard_onclick",
-            "data-task-id": cardData.taskId,
+            "ev:onclick": "scwin.new_task_onclick",
+            "data-task-id": cardData.taskId || "",
+            "data-board-id": cardData.boardId || "",
             "data-row": "0"
         },
         targetContainer
@@ -2314,9 +2326,6 @@ scwin.waitForElementReady = function(component, maxAttempts = 50) {
 // 드래그 시작 시 호출되는 함수
 scwin.handleDragStart = function(e) {
     console.log("=== 드래그 시작 ===");
-    console.log("이벤트 객체:", e);
-    console.log("타겟 요소:", e.target);
-    console.log("이벤트 타입:", e.type);
     
     // 드래그되는 카드 정보 저장
     var cardElement = e.target;
@@ -2328,18 +2337,30 @@ scwin.handleDragStart = function(e) {
     console.log("- currentBoardId:", currentBoardId);
     console.log("- cardElement:", cardElement);
     
-    // 전역 변수에 드래그 정보 저장
+    // 필수 정보 유효성 검사
+    if (!taskId || !currentBoardId) {
+        console.error("필수 드래그 정보가 누락되었습니다:", {taskId: taskId, currentBoardId: currentBoardId});
+        e.preventDefault();
+        return false;
+    }
+    
+    // 전역 변수에 드래그 정보 저장 (더 안전한 방식)
     scwin.draggedCard = {
         element: cardElement,
         taskId: taskId,
         sourceBoardId: currentBoardId,
-        sourceContainer: cardElement.parentElement
+        sourceContainer: cardElement.parentElement,
+        timestamp: new Date().getTime() // 타임스탬프 추가로 신뢰성 향상
     };
     
-    // 드래그 효과 설정
+    // dataTransfer에도 백업 정보 저장
     if (e.dataTransfer) {
         e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData("text/html", cardElement.outerHTML);
+        e.dataTransfer.setData("application/json", JSON.stringify({
+            taskId: taskId,
+            sourceBoardId: currentBoardId
+        }));
         console.log("dataTransfer 설정 완료");
     } else {
         console.error("dataTransfer 객체가 없습니다!");
@@ -2370,6 +2391,31 @@ scwin.handleDragEnd = function(e) {
     dropZones.forEach(function(zone) {
         zone.classList.remove("drag-over");
     });
+};
+
+// 드래그 상태 정리 함수
+scwin.cleanupDragState = function() {
+    console.log("=== 드래그 상태 정리 ===");
+    
+    // 드래그 중인 모든 요소에서 스타일 제거
+    var draggingElements = document.querySelectorAll('.dragging');
+    draggingElements.forEach(function(element) {
+        element.classList.remove("dragging");
+    });
+    
+    // 전체 드래그 상태 정리
+    document.body.classList.remove("dragging-in-progress");
+    
+    // 모든 드롭 존의 하이라이트 제거
+    var dropZones = document.querySelectorAll(".drop-zone, [data-drop-zone]");
+    dropZones.forEach(function(zone) {
+        zone.classList.remove("drag-over");
+    });
+    
+    // 드래그 정보 초기화 (약간의 지연 후)
+    setTimeout(function() {
+        scwin.draggedCard = null;
+    }, 100);
 };
 
 // 드래그 오버 이벤트 (드롭 존에서 발생)
@@ -2419,19 +2465,11 @@ scwin.handleDragLeave = function(e) {
 
 // 드롭 이벤트 (실제 드롭 처리)
 scwin.handleDrop = function(e) {
-    debugger;
     console.log("=== handleDrop 함수 호출됨 ===");
-    console.log("함수 진입 성공!");
-    console.log("이벤트 객체:", e);
-    console.log("이벤트 타입:", e.type);
-    console.log("타겟 요소:", e.target);
-    console.log("현재 타겟:", e.currentTarget);
+    console.log("드래그된 카드 정보:", scwin.draggedCard);
     
     e.preventDefault();
     e.stopPropagation();
-    
-    console.log("드롭 이벤트 발생:", e.currentTarget);
-    console.log("드래그된 카드 정보:", scwin.draggedCard);
     
     var dropZone = e.currentTarget;
     var targetBoardId = dropZone.getAttribute("data-board-id");
@@ -2440,11 +2478,60 @@ scwin.handleDrop = function(e) {
     console.log("- dropZone:", dropZone);
     console.log("- targetBoardId:", targetBoardId);
     
-    // 드래그된 카드 정보 확인
-    if (!scwin.draggedCard) {
-        console.error("드래그된 카드 정보가 없습니다.");
-        alert("드래그된 카드 정보가 없습니다. 다시 시도해주세요.");
-        return;
+    // 드래그된 카드 정보 확인 (더 안전한 방식)
+    if (!scwin.draggedCard || !scwin.draggedCard.element || !scwin.draggedCard.taskId) {
+        console.error("드래그된 카드 정보가 없거나 불완전합니다.");
+        console.error("현재 draggedCard:", scwin.draggedCard);
+        
+        // 1차 복구 시도: dataTransfer에서 정보 복구
+        try {
+            var transferData = e.dataTransfer.getData("application/json");
+            if (transferData) {
+                var dragInfo = JSON.parse(transferData);
+                console.log("dataTransfer에서 정보 복구 시도:", dragInfo);
+                
+                // DOM에서 해당 카드 찾기
+                var cardElement = document.querySelector('[data-task-id="' + dragInfo.taskId + '"]');
+                if (cardElement) {
+                    scwin.draggedCard = {
+                        element: cardElement,
+                        taskId: dragInfo.taskId,
+                        sourceBoardId: dragInfo.sourceBoardId,
+                        sourceContainer: cardElement.parentElement
+                    };
+                    console.log("dataTransfer에서 정보 복구 성공");
+                }
+            }
+        } catch (error) {
+            console.log("dataTransfer 정보 복구 실패:", error);
+        }
+        
+        // 2차 복구 시도: 드래그 중인 요소에서 정보 복구
+        if (!scwin.draggedCard || !scwin.draggedCard.taskId) {
+            var draggedElements = document.querySelectorAll('.dragging');
+            if (draggedElements.length > 0) {
+                var draggedElement = draggedElements[0];
+                var taskId = draggedElement.getAttribute("data-task-id");
+                var sourceBoardId = draggedElement.getAttribute("data-board-id");
+                
+                if (taskId && sourceBoardId) {
+                    console.log("DOM에서 드래그 정보 복구 성공:", {taskId: taskId, sourceBoardId: sourceBoardId});
+                    scwin.draggedCard = {
+                        element: draggedElement,
+                        taskId: taskId,
+                        sourceBoardId: sourceBoardId,
+                        sourceContainer: draggedElement.parentElement
+                    };
+                }
+            }
+        }
+        
+        // 최종 확인: 여전히 정보가 없으면 알림
+        if (!scwin.draggedCard || !scwin.draggedCard.taskId) {
+            alert("드래그된 카드 정보가 없습니다. 다시 시도해주세요.");
+            scwin.cleanupDragState();
+            return;
+        }
     }
     
     var draggedElement = scwin.draggedCard.element;
@@ -2461,20 +2548,29 @@ scwin.handleDrop = function(e) {
     if (sourceBoardId === targetBoardId) {
         console.log("같은 보드로 이동하려고 시도했습니다. 무시합니다.");
         dropZone.classList.remove("drag-over");
+        scwin.cleanupDragState();
         return;
     }
     
     // 카드 이동 처리
-    scwin.moveCardToBoard(draggedElement, targetBoardId, taskId);
-    
-    // WebSocket으로 카드 이동 메시지 전송
-    scwin.sendCardMoveMessage(taskId, sourceBoardId, targetBoardId);
+    try {
+        scwin.moveCardToBoard(draggedElement, targetBoardId, taskId);
+        
+        // WebSocket으로 카드 이동 메시지 전송
+        scwin.sendCardMoveMessage(taskId, sourceBoardId, targetBoardId);
+        
+        console.log("카드 이동 성공:", taskId, "->", targetBoardId);
+        
+    } catch (error) {
+        console.error("카드 이동 중 오류 발생:", error);
+        alert("카드 이동 중 오류가 발생했습니다. 다시 시도해주세요.");
+    }
     
     // 드롭 존 하이라이트 제거
     dropZone.classList.remove("drag-over");
     
-    // 드래그 정보 초기화
-    scwin.draggedCard = null;
+    // 드래그 상태 정리
+    scwin.cleanupDragState();
 };
 
 // 카드를 다른 보드로 이동하는 함수
@@ -2812,9 +2908,31 @@ scwin.moveCardToBoard = function(cardElement, targetBoardId, taskId) {
     });
     
     try {
+        // taskId 검증 및 복구 시도
+        if (!taskId || taskId === "" || taskId === "null" || taskId === "undefined") {
+            console.warn("taskId가 유효하지 않습니다. 카드 element에서 추출을 시도합니다.");
+            
+            // 카드 element에서 taskId 다시 추출 시도
+            taskId = cardElement.getAttribute("data-task-id");
+            
+            if (!taskId || taskId === "" || taskId === "null" || taskId === "undefined") {
+                console.error("카드 element에서도 taskId를 찾을 수 없습니다. 이동을 중단합니다.");
+                alert("카드 정보를 찾을 수 없어 이동할 수 없습니다.");
+                return false;
+            }
+            
+            console.log("카드 element에서 taskId 복구 성공:", taskId);
+        }
+        
         // 현재 보드 정보
         var sourceBoardId = cardElement.getAttribute("data-board-id");
         console.log("소스 보드 ID:", sourceBoardId);
+        
+        // 같은 보드로 이동하는 경우 처리하지 않음
+        if (sourceBoardId === targetBoardId) {
+            console.log("같은 보드로 이동하려고 시도함. 처리 중단.");
+            return true;
+        }
         
         // 타겟 컴포넌트 찾기
         var targetContainerId = "card_container_" + targetBoardId;
@@ -2847,27 +2965,158 @@ scwin.moveCardToBoard = function(cardElement, targetBoardId, taskId) {
         
         console.log("타겟 DOM 요소 찾기 성공:", targetDOMElement);
         
-        // 카드 DOM 이동
-        targetDOMElement.appendChild(cardElement);
+        // 서버에 먼저 업데이트 요청
+        console.log("서버에 태스크 보드 업데이트 요청:", taskId, "->", targetBoardId);
+        dm_taskVo.set("taskId", taskId);
+        dm_taskVo.set("boardId", targetBoardId);
         
-        // 카드의 data-board-id 업데이트
-        cardElement.setAttribute("data-board-id", targetBoardId);
+        // 비동기 서버 업데이트를 위한 콜백 설정
+        scwin.pendingCardMove = {
+            cardElement: cardElement,
+            sourceBoardId: sourceBoardId,
+            targetBoardId: targetBoardId,
+            targetDOMElement: targetDOMElement,
+            taskId: taskId
+        };
         
-        // 카운트 업데이트
-        scwin.updateBoardCardCounts(sourceBoardId, targetBoardId);
-        
-        console.log("카드 이동 완료:", taskId, "->", targetBoardId);
-        
-        // 이동 완료 알림 (선택사항)
-        var sourceBoard = scwin.getBoardTitle(sourceBoardId);
-        var targetBoard = scwin.getBoardTitle(targetBoardId);
-        console.log(`카드가 "${sourceBoard}"에서 "${targetBoard}"로 이동되었습니다.`);
+        // 서버 업데이트 실행
+        $c.sbm.execute(update_task_board);
         
         return true;
         
     } catch (error) {
         console.error("카드 이동 중 오류 발생:", error);
         return false;
+    }
+};
+
+// 태스크 보드 업데이트 성공 콜백
+scwin.update_task_board_submitdone = function(e) {
+    console.log("서버 태스크 보드 업데이트 성공:", e);
+    
+    try {
+        // 대기 중인 카드 이동 정보 확인
+        if (!scwin.pendingCardMove) {
+            console.error("대기 중인 카드 이동 정보가 없습니다.");
+            return;
+        }
+        
+        var moveInfo = scwin.pendingCardMove;
+        console.log("서버 업데이트 성공 후 DOM 업데이트 실행:", moveInfo.taskId);
+        
+        // DOM 업데이트 실행
+        moveInfo.targetDOMElement.appendChild(moveInfo.cardElement);
+        
+        // 카드의 data-board-id 업데이트
+        moveInfo.cardElement.setAttribute("data-board-id", moveInfo.targetBoardId);
+        
+        // 카운트 업데이트
+        scwin.updateBoardCardCounts(moveInfo.sourceBoardId, moveInfo.targetBoardId);
+        
+        // allTasksData 로컬 캐시 업데이트
+        scwin.updateLocalTaskCache(moveInfo.taskId, moveInfo.targetBoardId);
+        
+        // 이동 완료 알림
+        var sourceBoard = scwin.getBoardTitle(moveInfo.sourceBoardId);
+        var targetBoard = scwin.getBoardTitle(moveInfo.targetBoardId);
+        console.log(`카드가 "${sourceBoard}"에서 "${targetBoard}"로 이동되었습니다.`);
+        
+        // WebSocket을 통해 다른 사용자에게 알림
+        if (scwin.isWebSocketConnected) {
+            scwin.sendWebSocketMessage({
+                type: "CARD_MOVED",
+                taskId: moveInfo.taskId,
+                fromBoardId: moveInfo.sourceBoardId,
+                toBoardId: moveInfo.targetBoardId,
+                timestamp: Date.now()
+            });
+        }
+        
+        // 대기 정보 초기화
+        scwin.pendingCardMove = null;
+        
+        console.log("카드 이동 완료 (서버+DOM 동기화):", moveInfo.taskId);
+        
+    } catch (error) {
+        console.error("서버 업데이트 성공 후 DOM 업데이트 중 오류:", error);
+        // 에러가 발생해도 대기 정보는 초기화
+        scwin.pendingCardMove = null;
+    }
+};
+
+// 태스크 보드 업데이트 실패 콜백
+scwin.update_task_board_submiterror = function(e) {
+    console.error("서버 태스크 보드 업데이트 실패:", e);
+    
+    try {
+        // 대기 중인 카드 이동 정보 확인
+        if (scwin.pendingCardMove) {
+            var moveInfo = scwin.pendingCardMove;
+            console.log("서버 업데이트 실패로 인한 롤백:", moveInfo.taskId);
+            
+            // 사용자에게 알림
+            alert("카드 이동에 실패했습니다. 다시 시도해주세요.");
+            
+            // 대기 정보 초기화
+            scwin.pendingCardMove = null;
+        }
+    } catch (error) {
+        console.error("서버 업데이트 실패 처리 중 오류:", error);
+    }
+};
+
+// 로컬 캐시에서 태스크 정보 업데이트
+scwin.updateLocalTaskCache = function(taskId, newBoardId) {
+    try {
+        if (!scwin.allTasksData) {
+            scwin.allTasksData = {};
+        }
+        
+        var movedTask = null;
+        var sourceBoardId = null;
+        
+        // 모든 보드의 캐시에서 해당 태스크를 찾아서 제거
+        for (var boardId in scwin.allTasksData) {
+            if (scwin.allTasksData.hasOwnProperty(boardId)) {
+                var tasks = scwin.allTasksData[boardId];
+                for (var i = 0; i < tasks.length; i++) {
+                    if (tasks[i].taskId === taskId) {
+                        movedTask = tasks[i];
+                        sourceBoardId = boardId;
+                        
+                        // 기존 보드에서 제거 (다른 보드로 이동하는 경우에만)
+                        if (boardId !== newBoardId) {
+                            tasks.splice(i, 1);
+                            console.log(`로컬 캐시에서 태스크 제거: ${taskId} from ${boardId}`);
+                        }
+                        break;
+                    }
+                }
+                if (movedTask) break;
+            }
+        }
+        
+        // 태스크를 찾았고 다른 보드로 이동하는 경우
+        if (movedTask && sourceBoardId !== newBoardId) {
+            // 태스크의 boardId 업데이트
+            movedTask.boardId = newBoardId;
+            
+            // 새 보드 캐시에 추가
+            if (!scwin.allTasksData[newBoardId]) {
+                scwin.allTasksData[newBoardId] = [];
+            }
+            scwin.allTasksData[newBoardId].push(movedTask);
+            console.log(`로컬 캐시에 태스크 추가: ${taskId} to ${newBoardId}`);
+            
+            // 변경된 보드들의 화면 업데이트
+            scwin.sortAndFilterBoardTasks(sourceBoardId);
+            scwin.sortAndFilterBoardTasks(newBoardId);
+        }
+        
+        console.log("로컬 캐시 업데이트 완료:", taskId, "->", newBoardId);
+        
+    } catch (error) {
+        console.error("로컬 캐시 업데이트 중 오류:", error);
     }
 };
 
@@ -3086,7 +3335,38 @@ scwin.load_Board_submiterror = function(e) {
 scwin.btn_settings_onclick = function (e) {
     $p.url("/InsWebApp/ui/project/projectSettingMainPage.xml");
 };
-]]></script>
+
+//task 버튼 눌렀을 때 
+scwin.new_task_onclick = function (e) {
+    var param = {
+        "type": "json", 
+        "name": "userInfo", 
+        "data": {
+            "userId": WebSquare.session.getAttribute("userId"),
+            "userName": scwin.userName,
+            "userImage": scwin.userImage
+        }
+    };
+
+    // 팝업 생성 옵션 지정
+    var options = {
+        id: "exa_popup",
+        type: "wframePopup",
+        width: "1300",
+        height: "750",
+        top: "140",
+        left: "350",
+        popupName: "2차프로젝트 / 진행중",
+        modal: false,
+        closeAction: "scwin.popup_closeAction",
+        customTitleBar: false,
+        dataObject: param
+    };
+
+    // 팝업 생성
+    $p.openPopup("/InsWebApp/ui/project/taskModal.xml", options);
+
+};]]></script>
 		<style type="text/css"><![CDATA[
 /* 전체 컨테이너 */
 .project-main-container {
