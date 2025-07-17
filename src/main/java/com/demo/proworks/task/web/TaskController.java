@@ -475,6 +475,65 @@ public class TaskController {
     	invalidateProjectCacheByBoardId(taskVo.getBoardId(), "태스크 갱신");
     }
 
+    /**
+     * 업무(Task)의 보드를 변경합니다.
+     * 칸반 보드에서 드래그 앤 드롭으로 카드를 이동할 때 사용됩니다.
+     *
+     * @param  taskVo 업무(Task) 정보 (taskId, boardId 필수)
+     * @return 업데이트 결과
+     * @throws Exception
+     */
+    @ElService(key = "task/updateBoard")    
+    @RequestMapping(value = "task/updateBoard")
+    @ElDescription(sub = "업무(Task) 보드 변경처리", desc = "업무(Task)의 보드를 변경하여 다른 칸반 컬럼으로 이동합니다.")    
+    public java.util.Map<String, Object> updateTaskBoard(TaskVo taskVo) throws Exception {
+        System.out.println("TaskController.updateTaskBoard - 요청 데이터: taskId=" + taskVo.getTaskId() + ", boardId=" + taskVo.getBoardId());
+        
+        // 필수 파라미터 검증
+        if (taskVo.getTaskId() == null || taskVo.getTaskId().trim().isEmpty()) {
+            throw new IllegalArgumentException("taskId는 필수 파라미터입니다.");
+        }
+        if (taskVo.getBoardId() == null || taskVo.getBoardId().trim().isEmpty()) {
+            throw new IllegalArgumentException("boardId는 필수 파라미터입니다.");
+        }
+        
+        // 기존 태스크 정보 조회
+        TaskVo existingTask = taskService.selectTaskById(taskVo.getTaskId());
+        if (existingTask == null) {
+            throw new IllegalArgumentException("존재하지 않는 taskId입니다: " + taskVo.getTaskId());
+        }
+        
+        String oldBoardId = existingTask.getBoardId();
+        String newBoardId = taskVo.getBoardId();
+        
+        System.out.println("태스크 보드 변경: taskId=" + taskVo.getTaskId() + ", " + oldBoardId + " -> " + newBoardId);
+        
+        // 보드 변경 실행
+        int result = taskService.updateTaskBoard(taskVo.getTaskId(), newBoardId);
+        
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        
+        if (result > 0) {
+            System.out.println("태스크 보드 변경 성공: taskId=" + taskVo.getTaskId());
+            
+            // 이전 보드와 새 보드의 Redis 캐시 무효화
+            invalidateProjectCacheByBoardId(oldBoardId, "태스크 보드 변경 (이전 보드)");
+            invalidateProjectCacheByBoardId(newBoardId, "태스크 보드 변경 (새 보드)");
+            
+            response.put("success", true);
+            response.put("message", "태스크 보드가 성공적으로 변경되었습니다.");
+            response.put("taskId", taskVo.getTaskId());
+            response.put("oldBoardId", oldBoardId);
+            response.put("newBoardId", newBoardId);
+        } else {
+            System.out.println("태스크 보드 변경 실패: taskId=" + taskVo.getTaskId());
+            response.put("success", false);
+            response.put("message", "태스크 보드 변경에 실패했습니다.");
+        }
+        
+        return response;
+    }
+
 	/**
 	 * 업무(Task) 정보와 업무버전(TaskVersion)을 처리함
 	 *

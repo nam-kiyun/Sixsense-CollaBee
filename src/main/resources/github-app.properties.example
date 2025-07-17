@@ -1,0 +1,24 @@
+# GitHub App 설정 예시
+# 실제 사용 시 해당 값들을 설정해주세요
+
+# GitHub App 기본 설정
+github.app.id=your_github_app_id
+github.app.private.key.path=/path/to/your/private-key.pem
+
+# 웹훅 설정
+webhook.url=https://your-webhook-url.com/webhook
+github.webhook.secret=your_webhook_secret
+
+# GitHub API 설정
+github.api.url=https://api.github.com
+
+# 로깅 설정
+logging.level.com.demo.proworks.githubapptoken=DEBUG
+logging.level.com.demo.proworks.githubwebhook=DEBUG
+logging.level.com.demo.proworks.repobranch=DEBUG
+
+# JWT 토큰 만료 시간 (분)
+github.app.token.expiry.minutes=10
+
+# Installation 토큰 만료 시간 (분)
+github.installation.token.expiry.minutes=60

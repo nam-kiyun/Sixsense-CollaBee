@@ -53,10 +53,55 @@
 	    <appender-ref ref="console" />
 	</logger>	
 	
+	<!-- MyBatis 로그 설정 -->
+	<logger name="org.apache.ibatis" additivity="false">
+	    <level value="DEBUG" />
+	    <appender-ref ref="console" />
+	</logger>
 	
+	<logger name="org.mybatis" additivity="false">
+	    <level value="DEBUG" />
+	    <appender-ref ref="console" />
+	</logger>
 	
-		
-		
+	<logger name="com.demo.proworks.github.dao" additivity="false">
+	    <level value="DEBUG" />
+	    <appender-ref ref="console" />
+	</logger>
+
+	<!-- 칸반 보드 실시간 시스템 로거 -->
+	<logger name="com.demo.proworks.websocket" additivity="false">
+	    <level value="DEBUG" />
+	    <appender-ref ref="console" />
+	</logger>
+
+	<logger name="com.demo.proworks.redis" additivity="false">
+	    <level value="DEBUG" />
+	    <appender-ref ref="console" />
+	</logger>
+
+	<logger name="com.demo.proworks.batch" additivity="false">
+	    <level value="DEBUG" />
+	    <appender-ref ref="console" />
+	</logger>
+
+	<!-- Redis 클라이언트 로거 -->
+	<logger name="org.springframework.data.redis" additivity="false">
+	    <level value="INFO" />
+	    <appender-ref ref="console" />
+	</logger>
+
+	<logger name="redis.clients.jedis" additivity="false">
+	    <level value="WARN" />
+	    <appender-ref ref="console" />
+	</logger>
+
+	<!-- Spring 스케줄러 로거 -->
+	<logger name="org.springframework.scheduling" additivity="false">
+	    <level value="INFO" />
+	    <appender-ref ref="console" />
+	</logger>
+
 	<root>
 		<level value="ON" />
 		<appender-ref ref="console" />

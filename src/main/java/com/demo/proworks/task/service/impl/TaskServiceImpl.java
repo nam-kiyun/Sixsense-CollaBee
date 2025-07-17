@@ -786,7 +786,47 @@ public class TaskServiceImpl implements TaskService {
 		return projectTasks;
 	}
 	
+	/**
+	 * 업무(Task)의 보드 위치만 갱신 처리 한다. (칸반 카드 이동용)
+	 */
+	public int updateTaskBoard(String taskId, String boardId) throws Exception {
+		System.out.println("TaskServiceImpl.updateTaskBoard - taskId: " + taskId + ", boardId: " + boardId);
+		
+		if (taskId == null || taskId.trim().isEmpty()) {
+			throw new IllegalArgumentException("taskId는 필수 파라미터입니다.");
+		}
+		if (boardId == null || boardId.trim().isEmpty()) {
+			throw new IllegalArgumentException("boardId는 필수 파라미터입니다.");
+		}
+		
+		TaskVo taskVo = new TaskVo();
+		taskVo.setTaskId(taskId);
+		taskVo.setBoardId(boardId);
+		
+		int result = taskDAO.updateTaskBoard(taskVo);
+		System.out.println("TaskServiceImpl.updateTaskBoard - 업데이트 결과: " + result);
+		
+		return result;
+	}
 	
+	/**
+	 * 업무(Task) ID로 단건 정보를 조회한다.
+	 */
+	public TaskVo selectTaskById(String taskId) throws Exception {
+		System.out.println("TaskServiceImpl.selectTaskById - taskId: " + taskId);
+		
+		if (taskId == null || taskId.trim().isEmpty()) {
+			throw new IllegalArgumentException("taskId는 필수 파라미터입니다.");
+		}
+		
+		TaskVo searchVo = new TaskVo();
+		searchVo.setTaskId(taskId);
+		
+		TaskVo result = taskDAO.selectTask(searchVo);
+		System.out.println("TaskServiceImpl.selectTaskById - 조회 결과: " + (result != null ? result.getTaskTitle() : "없음"));
+		
+		return result;
+	}
 	
 }
 

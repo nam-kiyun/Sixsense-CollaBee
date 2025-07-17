@@ -128,6 +128,25 @@
 		WHERE p.PROJECT_ID = #{projectId}
 	</select>
 
+	<select id="selectUserParticipatedProjects" parameterType="String" resultType="com.demo.proworks.project.vo.ProjectVo">
+		<!-- 사용자가 참여한 프로젝트 목록을 조회한다. -->
+		
+		SELECT /* QueryID : com.demo.proworks.project.selectUserParticipatedProjects */
+			p.PROJECT_ID as projectId,
+			p.PROJECT_NAME as projectName,
+			p.DESCRIPTION as description,
+			p.PROJECT_IMAGE_URL as projectImageUrl,
+			p.CREATED_AT as createdAt,
+			p.EMAIL_SEND_TIME as emailSendTime,
+			p.USER_ID as userId,
+			u.USER_NAME as userName
+		FROM PROJECT p
+		JOIN PROJECT_USER pu ON p.PROJECT_ID = pu.PROJECT_ID
+		LEFT JOIN USER u ON p.USER_ID = u.USER_ID
+		WHERE pu.USER_ID = #{userId}
+		ORDER BY p.CREATED_AT DESC
+	</select>
+
 </mapper>
 
 
