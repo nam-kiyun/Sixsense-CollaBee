@@ -290,6 +290,7 @@ scwin.changeEditor = function () {
 
     ckInstance.on("instanceReady", function () {
         scwin.previousHTML = contents_editor.getHTML(); // 초기값 설정
+        console.log(scwin.previousHTML);
 
         ckInstance.on("change", function () {
             console.log("바뀜");
@@ -529,7 +530,6 @@ scwin.getTask = function (taskId, projectId) {
             data.endDate ? end_date.setValue(data.endDate) : "";
 
             contents_editor.setHTML(data.content);
-            scwin.previousHTML = data.content;
 
 
             const fileList = data.fileSrcVo;
@@ -556,6 +556,9 @@ scwin.getTask = function (taskId, projectId) {
             });
 
             contents_editor.setHTML(container.innerHTML);
+            scwin.previousHTML = contents_editor.getHTML();
+
+            console.log(container.innerHTML);
             dls_allFile.setJSON(data.fileSrcVo);
             dls_file.setJSON(data.fileSrcVo);
 
@@ -1323,7 +1326,7 @@ scwin.fileInput_change = function (e) {
                 name: file.name,
                 url: fileDataUrl,
                 type: file.type,
-                num: scwin.filePageNum + 1,
+                num: ++scwin.filePageNum,
                 data: fileDataUrl,
                 size: file.size
             };
@@ -1338,26 +1341,30 @@ scwin.fileInput_change = function (e) {
             //3. 모든 파일 읽은 후 그리드 반영
             if (filesReadCount === filesArray.length) {
                 scwin.addFileGrid(tempGridList); // 그리드 추가는 여기서!
+
                 setTimeout(() => {
-                    scwin.previousHTML = contents_editor.getHTML(); // 삽입 후 상태 저장
+                    scwin.previousHTML = contents_editor.getHTML(); // 추적
+                    console.log(scwin.previousHTML);
                 }, 30);
             }
         };
 
         reader.readAsDataURL(file);
+
+
     }
 };
 
 
 //파일 그리드에 파일 추가
-scwin.addFileGrid = function (files) {
+scwin.addFileGrid = function (files, num) {
     const dsAll = $p.getComponentById("dls_allFile");
     const allList = dsAll.getAllJSON();
     const newList = [...allList];
 
     for (let file of files) {
         newList.unshift({
-            num: ++scwin.filePageNum,
+            num: file.num,
             fileName: file.name,
             size: file.size,
             type: file.type,
