@@ -261,7 +261,6 @@ public class ProjectServiceImpl implements ProjectService {
 		return projectDAO.selectProjectForEmail(projectId);
 	}
 	
-	
 	@Override
 	public List<EmailVo> selectProjectsForEmailSend() throws Exception {
 		return projectDAO.selectProjectsForEmailSend();
@@ -552,3 +551,4 @@ public class ProjectServiceImpl implements ProjectService {
 	}
 	
 }
+

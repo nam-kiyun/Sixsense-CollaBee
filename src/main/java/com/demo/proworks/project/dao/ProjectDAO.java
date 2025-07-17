@@ -102,6 +102,7 @@ public class ProjectDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
     }
 
     /**
+
      * 이메일 발송이 설정된 모든 프로젝트를 조회한다.
      *
      * @return List<EmailVo> 이메일 발송을 위한 프로젝트 정보 목록
@@ -124,4 +125,3 @@ public class ProjectDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
     }
 
 }
-
