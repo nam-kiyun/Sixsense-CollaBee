@@ -14,7 +14,7 @@ body {
     padding: 0;
     margin: 0;
     border: none;
-    height: 100%;
+    height: 90%;
     /* background-color: cadetblue; */
 }
 
@@ -167,7 +167,7 @@ body {
 	height: 100% !important;
 	border-radius: 8px;
 }
-.cke_inner #cke_1_top{ /*에디터 헤더*/
+.cke_inner .cke_top{ /*에디터 헤더*/
 	/*background-color: orange;*/
 /*	min-height: 30px !important;*/
 	display: flex;
@@ -179,7 +179,7 @@ body {
 	border-top-right-radius: 8px;
 	border-top-left-radius: 8px;
 }
-.cke_inner #cke_1_top:hover{ /*에디터 헤더*/
+.cke_inner .cke_top:hover{ /*에디터 헤더*/
 	/*background-color: orange;*/
 /*	min-height: 30px !important;*/
 	display: flex;
