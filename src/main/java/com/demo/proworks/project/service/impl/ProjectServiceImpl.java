@@ -25,6 +25,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import com.demo.proworks.projectuser.dao.ProjectUserDAO;
+import com.demo.proworks.projectuser.vo.ProjectUserVo;
 import com.demo.proworks.board.dao.BoardDAO;
 import com.demo.proworks.task.dao.TaskDAO;
 import com.demo.proworks.taskversion.dao.TaskVersionDAO;
@@ -169,9 +170,13 @@ public class ProjectServiceImpl implements ProjectService {
 		if (result > 0) {
 			System.out.println("✅ 프로젝트 생성 성공 - projectId: " + projectVo.getProjectId());
 			
-			// 2. 생성된 프로젝트 ID로 기본 보드 3개 생성
 			String createdProjectId = projectVo.getProjectId();
 			if (createdProjectId != null && !createdProjectId.trim().isEmpty()) {
+				// 2. 프로젝트 생성자를 project_user 테이블에 추가 (관리자 권한)
+				addProjectCreatorToProjectUser(projectVo);
+				System.out.println("✅ 프로젝트 생성자 project_user 테이블 추가 완료 - projectId: " + createdProjectId);
+				
+				// 3. 생성된 프로젝트 ID로 기본 보드 3개 생성
 				createDefaultBoards(createdProjectId);
 				System.out.println("✅ 기본 보드 3개 생성 완료 - projectId: " + createdProjectId);
 			} else {
@@ -216,6 +221,30 @@ public class ProjectServiceImpl implements ProjectService {
 		}
 		
 		System.out.println("✅ 모든 기본 보드 생성 완료");
+	}
+	
+	/**
+	 * 프로젝트 생성자를 project_user 테이블에 관리자 권한으로 추가한다.
+	 * 
+	 * @param projectVo 생성된 프로젝트 정보
+	 * @throws Exception
+	 */
+	private void addProjectCreatorToProjectUser(ProjectVo projectVo) throws Exception {
+		System.out.println("🔧 프로젝트 생성자 project_user 테이블 추가 시작");
+		
+		ProjectUserVo projectUserVo = new ProjectUserVo();
+		projectUserVo.setProjectId(projectVo.getProjectId());
+		projectUserVo.setUserId(projectVo.getUserId());
+		projectUserVo.setRole("ADMIN"); // 프로젝트 생성자는 관리자 권한
+		
+		int result = projectUserDAO.insertProjectUser(projectUserVo);
+		
+		if (result > 0) {
+			System.out.println("✅ 프로젝트 생성자 project_user 테이블 추가 성공 - userId: " + projectVo.getUserId() + ", projectId: " + projectVo.getProjectId());
+		} else {
+			System.err.println("❌ 프로젝트 생성자 project_user 테이블 추가 실패 - result: " + result);
+			throw new Exception("프로젝트 생성자 project_user 테이블 추가에 실패했습니다.");
+		}
 	}
 	
     /**

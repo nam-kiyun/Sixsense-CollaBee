@@ -122,7 +122,6 @@ scwin.wsUrls = null; // WebSocket URL 목록 저장
  * WebSocket 연결 초기화
  */
 scwin.initWebSocket = function() {
-    debugger;
     console.log("WebSocket 연결 테스트 시작");
     
     // 디바운싱 타이머 변수

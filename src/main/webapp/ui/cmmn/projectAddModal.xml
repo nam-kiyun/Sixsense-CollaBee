@@ -307,6 +307,11 @@ scwin.sbm_saveProject_submitdone = function(e) {
             parentFrame.scwin.refreshSideMenu();
         }
         
+        // 메인 콘텐츠의 프로젝트 카드도 갱신
+        if (parentFrame && parentFrame.scwin && parentFrame.scwin.refreshMainContent) {
+            parentFrame.scwin.refreshMainContent();
+        }
+        
         // WebSquare 팝업 닫기 - 여러 방법 시도
         console.log("팝업 닫기 시도 시작");
         
