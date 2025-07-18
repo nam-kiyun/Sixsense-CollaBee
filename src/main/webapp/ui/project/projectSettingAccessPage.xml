@@ -436,7 +436,7 @@ scwin.onpageload = function() {
         // 프로젝트 멤버 목록 조회
         scwin.loadProjectUsers(projectId);
     } else {
-        alert("프로젝트 ID가 필요합니다.");
+        $c.win.alert("프로젝트 ID가 필요합니다.");
         return;
     }
     
@@ -533,13 +533,13 @@ scwin.loadProjectUsers = function(projectId) {
             },
             error: function(xhr, status, error) {
                 
-                alert("프로젝트 멤버 목록을 불러오는데 실패했습니다: " + error);
+                $c.win.alert("프로젝트 멤버 목록을 불러오는데 실패했습니다: " + error);
             }
         });
         
     } catch (e) {
         
-        alert("프로젝트 멤버 목록을 불러오는데 오류가 발생했습니다: " + e.message);
+        $c.win.alert("프로젝트 멤버 목록을 불러오는데 오류가 발생했습니다: " + e.message);
     }
 };
 
@@ -604,11 +604,11 @@ scwin.searchUser = function(userId, projectId) {
                 scwin.handleSearchResult(data);
             },
             error: function(xhr, status, error) {
-                alert("사용자 검색에 실패했습니다.");
+                $c.win.alert("사용자 검색에 실패했습니다.");
             }
         });
     } catch (e) {
-        alert("사용자 검색 중 오류가 발생했습니다.");
+        $c.win.alert("사용자 검색 중 오류가 발생했습니다.");
     }
 };
 
@@ -780,7 +780,7 @@ scwin.sendProjectInviteEmail = function(userEmail, projectId) {
             dataType: "json",
             success: function(data) {
                 if (data && data.success) {
-                    alert("프로젝트 초대 이메일이 성공적으로 발송되었습니다.");
+                    $c.win.alert("프로젝트 초대 이메일이 성공적으로 발송되었습니다.");
                     
                     // 성공 시 입력값 초기화 및 UI 업데이트
                     input_search.setValue("");
@@ -793,16 +793,16 @@ scwin.sendProjectInviteEmail = function(userEmail, projectId) {
                     dm_searchResult.set("userName", "");
                     dm_searchResult.set("email", "");
                 } else {
-                    alert("이메일 발송에 실패했습니다: " + (data && data.message ? data.message : "알 수 없는 오류"));
+                    $c.win.alert("이메일 발송에 실패했습니다: " + (data && data.message ? data.message : "알 수 없는 오류"));
                 }
             },
             error: function(xhr, status, error) {
-                alert("이메일 발송 중 오류가 발생했습니다: " + error);
+                $c.win.alert("이메일 발송 중 오류가 발생했습니다: " + error);
             }
         });
         
     } catch (e) {
-        alert("이메일 발송 중 예외가 발생했습니다: " + e.message);
+        $c.win.alert("이메일 발송 중 예외가 발생했습니다: " + e.message);
     }
 };
 
@@ -819,7 +819,7 @@ scwin.inviteUser = function(userId) {
             action: "action_inviteUser",
             success: function(data) {
                 
-                alert("사용자 초대가 완료되었습니다.\n\n사용자가 초대를 수락하면 프로젝트 멤버로 추가됩니다.");
+                $c.win.alert("사용자 초대가 완료되었습니다.\n\n사용자가 초대를 수락하면 프로젝트 멤버로 추가됩니다.");
                 
                 // 검색창 초기화
                 dm_search.set("searchValue", "");
@@ -829,7 +829,7 @@ scwin.inviteUser = function(userId) {
             },
             error: function(xhr, status, error) {
                 
-                alert("사용자 초대에 실패했습니다.");
+                $c.win.alert("사용자 초대에 실패했습니다.");
             }
         };
         
@@ -841,7 +841,7 @@ scwin.inviteUser = function(userId) {
         $w.executeWorkflow(option);
     } catch (e) {
         
-        alert("사용자 초대 중 오류가 발생했습니다.");
+        $c.win.alert("사용자 초대 중 오류가 발생했습니다.");
     }
 };
 
@@ -874,7 +874,7 @@ scwin.changeUserRole = function(userId, userName, newRole) {
     var projectId = dm_search.get("projectId");
     
     // 일단 권한 변경 기능은 추후 구현 예정
-    alert("권한 변경 기능은 현재 개발 중입니다.\n" + userName + "의 역할을 " + 
+    $c.win.alert("권한 변경 기능은 현재 개발 중입니다.\n" + userName + "의 역할을 " + 
           (newRole === "admin" ? "관리자" : "에디터") + "로 변경하려고 했습니다.");
     
     // 원래 상태로 되돌리기 위해 목록 새로고침
@@ -1023,7 +1023,7 @@ scwin.grd_projectUsers_onafterchange = function(e) {
             }
             
             
-            alert("역할 변경이 임시 저장되었습니다: " + userName + " (" + oldRole + " → " + newRole + ")");
+            $c.win.alert("역할 변경이 임시 저장되었습니다: " + userName + " (" + oldRole + " → " + newRole + ")");
         }
     }
 };
@@ -1158,7 +1158,7 @@ scwin.grd_projectUsers_oncellchange = function(e) {
             }
             
             
-            alert("역할 변경이 임시 저장되었습니다: " + userName + " (" + oldRole + " → " + newRole + ")");
+            $c.win.alert("역할 변경이 임시 저장되었습니다: " + userName + " (" + oldRole + " → " + newRole + ")");
         } else {
             
         }
@@ -1212,7 +1212,7 @@ scwin.btn_save_onclick = function(e) {
     }
     
     if (pendingChanges.length === 0) {
-        alert("변경된 내용이 없습니다.");
+        $c.win.alert("변경된 내용이 없습니다.");
         return;
     }
     
@@ -1238,7 +1238,7 @@ scwin.btn_save_onclick = function(e) {
     }
     
     if (finalAdminCount < 1) {
-        alert("프로젝트에는 최소 1명의 관리자가 있어야 합니다.");
+        $c.win.alert("프로젝트에는 최소 1명의 관리자가 있어야 합니다.");
         return;
     }
     
@@ -1260,7 +1260,7 @@ scwin.btn_save_onclick = function(e) {
 scwin.saveRoleChanges = function(index) {
     if (index >= pendingChanges.length) {
         // 모든 변경사항 저장 완료
-        alert("모든 변경사항이 저장되었습니다.");
+        $c.win.alert("모든 변경사항이 저장되었습니다.");
         pendingChanges = []; // 임시 저장 목록 초기화
         scwin.loadProjectUsers(dm_search.get("projectId")); // 목록 새로고침
         return;
@@ -1292,7 +1292,7 @@ scwin.saveRoleChanges = function(index) {
                 scwin.saveRoleChanges(index + 1);
             } else {
                 
-                alert("역할 변경에 실패했습니다: " + change.userName + "\n" + 
+                $c.win.alert("역할 변경에 실패했습니다: " + change.userName + "\n" + 
                       (data && data.message ? data.message : "알 수 없는 오류"));
                 scwin.loadProjectUsers(projectId); // 원래 상태로 복원
             }
@@ -1300,7 +1300,7 @@ scwin.saveRoleChanges = function(index) {
         error: function(xhr, status, error) {
             
             
-            alert("역할 변경 중 오류가 발생했습니다: " + change.userName + "\n" + error);
+            $c.win.alert("역할 변경 중 오류가 발생했습니다: " + change.userName + "\n" + error);
             scwin.loadProjectUsers(projectId); // 원래 상태로 복원
         }
     });
@@ -1323,7 +1323,7 @@ scwin.changeUserRole = function(userId, userName, newRole) {
         }
         
         if (adminCount <= 1) {
-            alert("프로젝트에는 최소 1명의 관리자가 있어야 합니다.");
+            $c.win.alert("프로젝트에는 최소 1명의 관리자가 있어야 합니다.");
             scwin.loadProjectUsers(projectId); // 원래 상태로 복원
             return;
         }
@@ -1342,15 +1342,15 @@ scwin.changeUserRole = function(userId, userName, newRole) {
         dataType: "json",
         success: function(data) {
             if (data && data.success) {
-                alert(userName + "의 역할이 " + (newRole === "admin" ? "관리자" : "에디터") + "로 변경되었습니다.");
+                $c.win.alert(userName + "의 역할이 " + (newRole === "admin" ? "관리자" : "에디터") + "로 변경되었습니다.");
                 scwin.loadProjectUsers(projectId); // 목록 새로고침
             } else {
-                alert("역할 변경에 실패했습니다: " + (data && data.message ? data.message : "알 수 없는 오류"));
+                $c.win.alert("역할 변경에 실패했습니다: " + (data && data.message ? data.message : "알 수 없는 오류"));
                 scwin.loadProjectUsers(projectId); // 원래 상태로 복원
             }
         },
         error: function(xhr, status, error) {
-            alert("역할 변경 중 오류가 발생했습니다: " + error);
+            $c.win.alert("역할 변경 중 오류가 발생했습니다: " + error);
             scwin.loadProjectUsers(projectId); // 원래 상태로 복원
         }
     });

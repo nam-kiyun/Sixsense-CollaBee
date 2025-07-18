@@ -17,6 +17,9 @@ import com.demo.proworks.email.vo.EmailVo;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import javax.mail.internet.MimeMessage;
@@ -433,7 +436,7 @@ public class ProjectServiceImpl implements ProjectService {
 	}
 	
 	@Override
-	@Scheduled(cron = "0 */10 * * * *")
+	@Scheduled(cron = "0 */5 * * * *")
 	public void sendTaskReminder() throws Exception {
 		try {
 			Calendar cal = Calendar.getInstance();
@@ -472,12 +475,24 @@ public class ProjectServiceImpl implements ProjectService {
 		try {
 			List<TaskVo> todoTasks = taskDAO.selectTodoTasksByProjectId(projectId);
 			
+			// 사용자별로 할일들을 그룹핑
+			Map<String, List<TaskVo>> userTasksMap = new HashMap<>();
 			for (TaskVo task : todoTasks) {
-				String taskKey = projectId + "_" + task.getTaskId() + "_" + getCurrentDateString();
+				String userKey = task.getProjectUserId(); // 사용자별 그룹핑 키
+				userTasksMap.computeIfAbsent(userKey, k -> new ArrayList<>()).add(task);
+			}
+			
+			// 사용자별로 하나의 메일 발송
+			for (Map.Entry<String, List<TaskVo>> entry : userTasksMap.entrySet()) {
+				String userKey = entry.getKey();
+				List<TaskVo> userTasks = entry.getValue();
 				
-				if (!sentTodayTasks.contains(taskKey)) {
-					sendTaskReminderEmail(task);
-					sentTodayTasks.add(taskKey);
+				// 해당 사용자의 메일이 오늘 이미 발송되었는지 확인
+				String userEmailKey = projectId + "_" + userKey + "_" + getCurrentDateString();
+				
+				if (!sentTodayTasks.contains(userEmailKey)) {
+					sendTasksReminderEmail(userTasks);
+					sentTodayTasks.add(userEmailKey);
 				}
 			}
 		} catch (Exception e) {
@@ -485,18 +500,24 @@ public class ProjectServiceImpl implements ProjectService {
 		}
 	}
 	
-	private void sendTaskReminderEmail(TaskVo task) {
+	private void sendTasksReminderEmail(List<TaskVo> tasks) {
 		try {
-			String userEmail = taskDAO.selectUserEmailByProjectUserId(task.getProjectUserId());
-			String userName = task.getUserName();
-			
-			if (userEmail == null || userEmail.isEmpty()) {
-				System.err.println("사용자 이메일을 찾을 수 없습니다. Task ID: " + task.getTaskId());
+			if (tasks == null || tasks.isEmpty()) {
 				return;
 			}
 			
-			String subject = "[COLLABEE] 오늘의 할 일: " + task.getTaskTitle();
-			String content = createTaskReminderEmailContent(task, userName);
+			// 첫 번째 작업에서 사용자 정보 추출 (모든 작업이 같은 사용자에게 할당됨)
+			TaskVo firstTask = tasks.get(0);
+			String userEmail = taskDAO.selectUserEmailByProjectUserId(firstTask.getProjectUserId());
+			String userName = firstTask.getUserName();
+			
+			if (userEmail == null || userEmail.isEmpty()) {
+				System.err.println("사용자 이메일을 찾을 수 없습니다. ProjectUserId: " + firstTask.getProjectUserId());
+				return;
+			}
+			
+			String subject = "[COLLABEE] 오늘의 할 일 " + tasks.size() + "개";
+			String content = createTasksReminderEmailContent(tasks, userName);
 			
 			JavaMailSenderImpl impl = (JavaMailSenderImpl) mailSender;
 			impl.setUsername(username);
@@ -511,14 +532,14 @@ public class ProjectServiceImpl implements ProjectService {
 			
 			mailSender.send(message);
 			
-			System.out.println("작업 알림 메일 발송 완료: " + userEmail + ", 작업: " + task.getTaskTitle());
+			System.out.println("작업 알림 메일 발송 완료: " + userEmail + ", 작업 수: " + tasks.size());
 			
 		} catch (Exception e) {
 			System.err.println("작업 알림 메일 발송 실패: " + e.getMessage());
 		}
 	}
 	
-	private String createTaskReminderEmailContent(TaskVo task, String userName) {
+	private String createTasksReminderEmailContent(List<TaskVo> tasks, String userName) {
 		String content = "<html lang='ko'>"
 				+ "<head><meta charset='UTF-8'/><title>작업 알림</title>"
 				+ "<style>"
@@ -528,10 +549,11 @@ public class ProjectServiceImpl implements ProjectService {
 				+ ".email-title { margin: 0; font-size: 32px; color: #ffb823; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3); }"
 				+ ".email-container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 0 0 10px 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); padding: 24px; text-align: center; }"
 				+ ".email-content { font-size: 15px; line-height: 1.5; margin-top: 10px; }"
-				+ ".task-card { margin: 30px 0; text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }"
-				+ ".task-title { font-size: 24px; font-weight: bold; color: #333; margin-bottom: 10px; }"
+				+ ".task-card { margin: 20px 0; text-align: left; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }"
+				+ ".task-title { font-size: 20px; font-weight: bold; color: #333; margin-bottom: 10px; }"
 				+ ".task-info { font-size: 14px; color: #666; margin: 5px 0; }"
 				+ ".email-footer { text-align: center; font-size: 14px; color: gray; margin-top: 20px; }"
+				+ ".task-count { font-weight: bold; color: #ffb823; }"
 				+ "</style></head>"
 				+ "<body>"
 				+ "<div class='header'>"
@@ -541,16 +563,22 @@ public class ProjectServiceImpl implements ProjectService {
 				+ "<div class='email-container'>"
 				+ "<p class='email-content'>"
 				+ "안녕하세요, " + userName + "님!<br />"
-				+ "오늘 처리하실 작업이 있습니다.<br />"
-				+ "아래 작업을 확인해보세요."
-				+ "</p>"
-				+ "<div class='task-card'>"
-				+ "<div class='task-title'>" + task.getTaskTitle() + "</div>"
-				+ "<div class='task-info'>우선순위: " + (task.getPriority() != null ? task.getPriority() : "보통") + "</div>"
-				+ "<div class='task-info'>시작일: " + (task.getStartDate() != null ? task.getStartDate() : "미정") + "</div>"
-				+ "<div class='task-info'>종료일: " + (task.getEndDate() != null ? task.getEndDate() : "미정") + "</div>"
-				+ "</div>"
-				+ "<p class='email-footer'>좋은 하루 되세요!</p>"
+				+ "오늘 처리하실 작업이 <span class='task-count'>" + tasks.size() + "개</span> 있습니다.<br />"
+				+ "아래 작업들을 확인해보세요."
+				+ "</p>";
+		
+		// 각 할일에 대해 카드 생성
+		for (int i = 0; i < tasks.size(); i++) {
+			TaskVo task = tasks.get(i);
+			content += "<div class='task-card'>"
+					+ "<div class='task-title'>" + task.getTaskTitle() + "</div>"
+					+ "<div class='task-info'>우선순위: " + (task.getPriority() != null ? task.getPriority() : "보통") + "</div>"
+					+ "<div class='task-info'>시작일: " + (task.getStartDate() != null ? task.getStartDate() : "미정") + "</div>"
+					+ "<div class='task-info'>종료일: " + (task.getEndDate() != null ? task.getEndDate() : "미정") + "</div>"
+					+ "</div>";
+		}
+		
+		content += "<p class='email-footer'>좋은 하루 되세요!</p>"
 				+ "</div>"
 				+ "</body>"
 				+ "</html>";

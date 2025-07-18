@@ -53,15 +53,15 @@ scwin.requestProjectId = function() {
     
     if (projectId === null) {
         // 사용자가 취소를 눌렀을 때
-        alert("프로젝트 ID가 필요합니다");
+        $c.win.alert("프로젝트 ID가 필요합니다");
         
     } else if (projectId.trim() === "") {
         // 빈 값을 입력했을 때
-        alert("프로젝트 ID를 입력해야 합니다");
+        $c.win.alert("프로젝트 ID를 입력해야 합니다");
         
     } else if (!/^\d+$/.test(projectId.trim())) {
         // 숫자가 아닌 값을 입력했을 때
-        alert("프로젝트 ID는 숫자여야 합니다.");
+        $c.win.alert("프로젝트 ID는 숫자여야 합니다.");
         
     }
     
