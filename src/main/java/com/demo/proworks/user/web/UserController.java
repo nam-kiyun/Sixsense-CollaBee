@@ -82,7 +82,7 @@ public class UserController {
 	@ElService(key = "user/login")
 	@RequestMapping(value = "user/login")
 	@ElDescription(sub = "로그인", desc = "로그인을 처리한다.")
-	public void login(LoginVo loginVo, HttpServletRequest request,HttpSession session) throws Exception {
+	public void login(LoginVo loginVo, HttpServletRequest request, HttpSession session) throws Exception {
 		String id = loginVo.getId();
 		String password = loginVo.getPassword();
 
@@ -255,7 +255,7 @@ public class UserController {
 	@RequestMapping(value = "user/update")
 	@ElDescription(sub = "FormData 사용자 정보 갱신", desc = "파일 포함 사용자 정보 갱신")
 	public void updateUserWithFile(@ModelAttribute UserVo userVo,
-			@RequestParam(value = "fileData", required = false) MultipartFile file) throws Exception {
+			@RequestParam(value = "fileData", required = false) MultipartFile file, HttpSession session) throws Exception {
 		String bucketName = "collabee";
 
 		// 1. 비밀번호 암호화
@@ -266,21 +266,25 @@ public class UserController {
 		}
 
 		// 2. S3 업로드
-//		if (file != null && !file.isEmpty()) {
-//			String originalName = file.getOriginalFilename();
-//			String s3Key = "userImage/" + System.currentTimeMillis() + "_" + originalName;
-//
-//			ObjectMetadata metadata = new ObjectMetadata();
-//			metadata.setContentLength(file.getSize());
-//			metadata.setContentType(file.getContentType());
-//
-//			amazonS3.putObject(new PutObjectRequest(bucketName, s3Key, file.getInputStream(), metadata));
-//
-//			String fileUrl = "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/" + s3Key;
-//			userVo.setProfileImageUrl(fileUrl);
-//		}
+		if (file != null && !file.isEmpty()) {
+			String originalName = file.getOriginalFilename();
+			String s3Key = "userImage/" + System.currentTimeMillis() + "_" + originalName;
 
-		userService.updateUser(userVo);
+			ObjectMetadata metadata = new ObjectMetadata();
+			metadata.setContentLength(file.getSize());
+			metadata.setContentType(file.getContentType());
+
+			amazonS3.putObject(new PutObjectRequest(bucketName, s3Key, file.getInputStream(), metadata));
+
+			String fileUrl = "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/" + s3Key;
+			userVo.setProfileImageUrl(fileUrl);
+		}
+		
+		UserVo result = userService.updateUser(userVo);
+		
+		
+		session.setAttribute("userName", result.getUserName());
+		session.setAttribute("profileImageUrl", result.getProfileImageUrl());
 	}
 
 	/**

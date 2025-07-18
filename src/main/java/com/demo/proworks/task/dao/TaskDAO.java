@@ -129,7 +129,7 @@ public class TaskDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstractD
      * @return String 사용자 이메일
      * @throws ElException
      */
-    public String selectUserEmailByProjectUserId(int projectUserId) throws ElException {
+    public String selectUserEmailByProjectUserId(String projectUserId) throws ElException {
         return (String) selectByPk("com.demo.proworks.task.selectUserEmailByProjectUserId", projectUserId);
     }
 

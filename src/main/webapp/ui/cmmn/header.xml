@@ -26,16 +26,24 @@
         <w2:layoutInfo/>
         <w2:publicInfo method=""/>
         <script lazy="false" type="text/javascript"><![CDATA[
-scwin.onpageload = function() {
+scwin.onpageload = function () {
     // 헤더 초기화
 };
 
-scwin.btn_logout_onclick = function(e) {
+scwin.btn_logout_onclick = function (e) {
     if (confirm("로그아웃 하시겠습니까?")) {
         alert("로그아웃 되었습니다.");
         // 실제 로그아웃 처리 로직 추가
         // location.href = "/logout";
     }
+};
+
+scwin.grp_userInfo_onclick = function (e) {
+    $p.url("/InsWebApp/ui/user/myPage.xml");
+};
+
+scwin.grp_logo_onclick = function (e) {
+    $p.url("/InsWebApp/ui/mainPage.xml");
 };
 ]]></script>
     </head>
@@ -46,7 +54,7 @@ scwin.btn_logout_onclick = function(e) {
             id="grp_header">
             
             <!-- 로고 영역 -->
-            <xf:group style="display:flex;align-items:center;gap:16px;" id="grp_logo">
+            <xf:group style="display:flex;align-items:center;gap:16px;cursor: pointer" id="grp_logo" ev:onclick="scwin.grp_logo_onclick">
                 <xf:image src="/InsWebApp/images/collabee.png" style="width:65px;height:65px;" id="img_logo"/>
                 <xf:output style="color:#ffb823;font-weight:bold;font-size:32px;font-family:Koulen,sans-serif;" id="output_logo">
                     <xf:label><![CDATA[COLLABEE]]></xf:label>
@@ -57,8 +65,8 @@ scwin.btn_logout_onclick = function(e) {
             <xf:group style="display: flex;gap: 16px;align-items: center;" id="grp_userArea">
                 
                 <!-- 사용자 정보 -->
-                <xf:group style="display:flex;align-items:center;gap:4px;" id="grp_userInfo">
-                    <xf:image src="/InsWebApp/assets/images/account_circle.svg" style="width:45px;height:46px;" id="img_userIcon"/>
+                <xf:group style="display:flex;align-items:center;cursor: pointer;gap:4px;" id="grp_userInfo" ev:onclick="scwin.grp_userInfo_onclick">
+                    <xf:image src="/InsWebApp/assets/images/account_circle.svg" style="width:45px;height:46px; border-radius: 50%;" id="img_userIcon"/>
                     <xf:output style="color:#ffffff;font-size:20px;font-family:Inter,sans-serif;" 
                                ref="dm_header.userName" id="output_userName"/>
                     <xf:output style="color:#ffffff;font-size:20px;font-family:Inter,sans-serif;" id="output_nim">
