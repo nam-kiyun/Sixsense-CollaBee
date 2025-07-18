@@ -448,8 +448,8 @@ public class TaskController {
     	if (result > 0) {
     	    System.out.println("TaskController.insertTask - 생성 성공, taskId: " + taskVo.getTaskId());
     	    
-    	    // Redis 캐시 무효화 - 프로젝트의 태스크 목록이 변경되었음
-    	    invalidateProjectCacheByBoardId(taskVo.getBoardId(), "태스크 등록");
+    	    // Redis 캐시에 새 태스크 추가 (캐시 무효화 대신 캐시 업데이트)
+    	    addTaskToProjectCacheByBoardId(taskVo.getBoardId(), taskVo, "태스크 등록");
     	    
     	    return taskVo; // 생성된 태스크 정보 반환 (AUTO_INCREMENT로 생성된 taskId 포함)
     	} else {
@@ -622,6 +622,50 @@ public class TaskController {
         // Redis 캐시 무효화 - 프로젝트의 태스크 목록이 변경되었음
         invalidateProjectCacheByBoardId(taskVo.getBoardId(), "태스크 삭제");
 	}
+
+	/**
+	 * 보드 정보를 갱신 처리한다.
+	 *
+	 * @param boardVo 보드 정보 (WebSquare에서 전달되는 객체)
+	 * @throws Exception
+	 */
+	@ElService(key = "task/updateBoard")
+	@RequestMapping(value = "task/updateBoard")
+	@ElDescription(sub = "보드 정보 갱신처리", desc = "보드 정보를 갱신 처리한다.")
+	public void updateBoard(Object boardData) throws Exception {
+		try {
+			// Object를 BoardVo로 변환
+			BoardVo boardVo = new BoardVo();
+			
+			if (boardData instanceof java.util.Map) {
+				@SuppressWarnings("unchecked")
+				java.util.Map<String, Object> dataMap = (java.util.Map<String, Object>) boardData;
+				
+				if (dataMap.get("boardId") != null) {
+					boardVo.setBoardId(String.valueOf(dataMap.get("boardId")));
+				}
+				if (dataMap.get("projectId") != null) {
+					boardVo.setProjectId(String.valueOf(dataMap.get("projectId")));
+				}
+				if (dataMap.get("boardTitle") != null) {
+					boardVo.setBoardTitle(String.valueOf(dataMap.get("boardTitle")));
+				}
+			}
+			
+			boardService.updateBoard(boardVo);
+			
+			// Redis 캐시 무효화
+			if (boardVo.getProjectId() != null) {
+				kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
+				System.out.println("🗑️ 보드 갱신으로 인한 프로젝트 캐시 무효화: " + boardVo.getProjectId());
+			}
+			
+		} catch (Exception e) {
+			System.err.println("❌ 보드 갱신 중 오류 발생: " + e.getMessage());
+			throw e;
+		}
+	}
+
  
     /**
      * boardId를 통해 projectId를 찾아 Redis 캐시 무효화
@@ -645,6 +689,33 @@ public class TaskController {
             }
         } catch (Exception e) {
             System.err.println("❌ 캐시 무효화 중 오류 발생: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * boardId를 통해 projectId를 찾아 Redis 캐시에 새 태스크 추가
+     */
+    private void addTaskToProjectCacheByBoardId(String boardId, TaskVo taskVo, String action) {
+        if (boardId == null) {
+            System.out.println("⚠️ boardId가 null이어서 캐시 업데이트를 건너뜁니다.");
+            return;
+        }
+        
+        try {
+            BoardVo boardVo = new BoardVo();
+            boardVo.setBoardId(boardId);
+            BoardVo board = boardService.selectBoard(boardVo);
+            
+            if (board != null && board.getProjectId() != null) {
+                kanbanRedisService.addTaskToProjectCache(board.getProjectId(), taskVo);
+                System.out.println("✅ " + action + "으로 인한 프로젝트 캐시 업데이트: " + board.getProjectId());
+            } else {
+                System.out.println("⚠️ boardId로 프로젝트를 찾을 수 없어 캐시 업데이트를 건너뜁니다: " + boardId);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ 캐시 업데이트 중 오류 발생: " + e.getMessage());
+            // 실패 시 기존 방식으로 대체
+            invalidateProjectCacheByBoardId(boardId, action + " (캐시 업데이트 실패로 무효화)");
         }
     }
    

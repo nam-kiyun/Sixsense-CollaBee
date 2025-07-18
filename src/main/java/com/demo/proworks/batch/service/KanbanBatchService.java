@@ -40,7 +40,7 @@ public class KanbanBatchService {
      * 5분마다 배치 처리 실행 (운영용)
      * Redis 캐시의 태스크 이동 데이터를 데이터베이스에 반영
      */
-    @Scheduled(fixedDelay = 300000) // 5분 간격 (300초)
+    @Scheduled(fixedDelay = 30000) // 5분 간격 (300초)
     public void processBatchUpdate() {
         if (isBatchRunning) {
             System.out.println("이전 배치 처리가 아직 진행 중입니다. 건너뜁니다.");
@@ -270,6 +270,75 @@ public class KanbanBatchService {
             processBatchUpdate();
         } catch (Exception e) {
             throw new RuntimeException("수동 배치 처리 실행 실패: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 세션 종료 시 즉시 배치 처리 실행
+     * 데이터 손실 방지를 위해 모든 대기 중인 태스크를 즉시 DB에 저장
+     */
+    public void processImmediateBatch() {
+        System.out.println("🚨 즉시 배치 처리 실행 - 세션 종료로 인한 데이터 보호");
+        
+        try {
+            long queueSize = redisService.getBatchQueueSize();
+            if (queueSize == 0) {
+                System.out.println("💾 처리할 대기 태스크가 없습니다.");
+                return;
+            }
+            
+            System.out.println("💾 대기 중인 태스크 즉시 처리: " + queueSize + "개");
+            
+            // 배치 처리 큐에서 모든 태스크 가져오기
+            List<String> taskIds = redisService.popAllFromBatchQueue();
+            
+            if (taskIds.isEmpty()) {
+                System.out.println("💾 처리 중 큐가 비워졌습니다.");
+                return;
+            }
+            
+            // 동기적으로 즉시 처리 (비동기 대신 동기로 완료까지 대기)
+            int successCount = 0;
+            int failCount = 0;
+            
+            for (String taskId : taskIds) {
+                try {
+                    // Redis에서 태스크 이동 정보 조회
+                    KanbanMessage moveMessage = redisService.getTaskMove(taskId);
+                    
+                    if (moveMessage == null) {
+                        System.out.println("❌ Redis에서 태스크 정보를 찾을 수 없습니다: " + taskId);
+                        failCount++;
+                        continue;
+                    }
+                    
+                    // 데이터베이스 업데이트
+                    boolean updateResult = updateTaskInDatabase(moveMessage);
+                    
+                    if (updateResult) {
+                        // 성공하면 Redis에서 삭제
+                        redisService.deleteTaskMove(taskId);
+                        successCount++;
+                        System.out.println("✅ 즉시 처리 성공: " + taskId + " -> " + moveMessage.getToBoardId());
+                    } else {
+                        failCount++;
+                        System.err.println("❌ 즉시 처리 실패: " + taskId);
+                    }
+                    
+                } catch (Exception e) {
+                    failCount++;
+                    System.err.println("❌ 즉시 처리 중 오류: " + taskId + " - " + e.getMessage());
+                }
+            }
+            
+            totalProcessedTasks += successCount;
+            totalFailedTasks += failCount;
+            
+            System.out.println("💾 즉시 배치 처리 완료 - 성공: " + successCount + ", 실패: " + failCount);
+            
+        } catch (Exception e) {
+            System.err.println("❌ 즉시 배치 처리 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

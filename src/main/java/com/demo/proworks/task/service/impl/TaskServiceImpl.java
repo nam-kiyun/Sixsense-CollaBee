@@ -763,6 +763,9 @@ public class TaskServiceImpl implements TaskService {
 		// 더 나은 방법: 프로젝트 ID로 직접 조회하는 쿼리 추가
 		
 		TaskVo searchVo = new TaskVo();
+		// 페이징 없이 모든 데이터 조회를 위해 큰 값 설정
+		searchVo.setPageIndex(1);
+		searchVo.setPageSize(1000); // 충분히 큰 값으로 설정
 		List<TaskVo> allTasks = taskDAO.selectListTask(searchVo);
 		
 		System.out.println("TaskServiceImpl - 전체 태스크 개수: " + (allTasks != null ? allTasks.size() : 0));

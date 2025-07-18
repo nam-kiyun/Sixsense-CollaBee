@@ -55,12 +55,31 @@
 						<w2:key id="projectId" name="projectId" dataType="text"></w2:key>
 					</w2:keyInfo>
 				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dm_userInfo">
+					<w2:keyInfo>
+						<w2:key id="userId" name="userId" dataType="text"></w2:key>
+						<w2:key id="userName" name="userName" dataType="text"></w2:key>
+						<w2:key id="userImage" name="userImage" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
 				<w2:dataList baseNode="list" repeatNode="map" id="dlt_calendar_schedule" saveRemovedData="true">
 					<w2:columnInfo>
 						<w2:column id="id" name="id" dataType="text"></w2:column>
 						<w2:column id="title" name="title" dataType="text"></w2:column>
 						<w2:column id="start" name="start" dataType="text"></w2:column>
 						<w2:column id="end" name="end" dataType="text"></w2:column>
+						<w2:column id="boardId" name="boardId" dataType="text"></w2:column>
+						<w2:column id="boardTitle" name="boardTitle" dataType="text"></w2:column>
+						<w2:column id="priority" name="priority" dataType="text"></w2:column>
+						<w2:column id="tags" name="tags" dataType="text"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataList baseNode="list" repeatNode="map" id="dlt_gantt_schedule" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column id="taskId" name="taskId" dataType="text"></w2:column>
+						<w2:column id="taskTitle" name="taskTitle" dataType="text"></w2:column>
+						<w2:column id="startDate" name="startDate" dataType="text"></w2:column>
+						<w2:column id="endDate" name="endDate" dataType="text"></w2:column>
 						<w2:column id="boardId" name="boardId" dataType="text"></w2:column>
 						<w2:column id="boardTitle" name="boardTitle" dataType="text"></w2:column>
 						<w2:column id="priority" name="priority" dataType="text"></w2:column>
@@ -93,6 +112,18 @@
 		<w2:publicInfo method="" />
 		<script lazy="false" type="text/javascript"><![CDATA[
 scwin.onpageload = function () {
+    console.log("projectMainPage 페이지 로드 시작");
+    
+    // 사용자 인증 정보 확인 (메인페이지에서 전달받은 정보 사용)
+    var userId = scwin.getCurrentUserId();
+    if (!userId) {
+        console.error("사용자 인증 정보가 없습니다.");
+        console.log("메인페이지에서 사용자 정보가 전달되지 않았습니다.");
+        return;
+    }
+    
+    console.log("사용자 인증 확인 완료:", userId);
+    
     // 페이지 로드 시 데이터 바인딩
     scwin.loadProjectData();
     
@@ -101,6 +132,8 @@ scwin.onpageload = function () {
     
     // 정렬 기본값 설정
     scwin.initSortControls();
+    
+    console.log("projectMainPage 초기화 완료");
 };
 
 // 프로젝트 데이터 로드 함수
@@ -383,39 +416,31 @@ scwin.sendCardMoveMessage = function(taskId, fromBoardId, toBoardId) {
 };
 
 /**
- * 현재 사용자 ID 가져오기
+ * 현재 사용자 ID 가져오기 (dm_userInfo에서만 조회)
  */
 scwin.getCurrentUserId = function() {
     var currentUserId = null;
     
     try {
-        // 1. 프로젝트 데이터에서 사용자 ID 가져오기
-        if (scwin.currentProjectData && scwin.currentProjectData.userId) {
-            currentUserId = scwin.currentProjectData.userId;
-        }
+        console.log("현재 사용자 ID 조회 시작");
         
-        // 2. WebSquare 세션에서 가져오기
-        if (!currentUserId && typeof WebSquare !== "undefined" && WebSquare.session) {
-            currentUserId = WebSquare.session.getAttribute("userId") || WebSquare.session.getAttribute("userEmail");
-        }
-        
-        // 3. 세션 스토리지에서 가져오기
-        if (!currentUserId && typeof sessionStorage !== "undefined") {
-            currentUserId = sessionStorage.getItem("userId") || sessionStorage.getItem("userEmail");
-        }
-        
-        // 4. 기본값
-        if (!currentUserId) {
-            currentUserId = "user01"; // 임시 기본값
+        // dm_userInfo에서 가져오기 (메인페이지에서 전달받은 데이터)
+        var userInfo = $p.getComponentById("dm_userInfo").get("userId");
+        if (userInfo) {
+            currentUserId = userInfo.trim();
+            console.log("dm_userInfo에서 사용자 ID:", currentUserId);
+        } else {
+            console.error("dm_userInfo에 사용자 ID가 없습니다.");
         }
         
     } catch (e) {
         console.error("사용자 ID 가져오기 실패:", e);
-        currentUserId = "user01"; // 오류 시 기본값
+        currentUserId = null;
     }
     
     return currentUserId;
 };
+
 
 /**
  * 메시지로부터 카드 위치 업데이트 (실시간 동기화 핵심 로직)
@@ -1019,11 +1044,15 @@ scwin.toggleTag_collabo = function(e) {
     scwin.toggleTagFilter("collabo");
 };
 
+scwin.toggleTag_untagged = function(e) {
+    scwin.toggleTagFilter("untagged");
+};
+
 /**
  * 모든 태그 선택/해제 토글
  */
 scwin.selectAllTags = function() {
-    var allTags = ["dev", "test", "doc", "plan", "analytics", "collabo"];
+    var allTags = ["dev", "test", "doc", "plan", "analytics", "collabo", "untagged"];
     
     // 현재 모든 태그가 선택되어 있는지 확인
     var isAllSelected = allTags.every(function(tag) {
@@ -1213,9 +1242,19 @@ scwin.filterBoardTasksLocally = function(boardId) {
 scwin.isTaskMatchesTags = function(task, selectedTags) {
     var taskTags = task.tags;
     
-    // 태스크에 태그가 없으면 매칭 안됨
+    // 태그 필터가 없으면 모든 태스크 표시 (전체 선택 상태)
+    if (!selectedTags || selectedTags.length === 0) {
+        return true;
+    }
+    
+    // 태스크에 태그가 없는 경우 처리
     if (!taskTags || taskTags.trim() === "") {
-        return false;
+        // "untagged" 옵션이 선택되었거나, 모든 태그가 선택된 상태이면 표시
+        var allTags = ["dev", "test", "doc", "plan", "analytics", "collabo", "untagged"];
+        var isAllTagsSelected = allTags.every(function(tag) {
+            return selectedTags.indexOf(tag) > -1;
+        });
+        return selectedTags.indexOf("untagged") > -1 || isAllTagsSelected;
     }
     
     // 태스크의 태그들을 배열로 변환
@@ -1456,13 +1495,35 @@ scwin.board_onclick = function(e) {
     // 칸반 보드 표시
     var kanbanBoard = $p.getComponentById("grp_kanban_board");
     if (kanbanBoard) {
-        kanbanBoard.show();
+        kanbanBoard.setStyle("display","flex");
+        kanbanBoard.show("");
     }
 };
 
-// 목록 보기 버튼 클릭
+// 목록 보기 (간트차트) 버튼 클릭
 scwin.list_onclick = function(e) {
-    alert("목록 보기 기능은 준비 중입니다.");
+    console.log("List 버튼 클릭됨");
+    
+    // 게시판 숨기기
+    var kanbanBoard = $p.getComponentById("grp_kanban_board");
+    if (kanbanBoard) {
+        kanbanBoard.hide();
+    }
+    
+    // 캘린더 숨기기
+    var calendarView = $p.getComponentById("grp_calendar_view");
+    if (calendarView) {
+        calendarView.hide();
+    }
+    
+    // 간트차트 보이기
+    var ganttView = $p.getComponentById("grp_gantt_view");
+    if (ganttView) {
+        ganttView.show();
+    }
+    
+    // 간트차트 데이터 로딩
+    scwin.loadGanttData();
 };
 
 // 캘린더 보기 버튼 클릭
@@ -3656,10 +3717,22 @@ scwin.new_task_onclick = function (e) {
     
     console.log("모달 열기 - taskId:", taskId, "projectId:", projectId, "popupName:", popupName);
     
-    // 사용자 정보 가져오기 (세션에는 userId만 있음)
-    var userId = WebSquare.session.getAttribute("userId");
-    var userName = userId || "사용자"; // userId를 userName으로 사용
+    // 사용자 정보 가져오기 (안전한 방법으로)
+    var userId = scwin.getCurrentUserId();
+    if (!userId) {
+        console.error("사용자 정보를 가져올 수 없어 태스크 생성이 불가능합니다.");
+        alert("로그인 정보를 확인할 수 없습니다. 페이지를 새로고침해주세요.");
+        return;
+    }
+    
+    var userName = userId; // userId를 userName으로 사용
     var userImage = "/InsWebApp/images/default-avatar.png"; // 기본 아바타 이미지
+    
+    console.log("태스크 생성을 위한 사용자 정보:", {
+        userId: userId,
+        userName: userName,
+        userImage: userImage
+    });
     
     var param = {
         "type": "json", 
@@ -3691,7 +3764,8 @@ scwin.new_task_onclick = function (e) {
     // 팝업 생성
     $p.openPopup("/InsWebApp/ui/project/taskModal.xml", options);
 
-};]]></script>
+};
+]]></script>
 		<style type="text/css"><![CDATA[
 /* 전체 컨테이너 */
 .project-main-container {
@@ -4487,27 +4561,27 @@ scwin.new_task_onclick = function (e) {
 				<xf:group class="header-actions">
 					<!-- GitHub 연동 버튼 - 제일 왼쪽에 배치 -->
 					<xf:trigger type="button" class="btn-github btn-github-main" id="btn_github" ev:onclick="scwin.github_onclick">
-						<xf:label><![CDATA[🐙 GitHub]]></xf:label>
+						<xf:label><![CDATA[GitHub]]></xf:label>
 					</xf:trigger>
 
 					<xf:trigger type="button" class="btn-github" id="btn_filter" ev:onclick="scwin.filter_onclick">
-						<xf:label><![CDATA[🔽 Filter]]></xf:label>
+						<xf:label><![CDATA[필터]]></xf:label>
 					</xf:trigger>
 
 					<xf:trigger type="button" class="btn-github" id="btn_sort" ev:onclick="scwin.sort_onclick">
-						<xf:label><![CDATA[📊 Sort]]></xf:label>
+						<xf:label><![CDATA[정렬]]></xf:label>
 					</xf:trigger>
 
 					<xf:trigger type="button" class="btn-github" id="btn_board" ev:onclick="scwin.board_onclick">
-						<xf:label><![CDATA[Board]]></xf:label>
+						<xf:label><![CDATA[칸반보드]]></xf:label>
 					</xf:trigger>
 
 					<xf:trigger type="button" class="btn-github" id="btn_list" ev:onclick="scwin.list_onclick">
-						<xf:label><![CDATA[List]]></xf:label>
+						<xf:label><![CDATA[간트차트]]></xf:label>
 					</xf:trigger>
 
 					<xf:trigger type="button" class="btn-github" id="btn_calendar" ev:onclick="scwin.calendar_onclick">
-						<xf:label><![CDATA[Calendar]]></xf:label>
+						<xf:label><![CDATA[캘린더]]></xf:label>
 					</xf:trigger>
 
 					<xf:trigger type="button" class="btn-primary" id="btn_new_task" ev:onclick="scwin.new_task_onclick">
@@ -4515,7 +4589,7 @@ scwin.new_task_onclick = function (e) {
 					</xf:trigger>
 
 					<xf:trigger type="button" class="btn-github" id="btn_settings" ev:onclick="scwin.btn_settings_onclick">
-						<xf:label><![CDATA[⚙️ 프로젝트 설정]]></xf:label>
+						<xf:label><![CDATA[프로젝트 설정]]></xf:label>
 					</xf:trigger>
 				</xf:group>
 			</xf:group>
@@ -4585,6 +4659,9 @@ scwin.new_task_onclick = function (e) {
 						<xf:trigger type="button" class="btn-tag" id="btn_tag_collabo" ev:onclick="scwin.toggleTag_collabo">
 							<xf:label>👥 협업</xf:label>
 						</xf:trigger>
+						<xf:trigger type="button" class="btn-tag" id="btn_tag_untagged" ev:onclick="scwin.toggleTag_untagged">
+							<xf:label>🏷️ 태그없음</xf:label>
+						</xf:trigger>
 					</xf:group>
 				</xf:group>
 			</xf:group>
@@ -4607,6 +4684,23 @@ scwin.new_task_onclick = function (e) {
 					editable="true"
 					selectable="true">
 				</w2:scheduleCalendar>
+			</xf:group>
+
+			<!-- 간트차트 영역 -->
+			<xf:group id="grp_gantt_view" class="gantt-container" style="display:none;">
+				<w2:fwGanttChart id="gantt_chart" 
+					style="width: 90%; height: 600px; margin: 10px auto;"
+					ref="dlt_gantt_schedule"
+					processNode="boardTitle"
+					taskNode="taskTitle"
+					startDateNode="startDate"
+					endDateNode="endDate"
+					taskIdNode="taskId"
+					dateformat="yyyy-mm-dd"
+					timeBase="date"
+					title="프로젝트 일정 간트차트"
+					version="v3">
+				</w2:fwGanttChart>
 			</xf:group>
 		</xf:group>
 	</body>
