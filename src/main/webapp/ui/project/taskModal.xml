@@ -156,8 +156,8 @@ scwin.onpageload = function () {
     const generateUniqueId = (prefix) => {
         return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     };
-    const group = $p.getComponentById("mf_exa_popup_header"); // 헤더의 버튼 영역
-    const close = $p.getComponentById("mf_exa_popup_header_control");
+    const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_header"); // 헤더의 버튼 영역
+    const close = $p.getComponentById("mf_wfr_mainContent_exa_popup_header_control");
     const btnGroupId = generateUniqueId("btn_group");
     const saveId = generateUniqueId("btn_save");
     const versionId = generateUniqueId("btn_version");
@@ -167,6 +167,8 @@ scwin.onpageload = function () {
         className: "header-btn-group",
     }, group);
 
+console.log(group);
+console.log(btnGroup);
 
     if (btnGroup?.render) {
         group.insertBefore(btnGroup.render, close);
@@ -227,8 +229,8 @@ scwin.onpageload = function () {
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //문서 내용 불러오기
     scwin.taskInfo = "";
-    scwin.taskId = 1;
-    scwin.projectId = 7;
+    scwin.taskId = userInfo.taskId;
+    scwin.projectId = userInfo.projectId;
     scwin.getTask(scwin.taskId, scwin.projectId);
 
     // setTimeout(function () {
@@ -278,7 +280,7 @@ scwin.changeEditor = function () {
     }
 
     // CKEditor 인스턴스 직접 접근
-    const ckInstance = CKEDITOR.instances["mf_exa_popup_wframe_contents_editor_"];
+    const ckInstance = CKEDITOR.instances["mf_wfr_mainContent_exa_popup_wframe_contents_editor_"];
     Object.keys(CKEDITOR.instances).forEach(key => {
         console.log("인스턴스 ID:", key);
     });
@@ -428,7 +430,7 @@ scwin.versionPopup = function (e) {
         };
 
         // 팝업 생성
-        $p.openPopup("./versionModal.xml", options);
+        $p.openPopup("/InsWebApp/ui/project/versionModal.xml", options);
     }
 };
 
@@ -729,7 +731,7 @@ scwin.initializeChatWebSocket = function () {
                     case 'delete-message':
                         console.log("삭제 메시지 수신:", data.messageId);
 
-                        const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+                        const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
                         const children = group.getChildren ? group.getChildren() : [];
                         // console.log("group: " + group);
                         // console.log("children: " + children);
@@ -827,7 +829,7 @@ scwin.comment_send_button_onclick = function () {
 
 //화면에 댓글 추가
 scwin.addChatMessage = function (userName, message, time = "", isMine = false, image, commentId = 0, insertBeforeComp) {
-    const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+    const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
     const generateUniqueId = (prefix) => {
         return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     };
@@ -936,7 +938,7 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
 
 //삭제할 때 날짜와 함께 삭제
 scwin.deleteChat = function (chat) {
-    const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+    const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
 
     // 그룹 내부의 자식 컴포넌트 목록 가져오기
     const children = group.getChildren();
@@ -966,7 +968,7 @@ scwin.deleteChat = function (chat) {
 
 //화면에 날짜 표시
 scwin.addChatDate = function (dateText, insertBeforeComp) {
-    const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+    const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
     const wrapperId = "chat_date_" + Date.now();
 
     const dateWrapper = $p.dynamicCreate(wrapperId, "span", {
@@ -986,7 +988,7 @@ scwin.addChatDate = function (dateText, insertBeforeComp) {
 scwin.sbm_comment_get_submitdone = function (e) {
     const responseData = e.responseJSON;
     const commentList = responseData.elData?.commentVoList ?? [];
-    const group = $p.getComponentById("mf_exa_popup_wframe_comment_main_group");
+    const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
     let firstChild = group.render?.children[0] ?? null;
     let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
 

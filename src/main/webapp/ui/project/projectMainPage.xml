@@ -122,7 +122,6 @@ scwin.wsUrls = null; // WebSocket URL 목록 저장
  * WebSocket 연결 초기화
  */
 scwin.initWebSocket = function() {
-    debugger;
     console.log("WebSocket 연결 테스트 시작");
     
     // 디바운싱 타이머 변수
@@ -3626,10 +3625,10 @@ scwin.new_task_onclick = function (e) {
     var options = {
         id: "exa_popup",
         type: "wframePopup",
-        width: "1300",
-        height: "750",
-        top: "140",
-        left: "350",
+        width: "1350",
+        height: "800",
+        top: "115",
+        left: "330",
         popupName: popupName,
         modal: false,
         closeAction: "scwin.popup_closeAction",
