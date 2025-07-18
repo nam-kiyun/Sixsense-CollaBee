@@ -226,6 +226,7 @@ public class UserController {
 		String rawPassword = userVo.getPassword();
 		String encodedPassword = passwordEncoder.encode(rawPassword);
 		userVo.setPassword(encodedPassword);
+		userVo.setProfileImageUrl("https://collabee.s3.ap-northeast-2.amazonaws.com/defaultUserImage.png");
 		userService.insertUser(userVo);
 	}
 
