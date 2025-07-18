@@ -11,11 +11,11 @@
 }
 
 .signup-group {
-    gap: 24px;
+    gap: 35px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-	margin-bottom: 10px;
+	margin-bottom: 30px;
 }
 
 .error-text{
@@ -24,4 +24,13 @@
 	text-align: left;
 	color: red;
 	margin-top: 5px;
+}
+
+.auth-button{
+	width: 25%;
+	height: 50px;
+	border-radius: 6px;
+	background-color: #FFB823;
+	outline: none;
+	border: none;
 }

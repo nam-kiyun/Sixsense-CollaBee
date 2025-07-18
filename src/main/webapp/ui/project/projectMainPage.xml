@@ -3660,7 +3660,7 @@ scwin.new_task_onclick = function (e) {
     var userId = WebSquare.session.getAttribute("userId");
     var userName = userId || "사용자"; // userId를 userName으로 사용
     var userImage = "/InsWebApp/images/default-avatar.png"; // 기본 아바타 이미지
-    
+
     var param = {
         "type": "json", 
         "name": "userInfo", 

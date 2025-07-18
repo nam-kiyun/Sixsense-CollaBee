@@ -74,11 +74,18 @@
 						<w2:column dataType="text" name="name6" id="num"></w2:column>
 					</w2:columnInfo>
 				</w2:dataList>
+				<w2:dataMap baseNode="map" id="dma_userInfo">
+					<w2:keyInfo>
+						<w2:key dataType="text" name="사용자명" id="userName"></w2:key>
+						<w2:key dataType="text" name="사용자ID" id="userId"></w2:key>
+						<w2:key dataType="text" name="사용자 이미지" id="profileImageUrl"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
 			</w2:dataCollection>
 			<w2:workflowCollection />
-			<xf:submission id="sbm_comment_create" action="/InsWebApp/comment/create.pwkjson" method="post"
-				mediatype="application/json" ref='data:json,{"id":"dma_comment","key":"elData"}' target="" encoding="UTF-8" instance="" replace=""
-				errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_create_submitdone"
+			<xf:submission id="sbm_comment_create" action="/InsWebApp/comment/create.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dma_comment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_create_submitdone"
 				ev:submiterror="scwin.sbm_comment_create_submiterror" abortTrigger="">
 			</xf:submission>
 			<xf:submission id="sbm_comment_get" action="/InsWebApp/comment/{taskId}.pwkjson" method="post" mediatype="application/json"
@@ -86,14 +93,18 @@
 				customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_get_submitdone"
 				ev:submiterror="scwin.sbm_comment_get_submiterror" abortTrigger="">
 			</xf:submission>
-			<xf:submission id="sbm_comment_delete" action="/InsWebApp/comment/delete.pwkjson" method="post"
-				mediatype="application/json" ref='data:json,{"id":"dma_comment","key":"elData"}' target='' encoding="UTF-8" instance="" replace=""
-				errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_delete_submitdone"
+			<xf:submission id="sbm_comment_delete" action="/InsWebApp/comment/delete.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dma_comment","key":"elData"}' target='' encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_delete_submitdone"
 				ev:submiterror="scwin.sbm_comment_delete_submiterror" abortTrigger="">
 			</xf:submission>
-			<xf:submission id="sbm_task_get" action="/InsWebApp/task/{taskId}.pwkjson" method="post" mediatype="application/json"
-				ref="" target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
+			<xf:submission id="sbm_task_get" action="/InsWebApp/task/{taskId}.pwkjson" method="post" mediatype="application/json" ref=""
+				target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
 				ev:submitdone="scwin.sbm_task_get_submitdone" ev:submiterror="scwin.sbm_task_get_submiterror" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json" ref="" target='data:json,{"id":"dma_userInfo","key":"userInfo"}' encoding="UTF-8"
+				instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone=""
+				ev:submiterror="" abortTrigger="">
 			</xf:submission>
 		</xf:model>
 		<w2:layoutInfo />
@@ -167,8 +178,6 @@ scwin.onpageload = function () {
         className: "header-btn-group",
     }, group);
 
-console.log(group);
-console.log(btnGroup);
 
     if (btnGroup?.render) {
         group.insertBefore(btnGroup.render, close);
@@ -223,8 +232,7 @@ console.log(btnGroup);
     scwin.defaultImage = "https://raw.githubusercontent.com/dorazi0423/test/refs/heads/main/group1.png";
     currentUser.userId = userInfo.userId;
     currentUser.userName = userInfo.userName;
-    currentUser.userImage = userInfo.userImage;
-
+    currentUser.userImage = userInfo.userImage
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //문서 내용 불러오기
@@ -988,9 +996,14 @@ scwin.addChatDate = function (dateText, insertBeforeComp) {
 scwin.sbm_comment_get_submitdone = function (e) {
     const responseData = e.responseJSON;
     const commentList = responseData.elData?.commentVoList ?? [];
+    const userInfo = responseData.userHeader
     const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
     let firstChild = group.render?.children[0] ?? null;
     let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
+
+    currentUser.userId = userInfo.userId;
+    currentUser.userName = userInfo.userName;
+    currentUser.userImage = userInfo.userImage
 
 
     if (commentList.length === 0) {
@@ -1019,6 +1032,7 @@ scwin.sbm_comment_get_submitdone = function (e) {
         const currentDate = scwin.formatDate(comment.createdAt);
         const nextDate = nextComment ? scwin.formatDate(nextComment.createdAt) : null;
         const isMine = (comment.userId === currentUser.userId);
+        console.log(currentDate);
 
         // 댓글 삽입
         const commentComp = scwin.addChatMessage(
@@ -1031,7 +1045,7 @@ scwin.sbm_comment_get_submitdone = function (e) {
             insertBeforeTarget
         );
         insertBeforeTarget = commentComp;
-
+        
         // 다음 댓글이 없거나 날짜가 다르면 → 지금 날짜를 현재 댓글 앞에 삽입
         if (currentDate !== nextDate || i === commentList.length - 1) {
             const dateComp = scwin.addChatDate(currentDate, insertBeforeTarget);
