@@ -23,7 +23,7 @@ body{
 }
 
 .signup-group {
-    gap: 20px;
+    gap: 35px;
     display: flex;
     flex-direction: column;
     justify-content: center;

@@ -1,50 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet href="/InsWebApp/css/auth/base.css" type="text/css"?>
 <?xml-stylesheet href="/InsWebApp/css/auth/loginPage.css" type="text/css"?>
-<html xmlns="http://www.w3.org/1999/xhtml"
-    xmlns:ev="http://www.w3.org/2001/xml-events"
-    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
-    <head>
-    	<w2:type>COMPONENT</w2:type>
-    	<w2:buildDate />
-    	<w2:MSA />
-    	<xf:model>
-    		<w2:dataCollection baseNode="map">
-    			<w2:dataMap baseNode="map" id="dma_login">
-    				<w2:keyInfo>
-    					<w2:key dataType="text" name="아이디" id="id"></w2:key>
-    					<w2:key dataType="text" name="비밀번호" id="password"></w2:key>
-    				</w2:keyInfo>
-    			</w2:dataMap>
-    			<w2:dataMap baseNode="map" id="dma_mailParam">
-    				<w2:keyInfo>
-    					<w2:key dataType="text" name="이메일" id="email"></w2:key>
-    				</w2:keyInfo>
-    			</w2:dataMap>
-    			<w2:dataMap baseNode="map" id="dma_recaptcha">
-    				<w2:keyInfo>
-    					<w2:key dataType="text" name="비밀키" id="secretKey"></w2:key>
-    					<w2:key dataType="text" name="토큰" id="token"></w2:key>
-    				</w2:keyInfo>
-    			</w2:dataMap>
-    		</w2:dataCollection>
-    		<w2:workflowCollection />
-    		<xf:submission id="sbm_login" action="/InsWebApp/user/login.pwkjson" method="post" mediatype="application/json"
-    			ref='data:json,{"id":"dma_login","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
-    			mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_login_submitdone" ev:submiterror="" abortTrigger="">
-    		</xf:submission>
-    		<xf:submission id="sbm_email" action="/InsWebApp/send/SendEmail.pwkjson" method="post" mediatype="application/json" ref="" target=""
-    			encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
-    			ev:submitdone="" ev:submiterror="" abortTrigger="">
-    		</xf:submission>
-    		<xf:submission id="sbm_recaptcha" action="/InsWebApp/user/recaptcha.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_recaptcha","key":"elData"}' target="" encoding="UTF-8"
-    			instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_rechapcher_submitdone"
-    			ev:submiterror="scwin.sbm_recaptcha_submiterror" abortTrigger="">
-    		</xf:submission>
-    	</xf:model>
-    	<w2:layoutInfo />
-    	<w2:publicInfo method="" />
-    	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare"
+	xmlns:xf="http://www.w3.org/2002/xforms">
+	<head>
+		<w2:type>COMPONENT</w2:type>
+		<w2:buildDate />
+		<w2:MSA />
+		<xf:model>
+			<w2:dataCollection baseNode="map">
+				<w2:dataMap baseNode="map" id="dma_login">
+					<w2:keyInfo>
+						<w2:key dataType="text" name="아이디" id="id"></w2:key>
+						<w2:key dataType="text" name="비밀번호" id="password"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dma_mailParam">
+					<w2:keyInfo>
+						<w2:key dataType="text" name="이메일" id="email"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dma_recaptcha">
+					<w2:keyInfo>
+						<w2:key dataType="text" name="비밀키" id="secretKey"></w2:key>
+						<w2:key dataType="text" name="토큰" id="token"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+			</w2:dataCollection>
+			<w2:workflowCollection />
+			<xf:submission id="sbm_login" action="/InsWebApp/user/login.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dma_login","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_login_submitdone" ev:submiterror="" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_email" action="/InsWebApp/send/SendEmail.pwkjson" method="post" mediatype="application/json" ref=""
+				target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
+				ev:submitdone="" ev:submiterror="" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_recaptcha" action="/InsWebApp/user/recaptcha.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dma_recaptcha","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_rechapcher_submitdone"
+				ev:submiterror="scwin.sbm_recaptcha_submiterror" abortTrigger="">
+			</xf:submission>
+		</xf:model>
+		<w2:layoutInfo />
+		<w2:publicInfo method="" />
+		<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
     scwin.onresize();
 
     //리캡챠 컴포넌트
@@ -70,6 +70,13 @@
             $p.log("Error: grecaptcha API를 찾을 수 없거나 준비되지 않았습니다. reCAPTCHA 스크립트 로딩을 확인하세요.");
         }
     }
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            scwin.login_button_onclick();
+            console.log('엔터 키가 눌렸습니다!');
+        }
+    });
 };
 
 scwin.onresize = function (e) {
@@ -145,7 +152,7 @@ scwin.login_button_onclick = async function (e) {
     let email = email_input.getValue();
     let password = password_input.getValue();
     let isValid = true;
-
+    
     // 1. 입력값 체크
     if (!email) {
         email_error_text.setValue("*이메일을 입력해주세요.");
@@ -161,6 +168,7 @@ scwin.login_button_onclick = async function (e) {
         password_error_text.setValue("");
     }
 
+    dma_login.set("password", password);
     if (!isValid) return;
 
     // 2. reCAPTCHA 완료 여부
@@ -233,74 +241,76 @@ scwin.sbm_login_submitdone = async function (e) {
     }
 };
 
-//엔터 누르면 로그인 버튼 클릭
-scwin.input_onkeyup = function (e) {
-    if (e.keyCode === 13) {
-        scwin.login_button_onclick();
-    }
-};
+// //엔터 누르면 로그인 버튼 클릭
+// scwin.input_onkeyup = function (e) {
+//     if (e.keyCode === 13) {
+//         scwin.login_button_onclick();
+//     }
+// };
 ]]></script>
-    	<style type="text/css"><![CDATA[]]></style>
-    </head>
-    <body ev:onpageload="scwin.onpageload" style="padding: 0;margin: 0;;">
-    	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
-    		style="background-color: #FFF4D6;align-items: center;justify-content: center;display: flex;height: 100%;">
+		<style type="text/css"><![CDATA[]]>
+		</style>
+	</head>
+	<body ev:onpageload="scwin.onpageload" style="padding: 0;margin: 0;;">
+		<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+			style="background-color: #FFF4D6;align-items: center;justify-content: center;display: flex;height: 100%;">
 
-    		<xf:group style="width:41.40%;height:450px;" id="signup_form" class="auth-form">
+			<xf:group style="width:41.40%;height:450px;" id="signup_form" class="auth-form">
 
-    			<xf:group style="height:55px;display:flex;flex-direction:row;" id="">
-
-
-    				<xf:image src="/InsWebApp/images/collabee_icon.jpg" style="width:51px;height:48px;display:flex;" id=""></xf:image>
-    				<w2:textbox id="" label="COLLABEE"
-    					style="width:150px;height:37px;color: #FFB823;font-size:30px;font-weight: bold;display: flex;">
-    				</w2:textbox>
-    			</xf:group>
+				<xf:group style="height:55px;display:flex;flex-direction:row;" id="">
 
 
-    			<w2:textbox id="" label="쉽고 편하게 사용가능한 COLLABEE 사용하기" style="height: 23px;color: #DAD3D3;"></w2:textbox>
-    			<xf:group style="width:60%;height:386px;" id="signup_group" class="signup-group">
-    				<xf:group style="height: 60px;" id="">
-    					<w2:textbox style="height: 23px;" id="" label="이메일"></w2:textbox>
-    					<xf:group class="input-group" id="email_group" style="">
-    						<xf:output class="fa-solid fa-envelope auth-icon" id="" label="" style="">
-    							<xf:label></xf:label>
-    						</xf:output>
-    						<xf:input class="input-group-container" id="email_input" placeholder="이메일을 입력하세요"
-    							showPlaceHolderOnReadOnly="true" style="" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus" ref="data:dma_login.id"
-    							ev:onkeyup="scwin.input_onkeyup">
-    						</xf:input>
-    					</xf:group>
-    					<w2:textbox id="email_error_text" label="" style="" class="error-text"></w2:textbox>
-    				</xf:group>
-    				<xf:group id="" style="height: 60px;">
-    					<w2:textbox id="" label="비밀번호" style="height: 23px;"></w2:textbox>
-    					<xf:group class="input-group" id="password_group" style="">
-    						<xf:output class="fa-solid fa-lock auth-icon" id="" label="" style="">
-    							<xf:label></xf:label>
-    						</xf:output>
-    						<xf:secret class="input-group-container" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus"
-    							id="password_input" placeholder="비밀번호를 입력하세요" style="" ref="data:dma_login.password" ev:onkeyup="scwin.input_onkeyup">
-    						</xf:secret>
-    					</xf:group>
-    					<w2:textbox id="password_error_text" label="" style="" class="error-text"></w2:textbox>
-    				</xf:group>
-    				<w2:span label="" style="" id="recaptcha-container" class="recaptcha-span"></w2:span>
-    			</xf:group>
-    			<xf:trigger type="button" style="" id="login_button" class="auth-button" ev:onclick="scwin.login_button_onclick">
-    				<xf:label><![CDATA[로그인]]></xf:label>
-    			</xf:trigger>
-    			<xf:group style="height:54px;" id="" class="button-group">
-    				<xf:trigger style="width: 80px;height: 23px;" id="signup_button" type="button" class="login-button"
-    					ev:onclick="scwin.signup_button_onclick">
-    					<xf:label><![CDATA[회원가입]]></xf:label>
-    				</xf:trigger>
-    				<xf:trigger style="width:96px;height:23px;" id="findPwd_button" type="button" class="login-button"
-    					ev:onclick="scwin.findPwd_button_onclick">
-    					<xf:label><![CDATA[비밀번호찾기]]></xf:label>
-    				</xf:trigger>
-    			</xf:group>
-    		</xf:group>
-    	</xf:group>
-    </body>
+					<xf:image src="/InsWebApp/images/collabee_icon.jpg" style="width:51px;height:48px;display:flex;" id=""></xf:image>
+					<w2:textbox id="" label="COLLABEE"
+						style="width:150px;height:37px;color: #FFB823;font-size:30px;font-weight: bold;display: flex;">
+					</w2:textbox>
+				</xf:group>
+
+
+				<w2:textbox id="" label="쉽고 편하게 사용가능한 COLLABEE 사용하기" style="height: 23px;color: #DAD3D3;"></w2:textbox>
+				<xf:group style="width:60%;height:386px;" id="signup_group" class="signup-group">
+					<xf:group style="height: 60px;" id="">
+						<w2:textbox style="height: 23px;" id="" label="이메일"></w2:textbox>
+						<xf:group class="input-group" id="email_group" style="">
+							<xf:output class="fa-solid fa-envelope auth-icon" id="" label="" style="">
+								<xf:label></xf:label>
+							</xf:output>
+							<xf:input class="input-group-container" id="email_input" placeholder="이메일을 입력하세요" showPlaceHolderOnReadOnly="true" style=""
+								ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus" ref="data:dma_login.id" ev:onkeyup="scwin.input_onkeyup">
+							</xf:input>
+						</xf:group>
+						<w2:textbox id="email_error_text" label="" style="" class="error-text"></w2:textbox>
+					</xf:group>
+					<xf:group id="" style="height: 60px;">
+						<w2:textbox id="" label="비밀번호" style="height: 23px;"></w2:textbox>
+						<xf:group class="input-group" id="password_group" style="">
+							<xf:output class="fa-solid fa-lock auth-icon" id="" label="" style="">
+								<xf:label></xf:label>
+							</xf:output>
+							<xf:secret class="input-group-container" ev:onblur="scwin.input_onblur" ev:onfocus="scwin.input_onfocus"
+								id="password_input" placeholder="비밀번호를 입력하세요" style="" ref="data:dma_login.password" ev:onkeyup="scwin.input_onkeyup">
+							</xf:secret>
+						</xf:group>
+						<w2:textbox id="password_error_text" label="" style="" class="error-text"></w2:textbox>
+					</xf:group>
+					<xf:group>
+						<w2:span style="" label="" id="recaptcha-container" class="recaptch-span"></w2:span>
+					</xf:group>
+				</xf:group>
+				<xf:trigger type="button" style="" id="login_button" class="auth-button" ev:onclick="scwin.login_button_onclick">
+					<xf:label><![CDATA[로그인]]></xf:label>
+				</xf:trigger>
+				<xf:group style="height:54px;" id="" class="button-group">
+					<xf:trigger style="width: 80px;height: 23px;" id="signup_button" type="button" class="login-button"
+						ev:onclick="scwin.signup_button_onclick">
+						<xf:label><![CDATA[회원가입]]></xf:label>
+					</xf:trigger>
+					<xf:trigger style="width:96px;height:23px;" id="findPwd_button" type="button" class="login-button"
+						ev:onclick="scwin.findPwd_button_onclick">
+						<xf:label><![CDATA[비밀번호찾기]]></xf:label>
+					</xf:trigger>
+				</xf:group>
+			</xf:group>
+		</xf:group>
+	</body>
 </html>

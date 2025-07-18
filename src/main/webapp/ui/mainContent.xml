@@ -117,14 +117,14 @@ scwin.loadProjectList = function() {
 // 프로젝트 목록 조회 서브미션 완료 콜백
 scwin.sbm_selectProjectList_submitdone = function(e) {
     console.log("=== 프로젝트 목록 조회 응답 디버깅 ===");
-    console.log("📡 응답 전체 데이터:", JSON.stringify(e.responseJSON, null, 2));
+    console.log("������ 응답 전체 데이터:", JSON.stringify(e.responseJSON, null, 2));
     
     const elData = e.responseJSON.elData;
-    console.log("📋 elData:", JSON.stringify(elData, null, 2));
+    console.log("������ elData:", JSON.stringify(elData, null, 2));
     
     if (elData && elData.projectVoList) {
         console.log("✅ 프로젝트 목록 있음, 개수:", elData.projectVoList.length);
-        console.log("📝 첫 번째 프로젝트 샘플:", elData.projectVoList[0] ? JSON.stringify(elData.projectVoList[0], null, 2) : "없음");
+        console.log("������ 첫 번째 프로젝트 샘플:", elData.projectVoList[0] ? JSON.stringify(elData.projectVoList[0], null, 2) : "없음");
         scwin.renderProjectCards(elData.projectVoList);
     } else {
         console.log("❌ 프로젝트 목록이 없거나 비어있음");
@@ -137,8 +137,8 @@ scwin.sbm_selectProjectList_submitdone = function(e) {
 // 프로젝트 카드들을 동적으로 렌더링
 scwin.renderProjectCards = function(projectList) {
     console.log("=== 프로젝트 카드 렌더링 디버깅 ===");
-    console.log("📋 전달받은 프로젝트 리스트:", JSON.stringify(projectList, null, 2));
-    console.log("🔢 프로젝트 개수:", projectList ? projectList.length : 0);
+    console.log("������ 전달받은 프로젝트 리스트:", JSON.stringify(projectList, null, 2));
+    console.log("������ 프로젝트 개수:", projectList ? projectList.length : 0);
     
     console.log("프로젝트 카드 렌더링 시작:", projectList);
     
@@ -171,17 +171,17 @@ scwin.createProjectCard = function(project, index) {
     
     try {
         console.log("=== 프로젝트 카드 데이터 디버깅 ===");
-        console.log("📋 프로젝트 전체 데이터:", JSON.stringify(project, null, 2));
-        console.log("🆔 프로젝트 ID:", projectId);
-        console.log("📝 프로젝트명:", project.projectName);
-        console.log("📄 설명:", project.description);
-        console.log("🖼️ 이미지 URL:", project.projectImageUrl);
-        console.log("📅 생성일:", project.createdAt);
-        console.log("👤 사용자 ID:", project.userId);
-        console.log("👤 사용자명:", project.userName);
-        console.log("📧 이메일 발송시간:", project.emailSendTime);
-        console.log("🔢 인덱스:", index);
-        console.log("🏷️ 카드 ID:", cardId);
+        console.log("������ 프로젝트 전체 데이터:", JSON.stringify(project, null, 2));
+        console.log("������ 프로젝트 ID:", projectId);
+        console.log("������ 프로젝트명:", project.projectName);
+        console.log("������ 설명:", project.description);
+        console.log("������️ 이미지 URL:", project.projectImageUrl);
+        console.log("������ 생성일:", project.createdAt);
+        console.log("������ 사용자 ID:", project.userId);
+        console.log("������ 사용자명:", project.userName);
+        console.log("������ 이메일 발송시간:", project.emailSendTime);
+        console.log("������ 인덱스:", index);
+        console.log("������️ 카드 ID:", cardId);
         console.log("=====================================");
         
         console.log("프로젝트 카드 생성 시작:", project.projectName, "ID:", cardId);

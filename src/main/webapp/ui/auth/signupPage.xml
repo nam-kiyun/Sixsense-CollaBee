@@ -270,7 +270,7 @@ scwin.email_input_onkeyup = function (e) {
 
     				<xf:group style="height: 60px;" id="">
     					<w2:textbox style="height:23px;" id="" label="이름"></w2:textbox>
-    					<xf:group style="height:35px;border: 1px solid #DAD3D3;border-radius: 6px;box-sizing: border-box;padding-left:10px;"
+    					<xf:group style=""
     						id="name_group" class="input-group">
     						<xf:output style="width:30px;height:100%;" label="" id="" class="fa-solid fa-circle-user auth-icon">
     							<xf:label></xf:label>
@@ -289,7 +289,7 @@ scwin.email_input_onkeyup = function (e) {
     							<xf:label><![CDATA[중복확인]]></xf:label>
     						</xf:trigger>
     						<xf:group
-    							style="height:35px;border: 1px solid #DAD3D3;border-radius: 6px;box-sizing: border-box;padding-left:10px;" id="email_group"
+    							style="" id="email_group"
     							class="input-group">
     							<xf:output style="width:30px;height:100%;" id="" label="" class="fa-solid fa-envelope auth-icon">
     								<xf:label></xf:label>
@@ -304,7 +304,7 @@ scwin.email_input_onkeyup = function (e) {
     				</xf:group>
     				<xf:group style="height: 60px;" id="">
     					<w2:textbox style="height: 23px;" id="" label="비밀번호"></w2:textbox>
-    					<xf:group style="height:35px;border: 1px solid #DAD3D3;border-radius: 6px;box-sizing: border-box;padding-left:10px;"
+    					<xf:group style=""
     						id="password_group" class="input-group">
     						<xf:output style="width:30px;height:100%;" id="" label="" class="fa-solid fa-lock auth-icon">
     							<xf:label></xf:label>
@@ -317,7 +317,7 @@ scwin.email_input_onkeyup = function (e) {
     				</xf:group>
     				<xf:group style="height: 60px;" id="">
     					<w2:textbox style="height: 23px;" id="" label="비밀번호 확인"></w2:textbox>
-    					<xf:group style="height:35px;border: 1px solid #DAD3D3;border-radius: 6px;box-sizing: border-box;padding-left:10px;"
+    					<xf:group style=""
     						id="passwordCheck_group" class="input-group">
     						<xf:output style="width:30px;height:100%;" id="" label="" class="fa-solid fa-check auth-icon">
     							<xf:label></xf:label>
