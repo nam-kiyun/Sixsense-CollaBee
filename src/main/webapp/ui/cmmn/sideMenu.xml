@@ -491,6 +491,11 @@ scwin.selectProjectMenuFromExternal = function(projectId, projectData) {
 scwin.refreshProjectList = function() {
     console.log("프로젝트 목록 새로고침");
     scwin.loadUserProjects();
+    
+    // 메인 콘텐츠에도 즉시 갱신 요청
+    setTimeout(() => {
+        scwin.notifyMainContentWithProjectData();
+    }, 500);
 };
 
 scwin.btn_addProject_onclick = function(e) {
