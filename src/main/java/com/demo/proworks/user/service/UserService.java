@@ -61,7 +61,7 @@ public interface UserService {
      * @return 번호
      * @throws Exception
      */
-	public int updateUser(UserVo userVo) throws Exception;
+	public UserVo updateUser(UserVo userVo) throws Exception;
 	
     /**
      * 사용자 정보를 삭제 처리 한다.

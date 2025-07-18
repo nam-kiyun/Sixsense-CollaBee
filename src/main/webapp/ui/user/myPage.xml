@@ -22,26 +22,28 @@
     					<w2:key dataType="text" name="파일" id="fileData"></w2:key>
     				</w2:keyInfo>
     			</w2:dataMap>
+    			<w2:dataMap baseNode="map" id="dma_userInfo">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="사용자명" id="userName"></w2:key>
+    					<w2:key dataType="text" name="사용자ID" id="userId"></w2:key>
+    					<w2:key dataType="text" name="사용자 이미지" id="profileImageUrl"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
     		</w2:dataCollection>
     		<w2:workflowCollection />
+    		<xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json" ref="" target='data:json,{"id":"dma_userInfo","key":"userInfo"}' encoding="UTF-8"
+    			instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_getUserInfo_submitdone"
+    			ev:submiterror="" abortTrigger="">
+    		</xf:submission>
     	</xf:model>
     	<w2:layoutInfo />
     	<w2:publicInfo method="" />
-    	<script lazy="false" type="text/javascript"><![CDATA[
-scwin.onpageload = function () {
+    	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
     scwin.onresize();
-
+    $p.executeSubmission("sbm_getUserInfo");
+    
     //전역변수
     scwin.file = "";
-    scwin.userId = $p.getParameter("userId");
-    scwin.userName = $p.getParameter("userName");
-    scwin.profileImageUrl = $p.getParameter("profileImageUrl");
-    name_input.setValue(scwin.userName);
-    email_input.setValue(scwin.userId);
-    
-    if (scwin?.profileImageUrl) {
-        profile_button.setStyle("background-image", `url('${scwin.profileImageUrl}')`);
-    }
 }
 
 scwin.onresize = function (e) {
@@ -116,7 +118,7 @@ scwin.update_button_onclick = function (e) {
     const formData = new FormData();
 
     // 빈 값으로 필드 세팅
-    formData.append("userId", scwin.userId);
+    formData.append("userId", email_input.getValue());
     formData.append("userName", name_input.getValue());
     formData.append("password", password_input.getValue());
     formData.append("fileData", scwin.file);
@@ -135,6 +137,20 @@ scwin.update_button_onclick = function (e) {
         }
     });
 
+};
+scwin.sbm_getUserInfo_submitdone = function (e) {
+    const responseData = e.responseJSON.userVo;
+    console.log(responseData);
+
+    name_input.setValue(responseData.userName);
+    email_input.setValue(responseData.userId);
+
+    if (responseData?.profileImageUrl) {
+        profile_button.setStyle("background-image", `url('${responseData.profileImageUrl}')`);
+    }
+
+    header.getWindow().output_userName.setValue(responseData.userName);
+    header.getWindow().img_userIcon.setSrc(responseData.profileImageUrl);
 };]]></script>
     	<style type="text/css"><![CDATA[body {
     margin: 0;
@@ -323,7 +339,7 @@ scwin.update_button_onclick = function (e) {
     	<xf:group meta_snippetCategory="00_화면시작" meta_snippetName="0_01 페이지시작" meta_snippetKeyComponent="true" style="" id=""
     		class="sub_contents container-group ">
     		<xf:group style="" id="" class="header-group">
-    			<w2:pageFrame src="/InsWebApp/ui/cmmn/header.xml" style="" id="" class=""></w2:pageFrame>
+    			<w2:pageFrame src="/InsWebApp/ui/cmmn/header.xml" style="" id="header" class=""></w2:pageFrame>
     		</xf:group>
     		<xf:group style="" id="" class="main-group">
     			<xf:group style="" id="form_group" class="form-group">
