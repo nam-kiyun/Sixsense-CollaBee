@@ -3,6 +3,8 @@ package com.demo.proworks.redis.service;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,35 @@ public class KanbanRedisService {
         // @JsonFilter 어노테이션 무시 설정
         this.objectMapper.configure(MapperFeature.USE_ANNOTATIONS, false);
         this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+    
+    /**
+     * 서버 시작 시 Redis 캐시 초기화
+     * 이전 서버 실행의 오래된 캐시 데이터를 제거하여 데이터 일관성 보장
+     */
+    @PostConstruct
+    public void initializeCache() {
+        System.out.println("🚀 서버 시작 - Redis 캐시 초기화 시작");
+        try {
+            // 프로젝트 관련 캐시 삭제
+            deleteKeysByPattern("kanban:project:*");
+            
+            // 배치 큐 정리
+            long queueSize = getBatchQueueSize();
+            if (queueSize > 0) {
+                kanbanRedisTemplate.delete(BATCH_QUEUE_KEY);
+                System.out.println("🧹 배치 큐 정리 완료: " + queueSize + "개 항목 삭제");
+            }
+            
+            // 만료된 태스크 이동 데이터 정리
+            deleteKeysByPattern(TASK_MOVE_KEY + "*");
+            
+            System.out.println("✅ 서버 시작 시 Redis 캐시 초기화 완료 - 새로운 세션에서 최신 DB 데이터로 시작됩니다");
+            
+        } catch (Exception e) {
+            System.err.println("❌ 서버 시작 시 Redis 캐시 초기화 실패: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     // Redis 키 상수
@@ -705,6 +736,28 @@ public class KanbanRedisService {
             System.out.println("🗑️ 프로젝트 캐시 무효화 완료: " + projectId);
         } catch (Exception e) {
             System.err.println("❌ 프로젝트 캐시 무효화 실패: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 프로젝트 태스크 캐시에 새 태스크 추가 (캐시 무효화 대신 사용)
+     * 
+     * 주의: 현재는 캐시 데이터 불일치 문제가 있어 캐시 무효화로 처리
+     * TODO: 향후 캐시 동기화 로직 개선 필요
+     */
+    public void addTaskToProjectCache(String projectId, Object taskData) {
+        try {
+            System.out.println("🔄 캐시 데이터 불일치 감지 - 캐시 무효화로 처리: " + projectId);
+            System.out.println("📝 추가하려는 태스크: " + objectMapper.writeValueAsString(taskData));
+            
+            // 현재는 캐시 무효화로 처리하여 다음 조회 시 DB에서 최신 데이터 로드
+            invalidateProjectCache(projectId);
+            
+            System.out.println("✅ 캐시 무효화 완료 - 다음 조회 시 최신 DB 데이터로 캐시 재생성됩니다: " + projectId);
+            
+        } catch (Exception e) {
+            System.err.println("❌ 캐시 처리 실패: " + e.getMessage());
+            invalidateProjectCache(projectId);
         }
     }
 

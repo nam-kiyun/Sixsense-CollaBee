@@ -142,9 +142,17 @@ scwin.updateMainContentUserInfo = function () {
                 const userName = dm_userInfo.get("userName");
                 const userId = dm_userInfo.get("userId");
                 
+                console.log("메인페이지에서 가져온 사용자 정보:");
+                console.log("- userName:", userName);
+                console.log("- userId:", userId);
+                
                 // 사용자 정보 업데이트
                 mainContentWindow.dm_userInfo.set("userName", userName);
                 mainContentWindow.dm_userInfo.set("userId", userId);
+                
+                console.log("하위 콘텐츠로 전달한 사용자 정보:");
+                console.log("- userName:", userName);
+                console.log("- userId:", userId);
                 
                 // 프로젝트 조회 파라미터도 업데이트
                 if (mainContentWindow.dmp_projectVo) {

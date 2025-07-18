@@ -12,6 +12,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.demo.proworks.redis.service.KanbanRedisService;
 import com.demo.proworks.websocket.message.KanbanMessage;
+import com.demo.proworks.batch.service.KanbanBatchService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -28,6 +29,10 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 	// Redis 서비스 의존성 주입
 	@Autowired
 	private KanbanRedisService kanbanRedisService;
+	
+	// 배치 서비스 의존성 주입
+	@Autowired
+	private KanbanBatchService kanbanBatchService;
 
 	// 활성 세션 관리 (세션ID -> WebSocketSession)
 	private final ConcurrentHashMap<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
@@ -74,17 +79,6 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 		}
 	}
 
-	@Override
-	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-		String sessionId = session.getId();
-		sessions.remove(sessionId);
-
-		// 사용자 세션 정보도 제거
-		userSessions.entrySet().removeIf(entry -> entry.getValue().equals(sessionId));
-
-		System.out.println("WebSocket 연결 종료: " + sessionId);
-		System.out.println("현재 활성 세션 수: " + sessions.size());
-	}
 
 	@Override
 	public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
@@ -226,6 +220,42 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 		});
 
 		System.out.println("메시지 브로드캐스트 완료: " + sessions.size() + "개 세션");
+	}
+
+	/**
+	 * WebSocket 연결 해제 처리
+	 */
+	@Override
+	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+		String sessionId = session.getId();
+		
+		// 세션 제거
+		sessions.remove(sessionId);
+		
+		// 사용자 세션 매핑에서도 제거
+		userSessions.entrySet().removeIf(entry -> entry.getValue().equals(sessionId));
+		
+		System.out.println("WebSocket 연결 해제: " + sessionId);
+		System.out.println("현재 활성 세션 수: " + sessions.size());
+		
+		// 모든 사용자가 나가면 데이터 보호 후 캐시 무효화
+		if (sessions.size() == 0) {
+			System.out.println("🗑️ 모든 사용자 연결 해제 - 데이터 보호 및 캐시 무효화 시작");
+			try {
+				// 1단계: 미처리된 태스크 이동 데이터를 즉시 DB에 저장 (데이터 손실 방지)
+				System.out.println("💾 1단계: 미처리 데이터 즉시 DB 저장");
+				kanbanBatchService.processImmediateBatch();
+				
+				// 2단계: 모든 프로젝트의 캐시 무효화
+				System.out.println("🗑️ 2단계: 프로젝트 캐시 무효화");
+				kanbanRedisService.deleteKeysByPattern("kanban:project:*");
+				
+				System.out.println("✅ 데이터 보호 및 캐시 무효화 완료 - 다음 접속 시 최신 DB 데이터로 로드됩니다");
+			} catch (Exception e) {
+				System.err.println("❌ 데이터 보호 및 캐시 무효화 실패: " + e.getMessage());
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/**
