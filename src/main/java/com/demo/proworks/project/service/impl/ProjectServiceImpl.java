@@ -56,7 +56,7 @@ import com.amazonaws.services.s3.model.DeleteObjectRequest;
  * 
  */
 @Service("projectServiceImpl")
-@EnableScheduling
+//@EnableScheduling
 public class ProjectServiceImpl implements ProjectService {
 
     private Set<String> sentTodayTasks = new HashSet<>();
@@ -436,7 +436,7 @@ public class ProjectServiceImpl implements ProjectService {
 	}
 	
 	@Override
-	@Scheduled(cron = "0 */5 * * * *")
+	@Scheduled(cron = "0 0 * * * *")
 	public void sendTaskReminder() throws Exception {
 		try {
 			Calendar cal = Calendar.getInstance();
