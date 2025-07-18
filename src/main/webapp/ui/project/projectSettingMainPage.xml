@@ -30,18 +30,18 @@
         <w2:publicInfo method=""/>
         <script lazy="false" type="text/javascript"><![CDATA[
 scwin.onpageload = function() {
+    // taskModal과 동일한 방식으로 파라미터 받기
+    let projectInfo = $p.getParameter("projectInfo");
     
-    
-    // URL 파라미터에서 project_id 받기
-    scwin.projectId = $p.getParameter("project_id");
-    
-    
-    // project_id가 없으면 사용자에게 입력 요청
-    if (!scwin.projectId) {
-        scwin.requestProjectId();
-    } else {
+    if (projectInfo && projectInfo.projectId) {
+        scwin.projectId = projectInfo.projectId;
+        console.log("ProjectSettingMainPage - 받은 projectId:", scwin.projectId);
+        
         // 기본적으로 세부사항 페이지 표시
         scwin.loadSettingContent("projectSettingDetail");
+    } else {
+        console.log("ProjectSettingMainPage - projectId가 없어서 입력 요청");
+        scwin.requestProjectId();
     }
 };
 
@@ -85,25 +85,32 @@ scwin.loadSettingContent = function (menuType) {
 
        
 
+        // projectId가 없으면 로딩하지 않음
+        if (!scwin.projectId) {
+            console.log("loadSettingContent - projectId가 없어서 로딩 중단");
+            return false;
+        }
+
         switch (menuType) {
             case "projectSettingDetail":
-                srcPath = "/InsWebApp/ui/project/projectSettingDetailPage.xml?project_id=" + scwin.projectId;
+                srcPath = "/InsWebApp/ui/project/projectSettingDetailPage.xml?projectId=" + scwin.projectId;
                 selectedMenu = "detail";
                 break;
             case "projectSettingAccess":
-                srcPath = "/InsWebApp/ui/project/projectSettingAccessPage.xml?project_id=" + scwin.projectId;
+                srcPath = "/InsWebApp/ui/project/projectSettingAccessPage.xml?projectId=" + scwin.projectId;
                 selectedMenu = "access";
                 break;
             /* case "projectSettingGithub":
-                srcPath = "/InsWebApp/ui/project/projectSettingGithubPage.xml?project_id=" + scwin.projectId;
+                srcPath = "/InsWebApp/ui/project/projectSettingGithubPage.xml?projectId=" + scwin.projectId;
                 selectedMenu = "github";
                 break; */
             default:
-                srcPath = "/InsWebApp/ui/project/projectSettingDetailPage.xml?project_id=" + scwin.projectId;
+                srcPath = "/InsWebApp/ui/project/projectSettingDetailPage.xml?projectId=" + scwin.projectId;
                 selectedMenu = "detail";
-                
                 break;
         }
+
+        console.log("loadSettingContent - 로딩할 경로:", srcPath);
 
        
 
@@ -116,22 +123,21 @@ scwin.loadSettingContent = function (menuType) {
 
             // 변경 후 확인
             setTimeout(function () {
-                
+                console.log("loadSettingContent - 콘텐츠 로딩 완료:", selectedMenu);
             }, 100);
 
         } else {
-           
+            console.log("loadSettingContent - wfr_settingContent를 찾을 수 없음");
             return false;
         }
 
         // 현재 페이지 상태 업데이트
         dm_main.set("currentPage", selectedMenu);
 
-        
         return true;
 
     } catch (e) {
-        
+        console.error("loadSettingContent 오류:", e);
         return false;
     }
 };
@@ -197,24 +203,24 @@ scwin.wfr_header_onready = function() {
 ]]></script>
     </head>
     <body ev:onpageload="scwin.onpageload">
-        <!-- 전체 페이지 컨테이너 (mainPage.xml 스타일과 동일) -->
-        <xf:group style="display:flex;flex-direction:column;margin:0;padding:0;" id="grp_mainContainer">
+        <!-- 전체 페이지 컨테이너 (모달용 레이아웃) -->
+        <xf:group style="display:flex;flex-direction:column;margin:0;padding:0;height:100vh;" id="grp_mainContainer">
             
-            <!-- 헤더 영역 -->
-            <xf:group style="width:100%;position:fixed;top:0;left:0;z-index:1000;" id="grp_headerArea">
+            <!-- 헤더 영역 (모달에서는 숨김) -->
+            <xf:group style="width:100%;position:fixed;top:0;left:0;z-index:1000;display:none;" id="grp_headerArea">
                 <w2:wframe id="wfr_header" style="width:100%;" src="/InsWebApp/ui/cmmn/header.xml" ev:onready="scwin.wfr_header_onready"/>
             </xf:group>
             
-            <!-- 메인 콘텐츠 영역 (헤더 아래) -->
-            <xf:group style="width:100%;height:calc(100vh - 100px);margin-top:100px;display:flex;" id="grp_contentArea">
+            <!-- 메인 콘텐츠 영역 (헤더 없이 전체 높이 사용) -->
+            <xf:group style="width:100%;height:100vh;display:flex;" id="grp_contentArea">
                 
                 <!-- 사이드메뉴 영역 -->
-                <xf:group style="width:303px;height:100%;position:fixed;left:0;z-index:999;" id="grp_sideMenuArea">
-                    <w2:wframe id="wfr_sideMenu" style="width:100%;" src="/InsWebApp/ui/cmmn/projectSettingSideMenu.xml" ev:onready="scwin.wfr_sideMenu_onready"/>
+                <xf:group style="width:303px;height:100%;position:relative;z-index:999;" id="grp_sideMenuArea">
+                    <w2:wframe id="wfr_sideMenu" style="width:100%;height:100%;" src="/InsWebApp/ui/cmmn/projectSettingSideMenu.xml" ev:onready="scwin.wfr_sideMenu_onready"/>
                 </xf:group>
                 
                 <!-- 설정 콘텐츠 -->
-                <xf:group style="margin-left:303px;width:calc(100% - 303px);background-color:#f5f5f5;border-left:1px solid #000000;height:100%;overflow-y:auto;" id="grp_settingContent">
+                <xf:group style="width:calc(100% - 303px);background-color:#f5f5f5;border-left:1px solid #000000;height:100%;" id="grp_settingContent">
                     <w2:wframe id="wfr_settingContent" style="width:100%;height:100%;" src="/InsWebApp/ui/project/projectSettingDetailPage.xml" ev:onready="scwin.wfr_settingContent_onready"/>
                 </xf:group>
                 
