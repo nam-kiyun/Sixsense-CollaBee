@@ -171,14 +171,6 @@ scwin.updateProjectName = function(projectName) {
             id="grp_settingSideMenu">
             
             <!-- 프로젝트 정보 섹션 -->
-            <xf:group style="margin-bottom:32px;padding:0 24px;" id="grp_projectInfo">
-                <!-- 프로젝트명 표시 -->
-                <xf:output style="color:#000000;font-size:20px;font-family:Inter,sans-serif;font-weight:600;margin-bottom:8px;" 
-                           ref="dm_settingSideMenu.projectName" id="output_projectName"/>
-                <!-- <xf:output style="color:#666666;font-size:14px;font-family:Inter,sans-serif;font-weight:400;" id="output_settingLabel">
-                    <xf:label><![CDATA[프로젝트 설정]]></xf:label>
-                </xf:output> -->
-            </xf:group>
             
             <!-- 설정 메뉴 섹션 -->
             <xf:group style="margin-bottom:20px;" id="grp_settingSection">
