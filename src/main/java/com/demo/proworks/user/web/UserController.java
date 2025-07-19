@@ -39,6 +39,8 @@ import com.inswave.elfw.annotation.ElService;
 import com.inswave.elfw.log.AppLog;
 import com.inswave.elfw.login.LoginInfo;
 import com.inswave.elfw.login.LoginProcessor;
+import org.springframework.web.bind.annotation.RequestMethod;
+import com.inswave.elfw.annotation.ElValidator;
 
 /**
  * @subject : 사용자 정보 관련 처리를 담당하는 컨트롤러
@@ -97,6 +99,22 @@ public class UserController {
 		}
 
 	}
+	
+	/**
+	 * 로그인 폼 페이지를 로드한다.
+	 * @param loginVo 로그인 정보 LoginVo
+	 * @param request 요청 정보 HttpServletRequest
+	 * @throws Exception
+	 */
+	@ElService(key = "user/logout")    
+    @RequestMapping(value = "user/logout")   
+    @ElDescription(sub = "로그인 폼 페이지 로드", desc = "로그인 폼 페이지를 로드한다.")           
+    public void loginFrm(LoginVo loginVo, HttpServletRequest request) throws Exception {    
+		String id = loginVo.getId();
+		
+		loginProcess.processLogout(request, id);
+    }
+
 
 	/**
 	 * 리캡챠 로그인시에 처리한다.

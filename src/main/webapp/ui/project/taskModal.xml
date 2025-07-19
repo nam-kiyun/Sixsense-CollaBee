@@ -538,6 +538,7 @@ scwin.getTask = function (taskId, projectId) {
             data.tags ? tags_input.setValue(data.tags) : "";
             data.startDate ? start_date.setValue(data.startDate) : "";
             data.endDate ? end_date.setValue(data.endDate) : "";
+            data.userName ? name_input.setValue(data.userName) : "";
 
             contents_editor.setHTML(data.content);
 
@@ -1589,7 +1590,7 @@ scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
 					<xf:group style="" id="" class="header-input">
 						<xf:group style="" id="" class="header-input-box">
 							<w2:textbox id="" label="작성자" style="" class="header-input-text input-text text-bold"></w2:textbox>
-							<w2:textbox id="name_input" label="다인" style="width:148px; height:21px;" class="text-left input-text"></w2:textbox>
+							<w2:textbox id="name_input" label="" style="width:148px; height:21px;" class="text-left input-text"></w2:textbox>
 						</xf:group>
 						<xf:group class="header-input-box" id="" style="">
 							<w2:textbox id="" label="담당자" style="" class="header-input-text input-text text-bold"></w2:textbox>
