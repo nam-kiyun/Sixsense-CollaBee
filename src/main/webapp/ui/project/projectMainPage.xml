@@ -1723,6 +1723,87 @@ scwin.formatDateForCalendar = function(dateString) {
     }
 };
 
+/**
+ * 간트차트 데이터 로딩 함수
+ */
+scwin.loadGanttData = function() {
+    console.log("간트차트 데이터 로딩 시작");
+    
+    // 간트차트 데이터 리스트 초기화
+    dlt_gantt_schedule.removeAll();
+    
+    // 현재 프로젝트 ID 가져오기
+    var projectId = dm_projectVo.get("projectId");
+    if (!projectId) {
+        console.error("프로젝트 ID가 없습니다.");
+        return;
+    }
+    
+    // 서버에서 태스크 데이터 가져오기
+    var params = {
+        projectId: projectId,
+        sortField: "startDate",
+        sortOrder: "asc",
+        boardId: "",
+        tags: ""
+    };
+    
+    // 태스크 데이터 요청
+    console.log("간트차트용 태스크 데이터 요청 파라미터:", params);
+    
+    // 모든 태스크 가져오기
+    $p.executeSubmission("load_Task", {
+        data: params,
+        success: function(response) {
+            console.log("간트차트용 태스크 데이터 로딩 성공:", response);
+            
+            var taskList = response.taskListVo;
+            if (!taskList || taskList.length === 0) {
+                console.log("간트차트에 표시할 태스크가 없습니다.");
+                return;
+            }
+            
+            // 태스크 데이터를 간트차트 형식으로 변환
+            for (var i = 0; i < taskList.length; i++) {
+                var task = taskList[i];
+                
+                // 간트차트 데이터 생성
+                var ganttData = {
+                    taskId: task.taskId,
+                    taskTitle: task.taskTitle,
+                    startDate: task.startDate,
+                    endDate: task.endDate,
+                    boardId: task.boardId,
+                    boardTitle: task.boardTitle || "보드",
+                    priority: task.priority || "MEDIUM",
+                    tags: task.tags || ""
+                };
+                
+                // 간트차트 데이터 리스트에 추가
+                dlt_gantt_schedule.insertRow(i);
+                dlt_gantt_schedule.setCellData(i, "taskId", ganttData.taskId);
+                dlt_gantt_schedule.setCellData(i, "taskTitle", ganttData.taskTitle);
+                dlt_gantt_schedule.setCellData(i, "startDate", ganttData.startDate);
+                dlt_gantt_schedule.setCellData(i, "endDate", ganttData.endDate);
+                dlt_gantt_schedule.setCellData(i, "boardId", ganttData.boardId);
+                dlt_gantt_schedule.setCellData(i, "boardTitle", ganttData.boardTitle);
+                dlt_gantt_schedule.setCellData(i, "priority", ganttData.priority);
+                dlt_gantt_schedule.setCellData(i, "tags", ganttData.tags);
+            }
+            
+            console.log("간트차트 데이터 로딩 완료. 태스크 수:", taskList.length);
+            
+            // 간트차트 컴포넌트 그리기
+            if (gantt_chart) {
+                gantt_chart.draw();
+            }
+        },
+        error: function(error) {
+            console.error("간트차트 데이터 로딩 실패:", error);
+        }
+    });
+};
+
 // GitHub 버튼 클릭 - GitHub App 관리 페이지로 이동
 scwin.github_onclick = function(e) {
     console.log("GitHub 버튼 클릭됨");
