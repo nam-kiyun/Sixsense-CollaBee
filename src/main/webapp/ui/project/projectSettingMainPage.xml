@@ -10,6 +10,18 @@
         <![CDATA[body{
     overflow: hidden;
 }
+
+/* 모달창 둥근 모서리 제거 */
+.w2wframe,
+iframe[src*="projectSettingMainPage"],
+div[id*="wframe"][style*="position: absolute"],
+div[id*="popup"] iframe,
+[id*="wframe_popup"],
+[class*="wframe_popup"] {
+    border-radius: 0 !important;
+    -webkit-border-radius: 0 !important;
+    -moz-border-radius: 0 !important;
+}
 ]]></style>
         <xf:model>
             <w2:dataCollection baseNode="map">

@@ -3642,11 +3642,11 @@ scwin.btn_settings_onclick = function (e) {
     var options = {
         id: "projectSettingPopup",
         type: "wframePopup", 
-        width: "1550",
-        height: "800",
+        width: "1922",
+        height: "845",
         top: "100",
-        left: "200", 
-        popupName: "프로젝트 설정",
+        left: "0", 
+        popupName: " ",
         modal: false,  // taskModal과 동일
         closeAction: "scwin.projectSetting_closeAction",
         customTitleBar: false,
