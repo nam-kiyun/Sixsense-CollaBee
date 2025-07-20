@@ -110,6 +110,10 @@
 		</xf:model>
 		<w2:layoutInfo />
 		<w2:publicInfo method="" />
+		
+		<!-- 서버 정보 유틸리티 로드 -->
+		<script type="text/javascript" src="/InsWebApp/js/comm/serverInfo.js"></script>
+		
 		<script lazy="false" type="text/javascript"><![CDATA[
 scwin.onpageload = function () {
     console.log("projectMainPage 페이지 로드 시작");
@@ -3768,7 +3772,50 @@ scwin.new_task_onclick = function (e) {
 
 // 화상통화 버튼 클릭 이벤트
 scwin.btn_videoCall_onclick = function(e) {
-    $c.win.alert("화상통화 기능이 곧 제공될 예정입니다!");
+    // 프로젝트 ID 가져오기
+    var projectId = null;
+    
+    // 첫 번째 방법: currentProjectData에서 가져오기
+    if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
+        projectId = scwin.currentProjectData.projectId;
+    }
+    
+    // 두 번째 방법: dm_projectVo에서 가져오기
+    if (!projectId) {
+        try {
+            projectId = dm_projectVo.get("projectId");
+        } catch (e) {
+            console.log("dm_projectVo에서 projectId 가져오기 실패:", e);
+        }
+    }
+    
+    // 세 번째 방법: URL 파라미터에서 가져오기
+    if (!projectId) {
+        var urlParams = new URLSearchParams(window.location.search);
+        projectId = urlParams.get('projectId');
+    }
+    
+    if (!projectId) {
+        $c.win.alert("프로젝트 ID를 찾을 수 없습니다.");
+        console.error("프로젝트 ID를 찾을 수 없습니다.");
+        return;
+    }
+    
+    console.log("화상통화 시작 - 프로젝트 ID:", projectId);
+    
+    // ServerInfo 유틸리티를 사용하여 동적 서버 정보 가져오기
+    if (window.ServerInfo) {
+        // ServerInfo가 로드된 경우
+        var videoCallUrl = ServerInfo.getVideoChatUrl(projectId);
+        console.log("화상통화 URL (ServerInfo):", videoCallUrl);
+        window.location.href = videoCallUrl;
+    } else {
+        // ServerInfo가 없는 경우 기존 방식 사용
+        var currentHost = window.location.hostname;
+        var videoCallUrl = "https://" + currentHost + ":19443/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/videochat/webRTCVideoChatPage.xml&project_id=" + encodeURIComponent(projectId);
+        console.log("화상통화 URL (fallback):", videoCallUrl);
+        window.location.href = videoCallUrl;
+    }
 };
 ]]></script>
 		<style type="text/css"><![CDATA[

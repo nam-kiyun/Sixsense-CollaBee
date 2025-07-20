@@ -289,6 +289,9 @@
             //console.log('✅ Simple WebRTC 준비 완료 - 라이브러리 불필요');
         </script>
         
+        <!-- 서버 정보 유틸리티 로드 -->
+        <script type="text/javascript" src="/InsWebApp/js/comm/serverInfo.js"></script>
+        
         <script type="text/javascript"><![CDATA[
 // Simple WebRTC 다대다 화상통화 구현 (P2P Mesh 방식)
 // WebRTC 관련 변수들
@@ -3901,6 +3904,39 @@ scwin.showMiniPIP = function() {
     
     if (!miniPipContainer || !mainContainer) return;
     
+    // PIP 모드에서 projectMainPage.xml로 이동
+    // 미니 PIP 컨테이너를 새 창으로 분리하고 메인 창을 프로젝트 페이지로 이동
+    scwin.openPipInNewWindow();
+    
+    // 현재 프로젝트 ID 가져오기
+    var urlParams = new URLSearchParams(window.location.search);
+    var projectId = urlParams.get('project_id');
+    
+    // 메인 창을 projectMainPage.xml로 이동 (프로젝트 ID 포함)
+    setTimeout(function() {
+        var returnUrl;
+        
+        // ServerInfo 유틸리티를 사용하여 동적 서버 정보 가져오기
+        if (window.ServerInfo) {
+            // ServerInfo가 로드된 경우
+            returnUrl = ServerInfo.getProjectMainUrl(projectId);
+            console.log("PIP 복귀 URL (ServerInfo):", returnUrl);
+        } else {
+            // ServerInfo가 없는 경우 기존 방식 사용
+            var currentHost = window.location.hostname;
+            returnUrl = "http://" + currentHost + ":9093/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/project/projectMainPage.xml";
+            if (projectId) {
+                returnUrl += "&projectId=" + encodeURIComponent(projectId);
+            }
+            console.log("PIP 복귀 URL (fallback):", returnUrl);
+        }
+        
+        window.location.href = returnUrl;
+    }, 500);
+    
+    return; // 기존 PIP 로직은 실행하지 않음
+    
+    // === 아래는 기존 코드 (위에서 return으로 실행되지 않음) ===
     // 전체 화상통화 영역 숨기기 (비디오 + 채팅)
     mainContainer.style.display = 'none';
     
@@ -4605,6 +4641,177 @@ scwin.removeRemoteUser = function(userId) {
         
     } catch (error) {
         //console.error('❌ 원격 사용자 제거 실패:', error);
+    }
+};
+
+// 새 창에서 PIP 모드 열기
+scwin.openPipInNewWindow = function() {
+    try {
+        // 현재 비디오 참가자들의 정보 수집
+        const videoElements = document.querySelectorAll('.remote-user-video video');
+        const participantCount = videoElements.length;
+        
+        // 새 창으로 미니 화상통화 창 열기
+        const pipWindow = window.open('', 'videoChatPip', 
+            'width=320,height=400,resizable=yes,scrollbars=no,status=no,toolbar=no,menubar=no,location=no'
+        );
+        
+        if (!pipWindow) {
+            $c.win.alert('팝업이 차단되었습니다. 팝업을 허용해주세요.');
+            return;
+        }
+        
+        // PIP 창의 HTML 구성
+        const pipHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>화상통화 - PIP</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { 
+                        background: rgba(0, 0, 0, 0.9); 
+                        font-family: Arial, sans-serif;
+                        overflow: hidden;
+                    }
+                    .pip-header {
+                        background: #FFB823;
+                        color: white;
+                        padding: 8px 12px;
+                        font-size: 14px;
+                        font-weight: bold;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    .pip-close {
+                        background: none;
+                        border: none;
+                        color: white;
+                        font-size: 18px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        padding: 0;
+                        width: 20px;
+                        height: 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .pip-close:hover { background: rgba(255, 255, 255, 0.2); }
+                    .video-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                        grid-gap: 5px;
+                        padding: 10px;
+                        height: calc(100vh - 40px);
+                        overflow-y: auto;
+                    }
+                    .video-item {
+                        background: #2a2a2a;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        position: relative;
+                        aspect-ratio: 16/9;
+                    }
+                    .video-item video {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+                    .user-name {
+                        position: absolute;
+                        bottom: 5px;
+                        left: 5px;
+                        background: rgba(0, 0, 0, 0.7);
+                        color: white;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-size: 10px;
+                    }
+                    .no-video {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #ccc;
+                        font-size: 12px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="pip-header">
+                    <span>화상통화 (${participantCount}명)</span>
+                    <button class="pip-close" onclick="window.close()">×</button>
+                </div>
+                <div class="video-grid" id="pipVideoGrid">
+                    ${participantCount === 0 ? '<div class="no-video">참가자가 없습니다</div>' : ''}
+                </div>
+            </body>
+            </html>
+        `;
+        
+        pipWindow.document.write(pipHtml);
+        pipWindow.document.close();
+        
+        // 비디오 스트림을 PIP 창으로 복사
+        if (participantCount > 0) {
+            setTimeout(function() {
+                scwin.cloneVideosToPopup(pipWindow);
+            }, 100);
+        }
+        
+        console.log('✅ PIP 창이 새 창으로 열렸습니다');
+        
+    } catch (error) {
+        console.error('❌ PIP 새 창 열기 실패:', error);
+        $c.win.alert('PIP 모드 실행 중 오류가 발생했습니다.');
+    }
+};
+
+// 비디오 스트림을 팝업창으로 복사
+scwin.cloneVideosToPopup = function(pipWindow) {
+    try {
+        const pipVideoGrid = pipWindow.document.getElementById('pipVideoGrid');
+        if (!pipVideoGrid) return;
+        
+        // 기존 내용 지우기
+        pipVideoGrid.innerHTML = '';
+        
+        // 현재 창의 모든 비디오 요소 찾기
+        const videoContainers = document.querySelectorAll('.remote-user-video');
+        
+        videoContainers.forEach(function(container, index) {
+            const video = container.querySelector('video');
+            const userName = container.querySelector('.remote-user-name')?.textContent || `참가자 ${index + 1}`;
+            
+            if (video && video.srcObject) {
+                // PIP 창에 비디오 아이템 생성
+                const videoItem = pipWindow.document.createElement('div');
+                videoItem.className = 'video-item';
+                
+                const clonedVideo = pipWindow.document.createElement('video');
+                clonedVideo.srcObject = video.srcObject;
+                clonedVideo.autoplay = true;
+                clonedVideo.muted = true;
+                clonedVideo.playsInline = true;
+                
+                const userNameDiv = pipWindow.document.createElement('div');
+                userNameDiv.className = 'user-name';
+                userNameDiv.textContent = userName;
+                
+                videoItem.appendChild(clonedVideo);
+                videoItem.appendChild(userNameDiv);
+                pipVideoGrid.appendChild(videoItem);
+            }
+        });
+        
+        // 비디오가 없으면 메시지 표시
+        if (pipVideoGrid.children.length === 0) {
+            pipVideoGrid.innerHTML = '<div class="no-video">참가자가 없습니다</div>';
+        }
+        
+    } catch (error) {
+        console.error('❌ 비디오 복사 실패:', error);
     }
 };
 
