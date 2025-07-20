@@ -3765,6 +3765,11 @@ scwin.new_task_onclick = function (e) {
     $p.openPopup("/InsWebApp/ui/project/taskModal.xml", options);
 
 };
+
+// 화상통화 버튼 클릭 이벤트
+scwin.btn_videoCall_onclick = function(e) {
+    $c.win.alert("화상통화 기능이 곧 제공될 예정입니다!");
+};
 ]]></script>
 		<style type="text/css"><![CDATA[
 /* 전체 컨테이너 */
@@ -4546,6 +4551,42 @@ scwin.new_task_onclick = function (e) {
     font-weight: 500 !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
 }
+
+/* 플로팅 화상통화 버튼 */
+.floating-video-btn {
+    position: fixed !important;
+    bottom: 30px !important;
+    right: 30px !important;
+    width: 60px !important;
+    height: 60px !important;
+    background-color: #ffb823 !important;
+    border: none !important;
+    border-radius: 50% !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 1000 !important;
+    transition: all 0.3s ease !important;
+}
+
+.floating-video-btn:hover {
+    background-color: #e6a520 !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* 화상통화 아이콘 */
+.video-icon {
+    width: 24px !important;
+    height: 24px !important;
+    background-image: url('/InsWebApp/images/video-solid.svg') !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    filter: brightness(0) !important; /* 아이콘을 검은색으로 만들기 */
+}
 ]]></style>
 	</head>
 	<body ev:onpageload="scwin.onpageload">
@@ -4703,5 +4744,17 @@ scwin.new_task_onclick = function (e) {
 				</w2:fwGanttChart>
 			</xf:group>
 		</xf:group>
+		
+		<!-- 플로팅 화상통화 버튼 -->
+		<xf:trigger 
+			class="floating-video-btn"
+			id="btn_videoCall" 
+			type="button" 
+			ev:onclick="scwin.btn_videoCall_onclick">
+			<xf:label>
+				<div class="video-icon"></div>
+			</xf:label>
+		</xf:trigger>
+		
 	</body>
 </html>
