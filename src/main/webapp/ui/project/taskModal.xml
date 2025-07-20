@@ -41,7 +41,7 @@
 						<w2:key nullYN="" defaultValue="String" dataType="text" name="버전아이디" length="" id="taskVersionId" encYN=""></w2:key>
 						<w2:key nullYN="" defaultValue="String" dataType="text" name="내용" length="" id="content" encYN=""></w2:key>
 						<w2:key defaultValue="String" dataType="text" name="created_at" id="createdAt"></w2:key>
-						<w2:key dataType="text" name="name13" id="key13"></w2:key>
+						<w2:key dataType="text" name="userName" id="userName"></w2:key>
 					</w2:keyInfo>
 				</w2:dataMap>
 				<w2:dataList baseNode="list" repeatNode="map" id="dls_manager" saveRemovedData="true">
@@ -102,9 +102,13 @@
 				target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
 				ev:submitdone="scwin.sbm_task_get_submitdone" ev:submiterror="scwin.sbm_task_get_submiterror" abortTrigger="">
 			</xf:submission>
-			<xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json" ref="" target='data:json,{"id":"dma_userInfo","key":"userInfo"}' encoding="UTF-8"
-				instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone=""
-				ev:submiterror="" abortTrigger="">
+			<xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json"
+				ref="" target='data:json,{"id":"dma_userInfo","key":"userInfo"}' encoding="UTF-8" instance="" replace="" errorHandler=""
+				customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="" ev:submiterror="" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_deleteTask" action="/InsWebApp/task/delete.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dma_task","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_deleteTask_submitdone" ev:submiterror="" abortTrigger="">
 			</xf:submission>
 		</xf:model>
 		<w2:layoutInfo />
@@ -172,6 +176,7 @@ scwin.onpageload = function () {
     const btnGroupId = generateUniqueId("btn_group");
     const saveId = generateUniqueId("btn_save");
     const versionId = generateUniqueId("btn_version");
+    const deleteId = generateUniqueId("btn_delete");
 
     // 버튼 그룹 생성
     const btnGroup = $p.dynamicCreate(btnGroupId, "group", {
@@ -190,12 +195,17 @@ scwin.onpageload = function () {
         label: "저장",
     }, btnGroup);
 
+
     const version = $p.dynamicCreate(versionId, "button", {
-        className: "btn-version",
+        className: "btn-icon btn-version",
     }, btnGroup);
 
-    const btn_save = $p.getComponentById(saveId);
+    const deleteBtn = $p.dynamicCreate(deleteId, "button", {
+        className: "btn-icon btn-delete",
+    }, btnGroup);
 
+
+    const btn_save = $p.getComponentById(saveId);
     //task 저장버튼
     btn_save.bind("onclick", function () {
         scwin.saveTask();
@@ -206,12 +216,22 @@ scwin.onpageload = function () {
         scwin.versionPopup();
     })
 
+    const btn_delete = $p.getComponentById(deleteId);
+    btn_delete.bind("onclick", function () {
+        if (window.confirm("해당 작업을 삭제하시겠습니까")) {
+
+            $c.sbm.execute(sbm_deleteTask);
+
+            // $p.parent().scwin.projectSetting_closeAction();
+        }
+    })
+
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     //ifram, contents 높이 조절
     setInterval(() => {
         const iframe = document.querySelector('.cke_wysiwyg_frame');
-        const contents = $p.getComponentById("cke_1_contents");
+        const contents = document.querySelector(".cke_contents");
 
         const innerDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
         const body = innerDoc?.body;
@@ -456,7 +476,7 @@ scwin.fileButtonInit = function () {
         return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     };
 
-    const editorHeader = $p.getComponentById("cke_1_top");
+    const editorHeader = document.querySelector(".cke_top");
     const btnGroupId = generateUniqueId("btn_group");
     const fileBtnId = generateUniqueId("btn_fileUpload");
     const fileInputId = generateUniqueId("input_file");
@@ -512,6 +532,9 @@ scwin.getTask = function (taskId, projectId) {
         success: async function (res) {
             const data = res.taskUpdateVo;
             scwin.taskInfo = data;
+
+            dma_task.set("boardId", data.boardId);
+            dma_task.set("taskId", data.taskId);
 
             header_title.setValue(data.taskTitle);
             // projectUserVo 리스트를 세팅
@@ -1046,7 +1069,7 @@ scwin.sbm_comment_get_submitdone = function (e) {
             insertBeforeTarget
         );
         insertBeforeTarget = commentComp;
-        
+
         // 다음 댓글이 없거나 날짜가 다르면 → 지금 날짜를 현재 댓글 앞에 삽입
         if (currentDate !== nextDate || i === commentList.length - 1) {
             const dateComp = scwin.addChatDate(currentDate, insertBeforeTarget);
@@ -1573,6 +1596,11 @@ scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
     } else {
 
     }
+};
+
+scwin.sbm_deleteTask_submitdone = function (e) {
+    const close = $p.getComponentById("mf_wfr_mainContent_exa_popup_close");
+    close.click();
 };
 ]]></script>
 		<style type="text/css"><![CDATA[]]>

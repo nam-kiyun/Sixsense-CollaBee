@@ -134,5 +134,14 @@
 			WHERE b.PROJECT_ID = #{projectId}
 		)
 	</delete>
+	
+	
+	<delete id="deleteCommentByTaskId" parameterType="com.demo.proworks.comment.vo.CommentVo">
+		<!-- 댓글정보를 삭제한다. -->
+
+		DELETE FROM COMMENT /* QueryID : com.demo.proworks.comment.deleteComment */
+		WHERE
+		TASK_ID = #{taskId}
+	</delete>
 
 </mapper>

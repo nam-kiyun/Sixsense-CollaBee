@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="/InsWebApp/css/task/versionModal.css" type="text/css"?>
 <html xmlns="http://www.w3.org/1999/xhtml"
     xmlns:ev="http://www.w3.org/2001/xml-events"
     xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
@@ -252,7 +253,8 @@ mf_wfr_mainContent_exa_popup_wframe_task_version_wframe{}
 .version-group::-webkit-scrollbar-thumb {
     background-color: #ffb823; /* 스크롤 핸들 */
     border-radius: 10px;
-}]]></style>
+}
+]]></style>
     </head>
     <body ev:onpageload="scwin.onpageload">
     	<xf:group class="sub_contents version-container" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
