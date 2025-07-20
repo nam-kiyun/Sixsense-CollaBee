@@ -28,7 +28,31 @@
                         <w2:column id="isOwn" name="isOwn" dataType="text"/>
                     </w2:columnInfo>
                 </w2:dataList>
+                
+                <!-- 사용자 정보 데이터맵 (세션 정보) -->
+                <w2:dataMap baseNode="map" id="dm_userInfo">
+                    <w2:keyInfo>
+                        <w2:key id="userId" name="사용자ID" dataType="text"/>
+                        <w2:key id="userName" name="사용자명" dataType="text"/>
+                        <w2:key id="userImage" name="사용자이미지" dataType="text"/>
+                    </w2:keyInfo>
+                    <w2:data use="true">
+                        <userId></userId>
+                        <userName></userName>
+                        <userImage></userImage>
+                    </w2:data>
+                </w2:dataMap>
             </w2:dataCollection>
+            
+            <!-- 세션 사용자 정보 가져오기 submission -->
+            <xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" 
+                           method="post" mediatype="application/json" 
+                           ref="" target='data:json,{"id":"dm_userInfo","key":"userVo"}' 
+                           encoding="UTF-8" instance="" replace="none" 
+                           errorHandler="" customHandler="" mode="asynchronous" processMsg="" 
+                           ev:submit="" ev:submitdone="scwin.sbm_getUserInfo_submitdone" 
+                           ev:submiterror="scwin.sbm_getUserInfo_submiterror" abortTrigger="">
+            </xf:submission>
         </xf:model>
         
         <style>
@@ -331,16 +355,17 @@ const generateUserId = () => {
     return `user_${timestamp}_${random}`;
 };
 
+// 초기 사용자 정보 (세션에서 가져올 때까지 임시값)
 let currentUser = {
     userId: generateUserId(),
-    userName: "사용자" + Math.floor(Math.random() * 100),
+    userName: "로딩중...",
     channelName: "webrtc-room-" + (new URLSearchParams(window.location.search).get('project_id') || 'default')
 };
 
 //console.log("현재 사용자 정보:", currentUser);
 
 scwin.onpageload = function() {
-    //console.log("webRTC mediasoup 다대다 화상통화 페이지 초기화");
+    //console.log("webRTC 다대다 화상통화 페이지 초기화");
     
     // HTTPS 체크
     if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
@@ -348,7 +373,11 @@ scwin.onpageload = function() {
         return;
     }
     
-    // 데이터 초기화
+    // 먼저 세션에서 사용자 정보 로드
+    console.log("세션에서 사용자 정보를 가져오는 중...");
+    $p.executeSubmission("sbm_getUserInfo");
+    
+    // 데이터 초기화 (사용자 정보는 submission 완료 후 업데이트)
     dma_videoChat.set("channelName", currentUser.channelName);
     dma_videoChat.set("userId", currentUser.userId);
     dma_videoChat.set("userName", currentUser.userName);
@@ -357,22 +386,7 @@ scwin.onpageload = function() {
     // WebSocket 초기화 (채팅용 - 그대로 유지)
     scwin.initializeChatWebSocket();
     
-    // Simple WebRTC 초기화
-    setTimeout(() => {
-        //console.log("✅ Simple WebRTC 초기화 시작");
-        //scwin.addChatMessage("시스템", "✅ Simple WebRTC 화상통화 시스템 준비 중...", false);
-        
-        // Simple WebRTC 초기화
-        scwin.initializeSimpleWebRTC();
-        
-        //console.log("✅ Simple WebRTC 다대다 화상통화 시스템 준비 완료");
-        //scwin.addChatMessage("시스템", "✅ Simple WebRTC 다대다 화상통화방에 오신 것을 환영합니다!", false);
-        
-        // 페이지 진입 시 자동으로 화상통화 참가 (빠른 실행)
-            setTimeout(() => {
-            scwin.autoJoinCall();
-        }, 100);
-    }, 500);
+    // WebRTC 초기화는 사용자 정보 로드 완료 후 실행 (scwin.initializeWebRTCAfterUserInfo에서 처리)
     
     // 엔터키 이벤트 리스너 추가
     setTimeout(() => {
@@ -4812,6 +4826,88 @@ scwin.cloneVideosToPopup = function(pipWindow) {
         
     } catch (error) {
         console.error('❌ 비디오 복사 실패:', error);
+    }
+};
+
+// 세션 사용자 정보 로드 완료 이벤트
+scwin.sbm_getUserInfo_submitdone = function(e) {
+    try {
+        console.log("세션 사용자 정보 로드 완료:", e);
+        
+        // 세션에서 가져온 사용자 정보 확인
+        var sessionUserId = dm_userInfo.get("userId");
+        var sessionUserName = dm_userInfo.get("userName");
+        var sessionUserImage = dm_userInfo.get("userImage");
+        
+        console.log("세션 사용자 정보:", {
+            userId: sessionUserId,
+            userName: sessionUserName,
+            userImage: sessionUserImage
+        });
+        
+        // 실제 로그인 사용자 정보로 업데이트
+        if (sessionUserId && sessionUserName) {
+            currentUser.userName = sessionUserName;
+            
+            // WebRTC 사용자 ID는 고유성을 위해 세션ID + 타임스탬프 조합 사용
+            var timestamp = Date.now();
+            currentUser.userId = sessionUserId + "_" + timestamp;
+            
+            console.log("업데이트된 사용자 정보:", currentUser);
+            
+            // 데이터맵 업데이트
+            dma_videoChat.set("userId", currentUser.userId);
+            dma_videoChat.set("userName", currentUser.userName);
+            
+        } else {
+            console.warn("세션에서 사용자 정보를 가져올 수 없습니다. 기본값 사용.");
+            // 기본값 설정
+            currentUser.userName = "익명사용자";
+            dma_videoChat.set("userName", currentUser.userName);
+        }
+        
+        // WebRTC 초기화 진행
+        scwin.initializeWebRTCAfterUserInfo();
+        
+    } catch (error) {
+        console.error("사용자 정보 로드 처리 중 오류:", error);
+        // 오류 시 기본값으로 진행
+        currentUser.userName = "익명사용자";
+        dma_videoChat.set("userName", currentUser.userName);
+        scwin.initializeWebRTCAfterUserInfo();
+    }
+};
+
+// 세션 사용자 정보 로드 실패 이벤트
+scwin.sbm_getUserInfo_submiterror = function(e) {
+    console.error("세션 사용자 정보 로드 실패:", e);
+    
+    // 실패 시 기본값 사용
+    currentUser.userName = "익명사용자";
+    dma_videoChat.set("userName", currentUser.userName);
+    
+    // WebRTC 초기화 진행
+    scwin.initializeWebRTCAfterUserInfo();
+};
+
+// 사용자 정보 로드 후 WebRTC 초기화
+scwin.initializeWebRTCAfterUserInfo = function() {
+    try {
+        console.log("사용자 정보 로드 완료. WebRTC 초기화 시작...");
+        
+        // Simple WebRTC 초기화
+        scwin.initializeSimpleWebRTC();
+        
+        console.log("✅ WebRTC 다대다 화상통화 시스템 준비 완료");
+        
+        // 페이지 진입 시 자동으로 화상통화 참가
+        setTimeout(() => {
+            console.log("자동 화상통화 참가 시작...");
+            scwin.autoJoinCall();
+        }, 1000);
+        
+    } catch (error) {
+        console.error("WebRTC 초기화 실패:", error);
     }
 };
 
