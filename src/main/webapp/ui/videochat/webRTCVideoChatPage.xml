@@ -3801,8 +3801,34 @@ scwin.leaveCall = function() {
         
         //console.log("✅ 화상통화 종료 완료");
         
+        // 뒤로가기 기능 추가
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            // history가 없으면 기본 프로젝트 페이지로 이동
+            if (window.ServerInfo) {
+                const projectId = scwin.getProjectIdFromUrl();
+                if (projectId) {
+                    const projectMainUrl = ServerInfo.getProjectMainUrl(projectId);
+                    window.location.href = projectMainUrl;
+                } else {
+                    // 프로젝트 ID가 없으면 메인 페이지로
+                    window.location.href = '/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/mainPage.xml';
+                }
+            } else {
+                // ServerInfo가 없으면 기본 메인 페이지로
+                window.location.href = '/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/mainPage.xml';
+            }
+        }
+        
     } catch (error) {
         //console.error("❌ 화상통화 종료 실패:", error);
+        // 오류 발생 시에도 뒤로가기 시도
+        try {
+            window.history.back();
+        } catch (backError) {
+            window.location.href = '/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/mainPage.xml';
+        }
     }
 };
 
