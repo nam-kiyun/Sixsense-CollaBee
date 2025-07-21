@@ -10,6 +10,12 @@
         	<![CDATA[body{
     overflow: hidden;
 }
+
+/* 메인 콘텐츠에 스크롤 추가 */
+#grp_mainContent {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
 ]]></style>
         <xf:model>
             <w2:dataCollection baseNode="map">
@@ -546,7 +552,7 @@ scwin.popup_closeAction = function(argRuntimeID, argJsnInfo) {
     </head>
     <body ev:onpageload="scwin.onpageload">
         <!-- 전체 페이지 컨테이너 -->
-        <xf:group style="display:flex;flex-direction:column;margin:0;padding:0;" id="grp_mainContainer">
+        <xf:group style="display:flex;flex-direction:column;margin:0;padding:0;overflow: hidden;" id="grp_mainContainer">
             
             <!-- 헤더 영역 -->
             <xf:group style="width:100%;position:fixed;top:0;left:0;z-index:1000;" id="grp_headerArea">
@@ -562,7 +568,7 @@ scwin.popup_closeAction = function(argRuntimeID, argJsnInfo) {
                 </xf:group>
                 
                 <!-- 메인 콘텐츠 -->
-                <xf:group style="margin-left:303px;width:calc(100% - 303px);height:100%;background-color: #fff4d6;border-left:1px solid #000000;" id="grp_mainContent">
+                <xf:group style="margin-left:303px;width:calc(100% - 303px);height:100%;background-color: #fff4d6;border-left:1px solid #000000;overflow: auto;" id="grp_mainContent">
                     <w2:wframe id="wfr_mainContent" style="width:100%;height:100%;" src="/InsWebApp/ui/mainContent.xml"/>
                 </xf:group>
                 

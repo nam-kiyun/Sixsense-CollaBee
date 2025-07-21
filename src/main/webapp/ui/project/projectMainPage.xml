@@ -55,6 +55,12 @@
 						<w2:key id="projectId" name="projectId" dataType="text"></w2:key>
 					</w2:keyInfo>
 				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dm_boardVo_add">
+					<w2:keyInfo>
+						<w2:key id="boardTitle" name="보드 제목" dataType="text"></w2:key>
+						<w2:key id="projectId" name="프로젝트 ID" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
 				<w2:dataMap baseNode="map" id="dm_userInfo">
 					<w2:keyInfo>
 						<w2:key id="userId" name="userId" dataType="text"></w2:key>
@@ -107,6 +113,10 @@
 				ref='data:json,{"id":"dm_taskVo","key":"taskVo"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
 				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.update_task_board_submitdone" ev:submiterror="scwin.update_task_board_submiterror" abortTrigger="">
 			</xf:submission>
+			<xf:submission id="add_board" action="/InsWebApp/board/create.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dm_boardVo_add","key":"boardVo"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="보드를 생성 중입니다..." ev:submit="" ev:submitdone="scwin.add_board_submitdone" ev:submiterror="scwin.add_board_submiterror" abortTrigger="">
+			</xf:submission>
 		</xf:model>
 		<w2:layoutInfo />
 		<w2:publicInfo method="" />
@@ -119,15 +129,16 @@ scwin.onpageload = function () {
     if (!userId) {
         console.error("사용자 인증 정보가 없습니다.");
         console.log("메인페이지에서 사용자 정보가 전달되지 않았습니다.");
-        return;
+        console.log("⚠️ 사용자 정보가 없지만 WebSocket 연결은 시도합니다.");
+    } else {
+        console.log("사용자 인증 확인 완료:", userId);
     }
-    
-    console.log("사용자 인증 확인 완료:", userId);
     
     // 페이지 로드 시 데이터 바인딩
     scwin.loadProjectData();
     
-    // WebSocket 연결 초기화
+    // WebSocket 연결 초기화 (사용자 정보 없어도 연결 시도)
+    console.log("WebSocket 초기화 시작...");
     scwin.initWebSocket();
     
     // 정렬 기본값 설정
@@ -162,63 +173,134 @@ scwin.initWebSocket = function() {
     scwin.debounceDelay = 2000;
     
     console.log("현재 위치:", window.location.href);
+    console.log("현재 프로토콜:", window.location.protocol);
+    console.log("현재 호스트:", window.location.host);
     
     // 간단한 WebSocket URL
     var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     var host = window.location.host;
-    // 칸반 경로로 다시 시도 (Redis 의존성 제거 후)
-    var websocketUrl = protocol + '//' + host + '/InsWebApp/kanban';
+    
+    // 다양한 WebSocket 경로 시도
+    var possibleUrls = [
+        protocol + '//' + host + '/InsWebApp/kanban',
+        protocol + '//' + host + '/kanban', 
+        protocol + '//' + host + '/websocket',
+        protocol + '//' + host + '/ws',
+        protocol + '//' + host + '/InsWebApp/ws'
+    ];
+    
+    console.log("시도할 WebSocket URL 목록:", possibleUrls);
+    var websocketUrl = possibleUrls[0]; // 첫 번째 URL 시도
     
     console.log("연결 시도 URL:", websocketUrl);
     
     try {
+        console.log("WebSocket 객체 생성 시도...");
         scwin.websocket = new WebSocket(websocketUrl);
+        console.log("✅ WebSocket 객체 생성 성공:", scwin.websocket);
+        console.log("WebSocket 초기 상태:", scwin.websocket.readyState);
         
-        scwin.websocket.onopen = function(event) {
-            console.log("WebSocket 연결 성공");
-            scwin.isWebSocketConnected = true;
-            
-            // 테스트 메시지 전송
-            var testMessage = {
-                type: "USER_JOIN",
-                userId: "test-user",
-                timestamp: Date.now()
-            };
-            scwin.websocket.send(JSON.stringify(testMessage));
-            console.log("테스트 메시지 전송:", testMessage);
-        };
+        // 핸들러 설정
+        scwin.setupWebSocketHandlers(websocketUrl);
         
-        scwin.websocket.onmessage = function(event) {
-            console.log("=== WebSocket 메시지 수신 ===");
-            console.log("서버 응답:", event.data);
-            
-            try {
-                var message = JSON.parse(event.data);
-                console.log("파싱된 메시지:", message);
-                console.log("메시지 타입:", message.type);
-                
-                // 실제 메시지 처리 함수 호출
-                scwin.handleWebSocketMessage(message);
-            } catch (error) {
-                console.error("메시지 파싱 오류:", error);
-                console.error("파싱 실패한 데이터:", event.data);
+        // 연결 상태 모니터링
+        setTimeout(function() {
+            if (scwin.websocket) {
+                console.log("⏰ 5초 후 WebSocket 상태 체크:");
+                console.log("- 상태:", scwin.websocket.readyState);
+                console.log("- 연결됨:", scwin.isWebSocketConnected);
+                if (scwin.websocket.readyState !== WebSocket.OPEN) {
+                    console.warn("⚠️ WebSocket이 5초 내에 연결되지 않았습니다.");
+                    console.warn("다른 URL을 시도합니다...");
+                    scwin.tryAlternativeWebSocketUrl();
+                }
+            } else {
+                console.error("❌ WebSocket 객체가 사라졌습니다.");
             }
-        };
-        
-        scwin.websocket.onclose = function(event) {
-            console.log("WebSocket 연결 종료:", event.code, event.reason);
-            scwin.isWebSocketConnected = false;
-        };
-        
-        scwin.websocket.onerror = function(event) {
-            console.error("WebSocket 연결 실패");
-            console.error("URL:", websocketUrl);
-            scwin.isWebSocketConnected = false;
-        };
+        }, 5000);
         
     } catch (error) {
-        console.error("WebSocket 생성 실패:", error);
+        console.error("������ WebSocket 생성 중 치명적 오류 발생!");
+        console.error("- 오류 메시지:", error.message);
+        console.error("- 오류 스택:", error.stack);
+        console.error("- 브라우저 WebSocket 지원:", typeof WebSocket !== 'undefined');
+        console.error("- 시도한 URL:", websocketUrl);
+        scwin.websocket = null;
+        scwin.isWebSocketConnected = false;
+        
+        // 대체 URL 시도
+        scwin.tryAlternativeWebSocketUrl();
     }
+};
+
+/**
+ * 대체 WebSocket URL 시도
+ */
+scwin.currentUrlIndex = 0;
+scwin.tryAlternativeWebSocketUrl = function() {
+    scwin.currentUrlIndex = (scwin.currentUrlIndex || 0) + 1;
+    
+    var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    var host = window.location.host;
+    var possibleUrls = [
+        protocol + '//' + host + '/InsWebApp/kanban',
+        protocol + '//' + host + '/kanban', 
+        protocol + '//' + host + '/websocket',
+        protocol + '//' + host + '/ws',
+        protocol + '//' + host + '/InsWebApp/ws'
+    ];
+    
+    if (scwin.currentUrlIndex < possibleUrls.length) {
+        var nextUrl = possibleUrls[scwin.currentUrlIndex];
+        console.log("������ 대체 WebSocket URL 시도:", nextUrl, "(", scwin.currentUrlIndex + 1, "/", possibleUrls.length, ")");
+        
+        setTimeout(function() {
+            try {
+                scwin.websocket = new WebSocket(nextUrl);
+                scwin.setupWebSocketHandlers(nextUrl);
+            } catch (error) {
+                console.error("대체 URL 연결 실패:", error);
+                scwin.tryAlternativeWebSocketUrl();
+            }
+        }, 2000); // 2초 후 재시도
+    } else {
+        console.error("❌ 모든 WebSocket URL 시도 실패. WebSocket 연결을 포기합니다.");
+        scwin.websocket = null;
+        scwin.isWebSocketConnected = false;
+    }
+};
+
+/**
+ * WebSocket 핸들러 설정 (재사용 가능한 함수)
+ */
+scwin.setupWebSocketHandlers = function(websocketUrl) {
+    scwin.websocket.onopen = function(event) {
+        console.log("������ WebSocket 연결 성공! URL:", websocketUrl);
+        scwin.isWebSocketConnected = true;
+        scwin.sendUserJoinMessage();
+    };
+    
+    scwin.websocket.onmessage = function(event) {
+        console.log("=== WebSocket 메시지 수신 ===");
+        try {
+            var message = JSON.parse(event.data);
+            scwin.handleWebSocketMessage(message);
+        } catch (error) {
+            console.error("메시지 파싱 오류:", error);
+        }
+    };
+    
+    scwin.websocket.onclose = function(event) {
+        console.log("❌ WebSocket 연결 종료");
+        scwin.isWebSocketConnected = false;
+        scwin.websocket = null;
+    };
+    
+    scwin.websocket.onerror = function(event) {
+        console.error("������ WebSocket 연결 오류:", websocketUrl);
+        scwin.isWebSocketConnected = false;
+        scwin.tryAlternativeWebSocketUrl();
+    };
 };
 
 /**
@@ -292,12 +374,14 @@ scwin.onWebSocketError = function(event) {
  * 사용자 참여 메시지 전송
  */
 scwin.sendUserJoinMessage = function() {
+    var currentUserId = scwin.getCurrentUserId();
     var message = {
         type: "USER_JOIN",
-        userId: "user01", // 임시 사용자 ID
+        userId: currentUserId || "unknown",
         timestamp: Date.now()
     };
     
+    console.log("사용자 참여 메시지 전송:", message);
     scwin.sendWebSocketMessage(message);
 };
 
@@ -305,12 +389,26 @@ scwin.sendUserJoinMessage = function() {
  * WebSocket 메시지 전송
  */
 scwin.sendWebSocketMessage = function(message) {
+    console.log("=== WebSocket 메시지 전송 시도 ===");
+    console.log("전송할 메시지:", message);
+    console.log("WebSocket 상태:", scwin.websocket ? scwin.websocket.readyState : "WebSocket 객체 없음");
+    
     if (scwin.websocket && scwin.websocket.readyState === WebSocket.OPEN) {
         var jsonMessage = JSON.stringify(message);
         scwin.websocket.send(jsonMessage);
-        console.log("WebSocket 메시지 전송:", jsonMessage);
+        console.log("✅ WebSocket 메시지 전송 성공:", jsonMessage);
     } else {
-        console.warn("WebSocket 연결이 되어있지 않습니다.");
+        console.error("❌ WebSocket 연결이 되어있지 않습니다.");
+        console.log("WebSocket 상태 상세:");
+        if (scwin.websocket) {
+            console.log("- readyState:", scwin.websocket.readyState);
+            console.log("- CONNECTING (0):", scwin.websocket.readyState === 0);
+            console.log("- OPEN (1):", scwin.websocket.readyState === 1);
+            console.log("- CLOSING (2):", scwin.websocket.readyState === 2);
+            console.log("- CLOSED (3):", scwin.websocket.readyState === 3);
+        } else {
+            console.log("- WebSocket 객체가 존재하지 않습니다.");
+        }
     }
 };
 
@@ -346,8 +444,9 @@ scwin.handleWebSocketMessage = function(message) {
  * 카드 이동 메시지 처리 (다른 사용자의 실시간 카드 이동 반영)
  */
 scwin.handleCardMovedMessage = function(message) {
-    console.log("=== 다른 사용자의 카드 이동 수신 ===");
+    console.log("=== 카드 이동 메시지 수신 ===");
     console.log("전체 메시지:", message);
+    console.log("- 메시지 타입:", message.type);
     console.log("- taskId:", message.taskId, "타입:", typeof message.taskId);
     console.log("- fromBoardId:", message.fromBoardId, "타입:", typeof message.fromBoardId);
     console.log("- toBoardId:", message.toBoardId, "타입:", typeof message.toBoardId);
@@ -355,15 +454,25 @@ scwin.handleCardMovedMessage = function(message) {
     console.log("- projectId:", message.projectId);
     console.log("- timestamp:", message.timestamp);
     
-    // 테스트용: 본인이 이동한 카드도 처리 (원래는 중복 방지를 위해 무시)
+    // 중복 방지 로직 개선
     var currentUserId = scwin.getCurrentUserId();
     console.log("현재 사용자 ID:", currentUserId);
     console.log("메시지 사용자 ID:", message.userId);
-    console.log("ID 비교 결과:", message.userId === currentUserId);
     
-    if (message.userId === currentUserId) {
-        console.log("������ [테스트 모드] 본인이 이동한 카드도 처리합니다.");
-        // return; // 테스트용으로 주석 처리
+    // CARD_MOVE (본인이 보낸 메시지)는 무시, CARD_MOVED (서버 브로드캐스트)는 처리
+    if (message.type === "CARD_MOVE" && message.userId === currentUserId) {
+        console.log("ℹ️ 본인이 보낸 CARD_MOVE 메시지이므로 처리하지 않습니다.");
+        return;
+    }
+    
+    // CARD_MOVED 메시지거나 다른 사용자의 메시지인 경우 처리
+    if (message.type === "CARD_MOVED") {
+        console.log("🎯 CARD_MOVED 메시지를 처리합니다.");
+    } else if (message.userId !== currentUserId) {
+        console.log("🎯 다른 사용자의 카드 이동을 처리합니다.");
+    } else {
+        console.log("ℹ️ 처리하지 않는 메시지입니다.");
+        return;
     }
     
     // 메시지 유효성 검증
@@ -391,15 +500,23 @@ scwin.updateConnectionStatus = function(isConnected) {
  * 카드 이동 메시지 전송
  */
 scwin.sendCardMoveMessage = function(taskId, fromBoardId, toBoardId) {
+    console.log("=== 카드 이동 메시지 전송 시작 ===");
+    console.log("파라미터:", {taskId: taskId, fromBoardId: fromBoardId, toBoardId: toBoardId});
+    
     // 현재 프로젝트 ID 가져오기
     var projectId = null;
     if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
         projectId = scwin.currentProjectData.projectId;
+        console.log("currentProjectData에서 projectId 가져옴:", projectId);
     } else {
         // 프로젝트 데이터가 없으면 URL에서 추출 시도
         var urlParams = new URLSearchParams(window.location.search);
         projectId = urlParams.get('projectId');
+        console.log("URL에서 projectId 가져옴:", projectId);
     }
+    
+    var currentUserId = scwin.getCurrentUserId();
+    console.log("현재 사용자 ID:", currentUserId);
     
     var message = {
         type: "CARD_MOVE",
@@ -407,11 +524,11 @@ scwin.sendCardMoveMessage = function(taskId, fromBoardId, toBoardId) {
         fromBoardId: fromBoardId,
         toBoardId: toBoardId,
         projectId: projectId,
-        userId: scwin.getCurrentUserId(),
+        userId: currentUserId,
         timestamp: Date.now()
     };
     
-    console.log(" 카드 이동 메시지 전송:", message);
+    console.log("������ 카드 이동 메시지 전송:", message);
     scwin.sendWebSocketMessage(message);
 };
 
@@ -441,47 +558,120 @@ scwin.getCurrentUserId = function() {
     return currentUserId;
 };
 
+/**
+ * 사용자 ID로 사용자 이름 가져오기
+ */
+scwin.getUserNameByUserId = function(userId) {
+    if (!userId) {
+        return "담당자 없음";
+    }
+    
+    try {
+        // 현재 로그인한 사용자의 정보인지 확인
+        var currentUserId = scwin.getCurrentUserId();
+        if (userId === currentUserId) {
+            var userInfo = $p.getComponentById("dm_userInfo");
+            if (userInfo) {
+                var userName = userInfo.get("userName");
+                if (userName) {
+                    return userName;
+                }
+            }
+        }
+        
+        // 다른 사용자의 경우 기본적으로 userId를 표시하되, 
+        // 향후 사용자 목록 API가 있다면 여기서 매핑
+        // TODO: 프로젝트 멤버 정보 API 연동 필요
+        return userId; // 현재는 userId 그대로 표시
+    } catch (e) {
+        console.error("사용자 이름 조회 실패:", e);
+        return userId || "알 수 없음";
+    }
+};
 
 /**
  * 메시지로부터 카드 위치 업데이트 (실시간 동기화 핵심 로직)
  */
 scwin.updateCardPositionFromMessage = function(message) {
-    console.log("=== 실시간 카드 위치 업데이트 시작 ===");
+    console.log("🚀 === 실시간 카드 위치 업데이트 시작 ===");
+    console.log("📨 수신된 메시지:", message);
     
     var taskId = message.taskId;
     var fromBoardId = message.fromBoardId;
     var toBoardId = message.toBoardId;
     
+    console.log("📋 이동 정보:");
+    console.log("- taskId:", taskId);
+    console.log("- fromBoardId:", fromBoardId);
+    console.log("- toBoardId:", toBoardId);
+    
     // 1. 이동할 카드 찾기
+    console.log("🔍 1단계: 이동할 카드 찾기");
     var cardElement = scwin.findCardByTaskId(taskId);
     if (!cardElement) {
-        console.error("카드를 찾을 수 없습니다:", taskId);
+        console.error("❌ 카드를 찾을 수 없습니다:", taskId);
+        console.error("현재 페이지의 모든 카드 확인:");
+        var allCards = document.querySelectorAll("[data-task-id]");
+        allCards.forEach((card, index) => {
+            console.error(`카드 ${index + 1}: taskId=${card.getAttribute("data-task-id")}, id=${card.id}`);
+        });
         return;
     }
     
-    console.log("카드 찾기 성공:", cardElement);
+    console.log("✅ 카드 찾기 성공!");
+    console.log("카드 요소:", cardElement);
+    console.log("카드 현재 위치:", cardElement.parentElement);
     
     // 2. 타겟 보드 컨테이너 찾기
+    console.log("🎯 2단계: 타겟 보드 컨테이너 찾기");
     var targetContainerId = "card_container_" + toBoardId;
+    console.log("찾을 컨테이너 ID:", targetContainerId);
+    
     var targetContainer = null;
     
     try {
         targetContainer = eval(targetContainerId);
+        console.log("eval 결과:", targetContainer);
     } catch (e) {
-        console.error("타겟 컨테이너 찾기 실패:", targetContainerId, e);
+        console.error("❌ eval로 타겟 컨테이너 찾기 실패:", targetContainerId, e);
+    }
+    
+    // 백업 방법: $p.getComponentById 사용
+    if (!targetContainer) {
+        console.log("🔄 백업 방법: $p.getComponentById 사용");
+        try {
+            targetContainer = $p.getComponentById(targetContainerId);
+            console.log("$p.getComponentById 결과:", targetContainer);
+        } catch (e) {
+            console.error("❌ $p.getComponentById도 실패:", e);
+        }
     }
     
     if (!targetContainer) {
-        console.error("타겟 컨테이너를 찾을 수 없습니다:", targetContainerId);
+        console.error("❌ 타겟 컨테이너를 찾을 수 없습니다:", targetContainerId);
+        console.error("현재 페이지의 모든 컨테이너 확인:");
+        var allContainers = document.querySelectorAll("[id*='card_container_']");
+        allContainers.forEach((container, index) => {
+            console.error(`컨테이너 ${index + 1}: id=${container.id}`);
+        });
         return;
     }
     
-    console.log("타겟 컨테이너 찾기 성공:", targetContainer);
+    console.log("✅ 타겟 컨테이너 찾기 성공!");
+    console.log("타겟 컨테이너:", targetContainer);
+    console.log("타겟 컨테이너 ID:", targetContainer.id || targetContainer.getID());
     
     // 3. 카드 이동 애니메이션 및 DOM 업데이트
-    scwin.animateCardMove(cardElement, targetContainer, fromBoardId, toBoardId, taskId);
+    console.log("🎬 3단계: 카드 이동 애니메이션 실행");
+    try {
+        scwin.animateCardMove(cardElement, targetContainer, fromBoardId, toBoardId, taskId);
+        console.log("✅ 카드 이동 애니메이션 호출 성공");
+    } catch (error) {
+        console.error("❌ 카드 이동 애니메이션 실행 중 오류:", error);
+        console.error("오류 스택:", error.stack);
+    }
     
-    console.log("=== 실시간 카드 위치 업데이트 완료 ===");
+    console.log("🎉 === 실시간 카드 위치 업데이트 완료 ===");
 };
 
 /**
@@ -576,45 +766,70 @@ scwin.findCardByTaskId = function(taskId) {
  * 카드 이동 애니메이션 및 DOM 업데이트
  */
 scwin.animateCardMove = function(cardElement, targetContainer, fromBoardId, toBoardId, taskId) {
-    console.log("카드 이동 애니메이션 시작:", {
-        cardElement: cardElement,
-        targetContainer: targetContainer,
-        fromBoardId: fromBoardId,
-        toBoardId: toBoardId,
-        taskId: taskId
-    });
+    console.log("🎬 === 카드 이동 애니메이션 시작 ===");
+    console.log("📋 이동 파라미터:");
+    console.log("- cardElement:", cardElement);
+    console.log("- targetContainer:", targetContainer);
+    console.log("- fromBoardId:", fromBoardId);
+    console.log("- toBoardId:", toBoardId);
+    console.log("- taskId:", taskId);
     
     try {
         // 애니메이션 클래스 추가
+        console.log("🎨 1단계: 애니메이션 클래스 추가");
         cardElement.classList.add("moving-remotely");
+        console.log("✅ moving-remotely 클래스 추가 완료");
         
         // 실제 DOM 이동
+        console.log("🚚 2단계: DOM 이동 처리");
         var targetElement = targetContainer.element || targetContainer;
+        console.log("타겟 엘리먼트:", targetElement);
+        console.log("타겟 엘리먼트 타입:", typeof targetElement);
+        console.log("타겟 엘리먼트 태그:", targetElement.tagName);
+        console.log("현재 카드 위치:", cardElement.parentElement);
+        
+        // DOM 이동 실행
         targetElement.appendChild(cardElement);
+        console.log("✅ DOM 이동 완료");
+        console.log("이동 후 카드 위치:", cardElement.parentElement);
         
         // 카드의 data-board-id 업데이트
+        console.log("🏷️ 3단계: data-board-id 업데이트");
+        console.log("이전 data-board-id:", cardElement.getAttribute("data-board-id"));
         cardElement.setAttribute("data-board-id", toBoardId);
+        console.log("새로운 data-board-id:", cardElement.getAttribute("data-board-id"));
         
         // 보드 카운트 업데이트
+        console.log("🔢 4단계: 보드 카운트 업데이트");
         scwin.updateBoardCardCounts(fromBoardId, toBoardId);
         
         // 애니메이션 완료 후 클래스 제거
         setTimeout(function() {
+            console.log("🧹 5단계: 애니메이션 클래스 제거");
             cardElement.classList.remove("moving-remotely");
-            console.log("카드 이동 애니메이션 완료:", taskId);
+            console.log("✅ 카드 이동 애니메이션 완료:", taskId);
             
             // 이동 완료 알림 (선택사항)
-            scwin.showCardMoveNotification(taskId, fromBoardId, toBoardId);
+            try {
+                scwin.showCardMoveNotification(taskId, fromBoardId, toBoardId);
+            } catch (notificationError) {
+                console.log("알림 표시 중 오류 (무시 가능):", notificationError.message);
+            }
         }, 300);
         
-        console.log("카드 DOM 이동 성공:", taskId, "->", toBoardId);
+        console.log("🎉 카드 DOM 이동 성공:", taskId, "->", toBoardId);
         
     } catch (error) {
-        console.error("카드 이동 중 오류 발생:", error);
+        console.error("💥 카드 이동 중 치명적 오류 발생:");
+        console.error("- 오류 메시지:", error.message);
+        console.error("- 오류 스택:", error.stack);
+        console.error("- cardElement 상태:", cardElement);
+        console.error("- targetContainer 상태:", targetContainer);
         
         // 오류 시 애니메이션 클래스 제거
         if (cardElement && cardElement.classList) {
             cardElement.classList.remove("moving-remotely");
+            console.log("🧹 오류 시 애니메이션 클래스 제거 완료");
         }
     }
 };
@@ -2609,7 +2824,8 @@ scwin.createKanbanCardInBoard = function(cardData) {
             metaGroup
         );
         if (assigneeSpan) {
-            assigneeSpan.setValue("담당자: " + cardData.projectUserId);
+            var userName = scwin.getUserNameByUserId(cardData.projectUserId);
+            assigneeSpan.setValue("담당자: " + userName);
         }
     }
     
@@ -2774,8 +2990,9 @@ scwin.createKanbanCard = function(cardData, columnType) {
         },
         assigneeGroup
     );
-    if (avatarSpan) {
-        avatarSpan.setValue("김"); // 임시값, 실제로는 사용자 정보에서 가져와야 함
+    if (avatarSpan && cardData.projectUserId) {
+        var userName = scwin.getUserNameByUserId(cardData.projectUserId);
+        avatarSpan.setValue(userName.charAt(0)); // 사용자 이름의 첫 글자
     }
     
     // 9. 담당자 이름 생성
@@ -2785,8 +3002,9 @@ scwin.createKanbanCard = function(cardData, columnType) {
         {},
         assigneeGroup
     );
-    if (assigneeNameSpan) {
-        assigneeNameSpan.setValue("김개발"); // 임시값
+    if (assigneeNameSpan && cardData.projectUserId) {
+        var userName = scwin.getUserNameByUserId(cardData.projectUserId);
+        assigneeNameSpan.setValue(userName);
     }
     
     // 10. 마감일 생성 (있는 경우)
@@ -4398,15 +4616,297 @@ scwin.new_task_onclick = function (e) {
     $p.openPopup("/InsWebApp/ui/project/taskModal.xml", options);
 
 };
+
+/**
+ * 보드 추가 버튼 클릭 이벤트
+ */
+scwin.add_board_onclick = function(e) {
+    console.log("보드 추가 버튼 클릭됨");
+    
+    // 현재 프로젝트 ID 확인
+    var projectId = null;
+    if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
+        projectId = scwin.currentProjectData.projectId;
+    } else {
+        var urlParams = new URLSearchParams(window.location.search);
+        projectId = urlParams.get('projectId');
+    }
+    
+    if (!projectId) {
+        alert("프로젝트 ID를 찾을 수 없습니다.");
+        return;
+    }
+    
+    // 빈 보드 컬럼 생성 (input 태그 포함)
+    scwin.createEmptyBoardWithInput(projectId);
+};
+
+/**
+ * 보드 추가 성공 처리
+ */
+scwin.add_board_submitdone = function(e) {
+    console.log("보드 생성 성공:", e.responseJSON);
+    
+    try {
+        // 생성 성공 시 임시 보드 제거
+        if (scwin.currentTempBoardId) {
+            scwin.removeTempBoard(scwin.currentTempBoardId);
+            scwin.currentTempBoardId = null;
+        }
+        
+        // 보드 목록 다시 조회하여 전체 새로고침
+        console.log("보드 생성 완료. 보드 목록을 새로고침합니다.");
+        $p.executeSubmission("load_Board");
+        
+    } catch (error) {
+        console.error("보드 생성 응답 처리 중 오류:", error);
+        
+        // 오류 시 임시 보드 제거
+        if (scwin.currentTempBoardId) {
+            scwin.removeTempBoard(scwin.currentTempBoardId);
+            scwin.currentTempBoardId = null;
+        }
+    }
+};
+
+/**
+ * 보드 추가 실패 처리
+ */
+scwin.add_board_submiterror = function(e) {
+    console.error("보드 생성 실패:", e);
+    
+    var errorMessage = "보드 생성에 실패했습니다.";
+    
+    if (e.responseJSON && e.responseJSON.message) {
+        errorMessage += "\n원인: " + e.responseJSON.message;
+    } else if (e.status) {
+        errorMessage += "\n상태코드: " + e.status;
+    }
+    
+    alert(errorMessage);
+    
+    // 실패 시 임시 보드 제거
+    if (scwin.currentTempBoardId) {
+        scwin.removeTempBoard(scwin.currentTempBoardId);
+        scwin.currentTempBoardId = null;
+    }
+};
+
+/**
+ * input 태그가 있는 빈 보드 컬럼 생성
+ */
+scwin.createEmptyBoardWithInput = function(projectId) {
+    console.log("input이 있는 빈 보드 생성 시작");
+    
+    try {
+        var kanbanContainer = grp_kanban_board;
+        if (!kanbanContainer) {
+            console.error("칸반 컨테이너를 찾을 수 없습니다.");
+            return;
+        }
+        
+        // 임시 보드 ID 생성
+        var tempBoardId = "temp_board_" + new Date().getTime();
+        var columnId = "grp_dynamic_" + tempBoardId;
+        
+        // 1. 메인 컬럼 그룹 생성
+        var columnGroup = $p.dynamicCreate(
+            columnId,
+            "group",
+            {
+                className: "kanban-column",
+                style: "flex: 1; margin: 0 8px; background: #f6f8fa; border-radius: 8px; padding: 16px;",
+                "data-board-id": tempBoardId,
+                "data-temp-board": "true"
+            },
+            kanbanContainer
+        );
+        
+        if (!columnGroup) {
+            console.error("메인 컬럼 그룹 생성 실패:", columnId);
+            return;
+        }
+        
+        // 2. 컬럼 헤더 생성
+        var headerGroup = $p.dynamicCreate(
+            columnId + "_header",
+            "group",
+            {
+                className: "kanban-column-header",
+                style: "display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;"
+            },
+            columnGroup
+        );
+        
+        // 3. 제목 입력 영역 생성
+        var titleGroup = $p.dynamicCreate(
+            columnId + "_title_group",
+            "group",
+            {
+                style: "display: flex; align-items: center; gap: 8px; width: 100%;"
+            },
+            headerGroup
+        );
+        
+        // 4. 상태 인디케이터 생성
+        var statusIndicator = $p.dynamicCreate(
+            columnId + "_status",
+            "output",
+            {
+                className: "status-indicator",
+                style: "width: 8px; height: 8px; border-radius: 50%; background-color: #999999;"
+            },
+            titleGroup
+        );
+        
+        // 5. 보드명 입력 input 생성
+        var titleInput = $p.dynamicCreate(
+            columnId + "_input",
+            "input",
+            {
+                placeholder: "보드 이름을 입력하세요",
+                style: "width: 100%; padding: 6px 8px; border: 1px solid #d1d9e0; border-radius: 4px; font-weight: 600; font-size: 14px; background: white;",
+                "data-project-id": projectId,
+                "data-temp-board-id": tempBoardId
+            },
+            titleGroup
+        );
+        
+        if (titleInput) {
+            // input에 키보드 이벤트 바인딩
+            titleInput.bind("onkeydown", scwin.boardInput_onkeydown);
+            
+            // input에 포커스 주기
+            setTimeout(function() {
+                titleInput.focus();
+            }, 100);
+        }
+        
+        // 6. 빈 카드 컨테이너 생성
+        var cardContainer = $p.dynamicCreate(
+            columnId + "_container",
+            "group",
+            {
+                className: "kanban-cards-container",
+                style: "display: flex; flex-direction: column; gap: 8px; min-height: 100px; width: 100%; opacity: 0.5;",
+                "data-board-id": tempBoardId
+            },
+            columnGroup
+        );
+        
+        // 7. 안내 텍스트 추가
+        var guideText = $p.dynamicCreate(
+            columnId + "_guide",
+            "output",
+            {
+                style: "text-align: center; color: #656d76; font-size: 12px; padding: 20px; font-style: italic;"
+            },
+            cardContainer
+        );
+        
+        if (guideText) {
+            guideText.setValue("Enter: 보드 생성 | ESC: 취소");
+        }
+        
+        console.log("input이 있는 빈 보드 생성 완료:", tempBoardId);
+        
+    } catch (error) {
+        console.error("빈 보드 생성 중 오류:", error);
+    }
+};
+
+/**
+ * 보드명 입력 input의 키보드 이벤트 처리
+ */
+scwin.boardInput_onkeydown = function(e) {
+    var inputComponent = this;
+    var keyCode = e.keyCode;
+    
+    if (keyCode === 13) { // Enter 키 - 보드 생성
+        var boardTitle = inputComponent.getValue();
+        
+        if (boardTitle && boardTitle.trim() !== "") {
+            var projectId = inputComponent.getAttribute("data-project-id");
+            var tempBoardId = inputComponent.getAttribute("data-temp-board-id");
+            
+            console.log("보드 생성 요청:", {
+                boardTitle: boardTitle.trim(),
+                projectId: projectId,
+                tempBoardId: tempBoardId
+            });
+            
+            // 임시 보드 ID 저장 (생성 성공 시 교체용)
+            scwin.currentTempBoardId = tempBoardId;
+            
+            // 데이터 설정
+            dm_boardVo_add.set("boardTitle", boardTitle.trim());
+            dm_boardVo_add.set("projectId", projectId);
+            
+            // 서버에 보드 생성 요청
+            $p.executeSubmission("add_board");
+            
+        } else {
+            alert("보드 이름을 입력해주세요.");
+            inputComponent.focus();
+        }
+        
+    } else if (keyCode === 27) { // ESC 키 - 취소
+        console.log("보드 생성 취소");
+        
+        // 임시 보드 컬럼 제거
+        var tempBoardId = inputComponent.getAttribute("data-temp-board-id");
+        var columnId = "grp_dynamic_" + tempBoardId;
+        
+        try {
+            var columnComponent = eval(columnId);
+            if (columnComponent) {
+                columnComponent.remove();
+                console.log("임시 보드 컬럼 제거:", columnId);
+            }
+        } catch (error) {
+            console.log("임시 보드 컬럼 제거 중 오류:", error);
+        }
+    }
+};
+
+/**
+ * 임시 보드 제거
+ */
+scwin.removeTempBoard = function(tempBoardId) {
+    console.log("임시 보드 제거:", tempBoardId);
+    
+    try {
+        var tempColumnId = "grp_dynamic_" + tempBoardId;
+        var tempColumn = eval(tempColumnId);
+        
+        if (tempColumn) {
+            tempColumn.remove();
+            console.log("임시 보드 컬럼 제거 완료:", tempColumnId);
+        } else {
+            console.log("제거할 임시 보드 컬럼을 찾을 수 없습니다:", tempColumnId);
+        }
+        
+    } catch (error) {
+        console.error("임시 보드 제거 중 오류:", error);
+    }
+};
+
 ]]></script>
 		<style type="text/css"><![CDATA[
+/* 기본 스크롤 설정 */
+html, body {
+    height: 100%;
+    overflow: auto;
+    margin: 0;
+    padding: 0;
+}
+
 /* 전체 컨테이너 */
 .project-main-container {
     width: 100%;
+    height: auto;
     background-color: #fff4d6;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    overflow-x: hidden;
-    overflow-y: auto;
 }
 
 /* 헤더 영역 */
@@ -4498,12 +4998,10 @@ scwin.new_task_onclick = function (e) {
 .kanban-container {
     display: flex;
     gap: 16px;
-    <!-- padding: 0 10% 40px 10%; -->
-    overflow-x: auto;
-    min-height: calc(100vh - 200px);
     align-items: flex-start;  /* 상단 정렬 */
     max-width: 80%;
     margin: 0 2%;
+    padding-bottom: 60px;  /* 하단 여백 추가 */
 }
 
 /* 칸반 열 */
@@ -5217,8 +5715,8 @@ scwin.new_task_onclick = function (e) {
 						<xf:label><![CDATA[캘린더]]></xf:label>
 					</xf:trigger>
 
-					<xf:trigger type="button" class="btn-primary" id="btn_new_task" ev:onclick="scwin.new_task_onclick">
-						<xf:label><![CDATA[+ 새 작업]]></xf:label>
+					<xf:trigger type="button" class="btn-primary" id="btn_add_board" ev:onclick="scwin.add_board_onclick">
+						<xf:label><![CDATA[+ 보드 추가]]></xf:label>
 					</xf:trigger>
 
 					<xf:trigger type="button" class="btn-github" id="btn_settings" ev:onclick="scwin.btn_settings_onclick">
