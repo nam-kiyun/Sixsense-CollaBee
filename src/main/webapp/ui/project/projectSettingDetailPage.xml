@@ -801,43 +801,58 @@ scwin.executeProjectDelete = function(projectName) {
         data: requestData,
         contentType: 'application/x-www-form-urlencoded',
         success: function(response) {
-            
+            console.log("AJAX 성공 응답:", response);
             
             // 응답 처리
             var isSuccess = false;
             var message = "";
             
             try {
+                console.log("응답 타입:", typeof response);
+                console.log("응답 내용:", JSON.stringify(response));
+                
                 if (response && typeof response === 'object') {
                     if (response.success === true) {
                         isSuccess = true;
                         message = response.message || "프로젝트가 성공적으로 삭제되었습니다.";
+                        console.log("삭제 성공 확인됨");
                     } else {
                         isSuccess = false;
                         message = response.message || "프로젝트 삭제에 실패했습니다.";
+                        console.log("삭제 실패:", message);
                     }
                 } else {
                     // 응답이 없거나 예상과 다른 경우
                     isSuccess = false;
                     message = "서버 응답을 처리할 수 없습니다.";
+                    console.log("예상과 다른 응답:", response);
                 }
             } catch (e) {
                 isSuccess = false;
                 message = "응답 처리 중 오류가 발생했습니다.";
+                console.error("응답 처리 오류:", e);
             }
             
             if (isSuccess) {
-                $c.win.alert("'" + projectName + "' 프로젝트가 삭제되었습니다.\n메인 페이지로 이동합니다.");
+                console.log("삭제 성공, alert 표시");
                 
-                // 부모 창으로 대시보드 이동
-                try {
-                    var parentFrame = $p.parent();
-                    if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
-                        parentFrame.scwin.changeMenu("dashboard");
-                    }
-                } catch(e) {
+                $c.win.alert("'" + projectName + "' 프로젝트가 삭제되었습니다.\n메인 페이지로 이동합니다.", function() {
+                    console.log("alert 확인 버튼 클릭됨");
                     
-                }
+                    // WebSquare 방식으로 페이지 이동
+                    try {
+                        console.log("$p.url로 페이지 이동 시도");
+                        $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/mainPage.xml");
+                    } catch(e) {
+                        console.error("$p.url 이동 실패:", e);
+                        try {
+                            $p.url("/InsWebApp/ui/mainPage.xml");
+                        } catch(e2) {
+                            console.error("대체 이동 실패:", e2);
+                            window.location.href = "/InsWebApp/ui/mainPage.xml";
+                        }
+                    }
+                });
             } else {
                 $c.win.alert("프로젝트 삭제에 실패했습니다: " + message);
             }
