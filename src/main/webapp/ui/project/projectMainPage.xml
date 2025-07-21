@@ -1492,6 +1492,12 @@ scwin.board_onclick = function(e) {
         calendarView.hide();
     }
     
+    // 간트차트 영역 숨기기
+    var ganttView = $p.getComponentById("grp_gantt_view");
+    if (ganttView) {
+        ganttView.hide();
+    }
+    
     // 칸반 보드 표시
     var kanbanBoard = $p.getComponentById("grp_kanban_board");
     if (kanbanBoard) {
@@ -1516,11 +1522,23 @@ scwin.list_onclick = function(e) {
         calendarView.hide();
     }
     
-    // 간트차트 보이기
+    // 간트차트 보이기 전 기존 객체 정리
     var ganttView = $p.getComponentById("grp_gantt_view");
     if (ganttView) {
+        // 기존 FusionCharts 객체 확인
+        try {
+            if (gantt_chart && gantt_chart.fc()) {
+                console.log("List 버튼 클릭 시 기존 간트차트 객체 재사용");
+            }
+        } catch (e) {
+            console.log("간트차트 객체 상태 확인:", e);
+        }
+        
         ganttView.show();
     }
+    
+    // 간트차트 월별 네비게이션 초기화
+    scwin.initGanttNavigation();
     
     // 간트차트 데이터 로딩
     scwin.loadGanttData();
@@ -1534,6 +1552,12 @@ scwin.calendar_onclick = function(e) {
     var kanbanBoard = $p.getComponentById("grp_kanban_board");
     if (kanbanBoard) {
         kanbanBoard.hide();
+    }
+    
+    // 간트차트 영역 숨기기
+    var ganttView = $p.getComponentById("grp_gantt_view");
+    if (ganttView) {
+        ganttView.hide();
     }
     
     // 캘린더 영역 표시
@@ -1724,6 +1748,348 @@ scwin.formatDateForCalendar = function(dateString) {
 };
 
 /**
+ * 태스크 데이터를 간트차트로 변환하여 로드 (캘린더와 유사한 방식)
+ */
+scwin.loadTasksToGantt = function() {
+    console.log("태스크 데이터를 간트차트로 변환 시작");
+    
+    if (!gantt_chart) {
+        console.error("gantt_chart 컴포넌트를 찾을 수 없습니다.");
+        return;
+    }
+    
+    // 기존 FusionCharts 객체 확인 (중복 방지)
+    try {
+        var existingChart = gantt_chart.fc();
+        if (existingChart) {
+            console.log("기존 간트차트 객체가 존재합니다. 재사용합니다.");
+            // 기존 객체 정리하지 않고 재사용
+        }
+    } catch (e) {
+        console.log("새로운 간트차트 객체를 생성합니다.");
+    }
+    
+    // 간트차트 데이터 리스트에서 태스크 데이터 가져오기
+    var ganttTasks = dlt_gantt_schedule.getAllJSON();
+    console.log("간트차트 태스크 데이터:", ganttTasks);
+    
+    if (!ganttTasks || ganttTasks.length === 0) {
+        console.log("간트차트에 표시할 태스크가 없습니다.");
+        return;
+    }
+    
+    // 간트차트.txt 방식으로 데이터 설정
+    console.log("간트차트 JSON 데이터 설정 시작");
+    
+    // 1. 기본 차트 속성 설정 (간트차트.txt 형식)
+    var chartOptions = {
+        caption: "",  // 제목 제거
+        dateformat: "mm/dd/yyyy",
+        outputdateformat: "mm/dd/yyyy"
+    };
+    gantt_chart.setChartAttribute(chartOptions);
+    
+    // 2. 카테고리 설정 (간트차트.txt 방식 - 일별 카테고리만)
+    var categoryData = scwin.createGanttCategories(ganttTasks);
+    if (categoryData) {
+        console.log("간트차트 일별 카테고리 설정:", categoryData);
+        gantt_chart.setCategories(categoryData);
+    }
+    
+    // 3. processes와 tasks 데이터 생성
+    var ganttJSONData = scwin.createGanttJSONFromDataList(ganttTasks);
+    
+    // 4. JSON 데이터 설정 (간트차트.txt 방식)
+    if (ganttJSONData) {
+        console.log("간트차트 JSON 데이터:", ganttJSONData);
+        gantt_chart.setJSONData(ganttJSONData);
+    }
+    
+    // 4. 개별 태스크 색상 설정 (간트차트.txt setTasksColor 방식)
+    console.log("간트차트 개별 태스크 색상 설정");
+    ganttTasks.forEach(function(task) {
+        try {
+            var taskColor = scwin.getTaskColorByPriority(task.priority);
+            gantt_chart.setTasksColor(task.taskId, taskColor);
+            console.log("태스크 " + task.taskId + " 색상 설정: " + taskColor);
+        } catch (e) {
+            console.log("태스크 색상 설정 오류:", task.taskId, e);
+        }
+    });
+    
+    // 5. 간트차트 그리기
+    console.log("간트차트 그리기 시작");
+    gantt_chart.draw();
+    
+    console.log("간트차트 표시 완료");
+};
+
+/**
+ * 간트차트용 월별 + 일별 카테고리 생성 (2단계 카테고리)
+ */
+scwin.createGanttCategories = function(tasks) {
+    if (!tasks || tasks.length === 0) {
+        return null;
+    }
+    
+    // 현재 표시할 월 정보 (전역 변수에서 가져오기)
+    var currentYear = scwin.currentGanttYear || new Date().getFullYear();
+    var currentMonth = scwin.currentGanttMonth || (new Date().getMonth() + 1);
+    
+    console.log("간트차트 표시 월:", currentYear + "년 " + currentMonth + "월");
+    
+    // 해당 월의 시작일과 종료일 계산
+    var startDate = new Date(currentYear, currentMonth - 1, 1); // 월 시작
+    var endDate = new Date(currentYear, currentMonth, 0); // 월 마지막 날
+    var daysInMonth = endDate.getDate(); // 해당 월의 총 일수
+    
+    var monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", 
+                     "7월", "8월", "9월", "10월", "11월", "12월"];
+    
+    // 일별 카테고리만 생성 (0부터 시작하여 1일이 첫 번째 칸에 오도록)
+    var dayCategories = [];
+    
+    // 0일 추가 (빈 칸용)
+    var beforeMonthDate = new Date(currentYear, currentMonth - 1, 0); // 이전 달 마지막날
+    dayCategories.push({
+        start: scwin.formatToMMDDYYYY(beforeMonthDate),
+        end: scwin.formatToMMDDYYYY(beforeMonthDate),
+        label: ""  // 빈 라벨
+    });
+    
+    // 1일부터 마지막 날까지
+    for (var day = 1; day <= daysInMonth; day++) {
+        var dayDate = new Date(currentYear, currentMonth - 1, day);
+        dayCategories.push({
+            start: scwin.formatToMMDDYYYY(dayDate),
+            end: scwin.formatToMMDDYYYY(dayDate),
+            label: day.toString()
+        });
+    }
+    
+    console.log("일별 카테고리 생성:", (dayCategories.length - 1) + "일 (빈칸 + 1일 ~ " + dayCategories[dayCategories.length-1].label + "일)");
+    
+    // 일별 카테고리만 반환
+    return { category: dayCategories };
+};
+
+/**
+ * DataList에서 간트차트 JSON 데이터 생성 (간트차트.txt 방식)
+ */
+scwin.createGanttJSONFromDataList = function(ganttTasks) {
+    if (!ganttTasks || ganttTasks.length === 0) {
+        return null;
+    }
+    
+    var processes = [];
+    var tasks = [];
+    
+    // processes와 tasks 데이터 생성
+    ganttTasks.forEach(function(task, index) {
+        // processes (왼쪽 태스크 목록)
+        processes.push({
+            id: task.taskId,
+            label: task.taskTitle
+        });
+        
+        // tasks (간트 바) - 날짜를 mm/dd/yyyy 형식으로 변환 및 색상 지정
+        tasks.push({
+            id: task.taskId,
+            start: scwin.convertToMMDDYYYY(task.startDate),
+            end: scwin.convertToMMDDYYYY(task.endDate),
+            processid: task.taskId,
+            label: task.taskTitle,
+            color: scwin.getTaskColorByPriority(task.priority)  // 우선순위별 색상
+        });
+    });
+    
+    // 간트차트.txt 예제 형식으로 반환
+    return {
+        chart: {
+            caption: "프로젝트 일정",
+            dateformat: "mm/dd/yyyy",
+            outputdateformat: "mm/dd/yyyy"
+        },
+        processes: {
+            process: processes
+        },
+        tasks: {
+            task: tasks
+        }
+    };
+};
+
+/**
+ * 태스크 우선순위별 색상 반환 (로그아웃 버튼 색상으로 통일)
+ */
+scwin.getTaskColorByPriority = function(priority) {
+    // 로그아웃 버튼 색상 #ffb823 (황금색) 기반으로 통일
+    return "#ffb823";    // 모든 태스크를 황금색으로 통일
+};
+
+/**
+ * 보드별 색상 반환 (대안 색상 스키마)
+ */
+scwin.getTaskColorByBoard = function(boardId) {
+    var colors = [
+        "#FF6B6B",  // 빨간색
+        "#4ECDC4",  // 청록색  
+        "#45B7D1",  // 파란색
+        "#96CEB4",  // 초록색
+        "#FFEAA7",  // 노란색
+        "#DDA0DD",  // 자주색
+        "#98D8C8",  // 민트색
+        "#F7DC6F"   // 황금색
+    ];
+    
+    // 보드 ID를 기반으로 색상 인덱스 계산
+    var colorIndex = parseInt(boardId) % colors.length;
+    return colors[colorIndex];
+};
+
+/**
+ * yyyy-mm-dd 형식을 mm/dd/yyyy 형식으로 변환 (간트차트.txt 형식)
+ */
+scwin.convertToMMDDYYYY = function(dateString) {
+    if (!dateString || dateString.trim() === "") {
+        return "";
+    }
+    
+    try {
+        // yyyy-mm-dd -> mm/dd/yyyy 변환
+        var parts = dateString.split("-");
+        if (parts.length === 3) {
+            var year = parts[0];
+            var month = parts[1];
+            var day = parts[2];
+            return month + "/" + day + "/" + year;
+        }
+        return dateString;
+    } catch (e) {
+        console.error("날짜 변환 오류:", dateString, e);
+        return dateString;
+    }
+};
+
+/**
+ * Date 객체를 mm/dd/yyyy 형식으로 변환
+ */
+scwin.formatToMMDDYYYY = function(date) {
+    var month = (date.getMonth() + 1).toString().padStart(2, '0');
+    var day = date.getDate().toString().padStart(2, '0');
+    var year = date.getFullYear();
+    return month + "/" + day + "/" + year;
+};
+
+/**
+ * 간트차트 월별 네비게이션 초기화
+ */
+scwin.initGanttNavigation = function() {
+    // 현재 월로 초기화 (7월)
+    scwin.currentGanttYear = 2025;
+    scwin.currentGanttMonth = 7;
+    
+    // 레이블 업데이트
+    scwin.updateGanttMonthLabel();
+    
+    console.log("간트차트 네비게이션 초기화:", scwin.currentGanttYear + "년 " + scwin.currentGanttMonth + "월");
+};
+
+/**
+ * 간트차트 월 레이블 업데이트
+ */
+scwin.updateGanttMonthLabel = function() {
+    var monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", 
+                     "7월", "8월", "9월", "10월", "11월", "12월"];
+    
+    var labelText = scwin.currentGanttYear + "년 " + monthNames[scwin.currentGanttMonth - 1];
+    
+    // 레이블 컴포넌트 업데이트
+    var monthLabel = $p.getComponentById("lbl_gantt_current_month");
+    if (monthLabel) {
+        monthLabel.setValue(labelText);
+    }
+    
+    console.log("간트차트 월 레이블 업데이트:", labelText);
+};
+
+/**
+ * 이전 월로 이동
+ */
+scwin.moveToPreviousMonth = function() {
+    if (scwin.currentGanttMonth > 1) {
+        scwin.currentGanttMonth--;
+    } else {
+        scwin.currentGanttMonth = 12;
+        scwin.currentGanttYear--;
+    }
+    
+    console.log("이전 월로 이동:", scwin.currentGanttYear + "년 " + scwin.currentGanttMonth + "월");
+    
+    // 레이블 업데이트
+    scwin.updateGanttMonthLabel();
+    
+    // 간트차트 새로고침
+    scwin.refreshGanttChart();
+};
+
+/**
+ * 다음 월로 이동
+ */
+scwin.moveToNextMonth = function() {
+    if (scwin.currentGanttMonth < 12) {
+        scwin.currentGanttMonth++;
+    } else {
+        scwin.currentGanttMonth = 1;
+        scwin.currentGanttYear++;
+    }
+    
+    console.log("다음 월로 이동:", scwin.currentGanttYear + "년 " + scwin.currentGanttMonth + "월");
+    
+    // 레이블 업데이트
+    scwin.updateGanttMonthLabel();
+    
+    // 간트차트 새로고침
+    scwin.refreshGanttChart();
+};
+
+/**
+ * 간트차트 새로고침 (월 변경 시)
+ */
+scwin.refreshGanttChart = function() {
+    console.log("간트차트 새로고침 시작");
+    
+    // 현재 월에 해당하는 태스크만 필터링
+    var allTasks = dlt_gantt_schedule.getAllJSON();
+    var currentMonthTasks = scwin.filterTasksByMonth(allTasks, scwin.currentGanttYear, scwin.currentGanttMonth);
+    
+    console.log("현재 월 태스크:", currentMonthTasks.length + "개");
+    
+    // 간트차트 다시 그리기
+    scwin.loadTasksToGantt();
+};
+
+/**
+ * 특정 월의 태스크만 필터링
+ */
+scwin.filterTasksByMonth = function(tasks, year, month) {
+    return tasks.filter(function(task) {
+        if (!task.startDate && !task.endDate) {
+            return false;
+        }
+        
+        var taskStartDate = new Date(task.startDate);
+        var taskEndDate = new Date(task.endDate);
+        
+        var monthStart = new Date(year, month - 1, 1);
+        var monthEnd = new Date(year, month, 0);
+        
+        // 태스크가 해당 월과 겹치는지 확인
+        return (taskStartDate <= monthEnd && taskEndDate >= monthStart);
+    });
+};
+
+/**
  * 간트차트 데이터 로딩 함수
  */
 scwin.loadGanttData = function() {
@@ -1751,57 +2117,182 @@ scwin.loadGanttData = function() {
     // 태스크 데이터 요청
     console.log("간트차트용 태스크 데이터 요청 파라미터:", params);
     
-    // 모든 태스크 가져오기
-    $p.executeSubmission("load_Task", {
-        data: params,
-        success: function(response) {
-            console.log("간트차트용 태스크 데이터 로딩 성공:", response);
-            
-            var taskList = response.taskListVo;
-            if (!taskList || taskList.length === 0) {
-                console.log("간트차트에 표시할 태스크가 없습니다.");
-                return;
-            }
-            
-            // 태스크 데이터를 간트차트 형식으로 변환
-            for (var i = 0; i < taskList.length; i++) {
-                var task = taskList[i];
-                
-                // 간트차트 데이터 생성
-                var ganttData = {
-                    taskId: task.taskId,
-                    taskTitle: task.taskTitle,
-                    startDate: task.startDate,
-                    endDate: task.endDate,
-                    boardId: task.boardId,
-                    boardTitle: task.boardTitle || "보드",
-                    priority: task.priority || "MEDIUM",
-                    tags: task.tags || ""
-                };
-                
-                // 간트차트 데이터 리스트에 추가
-                dlt_gantt_schedule.insertRow(i);
-                dlt_gantt_schedule.setCellData(i, "taskId", ganttData.taskId);
-                dlt_gantt_schedule.setCellData(i, "taskTitle", ganttData.taskTitle);
-                dlt_gantt_schedule.setCellData(i, "startDate", ganttData.startDate);
-                dlt_gantt_schedule.setCellData(i, "endDate", ganttData.endDate);
-                dlt_gantt_schedule.setCellData(i, "boardId", ganttData.boardId);
-                dlt_gantt_schedule.setCellData(i, "boardTitle", ganttData.boardTitle);
-                dlt_gantt_schedule.setCellData(i, "priority", ganttData.priority);
-                dlt_gantt_schedule.setCellData(i, "tags", ganttData.tags);
-            }
-            
-            console.log("간트차트 데이터 로딩 완료. 태스크 수:", taskList.length);
-            
-            // 간트차트 컴포넌트 그리기
-            if (gantt_chart) {
-                gantt_chart.draw();
-            }
-        },
-        error: function(error) {
-            console.error("간트차트 데이터 로딩 실패:", error);
-        }
+    // 간트차트 전용 플래그 설정
+    scwin.isLoadingGantt = true;
+    
+    // dm_search_task에 파라미터 설정
+    dm_search_task.set("projectId", params.projectId);
+    dm_search_task.set("boardId", params.boardId);
+    dm_search_task.set("sortField", params.sortField);
+    dm_search_task.set("sortOrder", params.sortOrder);
+    dm_search_task.set("tags", params.tags);
+    
+    // 모든 태스크 가져오기 (load_Tasks submission 사용)
+    $p.executeSubmission("load_Tasks");
+};
+
+/**
+ * 간트차트 설정 및 그리기 함수 (간트차트.txt 방식 적용)
+ */
+scwin.setupGanttChart = function(taskList) {
+    console.log("간트차트 설정 시작");
+    
+    if (!gantt_chart) {
+        console.error("간트차트 컴포넌트를 찾을 수 없습니다.");
+        return;
+    }
+    
+    // 1. 차트 기본 속성 설정
+    var chartOptions = {
+        caption: "프로젝트 일정 관리",
+        subCaption: "태스크별 진행 현황",
+        dateformat: "mm/dd/yyyy",
+        outputdateformat: "mm/dd/yyyy",
+        ganttwidthpercent: "60",
+        gridwidthpercent: "40"
+    };
+    gantt_chart.setChartAttribute(chartOptions);
+    
+    // 2. 카테고리 설정 (월별)
+    var categories = scwin.generateGanttCategories(taskList);
+    if (categories && categories.category && categories.category.length > 0) {
+        gantt_chart.setCategories(categories);
+        console.log("간트차트 카테고리 설정 완료:", categories);
+    }
+    
+    // 3. 프로세스 속성 설정
+    var processesAttr = {
+        fontsize: "12",
+        isbold: "1",
+        align: "left",
+        headertext: "태스크명",
+        headerfontsize: "14",
+        headerbgcolor: "#999999",
+        headerfontcolor: "#ffffff"
+    };
+    gantt_chart.setProcessesAttribute(processesAttr);
+    
+    // 4. 태스크 속성 설정
+    var taskAttr = {
+        showpercentlabel: "1",
+        showstartdate: "1",
+        showenddate: "1",
+        fontsize: "11"
+    };
+    gantt_chart.setTaskAttribute(taskAttr);
+    
+    // 5. JSON 데이터 설정
+    var ganttData = scwin.generateGanttJSONData(taskList);
+    gantt_chart.setJSONData(ganttData);
+    
+    console.log("간트차트 설정 완료 및 렌더링");
+    gantt_chart.draw();
+};
+
+/**
+ * 간트차트용 카테고리 생성 (월별)
+ */
+scwin.generateGanttCategories = function(taskList) {
+    if (!taskList || taskList.length === 0) {
+        return null;
+    }
+    
+    // 모든 태스크의 시작일과 종료일을 수집
+    var allDates = [];
+    taskList.forEach(function(task) {
+        if (task.startDate) allDates.push(new Date(task.startDate));
+        if (task.endDate) allDates.push(new Date(task.endDate));
     });
+    
+    if (allDates.length === 0) {
+        return null;
+    }
+    
+    // 최소, 최대 날짜 구하기
+    var minDate = new Date(Math.min.apply(null, allDates));
+    var maxDate = new Date(Math.max.apply(null, allDates));
+    
+    // 월별 카테고리 생성
+    var categories = [];
+    var currentDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+    
+    while (currentDate <= maxDate) {
+        var startOfMonth = new Date(currentDate);
+        var endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        
+        categories.push({
+            start: scwin.formatDate(startOfMonth),
+            end: scwin.formatDate(endOfMonth),
+            label: (currentDate.getMonth() + 1) + "월 " + currentDate.getFullYear()
+        });
+        
+        currentDate.setMonth(currentDate.getMonth() + 1);
+    }
+    
+    return { category: categories };
+};
+
+/**
+ * 간트차트용 JSON 데이터 생성
+ */
+scwin.generateGanttJSONData = function(taskList) {
+    var processes = [];
+    var tasks = [];
+    
+    taskList.forEach(function(task, index) {
+        // 프로세스 데이터 (왼쪽 태스크명 영역)
+        processes.push({
+            id: task.taskId,
+            label: task.taskTitle,
+            fontsize: "12"
+        });
+        
+        // 태스크 데이터 (간트차트 바)
+        var taskData = {
+            id: task.taskId,
+            start: task.startDate,
+            end: task.endDate,
+            processid: task.taskId,
+            label: task.taskTitle,
+            color: scwin.getTaskColor(task.priority),
+            percentcomplete: "50" // 기본값, 추후 실제 진행률로 변경 가능
+        };
+        
+        tasks.push(taskData);
+    });
+    
+    return {
+        chart: {
+            caption: "프로젝트 일정",
+            dateformat: "mm/dd/yyyy",
+            outputdateformat: "mm/dd/yyyy"
+        },
+        categories: [scwin.generateGanttCategories(taskList)],
+        processes: { process: processes },
+        tasks: { task: tasks }
+    };
+};
+
+/**
+ * 우선순위에 따른 태스크 색상 반환
+ */
+scwin.getTaskColor = function(priority) {
+    switch(priority) {
+        case "HIGH": return "#FF6B6B";
+        case "MEDIUM": return "#4ECDC4";
+        case "LOW": return "#95E1D3";
+        default: return "#A8E6CF";
+    }
+};
+
+/**
+ * 날짜 포맷팅 (mm/dd/yyyy)
+ */
+scwin.formatDate = function(date) {
+    var month = (date.getMonth() + 1).toString().padStart(2, '0');
+    var day = date.getDate().toString().padStart(2, '0');
+    var year = date.getFullYear();
+    return month + "/" + day + "/" + year;
 };
 
 // GitHub 버튼 클릭 - GitHub App 관리 페이지로 이동
@@ -2396,7 +2887,68 @@ scwin.load_Tasks_submitdone = function(e) {
     let taskList = responseData.elData.taskVoList;
     console.log("서버로부터 직접 받은 태스크 목록:", taskList);
 
-    // 2. 태스크가 있으면 데이터 저장 및 카드 생성
+    // 간트차트 모드인지 확인
+    if (scwin.isLoadingGantt) {
+        console.log("간트차트용 태스크 데이터 처리 시작");
+        scwin.isLoadingGantt = false; // 플래그 리셋
+        
+        // 간트차트 데이터 리스트 초기화
+        dlt_gantt_schedule.removeAll();
+        
+        if (taskList && taskList.length > 0) {
+            // 태스크 데이터를 간트차트 형식으로 변환 (유효한 날짜만)
+            var validTaskIndex = 0;
+            for (var i = 0; i < taskList.length; i++) {
+                var task = taskList[i];
+                
+                // 시작일과 종료일이 모두 있는 태스크만 간트차트에 표시
+                if (!task.startDate || !task.endDate || 
+                    task.startDate.trim() === "" || task.endDate.trim() === "") {
+                    console.log("날짜 정보가 없는 태스크 제외:", task.taskTitle, task.startDate, task.endDate);
+                    continue;
+                }
+                
+                // 간트차트 데이터 생성
+                var ganttData = {
+                    taskId: task.taskId,
+                    taskTitle: task.taskTitle,
+                    startDate: task.startDate, // yyyy-mm-dd 형식 그대로 사용
+                    endDate: task.endDate,     // yyyy-mm-dd 형식 그대로 사용
+                    boardId: task.boardId,
+                    boardTitle: task.boardTitle || "보드",
+                    priority: task.priority || "MEDIUM",
+                    tags: task.tags || ""
+                };
+                
+                console.log("간트차트에 추가할 태스크:", ganttData);
+                
+                // 간트차트 데이터 리스트에 추가
+                dlt_gantt_schedule.insertRow(validTaskIndex);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "taskId", ganttData.taskId);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "taskTitle", ganttData.taskTitle);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "startDate", ganttData.startDate);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "endDate", ganttData.endDate);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "boardId", ganttData.boardId);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "boardTitle", ganttData.boardTitle);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "priority", ganttData.priority);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "tags", ganttData.tags);
+                
+                validTaskIndex++;
+            }
+            
+            console.log("간트차트에 유효한 태스크 수:", validTaskIndex);
+            
+            console.log("간트차트 데이터 로딩 완료. 태스크 수:", taskList.length);
+            
+            // 간트차트에 태스크 데이터 표시
+            scwin.loadTasksToGantt();
+        } else {
+            console.log("간트차트에 표시할 태스크가 없습니다.");
+        }
+        return; // 간트차트 처리 완료 후 함수 종료
+    }
+
+    // 2. 일반 칸반 보드용 태스크 처리
     if (taskList && taskList.length > 0) {
         var boardId = taskList[0].boardId; // 첫 번째 태스크의 boardId를 사용
         
@@ -4769,6 +5321,19 @@ scwin.new_task_onclick = function (e) {
 
 			<!-- 간트차트 영역 -->
 			<xf:group id="grp_gantt_view" class="gantt-container" style="display:none;">
+				<!-- 간트차트 월별 네비게이션 -->
+				<xf:group style="width: 90%; margin: 10px auto; padding: 10px; background: transparent; display: flex; justify-content: center; align-items: center;">
+					<xf:trigger id="btn_gantt_prev_month" style="display: inline-block; margin-right: 20px; padding: 8px 15px; background-color: white; border: 1px solid #ccc; border-radius: 6px; color: #4A3F35; font-weight: 500; cursor: pointer; transition: all 0.2s ease;" ev:onclick="scwin.moveToPreviousMonth">
+						<xf:label>◀ 이전 월</xf:label>
+					</xf:trigger>
+					<xf:output id="lbl_gantt_current_month" style="display: inline-block; font-size: 16px; font-weight: bold; margin: 0 20px; color: #4A3F35;">
+						<xf:label>2025년 7월</xf:label>
+					</xf:output>
+					<xf:trigger id="btn_gantt_next_month" style="display: inline-block; margin-left: 20px; padding: 8px 15px; background-color: white; border: 1px solid #ccc; border-radius: 6px; color: #4A3F35; font-weight: 500; cursor: pointer; transition: all 0.2s ease;" ev:onclick="scwin.moveToNextMonth">
+						<xf:label>다음 월 ▶</xf:label>
+					</xf:trigger>
+				</xf:group>
+				
 				<w2:fwGanttChart id="gantt_chart" 
 					style="width: 90%; height: 600px; margin: 10px auto;"
 					ref="dlt_gantt_schedule"
@@ -4779,8 +5344,7 @@ scwin.new_task_onclick = function (e) {
 					taskIdNode="taskId"
 					dateformat="yyyy-mm-dd"
 					timeBase="date"
-					title="프로젝트 일정 간트차트"
-					version="v3">
+					title="프로젝트 일정 간트차트">
 				</w2:fwGanttChart>
 			</xf:group>
 		</xf:group>
