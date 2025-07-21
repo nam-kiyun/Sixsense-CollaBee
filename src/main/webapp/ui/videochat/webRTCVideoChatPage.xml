@@ -3974,7 +3974,7 @@ scwin.openPipWindow = function() {
         `left=${pipLeft}`,
         `top=${pipTop}`,
         'resizable=yes',
-        'scrollbars=no',
+        'scrollbars=yes',
         'toolbar=no',
         'menubar=no',
         'location=no',
@@ -5053,7 +5053,7 @@ scwin.setupPipMode = function() {
             });
         });
         
-        // 비디오 영역만 전체 화면으로 확장
+        // 비디오 영역만 전체 화면으로 확장 (스크롤 가능)
         const videoSection = document.querySelector('.video-section');
         if (videoSection) {
             videoSection.style.cssText = `
@@ -5064,6 +5064,9 @@ scwin.setupPipMode = function() {
                 height: 100% !important;
                 z-index: 9999 !important;
                 background: #000 !important;
+                overflow: auto !important;
+                padding: 10px !important;
+                box-sizing: border-box !important;
             `;
         }
         
@@ -5080,6 +5083,10 @@ scwin.setupPipMode = function() {
                 border-radius: 5px !important;
             `;
         }
+        
+        // body 스크롤 허용
+        document.body.style.overflow = 'auto';
+        document.documentElement.style.overflow = 'auto';
         
         console.log('PIP 모드 설정 완료');
         
