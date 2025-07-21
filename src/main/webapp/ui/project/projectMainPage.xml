@@ -3654,6 +3654,7 @@ scwin.btn_settings_onclick = function (e) {
         modal: false,  // taskModal과 동일
         closeAction: "scwin.projectSetting_closeAction",
         customTitleBar: false,
+        //header: false,  // 헤더 숨김
         dataObject: param  // 파라미터는 여기로 전달
     };
 

@@ -22,6 +22,80 @@ div[id*="popup"] iframe,
     -webkit-border-radius: 0 !important;
     -moz-border-radius: 0 !important;
 }
+
+/* 모달 헤더 완전히 숨김 */
+#mf_wfr_mainContent_projectSettingPopup_header,
+[id*="projectSettingPopup_header"],
+[id*="popup_header"],
+.popup_header,
+.wframe_popup_header {
+    display: none !important;
+    height: 0 !important;
+    visibility: hidden !important;
+}
+
+/* WebSquare 기본 스타일보다 우선순위 높게 헤더 제거 */
+.w2popup_window .w2window_header,
+.w2window_header,
+#mf_wfr_mainContent_projectSettingPopup_header,
+[id*="projectSettingPopup"] .w2window_header,
+[id*="projectSettingPopup_header"] {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    z-index: -1 !important;
+}
+
+/* 모달 전체 컨테이너 설정 */
+#grp_mainContainer {
+    height: 100vh !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+/* 강력한 세로선 - 여러 방법 동시 적용 */
+#grp_mainContainer::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 303px !important;
+    width: 2px !important;
+    height: 100vh !important;
+    background-color: #000000 !important;
+    z-index: 9999 !important;
+    display: block !important;
+}
+
+/* 콘텐츠 영역에도 추가 보험 */
+#grp_contentArea::after {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 1px !important;
+    height: 100% !important;
+    background-color: #000000 !important;
+    z-index: 9999 !important;
+}
+
+/* 사이드메뉴 자체에도 강제 적용 */
+#grp_sideMenuArea {
+    border-right: 2px solid #000000 !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+}
+
+/* body 전체에는 적용하지 않음 - 제거됨 */
 ]]></style>
         <xf:model>
             <w2:dataCollection baseNode="map">
@@ -54,6 +128,70 @@ scwin.onpageload = function() {
     } else {
         console.log("ProjectSettingMainPage - projectId가 없어서 입력 요청");
         scwin.requestProjectId();
+    }
+    
+    // JavaScript로 헤더 강제 제거 및 세로선 추가
+    setTimeout(function() {
+        scwin.forceRemoveHeaderAndAddLine();
+    }, 0);
+};
+
+// 헤더 강제 제거 및 세로선 추가 함수
+scwin.forceRemoveHeaderAndAddLine = function() {
+    try {
+        // 모든 가능한 헤더 요소들 찾아서 제거
+        var headerSelectors = [
+            '#mf_wfr_mainContent_projectSettingPopup_header',
+            '[id*="projectSettingPopup_header"]',
+            '.w2window_header',
+            '.w2popup_window .w2window_header'
+        ];
+        
+        headerSelectors.forEach(function(selector) {
+            var elements = document.querySelectorAll(selector);
+            elements.forEach(function(el) {
+                if (el) {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.style.setProperty('height', '0px', 'important');
+                    el.style.setProperty('min-height', '0px', 'important');
+                    el.style.setProperty('position', 'absolute', 'important');
+                    el.style.setProperty('top', '-9999px', 'important');
+                    el.style.setProperty('opacity', '0', 'important');
+                    el.remove(); // 아예 제거
+                }
+            });
+        });
+        
+        // 모달창 안에만 세로선 추가 - body 제외
+        var containers = [
+            document.getElementById('grp_mainContainer'),
+            document.getElementById('grp_contentArea'),
+            document.querySelector('[id*="projectSettingPopup_body"]'),
+            document.querySelector('[id*="projectSettingPopup"]')
+        ];
+        
+        containers.forEach(function(container, index) {
+            if (container) {
+                var line = document.createElement('div');
+                line.id = 'customVerticalLine' + index;
+                // 모달 안에서만 보이도록 높이를 100%로 변경
+                line.style.cssText = 'position: absolute !important; top: 0 !important; left: 303px !important; width: 1px !important; height: 100% !important; background-color: #000000 !important; z-index: 999999 !important; pointer-events: none !important; display: block !important;';
+                container.appendChild(line);
+                console.log('세로선 추가됨 - 컨테이너 ' + index, container, line);
+            }
+        });
+        
+        // 추가로 사이드메뉴에 직접 border 적용
+        var sideMenu = document.getElementById('grp_sideMenuArea');
+        if (sideMenu) {
+            sideMenu.style.setProperty('border-right', '5px solid #00ff00', 'important');
+            sideMenu.style.setProperty('box-sizing', 'border-box', 'important');
+            console.log('사이드메뉴 border 적용됨', sideMenu);
+        }
+        
+        console.log('헤더 제거 및 세로선 추가 완료');
+    } catch(e) {
+        console.error('헤더 제거 실패:', e);
     }
 };
 
