@@ -101,7 +101,7 @@ public class UserController {
 	}
 	
 	/**
-	 * 로그인 폼 페이지를 로드한다.
+	 * 로그아웃을 한다
 	 * @param loginVo 로그인 정보 LoginVo
 	 * @param request 요청 정보 HttpServletRequest
 	 * @throws Exception
@@ -184,15 +184,15 @@ public class UserController {
 	}
 
 	/**
-	 * 사용자 정보을 단건 조회 처리 한다.
+	 * 회원정보 수정시 회원의 비밀번호를 확인한다
 	 *
 	 * @param userVo 사용자 정보
-	 * @return 단건 조회 결과
+	 * @return 사용자 정보
 	 * @throws Exception
 	 */
 	@ElService(key = "user/checkpassword")
 	@RequestMapping(value = "user/checkpassword")
-	@ElDescription(sub = "사용자 정보 갱신 폼을 위한 조회", desc = "사용자 정보 갱신 폼을 위한 조회를 한다.")
+	@ElDescription(sub = "회원정보 수정시 회원의 비밀번호를 확인", desc = "회원정보 수정시 회원의 비밀번호를 확인한다")
 	public UserVo selectUser(UserVo userVo) throws Exception {
 		// 사용자 조회
 		UserVo selectUserVo = userService.selectUser(userVo);
@@ -217,7 +217,7 @@ public class UserController {
 	 * 사용자 중복 체크
 	 *
 	 * @param userVo 사용자 정보
-	 * @return 사용자 존재 여부 확인
+	 * @return 이메일 중복 여부 확인
 	 * @throws Exception
 	 */
 	@ElService(key = "user/checkid")
@@ -239,7 +239,7 @@ public class UserController {
 	 */
 	@ElService(key = "user/signup")
 	@RequestMapping(value = "user/signup")
-	@ElDescription(sub = "사용자 정보 등록처리", desc = "사용자 정보를 등록 처리 한다.")
+	@ElDescription(sub = "사용자 정보를 등록", desc = "사용자 정보를 등록 처리 한다.")
 	public void insertUser(UserVo userVo) throws Exception {
 		String rawPassword = userVo.getPassword();
 		String encodedPassword = passwordEncoder.encode(rawPassword);
@@ -256,7 +256,7 @@ public class UserController {
 	 */
 	@ElService(key = "user/updatePassword")
 	@RequestMapping(value = "user/updatePassword")
-	@ElDescription(sub = "사용자 정보 갱신처리", desc = "사용자 정보를 갱신 처리 한다.")
+	@ElDescription(sub = "사용자 비밀번호를 변경", desc = "사용자 비밀번호를 변경한다.")
 	public void updatePassword(UserVo userVo) throws Exception {
 		String rawPassword = userVo.getPassword();
 		String encodedPassword = passwordEncoder.encode(rawPassword);
