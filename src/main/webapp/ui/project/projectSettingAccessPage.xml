@@ -757,11 +757,121 @@ scwin.btn_addUser_onclick = function(e) {
             return;
         }
         
-        // 이메일 발송 확인
-        if (confirm("'" + userName + "' 사용자에게 프로젝트 초대 이메일을 발송하시겠습니까?")) {
-            scwin.sendProjectInviteEmail(searchValue.trim(), projectId);
-        }
+        // 이메일 발송 확인 모달 열기
+        scwin.openEmailInviteConfirmModal(userName, searchValue.trim(), projectId);
     });
+};
+
+// 역할 변경 확인 모달 열기
+scwin.openRoleChangeConfirmModal = function(changeList) {
+    console.log("역할 변경 모달 열기");
+    
+    // 변경사항 리스트 설정
+    textarea_roleChangeList.setValue(changeList);
+    
+    // 모달 표시 (projectSettingDetailPage.xml 방식과 동일)
+    grp_roleChangeModalBackground.setStyle("display", "flex");
+};
+
+// 역할 변경 모달 닫기
+scwin.closeRoleChangeConfirmModal = function() {
+    grp_roleChangeModalBackground.setStyle("display", "none");
+};
+
+// 역할 변경 모달 배경 클릭 (모달 닫기)
+scwin.grp_roleChangeModalBackground_onclick = function(e) {
+    if (e.target.id === "grp_roleChangeModalBackground") {
+        scwin.closeRoleChangeConfirmModal();
+    }
+};
+
+// 역할 변경 모달 내부 클릭 (이벤트 전파 방지)
+scwin.grp_roleChangeModal_onclick = function(e) {
+    e.stopPropagation();
+};
+
+// 역할 변경 모달 X 버튼 클릭
+scwin.btn_roleChangeModalClose_onclick = function(e) {
+    scwin.closeRoleChangeConfirmModal();
+};
+
+// 역할 변경 모달 취소 버튼 클릭
+scwin.btn_roleChangeModalCancel_onclick = function(e) {
+    scwin.closeRoleChangeConfirmModal();
+};
+
+// 역할 변경 모달 확인 버튼 클릭
+scwin.btn_roleChangeModalConfirm_onclick = function(e) {
+    console.log("역할 변경 확인됨");
+    scwin.closeRoleChangeConfirmModal();
+    
+    // 순차적으로 저장
+    scwin.saveRoleChanges(0);
+};
+
+// 이메일 초대 확인 모달 열기
+scwin.openEmailInviteConfirmModal = function(userName, userEmail, projectId) {
+    console.log("이메일 초대 모달 열기:", userName, userEmail);
+    
+    // 사용자 정보 설정
+    output_emailInviteUserName.setValue("사용자: " + userName);
+    output_emailInviteUserEmail.setValue("이메일: " + userEmail);
+    
+    // 모달에 projectId와 userEmail 저장 (확인 버튼에서 사용)
+    scwin.pendingEmailInvite = {
+        userName: userName,
+        userEmail: userEmail,
+        projectId: projectId
+    };
+    
+    // 모달 표시 (projectSettingDetailPage.xml 방식과 동일)
+    grp_emailInviteModalBackground.setStyle("display", "flex");
+};
+
+// 이메일 초대 모달 닫기
+scwin.closeEmailInviteConfirmModal = function() {
+    grp_emailInviteModalBackground.setStyle("display", "none");
+    
+    // 임시 저장된 데이터 초기화
+    scwin.pendingEmailInvite = null;
+};
+
+// 이메일 초대 모달 배경 클릭 (모달 닫기)
+scwin.grp_emailInviteModalBackground_onclick = function(e) {
+    if (e.target.id === "grp_emailInviteModalBackground") {
+        scwin.closeEmailInviteConfirmModal();
+    }
+};
+
+// 이메일 초대 모달 내부 클릭 (이벤트 전파 방지)
+scwin.grp_emailInviteModal_onclick = function(e) {
+    e.stopPropagation();
+};
+
+// 이메일 초대 모달 X 버튼 클릭
+scwin.btn_emailInviteModalClose_onclick = function(e) {
+    scwin.closeEmailInviteConfirmModal();
+};
+
+// 이메일 초대 모달 취소 버튼 클릭
+scwin.btn_emailInviteModalCancel_onclick = function(e) {
+    scwin.closeEmailInviteConfirmModal();
+};
+
+// 이메일 초대 모달 확인 버튼 클릭
+scwin.btn_emailInviteModalConfirm_onclick = function(e) {
+    console.log("이메일 초대 확인됨");
+    
+    if (scwin.pendingEmailInvite) {
+        var userEmail = scwin.pendingEmailInvite.userEmail;
+        var projectId = scwin.pendingEmailInvite.projectId;
+        
+        scwin.closeEmailInviteConfirmModal();
+        scwin.sendProjectInviteEmail(userEmail, projectId);
+    } else {
+        console.error("초대할 사용자 정보가 없습니다.");
+        scwin.closeEmailInviteConfirmModal();
+    }
 };
 
 // 프로젝트 초대 이메일 발송 함수
@@ -1248,12 +1358,8 @@ scwin.btn_save_onclick = function(e) {
                " → " + (change.newRole === "admin" ? "관리자" : "에디터");
     }).join("\n");
     
-    if (!confirm("다음 변경사항을 저장하시겠습니까?\n\n" + changeList)) {
-        return;
-    }
-    
-    // 순차적으로 저장
-    scwin.saveRoleChanges(0);
+    // 역할 변경 확인 모달 열기
+    scwin.openRoleChangeConfirmModal(changeList);
 };
 
 // 역할 변경사항 순차 저장
@@ -1571,5 +1677,141 @@ scwin.makeProfileImagesRound = function() {
                 </xf:group>
             
         </xf:group>
+        
+        <!-- 역할 변경 확인 모달 -->
+        <xf:group style="position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:rgba(0,0,0,0.5);z-index:9999;display:none;justify-content:center;align-items:center;" id="grp_roleChangeModalBackground" ev:onclick="scwin.grp_roleChangeModalBackground_onclick">
+            
+            <!-- 역할 변경 확인 모달창 -->
+            <xf:group style="width:500px;background-color:#ffffff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.3);position:relative;" id="grp_roleChangeModal" ev:onclick="scwin.grp_roleChangeModal_onclick">
+                
+                <!-- 모달 헤더 -->
+                <xf:group style="position:relative;padding:24px 24px 0 24px;" id="grp_roleChangeModalHeader">
+                    
+                    <!-- 모달 X 버튼 -->
+                    <xf:trigger 
+                        style="position:absolute;top:16px;right:16px;width:24px;height:24px;background-color:transparent;border:none;font-size:18px;color:#999999;cursor:pointer;"
+                        id="btn_roleChangeModalClose" 
+                        type="button" 
+                        ev:onclick="scwin.btn_roleChangeModalClose_onclick">
+                        <xf:label><![CDATA[✕]]></xf:label>
+                    </xf:trigger>
+                    
+                </xf:group>
+                
+                <!-- 모달 콘텐츠 -->
+                <xf:group style="padding:0 32px 32px 32px;text-align:center;" id="grp_roleChangeModalContent">
+                    
+                    <!-- 확인 메시지 -->
+                    <xf:group style="margin-bottom:24px;" id="grp_roleChangeMessage">
+                        <xf:output 
+                            style="font-size:18px;font-weight:600;color:#333333;margin-bottom:16px;display:block;" 
+                            value="다음 변경사항을 저장하시겠습니까?" 
+                            id="output_roleChangeTitle"/>
+                        
+                        <!-- 변경사항 리스트 -->
+                        <xf:textarea 
+                            style="width:100%;height:120px;border:1px solid #e9ecef;border-radius:8px;padding:16px;font-size:14px;font-family:monospace;resize:none;background-color:#f8f9fa;"
+                            id="textarea_roleChangeList"
+                            readonly="true"/>
+                    </xf:group>
+                    
+                    <!-- 버튼 그룹 -->
+                    <xf:group style="display:flex;gap:12px;justify-content:center;" id="grp_roleChangeButtons">
+                        
+                        <!-- 취소 버튼 -->
+                        <xf:trigger 
+                            style="flex:1;height:48px;background-color:#6c757d;border:1px solid #6c757d;border-radius:8px;color:#ffffff;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
+                            id="btn_roleChangeModalCancel" 
+                            type="button" 
+                            ev:onclick="scwin.btn_roleChangeModalCancel_onclick">
+                            <xf:label><![CDATA[취소]]></xf:label>
+                        </xf:trigger>
+                        
+                        <!-- 확인 버튼 -->
+                        <xf:trigger 
+                            style="flex:1;height:48px;background-color:#ffb823;border:1px solid #ffb823;border-radius:8px;color:#000000;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
+                            id="btn_roleChangeModalConfirm" 
+                            type="button" 
+                            ev:onclick="scwin.btn_roleChangeModalConfirm_onclick">
+                            <xf:label><![CDATA[확인]]></xf:label>
+                        </xf:trigger>
+                        
+                    </xf:group>
+                    
+                </xf:group>
+                
+            </xf:group>
+            
+        </xf:group>
+        
+        <!-- 이메일 초대 확인 모달 -->
+        <xf:group style="position:fixed;top:0;left:0;width:100vw;height:100vh;background-color:rgba(0,0,0,0.5);z-index:9999;display:none;justify-content:center;align-items:center;" id="grp_emailInviteModalBackground" ev:onclick="scwin.grp_emailInviteModalBackground_onclick">
+            
+            <!-- 이메일 초대 확인 모달창 -->
+            <xf:group style="width:500px;background-color:#ffffff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.3);position:relative;" id="grp_emailInviteModal" ev:onclick="scwin.grp_emailInviteModal_onclick">
+                
+                <!-- 모달 헤더 -->
+                <xf:group style="position:relative;padding:24px 24px 0 24px;" id="grp_emailInviteModalHeader">
+                    
+                    <!-- 모달 X 버튼 -->
+                    <xf:trigger 
+                        style="position:absolute;top:16px;right:16px;width:24px;height:24px;background-color:transparent;border:none;font-size:18px;color:#999999;cursor:pointer;"
+                        id="btn_emailInviteModalClose" 
+                        type="button" 
+                        ev:onclick="scwin.btn_emailInviteModalClose_onclick">
+                        <xf:label><![CDATA[✕]]></xf:label>
+                    </xf:trigger>
+                    
+                </xf:group>
+                
+                <!-- 모달 콘텐츠 -->
+                <xf:group style="padding:0 32px 32px 32px;text-align:center;" id="grp_emailInviteModalContent">
+                    
+                    <!-- 확인 메시지 -->
+                    <xf:group style="margin-bottom:24px;" id="grp_emailInviteMessage">
+                        <xf:output 
+                            style="font-size:18px;font-weight:600;color:#333333;margin-bottom:16px;display:block;" 
+                            value="프로젝트 초대 이메일을 발송하시겠습니까?" 
+                            id="output_emailInviteTitle"/>
+                        
+                        <!-- 사용자 정보 -->
+                        <xf:output 
+                            style="font-size:16px;color:#666666;margin-bottom:8px;display:block;"
+                            id="output_emailInviteUserName"/>
+                        
+                        <xf:output 
+                            style="font-size:14px;color:#888888;display:block;"
+                            id="output_emailInviteUserEmail"/>
+                    </xf:group>
+                    
+                    <!-- 버튼 그룹 -->
+                    <xf:group style="display:flex;gap:12px;justify-content:center;" id="grp_emailInviteButtons">
+                        
+                        <!-- 취소 버튼 -->
+                        <xf:trigger 
+                            style="flex:1;height:48px;background-color:#6c757d;border:1px solid #6c757d;border-radius:8px;color:#ffffff;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
+                            id="btn_emailInviteModalCancel" 
+                            type="button" 
+                            ev:onclick="scwin.btn_emailInviteModalCancel_onclick">
+                            <xf:label><![CDATA[취소]]></xf:label>
+                        </xf:trigger>
+                        
+                        <!-- 확인 버튼 -->
+                        <xf:trigger 
+                            style="flex:1;height:48px;background-color:#ffb823;border:1px solid #ffb823;border-radius:8px;color:#000000;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
+                            id="btn_emailInviteModalConfirm" 
+                            type="button" 
+                            ev:onclick="scwin.btn_emailInviteModalConfirm_onclick">
+                            <xf:label><![CDATA[확인]]></xf:label>
+                        </xf:trigger>
+                        
+                    </xf:group>
+                    
+                </xf:group>
+                
+            </xf:group>
+            
+        </xf:group>
+        
     </body>
 </html>
