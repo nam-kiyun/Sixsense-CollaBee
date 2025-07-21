@@ -44,7 +44,7 @@ public class CommentDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
 
 	public long selectListCountByTaskId(int taskId) throws ElException {
 		CommentVo commentVo = new CommentVo();
-		commentVo.setTaskId(taskId + "");
+		commentVo.setTaskId(Integer.toString(taskId));
 		return (Long) selectByPk("com.demo.proworks.comment.selectListCountByTaskId", commentVo);
 	}
 

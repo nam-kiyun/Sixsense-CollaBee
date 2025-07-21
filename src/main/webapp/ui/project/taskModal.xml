@@ -1056,7 +1056,7 @@ scwin.sbm_comment_get_submitdone = function (e) {
         const currentDate = scwin.formatDate(comment.createdAt);
         const nextDate = nextComment ? scwin.formatDate(nextComment.createdAt) : null;
         const isMine = (comment.userId === currentUser.userId);
-        console.log(currentDate);
+        console.log(comment);
 
         // 댓글 삽입
         const commentComp = scwin.addChatMessage(
