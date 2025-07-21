@@ -3674,6 +3674,35 @@ scwin.projectSetting_closeAction = function(argRuntimeID, argJsnInfo) {
     return true; // 팝업 닫기 허용
 };
 
+// 프로젝트 설정 모달 강제 닫기 함수 (자식창에서 호출용)
+scwin.closeProjectSettingModal = function() {
+    console.log("projectMainPage에서 모달 닫기 함수 호출됨");
+    try {
+        // projectSettingPopup ID로 팝업 닫기
+        var result = $p.closePopup("projectSettingPopup");
+        console.log("$p.closePopup 결과:", result);
+        
+        if (!result) {
+            // 다른 방법 시도
+            var popup = $p.getPopupWindow("projectSettingPopup");
+            if (popup && popup.close) {
+                popup.close();
+                console.log("popup.close() 호출");
+            }
+        }
+    } catch(e) {
+        console.error("모달 닫기 실패:", e);
+    }
+};
+
+// 메시지 리스너 (자식창에서 postMessage로 모달 닫기 요청시)
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.action === 'closeProjectSettingPopup') {
+        console.log("메시지를 통한 모달 닫기 요청 받음");
+        scwin.closeProjectSettingModal();
+    }
+});
+
 //task 버튼 눌렀을 때 
 scwin.new_task_onclick = function (e) {
     // 클릭된 카드에서 taskId와 projectId 추출

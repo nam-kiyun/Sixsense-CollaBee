@@ -162,18 +162,80 @@ scwin.updateProjectName = function(projectName) {
         dm_settingSideMenu.set("projectName", projectName);
     }
 };
+
+// 뒤로가기 버튼 클릭
+scwin.btn_back_onclick = function(e) {
+    console.log("뒤로가기 버튼 클릭됨");
+    try {
+        // 방법 1: 부모의 closeProjectSettingPopup 함수 직접 호출
+        if (window.parent && window.parent.scwin && window.parent.scwin.closeProjectSettingPopup) {
+            console.log("부모의 closeProjectSettingPopup 함수 호출");
+            window.parent.scwin.closeProjectSettingPopup();
+            return; // 성공하면 여기서 끝
+        }
+        
+        // 방법 2: 최상위 부모(projectMainPage)의 closeProjectSettingModal 함수 호출  
+        if (window.parent && window.parent.parent && window.parent.parent.scwin && window.parent.parent.scwin.closeProjectSettingModal) {
+            console.log("최상위 부모의 closeProjectSettingModal 함수 호출");
+            window.parent.parent.scwin.closeProjectSettingModal();
+            return; // 성공하면 여기서 끝
+        }
+        
+        // 방법 3: 직접 부모에게 메시지 전송
+        if (window.parent) {
+            console.log("부모창에 메시지 전송");
+            window.parent.postMessage({action: 'closeProjectSettingPopup'}, '*');
+        }
+        
+        // 방법 4: 최상위 부모에게 메시지 전송
+        if (window.parent && window.parent.parent) {
+            console.log("최상위 부모창에 메시지 전송");
+            window.parent.parent.postMessage({action: 'closeProjectSettingPopup'}, '*');
+        }
+        
+        // 방법 5: 강제 닫기 시도
+        console.log("강제 닫기 시도");
+        setTimeout(function() {
+            if (window.close) {
+                window.close();
+            } else if (window.parent && window.parent.close) {
+                window.parent.close();
+            } else {
+                window.history.back();
+            }
+        }, 100);
+        
+    } catch(e) {
+        console.error("뒤로가기 실행 오류:", e);
+        // 최후의 수단
+        try {
+            window.history.back();
+        } catch(e2) {
+            console.error("history.back도 실패:", e2);
+        }
+    }
+};
 ]]></script>
     </head>
     <body ev:onpageload="scwin.onpageload">
         <!-- 설정 사이드메뉴 전체 컨테이너 -->
         <xf:group 
-            style="width:303px;height:924px;background-color:#ffffff;border-right:1px solid #000000;position:relative;padding:20px 0;"
+            style="width:303px;height:924px;background-color:#ffffff;border-right:1px solid #000000;position:relative;padding:0;"
             id="grp_settingSideMenu">
             
-            <!-- 프로젝트 정보 섹션 -->
+            <!-- 뒤로가기 버튼 -->
+            <xf:group style="padding:0 24px 16px 24px;margin:0;" id="grp_backIcon">
+                <xf:trigger 
+                    style="display:inline-flex;align-items:center;justify-content:flex-start;background:none;border:none;cursor:pointer;padding:0;font-size:36px;color:#333333;margin:0;"
+                    id="btn_backIcon" 
+                    type="button" 
+                    ev:onclick="scwin.btn_back_onclick">
+                    <xf:label style="font-size:36px;color:#333333;font-weight:bold;margin:0;padding:0;"><![CDATA[‹]]></xf:label>
+                </xf:trigger>
+            </xf:group>
             
             <!-- 설정 메뉴 섹션 -->
-            <xf:group style="margin-bottom:20px;" id="grp_settingSection">
+            <xf:group style="margin-bottom:20px;padding:0 0 20px 0;" id="grp_settingSection">
                 
                 <!-- 세부사항 메뉴 -->
                 <xf:group 
