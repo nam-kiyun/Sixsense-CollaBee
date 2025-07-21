@@ -270,8 +270,8 @@ public class EmailController {
                 + "아래 프로젝트에 참여해보세요!"
                 + "</p>"
                 + "<div class='project-card'>"
-                + (projectInfo.getProjectImageUrl() != null ? 
-                    "<img src='" + projectInfo.getProjectImageUrl() + "' alt='프로젝트 이미지' class='project-image' />" : "")
+                + "<img src='" + (projectInfo.getProjectImageUrl() != null && !projectInfo.getProjectImageUrl().trim().isEmpty() ? 
+                    projectInfo.getProjectImageUrl() : "https://collabee.s3.ap-northeast-2.amazonaws.com/projectImage/default_project_image.jpg") + "' alt='프로젝트 이미지' class='project-image' />"
                 + "<div class='project-name'>" + projectInfo.getProjectName() + "</div>"
                 + "<div class='project-info'>팀장: " + projectInfo.getUserName() + "</div>"
                 + "<div class='project-info'>초대 시각: " + projectInfo.getEmailSendTime() + "</div>"
