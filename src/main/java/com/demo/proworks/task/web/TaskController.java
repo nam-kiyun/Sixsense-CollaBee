@@ -718,5 +718,41 @@ public class TaskController {
             invalidateProjectCacheByBoardId(boardId, action + " (캐시 업데이트 실패로 무효화)");
         }
     }
+    
+    /**
+     * 사용자 이름을 포함한 업무(Task) 정보 목록 조회 처리한다.
+     *
+     * @param taskVo 업무(Task) 정보 TaskVo
+     * @return TaskListVo 사용자 이름이 포함된 업무(Task) 정보 목록 TaskListVo
+     * @throws Exception
+     */
+    @ElService(key = "TaskListWithUserName")
+    @RequestMapping(value = "TaskListWithUserName")
+    @ElDescription(sub = "사용자 이름을 포함한 업무(Task) 정보 목록 조회", desc = "조건에 맞는 사용자 이름을 포함한 업무(Task) 정보 목록을 조회한다.")
+    public TaskListVo selectTaskListWithUserName(TaskVo taskVo) throws Exception {
+
+        System.out.println("🔍 TaskListWithUserName 호출 - 입력 파라미터: " + taskVo.toString());
+        System.out.println("  - boardId: " + taskVo.getBoardId());
+        System.out.println("  - projectUserId: " + taskVo.getProjectUserId());
+        System.out.println("  - tags: " + taskVo.getTags());
+
+        List<TaskVo> taskVoList = taskService.selectTaskListWithUserName(taskVo);
+        
+        System.out.println("📊 TaskListWithUserName 결과 개수: " + (taskVoList != null ? taskVoList.size() : 0));
+        if (taskVoList != null && !taskVoList.isEmpty()) {
+            System.out.println("📋 조회된 태스크 목록:");
+            for (TaskVo task : taskVoList) {
+                System.out.println("  - taskId: " + task.getTaskId() + ", boardId: " + task.getBoardId() + 
+                                 ", title: " + task.getTaskTitle() + ", userName: " + task.getUserName());
+            }
+        } else {
+            System.out.println("⚠️ 조회된 태스크가 없습니다. boardId=" + taskVo.getBoardId() + " 조건 확인 필요");
+        }
+
+        TaskListVo taskListVo = new TaskListVo();
+        taskListVo.setTaskVoList(taskVoList);
+
+        return taskListVo;
+    }
    
 }
