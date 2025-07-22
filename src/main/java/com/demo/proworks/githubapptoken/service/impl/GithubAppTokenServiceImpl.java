@@ -9,9 +9,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.demo.proworks.githubapptoken.dao.GithubAppTokenDAO;
+import com.demo.proworks.github.dao.GitHubDAO;
 import com.demo.proworks.githubapptoken.service.GithubAppTokenService;
-import com.demo.proworks.githubapptoken.util.GitHubAppAuthUtil;
 import com.demo.proworks.githubapptoken.util.GitHubApiClient;
+import com.demo.proworks.githubapptoken.util.GitHubAppAuthUtil;
 import com.demo.proworks.githubapptoken.vo.GithubAppTokenVo;
 import com.inswave.elfw.exception.ElException;
 
@@ -33,6 +34,9 @@ public class GithubAppTokenServiceImpl implements GithubAppTokenService {
 
     @Autowired    
     private GithubAppTokenDAO githubAppTokenDAO;
+    
+    @Autowired
+    private GitHubDAO gitHubDAO;
     
     @Autowired
     private GitHubAppAuthUtil gitHubAppAuthUtil;
@@ -146,77 +150,58 @@ public class GithubAppTokenServiceImpl implements GithubAppTokenService {
     }
 
     /**
-     * 프로젝트 레포지토리 ID로 유효한 App Token을 조회한다.
+     * 사용자 ID로 Installation ID를 조회한다.
      */
     @Override
-    public String getValidAppToken(String projectRepoId) throws Exception {
+    public String getValidAppToken(String userId) throws Exception {
         try {
-            GithubAppTokenVo searchVo = new GithubAppTokenVo();
-            searchVo.setProjectRepoId(projectRepoId);
+            GithubAppTokenVo token = gitHubDAO.selectGitHubAppTokenByUserId(userId);
             
-            List<GithubAppTokenVo> tokens = githubAppTokenDAO.selectListGithubAppToken(searchVo);
-            
-            if (tokens != null && !tokens.isEmpty()) {
-                for (GithubAppTokenVo token : tokens) {
-                    // 만료 시간 확인
-                    if (token.getExpiredAt() != null && !token.getExpiredAt().isEmpty()) {
-                        LocalDateTime expiredAt = LocalDateTime.parse(token.getExpiredAt(), DATE_FORMATTER);
-                        if (expiredAt.isAfter(LocalDateTime.now().plusMinutes(5))) { // 5분 여유를 둠
-                            return token.getAppToken();
-                        }
-                    }
-                }
+            if (token != null && token.getGithubAppInstallationId() != null && !token.getGithubAppInstallationId().isEmpty()) {
+                return token.getGithubAppInstallationId(); // Installation ID 반환
             }
             
-            return null; // 유효한 토큰이 없음
+            return null; // Installation ID가 없음
         } catch (Exception e) {
-            System.err.println("❌ Error getting valid app token: " + e.getMessage());
-            throw new Exception("App Token 조회 실패: " + e.getMessage());
+            System.err.println("❌ Error getting installation ID: " + e.getMessage());
+            throw new Exception("Installation ID 조회 실패: " + e.getMessage());
         }
     }
 
     /**
-     * App Token을 갱신하거나 새로 생성한다.
+     * Installation ID를 업데이트한다.
      */
     @Override
     @Transactional
-    public String refreshAppToken(String projectRepoId, String userAccessToken, String repoOwner) throws Exception {
+    public String refreshAppToken(String userId, String userAccessToken, String repoOwner) throws Exception {
         try {
-            // 새로운 Installation Token 생성
-            String newToken = generateInstallationToken(userAccessToken, repoOwner);
+            // 기존 Installation ID 조회
+            GithubAppTokenVo existingToken = gitHubDAO.selectGitHubAppTokenByUserId(userId);
             
-            // 기존 토큰 삭제
-            GithubAppTokenVo deleteVo = new GithubAppTokenVo();
-            deleteVo.setProjectRepoId(projectRepoId);
-            List<GithubAppTokenVo> existingTokens = githubAppTokenDAO.selectListGithubAppToken(deleteVo);
-            for (GithubAppTokenVo existingToken : existingTokens) {
-                githubAppTokenDAO.deleteGithubAppToken(existingToken);
+            if (existingToken != null) {
+                // 기존 항목이 있으면 업데이트 (Installation ID는 변경되지 않으므로 실제로는 갱신할 필요 없음)
+                return existingToken.getGithubAppInstallationId();
+            } else {
+                // Installation ID가 없으면 null 반환 (GitHub App 설치 필요)
+                return null;
             }
-            
-            // 새 토큰 저장
-            GithubAppTokenVo newTokenVo = new GithubAppTokenVo();
-            newTokenVo.setGithubAppTokenId(generateTokenId());
-            newTokenVo.setProjectRepoId(projectRepoId);
-            newTokenVo.setAppToken(newToken);
-            
-            // Installation Token은 1시간 유효
-            LocalDateTime expiredAt = LocalDateTime.now().plusHours(1);
-            newTokenVo.setExpiredAt(expiredAt.format(DATE_FORMATTER));
-            newTokenVo.setCreatedAt(LocalDateTime.now().format(DATE_FORMATTER));
-            
-            githubAppTokenDAO.insertGithubAppToken(newTokenVo);
-            
-            return newToken;
         } catch (Exception e) {
-            System.err.println("❌ Error refreshing app token: " + e.getMessage());
-            throw new Exception("App Token 갱신 실패: " + e.getMessage());
+            System.err.println("❌ Error refreshing installation ID: " + e.getMessage());
+            throw new Exception("Installation ID 갱신 실패: " + e.getMessage());
         }
     }
     
     /**
-     * 고유한 토큰 ID를 생성한다.
+     * 사용자 ID로 GitHub App Token을 조회한다.
      */
-    private String generateTokenId() {
-        return "GAT_" + System.currentTimeMillis();
+    @Override
+    public GithubAppTokenVo selectGithubAppTokenByProjectRepoId(String userId) throws Exception {
+        try {
+            return gitHubDAO.selectGitHubAppTokenByUserId(userId);
+        } catch (Exception e) {
+            System.err.println("❌ Error selecting app token by user id: " + e.getMessage());
+            throw new Exception("사용자 ID로 App Token 조회 실패: " + e.getMessage());
+        }
     }
+    
 }

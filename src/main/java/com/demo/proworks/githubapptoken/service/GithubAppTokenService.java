@@ -83,23 +83,32 @@ public interface GithubAppTokenService {
 	public String generateInstallationToken(String userAccessToken, String repoOwner) throws Exception;
 	
 	/**
-     * 프로젝트 레포지토리 ID로 유효한 App Token을 조회한다.
+     * 사용자 ID로 유효한 Installation ID를 조회한다.
      *
-     * @param projectRepoId 프로젝트 레포지토리 ID
-     * @return App Token 또는 null
+     * @param userId 사용자 ID
+     * @return Installation ID 또는 null
      * @throws Exception
      */
-	public String getValidAppToken(String projectRepoId) throws Exception;
+	public String getValidAppToken(String userId) throws Exception;
 	
 	/**
-     * App Token을 갱신하거나 새로 생성한다.
+     * Installation ID를 갱신하거나 새로 생성한다.
      *
-     * @param projectRepoId 프로젝트 레포지토리 ID
+     * @param userId 사용자 ID
      * @param userAccessToken 사용자 액세스 토큰
      * @param repoOwner 레포지토리 소유자
-     * @return 갱신된 App Token
+     * @return 갱신된 Installation ID
      * @throws Exception
      */
-	public String refreshAppToken(String projectRepoId, String userAccessToken, String repoOwner) throws Exception;
+	public String refreshAppToken(String userId, String userAccessToken, String repoOwner) throws Exception;
+	
+	/**
+     * 사용자 ID로 GitHub App Token을 조회한다.
+     *
+     * @param userId 사용자 ID
+     * @return GitHub App Token VO
+     * @throws Exception
+     */
+	public GithubAppTokenVo selectGithubAppTokenByProjectRepoId(String userId) throws Exception;
 	
 }

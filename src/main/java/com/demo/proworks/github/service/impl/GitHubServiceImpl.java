@@ -243,33 +243,79 @@ public class GitHubServiceImpl implements GitHubService {
         try {
             String installationId = (String) param.get("installation_id");
             String setupAction = (String) param.get("setup_action");
+            String projectRepoId = (String) param.get("project_repo_id");
+            String repoOwner = (String) param.get("repo_owner");
+            String repoName = (String) param.get("repo_name");
+            String userId = (String) param.get("user_id");
             
-            logger.info("GitHub App 설치 완료: installation_id={}, setup_action={}", installationId, setupAction);
+            logger.info("GitHub App 설치 완료: installation_id={}, setup_action={}, projectRepoId={}", 
+                       installationId, setupAction, projectRepoId);
             
-            // TODO: installation_id를 데이터베이스에 저장
-            // TODO: GitHub API로 설치된 앱 정보 조회
-            // TODO: 설치된 레포지토리 목록 조회 및 저장
-            
-            if (installationId != null && !installationId.isEmpty()) {
-                // 설치 완료 로직
-                result.put("success", true);
-                result.put("installation_id", installationId);
-                result.put("setup_action", setupAction);
-                result.put("message", "GitHub App 설치가 완료되었습니다.");
-                
-                // 설치 로그 생성
-                Map<String, Object> installLog = new HashMap<>();
-                installLog.put("installation_id", installationId);
-                installLog.put("setup_action", setupAction);
-                installLog.put("installed_at", new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
-                
-                // TODO: 설치 로그를 데이터베이스에 저장
-                
-            } else {
+            if (installationId == null || installationId.trim().isEmpty()) {
                 result.put("success", false);
-                result.put("error", "설치 ID가 제공되지 않았습니다.");
+                result.put("error", "Installation ID가 제공되지 않았습니다.");
+                return result;
             }
             
+            if (userId != null && !userId.trim().isEmpty()) {
+                // GITHUB_APP_TOKENS 테이블에 Installation ID 저장 (사용자 기준)
+                try {
+                    // 기존에 동일한 user_id로 등록된 항목이 있는지 확인
+                    com.demo.proworks.githubapptoken.vo.GithubAppTokenVo existingToken = 
+                        gitHubDAO.selectGitHubAppTokenByUserId(userId);
+                    
+                    if (existingToken != null) {
+                        // 기존 항목 업데이트
+                        existingToken.setGithubAppInstallationId(installationId);
+                        existingToken.setCreatedAt(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
+                        
+                        gitHubDAO.updateGitHubAppToken(existingToken);
+                        logger.info("기존 GitHub App Token 업데이트 완료: userId={}, installationId={}", 
+                                   userId, installationId);
+                    } else {
+                        // 새 항목 생성 (ID는 AUTO_INCREMENT로 자동 생성)
+                        com.demo.proworks.githubapptoken.vo.GithubAppTokenVo tokenVo = 
+                            new com.demo.proworks.githubapptoken.vo.GithubAppTokenVo();
+                        tokenVo.setUserId(userId);
+                        tokenVo.setGithubAppInstallationId(installationId);
+                        tokenVo.setCreatedAt(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
+                        
+                        String tokenId = gitHubDAO.insertGitHubAppToken(tokenVo);
+                        logger.info("새 GitHub App Token 생성 완료: tokenId={}, userId={}, installationId={}", 
+                                   tokenId, userId, installationId);
+                    }
+                    
+                    result.put("success", true);
+                    result.put("installation_id", installationId);
+                    result.put("user_id", userId);
+                    result.put("message", "GitHub App Installation ID가 성공적으로 저장되었습니다.");
+                    
+                } catch (Exception e) {
+                    logger.error("GitHub App Installation ID 저장 실패", e);
+                    result.put("success", false);
+                    result.put("error", "Installation ID 저장 실패: " + e.getMessage());
+                    return result;
+                }
+            } else {
+                // projectRepoId가 없는 경우 일반적인 설치 완료 처리
+                logger.info("ProjectRepoId가 없어서 일반 설치 완료로 처리: installationId={}", installationId);
+                result.put("success", true);
+                result.put("installation_id", installationId);
+                result.put("message", "GitHub App 설치가 완료되었습니다.");
+            }
+            
+            // 설치 로그 생성
+            Map<String, Object> installLog = new HashMap<>();
+            installLog.put("installation_id", installationId);
+            installLog.put("setup_action", setupAction);
+            installLog.put("project_repo_id", projectRepoId);
+            installLog.put("repo_owner", repoOwner);
+            installLog.put("repo_name", repoName);
+            installLog.put("user_id", userId);
+            installLog.put("installed_at", new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
+            
+            logger.info("GitHub App 설치 로그: {}", installLog);
+                
         } catch (Exception e) {
             logger.error("GitHub App 설치 완료 처리 실패", e);
             result.put("success", false);

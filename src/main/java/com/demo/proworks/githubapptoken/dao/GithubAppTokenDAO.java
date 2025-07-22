@@ -88,5 +88,28 @@ public class GithubAppTokenDAO extends com.demo.proworks.cmmn.dao.ProworksDefaul
     public int deleteGithubAppToken(GithubAppTokenVo vo) throws ElException {
         return delete("com.demo.proworks.githubapptoken.deleteGithubAppToken", vo);
     }
+    
+    /**
+     * 사용자 ID로 GitHub App Token을 조회한다.
+     *  
+     * @param  userId 사용자 ID
+     * @return GithubAppTokenVo GitHub App Token
+     * @throws ElException
+     */
+    public GithubAppTokenVo selectGitHubAppTokenByUserId(String userId) throws ElException {
+        return (GithubAppTokenVo) selectByPk("com.demo.proworks.github.selectGitHubAppTokenByUserId", userId);
+    }
+    
+    /**
+     * 프로젝트 레포 ID로 GitHub App Token을 조회한다. (Deprecated - userId 사용 권장)
+     *  
+     * @param  projectRepoId 사용자 ID (실제로는 userId 파라미터)
+     * @return GithubAppTokenVo GitHub App Token
+     * @throws ElException
+     */
+    public GithubAppTokenVo selectGitHubAppTokenByProjectRepoId(String projectRepoId) throws ElException {
+        // 실제로는 userId를 받아서 userId로 조회
+        return selectGitHubAppTokenByUserId(projectRepoId);
+    }
 
 }

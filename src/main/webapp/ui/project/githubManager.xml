@@ -647,41 +647,9 @@ scwin.redirectToGitHubLogin = function () {
                 params.push("projectId=" + encodeURIComponent(scwin.currentProjectData.projectId));
                 console.log("프로젝트 ID를 OAuth에 포함:", scwin.currentProjectData.projectId);
             }
-            if (scwin.currentProjectData.userId) {
-                params.push("userId=" + encodeURIComponent(scwin.currentProjectData.userId));
-                console.log("사용자 ID를 OAuth에 포함:", scwin.currentProjectData.userId);
-            }
         }
 
-        // WebSquare에서 추가 사용자 정보 가져오기 시도
-        if (!scwin.currentProjectData || !scwin.currentProjectData.userId) {
-            try {
-                // 다양한 방법으로 사용자 ID 가져오기 시도
-                let userId = null;
-
-                // WebSquare 파라미터에서 시도
-                try {
-                    userId = $p.getParameter("userId") || $p.getParameter("user_id");
-                } catch (e) { }
-
-                // 세션 스토리지에서 시도
-                if (!userId && typeof sessionStorage !== 'undefined') {
-                    userId = sessionStorage.getItem("userId") || sessionStorage.getItem("userEmail");
-                }
-
-                // 로컬 스토리지에서 시도
-                if (!userId && typeof localStorage !== 'undefined') {
-                    userId = localStorage.getItem("userId") || localStorage.getItem("userEmail");
-                }
-
-                if (userId && userId.trim() && userId !== "user01") {
-                    params.push("userId=" + encodeURIComponent(userId));
-                    console.log("추가로 찾은 사용자 ID를 OAuth에 포함:", userId);
-                }
-            } catch (e) {
-                console.log("추가 사용자 ID 찾기 실패:", e);
-            }
-        }
+        // 백엔드에서 세션의 실제 사용자 ID를 사용하므로 프론트에서 userId 파라미터 불필요
 
         // URL 파라미터 추가
         if (params.length > 0) {
@@ -3399,39 +3367,7 @@ scwin.testGitHubAuthStart = function () {
             params.push("projectId=" + encodeURIComponent(scwin.currentProjectData.projectId));
             console.log("프로젝트 ID를 OAuth에 포함:", scwin.currentProjectData.projectId);
         }
-        if (scwin.currentProjectData && scwin.currentProjectData.userId) {
-            params.push("userId=" + encodeURIComponent(scwin.currentProjectData.userId));
-            console.log("사용자 ID를 OAuth에 포함:", scwin.currentProjectData.userId);
-        }
-
-        // 추가 사용자 ID 찾기 (프로젝트 데이터에 없는 경우)
-        if (!scwin.currentProjectData || !scwin.currentProjectData.userId) {
-            try {
-                var userId = null;
-
-                // WebSquare 파라미터에서 시도
-                try {
-                    userId = $p.getParameter("userId") || $p.getParameter("user_id");
-                } catch (e) { }
-
-                // 세션 스토리지에서 시도
-                if (!userId && typeof sessionStorage !== 'undefined') {
-                    userId = sessionStorage.getItem("userId") || sessionStorage.getItem("userEmail");
-                }
-
-                // 로컬 스토리지에서 시도
-                if (!userId && typeof localStorage !== 'undefined') {
-                    userId = localStorage.getItem("userId") || localStorage.getItem("userEmail");
-                }
-
-                if (userId && userId.trim() && userId !== "user01") {
-                    params.push("userId=" + encodeURIComponent(userId));
-                    console.log("WebSquare에서 추가로 찾은 사용자 ID를 OAuth에 포함:", userId);
-                }
-            } catch (e) {
-                console.log("WebSquare 추가 사용자 ID 찾기 실패:", e);
-            }
-        }
+        // 백엔드에서 세션의 실제 사용자 ID를 사용하므로 프론트에서 userId 파라미터 불필요
 
         if (params.length > 0) {
             authUrl += "?" + params.join("&");

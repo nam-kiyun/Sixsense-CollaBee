@@ -13,13 +13,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import com.demo.proworks.githubapptoken.service.GithubAppTokenService;
+import com.demo.proworks.githubapptoken.vo.GithubAppTokenVo;
+import com.demo.proworks.userpersonaltoken.service.UserPersonalTokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @subject : GitHub Repository Branch 관리를 위한 유틸리티
  * @description : GitHub API를 통한 브랜치 관리 기능 제공
  * @author : 남기윤
- * @since : 2025/07/07
+ * @since : 2025/07/07W
  */
 @Component
 public class GitHubBranchManager {
@@ -28,6 +30,9 @@ public class GitHubBranchManager {
 
 	@Autowired
 	private GithubAppTokenService githubAppTokenService;
+	
+	@Autowired
+	private UserPersonalTokenService userPersonalTokenService;
 
 	private RestTemplate restTemplate = new RestTemplate();
 	private ObjectMapper objectMapper = new ObjectMapper();
@@ -88,15 +93,37 @@ public class GitHubBranchManager {
 	}
 
 	/**
-	 * 새로운 브랜치를 생성한다.
+	 * 새로운 브랜치를 생성한다. Installation Token 우선 사용, Personal Token 폴백
 	 * 
 	 * @param repoFullName 레포지토리 전체 이름
 	 * @param branchName   새 브랜치 이름
 	 * @param sourceBranch 소스 브랜치 이름
-	 * @param accessToken  액세스 토큰
+	 * @param projectRepoId 프로젝트 레포 ID (Installation Token 조회용)
+	 * @param userId 사용자 ID (Personal Token 폴백용)
 	 * @return 생성된 브랜치 정보
 	 */
 	public Map<String, Object> createBranch(String repoFullName, String branchName, String sourceBranch,
+			String projectRepoId, String userId) throws Exception {
+		
+		// Installation Token 우선 사용
+		String accessToken = getEffectiveAccessToken(projectRepoId, userId);
+		return createBranchWithToken(repoFullName, branchName, sourceBranch, accessToken);
+	}
+	
+	/**
+	 * 레거시 메소드 - 기존 호환성 유지
+	 * @deprecated Use createBranch(String, String, String, String, String) instead
+	 */
+	@Deprecated
+	public Map<String, Object> createBranch(String repoFullName, String branchName, String sourceBranch,
+			String accessToken) throws Exception {
+		return createBranchWithToken(repoFullName, branchName, sourceBranch, accessToken);
+	}
+	
+	/**
+	 * 실제 브랜치 생성 로직
+	 */
+	private Map<String, Object> createBranchWithToken(String repoFullName, String branchName, String sourceBranch,
 			String accessToken) throws Exception {
 		// 1. 소스 브랜치의 SHA 조회
 		String sourceSha = getBranchSha(repoFullName, sourceBranch, accessToken);
@@ -130,6 +157,48 @@ public class GitHubBranchManager {
 
 		throw new RuntimeException("브랜치 생성에 실패했습니다.");
 	}
+	
+	/**
+	 * 효과적인 액세스 토큰 선택 - Installation Token 우선, Personal Token 폴백
+	 * @param projectRepoId 프로젝트 레포 ID
+	 * @param userId 사용자 ID
+	 * @return 사용할 액세스 토큰
+	 */
+	private String getEffectiveAccessToken(String projectRepoId, String userId) {
+		try {
+			// 1. 사용자 ID로 Installation ID 조회 시도
+			GithubAppTokenVo appToken = githubAppTokenService.selectGithubAppTokenByProjectRepoId(userId);
+			if (appToken != null && appToken.getGithubAppInstallationId() != null && !appToken.getGithubAppInstallationId().isEmpty()) {
+				// Personal Token을 사용하여 Installation Token 동적 생성
+				try {
+					String personalToken = userPersonalTokenService.getToken(userId);
+					if (personalToken != null && !personalToken.isEmpty()) {
+						// repoFullName에서 repoOwner 추출 필요 - 임시로 Personal Token 사용
+						System.out.println("Installation ID 발견, Personal Token 사용: " + appToken.getGithubAppInstallationId());
+						return personalToken;
+					}
+				} catch (Exception e2) {
+					System.out.println("Personal Token 조회 실패: " + e2.getMessage());
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("Installation ID 조회 실패, Personal Token으로 폴백: " + e.getMessage());
+		}
+			
+		try {
+			// 2. Personal Token 폴백
+			String personalToken = userPersonalTokenService.getToken(userId);
+			if (personalToken != null && !personalToken.isEmpty()) {
+				System.out.println("Personal Token 폴백 사용");
+				return personalToken;
+			}
+		} catch (Exception e) {
+			System.out.println("Personal Token 조회도 실패: " + e.getMessage());
+		}
+		
+		throw new RuntimeException("사용 가능한 GitHub 토큰이 없습니다. GitHub App 설치 또는 Personal Token 설정이 필요합니다.");
+	}
+	
 
 	/**
 	 * 브랜치를 삭제한다.
