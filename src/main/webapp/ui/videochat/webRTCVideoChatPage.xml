@@ -59,7 +59,7 @@
             * { margin: 0; padding: 0; box-sizing: border-box; }
             html { height: 100vh; margin: 0; padding: 0; }
             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; overflow: hidden; margin: 0; padding: 0; height: 100vh; }
-            .video-chat-container { display: flex; height: 100vh; width: 100vw; background: #000; margin: 0; padding: 0; }
+            .video-chat-container { display: flex; height: 100%; width: 100%; background: #000; margin: 0; padding: 0; }
             .video-section { flex: 3; position: relative; background: #1a1a1a; display: flex; flex-direction: column; }
             .local-video-container { display: none; /* 오른쪽 상단 고정 비디오 숨김 - 그리드로 이동 */ }
             .local-video { width: 100%; height: 100%; background: #2a2a2a; border-radius: 8px; object-fit: cover; }
@@ -293,7 +293,7 @@
             }
             .muted { background: #dc3545 !important; }
             .video-off { background: #6c757d !important; }
-            .chat-section { flex: 1; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; min-width: 350px; max-width: 400px; padding: 0 !important; margin: 0 !important; gap: 0 !important; height: 100vh; }
+            .chat-section { flex: 1; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; min-width: 270px; max-width: 330px; padding: 0 !important; margin: 0 !important; gap: 0 !important; height: 100vh; }
             .chat-header { height: 40px; flex-shrink: 0; padding: 8px 10px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
             .chat-title { font-size: 16px; font-weight: bold; color: #333; }
             .chat-subtitle { font-size: 12px; color: #666; }
@@ -3810,31 +3810,41 @@ scwin.leaveCall = function() {
         
         //console.log("✅ 화상통화 종료 완료");
         
-        // 뒤로가기 기능 추가
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            // history가 없으면 기본 프로젝트 페이지로 이동
-            if (window.ServerInfo) {
-                const projectId = scwin.getProjectIdFromUrl();
-                if (projectId) {
-                    const projectMainUrl = ServerInfo.getProjectMainUrl(projectId);
-                    window.location.href = projectMainUrl;
-                } else {
-                    // 프로젝트 ID가 없으면 메인 페이지로
-                    window.location.href = '/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/mainPage.xml';
-                }
+        // 모달 팝업 닫기 (부모 페이지의 함수 호출)
+        try {
+            // 부모 페이지의 closeVideoChatModal 함수 호출
+            if (window.parent && window.parent.scwin && window.parent.scwin.closeVideoChatModal) {
+                console.log("부모 페이지의 closeVideoChatModal 함수 호출");
+                window.parent.scwin.closeVideoChatModal();
+            } else if (window.parent && window.parent.$p && window.parent.$p.closePopup) {
+                console.log("부모 페이지에서 videoChatPopup ID로 닫기");
+                window.parent.$p.closePopup("videoChatPopup");
             } else {
-                // ServerInfo가 없으면 기본 메인 페이지로
+                console.log("부모 페이지 함수를 찾을 수 없어 메시지 전송 시도");
+                // 메시지 전송 방식으로 시도
+                if (window.parent) {
+                    window.parent.postMessage({action: 'closeVideoChatPopup'}, '*');
+                }
+            }
+        } catch (closeError) {
+            console.error("모달 닫기 실패, fallback 시도:", closeError);
+            // Fallback: 기존 방식으로 뒤로가기
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
                 window.location.href = '/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/mainPage.xml';
             }
         }
         
     } catch (error) {
         //console.error("❌ 화상통화 종료 실패:", error);
-        // 오류 발생 시에도 뒤로가기 시도
+        // 오류 발생 시 모달 닫기 시도
         try {
-            window.history.back();
+            if (window.parent && window.parent.scwin && window.parent.scwin.closeVideoChatModal) {
+                window.parent.scwin.closeVideoChatModal();
+            } else {
+                window.history.back();
+            }
         } catch (backError) {
             window.location.href = '/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/mainPage.xml';
         }
@@ -3927,9 +3937,9 @@ scwin.toggleVideo = function() {
 // 미니 PIP 모드 상태
 let isMiniPipActive = false;
 
-// Picture-in-Picture 토글 (새창 PIP 방식)
+// Picture-in-Picture 토글 (모달 닫기 + 소형 컨테이너 방식)
 scwin.togglePiP = function() {
-    console.log('PIP 버튼 클릭됨');
+    console.log('PIP 버튼 클릭됨 - 새로운 모달 방식');
     
     // 로컬 비디오와 원격 비디오 확인
     const localVideo = document.getElementById('localVideo');
@@ -3941,18 +3951,84 @@ scwin.togglePiP = function() {
     }
     
     try {
-        // PIP 새창 생성
-        scwin.openPipWindow();
+        console.log('PIP 모드 시작: 비디오 상태 저장 후 모달 닫기');
         
-        // 잠시 후 원래 창을 뒤로가기
+        // 1단계: 현재 비디오 상태를 부모 페이지에 저장
+        scwin.saveVideoStateToParent();
+        
+        // 2단계: 모달 팝업 닫기
         setTimeout(() => {
-            console.log('뒤로가기 실행');
-            window.history.back();
-        }, 1000); // 새창이 완전히 열린 후 뒤로가기
+            // 부모 페이지의 closeVideoChatModal 함수 호출
+            if (window.parent && window.parent.scwin && window.parent.scwin.closeVideoChatModal) {
+                console.log("PIP: 부모 페이지의 closeVideoChatModal 함수 호출");
+                window.parent.scwin.closeVideoChatModal();
+            } else if (window.parent && window.parent.$p && window.parent.$p.closePopup) {
+                console.log("PIP: 부모 페이지에서 videoChatPopup ID로 닫기");
+                window.parent.$p.closePopup("videoChatPopup");
+            } else {
+                console.log("PIP: 부모 페이지 함수를 찾을 수 없어 메시지 전송");
+                if (window.parent) {
+                    window.parent.postMessage({action: 'closeVideoChatPopup'}, '*');
+                }
+            }
+            
+            // 3단계: 부모 페이지에 PIP 컨테이너 표시 요청
+            setTimeout(() => {
+                if (window.parent && window.parent.scwin && window.parent.scwin.showMiniVideoChatContainer) {
+                    console.log("PIP: 부모 페이지에 소형 컨테이너 표시 요청");
+                    window.parent.scwin.showMiniVideoChatContainer();
+                }
+            }, 100);
+        }, 200);
         
     } catch (error) {
-        console.error('PIP 새창 생성 실패:', error);
-        alert('PIP 창을 열 수 없습니다: ' + error.message);
+        console.error('PIP 모드 전환 실패:', error);
+        alert('PIP 모드로 전환할 수 없습니다: ' + error.message);
+    }
+};
+
+// 비디오 상태를 부모 페이지에 저장하는 함수
+scwin.saveVideoStateToParent = function() {
+    try {
+        console.log('비디오 상태를 부모 페이지에 저장 시작');
+        
+        // 현재 비디오 상태 수집
+        const videoState = {
+            localStream: localStream,
+            peerConnections: peerConnections,
+            currentUser: currentUser,
+            isJoined: isJoined,
+            isMuted: isMuted,
+            isVideoOff: isVideoOff,
+            remoteStreams: remoteStreams,
+            remoteUserInfo: remoteUserInfo,
+            chatSocket: chatSocket
+        };
+        
+        // 부모 페이지에 비디오 상태 저장
+        if (window.parent && window.parent.scwin) {
+            window.parent.scwin.videoConnectionState = videoState;
+            console.log('✅ 부모 페이지에 비디오 상태 저장 완료');
+        }
+        
+        // 로컬 스토리지에도 임시 저장 (백업용)
+        try {
+            const simpleState = {
+                userId: currentUser.userId,
+                userName: currentUser.userName,
+                channelName: currentUser.channelName,
+                isJoined: isJoined,
+                isMuted: isMuted,
+                isVideoOff: isVideoOff,
+                participantCount: peerConnections.size
+            };
+            localStorage.setItem('tempVideoChatState', JSON.stringify(simpleState));
+        } catch (e) {
+            console.warn('로컬 스토리지 저장 실패:', e);
+        }
+        
+    } catch (error) {
+        console.error('비디오 상태 저장 실패:', error);
     }
 };
 

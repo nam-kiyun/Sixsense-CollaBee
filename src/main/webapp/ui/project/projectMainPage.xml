@@ -3831,22 +3831,266 @@ scwin.btn_videoCall_onclick = function(e) {
         return;
     }
     
-    console.log("화상통화 시작 - 프로젝트 ID:", projectId);
+    console.log("화상통화 모달 시작 - 프로젝트 ID:", projectId);
     
-    // ServerInfo 유틸리티를 사용하여 동적 서버 정보 가져오기
-    if (window.ServerInfo) {
-        // ServerInfo가 로드된 경우
-        var videoCallUrl = ServerInfo.getVideoChatUrl(projectId);
-        console.log("화상통화 URL (ServerInfo):", videoCallUrl);
-        window.location.href = videoCallUrl;
-    } else {
-        // ServerInfo가 없는 경우 기존 방식 사용
-        var currentHost = window.location.hostname;
-        var videoCallUrl = "https://" + currentHost + ":19443/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/videochat/webRTCVideoChatPage.xml&project_id=" + encodeURIComponent(projectId);
-        console.log("화상통화 URL (fallback):", videoCallUrl);
-        window.location.href = videoCallUrl;
+    // 프로젝트 설정과 동일한 방식으로 파라미터 구성
+    var param = {
+        "type": "json",
+        "name": "projectInfo", 
+        "data": {
+            "projectId": projectId
+        }
+    };
+
+    // 기본 모달 옵션 설정 (테스트용)
+    var options = {
+        id: "videoChatPopup",
+        type: "wframePopup", 
+        width: "1920",      // 고정 크기로 테스트
+        height: "940",
+        left : "0",      
+        modal: true,
+        header: false,
+        customTitleBar: false,
+        closeAction: "scwin.videoChat_closeAction",
+        dataObject: param
+    };
+
+    // 화상통화 팝업 열기
+    $p.openPopup("/InsWebApp/ui/videochat/webRTCVideoChatPage.xml", options);
+};
+
+// 화상통화 팝업 닫기 액션
+scwin.videoChat_closeAction = function() {
+    console.log("화상통화 팝업 닫기");
+    // 팝업 닫기
+    $p.closePopup("videoChatPopup");
+};
+
+// 화상통화 모달 닫기 함수 (자식 페이지에서 호출용)
+scwin.closeVideoChatModal = function() {
+    console.log("자식 페이지에서 화상통화 모달 닫기 요청");
+    $p.closePopup("videoChatPopup");
+};
+
+// 비디오 연결 상태 저장용 전역 변수
+scwin.videoConnectionState = null;
+
+// 소형 비디오 채팅 컨테이너 표시 함수
+scwin.showMiniVideoChatContainer = function() {
+    console.log("소형 비디오 채팅 컨테이너 표시 시작");
+    
+    try {
+        // 기존 컨테이너가 있으면 제거
+        const existingContainer = document.getElementById('miniVideoChatContainer');
+        if (existingContainer) {
+            existingContainer.remove();
+            console.log("기존 미니 컨테이너 제거됨");
+        }
+        
+        // 소형 컨테이너 HTML 생성
+        const containerHtml = `
+            <div id="miniVideoChatContainer" class="mini-video-chat-container">
+                <div class="mini-video-header">
+                    <span class="mini-video-title">화상통화</span>
+                    <div class="mini-video-controls">
+                        <button class="mini-expand-btn" onclick="scwin.expandVideoChat()" title="확대">⛶</button>
+                        <button class="mini-close-btn" onclick="scwin.closeMiniVideoChat()" title="닫기">×</button>
+                    </div>
+                </div>
+                <div class="mini-video-content">
+                    <div id="miniVideoGrid" class="mini-video-grid">
+                        <!-- 비디오들이 동적으로 추가됩니다 -->
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // DOM에 추가
+        document.body.insertAdjacentHTML('beforeend', containerHtml);
+        
+        const container = document.getElementById('miniVideoChatContainer');
+        if (container) {
+            // 드래그 기능 추가
+            scwin.makeMiniContainerDraggable(container);
+            
+            // 저장된 비디오 상태가 있으면 복원
+            if (scwin.videoConnectionState) {
+                scwin.restoreVideoState();
+            }
+            
+            console.log("✅ 소형 비디오 컨테이너 표시 완료");
+        }
+        
+    } catch (error) {
+        console.error("소형 비디오 컨테이너 표시 실패:", error);
     }
 };
+
+// 소형 컨테이너 드래그 기능
+scwin.makeMiniContainerDraggable = function(container) {
+    const header = container.querySelector('.mini-video-header');
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+    
+    header.addEventListener('mousedown', function(e) {
+        if (e.target.closest('button')) return; // 버튼 클릭은 무시
+        
+        isDragging = true;
+        const rect = container.getBoundingClientRect();
+        dragOffset.x = e.clientX - rect.left;
+        dragOffset.y = e.clientY - rect.top;
+        
+        function handleMouseMove(e) {
+            if (!isDragging) return;
+            
+            const x = Math.max(0, Math.min(e.clientX - dragOffset.x, window.innerWidth - container.offsetWidth));
+            const y = Math.max(0, Math.min(e.clientY - dragOffset.y, window.innerHeight - container.offsetHeight));
+            
+            container.style.left = x + 'px';
+            container.style.top = y + 'px';
+            container.style.right = 'auto';
+            container.style.bottom = 'auto';
+        }
+        
+        function handleMouseUp() {
+            isDragging = false;
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        }
+        
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        e.preventDefault();
+    });
+    
+    // 드래그 중 커서 변경
+    header.style.cursor = 'move';
+};
+
+// 비디오 상태 복원
+scwin.restoreVideoState = function() {
+    try {
+        console.log("비디오 상태 복원 시작");
+        
+        const videoState = scwin.videoConnectionState;
+        if (!videoState) {
+            console.warn("복원할 비디오 상태가 없습니다");
+            return;
+        }
+        
+        const miniGrid = document.getElementById('miniVideoGrid');
+        if (!miniGrid) {
+            console.error("미니 비디오 그리드를 찾을 수 없습니다");
+            return;
+        }
+        
+        // 로컬 비디오 추가
+        if (videoState.localStream) {
+            scwin.addMiniVideo('local', videoState.localStream, videoState.currentUser.userName);
+        }
+        
+        // 원격 비디오들 추가 (연결 상태 유지)
+        if (videoState.remoteStreams) {
+            videoState.remoteStreams.forEach((stream, userId) => {
+                const userInfo = videoState.remoteUserInfo.get(userId);
+                const userName = userInfo ? userInfo.userName : `사용자 ${userId}`;
+                scwin.addMiniVideo(userId, stream, userName);
+            });
+        }
+        
+        console.log("✅ 비디오 상태 복원 완료");
+        
+    } catch (error) {
+        console.error("비디오 상태 복원 실패:", error);
+    }
+};
+
+// 미니 비디오 추가
+scwin.addMiniVideo = function(videoId, stream, userName) {
+    try {
+        const miniGrid = document.getElementById('miniVideoGrid');
+        if (!miniGrid) return;
+        
+        const videoItem = document.createElement('div');
+        videoItem.className = 'mini-video-item';
+        videoItem.id = 'miniVideo_' + videoId;
+        
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.autoplay = true;
+        video.muted = videoId === 'local'; // 로컬 비디오는 음소거
+        video.playsInline = true;
+        video.className = 'mini-video';
+        
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'mini-video-name';
+        nameDiv.textContent = userName;
+        
+        videoItem.appendChild(video);
+        videoItem.appendChild(nameDiv);
+        miniGrid.appendChild(videoItem);
+        
+        console.log("미니 비디오 추가됨:", videoId, userName);
+        
+    } catch (error) {
+        console.error("미니 비디오 추가 실패:", error);
+    }
+};
+
+// 소형 비디오 채팅 닫기
+scwin.closeMiniVideoChat = function() {
+    console.log("소형 비디오 채팅 닫기");
+    
+    try {
+        const container = document.getElementById('miniVideoChatContainer');
+        if (container) {
+            // 비디오 스트림 정리
+            const videos = container.querySelectorAll('video');
+            videos.forEach(video => {
+                if (video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                    video.srcObject = null;
+                }
+            });
+            
+            container.remove();
+            console.log("✅ 소형 비디오 컨테이너 제거됨");
+        }
+        
+        // 비디오 상태 정리
+        scwin.videoConnectionState = null;
+        
+        // 로컬 스토리지 정리
+        localStorage.removeItem('tempVideoChatState');
+        
+    } catch (error) {
+        console.error("소형 비디오 채팅 닫기 실패:", error);
+    }
+};
+
+// 비디오 채팅 확대 (다시 모달로)
+scwin.expandVideoChat = function() {
+    console.log("비디오 채팅 확대 시작");
+    
+    try {
+        // 화상통화 모달을 다시 열기
+        scwin.btn_videoCall_onclick();
+        
+        // 잠시 후 소형 컨테이너 제거
+        setTimeout(() => {
+            const container = document.getElementById('miniVideoChatContainer');
+            if (container) {
+                container.remove();
+            }
+        }, 500);
+        
+    } catch (error) {
+        console.error("비디오 채팅 확대 실패:", error);
+    }
+};
+
+// forceFullScreenPopup 함수 제거됨 - 기본 WebSquare 팝업 사용
 ]]></script>
 		<style type="text/css"><![CDATA[
 /* 전체 컨테이너 */
@@ -4534,6 +4778,11 @@ scwin.btn_videoCall_onclick = function(e) {
     }
 }
 
+#mf_wfr_mainContent_videoChatPopup_body {
+      top: 0px;
+      bottom: 0px;
+  }
+
 /* 캘린더 내부 표 배경색을 흰색으로 변경 */
 .calendar-container .fc-day,
 .calendar-container .fc-widget-content,
@@ -4664,6 +4913,130 @@ scwin.btn_videoCall_onclick = function(e) {
     background-position: center !important;
     filter: brightness(0) !important; /* 아이콘을 검은색으로 만들기 */
 }
+
+/* 소형 비디오 채팅 컨테이너 스타일 */
+.mini-video-chat-container {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    width: 320px !important;
+    height: 240px !important;
+    background: rgba(0, 0, 0, 0.9) !important;
+    border-radius: 12px !important;
+    border: 2px solid #FFB823 !important;
+    z-index: 9999 !important;
+    overflow: hidden !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5) !important;
+    user-select: none !important;
+    transform: translate3d(0, 0, 0) !important;
+}
+
+.mini-video-header {
+    background: #FFB823 !important;
+    color: white !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    cursor: move !important;
+    user-select: none !important;
+    position: relative !important;
+    z-index: 10001 !important;
+}
+
+.mini-video-header:hover {
+    background: #e6a820 !important;
+}
+
+.mini-video-title {
+    flex: 1;
+    font-size: 14px;
+}
+
+.mini-video-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.mini-expand-btn, .mini-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+}
+
+.mini-expand-btn:hover, .mini-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.mini-video-content {
+    height: calc(100% - 36px);
+    padding: 8px;
+}
+
+.mini-video-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 5px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.mini-video-item {
+    position: relative;
+    background: #2a2a2a;
+    border-radius: 6px;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    border: 1px solid #444;
+}
+
+.mini-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.mini-video-name {
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+/* 드래그 중 애니메이션 비활성화 */
+.mini-video-chat-container.dragging {
+    transition: none !important;
+}
+
+/* 반응형 처리 */
+@media (max-width: 600px) {
+    .mini-video-chat-container {
+        width: 280px !important;
+        height: 200px !important;
+        bottom: 10px !important;
+        right: 10px !important;
+    }
+}
+
+/* 화상통화 팝업 관련 CSS 제거됨 - 기본 WebSquare 팝업 사용 */
 ]]></style>
 	</head>
 	<body ev:onpageload="scwin.onpageload">
