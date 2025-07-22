@@ -50,19 +50,21 @@ public interface GitHubDAO {
     void updateGitHubAppToken(GithubAppTokenVo tokenVo) throws Exception;
     
     /**
-     * 로컬 사용자 ID로 GitHub Personal Token 조회
-     * @param userId 로컬 사용자 ID
+     * 사용자 ID로 GitHub App Token 조회
+     * @param userId 사용자 ID
      * @return GitHub App Token 정보
      * @throws Exception
      */
     GithubAppTokenVo selectGitHubAppTokenByUserId(String userId) throws Exception;
     
     /**
-     * 프로젝트 레포 ID로 GitHub App Token 조회
-     * @param projectRepoId 프로젝트 레포 ID
+     * 프로젝트 레포 ID로 GitHub App Token 조회 (Deprecated - userId 사용 권장)
+     * @param projectRepoId 프로젝트 레포 ID (실제로는 userId 파라미터)
      * @return GitHub App Token 정보
      * @throws Exception
+     * @deprecated Use selectGitHubAppTokenByUserId(String userId) instead
      */
+    @Deprecated
     GithubAppTokenVo selectGitHubAppTokenByProjectRepoId(String projectRepoId) throws Exception;
 
     // ==============================

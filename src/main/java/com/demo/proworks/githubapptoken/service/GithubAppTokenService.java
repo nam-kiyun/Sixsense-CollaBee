@@ -109,6 +109,6 @@ public interface GithubAppTokenService {
      * @return GitHub App Token VO
      * @throws Exception
      */
-	public GithubAppTokenVo selectGithubAppTokenByProjectRepoId(String userId) throws Exception;
+	public GithubAppTokenVo selectGithubAppTokenByUserId(String userId) throws Exception;
 	
 }

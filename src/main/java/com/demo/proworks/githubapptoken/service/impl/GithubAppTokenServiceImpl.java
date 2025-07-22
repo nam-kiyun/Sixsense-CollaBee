@@ -195,7 +195,7 @@ public class GithubAppTokenServiceImpl implements GithubAppTokenService {
      * 사용자 ID로 GitHub App Token을 조회한다.
      */
     @Override
-    public GithubAppTokenVo selectGithubAppTokenByProjectRepoId(String userId) throws Exception {
+    public GithubAppTokenVo selectGithubAppTokenByUserId(String userId) throws Exception {
         try {
             return gitHubDAO.selectGitHubAppTokenByUserId(userId);
         } catch (Exception e) {

@@ -252,9 +252,9 @@ public class GitHubController {
             
         } catch (Exception e) {
             logger.error("GitHub OAuth 인증 시작 실패", e);
-            ModelAndView mv = new ModelAndView("/error");
-            mv.addObject("error", "GitHub 인증을 시작할 수 없습니다: " + e.getMessage());
-            return mv;
+            ModelAndView startErrorMv = new ModelAndView("/error");
+            startErrorMv.addObject("error", "GitHub 인증을 시작할 수 없습니다: " + e.getMessage());
+            return startErrorMv;
         }
     }
     
@@ -278,18 +278,18 @@ public class GitHubController {
         try {
             if (error != null) {
                 logger.error("GitHub OAuth 인증 실패: {}", error);
-                ModelAndView mv = new ModelAndView();
-                mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                ModelAndView errorMv = new ModelAndView();
+                errorMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
                     java.net.URLEncoder.encode("GitHub 인증이 거부되었습니다.", "UTF-8"));
-                return mv;
+                return errorMv;
             }
             
             if (code == null) {
                 logger.error("GitHub OAuth 코드가 없습니다");
-                ModelAndView mv = new ModelAndView();
-                mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                ModelAndView noCodeMv = new ModelAndView();
+                noCodeMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
                     java.net.URLEncoder.encode("인증 코드가 제공되지 않았습니다.", "UTF-8"));
-                return mv;
+                return noCodeMv;
             }
             
             HttpSession session = request.getSession();
@@ -297,10 +297,10 @@ public class GitHubController {
             
             if (!state.equals(sessionState)) {
                 logger.error("GitHub OAuth state 불일치");
-                ModelAndView mv = new ModelAndView();
-                mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                ModelAndView stateMv = new ModelAndView();
+                stateMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
                     java.net.URLEncoder.encode("인증 상태가 유효하지 않습니다.", "UTF-8"));
-                return mv;
+                return stateMv;
             }
             
             // state에서 userId와 projectId 추출
@@ -343,10 +343,10 @@ public class GitHubController {
             
             if (finalUserId == null) {
                 logger.error("사용자 ID를 찾을 수 없습니다. OAuth 연동을 진행할 수 없습니다.");
-                ModelAndView mv = new ModelAndView();
-                mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                ModelAndView userNotFoundMv = new ModelAndView();
+                userNotFoundMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
                     java.net.URLEncoder.encode("로그인된 사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.", "UTF-8"));
-                return mv;
+                return userNotFoundMv;
             }
             
             logger.info("디버깅 - 최종 사용할 userId: {}", finalUserId);
@@ -391,16 +391,16 @@ public class GitHubController {
             }
             
             logger.info("OAuth 성공 후 GitHub App 설치로 자동 리다이렉트: {}", appInstallUrl);
-            ModelAndView mv = new ModelAndView();
-            mv.setViewName("redirect:" + appInstallUrl);
-            return mv;
+            ModelAndView redirectMv = new ModelAndView();
+            redirectMv.setViewName("redirect:" + appInstallUrl);
+            return redirectMv;
             
         } catch (Exception e) {
             logger.error("GitHub OAuth 콜백 처리 실패", e);
-            ModelAndView mv = new ModelAndView();
-//            mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+            ModelAndView exceptionMv = new ModelAndView();
+//            exceptionMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
 //                java.net.URLEncoder.encode("GitHub OAuth 처리 중 오류가 발생했습니다.", "UTF-8"));
-            return mv;
+            return exceptionMv;
         }
     }
     
@@ -424,9 +424,9 @@ public class GitHubController {
             // 현재 사용자 ID 가져오기
             String userId = getUserId(request, null);
             if (userId == null) {
-                ModelAndView mv = new ModelAndView("/error");
-                mv.addObject("error", "사용자 정보를 찾을 수 없습니다.");
-                return mv;
+                ModelAndView installErrorMv = new ModelAndView("/error");
+                installErrorMv.addObject("error", "사용자 정보를 찾을 수 없습니다.");
+                return installErrorMv;
             }
             
             // 설치 정보를 세션에 저장 (콜백에서 사용)
@@ -458,9 +458,9 @@ public class GitHubController {
             
         } catch (Exception e) {
             logger.error("GitHub App 설치 시작 실패", e);
-            ModelAndView mv = new ModelAndView("/error");
-            mv.addObject("error", "GitHub App 설치를 시작할 수 없습니다: " + e.getMessage());
-            return mv;
+            ModelAndView appInstallErrorMv = new ModelAndView("/error");
+            appInstallErrorMv.addObject("error", "GitHub App 설치를 시작할 수 없습니다: " + e.getMessage());
+            return appInstallErrorMv;
         }
     }
 
@@ -483,9 +483,9 @@ public class GitHubController {
             
             if (installation_id == null || installation_id.trim().isEmpty()) {
                 logger.error("Installation ID가 제공되지 않았습니다");
-                ModelAndView mv = new ModelAndView("/error");
-                mv.addObject("error", "GitHub App 설치 정보가 제공되지 않았습니다.");
-                return mv;
+                ModelAndView noInstallationMv = new ModelAndView("/error");
+                noInstallationMv.addObject("error", "GitHub App 설치 정보가 제공되지 않았습니다.");
+                return noInstallationMv;
             }
             
             // 세션에서 설치 정보 가져오기
@@ -531,16 +531,16 @@ public class GitHubController {
                         return new ModelAndView("redirect:" + redirectUrl);
                     } else {
                         logger.error("GitHub App Installation ID 저장 실패: {}", setupResult.get("error"));
-                        ModelAndView mv = new ModelAndView("/error");
-                        mv.addObject("error", "GitHub App 설정 저장 실패: " + setupResult.get("error"));
-                        return mv;
+                        ModelAndView saveErrorMv = new ModelAndView("/error");
+                        saveErrorMv.addObject("error", "GitHub App 설정 저장 실패: " + setupResult.get("error"));
+                        return saveErrorMv;
                     }
                     
                 } catch (Exception e) {
                     logger.error("Installation ID 저장 중 오류", e);
-                    ModelAndView mv = new ModelAndView("/error");
-                    mv.addObject("error", "GitHub App 설정 저장 중 오류가 발생했습니다: " + e.getMessage());
-                    return mv;
+                    ModelAndView storageErrorMv = new ModelAndView("/error");
+                    storageErrorMv.addObject("error", "GitHub App 설정 저장 중 오류가 발생했습니다: " + e.getMessage());
+                    return storageErrorMv;
                 }
             } else {
                 logger.warn("ProjectRepoId가 없어서 Installation ID를 저장할 수 없습니다. 일반 설정 완료로 처리합니다.");
@@ -561,9 +561,9 @@ public class GitHubController {
             
         } catch (Exception e) {
             logger.error("GitHub App 설정 완료 처리 실패", e);
-            ModelAndView mv = new ModelAndView("/error");
-            mv.addObject("error", "GitHub App 설정 처리 중 오류가 발생했습니다: " + e.getMessage());
-            return mv;
+            ModelAndView setupErrorMv = new ModelAndView("/error");
+            setupErrorMv.addObject("error", "GitHub App 설정 처리 중 오류가 발생했습니다: " + e.getMessage());
+            return setupErrorMv;
         }
     }
     
@@ -1078,6 +1078,170 @@ public class GitHubController {
         return result;
     }
     
+    // ==============================
+    // GitHub 연결 상태 체크 API
+    // ==============================
+    
+    /**
+     * GitHub 연결 상태를 확인하고 필요한 단계를 안내한다.
+     */
+    @ElService(key = "connection/status")
+    @ElDescription(sub = "GitHub 연결 상태 확인", desc = "OAuth와 GitHub App 설치 상태를 확인하여 필요한 단계를 안내합니다.")
+    @RequestMapping(value = "connection/status")
+    @ResponseBody
+    public Map<String, Object> checkGitHubConnectionStatus(HttpServletRequest request) {
+        
+        logger.info("=== GitHub 연결 상태 확인 API 호출 ===");
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 현재 사용자 ID 가져오기
+            String userId = getUserId(request, null);
+            if (userId == null) {
+                result.put("success", false);
+                result.put("error", "사용자 정보를 찾을 수 없습니다.");
+                return result;
+            }
+            
+            logger.info("사용자 ID: {}", userId);
+            
+            // 1단계: OAuth Token 확인
+            try {
+                com.demo.proworks.userpersonaltoken.service.UserPersonalTokenService userPersonalTokenService = 
+                    (com.demo.proworks.userpersonaltoken.service.UserPersonalTokenService) 
+                    org.springframework.web.context.support.WebApplicationContextUtils
+                        .getWebApplicationContext(request.getServletContext())
+                        .getBean("userPersonalTokenServiceImpl");
+                
+                String personalToken = userPersonalTokenService.getToken(userId);
+                
+                if (personalToken == null || personalToken.trim().isEmpty()) {
+                    logger.info("OAuth 토큰 없음 - OAuth 인증 필요");
+                    result.put("success", true);
+                    result.put("status", "oauth_required");
+                    result.put("message", "GitHub OAuth 인증이 필요합니다.");
+                    result.put("next_step", "oauth_auth");
+                    result.put("redirect_url", "/InsWebApp/github/auth");
+                    return result;
+                }
+                
+                logger.info("OAuth 토큰 확인됨");
+                
+            } catch (Exception e) {
+                logger.warn("OAuth 토큰 조회 실패: {}", e.getMessage());
+                result.put("success", true);
+                result.put("status", "oauth_required");
+                result.put("message", "GitHub OAuth 인증이 필요합니다.");
+                result.put("next_step", "oauth_auth");
+                result.put("redirect_url", "/InsWebApp/github/auth");
+                return result;
+            }
+            
+            // 2단계: Installation ID 확인
+            try {
+                com.demo.proworks.githubapptoken.service.GithubAppTokenService githubAppTokenService = 
+                    (com.demo.proworks.githubapptoken.service.GithubAppTokenService) 
+                    org.springframework.web.context.support.WebApplicationContextUtils
+                        .getWebApplicationContext(request.getServletContext())
+                        .getBean("githubAppTokenService");
+                
+                com.demo.proworks.githubapptoken.vo.GithubAppTokenVo appToken = 
+                    githubAppTokenService.selectGithubAppTokenByUserId(userId);
+                
+                if (appToken == null || appToken.getGithubAppInstallationId() == null || appToken.getGithubAppInstallationId().trim().isEmpty()) {
+                    logger.info("Installation ID 없음 - GitHub App 설치 필요");
+                    result.put("success", true);
+                    result.put("status", "app_install_required");
+                    result.put("message", "GitHub App 설치가 필요합니다.");
+                    result.put("next_step", "app_install");
+                    result.put("redirect_url", "/InsWebApp/github/app/install");
+                    return result;
+                }
+                
+                logger.info("Installation ID 확인됨: {}", appToken.getGithubAppInstallationId());
+                
+                // 3단계: 완전 연동 완료
+                result.put("success", true);
+                result.put("status", "fully_connected");
+                result.put("message", "GitHub 연동이 완료되었습니다.");
+                result.put("oauth_available", true);
+                result.put("app_installed", true);
+                result.put("installation_id", appToken.getGithubAppInstallationId());
+                
+                return result;
+                
+            } catch (Exception e) {
+                logger.warn("Installation ID 조회 실패: {}", e.getMessage());
+                result.put("success", true);
+                result.put("status", "app_install_required");
+                result.put("message", "GitHub App 설치가 필요합니다.");
+                result.put("next_step", "app_install");
+                result.put("redirect_url", "/InsWebApp/github/app/install");
+                return result;
+            }
+            
+        } catch (Exception e) {
+            logger.error("GitHub 연결 상태 확인 실패", e);
+            result.put("success", false);
+            result.put("error", "연결 상태 확인 중 오류가 발생했습니다: " + e.getMessage());
+            return result;
+        }
+    }
+    
+    /**
+     * GitHub 연결 상태를 확인하고 필요시 자동 리다이렉트한다.
+     */
+    @ElService(key = "connection/check-and-redirect")
+    @ElDescription(sub = "GitHub 연결 체크 및 리다이렉트", desc = "GitHub 연결 상태를 확인하고 필요한 단계로 자동 리다이렉트합니다.")
+    @RequestMapping(value = "connection/check-and-redirect", method = RequestMethod.GET)
+    public ModelAndView checkAndRedirectGitHubConnection(HttpServletRequest request) {
+        
+        logger.info("=== GitHub 연결 체크 및 리다이렉트 ===");
+        
+        try {
+            Map<String, Object> statusResult = checkGitHubConnectionStatus(request);
+            
+            if (!(Boolean) statusResult.get("success")) {
+                ModelAndView errorMv = new ModelAndView("/error");
+                errorMv.addObject("error", statusResult.get("error"));
+                return errorMv;
+            }
+            
+            String status = (String) statusResult.get("status");
+            String redirectUrl = (String) statusResult.get("redirect_url");
+            
+            switch (status) {
+                case "oauth_required":
+                    logger.info("OAuth 인증 필요 - 리다이렉트: {}", redirectUrl);
+                    return new ModelAndView("redirect:" + redirectUrl);
+                    
+                case "app_install_required":
+                    logger.info("GitHub App 설치 필요 - 리다이렉트: {}", redirectUrl);
+                    return new ModelAndView("redirect:" + redirectUrl);
+                    
+                case "fully_connected":
+                    logger.info("GitHub 연동 완료 - 메인 페이지로 이동");
+                    ModelAndView successMv = new ModelAndView();
+                    successMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_main.xml");
+                    successMv.addObject("status", "connected");
+                    successMv.addObject("message", "GitHub 연동이 완료되었습니다.");
+                    return successMv;
+                    
+                default:
+                    ModelAndView unknownMv = new ModelAndView("/error");
+                    unknownMv.addObject("error", "알 수 없는 연결 상태입니다.");
+                    return unknownMv;
+            }
+            
+        } catch (Exception e) {
+            logger.error("GitHub 연결 체크 및 리다이렉트 실패", e);
+            ModelAndView exceptionMv = new ModelAndView("/error");
+            exceptionMv.addObject("error", "연결 상태 확인 중 오류가 발생했습니다: " + e.getMessage());
+            return exceptionMv;
+        }
+    }
+
     // ==============================
     // 브랜치 관리 API
     // ==============================

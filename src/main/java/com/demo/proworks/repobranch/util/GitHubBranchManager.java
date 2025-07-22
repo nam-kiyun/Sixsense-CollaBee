@@ -14,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.demo.proworks.githubapptoken.service.GithubAppTokenService;
 import com.demo.proworks.githubapptoken.vo.GithubAppTokenVo;
+import com.demo.proworks.githubapptoken.util.GitHubApiClient;
 import com.demo.proworks.userpersonaltoken.service.UserPersonalTokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -33,6 +34,9 @@ public class GitHubBranchManager {
 	
 	@Autowired
 	private UserPersonalTokenService userPersonalTokenService;
+	
+	@Autowired
+	private GitHubApiClient gitHubApiClient;
 
 	private RestTemplate restTemplate = new RestTemplate();
 	private ObjectMapper objectMapper = new ObjectMapper();
@@ -167,18 +171,17 @@ public class GitHubBranchManager {
 	private String getEffectiveAccessToken(String projectRepoId, String userId) {
 		try {
 			// 1. 사용자 ID로 Installation ID 조회 시도
-			GithubAppTokenVo appToken = githubAppTokenService.selectGithubAppTokenByProjectRepoId(userId);
+			GithubAppTokenVo appToken = githubAppTokenService.selectGithubAppTokenByUserId(userId);
 			if (appToken != null && appToken.getGithubAppInstallationId() != null && !appToken.getGithubAppInstallationId().isEmpty()) {
-				// Personal Token을 사용하여 Installation Token 동적 생성
+				// private-key.pem을 사용하여 Installation Token 생성
 				try {
-					String personalToken = userPersonalTokenService.getToken(userId);
-					if (personalToken != null && !personalToken.isEmpty()) {
-						// repoFullName에서 repoOwner 추출 필요 - 임시로 Personal Token 사용
-						System.out.println("Installation ID 발견, Personal Token 사용: " + appToken.getGithubAppInstallationId());
-						return personalToken;
-					}
+					String installationToken = gitHubApiClient.getInstallationToken(appToken.getGithubAppInstallationId());
+					System.out.println("✅ Installation Token 생성 성공: " + appToken.getGithubAppInstallationId());
+					System.out.println("🔑 생성된 Token (앞 20자): " + installationToken.substring(0, Math.min(20, installationToken.length())) + "...");
+					return installationToken;
 				} catch (Exception e2) {
-					System.out.println("Personal Token 조회 실패: " + e2.getMessage());
+					System.out.println("❌ Installation Token 생성 실패: " + e2.getMessage());
+					// Installation Token 실패 시 Personal Token으로 폴백
 				}
 			}
 		} catch (Exception e) {
