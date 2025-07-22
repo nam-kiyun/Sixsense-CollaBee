@@ -4,6 +4,7 @@ import com.inswave.elfw.annotation.ElDto;
 import com.inswave.elfw.annotation.ElDtoField;
 import com.inswave.elfw.annotation.ElVoField;
 import com.fasterxml.jackson.annotation.JsonFilter;
+import java.util.List;
 
 @JsonFilter("elExcludeFilter")
 @ElDto(FldYn = "", delimeterYn = "", logicalName = "프로젝트 정보")
@@ -36,6 +37,8 @@ public class ProjectVo extends com.demo.proworks.cmmn.ProworksCommVO {
 
     @ElDtoField(logicalName = "user_name", physicalName = "userName", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userName;
+
+    private List<com.demo.proworks.projectuser.vo.ProjectUserVo> projectUsers;
 
     @ElVoField(physicalName = "projectId")
     public String getProjectId(){
@@ -123,6 +126,14 @@ public class ProjectVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElVoField(physicalName = "userName")
     public void setUserName(String userName){
         this.userName = userName;
+    }
+
+    public List<com.demo.proworks.projectuser.vo.ProjectUserVo> getProjectUsers(){
+        return this.projectUsers;
+    }
+
+    public void setProjectUsers(List<com.demo.proworks.projectuser.vo.ProjectUserVo> projectUsers){
+        this.projectUsers = projectUsers;
     }
 
     @Override
