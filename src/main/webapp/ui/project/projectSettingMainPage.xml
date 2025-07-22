@@ -34,6 +34,10 @@ div[id*="popup"] iframe,
     visibility: hidden !important;
 }
 
+#mf_wfr_mainContent_projectSettingPopup_body {
+    top : 0px;
+}
+
 /* WebSquare 기본 스타일보다 우선순위 높게 헤더 제거 */
 .w2popup_window .w2window_header,
 .w2window_header,
