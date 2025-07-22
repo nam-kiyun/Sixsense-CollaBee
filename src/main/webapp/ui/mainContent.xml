@@ -447,8 +447,8 @@ scwin.createUpdateSection = function(parentGroup, projectId, project, counter) {
         if (updateGroup) {
             const updateText = $p.dynamicCreate("output_lastUpdate_" + projectId + "_" + counter, "output", { style: "font-size:14px;color:rgba(0,0,0,0.6);font-family:Inter,sans-serif;" }, updateGroup);
             if (updateText) {
-                const lastUpdate = project.emailSendTime || "5 minutes ago";
-                updateText.setValue("Last Update " + lastUpdate + " ...");
+                const lastUpdate = project.emailSendTime || "09:00";
+                updateText.setValue("메일 발송시각 " + lastUpdate);
             }
         }
     } catch(e) {
