@@ -156,15 +156,17 @@ body {
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 35%;
+    min-height: 35%;
     padding: 0 30px;
+    gap: 10px;
     box-sizing: border-box;
+    /* background-color: khaki; */
     /* background-color: khaki; */
 }
 
 .dec-title {
     width: 70%;
-    height: 16%;
+    min-height: 16%;
     font-size: 23px;
     font-weight: bold;
     margin-bottom: 15px;
@@ -172,7 +174,7 @@ body {
 
 .dec-group {
     display: flex;
-    height: 14%;
+    min-height: 14%;
 }
 
 .dec-name {
