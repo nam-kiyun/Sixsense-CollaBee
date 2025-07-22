@@ -943,7 +943,7 @@ scwin.btn_back_onclick = function(e) {
                         id="btn_changeImage" 
                         type="button" 
                         ev:onclick="scwin.btn_changeImage_onclick">
-                        <xf:label><![CDATA[📷]]></xf:label>
+                        <xf:label><![CDATA[]]></xf:label>
                     </xf:trigger>
                     
                 </xf:group>
