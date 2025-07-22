@@ -388,3 +388,14 @@
 .fid .wd650.fn {width:650px}
 .fid.fn .wd700,
 .fid .wd700.fn {width:700px}
+
+
+
+.w2window_window_move_type{
+	box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+	/*box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);*/
+}
+.w2window_window_move_type:focus{
+	border: none;
+	outline: none;
+}

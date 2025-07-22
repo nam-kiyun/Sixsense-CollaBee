@@ -139,5 +139,14 @@
             WHERE b.PROJECT_ID = #{projectId}
         )
     </delete>
+    
+    <delete id="deleteTaskVersionByTaskId" parameterType="com.demo.proworks.taskversion.vo.TaskVersionVo">
+    	<!-- 버전관리를 위한 Task(업무) 정보를 삭제한다. -->
+    	
+        DELETE FROM TASKVERSION   /* QueryID : com.demo.proworks.taskversion.deleteTaskVersion */ 
+        WHERE   
+                TASK_ID = #{taskId}
+        
+    </delete>
 
 </mapper>

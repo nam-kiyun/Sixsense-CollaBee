@@ -75,7 +75,8 @@ public class ManagerDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
      * @return 번호
      * @throws ElException
      */
-    public int insertManager(ManagerVo vo) throws ElException {    	
+    public int insertManager(ManagerVo vo) throws ElException { 
+    	System.out.println("매니저 부분 " + vo);
         return insert("com.demo.proworks.manager.insertManager", vo);
     }
 

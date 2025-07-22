@@ -708,6 +708,10 @@ public class TaskServiceImpl implements TaskService {
 		commentVo.setTaskId(taskVo.getTaskId());
 		commentDAO.deleteCommentByTaskId(commentVo);
 		
+		TaskVersionVo taskVersionVo = new TaskVersionVo();
+		taskVersionVo.setTaskId(taskVo.getTaskId());
+		taskVersionDAO.deleteTaskVersionByTaskId(taskVersionVo);
+		
 		int result = taskDAO.deleteTask(taskVo);
 		
 		// 3. DB 삭제 성공 시 Redis 캐시 무효화
