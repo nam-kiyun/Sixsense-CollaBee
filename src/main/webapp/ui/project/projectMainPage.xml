@@ -3849,7 +3849,7 @@ scwin.btn_videoCall_onclick = function(e) {
         width: "1920",      // 고정 크기로 테스트
         height: "940",
         left : "0",      
-        modal: true,
+        modal: false,
         header: false,
         customTitleBar: false,
         closeAction: "scwin.videoChat_closeAction",
@@ -3931,12 +3931,12 @@ window.addEventListener('message', function(event) {
                 element.remove();
             });
             
-            // 3단계: 백드롭 제거
-            var backdrop = document.querySelector('.w2popup_backdrop');
-            if (backdrop) {
-                backdrop.remove();
-                console.log("백드롭 제거 완료:");
-            }
+            // 3단계: 강제 페이지 활성화 (백드롭 대신)
+            document.body.style.pointerEvents = 'auto !important';
+            document.body.style.filter = 'none !important';
+            document.body.style.opacity = '1 !important';
+            document.documentElement.style.pointerEvents = 'auto !important';
+            console.log("페이지 강제 활성화 완료");
             
             
             // 4단계: 기본 스타일 초기화
