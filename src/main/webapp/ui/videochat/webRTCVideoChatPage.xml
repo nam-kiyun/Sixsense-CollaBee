@@ -2592,8 +2592,9 @@ scwin.removeRemoteUser = function(peerId) {
 
 // 화상통화 나가기
 scwin.leaveCall = function() {
+    console.log("=== leaveCall 함수 시작 ===");
     try {
-        //console.log("화상통화 나가기 시작");
+        console.log("화상통화 나가기 시작");
         
         // Producer 정리
         if (videoProducer) {
@@ -2669,7 +2670,62 @@ scwin.leaveCall = function() {
         
         scwin.updateControlButtons();
         //scwin.addChatMessage("시스템", "화상통화를 나갔습니다.", false);
-        //console.log("✅ 화상통화 나가기 완료");
+        console.log("✅ 화상통화 나가기 완료");
+        
+        console.log("나가기 함수 실행 중 - 모달 닫기 시작");
+        
+        // 프로젝트 설정과 동일한 방식으로 모달 닫기 (projectSettingSideMenu.xml의 btn_back_onclick 로직)
+        try {
+            console.log("화상통화 모달 닫기 시작 - 프로젝트 설정 방식 적용");
+            
+            // 방법 1: 부모의 closeVideoChatModal 함수 직접 호출
+            if (window.parent && window.parent.scwin && window.parent.scwin.closeVideoChatModal) {
+                console.log("부모의 closeVideoChatModal 함수 호출");
+                window.parent.scwin.closeVideoChatModal();
+                return; // 성공하면 여기서 끝
+            }
+            
+            // 방법 2: 최상위 부모의 함수 호출  
+            if (window.parent && window.parent.parent && window.parent.parent.scwin && window.parent.parent.scwin.closeVideoChatModal) {
+                console.log("최상위 부모의 closeVideoChatModal 함수 호출");
+                window.parent.parent.scwin.closeVideoChatModal();
+                return; // 성공하면 여기서 끝
+            }
+            
+            // 방법 3: 직접 부모에게 메시지 전송
+            if (window.parent) {
+                console.log("부모창에 메시지 전송");
+                window.parent.postMessage({action: 'closeVideoChatPopup'}, '*');
+            }
+            
+            // 방법 4: 최상위 부모에게 메시지 전송
+            if (window.parent && window.parent.parent) {
+                console.log("최상위 부모창에 메시지 전송");
+                window.parent.parent.postMessage({action: 'closeVideoChatPopup'}, '*');
+            }
+            
+            // 방법 5: 강제 닫기 시도
+            console.log("강제 닫기 시도");
+            setTimeout(function() {
+                if (window.close) {
+                    window.close();
+                } else if (window.parent && window.parent.close) {
+                    window.parent.close();
+                } else {
+                    window.history.back();
+                }
+            }, 100);
+            
+        } catch(e) {
+            console.error("화상통화 모달 닫기 실행 오류:", e);
+            // 최후의 수단
+            try {
+                window.history.back();
+            } catch(e2) {
+                console.error("history.back도 실패:", e2);
+            }
+        }
+        
         
     } catch (error) {
         //console.error("❌ 화상통화 나가기 실패:", error);
@@ -3810,29 +3866,59 @@ scwin.leaveCall = function() {
         
         //console.log("✅ 화상통화 종료 완료");
         
-        // 모달 팝업 닫기 (부모 페이지의 함수 호출)
+        // 프로젝트 설정과 동일한 방식으로 모달 닫기 (projectSettingSideMenu.xml의 btn_back_onclick 방식)
         try {
-            // 부모 페이지의 closeVideoChatModal 함수 호출
+            console.log("화상통화 모달 닫기 시작 - 프로젝트 설정 방식 적용");
+            
+            // 방법 1: 부모의 closeVideoChatModal 함수 직접 호출
             if (window.parent && window.parent.scwin && window.parent.scwin.closeVideoChatModal) {
-                console.log("부모 페이지의 closeVideoChatModal 함수 호출");
+                console.log("방법 1: 부모의 closeVideoChatModal 함수 호출");
                 window.parent.scwin.closeVideoChatModal();
-            } else if (window.parent && window.parent.$p && window.parent.$p.closePopup) {
-                console.log("부모 페이지에서 videoChatPopup ID로 닫기");
-                window.parent.$p.closePopup("videoChatPopup");
-            } else {
-                console.log("부모 페이지 함수를 찾을 수 없어 메시지 전송 시도");
-                // 메시지 전송 방식으로 시도
-                if (window.parent) {
-                    window.parent.postMessage({action: 'closeVideoChatPopup'}, '*');
-                }
+                return; // 성공하면 여기서 끝
             }
-        } catch (closeError) {
-            console.error("모달 닫기 실패, fallback 시도:", closeError);
-            // Fallback: 기존 방식으로 뒤로가기
-            if (window.history.length > 1) {
+            
+            // 방법 2: 최상위 부모의 함수 호출  
+            if (window.parent && window.parent.parent && window.parent.parent.scwin && window.parent.parent.scwin.closeVideoChatModal) {
+                console.log("방법 2: 최상위 부모의 closeVideoChatModal 함수 호출");
+                window.parent.parent.scwin.closeVideoChatModal();
+                return; // 성공하면 여기서 끝
+            }
+            
+            // 방법 3: 직접 부모에게 메시지 전송
+            if (window.parent) {
+                console.log("방법 3: 부모창에 메시지 전송");
+                window.parent.postMessage({action: 'closeVideoChatPopup'}, '*');
+            }
+            
+            // 방법 4: 최상위 부모에게 메시지 전송
+            if (window.parent && window.parent.parent) {
+                console.log("방법 4: 최상위 부모창에 메시지 전송");
+                window.parent.parent.postMessage({action: 'closeVideoChatPopup'}, '*');
+            }
+            
+            // 방법 5: 강제 닫기 시도
+            console.log("방법 5: 강제 닫기 시도");
+            setTimeout(function() {
+                if (window.close) {
+                    console.log("window.close() 시도");
+                    window.close();
+                } else if (window.parent && window.parent.close) {
+                    console.log("window.parent.close() 시도");
+                    window.parent.close();
+                } else {
+                    console.log("history.back() 시도");
+                    window.history.back();
+                }
+            }, 100);
+            
+        } catch(closeError) {
+            console.error("화상통화 모달 닫기 실행 오류:", closeError);
+            // 최후의 수단
+            try {
+                console.log("최후 수단: history.back()");
                 window.history.back();
-            } else {
-                window.location.href = '/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/mainPage.xml';
+            } catch(e2) {
+                console.error("history.back도 실패:", e2);
             }
         }
         

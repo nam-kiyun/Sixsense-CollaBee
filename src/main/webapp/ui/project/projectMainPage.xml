@@ -3870,8 +3870,142 @@ scwin.videoChat_closeAction = function() {
 // 화상통화 모달 닫기 함수 (자식 페이지에서 호출용)
 scwin.closeVideoChatModal = function() {
     console.log("자식 페이지에서 화상통화 모달 닫기 요청");
+    
+    // 방법 1: 정상적인 closePopup 호출
     $p.closePopup("videoChatPopup");
+    
+    // 방법 2: 강제 DOM 제거
+    setTimeout(function() {
+        try {
+            console.log("강제 DOM 제거 시도");
+            var selectors = [
+                '#videoChatPopup',
+                '[id*="videoChatPopup"]',
+                '[id*="popup"][id*="video"]',
+                '.w2popup_window',
+                '.wframe_popup'
+            ];
+            
+            selectors.forEach(function(selector) {
+                var elements = document.querySelectorAll(selector);
+                elements.forEach(function(element) {
+                    console.log("팝업 요소 발견 및 제거:", selector);
+                    element.remove();
+                });
+            });
+            
+            // 백드롭 제거
+            var backdrop = document.querySelector('.w2popup_backdrop');
+            if (backdrop) {
+                backdrop.remove();
+                console.log("백드롭 제거 완료");
+            }
+            
+        } catch(e) {
+            console.error("강제 DOM 제거 실패:", e);
+        }
+    }, 100);
 };
+
+// PostMessage 이벤트 리스너 추가 (자식 창에서 보낸 메시지 처리)
+window.addEventListener('message', function(event) {
+    console.log("PostMessage 받음:", event.data);
+    
+    if (event.data && event.data.action === 'closeVideoChatPopup') {
+        console.log("화상통화 팝업 닫기 메시지 받음 - 강제 닫기 실행");
+        
+        // 즉시 강제 DOM 제거 - 더 정확하고 강력한 방법
+        try {
+            console.log("=== 화상통화 모달 강제 닫기 시작 ===");
+            
+            var found = false;
+            var removedCount = 0;
+            
+            // 1단계: WebSquare $p API 사용하여 팝업 닫기
+            try {
+                if (typeof $p !== 'undefined' && $p.closePopup) {
+                    console.log("WebSquare API로 videoChatPopup 닫기 시도");
+                    $p.closePopup("videoChatPopup");
+                    found = true;
+                    removedCount++;
+                }
+            } catch(e) {
+                console.log("WebSquare API 닫기 실패:", e);
+            }
+            
+            // 2단계: 화상통화 모달만 정확히 제거 (페이지 구조 보존)
+            var videoPopupSelectors = [
+                '#videoChatPopup',
+                '[id="mf_wfr_mainContent_videoChatPopup"]',
+                'div[id*="videoChatPopup"]:not([id*="wfr_header"]):not([id*="wfr_sideMenu"]):not([id*="wfr_mainContent"])',
+                'iframe[src*="webRTCVideoChatPage"]'
+            ];
+            
+            videoPopupSelectors.forEach(function(selector) {
+                try {
+                    var elements = document.querySelectorAll(selector);
+                    if (elements.length > 0) {
+                        console.log("발견된 화상통화 모달:", selector, elements.length + "개");
+                        elements.forEach(function(element) {
+                            // 페이지 핵심 구조는 제거하지 않음
+                            var elementId = element.id || '';
+                            if (elementId.includes('wfr_header') || 
+                                elementId.includes('wfr_sideMenu') || 
+                                elementId === 'mf_wfr_mainContent') {
+                                console.log("페이지 핵심 구조이므로 제거 건너뜀:", elementId);
+                                return;
+                            }
+                            
+                            console.log("화상통화 모달 요소 제거:", selector, elementId);
+                            element.remove();
+                            found = true;
+                            removedCount++;
+                        });
+                    }
+                } catch(e) {
+                    console.error("화상통화 모달 제거 오류:", selector, e);
+                }
+            });
+            
+            // 3단계: 화상통화 관련 백드롭만 제거 (높은 z-index 팝업만)
+            var backdropSelectors = ['.w2popup_backdrop', '.backdrop'];
+            backdropSelectors.forEach(function(selector) {
+                try {
+                    var elements = document.querySelectorAll(selector);
+                    elements.forEach(function(element) {
+                        if (element.style.zIndex && parseInt(element.style.zIndex) > 9000) {
+                            console.log("화상통화 백드롭 제거:", selector, element.className);
+                            element.remove();
+                            found = true;
+                            removedCount++;
+                        }
+                    });
+                } catch(e) {
+                    console.error("백드롭 제거 오류:", e);
+                }
+            });
+            
+            // 4단계: body 스타일 초기화 (클릭 가능하게)
+            document.body.style.pointerEvents = 'auto';
+            document.body.style.overflow = 'auto';
+            document.documentElement.style.pointerEvents = 'auto';
+            document.documentElement.style.overflow = 'auto';
+            console.log("body 스타일 초기화 완료");
+            
+            if (!found) {
+                console.log("PostMessage - 제거할 팝업 요소를 찾지 못함");
+                console.log("현재 DOM 상태:");
+                console.log("- div 요소:", document.querySelectorAll('div').length + "개");
+                console.log("- iframe 요소:", document.querySelectorAll('iframe').length + "개");
+            } else {
+                console.log("PostMessage - 총 " + removedCount + "개 요소 제거 완료");
+            }
+            
+        } catch(e) {
+            console.error("PostMessage 처리 중 DOM 제거 실패:", e);
+        }
+    }
+});
 
 // 비디오 연결 상태 저장용 전역 변수
 scwin.videoConnectionState = null;
