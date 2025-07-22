@@ -356,10 +356,35 @@ const generateUserId = () => {
 };
 
 // 초기 사용자 정보 (세션에서 가져올 때까지 임시값)
+// dataObject로 전달받은 projectId 사용
+let projectId = 'default';
+try {
+    // WebSquare popup의 dataObject에서 projectId 추출
+    if ($p && $p.getParameter && $p.getParameter("projectInfo")) {
+        const projectInfo = $p.getParameter("projectInfo");
+        if (projectInfo && projectInfo.projectId) {
+            projectId = projectInfo.projectId;
+            console.log("dataObject에서 projectId 획득:", projectId);
+        }
+    }
+    
+    // 대안: URL parameter도 확인 (fallback)
+    if (projectId === 'default') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlProjectId = urlParams.get('project_id');
+        if (urlProjectId) {
+            projectId = urlProjectId;
+            console.log("URL parameter에서 projectId 획득:", projectId);
+        }
+    }
+} catch (e) {
+    console.log("projectId 추출 실패, 기본값 사용:", e);
+}
+
 let currentUser = {
     userId: generateUserId(),
     userName: "로딩중...",
-    channelName: "webrtc-room-" + (new URLSearchParams(window.location.search).get('project_id') || 'default')
+    channelName: "webrtc-room-" + projectId
 };
 
 //console.log("현재 사용자 정보:", currentUser);

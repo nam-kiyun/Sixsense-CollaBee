@@ -3924,12 +3924,41 @@ window.addEventListener('message', function(event) {
                 $p.closePopup("videoChatPopup");
             }
             
-            // 2단계: 화상통화 관련 요소만 제거
-            var videoElements = document.querySelectorAll('[id*="videoChatPopup"]');
-            videoElements.forEach(function(element) {
-                console.log("화상통화 요소 제거:", element.id);
-                element.remove();
+            // 2단계: 화상통화 DOM 완전 정리 (ID 중복 오류 방지)
+            console.log("화상통화 DOM 완전 정리 시작");
+            
+            // 1) videoChatPopup 관련 모든 요소 제거
+            var videoSelectors = [
+                '[id*="videoChatPopup"]',
+                '[id*="mf_wfr_mainContent_videoChatPopup"]',
+                '.videochat-popup',
+                '.video-chat-container'
+            ];
+            
+            var totalRemoved = 0;
+            videoSelectors.forEach(function(selector) {
+                var elements = document.querySelectorAll(selector);
+                elements.forEach(function(element) {
+                    console.log("화상통화 DOM 제거:", element.id);
+                    element.remove();
+                    totalRemoved++;
+                });
             });
+            
+            // 2) WebSquare 내부 캐시도 정리
+            try {
+                if (typeof $p !== 'undefined' && $p.destroyPopup) {
+                    $p.destroyPopup("videoChatPopup");
+                    console.log("WebSquare 팝업 캐시 정리 완료");
+                } else if (typeof $p !== 'undefined' && $p.removePopup) {
+                    $p.removePopup("videoChatPopup");
+                    console.log("WebSquare 팝업 제거 완료");
+                }
+            } catch(e) {
+                console.log("WebSquare 캐시 정리:", e.message);
+            }
+            
+            console.log("총 " + totalRemoved + "개 DOM 요소 제거됨");
             
             // 3단계: 강제 페이지 활성화 (백드롭 대신)
             document.body.style.pointerEvents = 'auto !important';
