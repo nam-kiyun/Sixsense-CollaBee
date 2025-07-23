@@ -230,6 +230,7 @@ scwin.sbm_checkEmail_submitdone = function (e) {
         emailCheck_button.setDisabled(true);
         email_error_text.setValue("*사용가능한 이메일입니다");
         email_error_text.setStyle("color", "green");
+        emailCheck_button.addClass("button-disabled");
     } else {
         email_error_text.setValue("*이미 가입된 이메일입니다.");
     }
@@ -244,7 +245,8 @@ scwin.sbm_checkEmail_submiterror = function (e) {
 scwin.email_input_onkeyup = function (e) {
     scwin.checkTry = false;
     scwin.checkEmail = false;
-    emailCheck_button.setDisabled(false)
+    emailCheck_button.setDisabled(false);
+    emailCheck_button.removeClass("button-disabled");
 };
 
 ]]></script>
@@ -268,7 +270,7 @@ scwin.email_input_onkeyup = function (e) {
     			<w2:textbox id="" label="회원가입 " style="height: 23px;color: #DAD3D3;"></w2:textbox>
     			<xf:group style="width:60%;height:356px;" id="signup_group" class="signup-group">
 
-    				<xf:group style="height: 60px;" id="">
+    				<xf:group style="" id="" class="form-group">
     					<w2:textbox style="height:23px;" id="" label="이름"></w2:textbox>
     					<xf:group style=""
     						id="name_group" class="input-group">
@@ -282,7 +284,7 @@ scwin.email_input_onkeyup = function (e) {
     					</xf:group>
     					<w2:textbox id="name_error_text" label="" style="" class="error-text"></w2:textbox>
     				</xf:group>
-    				<xf:group style="height: 60px;" id="">
+    				<xf:group style="" id="" class="form-group">
     					<w2:textbox style="height: 23px;" id="" label="이메일"></w2:textbox>
     					<xf:group style="height:35px;" id="" class="email-group">
     						<xf:trigger style="" id="emailCheck_button" type="button" class="duplicateCheck-button auth-button" ev:onclick="scwin.emailCheck_button_onclick">
@@ -302,7 +304,7 @@ scwin.email_input_onkeyup = function (e) {
     					</xf:group>
     					<w2:textbox id="email_error_text" label="" style="" class="error-text"></w2:textbox>
     				</xf:group>
-    				<xf:group style="height: 60px;" id="">
+    				<xf:group style="" id="" class="form-group">
     					<w2:textbox style="height: 23px;" id="" label="비밀번호"></w2:textbox>
     					<xf:group style=""
     						id="password_group" class="input-group">
@@ -315,7 +317,7 @@ scwin.email_input_onkeyup = function (e) {
     					</xf:group>
     					<w2:textbox id="password_error_text" label="" style="" class="error-text"></w2:textbox>
     				</xf:group>
-    				<xf:group style="height: 60px;" id="">
+    				<xf:group style="" id="" class="form-group">
     					<w2:textbox style="height: 23px;" id="" label="비밀번호 확인"></w2:textbox>
     					<xf:group style=""
     						id="passwordCheck_group" class="input-group">

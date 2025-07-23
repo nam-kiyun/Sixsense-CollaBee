@@ -16,8 +16,8 @@ public class CommentVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "comment_id", physicalName = "commentId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "0", desc = "", attr = "")
     private int commentId = 0;
 
-    @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "int", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
-    private int taskId;
+    @ElDtoField(logicalName = "task_id", physicalName = "taskId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String taskId;
 
     @ElDtoField(logicalName = "user_id", physicalName = "userId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String userId;
@@ -48,12 +48,13 @@ public class CommentVo extends com.demo.proworks.cmmn.ProworksCommVO {
     }
 
     @ElVoField(physicalName = "taskId")
-    public int getTaskId(){
-        return taskId;
+    public String getTaskId(){
+        String ret = this.taskId;
+        return ret;
     }
 
     @ElVoField(physicalName = "taskId")
-    public void setTaskId(int taskId){
+    public void setTaskId(String taskId){
         this.taskId = taskId;
     }
 
@@ -133,7 +134,8 @@ public class CommentVo extends com.demo.proworks.cmmn.ProworksCommVO {
         sb.append("message").append("=").append(message).append(",");
         sb.append("createdAt").append("=").append(createdAt).append(",");
         sb.append("userName").append("=").append(userName).append(",");
-        sb.append("userImage").append("=").append(userImage);
+        sb.append("userImage").append("=").append(userImage).append(",");
+        sb.append("projectId").append("=").append(projectId);
         sb.append("]");
         return sb.toString();
 
