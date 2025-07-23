@@ -133,4 +133,15 @@ public class TaskDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstractD
         return (String) selectByPk("com.demo.proworks.task.selectUserEmailByProjectUserId", projectUserId);
     }
 
+    /**
+     * 사용자 이름을 포함한 업무(Task) 정보 목록을 조회한다.
+     *  
+     * @param  TaskVo 업무(Task) 정보
+     * @return List<TaskVo> 사용자 이름이 포함된 업무(Task) 정보
+     * @throws ElException
+     */
+    public List<TaskVo> selectTaskListWithUserName(TaskVo vo) throws ElException {      	
+        return (List<TaskVo>)list("com.demo.proworks.task.selectTaskListWithUserName", vo);
+    }
+
 }

@@ -10,15 +10,13 @@
     <!-- GitHub 사용자 App Token 저장 -->
     <insert id="insertGitHubAppToken" parameterType="Map" useGeneratedKeys="true" keyProperty="github_app_token_id">
         INSERT INTO GITHUB_APP_TOKENS (
-            project_repo_id,
-            app_token,
-            expired_at,
-            created_at
+            user_id,
+            created_at,
+            github_app_installation_id
         ) VALUES (
-            #{project_repo_id},
-            #{app_token},
-            #{expired_at},
-            NOW()
+            #{user_id},
+            NOW(),
+            #{github_app_installation_id}
         )
     </insert>
     
@@ -26,8 +24,7 @@
     <update id="updateGitHubAppToken" parameterType="Map">
         UPDATE GITHUB_APP_TOKENS 
         SET 
-            app_token = #{app_token},
-            expired_at = #{expired_at}
+            github_app_installation_id = #{github_app_installation_id}
         WHERE github_app_token_id = #{github_app_token_id}
     </update>
     
@@ -35,14 +32,24 @@
     <select id="selectGitHubAppTokenByUserId" parameterType="String" resultType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo">
         SELECT 
             gat.github_app_token_id as githubAppTokenId,
-            gat.project_repo_id as projectRepoId,
-            gat.app_token as appToken,
-            gat.expired_at as expiredAt,
-            gat.created_at as createdAt
+            gat.user_id as userId,
+            gat.created_at as createdAt,
+            gat.github_app_installation_id as githubAppInstallationId
         FROM GITHUB_APP_TOKENS gat
-        INNER JOIN PROJECT_REPO pr ON gat.project_repo_id = pr.project_repo_id
-        INNER JOIN PROJECT_USER pu ON pr.project_id = pu.project_id
-        WHERE pu.user_id = #{userId}
+        WHERE gat.user_id = #{userId}
+        ORDER BY gat.created_at DESC
+        LIMIT 1
+    </select>
+    
+    <!-- 사용자 ID로 GitHub App Token 조회 (프로젝트 레포 ID 대신 사용자 ID 사용) -->
+    <select id="selectGitHubAppTokenByProjectRepoId" parameterType="String" resultType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo">
+        SELECT 
+            gat.github_app_token_id as githubAppTokenId,
+            gat.user_id as userId,
+            gat.created_at as createdAt,
+            gat.github_app_installation_id as githubAppInstallationId
+        FROM GITHUB_APP_TOKENS gat
+        WHERE gat.user_id = #{userId}
         ORDER BY gat.created_at DESC
         LIMIT 1
     </select>
@@ -60,7 +67,8 @@
             pr.repo_owner as repoOwner,
             pr.repo_name as repoName,
             pr.default_branch as defaultBranch,
-            pr.github_app_installation_id as githubAppInstallationId
+            pr.github_app_installation_id as githubAppInstallationId,
+            pr.connected_by as connectedBy
         FROM PROJECT_REPO pr
         INNER JOIN PROJECT_USER pu ON pr.project_id = pu.project_id
         WHERE pu.user_id = #{userId}
@@ -77,7 +85,8 @@
             pr.repo_owner as repoOwner,
             pr.repo_name as repoName,
             pr.default_branch as defaultBranch,
-            pr.github_app_installation_id as githubAppInstallationId
+            pr.github_app_installation_id as githubAppInstallationId,
+            pr.connected_by as connectedBy
         FROM PROJECT_REPO pr
         WHERE pr.project_id = #{projectId}
         ORDER BY pr.project_repo_id DESC 
@@ -93,7 +102,8 @@
             pr.repo_owner as repoOwner,
             pr.repo_name as repoName,
             pr.default_branch as defaultBranch,
-            pr.github_app_installation_id as githubAppInstallationId
+            pr.github_app_installation_id as githubAppInstallationId,
+            pr.connected_by as connectedBy
         FROM PROJECT_REPO pr
         WHERE pr.repo_owner = #{repoOwner}
         AND pr.repo_name = #{repoName}
@@ -109,14 +119,16 @@
             repo_owner,
             repo_name,
             default_branch,
-            github_app_installation_id
+            github_app_installation_id,
+            connected_by
         ) VALUES (
             #{project_id},
             #{github_repository_id},
             #{repo_owner},
             #{repo_name},
             #{default_branch},
-            #{github_app_installation_id}
+            #{github_app_installation_id},
+            #{connected_by}
         )
     </insert>
     
@@ -127,7 +139,8 @@
             repo_owner = #{repo_owner},
             repo_name = #{repo_name},
             default_branch = #{default_branch},
-            github_app_installation_id = #{github_app_installation_id}
+            github_app_installation_id = #{github_app_installation_id},
+            connected_by = #{connected_by}
         WHERE project_repo_id = #{project_repo_id}
     </update>
     
@@ -254,35 +267,8 @@
          GitHub 앱 토큰 관리 (GITHUB_APP_TOKEN 테이블 사용)
          ============================== -->
     
-    <!-- GitHub 앱 토큰 저장 -->
-    <insert id="insertAppToken" parameterType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo" useGeneratedKeys="true" keyProperty="github_app_token_id">
-        INSERT INTO GITHUB_APP_TOKEN (
-            project_repo_id,
-            app_token,
-            expired_at,
-            created_at
-        ) VALUES (
-            #{projectRepoId},
-            #{appToken},
-            #{expiredAt},
-            NOW()
-        )
-    </insert>
-    
-    <!-- 프로젝트 레포지토리의 유효한 앱 토큰 조회 -->
-    <select id="selectValidAppTokenByRepoId" parameterType="String" resultType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo">
-        SELECT 
-            github_app_token_id as githubAppTokenId,
-            project_repo_id as projectRepoId,
-            app_token as appToken,
-            expired_at as expiredAt,
-            created_at as createdAt
-        FROM GITHUB_APP_TOKEN 
-        WHERE project_repo_id = #{projectRepoId} 
-        AND (expired_at IS NULL OR expired_at > NOW())
-        ORDER BY created_at DESC
-        LIMIT 1
-    </select>
+    <!-- GitHub 앱 토큰 저장 (Legacy - 사용되지 않음) -->
+    <!-- 실제로는 GITHUB_APP_TOKENS 테이블과 Installation ID만 사용 -->
 
     <!-- ==============================
          통계 및 모니터링 
@@ -294,13 +280,13 @@
             COUNT(DISTINCT rb.repo_branch_id) as total_branches,
             COUNT(DISTINCT pr.project_repo_id) as connected_repositories,
             COUNT(DISTINCT gw.github_webhook_id) as active_webhooks,
-            COUNT(DISTINCT gat.github_app_token_id) as app_tokens,
+            COUNT(DISTINCT gat.github_app_installation_id) as github_installations,
             COUNT(DISTINCT pl.project_log_id) as github_activities
         FROM PROJECT p
         LEFT JOIN PROJECT_REPO pr ON p.project_id = pr.project_id
         LEFT JOIN REPO_BRANCHES rb ON pr.project_repo_id = rb.project_repo_id
         LEFT JOIN GITHUB_WEBHOOK gw ON pr.project_repo_id = gw.project_repo_id
-        LEFT JOIN GITHUB_APP_TOKEN gat ON pr.project_repo_id = gat.project_repo_id
+        LEFT JOIN GITHUB_APP_TOKENS gat ON pu.user_id = gat.user_id
         LEFT JOIN PROJECT_USER pu ON p.project_id = pu.project_id
         LEFT JOIN PROJECT_LOG pl ON pu.project_user_id = pl.project_user_id AND pl.log_type LIKE 'GITHUB_%'
         WHERE p.project_id = #{project_id}
@@ -337,12 +323,11 @@
             pr.repo_owner,
             pr.repo_name,
             pr.github_app_installation_id,
-            gat.app_token is not null as has_app_token,
-            gat.expired_at as token_expires_at,
+            gat.github_app_installation_id is not null as has_installation_id,
             gw.github_webhook_id is not null as has_webhook,
             COUNT(DISTINCT rb.repo_branch_id) as branch_count
         FROM PROJECT_REPO pr
-        LEFT JOIN GITHUB_APP_TOKEN gat ON pr.project_repo_id = gat.project_repo_id AND (gat.expired_at IS NULL OR gat.expired_at &gt; NOW())
+        LEFT JOIN GITHUB_APP_TOKENS gat ON pu.user_id = gat.user_id
         LEFT JOIN GITHUB_WEBHOOK gw ON pr.project_repo_id = gw.project_repo_id
         LEFT JOIN REPO_BRANCHES rb ON pr.project_repo_id = rb.project_repo_id
         WHERE pr.project_repo_id = #{projectRepoId}
@@ -366,7 +351,7 @@
             (SELECT COUNT(*) FROM USER_PERSONAL_TOKENS) as connected_users,
             (SELECT COUNT(*) FROM PROJECT_REPO WHERE github_repository_id IS NOT NULL) as connected_repositories,
             (SELECT COUNT(*) FROM GITHUB_WEBHOOK) as active_webhooks,
-            (SELECT COUNT(*) FROM GITHUB_APP_TOKEN WHERE expired_at IS NULL OR expired_at &gt; NOW()) as valid_app_tokens,
+            (SELECT COUNT(*) FROM GITHUB_APP_TOKENS) as github_app_installations,
             (SELECT COUNT(*) FROM REPO_BRANCHES WHERE created_at &gt; DATE_SUB(NOW(), INTERVAL 24 HOUR)) as branches_created_24h
     </select>
 

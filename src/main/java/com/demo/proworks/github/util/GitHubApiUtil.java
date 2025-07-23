@@ -340,7 +340,12 @@ public class GitHubApiUtil {
         if ((Boolean) response.get("success")) {
             return response;
         } else {
-            throw new Exception("GitHub 브랜치 생성 실패: " + response.get("data"));
+            // 403 권한 오류인 경우 상태 코드 정보를 포함하여 예외 발생
+            String errorMessage = "GitHub 브랜치 생성 실패: " + response.get("data");
+            if (response.get("status_code") != null && response.get("status_code").equals(403)) {
+                errorMessage = "403: " + errorMessage;
+            }
+            throw new Exception(errorMessage);
         }
     }
     
@@ -420,6 +425,85 @@ public class GitHubApiUtil {
             return response;
         } else {
             throw new Exception("GitHub API 사용량 확인 실패: " + response.get("data"));
+        }
+    }
+    
+    /**
+     * 현재 사용자 정보 조회 (getUserInfo와 동일)
+     * @param accessToken 액세스 토큰
+     * @return 사용자 정보
+     * @throws Exception
+     */
+    public Map<String, Object> getCurrentUser(String accessToken) throws Exception {
+        return getUserInfo(accessToken);
+    }
+    
+    /**
+     * Installation Token 생성
+     * @param installationId Installation ID
+     * @return Installation Token
+     * @throws Exception
+     */
+    public String generateInstallationToken(String installationId) throws Exception {
+        logger.info("Installation Token 생성: {}", installationId);
+        
+        // JWT 토큰 생성이 필요하지만 현재는 GitHubApiClient의 로직을 사용
+        // TODO: JWT 생성 로직 추가 또는 GitHubApiClient 사용
+        throw new Exception("Installation Token 생성 기능이 구현되지 않았습니다. GitHubApiClient를 사용하세요.");
+    }
+    
+    /**
+     * 사용자가 레포지토리의 collaborator인지 확인
+     * @param accessToken 액세스 토큰
+     * @param repoFullName 레포지토리 전체 이름 (owner/repo)
+     * @param username GitHub 사용자명
+     * @return collaborator 여부
+     * @throws Exception
+     */
+    public boolean isCollaborator(String accessToken, String repoFullName, String username) throws Exception {
+        logger.info("Collaborator 권한 확인: {} in {}", username, repoFullName);
+        
+        String endpoint = String.format("/repos/%s/collaborators/%s", repoFullName, username);
+        
+        try {
+            Map<String, Object> response = get(endpoint, accessToken);
+            return (Boolean) response.get("success");
+        } catch (Exception e) {
+            // 404 또는 403 등의 경우 collaborator가 아님
+            logger.warn("Collaborator 권한 확인 실패: {}", e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * 레포지토리에 collaborator를 초대
+     * @param accessToken 액세스 토큰
+     * @param repoFullName 레포지토리 전체 이름 (owner/repo)
+     * @param username GitHub 사용자명
+     * @param permission 권한 레벨 (pull, push, maintain, admin)
+     * @return 초대 결과
+     * @throws Exception
+     */
+    public Map<String, Object> inviteCollaborator(String accessToken, String repoFullName, String username, String permission) throws Exception {
+        logger.info("Collaborator 초대: {} to {} with {}", username, repoFullName, permission);
+        
+        String endpoint = String.format("/repos/%s/collaborators/%s", repoFullName, username);
+        
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("permission", permission);
+        
+        Map<String, Object> response = put(endpoint, payload, accessToken);
+        
+        if ((Boolean) response.get("success")) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "사용자 " + username + "을(를) " + repoFullName + " 레포지토리에 초대했습니다.");
+            result.put("username", username);
+            result.put("repository", repoFullName);
+            result.put("permission", permission);
+            return result;
+        } else {
+            throw new Exception("Collaborator 초대 실패: " + response.get("data"));
         }
     }
 }

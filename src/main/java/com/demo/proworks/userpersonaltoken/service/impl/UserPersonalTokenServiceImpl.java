@@ -156,4 +156,24 @@ public class UserPersonalTokenServiceImpl implements UserPersonalTokenService {
 		return userPersonalTokenDAO.deleteUserPersonalToken(userPersonalTokenVo);
 	}
 	
+	/**
+     * 사용자 ID로 개인 토큰을 조회한다.
+     *
+     * @param userId 사용자 ID
+     * @return 개인 토큰 문자열 또는 null
+     * @throws Exception
+     */
+	@Override
+	public String getToken(String userId) throws Exception {
+		UserPersonalTokenVo searchVo = new UserPersonalTokenVo();
+		searchVo.setUserId(userId);
+		
+		UserPersonalTokenVo tokenVo = userPersonalTokenDAO.selectUserPersonalTokenByUserId(searchVo);
+		if (tokenVo != null && tokenVo.getAccessToken() != null) {
+			return tokenVo.getAccessToken();
+		}
+		
+		return null;
+	}
+	
 }

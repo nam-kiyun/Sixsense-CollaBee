@@ -12,6 +12,8 @@ import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -21,8 +23,13 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import com.demo.proworks.github.service.GitHubService;
+import com.demo.proworks.github.util.GitHubApiUtil;
 import com.demo.proworks.github.vo.BranchParameterVo;
+import com.demo.proworks.githubapptoken.service.GithubAppTokenService;
+import com.demo.proworks.githubapptoken.util.GitHubApiClient;
+import com.demo.proworks.projectrepo.service.ProjectRepositoryService;
 import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
+import com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
 
@@ -46,6 +53,16 @@ public class GitHubController {
     
     @Resource(name = "userPersonalTokenServiceImpl")
     private com.demo.proworks.userpersonaltoken.service.UserPersonalTokenService userPersonalTokenService;
+
+    @Autowired
+    private ProjectRepositoryService projectRepositoryService;
+    
+    @Autowired
+    private GitHubApiClient gitHubApiClient;
+    
+
+    @Autowired
+    private GithubAppTokenService githubAppTokenService;
     
     // 중복 웹훅 방지를 위한 배송 ID 캐시 (간단한 메모리 기반)
     private static final java.util.Set<String> processedDeliveryIds = 
@@ -55,28 +72,6 @@ public class GitHubController {
      * 생성자 - 빈 등록 확인용
      */
     public GitHubController() {
-        logger.info("GitHubController 빈이 생성되었습니다.");
-        System.out.println("=== GitHubController 생성됨 ===");
-        
-        // 매핑 확인 코드 주석 처리 (의존성 문제 방지)
-        new Thread(() -> {
-            try {
-                Thread.sleep(5000);
-                if (requestMappingHandlerMapping != null) {
-                    System.out.println("=== GitHub 컨트롤러 매핑 정보 ===");
-                    requestMappingHandlerMapping.getHandlerMethods().forEach((requestMappingInfo, handlerMethod) -> {
-                        if (handlerMethod.getBeanType().equals(GitHubController.class)) {
-                            System.out.println("GitHub 매핑: " + requestMappingInfo + " -> " + handlerMethod.getMethod().getName());
-                        }
-                    });
-                    System.out.println("=== GitHub 매핑 정보 끝 ===");
-                } else {
-                    System.out.println("RequestMappingHandlerMapping이 null입니다.");
-                }
-            } catch (Exception e) {
-                System.out.println("매핑 확인 중 오류: " + e.getMessage());
-            }
-        }).start();
     }
 
     // ==============================
@@ -104,37 +99,6 @@ public class GitHubController {
     }
     
     /**
-     * 매핑 정보 확인용 엔드포인트 (의존성 문제로 주석 처리)
-     */
-    /*
-    @ElService(key = "mappings")
-    @ElDescription(sub = "GitHub 매핑 확인", desc = "현재 등록된 URL 매핑 정보를 확인합니다.")
-    @RequestMapping(value = "mappings")
-    @ResponseBody
-    public Map<String, Object> checkMappings() {
-        logger.info("GitHub 매핑 확인");
-        System.out.println("=== GitHub 매핑 확인 메소드 진입 ===");
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("message", "매핑 확인 완료");
-        
-        try {
-            // 등록된 모든 매핑 정보 출력
-            requestMappingHandlerMapping.getHandlerMethods().forEach((requestMappingInfo, handlerMethod) -> {
-                System.out.println("매핑: " + requestMappingInfo + " -> " + handlerMethod);
-            });
-            result.put("mapping_logged", true);
-        } catch (Exception e) {
-            System.out.println("매핑 확인 중 오류: " + e.getMessage());
-            result.put("mapping_error", e.getMessage());
-        }
-        
-        return result;
-    }
-    */
-    
-    /**
      * 간단한 상태 확인 테스트 엔드포인트
      */
     @ElService(key = "health")
@@ -153,25 +117,6 @@ public class GitHubController {
     }
     
     /**
-     * GitHub 컨트롤러 간단 테스트용 엔드포인트 (서비스 의존성 없음)
-     */
-    @ElService(key = "simple-test")
-    @ElDescription(sub = "GitHub 간단 테스트", desc = "GitHub 컨트롤러의 간단한 테스트를 수행합니다.")
-    @RequestMapping(value = "simple-test")
-    @ResponseBody
-    public Map<String, Object> simpleTestGitHubController() {
-        logger.info("GitHub 컨트롤러 간단 테스트 호출");
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("message", "GitHub 컨트롤러 간단 테스트 성공");
-        result.put("controller", "GitHubController");
-        result.put("timestamp", new java.util.Date().toString());
-        
-        return result;
-    }
-    
-    /**
      * GitHub OAuth 인증 시작 (서비스 의존성 문제로 주석 처리)
      * test의 /auth/github 에 해당
      */
@@ -184,17 +129,21 @@ public class GitHubController {
             @RequestParam(required = false) String userId,
             HttpServletRequest request, 
             HttpServletResponse response) {
-        logger.info("GitHub OAuth 인증 시작 (projectId: {}, userId: {})", projectId, userId);
+        logger.info("GitHub OAuth 인증 시작 (projectId: {}, 요청된 userId: {})", projectId, userId);
         
         try {
             HttpSession session = request.getSession();
             
-            // state에 userId와 projectId 정보를 포함 (JSON 형태)
+            // 현재 세션의 실제 사용자 ID 가져오기 (프론트엔드 파라미터 무시)
+            String actualUserId = getUserId(request, null);
+            logger.info("OAuth 시작 - 프론트엔드 요청 userId: {}, 실제 세션 userId: {}", userId, actualUserId);
+            
+            // state에 실제 사용자 ID와 projectId 정보를 포함 (JSON 형태)
             Map<String, String> stateData = new HashMap<>();
             stateData.put("uuid", java.util.UUID.randomUUID().toString());
-            if (userId != null && !userId.trim().isEmpty()) {
-                stateData.put("userId", userId);
-                logger.info("state에 사용자 ID 포함: {}", userId);
+            if (actualUserId != null && !actualUserId.trim().isEmpty()) {
+                stateData.put("userId", actualUserId);
+                logger.info("state에 실제 사용자 ID 포함: {}", actualUserId);
             }
             if (projectId != null && !projectId.trim().isEmpty()) {
                 stateData.put("projectId", projectId);
@@ -216,12 +165,13 @@ public class GitHubController {
             
             session.setAttribute("githubOAuthState", state);
             
-            // 백업용으로 세션에도 저장
+            // 백업용으로 세션에도 저장 (실제 사용자 ID 사용)
             if (projectId != null && !projectId.trim().isEmpty()) {
                 session.setAttribute("githubOAuthProjectId", projectId);
             }
-            if (userId != null && !userId.trim().isEmpty()) {
-                session.setAttribute("githubOAuthUserId", userId);
+            if (actualUserId != null && !actualUserId.trim().isEmpty()) {
+                session.setAttribute("githubOAuthUserId", actualUserId);
+                logger.info("세션에 실제 사용자 ID 백업 저장: {}", actualUserId);
             }
             
             // GitHub OAuth URL 생성
@@ -247,9 +197,9 @@ public class GitHubController {
             
         } catch (Exception e) {
             logger.error("GitHub OAuth 인증 시작 실패", e);
-            ModelAndView mv = new ModelAndView("/error");
-            mv.addObject("error", "GitHub 인증을 시작할 수 없습니다: " + e.getMessage());
-            return mv;
+            ModelAndView startErrorMv = new ModelAndView("/error");
+            startErrorMv.addObject("error", "GitHub 인증을 시작할 수 없습니다: " + e.getMessage());
+            return startErrorMv;
         }
     }
     
@@ -273,18 +223,18 @@ public class GitHubController {
         try {
             if (error != null) {
                 logger.error("GitHub OAuth 인증 실패: {}", error);
-                ModelAndView mv = new ModelAndView();
-                mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                ModelAndView errorMv = new ModelAndView();
+                errorMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
                     java.net.URLEncoder.encode("GitHub 인증이 거부되었습니다.", "UTF-8"));
-                return mv;
+                return errorMv;
             }
             
             if (code == null) {
                 logger.error("GitHub OAuth 코드가 없습니다");
-                ModelAndView mv = new ModelAndView();
-                mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                ModelAndView noCodeMv = new ModelAndView();
+                noCodeMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
                     java.net.URLEncoder.encode("인증 코드가 제공되지 않았습니다.", "UTF-8"));
-                return mv;
+                return noCodeMv;
             }
             
             HttpSession session = request.getSession();
@@ -292,10 +242,10 @@ public class GitHubController {
             
             if (!state.equals(sessionState)) {
                 logger.error("GitHub OAuth state 불일치");
-                ModelAndView mv = new ModelAndView();
-                mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                ModelAndView stateMv = new ModelAndView();
+                stateMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
                     java.net.URLEncoder.encode("인증 상태가 유효하지 않습니다.", "UTF-8"));
-                return mv;
+                return stateMv;
             }
             
             // state에서 userId와 projectId 추출
@@ -333,66 +283,15 @@ public class GitHubController {
             param.put("code", code);
             param.put("state", state);
             
-            // OAuth 시작 시 저장된 사용자 ID 또는 현재 로그인된 사용자 ID 가져오기
-            String oauthUserId = (String) session.getAttribute("githubOAuthUserId");
-            String currentUserId = (String) session.getAttribute("userId");
+            // 공통 getUserId 메소드 사용 (auth/status와 동일한 로직)
+            String finalUserId = getUserId(request, stateUserId);
             
-            logger.info("디버깅 - oauthUserId: {}", oauthUserId);
-            logger.info("디버깅 - currentUserId (session): {}", currentUserId);
-            
-            // 세션에서 다양한 키로 사용자 ID 찾기
-            if (currentUserId == null) {
-                // 다양한 세션 키 시도
-                String[] userIdKeys = {"userId", "user_id", "userEmail", "user_email", "loginUserId", "login_user_id"};
-                for (String key : userIdKeys) {
-                    currentUserId = (String) session.getAttribute(key);
-                    if (currentUserId != null && !currentUserId.trim().isEmpty()) {
-                        logger.info("세션에서 사용자 ID 찾음 (키: {}): {}", key, currentUserId);
-                        break;
-                    }
-                }
-            }
-            
-            // ElHeader에서 사용자 정보 가져오기 시도
-            if (currentUserId == null) {
-                Object elHeader = request.getAttribute("ElHeader");
-                logger.info("디버깅 - ElHeader 객체: {}", elHeader != null ? elHeader.getClass().getName() : "null");
-                if (elHeader != null) {
-                    try {
-                        java.lang.reflect.Method getUserIdMethod = elHeader.getClass().getMethod("getUserId");
-                        currentUserId = (String) getUserIdMethod.invoke(elHeader);
-                        logger.info("ElHeader에서 사용자 ID 가져옴: {}", currentUserId);
-                    } catch (Exception e) {
-                        logger.error("ElHeader에서 사용자 ID 가져오기 실패", e);
-                    }
-                }
-            }
-            
-            // request parameter에서 확인 (프론트엔드에서 전달)
-            if (currentUserId == null) {
-                currentUserId = request.getParameter("userId");
-                if (currentUserId != null && !currentUserId.trim().isEmpty()) {
-                    logger.info("request parameter에서 사용자 ID 찾음: {}", currentUserId);
-                }
-            }
-            
-            // 최종 사용자 ID 결정 (우선순위: state > OAuth 시작 시 전달 > 세션 > 기타)
-            String finalUserId = null;
-            if (stateUserId != null && !stateUserId.trim().isEmpty() && !"user01".equals(stateUserId)) {
-                finalUserId = stateUserId;
-                logger.info("state에서 추출한 사용자 ID 사용: {}", finalUserId);
-            } else if (oauthUserId != null && !oauthUserId.trim().isEmpty() && !"user01".equals(oauthUserId)) {
-                finalUserId = oauthUserId;
-                logger.info("OAuth에서 전달받은 사용자 ID 사용: {}", finalUserId);
-            } else if (currentUserId != null && !currentUserId.trim().isEmpty() && !"user01".equals(currentUserId)) {
-                finalUserId = currentUserId;
-                logger.info("세션/기타에서 현재 사용자 ID 사용: {}", finalUserId);
-            } else {
+            if (finalUserId == null) {
                 logger.error("사용자 ID를 찾을 수 없습니다. OAuth 연동을 진행할 수 없습니다.");
-                ModelAndView mv = new ModelAndView();
-                mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                ModelAndView userNotFoundMv = new ModelAndView();
+                userNotFoundMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
                     java.net.URLEncoder.encode("로그인된 사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.", "UTF-8"));
-                return mv;
+                return userNotFoundMv;
             }
             
             logger.info("디버깅 - 최종 사용할 userId: {}", finalUserId);
@@ -423,34 +322,95 @@ public class GitHubController {
             session.setAttribute("githubAvatarUrl", authResult.get("avatar_url"));
             session.setAttribute("githubAccessToken", authResult.get("access_token"));
             
-            logger.info("GitHub OAuth 콜백 처리 성공");
+            logger.info("GitHub OAuth 콜백 처리 성공 - GitHub App 설치로 자동 진행");
             
-            // WebSquare 방식으로 콜백 처리 - websquare.html을 통해 XML 파일 로드
-            String username = (String) authResult.get("username");
-            String hasSelectedRepo = "false"; // 현재는 기본값
+            // OAuth 성공 후 바로 GitHub App 설치로 진행
+            // 필요한 정보를 세션에 저장
+            session.setAttribute("githubAppProjectRepoId", finalProjectId);
+            session.setAttribute("githubAppUserId", finalUserId);
             
-            String redirectUrl = String.format(
-                "/websquare/websquare.html?w2xPath=/InsWebApp/ui/github_callback.xml&status=success&username=%s&hasSelectedRepo=%s", 
-                java.net.URLEncoder.encode(username != null ? username : "", "UTF-8"),
-                hasSelectedRepo
-            );
+            // GitHub App 설치 URL로 바로 리다이렉트 (절대 경로 사용)
+            String appInstallUrl = "/github/app/install";
+            if (finalProjectId != null && !finalProjectId.trim().isEmpty()) {
+                appInstallUrl += "?projectRepoId=" + java.net.URLEncoder.encode(finalProjectId, "UTF-8");
+            }
             
-            logger.info("WebSquare 콜백 URL로 리다이렉트: {}", redirectUrl);
-            ModelAndView mv = new ModelAndView();
-            mv.setViewName("redirect:" + redirectUrl);
-            return mv;
+            logger.info("OAuth 성공 후 GitHub App 설치로 자동 리다이렉트: {}", appInstallUrl);
+            ModelAndView redirectMv = new ModelAndView();
+            redirectMv.setViewName("redirect:" + appInstallUrl);
+            return redirectMv;
             
         } catch (Exception e) {
             logger.error("GitHub OAuth 콜백 처리 실패", e);
-            ModelAndView mv = new ModelAndView();
-//            mv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+            ModelAndView exceptionMv = new ModelAndView();
+//            exceptionMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
 //                java.net.URLEncoder.encode("GitHub OAuth 처리 중 오류가 발생했습니다.", "UTF-8"));
-            return mv;
+            return exceptionMv;
         }
     }
     
     /**
-     * GitHub App 설치 후 설정 완료 처리
+     * GitHub App 설치 URL 생성
+     */
+    @ElService(key = "app/install")
+    @ElDescription(sub = "GitHub App 설치", desc = "GitHub App 설치 URL을 생성하여 리다이렉트합니다.")
+    @RequestMapping(value = "app/install", method = RequestMethod.GET)
+    public ModelAndView startGitHubAppInstall(
+            @RequestParam(required = false) String repoOwner,
+            @RequestParam(required = false) String repoName,
+            HttpServletRequest request) {
+        
+        logger.info("GitHub App 설치 시작: repoOwner={}, repoName={}", 
+                   repoOwner, repoName);
+        
+        try {
+            HttpSession session = request.getSession();
+            
+            // 현재 사용자 ID 가져오기
+            String userId = getUserId(request, null);
+            if (userId == null) {
+                ModelAndView installErrorMv = new ModelAndView("/error");
+                installErrorMv.addObject("error", "사용자 정보를 찾을 수 없습니다.");
+                return installErrorMv;
+            }
+            
+            // 설치 정보를 세션에 저장 (콜백에서 사용)
+            if (repoOwner != null && !repoOwner.trim().isEmpty()) {
+                session.setAttribute("githubAppRepoOwner", repoOwner);
+            }
+            if (repoName != null && !repoName.trim().isEmpty()) {
+                session.setAttribute("githubAppRepoName", repoName);
+            }
+            session.setAttribute("githubAppUserId", userId);
+            
+            // GitHub App 설치 URL 생성
+            String appName = System.getProperty("GITHUB_APP_NAME", "sixsense-collabee");
+            String installUrl = "https://github.com/apps/" + appName + "/installations/new";
+            
+            // 특정 레포지토리 설치 시 추가 파라미터
+            if (repoOwner != null && repoName != null) {
+                try {
+                    // 레포지토리 ID 조회가 필요한 경우 (선택사항)
+                    installUrl += "?suggested_target_id=" + java.net.URLEncoder.encode(repoOwner, "UTF-8");
+                } catch (Exception e) {
+                    logger.warn("레포지토리 정보 URL 인코딩 실패", e);
+                }
+            }
+            
+            logger.info("GitHub App 설치 URL로 리다이렉트: {}", installUrl);
+            
+            return new ModelAndView("redirect:" + installUrl);
+            
+        } catch (Exception e) {
+            logger.error("GitHub App 설치 시작 실패", e);
+            ModelAndView appInstallErrorMv = new ModelAndView("/error");
+            appInstallErrorMv.addObject("error", "GitHub App 설치를 시작할 수 없습니다: " + e.getMessage());
+            return appInstallErrorMv;
+        }
+    }
+
+    /**
+     * GitHub App 설치 후 설정 완료 처리 (개선됨)
      * GitHub App Setup URL에 해당
      */
     @ElService(key = "app/setup")
@@ -466,35 +426,191 @@ public class GitHubController {
         try {
             HttpSession session = request.getSession();
             
-            if (installation_id != null) {
-                // 서비스를 통해 GitHub App 설치 완료 처리
-                Map<String, Object> param = new HashMap<>();
-                param.put("installation_id", installation_id);
-                param.put("setup_action", setup_action);
+            if (installation_id == null || installation_id.trim().isEmpty()) {
+                logger.error("Installation ID가 제공되지 않았습니다");
+                ModelAndView noInstallationMv = new ModelAndView("/error");
+                noInstallationMv.addObject("error", "GitHub App 설치 정보가 제공되지 않았습니다.");
+                return noInstallationMv;
+            }
+            
+            // 세션에서 설치 정보 가져오기
+            String repoOwner = (String) session.getAttribute("githubAppRepoOwner");
+            String repoName = (String) session.getAttribute("githubAppRepoName");
+            String userId = (String) session.getAttribute("githubAppUserId");
+            
+            logger.info("세션에서 가져온 설치 정보 - repoOwner: {}, repoName: {}, userId: {}", 
+                       repoOwner, repoName, userId);
+            
+            // Installation ID를 DB에 저장 (사용자 기준)
+            if (userId != null && !userId.trim().isEmpty()) {
+                try {
+                    // 서비스를 통해 Installation ID 저장
+                    Map<String, Object> param = new HashMap<>();
+                    param.put("installation_id", installation_id);
+                    param.put("setup_action", setup_action);
+                    param.put("repo_owner", repoOwner);
+                    param.put("repo_name", repoName);
+                    param.put("user_id", userId);
+                    
+                    Map<String, Object> setupResult = gitHubService.processAppInstallation(param);
+                    
+                    if ((Boolean) setupResult.get("success")) {
+                        logger.info("GitHub App Installation ID 저장 성공: {}", installation_id);
+                        
+                        // 세션에 성공 정보 저장
+                        session.setAttribute("githubAppInstalled", true);
+                        session.setAttribute("githubInstallationId", installation_id);
+                        
+                        // 설치 완료 후 세션 정리
+                        session.removeAttribute("githubAppRepoOwner");
+                        session.removeAttribute("githubAppRepoName");
+                        session.removeAttribute("githubAppUserId");
+                        
+                        // GitHub 연동 성공 페이지로 리다이렉트 (OAuth + App 설치 모두 완료)
+                        String username = (String) session.getAttribute("githubUsername");
+                        String redirectUrl = String.format(
+                            "/websquare/websquare.html?w2xPath=/InsWebApp/ui/github_callback.xml&status=success&username=%s&hasSelectedRepo=false&appInstalled=true&installation_id=%s", 
+                            java.net.URLEncoder.encode(username != null ? username : "", "UTF-8"),
+                            installation_id
+                        );
+                        return new ModelAndView("redirect:" + redirectUrl);
+                    } else {
+                        logger.error("GitHub App Installation ID 저장 실패: {}", setupResult.get("error"));
+                        ModelAndView saveErrorMv = new ModelAndView("/error");
+                        saveErrorMv.addObject("error", "GitHub App 설정 저장 실패: " + setupResult.get("error"));
+                        return saveErrorMv;
+                    }
+                    
+                } catch (Exception e) {
+                    logger.error("Installation ID 저장 중 오류", e);
+                    ModelAndView storageErrorMv = new ModelAndView("/error");
+                    storageErrorMv.addObject("error", "GitHub App 설정 저장 중 오류가 발생했습니다: " + e.getMessage());
+                    return storageErrorMv;
+                }
+            } else {
+                logger.warn("ProjectRepoId가 없어서 Installation ID를 저장할 수 없습니다. 일반 설정 완료로 처리합니다.");
                 
-                Map<String, Object> setupResult = gitHubService.processAppInstallation(param);
-                
+                // 일반적인 설치 완료 처리
                 session.setAttribute("githubAppInstalled", true);
                 session.setAttribute("githubInstallationId", installation_id);
                 
-                logger.info("GitHub App 설치 처리 성공");
-                
-                // 웹스퀘어 구조에 맞게 프로젝트 메인 페이지로 리다이렉트
-                return new ModelAndView("redirect:/websquare/websquare.html?w2xPath=/InsWebApp/ui/project/projectMainPage.xml&setup=completed");
-            } else {
-                ModelAndView mv = new ModelAndView("/error");
-                mv.addObject("error", "GitHub App 설치 정보가 제공되지 않았습니다.");
-                return mv;
+                // 일반적인 GitHub 연동 성공 페이지로 리다이렉트
+                String username = (String) session.getAttribute("githubUsername");
+                String redirectUrl = String.format(
+                    "/websquare/websquare.html?w2xPath=/InsWebApp/ui/github_callback.xml&status=success&username=%s&hasSelectedRepo=false&appInstalled=true&installation_id=%s", 
+                    java.net.URLEncoder.encode(username != null ? username : "", "UTF-8"),
+                    installation_id
+                );
+                return new ModelAndView("redirect:" + redirectUrl);
             }
             
         } catch (Exception e) {
             logger.error("GitHub App 설정 완료 처리 실패", e);
-            ModelAndView mv = new ModelAndView("/error");
-            mv.addObject("error", "GitHub App 설정 처리 중 오류가 발생했습니다.");
-            return mv;
+            ModelAndView setupErrorMv = new ModelAndView("/error");
+            setupErrorMv.addObject("error", "GitHub App 설정 처리 중 오류가 발생했습니다: " + e.getMessage());
+            return setupErrorMv;
         }
     }
     
+    /**
+     * 사용자 ID를 다양한 소스에서 일관된 우선순위로 가져오는 공통 메소드
+     */
+    private String getUserId(HttpServletRequest request, String stateUserId) {
+        String userId = null;
+        HttpSession session = request.getSession();
+        
+        // 1. state에서 추출한 userId (OAuth callback에서 전달된 최우선 정보)
+        if (stateUserId != null && !stateUserId.trim().isEmpty() && !"user01".equals(stateUserId)) {
+            userId = stateUserId;
+            System.out.println("state에서 추출한 사용자 ID 사용: " + userId);
+            return userId;
+        }
+        
+        // 2. OAuth 시작 시 전달받은 userId
+        String oauthUserId = (String) session.getAttribute("githubOAuthUserId");
+        if (oauthUserId != null && !oauthUserId.trim().isEmpty() && !"user01".equals(oauthUserId)) {
+            userId = oauthUserId;
+            System.out.println("OAuth에서 전달받은 사용자 ID 사용: " + userId);
+            return userId;
+        }
+        
+        // 3. UserHeader에서 userId 가져오기
+        try {
+            Object userheader = session.getAttribute("userheader");
+            if (userheader != null) {
+                System.out.println("UserHeader 타입: " + userheader.getClass().getName());
+                
+                // ProworksUserHeader로 캐스팅하여 직접 접근
+                if (userheader instanceof com.demo.proworks.cmmn.ProworksUserHeader) {
+                    com.demo.proworks.cmmn.ProworksUserHeader proworksUserHeader = 
+                        (com.demo.proworks.cmmn.ProworksUserHeader) userheader;
+                    
+                    String testId = proworksUserHeader.getTestId();
+                    System.out.println("testId: " + testId);
+                    
+                    if (testId != null && !testId.trim().isEmpty() && !"user01".equals(testId)) {
+                        userId = testId;
+                        System.out.println("UserHeader에서 testId로 userId 가져옴: " + userId);
+                        return userId;
+                    }
+                }
+                
+                // Reflection을 통해 getUserId() 메서드 호출 시도
+                try {
+                    java.lang.reflect.Method getUserIdMethod = userheader.getClass().getMethod("getUserId");
+                    String reflectionUserId = (String) getUserIdMethod.invoke(userheader);
+                    if (reflectionUserId != null && !reflectionUserId.trim().isEmpty() && !"user01".equals(reflectionUserId)) {
+                        userId = reflectionUserId;
+                        System.out.println("UserHeader에서 Reflection으로 userId 가져옴: " + userId);
+                        return userId;
+                    }
+                } catch (Exception e) {
+                    System.out.println("Reflection으로 getUserId 가져오기 실패: " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("UserHeader에서 userId 가져오기 실패: " + e.getMessage());
+        }
+        
+        // 4. 세션에서 다양한 키로 사용자 ID 찾기
+        String[] userIdKeys = {"userId", "user_id", "userEmail", "user_email", "loginUserId", "login_user_id"};
+        for (String key : userIdKeys) {
+            String sessionUserId = (String) session.getAttribute(key);
+            if (sessionUserId != null && !sessionUserId.trim().isEmpty() && !"user01".equals(sessionUserId)) {
+                userId = sessionUserId;
+                System.out.println("세션에서 사용자 ID 찾음 (키: {}): {}" + key + ", " + userId);
+                return userId;
+            }
+        }
+        
+        // 5. ElHeader에서 사용자 정보 가져오기 시도
+        Object elHeader = request.getAttribute("ElHeader");
+        if (elHeader != null) {
+            try {
+                java.lang.reflect.Method getUserIdMethod = elHeader.getClass().getMethod("getUserId");
+                String elHeaderUserId = (String) getUserIdMethod.invoke(elHeader);
+                if (elHeaderUserId != null && !elHeaderUserId.trim().isEmpty() && !"user01".equals(elHeaderUserId)) {
+                    userId = elHeaderUserId;
+                    System.out.println("ElHeader에서 사용자 ID 가져옴: " + userId);
+                    return userId;
+                }
+            } catch (Exception e) {
+                System.out.println("ElHeader에서 사용자 ID 가져오기 실패: " + e.getMessage());
+            }
+        }
+        
+        // 6. request parameter에서 확인 (프론트엔드에서 전달)
+        String paramUserId = request.getParameter("userId");
+        if (paramUserId != null && !paramUserId.trim().isEmpty() && !"user01".equals(paramUserId)) {
+            userId = paramUserId;
+            System.out.println("request parameter에서 사용자 ID 찾음: " + userId);
+            return userId;
+        }
+        
+        System.out.println("모든 소스에서 사용자 ID를 찾을 수 없습니다.");
+        return null;
+    }
+
     /**
      * GitHub 연결 상태 확인 (의존성 문제로 주석 처리)
      */
@@ -511,53 +627,9 @@ public class GitHubController {
         
         try {
             HttpSession session = request.getSession();
-            String userId = null;
             
-            // UserHeader에서 userId 가져오기
-            try {
-                Object userheader = session.getAttribute("userheader");
-                if (userheader != null) {
-                    System.out.println("UserHeader 타입: " + userheader.getClass().getName());
-                    
-                    // ProworksUserHeader로 캐스팅하여 직접 접근
-                    if (userheader instanceof com.demo.proworks.cmmn.ProworksUserHeader) {
-                        com.demo.proworks.cmmn.ProworksUserHeader proworksUserHeader = 
-                            (com.demo.proworks.cmmn.ProworksUserHeader) userheader;
-                        
-                        // 상위 클래스의 메서드들을 확인해보자
-                        System.out.println("ProworksUserHeader toString: " + proworksUserHeader.toString());
-                        
-                        // 가능한 userId 필드들을 확인
-                        String testId = proworksUserHeader.getTestId();
-                        System.out.println("testId: " + testId);
-                        
-                        if (testId != null && !testId.trim().isEmpty()) {
-                            userId = testId;
-                            System.out.println("UserHeader에서 testId로 userId 가져옴: " + userId);
-                        }
-                    }
-                    
-                    // Reflection을 통해 getUserId() 메서드 호출 시도
-                    if (userId == null) {
-                        try {
-                            java.lang.reflect.Method getUserIdMethod = userheader.getClass().getMethod("getUserId");
-                            userId = (String) getUserIdMethod.invoke(userheader);
-                            System.out.println("UserHeader에서 Reflection으로 userId 가져옴: " + userId);
-                        } catch (Exception e) {
-                            System.out.println("Reflection으로 getUserId 가져오기 실패: " + e.getMessage());
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                System.out.println("UserHeader에서 userId 가져오기 실패: " + e.getMessage());
-            }
-            
-            // 세션에서 직접 userId 가져오기 시도
-            if (userId == null) {
-                userId = (String) session.getAttribute("userId");
-                System.out.println("세션에서 직접 가져온 userId: " + userId);
-            }
-            
+            // 공통 getUserId 메소드 사용 (OAuth callback과 동일한 로직)
+            String userId = getUserId(request, null);
             System.out.println("최종 사용할 userId: " + userId);
             
             // 먼저 세션에서 GitHub 인증 상태 확인
@@ -788,6 +860,7 @@ public class GitHubController {
             param.put("repo_name", projectRepositoryVo.getRepoName());
             param.put("default_branch", projectRepositoryVo.getDefaultBranch());
             param.put("github_app_installation_id", projectRepositoryVo.getGithubAppInstallationId());
+            param.put("connected_by", userId); // 레포지토리를 연결한 사용자 ID
             
             System.out.println("컨트롤러 - DB 저장 파라미터: " + param);
             
@@ -952,6 +1025,170 @@ public class GitHubController {
     }
     
     // ==============================
+    // GitHub 연결 상태 체크 API
+    // ==============================
+    
+    /**
+     * GitHub 연결 상태를 확인하고 필요한 단계를 안내한다.
+     */
+    @ElService(key = "connection/status")
+    @ElDescription(sub = "GitHub 연결 상태 확인", desc = "OAuth와 GitHub App 설치 상태를 확인하여 필요한 단계를 안내합니다.")
+    @RequestMapping(value = "connection/status")
+    @ResponseBody
+    public Map<String, Object> checkGitHubConnectionStatus(HttpServletRequest request) {
+        
+        logger.info("=== GitHub 연결 상태 확인 API 호출 ===");
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 현재 사용자 ID 가져오기
+            String userId = getUserId(request, null);
+            if (userId == null) {
+                result.put("success", false);
+                result.put("error", "사용자 정보를 찾을 수 없습니다.");
+                return result;
+            }
+            
+            logger.info("사용자 ID: {}", userId);
+            
+            // 1단계: OAuth Token 확인
+            try {
+                com.demo.proworks.userpersonaltoken.service.UserPersonalTokenService userPersonalTokenService = 
+                    (com.demo.proworks.userpersonaltoken.service.UserPersonalTokenService) 
+                    org.springframework.web.context.support.WebApplicationContextUtils
+                        .getWebApplicationContext(request.getServletContext())
+                        .getBean("userPersonalTokenServiceImpl");
+                
+                String personalToken = userPersonalTokenService.getToken(userId);
+                
+                if (personalToken == null || personalToken.trim().isEmpty()) {
+                    logger.info("OAuth 토큰 없음 - OAuth 인증 필요");
+                    result.put("success", true);
+                    result.put("status", "oauth_required");
+                    result.put("message", "GitHub OAuth 인증이 필요합니다.");
+                    result.put("next_step", "oauth_auth");
+                    result.put("redirect_url", "/InsWebApp/github/auth");
+                    return result;
+                }
+                
+                logger.info("OAuth 토큰 확인됨");
+                
+            } catch (Exception e) {
+                logger.warn("OAuth 토큰 조회 실패: {}", e.getMessage());
+                result.put("success", true);
+                result.put("status", "oauth_required");
+                result.put("message", "GitHub OAuth 인증이 필요합니다.");
+                result.put("next_step", "oauth_auth");
+                result.put("redirect_url", "/InsWebApp/github/auth");
+                return result;
+            }
+            
+            // 2단계: Installation ID 확인
+            try {
+                com.demo.proworks.githubapptoken.service.GithubAppTokenService githubAppTokenService = 
+                    (com.demo.proworks.githubapptoken.service.GithubAppTokenService) 
+                    org.springframework.web.context.support.WebApplicationContextUtils
+                        .getWebApplicationContext(request.getServletContext())
+                        .getBean("githubAppTokenService");
+                
+                com.demo.proworks.githubapptoken.vo.GithubAppTokenVo appToken = 
+                    githubAppTokenService.selectGithubAppTokenByUserId(userId);
+                
+                if (appToken == null || appToken.getGithubAppInstallationId() == null || appToken.getGithubAppInstallationId().trim().isEmpty()) {
+                    logger.info("Installation ID 없음 - GitHub App 설치 필요");
+                    result.put("success", true);
+                    result.put("status", "app_install_required");
+                    result.put("message", "GitHub App 설치가 필요합니다.");
+                    result.put("next_step", "app_install");
+                    result.put("redirect_url", "/InsWebApp/github/app/install");
+                    return result;
+                }
+                
+                logger.info("Installation ID 확인됨: {}", appToken.getGithubAppInstallationId());
+                
+                // 3단계: 완전 연동 완료
+                result.put("success", true);
+                result.put("status", "fully_connected");
+                result.put("message", "GitHub 연동이 완료되었습니다.");
+                result.put("oauth_available", true);
+                result.put("app_installed", true);
+                result.put("installation_id", appToken.getGithubAppInstallationId());
+                
+                return result;
+                
+            } catch (Exception e) {
+                logger.warn("Installation ID 조회 실패: {}", e.getMessage());
+                result.put("success", true);
+                result.put("status", "app_install_required");
+                result.put("message", "GitHub App 설치가 필요합니다.");
+                result.put("next_step", "app_install");
+                result.put("redirect_url", "/InsWebApp/github/app/install");
+                return result;
+            }
+            
+        } catch (Exception e) {
+            logger.error("GitHub 연결 상태 확인 실패", e);
+            result.put("success", false);
+            result.put("error", "연결 상태 확인 중 오류가 발생했습니다: " + e.getMessage());
+            return result;
+        }
+    }
+    
+    /**
+     * GitHub 연결 상태를 확인하고 필요시 자동 리다이렉트한다.
+     */
+    @ElService(key = "connection/check-and-redirect")
+    @ElDescription(sub = "GitHub 연결 체크 및 리다이렉트", desc = "GitHub 연결 상태를 확인하고 필요한 단계로 자동 리다이렉트합니다.")
+    @RequestMapping(value = "connection/check-and-redirect", method = RequestMethod.GET)
+    public ModelAndView checkAndRedirectGitHubConnection(HttpServletRequest request) {
+        
+        logger.info("=== GitHub 연결 체크 및 리다이렉트 ===");
+        
+        try {
+            Map<String, Object> statusResult = checkGitHubConnectionStatus(request);
+            
+            if (!(Boolean) statusResult.get("success")) {
+                ModelAndView errorMv = new ModelAndView("/error");
+                errorMv.addObject("error", statusResult.get("error"));
+                return errorMv;
+            }
+            
+            String status = (String) statusResult.get("status");
+            String redirectUrl = (String) statusResult.get("redirect_url");
+            
+            switch (status) {
+                case "oauth_required":
+                    logger.info("OAuth 인증 필요 - 리다이렉트: {}", redirectUrl);
+                    return new ModelAndView("redirect:" + redirectUrl);
+                    
+                case "app_install_required":
+                    logger.info("GitHub App 설치 필요 - 리다이렉트: {}", redirectUrl);
+                    return new ModelAndView("redirect:" + redirectUrl);
+                    
+                case "fully_connected":
+                    logger.info("GitHub 연동 완료 - 메인 페이지로 이동");
+                    ModelAndView successMv = new ModelAndView();
+                    successMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_main.xml");
+                    successMv.addObject("status", "connected");
+                    successMv.addObject("message", "GitHub 연동이 완료되었습니다.");
+                    return successMv;
+                    
+                default:
+                    ModelAndView unknownMv = new ModelAndView("/error");
+                    unknownMv.addObject("error", "알 수 없는 연결 상태입니다.");
+                    return unknownMv;
+            }
+            
+        } catch (Exception e) {
+            logger.error("GitHub 연결 체크 및 리다이렉트 실패", e);
+            ModelAndView exceptionMv = new ModelAndView("/error");
+            exceptionMv.addObject("error", "연결 상태 확인 중 오류가 발생했습니다: " + e.getMessage());
+            return exceptionMv;
+        }
+    }
+
+    // ==============================
     // 브랜치 관리 API
     // ==============================
     
@@ -1060,6 +1297,58 @@ public class GitHubController {
                 result.put("error", "프로젝트 정보가 필요합니다.");
                 return result;
             }
+            
+            // GitHub Collaborator 권한 체크 추가
+            System.out.println("=== GitHub Collaborator 권한 체크 시작 ===1");
+            try {
+                // 프로젝트에 연결된 저장소 정보 조회 (권한 체크용)
+                ProjectRepositoryVo tempRepoInfo = gitHubService.getCurrentRepositoryByProjectId(projectId);
+                if (tempRepoInfo != null) {
+                    String projectRepoId = tempRepoInfo.getProjectRepoId();
+                    
+                    // 내부 권한 체크 메소드 호출
+                    java.util.Map<String, Object> authResponse = 
+                        checkCollaboratorAccessInternal(request, projectRepoId, userId);
+                    
+                    if (authResponse != null && !(Boolean) authResponse.get("success")) {
+                        String action = (String) authResponse.get("action");
+                        
+                        if ("invitation_sent".equals(action)) {
+                            // 초대 발송됨 - 안내 메시지와 함께 응답
+                            result.put("success", false);
+                            result.put("action", "invitation_sent");
+                            result.put("message", "GitHub 레포지토리에 초대장을 발송했습니다. 이메일을 확인하여 초대를 수락해주세요.");
+                            result.put("github_access_required", true);
+                            result.put("username", authResponse.get("username"));
+                            result.put("repository", authResponse.get("repository"));
+                            return result;
+                            
+                        } else if ("oauth_required".equals(action)) {
+                            // OAuth 인증 필요
+                            result.put("success", false);
+                            result.put("action", "oauth_required");
+                            result.put("message", "GitHub 계정 연동이 필요합니다.");
+                            result.put("oauth_url", "/github/auth/start");
+                            return result;
+                            
+                        } else {
+                            // 기타 오류
+                            result.put("success", false);
+                            result.put("message", authResponse.get("message"));
+                            result.put("github_access_denied", true);
+                            return result;
+                        }
+                    }
+                    
+                    System.out.println("✅ GitHub Collaborator 권한 확인 완료");
+                }
+                
+            } catch (Exception e) {
+                System.out.println("⚠️ GitHub 권한 체크 실패 - 계속 진행: " + e.getMessage());
+                // 권한 체크 실패 시에도 기존 로직 계속 진행 (호환성 유지)
+            }
+            
+            System.out.println("=== GitHub Collaborator 권한 체크 완료 ===");
             
             // DB에서 브랜치 목록 조회 (성능 최적화)
             System.out.println("DB에서 브랜치 목록 조회 시작");
@@ -1353,8 +1642,14 @@ public class GitHubController {
                         result.put("message", "브랜치 생성 성공: " + branchName);
                         result.put("data", createResponse.get("data"));
                     } else {
+                        // 403 권한 오류인 경우 사용자 친화적 메시지 표시
+                        String errorMessage = "브랜치 생성 실패: " + createResponse.get("data");
+                        if (createResponse.get("status_code") != null && 
+                            createResponse.get("status_code").equals(403)) {
+                            errorMessage = "브랜치 생성에 실패했습니다. 초대를 수락하고 생성해주세요.";
+                        }
                         result.put("success", false);
-                        result.put("error", "브랜치 생성 실패: " + createResponse.get("data"));
+                        result.put("error", errorMessage);
                     }
                 } else {
                     result.put("success", false);
@@ -1363,14 +1658,28 @@ public class GitHubController {
             } catch (Exception e) {
                 System.out.println("브랜치 생성 API 호출 오류: " + e.getMessage());
                 result.put("success", false);
-                result.put("error", "브랜치 생성 오류: " + e.getMessage());
+                
+                // 403 권한 오류가 포함된 경우 사용자 친화적 메시지 표시
+                String errorMessage = e.getMessage();
+                if (errorMessage != null && errorMessage.contains("403")) {
+                    errorMessage = "브랜치 생성에 실패했습니다. 초대를 수락하고 생성해주세요.";
+                } else {
+                    errorMessage = "브랜치 생성 오류: " + errorMessage;
+                }
+                result.put("error", errorMessage);
             }
             
         } catch (Exception e) {
             System.out.println("브랜치 생성 실패: " + e.getMessage());
             e.printStackTrace();
             result.put("success", false);
-            result.put("error", e.getMessage());
+            
+            // 403 권한 오류가 포함된 경우 사용자 친화적 메시지 표시
+            String errorMessage = e.getMessage();
+            if (errorMessage != null && errorMessage.contains("403")) {
+                errorMessage = "브랜치 생성에 실패했습니다. 초대를 수락하고 생성해주세요.";
+            }
+            result.put("error", errorMessage);
         }
         
         System.out.println("브랜치 생성 결과: " + result);
@@ -1781,4 +2090,302 @@ public class GitHubController {
         return result;
     }
 
+    /**
+     * 내부 호출용 - GitHub collaborator 권한 체크 및 자동 초대
+     * @RequestParam 어노테이션 없이 직접 파라미터를 받는 메소드
+     * 
+     * @param request HttpServletRequest
+     * @param projectRepoId 프로젝트 레포지토리 ID
+     * @param userId 사용자 ID
+     * @return 권한 체크 결과
+     */
+    private Map<String, Object> checkCollaboratorAccessInternal(HttpServletRequest request, String projectRepoId, String userId) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            System.out.println("=== 내부 권한 체크 시작 ===");
+            System.out.println("projectRepoId: " + projectRepoId);
+            System.out.println("userId: " + userId);
+            
+            // 1. 프로젝트 레포지토리 정보 조회
+            ProjectRepositoryVo repoSearchVo = new ProjectRepositoryVo();
+            repoSearchVo.setProjectRepoId(projectRepoId);
+            ProjectRepositoryVo repoInfo = projectRepositoryService.selectProjectRepository(repoSearchVo);
+            
+            if (repoInfo == null) {
+                result.put("success", false);
+                result.put("message", "프로젝트 레포지토리 정보를 찾을 수 없습니다.");
+                result.put("action", "error");
+                return result;
+            }
+            
+            String repoFullName = repoInfo.getRepoOwner() + "/" + repoInfo.getRepoName();
+            System.out.println("레포지토리: " + repoFullName);
+            
+            // 2. 사용자의 GitHub Personal Token 조회
+            com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo userTokenSearchVo = 
+                new com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo();
+            userTokenSearchVo.setUserId(userId);
+            com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo userToken = 
+                userPersonalTokenService.selectUserPersonalTokenByUserId(userTokenSearchVo);
+            
+            System.out.println("조회된 userToken: " + userToken);
+            if (userToken != null) {
+                System.out.println("accessToken 존재 여부: " + (userToken.getAccessToken() != null));
+                if (userToken.getAccessToken() != null) {
+                    System.out.println("accessToken 길이: " + userToken.getAccessToken().length());
+                }
+            }
+            
+            if (userToken == null || userToken.getAccessToken() == null) {
+                System.out.println("❌ GitHub 토큰이 없음 - OAuth 필요");
+                result.put("success", false);
+                result.put("message", "GitHub 계정 연동이 필요합니다. GitHub OAuth 인증을 진행해주세요.");
+                result.put("action", "oauth_required");
+                result.put("oauth_url", "/github/auth/start");
+                return result;
+            }
+            
+            System.out.println("✅ GitHub 토큰 확인 완료");
+            
+            // 3. 사용자의 GitHub 계정 정보 조회
+            System.out.println("GitHub 사용자 정보 조회 시작...");
+            String githubUsername = null;
+            try {
+                Map<String, Object> userInfo = gitHubApiUtil.getCurrentUser(userToken.getAccessToken());
+                System.out.println("GitHub 사용자 정보 조회 완료: " + userInfo);
+                githubUsername = (String) userInfo.get("login");
+                System.out.println("GitHub 사용자명: " + githubUsername);
+            } catch (Exception e) {
+                System.out.println("❌ GitHub 사용자 정보 조회 실패: " + e.getMessage());
+                e.printStackTrace();
+                result.put("success", false);
+                result.put("message", "GitHub 사용자 정보 조회 실패: " + e.getMessage());
+                result.put("action", "error");
+                return result;
+            }
+            
+            // 4. Installation Token 또는 Personal Token으로 collaborator 권한 확인
+            String accessToken = null;
+            try {
+                // Installation ID 조회 (기존 githubAppTokenService 사용)
+                com.demo.proworks.githubapptoken.vo.GithubAppTokenVo appToken = 
+                    githubAppTokenService.selectGithubAppTokenByUserId(userId);
+                
+                if (appToken != null && appToken.getGithubAppInstallationId() != null) {
+                    // Installation Token 생성 (기존 githubAppTokenService 사용)
+                    String[] repoParts = repoFullName.split("/");
+                    String repoOwner = repoParts[0];
+                    
+                    accessToken = githubAppTokenService.generateInstallationToken(
+                        userToken.getAccessToken(), 
+                        repoOwner
+                    );
+                    System.out.println("✅ Installation Token으로 권한 확인");
+                } else {
+                    throw new Exception("Installation ID가 없습니다.");
+                }
+            } catch (Exception e) {
+                // Personal Token 폴백
+                accessToken = userToken.getAccessToken();
+                System.out.println("⚠️ Personal Token으로 권한 확인 (Installation Token 실패): " + e.getMessage());
+            }
+            
+            // 5. Collaborator 권한 확인
+            boolean isCollaborator = gitHubApiUtil.isCollaborator(accessToken, repoFullName, githubUsername);
+            System.out.println("Collaborator 권한: " + isCollaborator);
+            
+            if (isCollaborator) {
+                // 이미 collaborator인 경우
+                result.put("success", true);
+                result.put("message", "GitHub 레포지토리 접근 권한이 있습니다.");
+                result.put("action", "access_granted");
+                result.put("username", githubUsername);
+                result.put("repository", repoFullName);
+                return result;
+            }
+            
+            // 6. Collaborator가 아닌 경우 자동 초대 실행 - 저장소 관리자 토큰 사용
+            try {
+                System.out.println("🔄 자동 초대 실행 중...");
+                
+                // 저장소 관리자의 토큰 조회 (repoInfo.connectedBy)
+                String adminUserId = repoInfo.getConnectedBy();
+                String adminAccessToken = null;
+                
+                if (adminUserId != null && !adminUserId.isEmpty()) {
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo adminTokenSearchVo = 
+                        new com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo();
+                    adminTokenSearchVo.setUserId(adminUserId);
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo adminToken = 
+                        userPersonalTokenService.selectUserPersonalTokenByUserId(adminTokenSearchVo);
+                    
+                    if (adminToken != null && adminToken.getAccessToken() != null) {
+                        adminAccessToken = adminToken.getAccessToken();
+                        System.out.println("✅ 저장소 관리자(" + adminUserId + ")의 토큰으로 초대 실행");
+                    } else {
+                        System.out.println("⚠️ 저장소 관리자의 토큰이 없음, 현재 사용자 토큰 사용");
+                        adminAccessToken = accessToken;
+                    }
+                } else {
+                    System.out.println("⚠️ 저장소 관리자 정보 없음, 현재 사용자 토큰 사용");
+                    adminAccessToken = accessToken;
+                }
+                
+                Map<String, Object> inviteResult = gitHubApiUtil.inviteCollaborator(
+                    adminAccessToken, repoFullName, githubUsername, "push");
+                
+                result.put("success", true);
+                result.put("message", "GitHub 레포지토리에 초대장을 발송했습니다. 이메일을 확인하여 초대를 수락해주세요.");
+                result.put("action", "invitation_sent");
+                result.put("username", githubUsername);
+                result.put("repository", repoFullName);
+                result.put("permission", "push");
+                result.put("next_step", "GitHub에서 초대를 수락한 후 다시 시도해주세요.");
+                
+                System.out.println("✅ 초대 발송 완료");
+                return result;
+                
+            } catch (Exception inviteError) {
+                // 초대 실패 시
+                System.out.println("❌ 초대 실패: " + inviteError.getMessage());
+                result.put("success", false);
+                result.put("message", "GitHub 레포지토리 초대에 실패했습니다: " + inviteError.getMessage());
+                result.put("action", "invitation_failed");
+                result.put("username", githubUsername);
+                result.put("repository", repoFullName);
+                result.put("manual_invite_guide", "관리자에게 " + githubUsername + " 사용자를 " + repoFullName + " 레포지토리에 초대해달라고 요청하세요.");
+                
+                return result;
+            }
+            
+        } catch (Exception e) {
+            System.out.println("❌ 권한 체크 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "권한 확인 중 오류가 발생했습니다: " + e.getMessage());
+            result.put("action", "error");
+            result.put("error", e.getMessage());
+            
+            return result;
+        }
+    }
+
+    /**
+     * 프로젝트 접근 시 사용자의 GitHub 레포지토리 권한을 확인하고 
+     * 권한이 없을 경우 자동으로 collaborator 초대를 실행한다.
+     * 
+     * @param request HttpServletRequest
+     * @param projectRepoId 프로젝트 레포지토리 ID
+     * @param userId 사용자 ID
+     * @return ResponseEntity<Map<String, Object>>
+     */
+    @ElService(key = "SvcGHCOLLABCHECK01")
+    @RequestMapping(value = "/github/collaborator/check-and-invite")
+    @ElDescription(sub = "권한 확인 및 자동 초대", desc = "프로젝트 접근 시 GitHub 권한을 확인하고 필요시 자동 초대합니다.")
+    public @ResponseBody ResponseEntity<Map<String, Object>> checkAndInviteCollaborator(HttpServletRequest request,
+            @RequestParam("projectRepoId") String projectRepoId,
+            @RequestParam("userId") String userId) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 1. 프로젝트 레포지토리 정보 조회
+            ProjectRepositoryVo repoSearchVo = new ProjectRepositoryVo();
+            repoSearchVo.setProjectRepoId(projectRepoId);
+            ProjectRepositoryVo repoInfo = projectRepositoryService.selectProjectRepository(repoSearchVo);
+            
+            if (repoInfo == null) {
+                result.put("success", false);
+                result.put("message", "프로젝트 레포지토리 정보를 찾을 수 없습니다.");
+                result.put("action", "error");
+                return new ResponseEntity<>(result, HttpStatus.NOT_FOUND);
+            }
+            
+            String repoFullName = repoInfo.getRepoOwner() + "/" + repoInfo.getRepoName();
+            
+            // 2. 사용자의 GitHub Personal Token 조회
+            UserPersonalTokenVo userTokenSearchVo = new UserPersonalTokenVo();
+            userTokenSearchVo.setUserId(userId);
+            UserPersonalTokenVo userToken = userPersonalTokenService.selectUserPersonalToken(userTokenSearchVo);
+            
+            if (userToken == null || userToken.getAccessToken() == null) {
+                result.put("success", false);
+                result.put("message", "GitHub 계정 연동이 필요합니다. GitHub OAuth 인증을 진행해주세요.");
+                result.put("action", "oauth_required");
+                result.put("oauth_url", "/github/auth/start");
+                return new ResponseEntity<>(result, HttpStatus.UNAUTHORIZED);
+            }
+            
+            // 3. 사용자의 GitHub 계정 정보 조회
+            Map<String, Object> userInfo = gitHubApiClient.getCurrentUser(userToken.getAccessToken());
+            String githubUsername = (String) userInfo.get("login");
+            
+            // 4. Installation Token 또는 Personal Token으로 collaborator 권한 확인
+            String accessToken = null;
+            try {
+                // Installation ID 조회
+                String installationId = githubAppTokenService.getValidAppToken(userId);
+                if (installationId != null) {
+                    // Installation Token 생성
+                    accessToken = gitHubApiClient.getInstallationToken(installationId);
+                    System.out.println("✅ Installation Token으로 권한 확인: " + accessToken.substring(0, 20) + "...");
+                } else {
+                    throw new Exception("Installation ID가 없습니다.");
+                }
+            } catch (Exception e) {
+                // Personal Token 폴백
+                accessToken = userToken.getAccessToken();
+                System.out.println("⚠️ Personal Token으로 권한 확인 (Installation Token 실패): " + e.getMessage());
+            }
+            
+            // 5. Collaborator 권한 확인
+            boolean isCollaborator = gitHubApiClient.isCollaborator(accessToken, repoFullName, githubUsername);
+            
+            if (isCollaborator) {
+                // 이미 collaborator인 경우
+                result.put("success", true);
+                result.put("message", "GitHub 레포지토리 접근 권한이 있습니다.");
+                result.put("action", "access_granted");
+                result.put("username", githubUsername);
+                result.put("repository", repoFullName);
+                return new ResponseEntity<>(result, HttpStatus.OK);
+            }
+            
+            // 6. Collaborator가 아닌 경우 자동 초대 실행
+            try {
+                Map<String, Object> inviteResult = gitHubApiClient.inviteCollaborator(
+                    accessToken, repoFullName, githubUsername, "push");
+                
+                result.put("success", true);
+                result.put("message", "GitHub 레포지토리에 초대장을 발송했습니다. 이메일을 확인하여 초대를 수락해주세요.");
+                result.put("action", "invitation_sent");
+                result.put("username", githubUsername);
+                result.put("repository", repoFullName);
+                result.put("permission", "push");
+                result.put("next_step", "GitHub에서 초대를 수락한 후 다시 시도해주세요.");
+                
+                return new ResponseEntity<>(result, HttpStatus.OK);
+                
+            } catch (Exception inviteError) {
+                // 초대 실패 시
+                result.put("success", false);
+                result.put("message", "GitHub 레포지토리 초대에 실패했습니다: " + inviteError.getMessage());
+                result.put("action", "invitation_failed");
+                result.put("username", githubUsername);
+                result.put("repository", repoFullName);
+                result.put("manual_invite_guide", "관리자에게 " + githubUsername + " 사용자를 " + repoFullName + " 레포지토리에 초대해달라고 요청하세요.");
+                
+                return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "권한 확인 중 오류가 발생했습니다: " + e.getMessage());
+            result.put("action", "error");
+            result.put("error", e.getMessage());
+            
+            return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

@@ -30,17 +30,57 @@
 
 			/* 프로젝트 이미지 */
 			.project-image {
-			width: 100%;
-			height: 200px;
-			border-radius: 12px;
-			margin-bottom: 20px;
-			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			color: white;
-			font-size: 18px;
-			font-weight: 600;
+				position: relative;
+				width: 100%;
+				height: 200px;
+				border-radius: 12px;
+				margin-bottom: 20px;
+			}
+
+			.project-image-button {
+				width: 100%;
+				height: 200px;
+				border-radius: 12px;
+				background: #fff4d6;
+				background-size: contain;
+				background-position: center;
+				background-repeat: no-repeat;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: #333;
+				font-size: 18px;
+				font-weight: 600;
+				cursor: pointer;
+				border: 2px dashed #ccc;
+				outline: none;
+				transition: all 0.2s;
+			}
+
+			.project-image-button:hover {
+				border-color: #999;
+				background-color: #fff0c4;
+			}
+
+			.upload-icon-button {
+				position: absolute;
+				bottom: 0;
+				right: 0;
+				width: 40px;
+				height: 40px;
+				border-radius: 50%;
+				background-image: url('/InsWebApp/images/camera.svg');
+				background-size: 30px 30px;
+				background-position: center;
+				background-repeat: no-repeat;
+				border: none;
+				outline: none;
+				background-color: #FFB823;
+				cursor: pointer;
+			}
+
+			.upload-icon-button:hover {
+				background-color: #E6A420;
 			}
 
 			.input-group-modal {
@@ -58,17 +98,19 @@
 			.input-field {
 				width: 100%;
 				padding: 12px 16px;
-				border: 1px solid #ddd !important;
+				border: 2px solid #ccc !important;
 				border-radius: 8px;
 				font-size: 16px;
 				box-sizing: border-box;
 				outline: none !important;
+				background-color: #fff4d6;
 			}
 
 			.input-field:focus {
 				outline: none !important;
-				border-color: #007bff !important;
-				box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25) !important;
+				border-color: #999 !important;
+				box-shadow: 0 0 0 2px rgba(153, 153, 153, 0.25) !important;
+				background-color: #fff0c4;
 			}
 
 			/* 읽기전용 필드 스타일 */
@@ -168,22 +210,19 @@
 						<description></description>
 						<projectImageUrl></projectImageUrl>
 						<createdAt></createdAt>
-						<emailSendTime></emailSendTime>
+						<emailSendTime>09:00</emailSendTime>
 						<userId></userId>
-						
-						
-						
 					</w2:data>
 				</w2:dataMap>
 			</w2:dataCollection>
 			<w2:workflowCollection />
-			<xf:submission id="sbm_saveProject" action="/InsWebApp/project/create.pwkjson" method="post" mediatype="application/json"
-				ref='data:json,{"id":"dm_projectForm","key":"projectVo"}' encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
-				processMsg="프로젝트 저장 중..." ev:submitdone="scwin.sbm_saveProject_submitdone" ev:submiterror="scwin.sbm_saveProject_submiterror" />
 		</xf:model>
 		<w2:layoutInfo />
 		<w2:publicInfo method="" />
 		<script lazy="false" type="text/javascript"><![CDATA[
+// 전역 변수 - 업로드된 이미지 파일
+scwin.projectImageFile = null;
+
 scwin.onpageload = function() {
     // 모달 초기화
     scwin.initModal();
@@ -232,6 +271,12 @@ scwin.initModal = function() {
             input_userName.setReadOnly(true);
         }
         
+        // 메일 전송 시각을 09:00으로 설정
+        if (input_emailTime) {
+            input_emailTime.setValue("09:00");
+            input_emailTime.setReadOnly(true);
+        }
+        
         console.log("프로젝트 추가 모달 초기화 완료 - 팀장:", userName);
     } catch(e) {
         console.error("모달 초기화 오류:", e);
@@ -241,14 +286,17 @@ scwin.initModal = function() {
         dm_projectForm.set("description", "");
         dm_projectForm.set("projectImageUrl", "");
         dm_projectForm.set("createdAt", "");
-        dm_projectForm.set("emailSendTime", "");
+        dm_projectForm.set("emailSendTime", "09:00");
         dm_projectForm.set("userId", "");
         dm_projectForm.set("userName", "식스센스");
-        dm_projectForm.set("hour", "00");
-        dm_projectForm.set("minute", "00");
         
         if (input_userName) {
             input_userName.setReadOnly(true);
+        }
+        
+        if (input_emailTime) {
+            input_emailTime.setValue("09:00");
+            input_emailTime.setReadOnly(true);
         }
     }
 };
@@ -265,23 +313,47 @@ scwin.btn_save_onclick = function(e) {
             return;
         }
         
-        // hour와 minute를 조립해서 emailSendTime에 설정
-        const hour = scwin.validateTimeInput(input_hour.getValue(), 23);
-        const minute = scwin.validateTimeInput(input_minute.getValue(), 59);
-        const emailSendTime = hour + ":" + minute;
+        // 메일 전송 시각을 09:00으로 고정 설정
+        const emailSendTime = "09:00";
         dm_projectForm.set("emailSendTime", emailSendTime);
         console.log(emailSendTime);
         dm_projectForm.set("userId",popupParam.userId);
         console.log(popupParam.userId);
         dm_projectForm.set("description",input_description.getValue());
         
-        // 서브미션 실행 (다시 활성화)
-        $c.sbm.execute(sbm_saveProject);
+        // Ajax FormData를 사용한 파일 업로드 방식으로 변경
+        const formData = new FormData();
         
+        // 프로젝트 기본 정보 추가
+        formData.append("projectName", projectName);
+        formData.append("description", input_description.getValue());
+        formData.append("emailSendTime", emailSendTime);
+        formData.append("userId", popupParam.userId);
         
+        // 이미지 파일이 있으면 추가
+        if (scwin.projectImageFile) {
+            formData.append("file", scwin.projectImageFile);
+            console.log("이미지 파일 추가됨:", scwin.projectImageFile.name);
+        } else {
+            console.log("업로드할 이미지 파일 없음");
+        }
         
-        // scwin.modalClose(scwin.modalId,modalArgJsnInfo);
-        // scwin.modalClose(scwin.modalId);
+        // Ajax 요청으로 전송
+        $.ajax({
+            url: "/InsWebApp/project/create.pwkjson",
+            type: "POST",
+            data: formData,
+            processData: false, // 파일 업로드를 위해 필수
+            contentType: false, // 파일 업로드를 위해 필수
+            success: function(response) {
+                console.log("프로젝트 생성 성공:", response);
+                scwin.handleSaveSuccess(response);
+            },
+            error: function(xhr, status, error) {
+                console.error("프로젝트 생성 실패:", error);
+                scwin.handleSaveError(xhr, status, error);
+            }
+        });
     } catch(e) {
         console.error("프로젝트 저장 오류:", e);
         alert("프로젝트 저장 중 오류가 발생했습니다.");
@@ -289,11 +361,11 @@ scwin.btn_save_onclick = function(e) {
     }
 };
 
-// 서브미션 성공 시 처리
-scwin.sbm_saveProject_submitdone = function(e) {
+// Ajax 성공 시 처리
+scwin.handleSaveSuccess = function(response) {
     try {
         // 서버 응답 검증
-        const elHeader = e.responseJSON && e.responseJSON.elHeader;
+        const elHeader = response && response.elHeader;
         if (elHeader && elHeader.resSuc === false) {
             alert("에러코드: " + elHeader.resCode + "\n에러메시지: " + elHeader.resMsg);
             return;
@@ -312,13 +384,12 @@ scwin.sbm_saveProject_submitdone = function(e) {
             parentFrame.scwin.refreshMainContent();
         }
         
-        // WebSquare 팝업 닫기 - 여러 방법 시도
+        // WebSquare 팝업 닫기
         console.log("팝업 닫기 시도 시작");
         
         try {
-            // 방법 1: WebSquare 공식 API
             if (typeof $p.closePopup === 'function') {
-                console.log("방법 1: $p.closePopup() 사용");
+                console.log("$p.closePopup() 사용하여 팝업 닫기");
                 $p.closePopup();
             } 
         } catch (closeError) {
@@ -326,7 +397,7 @@ scwin.sbm_saveProject_submitdone = function(e) {
         }
         
     } catch (error) {
-        console.error("서브미션 완료 처리 중 오류:", error);
+        console.error("저장 성공 처리 중 오류:", error);
         alert("프로젝트가 저장되었지만 화면 처리 중 오류가 발생했습니다.");
         
         // 오류가 발생해도 팝업은 닫기 시도
@@ -342,10 +413,20 @@ scwin.sbm_saveProject_submitdone = function(e) {
     }
 };
 
-// 서브미션 실패 시 처리
-scwin.sbm_saveProject_submiterror = function(e) {
-    console.error("프로젝트 저장 실패:", e);
-    alert("프로젝트 저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+// Ajax 실패 시 처리
+scwin.handleSaveError = function(xhr, status, error) {
+    console.error("프로젝트 저장 실패:", {xhr: xhr, status: status, error: error});
+    
+    let errorMessage = "프로젝트 저장 중 오류가 발생했습니다.";
+    
+    if (xhr.responseJSON && xhr.responseJSON.elHeader) {
+        const elHeader = xhr.responseJSON.elHeader;
+        errorMessage += "\n에러코드: " + elHeader.resCode + "\n에러메시지: " + elHeader.resMsg;
+    } else if (xhr.responseText) {
+        errorMessage += "\n상세: " + xhr.responseText;
+    }
+    
+    alert(errorMessage);
 };
 
 // 이름 입력 키보드 이벤트
@@ -353,7 +434,82 @@ scwin.input_name_onkeyup = function(e) {
     dm_projectForm.set("projectName", e.target.value);
 };
 
-// 시간 입력 검증
+// 프로젝트 이미지 버튼 클릭 (메인 이미지 영역 클릭)
+scwin.btn_projectImage_onclick = function(e) {
+    console.log("프로젝트 이미지 영역 클릭");
+    $p.$("#fileInput_projectImage").click();
+    $p.$("#fileInput_projectImage").on("change", scwin.fileInput_change);
+};
+
+// 업로드 아이콘 버튼 클릭 (우상단 카메라 아이콘 클릭)
+scwin.btn_uploadIcon_onclick = function(e) {
+    console.log("업로드 아이콘 클릭");
+    $p.$("#fileInput_projectImage").click();
+    $p.$("#fileInput_projectImage").on("change", scwin.fileInput_change);
+};
+
+// 파일 선택 시 처리
+scwin.fileInput_change = function(e) {
+    try {
+        console.log("파일 입력 변경 감지");
+        
+        const fileInput = $p.$("#fileInput_projectImage").get(0);
+        const file = fileInput.files[0];
+
+        if (!file) {
+            console.log("선택된 파일이 없음");
+            return;
+        }
+        
+        console.log("선택된 파일:", file.name, file.type, file.size);
+        
+        // 파일 타입 검증
+        if (!file.type.startsWith('image/')) {
+            alert('이미지 파일만 업로드할 수 있습니다.');
+            return;
+        }
+        
+        // 파일 크기 검증 (10MB 제한)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('파일 크기가 10MB를 초과합니다.');
+            return;
+        }
+        
+        // 전역 변수에 파일 저장
+        scwin.projectImageFile = file;
+        
+        // 이미지 미리보기 생성
+        const imageUrl = URL.createObjectURL(file);
+        console.log("미리보기 URL 생성:", imageUrl);
+        
+        // 배경 이미지로 설정하고 스타일 변경
+        btn_projectImage.setStyle("background-image", `url('${imageUrl}')`);
+        
+        // 파일 업로드 시 점선에서 실선으로 변경
+        btn_projectImage.setStyle("border", "2px solid #999");
+        
+        // WebSquare에서 버튼 라벨 텍스트 제거하는 올바른 방법
+        try {
+            // 방법 1: 버튼의 라벨 숨기기
+            btn_projectImage.setStyle("color", "transparent");
+            
+            // 방법 2: 또는 라벨 내용을 빈 문자열로 설정
+            if (btn_projectImage.setLabel) {
+                btn_projectImage.setLabel("");
+            }
+        } catch(labelError) {
+            console.log("라벨 텍스트 제거 오류 (무시 가능):", labelError);
+        }
+        
+        console.log("이미지 미리보기 설정 완료");
+        
+    } catch(error) {
+        console.error("파일 처리 오류:", error);
+        alert("파일 처리 중 오류가 발생했습니다.");
+    }
+};
+
+// 시간 입력 검증 (사용하지 않지만 호환성을 위해 유지)
 scwin.validateTimeInput = function(inputValue, maxValue) {
     const num = parseInt(inputValue);
     if (isNaN(num) || num < 0) {
@@ -372,15 +528,19 @@ scwin.validateTimeInput = function(inputValue, maxValue) {
 
 			<!-- 프로젝트 이미지 -->
 			<xf:group class="project-image" id="grp_projectImage">
-				<xf:output id="output_imageText">
-					<xf:label><![CDATA[프로젝트 이미지]]></xf:label>
-				</xf:output>
+				<xf:trigger class="project-image-button" id="btn_projectImage" ev:onclick="scwin.btn_projectImage_onclick">
+					<xf:label id="label_projectImage"><![CDATA[프로젝트 이미지 업로드]]></xf:label>
+				</xf:trigger>
+				<xf:trigger class="upload-icon-button" id="btn_uploadIcon" ev:onclick="scwin.btn_uploadIcon_onclick">
+					<xf:label><![CDATA[]]></xf:label>
+				</xf:trigger>
+				<input style="display:none;" id="fileInput_projectImage" type="file" accept="image/*" onchange="scwin.fileInput_change"></input>
 			</xf:group>
 
 			<!-- 이름 입력 -->
 			<xf:group class="input-group-modal" id="grp_nameInput">
 				<xf:output class="input-label" id="label_name">
-					<xf:label><![CDATA[포르젝트 이름]]></xf:label>
+					<xf:label><![CDATA[프로젝트 이름]]></xf:label>
 				</xf:output>
 				<xf:input class="input-field" id="input_projectName" ref="dm_projectForm.projectName" ev:onkeyup="scwin.input_name_onkeyup" />
 			</xf:group>
@@ -401,22 +561,12 @@ scwin.validateTimeInput = function(inputValue, maxValue) {
 				<xf:input class="input-field-readonly" id="input_userName" ref="dm_projectForm.teamName" readOnly="true" />
 			</xf:group>
 
-			<!-- 매일 밤 9 시간 입력 -->
+			<!-- 메일 전송 시각 (고정값 표시) -->
 			<xf:group class="input-group-modal" id="grp_timeInput">
 				<xf:output class="input-label" id="label_time">
 					<xf:label><![CDATA[메일 전송 시각]]></xf:label>
 				</xf:output>
-
-				<xf:group class="time-input-group" id="grp_timeInputs">
-					<xf:input class="time-input" id="input_hour" ref="dm_projectForm.hour" ev:onkeyup="scwin.input_hour_onkeyup" maxlength="2" />
-					<xf:output class="time-separator" id="separator_time">
-						<xf:label><![CDATA[:]]></xf:label>
-					</xf:output>
-					<xf:input class="time-input" id="input_minute" ref="dm_projectForm.minute" ev:onkeyup="scwin.input_minute_onkeyup"
-						maxlength="2" />
-				</xf:group>
-
-				<!-- 프로젝트 시각 텍스트 -->
+				<xf:input class="input-field-readonly" id="input_emailTime" ref="dm_projectForm.emailSendTime" readOnly="true" />
 			</xf:group>
 
 			<!-- 저장 버튼 -->

@@ -802,7 +802,16 @@ public class TaskServiceImpl implements TaskService {
 		return projectTasks;
 	}
 	
-	
+	/**
+	 * 사용자 이름을 포함한 태스크 목록 조회
+	 * 
+	 * @param taskVo 검색 조건을 담은 TaskVo
+	 * @return 사용자 이름이 포함된 TaskVo 리스트
+	 * @throws Exception
+	 */
+	public List<TaskVo> selectTaskListWithUserName(TaskVo taskVo) throws Exception {
+		return taskDAO.selectTaskListWithUserName(taskVo);
+	}
 	
 }
 

@@ -197,16 +197,68 @@ public class ProjectController {
     } 
  
     /**
-     * 프로젝트 정보를 담는 테이블를 등록 처리 한다.
+     * 프로젝트 정보를 파일과 함께 등록 처리 한다.
      *
      * @param  projectVo 프로젝트 정보를 담는 테이블
+     * @param  file 프로젝트 이미지 파일 (선택사항)
      * @throws Exception
      */
     @ElService(key = "project/create")    
     @RequestMapping(value = "project/create")
-    @ElDescription(sub = "프로젝트 정보를 담는 테이블 등록처리", desc = "프로젝트 정보를 담는 테이블를 등록 처리 한다.")
-    public void insertProject(ProjectVo projectVo) throws Exception {    	 
-    	projectService.insertProject(projectVo);   
+    @ElDescription(sub = "프로젝트 정보를 파일과 함께 등록처리", desc = "프로젝트 정보와 이미지 파일을 함께 등록 처리 한다.")
+    public void insertProjectWithFile(@ModelAttribute ProjectVo projectVo,
+            @RequestParam(value = "file", required = false) MultipartFile file) throws Exception {
+        
+        System.out.println("=== 프로젝트 생성 요청 ===");
+        System.out.println("프로젝트명: " + projectVo.getProjectName());
+        System.out.println("설명: " + projectVo.getDescription());
+        System.out.println("이메일 전송시간: " + projectVo.getEmailSendTime());
+        System.out.println("사용자ID: " + projectVo.getUserId());
+        System.out.println("파일 존재 여부: " + (file != null && !file.isEmpty()));
+        
+        String bucketName = "collabee";
+        
+        // 1. 이미지 파일이 있으면 S3 업로드 처리
+        if (file != null && !file.isEmpty()) {
+            try {
+                System.out.println("파일 업로드 시작 - 파일명: " + file.getOriginalFilename() + ", 크기: " + file.getSize());
+                
+                String originalName = file.getOriginalFilename();
+                String s3Key = "projectImage/" + System.currentTimeMillis() + "_" + originalName;
+                
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentLength(file.getSize());
+                metadata.setContentType(file.getContentType());
+                
+                amazonS3.putObject(new PutObjectRequest(bucketName, s3Key, file.getInputStream(), metadata));
+                
+                String fileUrl = "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/" + s3Key;
+                projectVo.setProjectImageUrl(fileUrl);
+                
+                System.out.println("파일 업로드 완료 - URL: " + fileUrl);
+            } catch (Exception e) {
+                System.err.println("파일 업로드 실패: " + e.getMessage());
+                e.printStackTrace();
+                throw new Exception("이미지 업로드 중 오류가 발생했습니다: " + e.getMessage());
+            }
+        } else {
+            System.out.println("업로드할 파일이 없어 기본 이미지 URL 사용");
+            // 파일이 없으면 null로 두거나 기본 이미지 URL 설정
+            projectVo.setProjectImageUrl(null);
+        }
+        
+        // 2. 프로젝트 생성
+        try {
+            System.out.println("프로젝트 서비스 호출 시작");
+            projectService.insertProject(projectVo);
+            System.out.println("프로젝트 생성 완료");
+        } catch (Exception e) {
+            System.err.println("프로젝트 생성 실패: " + e.getMessage());
+            e.printStackTrace();
+            throw new Exception("프로젝트 생성 중 오류가 발생했습니다: " + e.getMessage());
+        }
+        
+        System.out.println("=== 프로젝트 생성 완료 ===");
     }
        
     /**

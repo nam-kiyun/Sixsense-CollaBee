@@ -162,4 +162,19 @@
 		AND p.EMAIL_SEND_TIME != ''
 	</select>
 
+	<select id="selectProjectUsers" parameterType="String" resultType="com.demo.proworks.projectuser.vo.ProjectUserVo">
+		<!-- 특정 프로젝트의 참여자 정보를 조회한다. -->
+		SELECT /* QueryID : com.demo.proworks.project.selectProjectUsers */
+			pu.PROJECT_USER_ID as projectUserId,
+			pu.PROJECT_ID as projectId,
+			pu.USER_ID as userId,
+			pu.ROLE as role,
+			u.USER_NAME as userName,
+			u.PROFILE_IMAGE_URL as profileImageUrl
+		FROM PROJECT_USER pu
+		JOIN USER u ON pu.USER_ID = u.USER_ID
+		WHERE pu.PROJECT_ID = #{projectId}
+		ORDER BY pu.ROLE DESC, u.USER_NAME ASC
+	</select>
+
 </mapper>

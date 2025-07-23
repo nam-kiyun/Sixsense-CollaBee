@@ -28,6 +28,14 @@ public interface GitHubDAO {
     String insertGitHubAppToken(Map<String, Object> param) throws Exception;
     
     /**
+     * GitHub App Token 저장 (VO 사용)
+     * @param tokenVo GitHub App Token 정보
+     * @return 등록된 토큰 ID
+     * @throws Exception
+     */
+    String insertGitHubAppToken(GithubAppTokenVo tokenVo) throws Exception;
+    
+    /**
      * GitHub 사용자 Personal Token 업데이트
      * @param param GitHub 사용자 정보 (Map)
      * @throws Exception
@@ -35,12 +43,29 @@ public interface GitHubDAO {
     void updateGitHubAppToken(Map<String, Object> param) throws Exception;
     
     /**
-     * 로컬 사용자 ID로 GitHub Personal Token 조회
-     * @param userId 로컬 사용자 ID
+     * GitHub App Token 업데이트 (VO 사용)
+     * @param tokenVo GitHub App Token 정보
+     * @throws Exception
+     */
+    void updateGitHubAppToken(GithubAppTokenVo tokenVo) throws Exception;
+    
+    /**
+     * 사용자 ID로 GitHub App Token 조회
+     * @param userId 사용자 ID
      * @return GitHub App Token 정보
      * @throws Exception
      */
     GithubAppTokenVo selectGitHubAppTokenByUserId(String userId) throws Exception;
+    
+    /**
+     * 프로젝트 레포 ID로 GitHub App Token 조회 (Deprecated - userId 사용 권장)
+     * @param projectRepoId 프로젝트 레포 ID (실제로는 userId 파라미터)
+     * @return GitHub App Token 정보
+     * @throws Exception
+     * @deprecated Use selectGitHubAppTokenByUserId(String userId) instead
+     */
+    @Deprecated
+    GithubAppTokenVo selectGitHubAppTokenByProjectRepoId(String projectRepoId) throws Exception;
 
     // ==============================
     // GitHub 레포지토리 관리
