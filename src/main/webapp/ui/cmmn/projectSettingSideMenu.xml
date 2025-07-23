@@ -220,7 +220,7 @@ scwin.btn_back_onclick = function(e) {
     <body ev:onpageload="scwin.onpageload">
         <!-- 설정 사이드메뉴 전체 컨테이너 -->
         <xf:group 
-            style="width:303px;height:924px;background-color:#ffffff;border-right:1px solid #000000;position:relative;padding:0;"
+            style="width:303px;height:100%;background-color:#ffffff;border-right:1px solid #000000;position:relative;padding:0;overflow:hidden;"
             id="grp_settingSideMenu">
             
             <!-- 뒤로가기 버튼 -->
