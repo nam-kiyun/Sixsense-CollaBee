@@ -5649,6 +5649,10 @@ scwin.expandVideoChat = function() {
     justify-content: center !important;
     z-index: 1000 !important;
     transition: all 0.3s ease !important;
+    background-image: url('/InsWebApp/images/video-solid.svg') !important;
+    background-size: 32px 32px !important;
+    background-repeat: no-repeat;
+    background-position : center;
 }
 
 .floating-video-btn:hover {
