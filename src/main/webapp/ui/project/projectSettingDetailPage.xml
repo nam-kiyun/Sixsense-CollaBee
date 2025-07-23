@@ -1018,7 +1018,7 @@ scwin.btn_back_onclick = function(e) {
                 			id="input_emailMinute" 
                 			ref="dm_projectDetail.emailMinute"
                 			style="width:30%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;text-align:center;"
-                			placeholder="분">
+                			placeholder="분" readOnly="true">
                 		</xf:input>
                 	</xf:group>
                 </xf:group>
