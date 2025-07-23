@@ -20,19 +20,15 @@
     		
         INSERT INTO GITHUB_APP_TOKENS   /* QueryID : com.demo.proworks.githubapptoken.insertGithubAppToken */
         ( 
-            GITHUB_APP_TOKEN_ID
-            <if test="projectRepoId    != null"> , PROJECT_REPO_ID     </if>
-            <if test="appToken          != null"> , APP_TOKEN           </if>
-            <if test="expiredAt         != null"> , EXPIRED_AT          </if>
-            <if test="createdAt         != null"> , CREATED_AT          </if>
+            <if test="userId    != null"> USER_ID     </if>
+            <if test="createdAt         != null"> <if test="userId != null">,</if> CREATED_AT          </if>
+            <if test="githubAppInstallationId != null"> <if test="userId != null or createdAt != null">,</if> GITHUB_APP_INSTALLATION_ID </if>
         )
         VALUES  
         ( 
-            #{githubAppTokenId}
-            <if test="projectRepoId    != null"> , #{projectRepoId}     </if>
-            <if test="appToken          != null"> , #{appToken}           </if>
-            <if test="expiredAt         != null"> , #{expiredAt}          </if>
-            <if test="createdAt         != null"> , #{createdAt}          </if> 
+            <if test="userId    != null"> #{userId}     </if>
+            <if test="createdAt         != null"> <if test="userId != null">,</if> #{createdAt}          </if>
+            <if test="githubAppInstallationId != null"> <if test="userId != null or createdAt != null">,</if> #{githubAppInstallationId} </if>
         )          
     </insert>	
 	
@@ -41,11 +37,9 @@
     	
         UPDATE GITHUB_APP_TOKENS    /* QueryID : com.demo.proworks.githubapptoken.updateGithubAppToken */      
       	  SET  
-                GITHUB_APP_TOKEN_ID = #{githubAppTokenId}        	                       
-            <if test="projectRepoId    != null"> , PROJECT_REPO_ID     = #{projectRepoId}     </if>
-            <if test="appToken          != null"> , APP_TOKEN           = #{appToken}           </if>
-            <if test="expiredAt         != null"> , EXPIRED_AT          = #{expiredAt}          </if>
-            <if test="createdAt         != null"> , CREATED_AT          = #{createdAt}          </if>                 
+            <if test="userId    != null"> USER_ID     = #{userId}     </if>
+            <if test="createdAt         != null"> <if test="userId != null">,</if> CREATED_AT          = #{createdAt}          </if>
+            <if test="githubAppInstallationId != null"> <if test="userId != null or createdAt != null">,</if> GITHUB_APP_INSTALLATION_ID = #{githubAppInstallationId} </if>                 
         WHERE   
                 GITHUB_APP_TOKEN_ID = #{githubAppTokenId}
     </update>
@@ -61,7 +55,7 @@
     <select id="selectGithubAppToken" parameterType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo" resultType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo">
     	<!-- 깃허브 앱 토큰 저장를 상세 조회한다. -->	
         SELECT     /* QueryID : com.demo.proworks.githubapptoken.selectGithubAppToken */
-            GITHUB_APP_TOKEN_ID as githubAppTokenId, PROJECT_REPO_ID as projectRepoId, APP_TOKEN as appToken, EXPIRED_AT as expiredAt, CREATED_AT as createdAt
+            GITHUB_APP_TOKEN_ID as githubAppTokenId, USER_ID as userId, CREATED_AT as createdAt, GITHUB_APP_INSTALLATION_ID as githubAppInstallationId
         FROM GITHUB_APP_TOKENS 
         WHERE 
                 GITHUB_APP_TOKEN_ID = #{githubAppTokenId}			
@@ -70,7 +64,7 @@
     <select id="selectListGithubAppToken" parameterType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo" resultType="com.demo.proworks.githubapptoken.vo.GithubAppTokenVo">
     	<!-- 깃허브 앱 토큰 저장 목록을 조회한다. -->
            SELECT    /* QueryID : com.demo.proworks.githubapptoken.selectListGithubAppToken */
-               GITHUB_APP_TOKEN_ID as githubAppTokenId, PROJECT_REPO_ID as projectRepoId, APP_TOKEN as appToken, EXPIRED_AT as expiredAt, CREATED_AT as createdAt		       
+               GITHUB_APP_TOKEN_ID as githubAppTokenId, USER_ID as userId, CREATED_AT as createdAt, GITHUB_APP_INSTALLATION_ID as githubAppInstallationId		       
            FROM (
                SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
                FROM (				

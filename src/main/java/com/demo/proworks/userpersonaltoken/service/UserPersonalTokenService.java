@@ -91,4 +91,13 @@ public interface UserPersonalTokenService {
      */
 	public int invalidateUserPersonalTokenByUserId(String userId) throws Exception;
 	
+	/**
+     * 사용자 ID로 개인 토큰을 조회한다.
+     *
+     * @param userId 사용자 ID
+     * @return 개인 토큰 문자열 또는 null
+     * @throws Exception
+     */
+	public String getToken(String userId) throws Exception;
+	
 }

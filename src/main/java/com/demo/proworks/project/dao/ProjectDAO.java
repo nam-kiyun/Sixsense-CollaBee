@@ -126,4 +126,15 @@ public class ProjectDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
         return (List<ProjectVo>) list("com.demo.proworks.project.selectUserParticipatedProjects", userId);
     }
 
+    /**
+     * 특정 프로젝트의 참여자 정보를 조회한다.
+     *  
+     * @param  projectId 프로젝트 ID
+     * @return List<ProjectUserVo> 프로젝트 참여자 목록
+     * @throws ElException
+     */
+    public List<com.demo.proworks.projectuser.vo.ProjectUserVo> selectProjectUsers(String projectId) throws ElException {
+        return (List<com.demo.proworks.projectuser.vo.ProjectUserVo>) list("com.demo.proworks.project.selectProjectUsers", projectId);
+    }
+
 }

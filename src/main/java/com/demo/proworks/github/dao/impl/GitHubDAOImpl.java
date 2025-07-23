@@ -34,14 +34,28 @@ public class GitHubDAOImpl implements GitHubDAO {
         return param.get("github_app_token_id") != null ? param.get("github_app_token_id").toString() : null;
     }
     
+    public String insertGitHubAppToken(GithubAppTokenVo tokenVo) throws Exception {
+        sqlSession.insert("com.demo.proworks.githubapptoken.insertGithubAppToken", tokenVo);
+        return tokenVo.getGithubAppTokenId();
+    }
+    
     @Override
     public void updateGitHubAppToken(Map<String, Object> param) throws Exception {
         sqlSession.update("com.demo.proworks.github.updateGitHubAppToken", param);
     }
     
+    public void updateGitHubAppToken(GithubAppTokenVo tokenVo) throws Exception {
+        sqlSession.update("com.demo.proworks.githubapptoken.updateGithubAppToken", tokenVo);
+    }
+    
     @Override
     public GithubAppTokenVo selectGitHubAppTokenByUserId(String userId) throws Exception {
         return sqlSession.selectOne("com.demo.proworks.github.selectGitHubAppTokenByUserId", userId);
+    }
+    
+    @Override
+    public GithubAppTokenVo selectGitHubAppTokenByProjectRepoId(String projectRepoId) throws Exception {
+        return sqlSession.selectOne("com.demo.proworks.github.selectGitHubAppTokenByProjectRepoId", projectRepoId);
     }
 
     // ==============================

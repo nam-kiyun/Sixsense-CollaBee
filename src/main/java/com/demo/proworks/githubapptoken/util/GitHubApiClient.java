@@ -250,4 +250,95 @@ public class GitHubApiClient {
         
         throw new RuntimeException("브랜치 생성에 실패했습니다.");
     }
+    
+    /**
+     * 사용자가 레포지토리의 collaborator인지 확인한다.
+     * 
+     * @param accessToken 액세스 토큰
+     * @param repoFullName 레포지토리 전체 이름
+     * @param username GitHub 사용자명
+     * @return collaborator 여부
+     */
+    public boolean isCollaborator(String accessToken, String repoFullName, String username) throws Exception {
+        String url = GITHUB_API_BASE_URL + "/repos/" + repoFullName + "/collaborators/" + username;
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "token " + accessToken);
+        headers.set("Accept", "application/vnd.github.v3+json");
+        headers.set("User-Agent", "ProWorks5-GitHub-Manager");
+        
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            // 404 또는 403 등의 경우 collaborator가 아님
+            return false;
+        }
+    }
+    
+    /**
+     * 레포지토리에 collaborator를 초대한다.
+     * 
+     * @param accessToken 액세스 토큰
+     * @param repoFullName 레포지토리 전체 이름
+     * @param username GitHub 사용자명
+     * @param permission 권한 레벨 (pull, push, maintain, admin)
+     * @return 초대 결과
+     */
+    public Map<String, Object> inviteCollaborator(String accessToken, String repoFullName, String username, String permission) throws Exception {
+        String url = GITHUB_API_BASE_URL + "/repos/" + repoFullName + "/collaborators/" + username;
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "token " + accessToken);
+        headers.set("Accept", "application/vnd.github.v3+json");
+        headers.set("User-Agent", "ProWorks5-GitHub-Manager");
+        
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("permission", permission);
+        
+        String requestBodyJson = objectMapper.writeValueAsString(requestBody);
+        HttpEntity<String> entity = new HttpEntity<>(requestBodyJson, headers);
+        
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.PUT, entity, Map.class);
+        
+        if (response.getStatusCode().is2xxSuccessful()) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "사용자 " + username + "을(를) " + repoFullName + " 레포지토리에 초대했습니다.");
+            result.put("username", username);
+            result.put("repository", repoFullName);
+            result.put("permission", permission);
+            return result;
+        }
+        
+        throw new RuntimeException("Collaborator 초대에 실패했습니다.");
+    }
+    
+    /**
+     * GitHub 사용자 정보를 조회한다.
+     * 
+     * @param accessToken 액세스 토큰
+     * @return 사용자 정보
+     */
+    public Map<String, Object> getCurrentUser(String accessToken) throws Exception {
+        String url = GITHUB_API_BASE_URL + "/user";
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "token " + accessToken);
+        headers.set("Accept", "application/vnd.github.v3+json");
+        headers.set("User-Agent", "ProWorks5-GitHub-Manager");
+        
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+        
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            return response.getBody();
+        }
+        
+        throw new RuntimeException("사용자 정보 조회에 실패했습니다.");
+    }
 }

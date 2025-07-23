@@ -20,14 +20,12 @@
     		
         INSERT INTO MANAGER   /* QueryID : com.demo.proworks.manager.insertManager */
         ( 
-            MANAGER_ID
-            <if test="taskId!= null"> , TASK_ID </if>
+            <if test="taskId!= null">TASK_ID </if>
             <if test="userId        != null"> , USER_ID         </if>
         )
         VALUES  
         ( 
-            #{managerId}
-            <if test="taskId!= null"> , #{taskId} </if>
+            <if test="taskId!= null"> #{taskId} </if>
             <if test="userId        != null"> , #{userId}         </if> 
         )          
     </insert>	

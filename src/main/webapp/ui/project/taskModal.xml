@@ -41,7 +41,7 @@
 						<w2:key nullYN="" defaultValue="String" dataType="text" name="버전아이디" length="" id="taskVersionId" encYN=""></w2:key>
 						<w2:key nullYN="" defaultValue="String" dataType="text" name="내용" length="" id="content" encYN=""></w2:key>
 						<w2:key defaultValue="String" dataType="text" name="created_at" id="createdAt"></w2:key>
-						<w2:key dataType="text" name="name13" id="key13"></w2:key>
+						<w2:key dataType="text" name="userName" id="userName"></w2:key>
 					</w2:keyInfo>
 				</w2:dataMap>
 				<w2:dataList baseNode="list" repeatNode="map" id="dls_manager" saveRemovedData="true">
@@ -81,6 +81,19 @@
 						<w2:key dataType="text" name="사용자 이미지" id="profileImageUrl"></w2:key>
 					</w2:keyInfo>
 				</w2:dataMap>
+				<w2:dataList baseNode="list" repeatNode="map" id="dls_backupFile" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column dataType="text" name="name8" id="fileId"></w2:column>
+						<w2:column dataType="text" name="name9" id="taskVersionId"></w2:column>
+						<w2:column dataType="text" name="이름" id="fileName"></w2:column>
+						<w2:column dataType="text" name="name7" id="filePath"></w2:column>
+						<w2:column dataType="text" name="크기" id="size"></w2:column>
+						<w2:column dataType="text" name="종류" id="type"></w2:column>
+						<w2:column dataType="text" name="내용" id="data"></w2:column>
+						<w2:column dataType="text" name="선택" id="CHK"></w2:column>
+						<w2:column dataType="text" name="name6" id="num"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
 			</w2:dataCollection>
 			<w2:workflowCollection />
 			<xf:submission id="sbm_comment_create" action="/InsWebApp/comment/create.pwkjson" method="post" mediatype="application/json"
@@ -102,9 +115,13 @@
 				target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
 				ev:submitdone="scwin.sbm_task_get_submitdone" ev:submiterror="scwin.sbm_task_get_submiterror" abortTrigger="">
 			</xf:submission>
-			<xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json" ref="" target='data:json,{"id":"dma_userInfo","key":"userInfo"}' encoding="UTF-8"
-				instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone=""
-				ev:submiterror="" abortTrigger="">
+			<xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json"
+				ref="" target='data:json,{"id":"dma_userInfo","key":"userInfo"}' encoding="UTF-8" instance="" replace="" errorHandler=""
+				customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="" ev:submiterror="" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_deleteTask" action="/InsWebApp/task/delete.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dma_task","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_deleteTask_submitdone" ev:submiterror="" abortTrigger="">
 			</xf:submission>
 		</xf:model>
 		<w2:layoutInfo />
@@ -162,6 +179,13 @@ scwin.onpageload = function () {
     //소켓 초기화 
     scwin.initializeChatWebSocket();
 
+    //버전관리
+    scwin.snapShot = false; //버전에서 현재상태 저장여부
+    scwin.originalData = {};
+    scwin.changeEditor();
+    scwin.previousHTML = "";
+
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     const generateUniqueId = (prefix) => {
@@ -172,6 +196,7 @@ scwin.onpageload = function () {
     const btnGroupId = generateUniqueId("btn_group");
     const saveId = generateUniqueId("btn_save");
     const versionId = generateUniqueId("btn_version");
+    const deleteId = generateUniqueId("btn_delete");
 
     // 버튼 그룹 생성
     const btnGroup = $p.dynamicCreate(btnGroupId, "group", {
@@ -190,20 +215,38 @@ scwin.onpageload = function () {
         label: "저장",
     }, btnGroup);
 
+
     const version = $p.dynamicCreate(versionId, "button", {
-        className: "btn-version",
+        className: "btn-icon btn-version",
     }, btnGroup);
 
-    const btn_save = $p.getComponentById(saveId);
+    const deleteBtn = $p.dynamicCreate(deleteId, "button", {
+        className: "btn-icon btn-delete",
+    }, btnGroup);
 
+
+    const btn_save = $p.getComponentById(saveId);
     //task 저장버튼
     btn_save.bind("onclick", function () {
-        scwin.saveTask();
+        if (!scwin.snapShot) {
+            scwin.saveTask(); // snapShot이 false일 때만 저장 수행
+        }
     });
+
+    // scwin.updateSaveButtonState(btn_save);
 
     const btn_version = $p.getComponentById(versionId);
     btn_version.bind("onclick", function () {
         scwin.versionPopup();
+    })
+
+    const btn_delete = $p.getComponentById(deleteId);
+    btn_delete.bind("onclick", function () {
+        $c.win.confirm("해당 작업을 삭제하시겠습니까", function (rtn) {
+            if (rtn.clickValue) {
+                $c.sbm.execute(sbm_deleteTask);
+            }
+        });
     })
 
 
@@ -211,7 +254,7 @@ scwin.onpageload = function () {
     //ifram, contents 높이 조절
     setInterval(() => {
         const iframe = document.querySelector('.cke_wysiwyg_frame');
-        const contents = $p.getComponentById("cke_1_contents");
+        const contents = document.querySelector(".cke_contents");
 
         const innerDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
         const body = innerDoc?.body;
@@ -272,11 +315,11 @@ scwin.onpageload = function () {
 
     scwin.chatDate = new Set();
 
-    scwin.snapShot = false; //버전에서 현재상태 저장여부
-    scwin.originalData = {};
-    scwin.changeEditor();
-    scwin.previousHTML = "";
+
 };
+
+
+
 
 scwin.changeEditor = function () {
     const editorComponentId = "contents_editor";
@@ -300,22 +343,14 @@ scwin.changeEditor = function () {
 
     ckInstance.on("instanceReady", function () {
         scwin.previousHTML = contents_editor.getHTML(); // 초기값 설정
-        console.log(scwin.previousHTML);
 
         ckInstance.on("change", function () {
-            console.log("바뀜");
             const currentHTML = ckInstance.getData();
-            console.log("지금 전체 파일");
-            console.log(dls_allFile.getAllJSON());
-            console.log("화면 파일");
-            console.log(dls_file.getAllJSON());
-            console.log(scwin.previousHTML);
-            console.log(currentHTML);
 
             if (currentHTML !== scwin.previousHTML) {
 
-                console.log("이전 내용:", scwin.previousHTML);
-                console.log("현재 내용:", currentHTML);
+                // console.log("이전 내용:", scwin.previousHTML);
+                // console.log("현재 내용:", currentHTML);
 
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(currentHTML, "text/html");
@@ -380,20 +415,31 @@ scwin.versionLoad = function (data) {
     if (!scwin.snapShot) {
         scwin.snapShot = true;
         scwin.originalData = scwin.currentWorkSnapshot();
+
+        let btnSave = document.querySelector(".btn-save");
+        btnSave.classList.add("header-btn-disabled");
     }
 
     contents_editor.setHTML(data.taskVersionVo.content);
+    dls_backupFile.setJSON(dls_allFile.getAllJSON());
     dls_allFile.setJSON(data.taskVersionVo.fileSrcVo);
     dls_file.setJSON(data.taskVersionVo.fileSrcVo);
 }
+
 
 //현재 버전상태 가져오기
 scwin.loadOriginalVersion = function () {
     if (scwin.originalData) {
         contents_editor.setHTML(scwin.originalData.content);
         dls_allFile.setJSON(scwin.originalData.fileSrc);
+        //dls_allFile.setJSON(dls_backupFile.getAllJSON());
         dls_file.setJSON(scwin.originalData.fileSrc);
         scwin.snapShot = false;
+
+        let btnSave = document.querySelector(".btn-save");
+        btnSave.classList.remove("header-btn-disabled");
+        console.log("현재버전");
+        console.log(dls_allFile.getAllJSON());
     }
 };
 
@@ -424,6 +470,7 @@ scwin.versionPopup = function (e) {
 
         // 팝업 생성 옵션 지정
         let options = {
+            headerVisible: false,
             id: versionPopupId,
             type: "wframePopup",
             width: "330",
@@ -435,11 +482,13 @@ scwin.versionPopup = function (e) {
             closeAction: "scwin.popup_closeAction",
             customTitleBar: false,
             dataObject: param,
+            title: false
         };
 
         // 팝업 생성
         $p.openPopup("/InsWebApp/ui/project/versionModal.xml", options);
     }
+
 };
 
 
@@ -456,7 +505,7 @@ scwin.fileButtonInit = function () {
         return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     };
 
-    const editorHeader = $p.getComponentById("cke_1_top");
+    const editorHeader = document.querySelector(".cke_top");
     const btnGroupId = generateUniqueId("btn_group");
     const fileBtnId = generateUniqueId("btn_fileUpload");
     const fileInputId = generateUniqueId("input_file");
@@ -513,6 +562,9 @@ scwin.getTask = function (taskId, projectId) {
             const data = res.taskUpdateVo;
             scwin.taskInfo = data;
 
+            dma_task.set("boardId", data.boardId);
+            dma_task.set("taskId", data.taskId);
+
             header_title.setValue(data.taskTitle);
             // projectUserVo 리스트를 세팅
 
@@ -538,6 +590,7 @@ scwin.getTask = function (taskId, projectId) {
             data.tags ? tags_input.setValue(data.tags) : "";
             data.startDate ? start_date.setValue(data.startDate) : "";
             data.endDate ? end_date.setValue(data.endDate) : "";
+            data.userName ? name_input.setValue(data.userName) : "";
 
             contents_editor.setHTML(data.content);
 
@@ -568,7 +621,6 @@ scwin.getTask = function (taskId, projectId) {
             contents_editor.setHTML(container.innerHTML);
             scwin.previousHTML = contents_editor.getHTML();
 
-            console.log(container.innerHTML);
             dls_allFile.setJSON(data.fileSrcVo);
             dls_file.setJSON(data.fileSrcVo);
 
@@ -1032,7 +1084,7 @@ scwin.sbm_comment_get_submitdone = function (e) {
         const currentDate = scwin.formatDate(comment.createdAt);
         const nextDate = nextComment ? scwin.formatDate(nextComment.createdAt) : null;
         const isMine = (comment.userId === currentUser.userId);
-        console.log(currentDate);
+        console.log(comment);
 
         // 댓글 삽입
         const commentComp = scwin.addChatMessage(
@@ -1045,14 +1097,16 @@ scwin.sbm_comment_get_submitdone = function (e) {
             insertBeforeTarget
         );
         insertBeforeTarget = commentComp;
-        
+
         // 다음 댓글이 없거나 날짜가 다르면 → 지금 날짜를 현재 댓글 앞에 삽입
         if (currentDate !== nextDate || i === commentList.length - 1) {
             const dateComp = scwin.addChatDate(currentDate, insertBeforeTarget);
             insertBeforeTarget = dateComp;
-
             scwin.chatDate.add(currentDate);
+            console.log("추가되었어용");
         }
+        console.log("currentDate !== nextDate: " + (currentDate !== nextDate))
+        console.log("i === commentList.length - 1: " + (i === commentList.length - 1));
     }
 
     //처음 페이지일 경우에는 스크롤 아래로
@@ -1573,6 +1627,29 @@ scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
 
     }
 };
+
+//작업 삭제가 완료되었을 때
+scwin.sbm_deleteTask_submitdone = function (e) {
+    const close = $p.getComponentById("mf_wfr_mainContent_exa_popup_close");
+    close.click();
+};
+
+//시작일
+scwin.start_date_onchange = function () {
+    let value = start_date.getValue();
+    if (start_date.getValue() !== "") {
+        end_date.setDisableBeforeDate(value);
+    }
+};
+
+//종료일 
+scwin.end_date_onchange = function () {
+    let value = end_date.getValue();
+    if (end_date.getValue() !== "") {
+        start_date.setDisableAfterDate(value);
+    }
+};
+
 ]]></script>
 		<style type="text/css"><![CDATA[]]>
 		</style>
@@ -1589,7 +1666,7 @@ scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
 					<xf:group style="" id="" class="header-input">
 						<xf:group style="" id="" class="header-input-box">
 							<w2:textbox id="" label="작성자" style="" class="header-input-text input-text text-bold"></w2:textbox>
-							<w2:textbox id="name_input" label="다인" style="width:148px; height:21px;" class="text-left input-text"></w2:textbox>
+							<w2:textbox id="name_input" label="" style="width:148px; height:21px;" class="text-left input-text"></w2:textbox>
 						</xf:group>
 						<xf:group class="header-input-box" id="" style="">
 							<w2:textbox id="" label="담당자" style="" class="header-input-text input-text text-bold"></w2:textbox>
@@ -1667,11 +1744,11 @@ scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
 					<xf:group class="header-input" id="" style="">
 						<xf:group class="header-input-box" id="" style="">
 							<w2:textbox class="header-input-text input-text text-bold" id="" label="시작일" style=""></w2:textbox>
-							<w2:inputCalendar id="start_date" style="width:148px; height:21px;" calendarValueType="yearMonthDate"></w2:inputCalendar>
+							<w2:inputCalendar id="start_date" style="width:148px; height:21px;" calendarValueType="yearMonthDate" ev:onchange="scwin.start_date_onchange"></w2:inputCalendar>
 						</xf:group>
 						<xf:group class="header-input-box" id="" style="">
 							<w2:textbox class="header-input-text input-text text-bold" id="" label="종료일" style=""></w2:textbox>
-							<w2:inputCalendar calendarValueType="yearMonthDate" id="end_date" style="width:148px; height:21px;"></w2:inputCalendar>
+							<w2:inputCalendar calendarValueType="yearMonthDate" id="end_date" style="width:148px; height:21px;" ev:onchange="scwin.end_date_onchange"></w2:inputCalendar>
 						</xf:group>
 					</xf:group>
 				</xf:group>

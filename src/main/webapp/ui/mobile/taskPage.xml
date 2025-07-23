@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="/InsWebApp/css/mobile/taskPage.css" type="text/css"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+    	<w2:type>COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:MSA />
+    	<xf:model>
+    		<w2:dataCollection baseNode="map">
+    			<w2:dataList baseNode="list" repeatNode="map" id="dls_manager" saveRemovedData="true">
+    				<w2:columnInfo>
+    					<w2:column dataType="text" name="사용자 아이디" id="userId"></w2:column>
+    					<w2:column dataType="text" name="사용자 이름" id="userName"></w2:column>
+    				</w2:columnInfo>
+    			</w2:dataList>
+    		</w2:dataCollection>
+    		<w2:workflowCollection />
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<w2:publicInfo method="" />
+    	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function() {
+	scwin.getTask(1, 7);
+};
+
+//task 정보 가져오기
+scwin.getTask = function (taskId, projectId) {
+    //  데이터 보내기
+    const formData = new FormData();
+    formData.append("projectId", projectId);
+
+    // 서버로 전송
+    $.ajax({
+        url: `/InsWebApp/task/${taskId}.pwkjson`,
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: async function (res) {
+            const data = res.taskUpdateVo;
+            scwin.taskInfo = data;
+
+            console.log(data);
+
+            // projectUserVo 리스트를 세팅
+
+
+            // //담당자(프로젝트 사용자 값 세팅)
+            let userData = [];
+            data.projectUserVo.forEach(user => {
+                userData.push({ userId: user.userId, userName: user.userName });
+            });
+            dls_manager.setJSON(userData);
+
+            // //담당자 존재하면 값 세팅
+            if (data.managerVo && data.managerVo.length > 0) {
+                let selectedUserIds = [];
+                data.managerVo.forEach(manager => {
+                    selectedUserIds.push(manager.userId);
+                });
+
+                manager_input.setValue(selectedUserIds);
+            }
+
+            data.priority ? priority_select.setValue(data.priority) : "";
+            data.tags ? tags_input.setValue(data.tags) : "";
+            data.startDate ? start_date.setValue(data.startDate) : "";
+            data.endDate ? end_date.setValue(data.endDate) : "";
+            data.userName ? userName_input.setValue(data.userName) : "";
+
+            body_text.setValue(data.content);
+
+
+            // const fileList = data.fileSrcVo;
+
+            // // HTML 에디터의 기존 내용 가져오기
+            // let html = contents_editor.getHTML();
+
+            // // DOM 파싱을 위한 임시 컨테이너 생성
+            // const container = document.createElement("div");
+            // container.innerHTML = html;
+
+            // // file-data 클래스를 가진 태그들을 순서대로 가져오기
+            // const fileTags = container.querySelectorAll(".file-data");
+
+            // // fileList 순서와 fileTags 순서가 일치한다고 가정하고 data-num 추가
+            // fileList.forEach((item, index) => {
+            //     item.num = ++scwin.filePageNum;
+
+            //     const el = fileTags[fileTags.length - 1 - index];
+
+            //     if (el) {
+            //         el.setAttribute("data-num", item.num);
+            //     }
+            // });
+
+            // contents_editor.setHTML(container.innerHTML);
+            // scwin.previousHTML = contents_editor.getHTML();
+
+            // dls_allFile.setJSON(data.fileSrcVo);
+            // dls_file.setJSON(data.fileSrcVo);
+
+        },
+        error: async function (err) {
+            await $c.win.alert("저장 실패! 다시 시도해주세요");
+        }
+    });
+}]]></script>
+    	<style type="text/css"><![CDATA[html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    /* 전체 높이 설정 */
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.header-group {
+    height: 50px;
+    background-color: black;
+}
+
+.main-group {
+    flex: 1;
+    overflow: auto;
+    /* background-color: rgb(201, 148, 83); */
+}
+
+.footer-group {
+    height: 50px;
+    background-color: rgb(197, 226, 184);
+}
+
+
+.contents-header {
+    display: flex;
+    width: 100%;
+    height: 10%;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+    /* background-color: pink; */
+}
+.header-title{
+    font-size: large;
+    font-weight: bold;
+}
+
+.contents-dec {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 35%;
+    padding: 0 30px;
+    box-sizing: border-box;
+    /* background-color: khaki; */
+}
+
+.dec-title {
+    width: 70%;
+    height: 16%;
+    font-size: 23px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.dec-group {
+    display: flex;
+    height: 14%;
+}
+
+.dec-name {
+    width: 25%;
+    font-weight: bold;
+}
+
+
+.contents-body {
+    display: flex;
+    width: 100%;
+    min-height: 55%;
+    justify-content: center;
+    padding: 30px;
+    box-sizing: border-box;
+    /* background-color: azure; */
+}
+
+.body-text{
+    width: 100%;
+    min-height: 55%;
+    padding: 30px;
+    box-sizing: border-box;
+    border: 1px solid black;
+    border-radius: 15px;
+}]]></style>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group style="" id="" class="wrapper ">
+    		<w2:pageFrame style="" id="" class="header-group"></w2:pageFrame>
+    		<xf:group style="" id="" class="main-group">
+    			<xf:group style="" id="" class="contents-header">
+    				<w2:textbox id="" label="프로젝트명" style="" class="header-title"></w2:textbox>
+    			</xf:group>
+    			<xf:group style="" id="" class="contents-dec">
+    				<w2:textbox id="" label="요구명세서" style="" class="dec-title"></w2:textbox>
+    				<xf:group style="" id="" class="dec-group">
+    					<w2:textbox id="" label="작성자" style="" class="dec-name"></w2:textbox>
+
+    					<w2:textbox id="userName_input" label="다인" style="width:134px;height:23px;"></w2:textbox>
+    				</xf:group>
+
+    				<xf:group class="dec-group" id="" style="">
+    					<w2:textbox id="" label="담당자" style="" class="dec-name"></w2:textbox>
+    					<xf:select1 id="manager_input" chooseOption="" style="width: 148px;height: 21px;" submenuSize="auto" allOption=""
+    						disabled="true" direction="auto" appearance="minimal" disabledClass="w2selectbox_disabled" ref="">
+    						<xf:choices>
+    							<xf:itemset nodeset="data:dls_manager">
+    								<xf:label ref="userName"></xf:label>
+    								<xf:value ref="userId"></xf:value>
+    							</xf:itemset>
+    						</xf:choices>
+    					</xf:select1>
+    				</xf:group>
+    				<xf:group class="dec-group" id="" style="">
+    					<w2:textbox id="" label="중요도" style="" class="dec-name"></w2:textbox>
+    					<xf:select1 id="" chooseOption="true" style="width: 148px;height: 21px;" submenuSize="auto" allOption=""
+    						disabled="true" direction="auto" appearance="minimal" disabledClass="w2selectbox_disabled" ref="" chooseOptionLabel="">
+    						<xf:choices>
+    							<xf:item>
+    								<xf:label><![CDATA[상]]></xf:label>
+    								<xf:value><![CDATA[hign]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[중]]></xf:label>
+    								<xf:value><![CDATA[medium]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[하]]></xf:label>
+    								<xf:value><![CDATA[low]]></xf:value>
+    							</xf:item>
+    						</xf:choices>
+    					</xf:select1>
+    				</xf:group>
+    				<xf:group class="dec-group" id="" style="">
+    					<w2:textbox id="" label="태그" style="" class="dec-name"></w2:textbox>
+    					<xf:select1 allOption="" appearance="minimal" chooseOption="true" chooseOptionLabel="" class="input-text"
+    						direction="auto" disabled="true" disabledClass="w2selectbox_disabled" id="selectbox1" ref="" style="width: 148px;height: 21px;"
+    						submenuSize="auto">
+    						<xf:choices>
+    							<xf:item>
+    								<xf:label><![CDATA[기획]]></xf:label>
+    								<xf:value><![CDATA[plan]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[개발]]></xf:label>
+    								<xf:value><![CDATA[dev]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[테스트]]></xf:label>
+    								<xf:value><![CDATA[test]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[문서화]]></xf:label>
+    								<xf:value><![CDATA[doc]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[분석]]></xf:label>
+    								<xf:value><![CDATA[analytics]]></xf:value>
+    							</xf:item>
+    							<xf:item>
+    								<xf:label><![CDATA[협업]]></xf:label>
+    								<xf:value><![CDATA[collabo]]></xf:value>
+    							</xf:item>
+    						</xf:choices>
+    					</xf:select1>
+    				</xf:group>
+    				<xf:group class="dec-group" id="" style="">
+    					<w2:textbox id="" label="시작일" style="" class="dec-name"></w2:textbox>
+    					<w2:inputCalendar id="start_date" style="width: 150px;height: 23px;" calendarValueType="yearMonthDate" disabled="true"></w2:inputCalendar>
+    				</xf:group>
+    				<xf:group class="dec-group" id="" style="">
+    					<w2:textbox id="" label="마감일" style="" class="dec-name"></w2:textbox>
+    					<w2:inputCalendar calendarValueType="yearMonthDate" id="end_date" style="width: 150px;height: 23px;" disabled="true"></w2:inputCalendar>
+    				</xf:group>
+    			</xf:group>
+    			<xf:group style="" id="" class="contents-body">
+    				<w2:textbox id="body_text" label="" style="" class="body-text" escape="false"></w2:textbox>
+    			</xf:group>
+    		</xf:group>
+    		<w2:pageFrame style="" id="" class="footer-group" src="/InsWebApp/ui/mobile/cmmn/footer.xml"></w2:pageFrame>
+    	</xf:group>
+    </body>
+</html>

@@ -245,4 +245,27 @@
         GROUP BY BOARD_ID
         ORDER BY BOARD_ID
     </select>
+    
+    <!-- 사용자 이름을 포함한 태스크 목록 조회 -->
+    <select id="selectTaskListWithUserName" parameterType="com.demo.proworks.task.vo.TaskVo" resultType="com.demo.proworks.task.vo.TaskVo">
+        <!-- 업무(Task) 정보와 사용자 이름을 함께 조회한다. -->
+        SELECT   /* QueryID : com.demo.proworks.task.selectTaskListWithUserName */
+            t.TASK_ID as taskId, 
+            t.BOARD_ID as boardId, 
+            t.PROJECT_USER_ID as projectUserId, 
+            t.PROJECT_REPO_ID as projectRepoId, 
+            t.TASK_TITLE as taskTitle, 
+            t.PRIORITY as priority, 
+            t.START_DATE as startDate, 
+            t.END_DATE as endDate, 
+            t.TAGS as tags,
+            u.USER_NAME as userName
+        FROM TASK t
+        JOIN PROJECT_USER pu ON t.PROJECT_USER_ID = pu.PROJECT_USER_ID
+        JOIN USER u ON pu.USER_ID = u.USER_ID
+        WHERE 1=1
+        <if test="projectUserId != null and projectUserId != ''"> AND t.PROJECT_USER_ID = #{projectUserId} </if>
+        <if test="boardId != null and boardId != ''"> AND t.BOARD_ID = #{boardId} </if>
+        ORDER BY t.START_DATE DESC
+    </select>
 </mapper>

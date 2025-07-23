@@ -344,8 +344,11 @@ scwin.onpageload = function () {
     dm_ui_state.set("loadingMessage", "");
     dm_ui_state.set("currentView", "repositories");
     dm_auth_status.set("needsLogin", "true");
+    
+    // 초기 스크롤 모드 설정 (저장소 목록 화면)
+    scwin.setPopupScrollMode('hidden');
 
-    // 프로젝트 데이터 초기화
+    // 프로젝트 데이터 초기화r
     scwin.initializeProjectData();
 
     // 이벤트 핸들러 초기화
@@ -354,8 +357,8 @@ scwin.onpageload = function () {
     // OAuth 성공 메시지 리스너 추가
     // scwin.initializeOAuthMessageListener();
 
-    // 인증 상태 확인 (이 안에서 checkCurrentRepository 호출)
-    scwin.checkAuthenticationStatus();
+    // 통합 연결 상태 확인 (OAuth + Installation ID 체크)
+    scwin.checkGitHubConnectionStatus();
     
 };
 
@@ -495,6 +498,319 @@ scwin.checkAuthenticationStatus = function () {
         console.error("AJAX 호출 오류:", e);
         scwin.showLoginRequiredUI();
     }
+};
+
+// GitHub App 설치 필요 상태 처리
+scwin.handleAppInstallRequired = function(result) {
+    console.log("GitHub App 설치 필요 상태 처리 시작");
+    console.log("사용자는 OAuth 인증됨, 하지만 Installation ID 없음");
+    
+    // 사용자 정보 표시
+    if (result.user) {
+        dm_auth_status.set("isAuthenticated", "true");
+        dm_auth_status.set("username", result.user.login || "");
+        dm_auth_status.set("avatarUrl", result.user.avatar_url || "");
+        dm_auth_status.set("needsLogin", "false");
+    }
+    
+    // GitHub App 설치 필요 상태로 설정
+    dm_auth_status.set("hasGitHubApp", "false");
+    
+    // 자동으로 GitHub App 설치 팝업 열기
+    scwin.openGitHubAppInstallPopup();
+};
+
+// 완전 연동 상태 처리
+scwin.handleFullyConnected = function(result) {
+    console.log("완전 연동 상태 처리 시작");
+    
+    // 모든 인증 정보 설정
+    dm_auth_status.set("isAuthenticated", "true");
+    dm_auth_status.set("needsLogin", "false");
+    dm_auth_status.set("hasGitHubApp", "true");
+    
+    if (result.user) {
+        dm_auth_status.set("username", result.user.login || "");
+        dm_auth_status.set("avatarUrl", result.user.avatar_url || "");
+    }
+    
+    // 저장소 선택 섹션 표시
+    scwin.showRepositorySelectionSection();
+    
+    // 기존 저장소 연결 상태 확인
+    scwin.checkCurrentRepository();
+};
+
+// GitHub App 설치 팝업 열기
+scwin.openGitHubAppInstallPopup = function() {
+    console.log("GitHub App 설치 팝업 열기 시작");
+    
+    try {
+        const baseUrl = window.location.protocol + "//" + window.location.host;
+        const installUrl = baseUrl + "/InsWebApp/github/app/install";
+        
+        console.log("GitHub App 설치 URL:", installUrl);
+        
+        // 설치 안내 메시지 표시
+        const confirmMessage = "GitHub 저장소에 접근하려면 GitHub App을 설치해야 합니다.\n\n" +
+                             "확인을 누르면 GitHub App 설치 페이지가 열립니다.\n" +
+                             "설치 완료 후 이 창으로 다시 돌아와주세요.";
+        
+        if (confirm(confirmMessage)) {
+            // GitHub App 설치 팝업 열기
+            const installWindow = window.open(
+                installUrl,
+                'github_app_install_popup',
+                'width=900,height=700,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
+            );
+            
+            if (installWindow) {
+                console.log("GitHub App 설치 팝업 열림");
+                
+                // 설치 완료 감지를 위한 주기적 체크 시작
+                scwin.startInstallationCheckLoop();
+                
+                // 설치 안내 UI 표시
+                scwin.showAppInstallPendingUI();
+            } else {
+                console.error("팝업이 차단되었거나 열 수 없음");
+                $c.win.alert("팝업이 차단되었습니다. 팝업 차단을 해제하고 다시 시도해주세요.");
+            }
+        }
+    } catch (error) {
+        console.error("GitHub App 설치 팝업 열기 실패:", error);
+        $c.win.alert("GitHub App 설치 페이지를 열 수 없습니다: " + error.message);
+    }
+};
+
+// 설치 완료 확인 루프 시작
+scwin.startInstallationCheckLoop = function() {
+    console.log("Installation 완료 확인 루프 시작");
+    
+    // 기존 체크 루프가 있다면 정리
+    if (scwin.installationCheckInterval) {
+        clearInterval(scwin.installationCheckInterval);
+    }
+    
+    // 5초마다 설치 상태 확인
+    scwin.installationCheckInterval = setInterval(function() {
+        console.log("Installation ID 확인 중...");
+        
+        $.ajax({
+            url: "/InsWebApp/github/connection/status.pwkjson",
+            type: "GET",
+            dataType: "json",
+            success: function(result) {
+                if (result && result.status === "fully_connected") {
+                    console.log("GitHub App 설치 완료 감지!");
+                    
+                    // 체크 루프 정리
+                    clearInterval(scwin.installationCheckInterval);
+                    scwin.installationCheckInterval = null;
+                    
+                    // 완전 연동 상태 처리
+                    scwin.handleFullyConnected(result);
+                    
+                    // 성공 메시지
+                    $c.win.alert("GitHub App 설치가 완료되었습니다!");
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("Installation 확인 중 오류:", error);
+            }
+        });
+    }, 5000); // 5초 간격
+    
+    // 5분 후 자동 정리 (타임아웃)
+    setTimeout(function() {
+        if (scwin.installationCheckInterval) {
+            console.log("Installation 확인 타임아웃");
+            clearInterval(scwin.installationCheckInterval);
+            scwin.installationCheckInterval = null;
+        }
+    }, 300000); // 5분
+};
+
+// App 설치 대기 UI 표시
+scwin.showAppInstallPendingUI = function() {
+    console.log("GitHub App 설치 대기 UI 표시");
+    
+    // 새로운 섹션 관리 함수 사용
+    scwin.showAppInstallPendingSection();
+};
+
+// ==================== UI 섹션 관리 함수들 ====================
+
+// 모든 섹션 숨기기 (완전 분리)
+scwin.hideAllSections = function() {
+    console.log("모든 UI 섹션 숨기는 중...");
+    
+    try {
+        // 1. 로딩 오버레이 숨기기
+        scwin.setLoading(false);
+        
+        // 2. 로그인 필요 섹션 숨기기
+        var loginSection = $p.getComponentById("login_required_section");
+        if (loginSection) {
+            loginSection.addClass("hidden");
+            loginSection.setStyle("display", "none");
+        }
+        
+        // 3. 메인 GitHub 컨텐츠 숨기기
+        var mainContent = $p.getComponentById("github_main_content");
+        if (mainContent) {
+            mainContent.setStyle("display", "none");
+        }
+        
+        // 4. 저장소 관련 섹션들 숨기기
+        var repoLoadingSection = $p.getComponentById("repo_loading_section");
+        if (repoLoadingSection) {
+            repoLoadingSection.setStyle("display", "none");
+        }
+        
+        var repoEmptySection = $p.getComponentById("repo_empty_section");
+        if (repoEmptySection) {
+            repoEmptySection.setStyle("display", "none");
+        }
+        
+        var repoCardsContainer = $p.getComponentById("repo_cards_container");
+        if (repoCardsContainer) {
+            repoCardsContainer.setStyle("display", "none");
+        }
+        
+        // 5. 브랜치 관리 섹션 제거 (동적 생성된 요소)
+        var branchSection = $p.getComponentById("branch_management_section");
+        if (branchSection) {
+            branchSection.remove();
+        }
+        
+        console.log("모든 UI 섹션 숨기기 완료");
+    } catch (error) {
+        console.error("UI 섹션 숨기기 중 오류:", error);
+    }
+};
+
+// 로그인 필요 섹션만 표시
+scwin.showLoginRequiredSection = function() {
+    console.log("로그인 필요 UI 표시");
+    
+    // 모든 섹션 숨기기
+    scwin.hideAllSections();
+    
+    // 로그인 섹션만 표시
+    var loginSection = $p.getComponentById("login_required_section");
+    if (loginSection) {
+        loginSection.removeClass("hidden");
+        loginSection.setStyle("display", "block");
+    }
+    
+    // 상태 업데이트
+    dm_auth_status.set("needsLogin", "true");
+    dm_ui_state.set("currentView", "login");
+};
+
+// 저장소 선택 섹션 표시
+scwin.showRepositorySelectionSection = function() {
+    console.log("저장소 선택 UI 표시");
+    
+    // 모든 섹션 숨기기
+    scwin.hideAllSections();
+    
+    // 메인 컨텐츠와 저장소 카드 컨테이너 표시
+    var mainContent = $p.getComponentById("github_main_content");
+    if (mainContent) {
+        mainContent.setStyle("display", "block");
+    }
+    
+    var repoCardsContainer = $p.getComponentById("repo_cards_container");
+    if (repoCardsContainer) {
+        repoCardsContainer.setStyle("display", "block");
+    }
+    
+    // 상태 업데이트
+    dm_ui_state.set("currentView", "repositories");
+    dm_auth_status.set("needsLogin", "false");
+};
+
+// 브랜치 관리 섹션 표시
+scwin.showBranchManagementSection = function(repositoryData) {
+    console.log("브랜치 관리 UI 표시");
+    
+    // 모든 섹션 숨기기
+    scwin.hideAllSections();
+    
+    // 메인 컨텐츠 표시
+    var mainContent = $p.getComponentById("github_main_content");
+    if (mainContent) {
+        mainContent.setStyle("display", "block");
+    }
+    
+    // 브랜치 관리 섹션 생성 (기존 로직 활용)
+    scwin.createBranchManagementUI(repositoryData);
+    
+    // 상태 업데이트
+    dm_ui_state.set("currentView", "branches");
+    dm_auth_status.set("needsLogin", "false");
+};
+
+// App 설치 대기 섹션 표시
+scwin.showAppInstallPendingSection = function() {
+    console.log("GitHub App 설치 대기 UI 표시");
+    
+    // 모든 섹션 숨기기
+    scwin.hideAllSections();
+    
+    // 로딩 UI로 설치 대기 상태 표시
+    scwin.setLoading(true, "GitHub App 설치를 완료해주세요.\n\n설치 완료 후 자동으로 연결됩니다.");
+};
+
+// ==================== 통합 연결 상태 체크 ====================
+
+// 통합 연결 상태 체크 (섹션 완전 분리 적용)
+scwin.checkGitHubConnectionStatus = function() {
+    console.log("통합 GitHub 연결 상태 확인");
+    
+    // 임시 로딩 표시 (섹션 숨기지 않음)
+    scwin.setLoading(true, "연결 상태 확인 중...");
+    
+    $.ajax({
+        url: "/InsWebApp/github/connection/status.pwkjson",
+        type: "GET",
+        dataType: "json",
+        success: function(result) {
+            console.log("GitHub 연결 상태:", result);
+            
+            if (result && result.status) {
+                switch (result.status) {
+                    case "oauth_required":
+                        console.log("OAuth 인증 필요");
+                        scwin.showLoginRequiredSection();
+                        break;
+                        
+                    case "app_install_required":
+                        console.log("GitHub App 설치 필요 - 자동 팝업");
+                        scwin.handleAppInstallRequired(result);
+                        break;
+                        
+                    case "fully_connected":
+                        console.log("완전 연동 완료");
+                        scwin.handleFullyConnected(result);
+                        break;
+                        
+                    default:
+                        console.warn("알 수 없는 상태:", result.status);
+                        scwin.showLoginRequiredSection();
+                }
+            } else {
+                console.error("잘못된 응답 형식:", result);
+                scwin.showLoginRequiredSection();
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("연결 상태 확인 실패:", status, error);
+            scwin.showLoginRequiredSection();
+        }
+    });
 };
 
 // 인증 상태 확인 완료 핸들러
@@ -647,41 +963,9 @@ scwin.redirectToGitHubLogin = function () {
                 params.push("projectId=" + encodeURIComponent(scwin.currentProjectData.projectId));
                 console.log("프로젝트 ID를 OAuth에 포함:", scwin.currentProjectData.projectId);
             }
-            if (scwin.currentProjectData.userId) {
-                params.push("userId=" + encodeURIComponent(scwin.currentProjectData.userId));
-                console.log("사용자 ID를 OAuth에 포함:", scwin.currentProjectData.userId);
-            }
         }
 
-        // WebSquare에서 추가 사용자 정보 가져오기 시도
-        if (!scwin.currentProjectData || !scwin.currentProjectData.userId) {
-            try {
-                // 다양한 방법으로 사용자 ID 가져오기 시도
-                let userId = null;
-
-                // WebSquare 파라미터에서 시도
-                try {
-                    userId = $p.getParameter("userId") || $p.getParameter("user_id");
-                } catch (e) { }
-
-                // 세션 스토리지에서 시도
-                if (!userId && typeof sessionStorage !== 'undefined') {
-                    userId = sessionStorage.getItem("userId") || sessionStorage.getItem("userEmail");
-                }
-
-                // 로컬 스토리지에서 시도
-                if (!userId && typeof localStorage !== 'undefined') {
-                    userId = localStorage.getItem("userId") || localStorage.getItem("userEmail");
-                }
-
-                if (userId && userId.trim() && userId !== "user01") {
-                    params.push("userId=" + encodeURIComponent(userId));
-                    console.log("추가로 찾은 사용자 ID를 OAuth에 포함:", userId);
-                }
-            } catch (e) {
-                console.log("추가 사용자 ID 찾기 실패:", e);
-            }
-        }
+        // 백엔드에서 세션의 실제 사용자 ID를 사용하므로 프론트에서 userId 파라미터 불필요
 
         // URL 파라미터 추가
         if (params.length > 0) {
@@ -869,33 +1153,10 @@ scwin.testGitHubController = function () {
 
 // 로그인 필요 UI 표시
 scwin.showLoginRequiredUI = function () {
-    dm_auth_status.set("needsLogin", "true");
-    dm_auth_status.set("isAuthenticated", "false");
-
-    try {
-        // 메인 컨텐츠 숨기기
-        var mainContent = $p.getComponentById("github_main_content");
-        if (mainContent) {
-            mainContent.hide();
-        }
-
-        // 로그인 필요 섹션 표시
-        var loginSection = $p.getComponentById("login_required_section");
-        if (loginSection) {
-            loginSection.show();
-            loginSection.removeClass("hidden");
-        } else {
-            // 로그인 필요 섹션이 없으면 동적으로 생성
-            scwin.createLoginRequiredSection();
-        }
-    } catch (e) {
-        console.error("UI 업데이트 실패:", e);
-        // 동적으로 로그인 UI 생성
-        scwin.createLoginRequiredSection();
-    }
-
-    console.log("로그인 필요 UI 표시됨");
+    console.log("로그인 필요 UI 표시 (기존 함수)");
     
+    // 새로운 섹션 관리 함수 사용
+    scwin.showLoginRequiredSection();
 };
 
 // 로그인 필요 섹션 동적 생성
@@ -1085,26 +1346,14 @@ scwin.createLoginRequiredSection = function () {
 
 // 인증된 UI 표시
 scwin.showAuthenticatedUI = function () {
+    console.log("인증된 UI 표시 (기존 함수)");
+    
+    // 상태 업데이트
     dm_auth_status.set("needsLogin", "false");
     dm_auth_status.set("isAuthenticated", "true");
-
-    try {
-        var loginSection = $p.getComponentById("login_required_section");
-        if (loginSection) {
-            loginSection.hide();
-            loginSection.addClass("hidden");
-        }
-
-        var mainContent = $p.getComponentById("github_main_content");
-        if (mainContent) {
-            mainContent.show();
-        }
-    } catch (e) {
-        console.error("UI 업데이트 실패:", e);
-    }
-
-    console.log("인증된 사용자 UI 표시");
     
+    // 저장소 선택 섹션 표시
+    scwin.showRepositorySelectionSection();
 };
 
 // GitHub 레포지토리 목록 로드 (프론트엔드에서 직접 GitHub API 호출)
@@ -1184,6 +1433,9 @@ scwin.loadConnectedRepositories = function () {
 
                     // 레포지토리 개수 표시 업데이트
                     scwin.updateRepositoryCount(repositories.length);
+                    
+                    // 저장소 목록 화면에서는 스크롤 숨김
+                    scwin.setPopupScrollMode('hidden');
                 },
                 error: function (xhr, status, error) {
                     scwin.setLoading(false);
@@ -1250,6 +1502,7 @@ scwin.updateRepositoryDisplay = function () {
 
 // 레포지토리 카드 렌더링 (웹스퀘어 방식)
 scwin.renderRepositoryCards = function (repositories) {
+    debugger;
     try {
         // 카드 컨테이너 찾기
         var cardsContainer = $p.getComponentById("repo_cards_container");
@@ -1344,6 +1597,10 @@ scwin.renderRepositoryCards = function (repositories) {
         // 기존 카드 제거
         scwin.clearRepositoryCards();
 
+        // 주의사항 문구 동적 생성 (카드 컨테이너의 부모에 생성)
+        var parentContainer = cardsContainer.getParent();
+        scwin.createAdminConnectionWarning(parentContainer);
+
         // 각 레포지토리를 카드로 렌더링
         for (var i = 0; i < repositories.length; i++) {
             var repo = repositories[i];
@@ -1398,12 +1655,39 @@ scwin.clearRepositoryCards = function () {
     }
 };
 
+// 관리자 연결 필요 주의사항 문구 동적 생성
+scwin.createAdminConnectionWarning = function (container) {
+    try {
+        // 기존 주의사항 문구가 있으면 제거
+        var existingWarning = $p.getComponentById("admin_connection_warning");
+        if (existingWarning) {
+            existingWarning.remove();
+        }
+
+        // 간단한 주의사항 텍스트 생성 (기존 정적 형태와 동일하게)
+        var warningSpan = $p.dynamicCreate(
+            "admin_connection_warning",
+            "span",
+            {
+                style: "display: block !important; margin-bottom: 10px !important; padding: 8px 12px !important; background-color: #fff3cd !important; border-left: 4px solid #ffc107 !important; color: #856404 !important; font-size: 14px !important; width: auto !important; border-radius: 0 !important; box-shadow: none !important;",
+                className: "admin-connection-warning"
+            },
+            container
+        );
+        warningSpan.setValue("GitHub 저장소에 자동으로 팀원을 초대하려면, 해당 저장소의 관리자(Admin 권한)가 먼저 연결해야 합니다.");
+
+        console.log("관리자 연결 주의사항 문구 동적 생성 완료");
+    } catch (e) {
+        console.error("주의사항 문구 생성 실패:", e);
+    }
+};
+
 // 저장소 카드 생성 (웹스퀘어 방식)
 scwin.createRepositoryCard = function (repo, index, container) {
     try {
         var cardId = "repo_card_" + index;
         var isPrivate = repo.private || false;
-        var visibilityText = isPrivate ? "[Private]" : "[Public]";
+        var visibilityText = isPrivate ? "Private" : "Public";
         var visibilityClass = isPrivate ? "private" : "public";
         var language = repo.language || "Unknown";
         var stars = repo.stargazers_count || 0;
@@ -1574,12 +1858,12 @@ scwin.createRepositoryCard = function (repo, index, container) {
             footerGroup
         );
 
-        // 선택 버튼
+        // 선택 버튼 (로그아웃 버튼 색상 적용)
         var selectBtn = $p.dynamicCreate(
             cardId + "_select_btn",
             "trigger",
             {
-                style: "padding: 6px 12px; background-color: #007bff; border: 1px solid #007bff; border-radius: 6px; font-size: 12px; color: white; cursor: pointer;",
+                style: "padding: 6px 12px; background-color: #ffb823; border: 1px solid #ffb823 border-radius: 6px; font-size: 12px; color: #000000; cursor: pointer;",
                 className: "repo-action-btn primary"
             },
             actionsGroup
@@ -2047,6 +2331,12 @@ scwin.showBranchManagement = function (repoInfo) {
         // 저장소 정보 정규화 (데이터베이스 VO와 선택된 저장소 데이터 통일)
         var normalizedRepoInfo = scwin.normalizeRepositoryInfo(repoInfo);
 
+        // 주의사항 문구 제거 (브랜치 관리 화면에서는 불필요)
+        var existingWarning = $p.getComponentById("admin_connection_warning");
+        if (existingWarning) {
+            existingWarning.remove();
+        }
+
         // 저장소 목록 숨기기
         var cardsContainer = $p.getComponentById("repo_cards_container");
         if (cardsContainer) {
@@ -2059,6 +2349,8 @@ scwin.showBranchManagement = function (repoInfo) {
         // 브랜치 목록 로드
         scwin.loadBranches(normalizedRepoInfo);
         
+        // 브랜치 관리 화면에서는 스크롤 활성화
+        scwin.setPopupScrollMode('auto');
 
     } catch (e) {
         console.error("브랜치 관리 화면 표시 실패:", e);
@@ -2147,53 +2439,38 @@ scwin.showBranchManagementSection = function (repoInfo) {
         );
         titleSpan.setValue(repoInfo.owner + "/" + repoInfo.name);
 
-        // 뒤로가기 버튼
+        // 뒤로가기 버튼 (검정색)
         var backBtn = $p.dynamicCreate(
             "back_to_repos_btn",
             "trigger",
             {
-                style: "padding: 8px 16px; background-color: #6c757d; border: 1px solid #6c757d; border-radius: 6px; color: white; cursor: pointer;",
+                style: "padding: 8px 16px; background-color: #000000; border: 1px solid #000000; border-radius: 6px; color: white; cursor: pointer;",
                 className: "back-btn"
             },
             headerGroup
         );
-        backBtn.setValue("← 저장소 목록");
+        backBtn.setValue("저장소 목록");
         backBtn.bind("onclick", function () {
             scwin.showRepositoryList();
         });
 
-        // 브랜치 액션 버튼 그룹
+        // 브랜치 액션 버튼 그룹 (새로고침 왼쪽, 나머지 오른쪽)
         var actionGroup = $p.dynamicCreate(
             "branch_actions",
             "group",
             {
-                style: "display: flex; gap: 12px; margin-bottom: 20px;",
+                style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;",
                 className: "branch-actions"
             },
             branchSection
         );
 
-        // 브랜치 생성 버튼
-        var createBtn = $p.dynamicCreate(
-            "create_branch_btn",
-            "trigger",
-            {
-                style: "padding: 10px 20px; background-color: #28a745; border: 1px solid #28a745; border-radius: 6px; color: white; cursor: pointer;",
-                className: "create-branch-btn"
-            },
-            actionGroup
-        );
-        createBtn.setValue("+ 브랜치 생성");
-        createBtn.bind("onclick", function () {
-            scwin.showCreateBranchDialog(repoInfo);
-        });
-
-        // 새로고침 버튼
+        // 새로고침 버튼 (녹색) - 왼쪽에 배치
         var refreshBtn = $p.dynamicCreate(
             "refresh_branches_btn",
             "trigger",
             {
-                style: "padding: 10px 20px; background-color: #17a2b8; border: 1px solid #17a2b8; border-radius: 6px; color: white; cursor: pointer;",
+                style: "padding: 10px 20px; background-color: #28a745; border: 1px solid #28a745; border-radius: 6px; color: white; cursor: pointer;",
                 className: "refresh-branches-btn"
             },
             actionGroup
@@ -2201,6 +2478,80 @@ scwin.showBranchManagementSection = function (repoInfo) {
         refreshBtn.setValue("새로고침");
         refreshBtn.bind("onclick", function () {
             scwin.loadBranches(repoInfo);
+        });
+
+        // 오른쪽 요소들을 위한 그룹
+        var rightGroup = $p.dynamicCreate(
+            "branch_right_actions",
+            "group",
+            {
+                style: "display: flex; align-items: center; gap: 12px;",
+                className: "branch-right-actions"
+            },
+            actionGroup
+        );
+
+        // 브랜치명 라벨
+        var branchNameLabel = $p.dynamicCreate(
+            "branch_name_label",
+            "span",
+            {
+                style: "font-weight: 500; color: #333;",
+                className: "branch-name-label"
+            },
+            rightGroup
+        );
+        branchNameLabel.setValue("브랜치명:");
+
+        // 브랜치명 입력 필드
+        var branchNameInput = $p.dynamicCreate(
+            "branch_name_input",
+            "input",
+            {
+                style: "padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; width: 150px; margin-left: 8px;",
+                className: "branch-name-input"
+            },
+            rightGroup
+        );
+
+        // 기준브랜치 라벨
+        var baseBranchLabel = $p.dynamicCreate(
+            "base_branch_label",
+            "span",
+            {
+                style: "margin-left: 12px; font-weight: 500; color: #333;",
+                className: "base-branch-label"
+            },
+            rightGroup
+        );
+        baseBranchLabel.setValue("기준브랜치:");
+
+        // 기준브랜치 입력 필드
+        var baseBranchInput = $p.dynamicCreate(
+            "base_branch_input",
+            "input",
+            {
+                style: "padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; width: 120px; margin-left: 8px;",
+                className: "base-branch-input"
+            },
+            rightGroup
+        );
+        // 기본값으로 저장소의 기본 브랜치 설정
+        baseBranchInput.setValue(repoInfo.defaultBranch || "main");
+
+        // 브랜치 생성 버튼 (황금색)
+        var createBtn = $p.dynamicCreate(
+            "create_branch_btn",
+            "trigger",
+            {
+                style: "padding: 10px 20px; background-color: #ffb823; border: 1px solid rgb(255, 184, 35); border-radius: 6px; color: #000000; cursor: pointer; margin-left: 12px;",
+                className: "create-branch-btn"
+            },
+            rightGroup
+        );
+        createBtn.setValue("브랜치 생성");
+        createBtn.bind("onclick", function () {
+            scwin.createBranchFromInput(repoInfo);
         });
 
         // 브랜치 목록 컨테이너
@@ -2226,26 +2577,33 @@ scwin.showBranchManagementSection = function (repoInfo) {
 
 // 저장소 목록으로 돌아가기
 scwin.showRepositoryList = function () {
+    console.log('저장소 목록으로 이동 및 데이터 새로고침 시작');
+    
     try {
-        // 브랜치 관리 섹션 숨기기
-        var branchSection = $p.getComponentById("branch_management_section");
-        if (branchSection) {
-            branchSection.remove();
-        }
+        // 1. 저장소 선택 섹션으로 완전 전환 (새로운 섹션 관리 함수 사용)
+        scwin.showRepositorySelectionSection();
 
-        // 저장소 목록 표시
-        var cardsContainer = $p.getComponentById("repo_cards_container");
-        if (cardsContainer) {
-            cardsContainer.show();
-        }
-
-        // 현재 저장소 정보 초기화
+        // 2. 현재 저장소 정보 초기화
         scwin.currentRepository = null;
+        dm_ui_state.set("selectedRepo", "");
 
-        console.log('저장소 목록으로 돌아가기 완료');
+        // 3. 저장소 데이터 새로 요청 (자동 갱신)
+        console.log('저장소 데이터 새로고침 요청');
+        scwin.loadConnectedRepositories();
 
+        // 저장소 목록 화면에서는 스크롤 숨김
+        scwin.setPopupScrollMode('hidden');
+
+        console.log('저장소 목록으로 이동 및 데이터 새로고침 완료');
     } catch (e) {
-        console.error("저장소 목록 표시 실패:", e);
+        console.error("저장소 목록 이동 및 새로고침 실패:", e);
+        
+        // 오류 시 기본 저장소 선택 화면으로라도 전환
+        try {
+            scwin.showRepositorySelectionSection();
+        } catch (fallbackError) {
+            console.error("기본 화면 전환도 실패:", fallbackError);
+        }
     }
 };
 
@@ -2560,12 +2918,48 @@ scwin.createBranchCard = function (branch, index, container) {
             headerGroup
         );
 
+        // 삭제 버튼을 헤더의 오른쪽으로 이동 (기본 브랜치가 아닌 경우) - 큰 크기
+        if (!isDefault) {
+            var deleteBtn = $p.dynamicCreate(
+                cardId + "_delete",
+                "trigger",
+                {
+                    style: "padding: 6px 12px; background-color: #dc3545; border: 1px solid #dc3545; border-radius: 4px; color: white; cursor: pointer;",
+                    className: "delete-branch-btn"
+                },
+                statusGroup
+            );
+            deleteBtn.setValue("삭제");
+            deleteBtn.bind("onclick", function () {
+                // deleteBranch 함수 호출 대신 직접 구현
+                if (confirm("정말로 '" + branchName + "' 브랜치를 삭제하시겠습니까?")) {
+                    console.log('브랜치 삭제 실행:', branchName);
+                    
+                    var repoInfo = scwin.currentRepository;
+                    if (!repoInfo) {
+                        $c.win.alert("저장소 정보를 찾을 수 없습니다.");
+                        return;
+                    }
+                    
+                    // 브랜치 삭제 데이터맵 설정
+                    console.log("브랜치 삭제 데이터맵 설정");
+                    dm_delete_branch.set("owner", repoInfo.owner);
+                    dm_delete_branch.set("repo", repoInfo.name);
+                    dm_delete_branch.set("branchName", branchName);
+                    
+                    console.log("브랜치 삭제 서브미션 실행");
+                    $p.executeSubmission("sbm_deleteBranch");
+                }
+            });
+        }
+
+        // 기본 뱃지를 헤더의 오른쪽으로 이동 (기본 브랜치인 경우) - 큰 크기
         if (isDefault) {
             var defaultBadge = $p.dynamicCreate(
                 cardId + "_default",
                 "span",
                 {
-                    style: "padding: 4px 8px; background-color: #28a745; color: white; border-radius: 4px; font-size: 12px;",
+                    style: "padding: 6px 12px; background-color: #ffb823; color: #000000; border-radius: 4px;",
                     className: "default-badge"
                 },
                 statusGroup
@@ -2608,50 +3002,7 @@ scwin.createBranchCard = function (branch, index, container) {
         );
         commitSpan.setValue("최신 커밋: " + commitSha.substring(0, 7));
 
-        // 액션 버튼
-        if (!isDefault) {
-            var actionGroup = $p.dynamicCreate(
-                cardId + "_actions",
-                "group",
-                {
-                    style: "display: flex; gap: 8px;",
-                    className: "branch-actions"
-                },
-                cardGroup
-            );
-
-            var deleteBtn = $p.dynamicCreate(
-                cardId + "_delete",
-                "trigger",
-                {
-                    style: "padding: 6px 12px; background-color: #dc3545; border: 1px solid #dc3545; border-radius: 4px; color: white; cursor: pointer;",
-                    className: "delete-branch-btn"
-                },
-                actionGroup
-            );
-            deleteBtn.setValue("삭제");
-            deleteBtn.bind("onclick", function () {
-                // deleteBranch 함수 호출 대신 직접 구현
-                if (confirm("정말로 '" + branchName + "' 브랜치를 삭제하시겠습니까?")) {
-                    console.log('브랜치 삭제 실행:', branchName);
-                    
-                    var repoInfo = scwin.currentRepository;
-                    if (!repoInfo) {
-                        $c.win.alert("저장소 정보를 찾을 수 없습니다.");
-                        return;
-                    }
-                    
-                    // 브랜치 삭제 데이터맵 설정
-                    console.log("브랜치 삭제 데이터맵 설정");
-                    dm_delete_branch.set("owner", repoInfo.owner);
-                    dm_delete_branch.set("repo", repoInfo.name);
-                    dm_delete_branch.set("branchName", branchName);
-                    
-                    console.log("브랜치 삭제 서브미션 실행");
-                    $p.executeSubmission("sbm_deleteBranch");
-                }
-            });
-        }
+        // 하단 액션 그룹 제거 - 모든 버튼/뱃지가 헤더로 이동
 
         console.log("브랜치 카드 생성 완료:", branchName);
 
@@ -2715,6 +3066,116 @@ scwin.showCreateBranchDialog = function (repoInfo) {
     } catch (e) {
         console.error("브랜치 생성 다이얼로그 표시 실패:", e);
         $c.win.alert("브랜치 생성 다이얼로그 오류: " + e.message);
+    }
+};
+
+// 입력 필드에서 브랜치 생성
+scwin.createBranchFromInput = function (repoInfo) {
+    try {
+        console.log("입력 필드에서 브랜치 생성 시작, repoInfo:", repoInfo);
+        
+        // 저장소 정보 검증
+        if (!repoInfo) {
+            console.error("저장소 정보가 없습니다");
+            $c.win.alert("저장소 정보를 찾을 수 없습니다. 저장소를 먼저 선택해주세요.");
+            return;
+        }
+        
+        if (!repoInfo.owner || !repoInfo.name) {
+            console.error("저장소 정보가 불완전합니다:", repoInfo);
+            $c.win.alert("저장소 정보가 불완전합니다.\n\n저장소 소유자: " + (repoInfo.owner || "없음") + "\n저장소 이름: " + (repoInfo.name || "없음"));
+            return;
+        }
+        
+        console.log("저장소 정보 검증 완료 - " + repoInfo.owner + "/" + repoInfo.name);
+        
+        // 입력 필드에서 브랜치명 가져오기
+        var branchNameInput = $p.getComponentById("branch_name_input");
+        if (!branchNameInput) {
+            console.error("브랜치명 입력 필드를 찾을 수 없습니다");
+            $c.win.alert("브랜치명 입력 필드를 찾을 수 없습니다.");
+            return;
+        }
+        
+        var branchName = branchNameInput.getValue();
+        if (!branchName || !branchName.trim()) {
+            console.log("브랜치명이 입력되지 않음");
+            $c.win.alert("브랜치명을 입력해주세요.");
+            return;
+        }
+        
+        // 입력 필드에서 기준 브랜치명 가져오기
+        var baseBranchInput = $p.getComponentById("base_branch_input");
+        if (!baseBranchInput) {
+            console.error("기준 브랜치 입력 필드를 찾을 수 없습니다");
+            $c.win.alert("기준 브랜치 입력 필드를 찾을 수 없습니다.");
+            return;
+        }
+        
+        var fromBranch = baseBranchInput.getValue();
+        if (!fromBranch || !fromBranch.trim()) {
+            console.log("기준 브랜치명이 입력되지 않음");
+            $c.win.alert("기준 브랜치명을 입력해주세요.");
+            return;
+        }
+        
+        console.log("브랜치 생성 실행 - 새 브랜치: " + branchName.trim() + ", 기준: " + fromBranch.trim());
+        
+        // 데이터맵 설정
+        console.log("데이터맵 설정 시작");
+        dm_create_branch.set("owner", repoInfo.owner);
+        dm_create_branch.set("repo", repoInfo.name);
+        dm_create_branch.set("branchName", branchName.trim());
+        dm_create_branch.set("fromBranch", fromBranch.trim());
+        
+        console.log("데이터맵 설정 완료:", {
+            owner: dm_create_branch.get("owner"),
+            repo: dm_create_branch.get("repo"),
+            branchName: dm_create_branch.get("branchName"),
+            fromBranch: dm_create_branch.get("fromBranch")
+        });
+        
+        // 입력 필드 초기화
+        branchNameInput.setValue("");
+        baseBranchInput.setValue(repoInfo.defaultBranch || "main");
+        
+        console.log("서브미션 실행");
+        $p.executeSubmission("sbm_createBranch");
+        
+    } catch (e) {
+        console.error("입력 필드 브랜치 생성 실패:", e);
+        $c.win.alert("브랜치 생성 중 오류가 발생했습니다: " + e.message);
+    }
+};
+
+// 팝업 스크롤 모드 동적 변경
+scwin.setPopupScrollMode = function(mode) {
+    try {
+        // 팝업 컨테이너 찾기
+        var popupElement = document.getElementById('mf_wfr_mainContent_github_manager_popup_wframe');
+        
+        if (!popupElement) {
+            console.warn('팝업 요소를 찾을 수 없습니다. ID: mf_wfr_mainContent_github_manager_popup_wframe');
+            return;
+        }
+
+        console.log('팝업 스크롤 모드 변경:', mode);
+        
+        if (mode === 'auto') {
+            // 브랜치 관리 화면: 스크롤 활성화
+            popupElement.style.overflow = 'auto';
+            console.log('브랜치 관리 화면 - 스크롤 활성화');
+        } else if (mode === 'hidden') {
+            // 저장소 목록 화면: 스크롤 숨김
+            popupElement.style.overflow = 'hidden';
+            console.log('저장소 목록 화면 - 스크롤 숨김');
+        }
+        
+        // 변경 확인
+        console.log('현재 overflow 스타일:', popupElement.style.overflow);
+        
+    } catch (e) {
+        console.error('팝업 스크롤 모드 변경 실패:', e);
     }
 };
 
@@ -3399,39 +3860,7 @@ scwin.testGitHubAuthStart = function () {
             params.push("projectId=" + encodeURIComponent(scwin.currentProjectData.projectId));
             console.log("프로젝트 ID를 OAuth에 포함:", scwin.currentProjectData.projectId);
         }
-        if (scwin.currentProjectData && scwin.currentProjectData.userId) {
-            params.push("userId=" + encodeURIComponent(scwin.currentProjectData.userId));
-            console.log("사용자 ID를 OAuth에 포함:", scwin.currentProjectData.userId);
-        }
-
-        // 추가 사용자 ID 찾기 (프로젝트 데이터에 없는 경우)
-        if (!scwin.currentProjectData || !scwin.currentProjectData.userId) {
-            try {
-                var userId = null;
-
-                // WebSquare 파라미터에서 시도
-                try {
-                    userId = $p.getParameter("userId") || $p.getParameter("user_id");
-                } catch (e) { }
-
-                // 세션 스토리지에서 시도
-                if (!userId && typeof sessionStorage !== 'undefined') {
-                    userId = sessionStorage.getItem("userId") || sessionStorage.getItem("userEmail");
-                }
-
-                // 로컬 스토리지에서 시도
-                if (!userId && typeof localStorage !== 'undefined') {
-                    userId = localStorage.getItem("userId") || localStorage.getItem("userEmail");
-                }
-
-                if (userId && userId.trim() && userId !== "user01") {
-                    params.push("userId=" + encodeURIComponent(userId));
-                    console.log("WebSquare에서 추가로 찾은 사용자 ID를 OAuth에 포함:", userId);
-                }
-            } catch (e) {
-                console.log("WebSquare 추가 사용자 ID 찾기 실패:", e);
-            }
-        }
+        // 백엔드에서 세션의 실제 사용자 ID를 사용하므로 프론트에서 userId 파라미터 불필요
 
         if (params.length > 0) {
             authUrl += "?" + params.join("&");
@@ -3693,7 +4122,7 @@ scwin.getCurrentProjectId = function () {
 				width: 100%;
 				min-height: 600px;
 				max-height: none;
-				background-color: #f8f9fa;
+				background-color: white;
 				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 				line-height: 1.6;
 				color: #333;
@@ -3876,23 +4305,22 @@ scwin.getCurrentProjectId = function () {
 
 			.github-main {
 				flex: 1;
-				padding: 24px;
+				padding: 0;
 				overflow-y: auto;
-				background-color: #f8f9fa;
+				background-color: white;
 			}
 
 			.card {
 				background: white;
 				border-radius: 8px;
-				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 				margin-bottom: 24px;
 				overflow: hidden;
 			}
 
 			.card-header {
 				padding: 20px 24px;
-				border-bottom: 1px solid #e9ecef;
-				background-color: #f8f9fa;
+				border-top: 1px solid #e9ecef;
+				background-color: white;
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
@@ -3901,7 +4329,7 @@ scwin.getCurrentProjectId = function () {
 			}
 
 			.card-body {
-				padding: 24px;
+				padding: 10px 12px 24px 24px;
 			}
 
 			.card-title {
@@ -4263,7 +4691,29 @@ scwin.getCurrentProjectId = function () {
 					padding: 16px;
 				}
 			}
-		]]></style>
+
+            #mf_wfr_mainContent_github_manager_popup_wframe_branch_management_section {
+                width: 95% !important;
+                padding: 0px !important;
+                margin-left: 20px !important;
+                margin-bottom: 0px !important;
+                box-shadow: none !important;
+            }
+
+            #mf_wfr_mainContent_github_manager_popup_wframe_repo_cards_container {
+                max-height: 550px !important;
+            }
+            #mf_wfr_mainContent_github_manager_popup_wframe_branch_header{
+                padding-bottom: 10px !important;
+                    border-bottom: 1px solid rgb(233, 236, 239);
+            }
+            #mf_wfr_mainContent_github_manager_popup_wframe_wq_uuid_435 {
+                border-top: 1px solid rgb(233, 236, 239);
+            }
+            #mf_wfr_mainContent_github_manager_popup_wframe {
+                /* height: auto !important; */
+                overflow: auto;
+            }]]></style>
 	</head>
 	<body ev:onpageload="scwin.onpageload">
 		<xf:group id="loading-overlay" class="loading-overlay">
@@ -4313,30 +4763,10 @@ scwin.getCurrentProjectId = function () {
 		</xf:group>
 
 		<xf:group id="github_main_content" class="github-manager-container">
-			<xf:group class="github-header">
-				<xf:group>
-					<w2:span class="github-title">GitHub Repository Manager</w2:span>
-					<w2:span id="repo-count-info" class="repo-count-info">연결된 레포지토리를 로딩 중...</w2:span>
-				</xf:group>
-				<xf:group class="header-actions">
-					<xf:trigger type="button" class="btn btn-secondary" ev:onclick="scwin.checkServiceStatus_onclick">
-						<xf:label>서비스 상태</xf:label>
-					</xf:trigger>
-					<xf:trigger type="button" class="btn btn-secondary" ev:onclick="scwin.closeWindow_onclick">
-						<xf:label>닫기</xf:label>
-					</xf:trigger>
-				</xf:group>
-			</xf:group>
 
 			<xf:group class="github-content">
 				<xf:group class="github-main">
 					<xf:group class="card">
-						<xf:group class="card-header">
-							<w2:span class="card-title">GitHub 레포지토리 목록</w2:span>
-							<xf:trigger type="button" class="btn btn-primary" ev:onclick="scwin.loadConnectedRepositories">
-								<xf:label>새로고침</xf:label>
-							</xf:trigger>
-						</xf:group>
 						<xf:group class="card-body">
 							<!-- 로딩 메시지 -->
 							<xf:group id="repo_loading_section" class="loading-section" style="display: none;">

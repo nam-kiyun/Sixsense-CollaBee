@@ -90,9 +90,9 @@ public class BoardController {
      * @param  boardVo 보드
      * @throws Exception
      */
-    @ElService(key="BoardIns")    
-    @RequestMapping(value="BoardIns")
-    @ElDescription(sub="보드 등록처리",desc="보드를 등록 처리 한다.")
+    @ElService(key = "board/create")    
+    @RequestMapping(value = "board/create")
+    @ElDescription(sub = "보드 등록처리", desc = "보드를 등록 처리 한다.")
     public void insertBoard(BoardVo boardVo) throws Exception {    	 
     	boardService.insertBoard(boardVo);
     	

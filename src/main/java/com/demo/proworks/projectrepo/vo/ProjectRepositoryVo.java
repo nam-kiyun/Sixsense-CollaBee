@@ -31,6 +31,9 @@ public class ProjectRepositoryVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "github_app_installation_id", physicalName = "githubAppInstallationId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
     private String githubAppInstallationId;
 
+    @ElDtoField(logicalName = "connected_by", physicalName = "connectedBy", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    private String connectedBy;
+
     @ElVoField(physicalName = "projectRepoId")
     public String getProjectRepoId(){
         return projectRepoId;
@@ -101,9 +104,19 @@ public class ProjectRepositoryVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.githubAppInstallationId = githubAppInstallationId;
     }
 
+    @ElVoField(physicalName = "connectedBy")
+    public String getConnectedBy(){
+        return connectedBy;
+    }
+
+    @ElVoField(physicalName = "connectedBy")
+    public void setConnectedBy(String connectedBy){
+        this.connectedBy = connectedBy;
+    }
+
     @Override
     public String toString() {
-        return "ProjectRepositoryVo [projectRepoId=" + projectRepoId + ",projectId=" + projectId + ",githubRepositoryId=" + githubRepositoryId + ",repoOwner=" + repoOwner + ",repoName=" + repoName + ",defaultBranch=" + defaultBranch + ",githubAppInstallationId=" + githubAppInstallationId + "]";
+        return "ProjectRepositoryVo [projectRepoId=" + projectRepoId + ",projectId=" + projectId + ",githubRepositoryId=" + githubRepositoryId + ",repoOwner=" + repoOwner + ",repoName=" + repoName + ",defaultBranch=" + defaultBranch + ",githubAppInstallationId=" + githubAppInstallationId + ",connectedBy=" + connectedBy + "]";
     }
 
     public boolean isFixedLengthVo() {

@@ -114,5 +114,14 @@ public interface ProjectService {
      * @throws Exception
      */
 	public List<ProjectVo> selectUserParticipatedProjects(String userId) throws Exception;
+
+	/**
+     * 특정 프로젝트의 참여자 정보를 조회한다.
+     *
+     * @param  projectId 프로젝트 ID
+     * @return 프로젝트 참여자 목록 List<ProjectUserVo>
+     * @throws Exception
+     */
+	public List<com.demo.proworks.projectuser.vo.ProjectUserVo> selectProjectUsers(String projectId) throws Exception;
 	
 }

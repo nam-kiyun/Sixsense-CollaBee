@@ -6,28 +6,29 @@ import com.inswave.elfw.annotation.ElVoField;
 import com.fasterxml.jackson.annotation.JsonFilter;
 
 @JsonFilter("elExcludeFilter")
-@ElDto(FldYn = "", logicalName = "깃허브 앱 토큰 저장")
+@ElDto(FldYn = "", delimeterYn = "", logicalName = "깃허브 앱 토큰 저장")
 public class GithubAppTokenVo extends com.demo.proworks.cmmn.ProworksCommVO {
     private static final long serialVersionUID = 1L;
 
-    @ElDtoField(logicalName = "github_app_token_id", physicalName = "githubAppTokenId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    public GithubAppTokenVo(){
+    }
+
+    @ElDtoField(logicalName = "github_app_token_id", physicalName = "githubAppTokenId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String githubAppTokenId;
 
-    @ElDtoField(logicalName = "project_repo_id", physicalName = "projectRepoId", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String projectRepoId;
+    @ElDtoField(logicalName = "user_id", physicalName = "userId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String userId;
 
-    @ElDtoField(logicalName = "app_token", physicalName = "appToken", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String appToken;
-
-    @ElDtoField(logicalName = "expired_at", physicalName = "expiredAt", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
-    private String expiredAt;
-
-    @ElDtoField(logicalName = "created_at", physicalName = "createdAt", type = "String", typeKind = "", fldYn = "", length = 0, dotLen = 0, baseValue = "", desc = "")
+    @ElDtoField(logicalName = "created_at", physicalName = "createdAt", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String createdAt;
+
+    @ElDtoField(logicalName = "github_app_installation_id", physicalName = "githubAppInstallationId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
+    private String githubAppInstallationId;
 
     @ElVoField(physicalName = "githubAppTokenId")
     public String getGithubAppTokenId(){
-        return githubAppTokenId;
+        String ret = this.githubAppTokenId;
+        return ret;
     }
 
     @ElVoField(physicalName = "githubAppTokenId")
@@ -35,39 +36,21 @@ public class GithubAppTokenVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.githubAppTokenId = githubAppTokenId;
     }
 
-    @ElVoField(physicalName = "projectRepoId")
-    public String getProjectRepoId(){
-        return projectRepoId;
+    @ElVoField(physicalName = "userId")
+    public String getUserId(){
+        String ret = this.userId;
+        return ret;
     }
 
-    @ElVoField(physicalName = "projectRepoId")
-    public void setProjectRepoId(String projectRepoId){
-        this.projectRepoId = projectRepoId;
-    }
-
-    @ElVoField(physicalName = "appToken")
-    public String getAppToken(){
-        return appToken;
-    }
-
-    @ElVoField(physicalName = "appToken")
-    public void setAppToken(String appToken){
-        this.appToken = appToken;
-    }
-
-    @ElVoField(physicalName = "expiredAt")
-    public String getExpiredAt(){
-        return expiredAt;
-    }
-
-    @ElVoField(physicalName = "expiredAt")
-    public void setExpiredAt(String expiredAt){
-        this.expiredAt = expiredAt;
+    @ElVoField(physicalName = "userId")
+    public void setUserId(String userId){
+        this.userId = userId;
     }
 
     @ElVoField(physicalName = "createdAt")
     public String getCreatedAt(){
-        return createdAt;
+        String ret = this.createdAt;
+        return ret;
     }
 
     @ElVoField(physicalName = "createdAt")
@@ -75,13 +58,42 @@ public class GithubAppTokenVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.createdAt = createdAt;
     }
 
+    @ElVoField(physicalName = "githubAppInstallationId")
+    public String getGithubAppInstallationId(){
+        String ret = this.githubAppInstallationId;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "githubAppInstallationId")
+    public void setGithubAppInstallationId(String githubAppInstallationId){
+        this.githubAppInstallationId = githubAppInstallationId;
+    }
+
     @Override
     public String toString() {
-        return "GithubAppTokenVo [githubAppTokenId=" + githubAppTokenId + ",projectRepoId=" + projectRepoId + ",appToken=" + appToken + ",expiredAt=" + expiredAt + ",createdAt=" + createdAt + "]";
+        StringBuilder sb = new StringBuilder();
+        sb.append("GithubAppTokenVo [");
+        sb.append("githubAppTokenId").append("=").append(githubAppTokenId).append(",");
+        sb.append("userId").append("=").append(userId).append(",");
+        sb.append("createdAt").append("=").append(createdAt).append(",");
+        sb.append("githubAppInstallationId").append("=").append(githubAppInstallationId);
+        sb.append("]");
+        return sb.toString();
+
     }
 
     public boolean isFixedLengthVo() {
         return false;
     }
+
+    @Override
+    public void _xStreamEnc() {
+    }
+
+
+    @Override
+    public void _xStreamDec() {
+    }
+
 
 }
