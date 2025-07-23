@@ -413,6 +413,62 @@ public class ProjectUserController {
     }
 
     /**
+     * 특정 사용자의 프로젝트 내 역할을 확인한다.
+     *
+     * @param request HTTP 요청 객체
+     * @return Map<String, Object> 사용자 역할 정보
+     * @throws Exception
+     */
+    @ElService(key = "checkUserRole")    
+    @RequestMapping(value="checkUserRole")
+    @ElDescription(sub = "사용자 역할 확인", desc = "특정 사용자의 프로젝트 내 역할을 확인한다.")    
+    public Map<String, Object> checkUserRole(HttpServletRequest request) throws Exception {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            String projectId = request.getParameter("projectId");
+            String userId = request.getParameter("userId");
+            
+            if (projectId == null || userId == null) {
+                result.put("success", false);
+                result.put("role", null);
+                result.put("isAdmin", false);
+                result.put("message", "필수 파라미터가 누락되었습니다.");
+                return result;
+            }
+            
+            // 프로젝트 사용자 조회
+            ProjectUserVo projectUserVo = new ProjectUserVo();
+            projectUserVo.setProjectId(projectId);
+            projectUserVo.setUserId(userId);
+            
+            ProjectUserVo userRole = projectUserService.selectProjectUser(projectUserVo);
+            
+            if (userRole != null && userRole.getRole() != null) {
+                String role = userRole.getRole();
+                result.put("success", true);
+                result.put("role", role);
+                result.put("isAdmin", "admin".equals(role));
+                result.put("message", "역할 조회 성공");
+            } else {
+                result.put("success", false);
+                result.put("role", null);
+                result.put("isAdmin", false);
+                result.put("message", "프로젝트 멤버가 아닙니다.");
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("role", null);
+            result.put("isAdmin", false);
+            result.put("message", "역할 확인 중 오류가 발생했습니다: " + e.getMessage());
+        }
+        
+        return result;
+    }
+
+    /**
      * 프로젝트 참여 처리 (이메일 링크를 통한 접근)
      * 
      * @param projectId 프로젝트 ID
