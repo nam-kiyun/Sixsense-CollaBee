@@ -6,7 +6,7 @@ services:
     container_name: inswebapp-container
     restart: unless-stopped
     ports:
-      - "8080:8080" # HTTP 포트
+      - "8080:9093" # HTTP 포트
     volumes:
       # 로그 볼륨 (호스트에서 로그 확인 가능)
       - ./logs:/usr/local/tomcat/logs
