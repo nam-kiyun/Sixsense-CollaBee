@@ -27,6 +27,7 @@
             <if test="repoName                 != null"> , REPO_NAME                  </if>
             <if test="defaultBranch            != null"> , DEFAULT_BRANCH             </if>
             <if test="githubAppInstallationId!= null"> , GITHUB_APP_INSTALLATION_ID </if>
+            <if test="connectedBy              != null"> , CONNECTED_BY               </if>
         )
         VALUES  
         ( 
@@ -36,7 +37,8 @@
             <if test="repoOwner                != null"> , #{repoOwner}                 </if>
             <if test="repoName                 != null"> , #{repoName}                  </if>
             <if test="defaultBranch            != null"> , #{defaultBranch}             </if>
-            <if test="githubAppInstallationId!= null"> , #{githubAppInstallationId} </if> 
+            <if test="githubAppInstallationId!= null"> , #{githubAppInstallationId} </if>
+            <if test="connectedBy              != null"> , #{connectedBy}               </if> 
         )          
     </insert>	
 	
@@ -51,7 +53,8 @@
             <if test="repoOwner                != null"> , REPO_OWNER                 = #{repoOwner}                 </if>
             <if test="repoName                 != null"> , REPO_NAME                  = #{repoName}                  </if>
             <if test="defaultBranch            != null"> , DEFAULT_BRANCH             = #{defaultBranch}             </if>
-            <if test="githubAppInstallationId!= null"> , GITHUB_APP_INSTALLATION_ID = #{githubAppInstallationId} </if>                 
+            <if test="githubAppInstallationId!= null"> , GITHUB_APP_INSTALLATION_ID = #{githubAppInstallationId} </if>
+            <if test="connectedBy              != null"> , CONNECTED_BY               = #{connectedBy}               </if>                 
         WHERE   
                 PROJECT_REPO_ID            = #{projectRepoId}           
     </update>
@@ -67,7 +70,7 @@
     <select id="selectProjectRepository" parameterType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo" resultType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo">
     	<!-- 프로젝트와 연결된 레포지토리 정보를 상세 조회한다. -->	
         SELECT     /* QueryID : com.demo.proworks.projectrepo.selectProjectRepository */
-            PROJECT_REPO_ID as projectRepoId, PROJECT_ID as projectId, GITHUB_REPOSITORY_ID as githubRepositoryId, REPO_OWNER as repoOwner, REPO_NAME as repoName, DEFAULT_BRANCH as defaultBranch, GITHUB_APP_INSTALLATION_ID as githubAppInstallationId
+            PROJECT_REPO_ID as projectRepoId, PROJECT_ID as projectId, GITHUB_REPOSITORY_ID as githubRepositoryId, REPO_OWNER as repoOwner, REPO_NAME as repoName, DEFAULT_BRANCH as defaultBranch, GITHUB_APP_INSTALLATION_ID as githubAppInstallationId, CONNECTED_BY as connectedBy
         FROM PROJECT_REPO 
         WHERE 
                 PROJECT_REPO_ID            = #{projectRepoId}           			
@@ -76,7 +79,7 @@
     <select id="selectListProjectRepository" parameterType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo" resultType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo">
     	<!-- 프로젝트와 연결된 레포지토리 정보 목록을 조회한다. -->
            SELECT    /* QueryID : com.demo.proworks.projectrepo.selectListProjectRepository */
-               PROJECT_REPO_ID as projectRepoId, PROJECT_ID as projectId, GITHUB_REPOSITORY_ID as githubRepositoryId, REPO_OWNER as repoOwner, REPO_NAME as repoName, DEFAULT_BRANCH as defaultBranch, GITHUB_APP_INSTALLATION_ID as githubAppInstallationId		       
+               PROJECT_REPO_ID as projectRepoId, PROJECT_ID as projectId, GITHUB_REPOSITORY_ID as githubRepositoryId, REPO_OWNER as repoOwner, REPO_NAME as repoName, DEFAULT_BRANCH as defaultBranch, GITHUB_APP_INSTALLATION_ID as githubAppInstallationId, CONNECTED_BY as connectedBy		       
            FROM (
                SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
                FROM (				

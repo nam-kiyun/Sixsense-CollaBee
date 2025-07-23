@@ -490,6 +490,7 @@ public class GitHubServiceImpl implements GitHubService {
                 updateParam.put("repo_name", param.get("repo_name"));
                 updateParam.put("default_branch", param.get("default_branch"));
                 updateParam.put("github_app_installation_id", param.get("github_app_installation_id"));
+                updateParam.put("connected_by", param.get("connected_by")); // 연결자 정보 업데이트
                 
                 gitHubDAO.updateProjectRepository(updateParam);
                 

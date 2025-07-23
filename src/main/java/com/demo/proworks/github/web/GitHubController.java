@@ -12,6 +12,8 @@ import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -21,8 +23,13 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import com.demo.proworks.github.service.GitHubService;
+import com.demo.proworks.github.util.GitHubApiUtil;
 import com.demo.proworks.github.vo.BranchParameterVo;
+import com.demo.proworks.githubapptoken.service.GithubAppTokenService;
+import com.demo.proworks.githubapptoken.util.GitHubApiClient;
+import com.demo.proworks.projectrepo.service.ProjectRepositoryService;
 import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
+import com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
 
@@ -46,6 +53,16 @@ public class GitHubController {
     
     @Resource(name = "userPersonalTokenServiceImpl")
     private com.demo.proworks.userpersonaltoken.service.UserPersonalTokenService userPersonalTokenService;
+
+    @Autowired
+    private ProjectRepositoryService projectRepositoryService;
+    
+    @Autowired
+    private GitHubApiClient gitHubApiClient;
+    
+
+    @Autowired
+    private GithubAppTokenService githubAppTokenService;
     
     // 중복 웹훅 방지를 위한 배송 ID 캐시 (간단한 메모리 기반)
     private static final java.util.Set<String> processedDeliveryIds = 
@@ -55,28 +72,6 @@ public class GitHubController {
      * 생성자 - 빈 등록 확인용
      */
     public GitHubController() {
-        logger.info("GitHubController 빈이 생성되었습니다.");
-        System.out.println("=== GitHubController 생성됨 ===");
-        
-        // 매핑 확인 코드 주석 처리 (의존성 문제 방지)
-        new Thread(() -> {
-            try {
-                Thread.sleep(5000);
-                if (requestMappingHandlerMapping != null) {
-                    System.out.println("=== GitHub 컨트롤러 매핑 정보 ===");
-                    requestMappingHandlerMapping.getHandlerMethods().forEach((requestMappingInfo, handlerMethod) -> {
-                        if (handlerMethod.getBeanType().equals(GitHubController.class)) {
-                            System.out.println("GitHub 매핑: " + requestMappingInfo + " -> " + handlerMethod.getMethod().getName());
-                        }
-                    });
-                    System.out.println("=== GitHub 매핑 정보 끝 ===");
-                } else {
-                    System.out.println("RequestMappingHandlerMapping이 null입니다.");
-                }
-            } catch (Exception e) {
-                System.out.println("매핑 확인 중 오류: " + e.getMessage());
-            }
-        }).start();
     }
 
     // ==============================
@@ -104,37 +99,6 @@ public class GitHubController {
     }
     
     /**
-     * 매핑 정보 확인용 엔드포인트 (의존성 문제로 주석 처리)
-     */
-    /*
-    @ElService(key = "mappings")
-    @ElDescription(sub = "GitHub 매핑 확인", desc = "현재 등록된 URL 매핑 정보를 확인합니다.")
-    @RequestMapping(value = "mappings")
-    @ResponseBody
-    public Map<String, Object> checkMappings() {
-        logger.info("GitHub 매핑 확인");
-        System.out.println("=== GitHub 매핑 확인 메소드 진입 ===");
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("message", "매핑 확인 완료");
-        
-        try {
-            // 등록된 모든 매핑 정보 출력
-            requestMappingHandlerMapping.getHandlerMethods().forEach((requestMappingInfo, handlerMethod) -> {
-                System.out.println("매핑: " + requestMappingInfo + " -> " + handlerMethod);
-            });
-            result.put("mapping_logged", true);
-        } catch (Exception e) {
-            System.out.println("매핑 확인 중 오류: " + e.getMessage());
-            result.put("mapping_error", e.getMessage());
-        }
-        
-        return result;
-    }
-    */
-    
-    /**
      * 간단한 상태 확인 테스트 엔드포인트
      */
     @ElService(key = "health")
@@ -148,25 +112,6 @@ public class GitHubController {
         result.put("status", "ok");
         result.put("controller", "GitHubController");
         result.put("timestamp", System.currentTimeMillis());
-        
-        return result;
-    }
-    
-    /**
-     * GitHub 컨트롤러 간단 테스트용 엔드포인트 (서비스 의존성 없음)
-     */
-    @ElService(key = "simple-test")
-    @ElDescription(sub = "GitHub 간단 테스트", desc = "GitHub 컨트롤러의 간단한 테스트를 수행합니다.")
-    @RequestMapping(value = "simple-test")
-    @ResponseBody
-    public Map<String, Object> simpleTestGitHubController() {
-        logger.info("GitHub 컨트롤러 간단 테스트 호출");
-        
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("message", "GitHub 컨트롤러 간단 테스트 성공");
-        result.put("controller", "GitHubController");
-        result.put("timestamp", new java.util.Date().toString());
         
         return result;
     }
@@ -915,6 +860,7 @@ public class GitHubController {
             param.put("repo_name", projectRepositoryVo.getRepoName());
             param.put("default_branch", projectRepositoryVo.getDefaultBranch());
             param.put("github_app_installation_id", projectRepositoryVo.getGithubAppInstallationId());
+            param.put("connected_by", userId); // 레포지토리를 연결한 사용자 ID
             
             System.out.println("컨트롤러 - DB 저장 파라미터: " + param);
             
@@ -1352,6 +1298,58 @@ public class GitHubController {
                 return result;
             }
             
+            // GitHub Collaborator 권한 체크 추가
+            System.out.println("=== GitHub Collaborator 권한 체크 시작 ===1");
+            try {
+                // 프로젝트에 연결된 저장소 정보 조회 (권한 체크용)
+                ProjectRepositoryVo tempRepoInfo = gitHubService.getCurrentRepositoryByProjectId(projectId);
+                if (tempRepoInfo != null) {
+                    String projectRepoId = tempRepoInfo.getProjectRepoId();
+                    
+                    // 내부 권한 체크 메소드 호출
+                    java.util.Map<String, Object> authResponse = 
+                        checkCollaboratorAccessInternal(request, projectRepoId, userId);
+                    
+                    if (authResponse != null && !(Boolean) authResponse.get("success")) {
+                        String action = (String) authResponse.get("action");
+                        
+                        if ("invitation_sent".equals(action)) {
+                            // 초대 발송됨 - 안내 메시지와 함께 응답
+                            result.put("success", false);
+                            result.put("action", "invitation_sent");
+                            result.put("message", "GitHub 레포지토리에 초대장을 발송했습니다. 이메일을 확인하여 초대를 수락해주세요.");
+                            result.put("github_access_required", true);
+                            result.put("username", authResponse.get("username"));
+                            result.put("repository", authResponse.get("repository"));
+                            return result;
+                            
+                        } else if ("oauth_required".equals(action)) {
+                            // OAuth 인증 필요
+                            result.put("success", false);
+                            result.put("action", "oauth_required");
+                            result.put("message", "GitHub 계정 연동이 필요합니다.");
+                            result.put("oauth_url", "/github/auth/start");
+                            return result;
+                            
+                        } else {
+                            // 기타 오류
+                            result.put("success", false);
+                            result.put("message", authResponse.get("message"));
+                            result.put("github_access_denied", true);
+                            return result;
+                        }
+                    }
+                    
+                    System.out.println("✅ GitHub Collaborator 권한 확인 완료");
+                }
+                
+            } catch (Exception e) {
+                System.out.println("⚠️ GitHub 권한 체크 실패 - 계속 진행: " + e.getMessage());
+                // 권한 체크 실패 시에도 기존 로직 계속 진행 (호환성 유지)
+            }
+            
+            System.out.println("=== GitHub Collaborator 권한 체크 완료 ===");
+            
             // DB에서 브랜치 목록 조회 (성능 최적화)
             System.out.println("DB에서 브랜치 목록 조회 시작");
             
@@ -1644,8 +1642,14 @@ public class GitHubController {
                         result.put("message", "브랜치 생성 성공: " + branchName);
                         result.put("data", createResponse.get("data"));
                     } else {
+                        // 403 권한 오류인 경우 사용자 친화적 메시지 표시
+                        String errorMessage = "브랜치 생성 실패: " + createResponse.get("data");
+                        if (createResponse.get("status_code") != null && 
+                            createResponse.get("status_code").equals(403)) {
+                            errorMessage = "브랜치 생성에 실패했습니다. 초대를 수락하고 생성해주세요.";
+                        }
                         result.put("success", false);
-                        result.put("error", "브랜치 생성 실패: " + createResponse.get("data"));
+                        result.put("error", errorMessage);
                     }
                 } else {
                     result.put("success", false);
@@ -1654,14 +1658,28 @@ public class GitHubController {
             } catch (Exception e) {
                 System.out.println("브랜치 생성 API 호출 오류: " + e.getMessage());
                 result.put("success", false);
-                result.put("error", "브랜치 생성 오류: " + e.getMessage());
+                
+                // 403 권한 오류가 포함된 경우 사용자 친화적 메시지 표시
+                String errorMessage = e.getMessage();
+                if (errorMessage != null && errorMessage.contains("403")) {
+                    errorMessage = "브랜치 생성에 실패했습니다. 초대를 수락하고 생성해주세요.";
+                } else {
+                    errorMessage = "브랜치 생성 오류: " + errorMessage;
+                }
+                result.put("error", errorMessage);
             }
             
         } catch (Exception e) {
             System.out.println("브랜치 생성 실패: " + e.getMessage());
             e.printStackTrace();
             result.put("success", false);
-            result.put("error", e.getMessage());
+            
+            // 403 권한 오류가 포함된 경우 사용자 친화적 메시지 표시
+            String errorMessage = e.getMessage();
+            if (errorMessage != null && errorMessage.contains("403")) {
+                errorMessage = "브랜치 생성에 실패했습니다. 초대를 수락하고 생성해주세요.";
+            }
+            result.put("error", errorMessage);
         }
         
         System.out.println("브랜치 생성 결과: " + result);
@@ -2072,4 +2090,302 @@ public class GitHubController {
         return result;
     }
 
+    /**
+     * 내부 호출용 - GitHub collaborator 권한 체크 및 자동 초대
+     * @RequestParam 어노테이션 없이 직접 파라미터를 받는 메소드
+     * 
+     * @param request HttpServletRequest
+     * @param projectRepoId 프로젝트 레포지토리 ID
+     * @param userId 사용자 ID
+     * @return 권한 체크 결과
+     */
+    private Map<String, Object> checkCollaboratorAccessInternal(HttpServletRequest request, String projectRepoId, String userId) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            System.out.println("=== 내부 권한 체크 시작 ===");
+            System.out.println("projectRepoId: " + projectRepoId);
+            System.out.println("userId: " + userId);
+            
+            // 1. 프로젝트 레포지토리 정보 조회
+            ProjectRepositoryVo repoSearchVo = new ProjectRepositoryVo();
+            repoSearchVo.setProjectRepoId(projectRepoId);
+            ProjectRepositoryVo repoInfo = projectRepositoryService.selectProjectRepository(repoSearchVo);
+            
+            if (repoInfo == null) {
+                result.put("success", false);
+                result.put("message", "프로젝트 레포지토리 정보를 찾을 수 없습니다.");
+                result.put("action", "error");
+                return result;
+            }
+            
+            String repoFullName = repoInfo.getRepoOwner() + "/" + repoInfo.getRepoName();
+            System.out.println("레포지토리: " + repoFullName);
+            
+            // 2. 사용자의 GitHub Personal Token 조회
+            com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo userTokenSearchVo = 
+                new com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo();
+            userTokenSearchVo.setUserId(userId);
+            com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo userToken = 
+                userPersonalTokenService.selectUserPersonalTokenByUserId(userTokenSearchVo);
+            
+            System.out.println("조회된 userToken: " + userToken);
+            if (userToken != null) {
+                System.out.println("accessToken 존재 여부: " + (userToken.getAccessToken() != null));
+                if (userToken.getAccessToken() != null) {
+                    System.out.println("accessToken 길이: " + userToken.getAccessToken().length());
+                }
+            }
+            
+            if (userToken == null || userToken.getAccessToken() == null) {
+                System.out.println("❌ GitHub 토큰이 없음 - OAuth 필요");
+                result.put("success", false);
+                result.put("message", "GitHub 계정 연동이 필요합니다. GitHub OAuth 인증을 진행해주세요.");
+                result.put("action", "oauth_required");
+                result.put("oauth_url", "/github/auth/start");
+                return result;
+            }
+            
+            System.out.println("✅ GitHub 토큰 확인 완료");
+            
+            // 3. 사용자의 GitHub 계정 정보 조회
+            System.out.println("GitHub 사용자 정보 조회 시작...");
+            String githubUsername = null;
+            try {
+                Map<String, Object> userInfo = gitHubApiUtil.getCurrentUser(userToken.getAccessToken());
+                System.out.println("GitHub 사용자 정보 조회 완료: " + userInfo);
+                githubUsername = (String) userInfo.get("login");
+                System.out.println("GitHub 사용자명: " + githubUsername);
+            } catch (Exception e) {
+                System.out.println("❌ GitHub 사용자 정보 조회 실패: " + e.getMessage());
+                e.printStackTrace();
+                result.put("success", false);
+                result.put("message", "GitHub 사용자 정보 조회 실패: " + e.getMessage());
+                result.put("action", "error");
+                return result;
+            }
+            
+            // 4. Installation Token 또는 Personal Token으로 collaborator 권한 확인
+            String accessToken = null;
+            try {
+                // Installation ID 조회 (기존 githubAppTokenService 사용)
+                com.demo.proworks.githubapptoken.vo.GithubAppTokenVo appToken = 
+                    githubAppTokenService.selectGithubAppTokenByUserId(userId);
+                
+                if (appToken != null && appToken.getGithubAppInstallationId() != null) {
+                    // Installation Token 생성 (기존 githubAppTokenService 사용)
+                    String[] repoParts = repoFullName.split("/");
+                    String repoOwner = repoParts[0];
+                    
+                    accessToken = githubAppTokenService.generateInstallationToken(
+                        userToken.getAccessToken(), 
+                        repoOwner
+                    );
+                    System.out.println("✅ Installation Token으로 권한 확인");
+                } else {
+                    throw new Exception("Installation ID가 없습니다.");
+                }
+            } catch (Exception e) {
+                // Personal Token 폴백
+                accessToken = userToken.getAccessToken();
+                System.out.println("⚠️ Personal Token으로 권한 확인 (Installation Token 실패): " + e.getMessage());
+            }
+            
+            // 5. Collaborator 권한 확인
+            boolean isCollaborator = gitHubApiUtil.isCollaborator(accessToken, repoFullName, githubUsername);
+            System.out.println("Collaborator 권한: " + isCollaborator);
+            
+            if (isCollaborator) {
+                // 이미 collaborator인 경우
+                result.put("success", true);
+                result.put("message", "GitHub 레포지토리 접근 권한이 있습니다.");
+                result.put("action", "access_granted");
+                result.put("username", githubUsername);
+                result.put("repository", repoFullName);
+                return result;
+            }
+            
+            // 6. Collaborator가 아닌 경우 자동 초대 실행 - 저장소 관리자 토큰 사용
+            try {
+                System.out.println("🔄 자동 초대 실행 중...");
+                
+                // 저장소 관리자의 토큰 조회 (repoInfo.connectedBy)
+                String adminUserId = repoInfo.getConnectedBy();
+                String adminAccessToken = null;
+                
+                if (adminUserId != null && !adminUserId.isEmpty()) {
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo adminTokenSearchVo = 
+                        new com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo();
+                    adminTokenSearchVo.setUserId(adminUserId);
+                    com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo adminToken = 
+                        userPersonalTokenService.selectUserPersonalTokenByUserId(adminTokenSearchVo);
+                    
+                    if (adminToken != null && adminToken.getAccessToken() != null) {
+                        adminAccessToken = adminToken.getAccessToken();
+                        System.out.println("✅ 저장소 관리자(" + adminUserId + ")의 토큰으로 초대 실행");
+                    } else {
+                        System.out.println("⚠️ 저장소 관리자의 토큰이 없음, 현재 사용자 토큰 사용");
+                        adminAccessToken = accessToken;
+                    }
+                } else {
+                    System.out.println("⚠️ 저장소 관리자 정보 없음, 현재 사용자 토큰 사용");
+                    adminAccessToken = accessToken;
+                }
+                
+                Map<String, Object> inviteResult = gitHubApiUtil.inviteCollaborator(
+                    adminAccessToken, repoFullName, githubUsername, "push");
+                
+                result.put("success", true);
+                result.put("message", "GitHub 레포지토리에 초대장을 발송했습니다. 이메일을 확인하여 초대를 수락해주세요.");
+                result.put("action", "invitation_sent");
+                result.put("username", githubUsername);
+                result.put("repository", repoFullName);
+                result.put("permission", "push");
+                result.put("next_step", "GitHub에서 초대를 수락한 후 다시 시도해주세요.");
+                
+                System.out.println("✅ 초대 발송 완료");
+                return result;
+                
+            } catch (Exception inviteError) {
+                // 초대 실패 시
+                System.out.println("❌ 초대 실패: " + inviteError.getMessage());
+                result.put("success", false);
+                result.put("message", "GitHub 레포지토리 초대에 실패했습니다: " + inviteError.getMessage());
+                result.put("action", "invitation_failed");
+                result.put("username", githubUsername);
+                result.put("repository", repoFullName);
+                result.put("manual_invite_guide", "관리자에게 " + githubUsername + " 사용자를 " + repoFullName + " 레포지토리에 초대해달라고 요청하세요.");
+                
+                return result;
+            }
+            
+        } catch (Exception e) {
+            System.out.println("❌ 권한 체크 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "권한 확인 중 오류가 발생했습니다: " + e.getMessage());
+            result.put("action", "error");
+            result.put("error", e.getMessage());
+            
+            return result;
+        }
+    }
+
+    /**
+     * 프로젝트 접근 시 사용자의 GitHub 레포지토리 권한을 확인하고 
+     * 권한이 없을 경우 자동으로 collaborator 초대를 실행한다.
+     * 
+     * @param request HttpServletRequest
+     * @param projectRepoId 프로젝트 레포지토리 ID
+     * @param userId 사용자 ID
+     * @return ResponseEntity<Map<String, Object>>
+     */
+    @ElService(key = "SvcGHCOLLABCHECK01")
+    @RequestMapping(value = "/github/collaborator/check-and-invite")
+    @ElDescription(sub = "권한 확인 및 자동 초대", desc = "프로젝트 접근 시 GitHub 권한을 확인하고 필요시 자동 초대합니다.")
+    public @ResponseBody ResponseEntity<Map<String, Object>> checkAndInviteCollaborator(HttpServletRequest request,
+            @RequestParam("projectRepoId") String projectRepoId,
+            @RequestParam("userId") String userId) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 1. 프로젝트 레포지토리 정보 조회
+            ProjectRepositoryVo repoSearchVo = new ProjectRepositoryVo();
+            repoSearchVo.setProjectRepoId(projectRepoId);
+            ProjectRepositoryVo repoInfo = projectRepositoryService.selectProjectRepository(repoSearchVo);
+            
+            if (repoInfo == null) {
+                result.put("success", false);
+                result.put("message", "프로젝트 레포지토리 정보를 찾을 수 없습니다.");
+                result.put("action", "error");
+                return new ResponseEntity<>(result, HttpStatus.NOT_FOUND);
+            }
+            
+            String repoFullName = repoInfo.getRepoOwner() + "/" + repoInfo.getRepoName();
+            
+            // 2. 사용자의 GitHub Personal Token 조회
+            UserPersonalTokenVo userTokenSearchVo = new UserPersonalTokenVo();
+            userTokenSearchVo.setUserId(userId);
+            UserPersonalTokenVo userToken = userPersonalTokenService.selectUserPersonalToken(userTokenSearchVo);
+            
+            if (userToken == null || userToken.getAccessToken() == null) {
+                result.put("success", false);
+                result.put("message", "GitHub 계정 연동이 필요합니다. GitHub OAuth 인증을 진행해주세요.");
+                result.put("action", "oauth_required");
+                result.put("oauth_url", "/github/auth/start");
+                return new ResponseEntity<>(result, HttpStatus.UNAUTHORIZED);
+            }
+            
+            // 3. 사용자의 GitHub 계정 정보 조회
+            Map<String, Object> userInfo = gitHubApiClient.getCurrentUser(userToken.getAccessToken());
+            String githubUsername = (String) userInfo.get("login");
+            
+            // 4. Installation Token 또는 Personal Token으로 collaborator 권한 확인
+            String accessToken = null;
+            try {
+                // Installation ID 조회
+                String installationId = githubAppTokenService.getValidAppToken(userId);
+                if (installationId != null) {
+                    // Installation Token 생성
+                    accessToken = gitHubApiClient.getInstallationToken(installationId);
+                    System.out.println("✅ Installation Token으로 권한 확인: " + accessToken.substring(0, 20) + "...");
+                } else {
+                    throw new Exception("Installation ID가 없습니다.");
+                }
+            } catch (Exception e) {
+                // Personal Token 폴백
+                accessToken = userToken.getAccessToken();
+                System.out.println("⚠️ Personal Token으로 권한 확인 (Installation Token 실패): " + e.getMessage());
+            }
+            
+            // 5. Collaborator 권한 확인
+            boolean isCollaborator = gitHubApiClient.isCollaborator(accessToken, repoFullName, githubUsername);
+            
+            if (isCollaborator) {
+                // 이미 collaborator인 경우
+                result.put("success", true);
+                result.put("message", "GitHub 레포지토리 접근 권한이 있습니다.");
+                result.put("action", "access_granted");
+                result.put("username", githubUsername);
+                result.put("repository", repoFullName);
+                return new ResponseEntity<>(result, HttpStatus.OK);
+            }
+            
+            // 6. Collaborator가 아닌 경우 자동 초대 실행
+            try {
+                Map<String, Object> inviteResult = gitHubApiClient.inviteCollaborator(
+                    accessToken, repoFullName, githubUsername, "push");
+                
+                result.put("success", true);
+                result.put("message", "GitHub 레포지토리에 초대장을 발송했습니다. 이메일을 확인하여 초대를 수락해주세요.");
+                result.put("action", "invitation_sent");
+                result.put("username", githubUsername);
+                result.put("repository", repoFullName);
+                result.put("permission", "push");
+                result.put("next_step", "GitHub에서 초대를 수락한 후 다시 시도해주세요.");
+                
+                return new ResponseEntity<>(result, HttpStatus.OK);
+                
+            } catch (Exception inviteError) {
+                // 초대 실패 시
+                result.put("success", false);
+                result.put("message", "GitHub 레포지토리 초대에 실패했습니다: " + inviteError.getMessage());
+                result.put("action", "invitation_failed");
+                result.put("username", githubUsername);
+                result.put("repository", repoFullName);
+                result.put("manual_invite_guide", "관리자에게 " + githubUsername + " 사용자를 " + repoFullName + " 레포지토리에 초대해달라고 요청하세요.");
+                
+                return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "권한 확인 중 오류가 발생했습니다: " + e.getMessage());
+            result.put("action", "error");
+            result.put("error", e.getMessage());
+            
+            return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

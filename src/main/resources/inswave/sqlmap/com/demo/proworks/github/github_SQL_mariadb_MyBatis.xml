@@ -67,7 +67,8 @@
             pr.repo_owner as repoOwner,
             pr.repo_name as repoName,
             pr.default_branch as defaultBranch,
-            pr.github_app_installation_id as githubAppInstallationId
+            pr.github_app_installation_id as githubAppInstallationId,
+            pr.connected_by as connectedBy
         FROM PROJECT_REPO pr
         INNER JOIN PROJECT_USER pu ON pr.project_id = pu.project_id
         WHERE pu.user_id = #{userId}
@@ -84,7 +85,8 @@
             pr.repo_owner as repoOwner,
             pr.repo_name as repoName,
             pr.default_branch as defaultBranch,
-            pr.github_app_installation_id as githubAppInstallationId
+            pr.github_app_installation_id as githubAppInstallationId,
+            pr.connected_by as connectedBy
         FROM PROJECT_REPO pr
         WHERE pr.project_id = #{projectId}
         ORDER BY pr.project_repo_id DESC 
@@ -100,7 +102,8 @@
             pr.repo_owner as repoOwner,
             pr.repo_name as repoName,
             pr.default_branch as defaultBranch,
-            pr.github_app_installation_id as githubAppInstallationId
+            pr.github_app_installation_id as githubAppInstallationId,
+            pr.connected_by as connectedBy
         FROM PROJECT_REPO pr
         WHERE pr.repo_owner = #{repoOwner}
         AND pr.repo_name = #{repoName}
@@ -116,14 +119,16 @@
             repo_owner,
             repo_name,
             default_branch,
-            github_app_installation_id
+            github_app_installation_id,
+            connected_by
         ) VALUES (
             #{project_id},
             #{github_repository_id},
             #{repo_owner},
             #{repo_name},
             #{default_branch},
-            #{github_app_installation_id}
+            #{github_app_installation_id},
+            #{connected_by}
         )
     </insert>
     
@@ -134,7 +139,8 @@
             repo_owner = #{repo_owner},
             repo_name = #{repo_name},
             default_branch = #{default_branch},
-            github_app_installation_id = #{github_app_installation_id}
+            github_app_installation_id = #{github_app_installation_id},
+            connected_by = #{connected_by}
         WHERE project_repo_id = #{project_repo_id}
     </update>
     
