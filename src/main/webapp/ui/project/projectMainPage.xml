@@ -16,7 +16,7 @@
 						<w2:key id="sortOrder" name="정렬 순서" dataType="text"></w2:key>
 					</w2:keyInfo>
 				</w2:dataMap>
-				<w2:dataList baseNode="list" repeatNode="map" id="dlt_taskList" saveRemovedData="true">
+				<w2:dataList baseNode="list" repeatNode="map" id="dlt_scwin.taskList" saveRemovedData="true">
 					<w2:columnInfo>
 						<w2:column id="taskId" name="taskId" dataType="text"></w2:column>
 						<w2:column id="boardId" name="boardId" dataType="text"></w2:column>
@@ -107,14 +107,14 @@
 				abortTrigger="">
 			</xf:submission>
 			<xf:submission id="load_Tasks" action="/InsWebApp/TaskList.pwkjson" method="post" mediatype="application/json"
-				ref='data:json,{"id":"dm_search_task","key":"taskVo"}' target='data:json,{"id":"dlt_taskList","key":"taskVoList"}' encoding="UTF-8"
+				ref='data:json,{"id":"dm_search_task","key":"taskVo"}' target='data:json,{"id":"dlt_scwin.taskList","key":"taskVoList"}' encoding="UTF-8"
 				instance="" replace="none" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
 				ev:submitdone="scwin.load_Tasks_submitdone" ev:submiterror="" abortTrigger="">
 			</xf:submission>
 			<xf:submission id="load_Tasks_With_UserName" action="/InsWebApp/TaskListWithUserName.pwkjson" method="post"
 				mediatype="application/json" ref='data:json,{"id":"dm_search_task","key":"taskVo"}'
-				target='data:json,{"id":"dlt_taskList","key":"taskVoList"}' encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
-				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.load_Tasks_submitdone" ev:submiterror=""
+				target='data:json,{"id":"dlt_scwin.taskList","key":"taskVoList"}' encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.load_Tasks_With_UserName_submitdone" ev:submiterror=""
 				abortTrigger="">
 			</xf:submission>
 			<xf:submission id="update_task_board" action="/InsWebApp/task/updateBoard.pwkjson" method="post"
@@ -175,6 +175,9 @@ scwin.reconnectAttempts = 0;
 scwin.maxReconnectAttempts = 5;
 scwin.reconnectDelay = 3000; // 3초
 scwin.wsUrls = null; // WebSocket URL 목록 저장
+
+// 태스크 데이터 전역 변수
+scwin.taskList = null; // 서버에서 받아온 태스크 목록
 
 // 드래그 락 시스템 전역 변수
 scwin.lockedCards = new Map(); // taskId -> {userId, userName, timestamp}
@@ -615,12 +618,12 @@ scwin.getUserNameByUserId = function(userId, taskData) {
         }
         
         // 태스크 리스트에서 해당 userId의 userName 찾기
-        var taskList = $p.getComponentById("dlt_taskList");
-        if (taskList) {
-            var rowCount = taskList.getRowCount();
+        scwin.taskList = $p.getComponentById("dlt_scwin.taskList");
+        if (scwin.taskList) {
+            var rowCount = scwin.taskList.getRowCount();
             for (var i = 0; i < rowCount; i++) {
-                var projectUserId = taskList.getCellData(i, "projectUserId");
-                var userName = taskList.getCellData(i, "userName");
+                var projectUserId = scwin.taskList.getCellData(i, "projectUserId");
+                var userName = scwin.taskList.getCellData(i, "userName");
                 if (projectUserId === userId && userName) {
                     return userName;
                 }
@@ -1875,13 +1878,13 @@ scwin.loadTasksToCalendar = function() {
             }
         }
     } else {
-        console.warn("allTasksData가 없습니다. 대체 방법으로 dlt_taskList에서 데이터를 가져옵니다.");
+        console.warn("allTasksData가 없습니다. 대체 방법으로 dlt_scwin.taskList에서 데이터를 가져옵니다.");
         
-        // 대체 방법: dlt_taskList에서 직접 데이터 가져오기
-        var taskList = $p.getComponentById("dlt_taskList");
-        if (taskList) {
-            var taskData = taskList.getAllJSON();
-            console.log("dlt_taskList에서 가져온 데이터:", taskData);
+        // 대체 방법: dlt_scwin.taskList에서 직접 데이터 가져오기
+        scwin.taskList = $p.getComponentById("dlt_scwin.taskList");
+        if (scwin.taskList) {
+            var taskData = scwin.taskList.getAllJSON();
+            console.log("dlt_scwin.taskList에서 가져온 데이터:", taskData);
             if (taskData && taskData.length > 0) {
                 allTasks = taskData;
             }
@@ -2407,7 +2410,7 @@ scwin.loadGanttData = function() {
 /**
  * 간트차트 설정 및 그리기 함수 (간트차트.txt 방식 적용)
  */
-scwin.setupGanttChart = function(taskList) {
+scwin.setupGanttChart = function(taskListData) {
     console.log("간트차트 설정 시작");
     
     if (!gantt_chart) {
@@ -2427,7 +2430,7 @@ scwin.setupGanttChart = function(taskList) {
     gantt_chart.setChartAttribute(chartOptions);
     
     // 2. 카테고리 설정 (월별)
-    var categories = scwin.generateGanttCategories(taskList);
+    var categories = scwin.generateGanttCategories(scwin.taskList);
     if (categories && categories.category && categories.category.length > 0) {
         gantt_chart.setCategories(categories);
         console.log("간트차트 카테고리 설정 완료:", categories);
@@ -2455,7 +2458,7 @@ scwin.setupGanttChart = function(taskList) {
     gantt_chart.setTaskAttribute(taskAttr);
     
     // 5. JSON 데이터 설정
-    var ganttData = scwin.generateGanttJSONData(taskList);
+    var ganttData = scwin.generateGanttJSONData(scwin.taskList);
     gantt_chart.setJSONData(ganttData);
     
     console.log("간트차트 설정 완료 및 렌더링");
@@ -2465,14 +2468,14 @@ scwin.setupGanttChart = function(taskList) {
 /**
  * 간트차트용 카테고리 생성 (월별)
  */
-scwin.generateGanttCategories = function(taskList) {
-    if (!taskList || taskList.length === 0) {
+scwin.generateGanttCategories = function(taskListData) {
+    if (!taskListData || taskListData.length === 0) {
         return null;
     }
     
     // 모든 태스크의 시작일과 종료일을 수집
     var allDates = [];
-    taskList.forEach(function(task) {
+    taskListData.forEach(function(task) {
         if (task.startDate) allDates.push(new Date(task.startDate));
         if (task.endDate) allDates.push(new Date(task.endDate));
     });
@@ -2508,11 +2511,11 @@ scwin.generateGanttCategories = function(taskList) {
 /**
  * 간트차트용 JSON 데이터 생성
  */
-scwin.generateGanttJSONData = function(taskList) {
+scwin.generateGanttJSONData = function(taskListData) {
     var processes = [];
     var tasks = [];
     
-    taskList.forEach(function(task, index) {
+    taskListData.forEach(function(task, index) {
         // 프로세스 데이터 (왼쪽 태스크명 영역)
         processes.push({
             id: task.taskId,
@@ -2540,7 +2543,7 @@ scwin.generateGanttJSONData = function(taskList) {
             dateformat: "mm/dd/yyyy",
             outputdateformat: "mm/dd/yyyy"
         },
-        categories: [scwin.generateGanttCategories(taskList)],
+        categories: [scwin.generateGanttCategories(scwin.taskList)],
         processes: { process: processes },
         tasks: { task: tasks }
     };
@@ -2743,15 +2746,38 @@ scwin.createKanbanCardInBoard = function(cardData) {
         return existingCard;
     }
     
+    // 카드 데이터 디버깅
+    console.log("=== 카드 렌더링 디버그 ===");
+    console.log("전체 cardData:", cardData);
+    console.log("cardData.priority:", cardData.priority);
+    console.log("priority 타입:", typeof cardData.priority);
+    console.log("========================");
+
+    // 우선순위 값 정규화 (대소문자 통일 및 기본값 설정)
+    var normalizedPriority = "";
+    if (cardData.priority && typeof cardData.priority === "string") {
+        normalizedPriority = cardData.priority.toUpperCase();
+    } else {
+        console.warn("Priority 필드가 없거나 잘못된 형태:", cardData.priority);
+        normalizedPriority = "MEDIUM"; // 기본값
+    }
+
     // 우선순위에 따른 CSS 클래스 결정
-    var priorityClass = "priority-medium"; // 기본값
-    var priorityText = "보통";
-    if (cardData.priority === "HIGH") {
+    var priorityClass = "";
+    var priorityText = "";
+    if (normalizedPriority === "HIGH") {
         priorityClass = "priority-high";
         priorityText = "높음";
-    } else if (cardData.priority === "LOW") {
+    } else if (normalizedPriority === "MEDIUM") {
+        priorityClass = "priority-medium";
+        priorityText = "보통";
+    } else if (normalizedPriority === "LOW") {
         priorityClass = "priority-low";
         priorityText = "낮음";
+    } else {
+        console.error("Unknown priority value after normalization:", normalizedPriority);
+        priorityClass = "priority-medium"; // 알 수 없는 값은 보통으로 설정
+        priorityText = "보통";
     }
     
     // 1. 메인 카드 그룹 생성 (드래그 가능하도록 설정)
@@ -2832,8 +2858,7 @@ scwin.createKanbanCardInBoard = function(cardData) {
             cardId + "_priority",
             "output",
             {
-                className: "priority-badge " + priorityClass,
-                style: "font-size: 11px; padding: 2px 6px; border-radius: 12px; font-weight: 500; background: #f6f8fa; color: #656d76;"
+                className: "priority-badge " + priorityClass
             },
             headerGroup
         );
@@ -3163,8 +3188,8 @@ scwin.load_Tasks_submitdone = function(e) {
     // 1. 응답에서 직접 태스크 목록 추출
     var responseData = e.responseJSON;
    
-    let taskList = responseData.elData.taskVoList;
-    console.log("서버로부터 직접 받은 태스크 목록:", taskList);
+    scwin.taskList = responseData.elData.taskVoList;
+    console.log("서버로부터 직접 받은 태스크 목록:", scwin.taskList);
 
     // 간트차트 모드인지 확인
     if (scwin.isLoadingGantt) {
@@ -3174,11 +3199,11 @@ scwin.load_Tasks_submitdone = function(e) {
         // 간트차트 데이터 리스트 초기화
         dlt_gantt_schedule.removeAll();
         
-        if (taskList && taskList.length > 0) {
+        if (scwin.taskList && scwin.taskList.length > 0) {
             // 태스크 데이터를 간트차트 형식으로 변환 (유효한 날짜만)
             var validTaskIndex = 0;
-            for (var i = 0; i < taskList.length; i++) {
-                var task = taskList[i];
+            for (var i = 0; i < scwin.taskList.length; i++) {
+                var task = scwin.taskList[i];
                 
                 // 시작일과 종료일이 모두 있는 태스크만 간트차트에 표시
                 if (!task.startDate || !task.endDate || 
@@ -3217,7 +3242,7 @@ scwin.load_Tasks_submitdone = function(e) {
             
             console.log("간트차트에 유효한 태스크 수:", validTaskIndex);
             
-            console.log("간트차트 데이터 로딩 완료. 태스크 수:", taskList.length);
+            console.log("간트차트 데이터 로딩 완료. 태스크 수:", scwin.taskList.length);
             
             // 간트차트에 태스크 데이터 표시
             scwin.loadTasksToGantt();
@@ -3228,16 +3253,16 @@ scwin.load_Tasks_submitdone = function(e) {
     }
 
     // 2. 일반 칸반 보드용 태스크 처리
-    if (taskList && taskList.length > 0) {
-        var boardId = taskList[0].boardId; // 첫 번째 태스크의 boardId를 사용
+    if (scwin.taskList && scwin.taskList.length > 0) {
+        var boardId = scwin.taskList[0].boardId; // 첫 번째 태스크의 boardId를 사용
         
         // 2-1. 전체 태스크 데이터를 로컬에 저장 (필터링용)
-        scwin.storeAllTasksData(boardId, taskList);
+        scwin.storeAllTasksData(boardId, scwin.taskList);
         
         // 2-2. 필터링과 정렬을 모두 적용하여 태스크 표시
         scwin.sortAndFilterBoardTasks(boardId);
         
-        console.log(`보드 [${boardId}]의 태스크 로드 및 처리 완료: ${taskList.length}개`);
+        console.log(`보드 [${boardId}]의 태스크 로드 및 처리 완료: ${scwin.taskList.length}개`);
     } else {
         console.log("해당 보드에 대한 태스크가 없습니다.");
         
@@ -6223,35 +6248,99 @@ scwin.removeTempBoard = function(tempBoardId) {
  * 사용자 이름을 포함한 태스크 목록 로드 성공 콜백
  */
 scwin.load_Tasks_With_UserName_submitdone = function(e) {
-    console.log("✅ 사용자 이름 포함 태스크 목록 로드 성공");
-
-    // 혹시 모르니 수동으로 데이터 매핑
-    if (e.responseJSON && e.responseJSON.elData && e.responseJSON.elData.taskVoList) {
-        console.log("������ 수동으로 dlt_taskList에 데이터 설정");
-        dlt_taskList.setJSON(e.responseJSON.elData.taskVoList);
-        console.log("✅ dlt_taskList 수동 설정 완료. 데이터 개수:", dlt_taskList.getRowCount());
-    }
+    console.log("태스크 로드 완료 (프론트엔드 필터링 지원):", e);
     
-    try {
-        // 기존 구현된 createDynamicKanbanColumns 함수 호출 (보드 데이터가 있는 경우)
-        if (typeof scwin.createDynamicKanbanColumns === 'function' && dlt_boardListVo.getRowCount() > 0) {
-            console.log("������ 칸반 보드 다시 그리기 시작");
-            var boardList = dlt_boardListVo.getAllJSON();
-            scwin.createDynamicKanbanColumns(boardList);
-            console.log("✅ 칸반 보드 다시 그리기 완료");
-        } else if (typeof scwin.createKanbanCardInBoard === 'function') {
-            console.log("������ 칸반 카드만 업데이트");
-            // 현재 로드된 태스크들을 기존 보드에 표시
-            var tasks = dlt_taskList.getAllJSON();
-            for (var i = 0; i < tasks.length; i++) {
-                scwin.createKanbanCardInBoard(tasks[i]);
+    // 1. 응답에서 직접 태스크 목록 추출
+    var responseData = e.responseJSON;
+   
+    scwin.taskList = responseData.elData.taskVoList;
+    console.log("서버로부터 직접 받은 태스크 목록:", scwin.taskList);
+
+    // 간트차트 모드인지 확인
+    if (scwin.isLoadingGantt) {
+        console.log("간트차트용 태스크 데이터 처리 시작");
+        scwin.isLoadingGantt = false; // 플래그 리셋
+        
+        // 간트차트 데이터 리스트 초기화
+        dlt_gantt_schedule.removeAll();
+        
+        if (scwin.taskList && scwin.taskList.length > 0) {
+            // 태스크 데이터를 간트차트 형식으로 변환 (유효한 날짜만)
+            var validTaskIndex = 0;
+            for (var i = 0; i < scwin.taskList.length; i++) {
+                var task = scwin.taskList[i];
+                
+                // 시작일과 종료일이 모두 있는 태스크만 간트차트에 표시
+                if (!task.startDate || !task.endDate || 
+                    task.startDate.trim() === "" || task.endDate.trim() === "") {
+                    console.log("날짜 정보가 없는 태스크 제외:", task.taskTitle, task.startDate, task.endDate);
+                    continue;
+                }
+                
+                // 간트차트 데이터 생성
+                var ganttData = {
+                    taskId: task.taskId,
+                    taskTitle: task.taskTitle,
+                    startDate: task.startDate, // yyyy-mm-dd 형식 그대로 사용
+                    endDate: task.endDate,     // yyyy-mm-dd 형식 그대로 사용
+                    boardId: task.boardId,
+                    boardTitle: task.boardTitle || "보드",
+                    priority: task.priority || "MEDIUM",
+                    tags: task.tags || ""
+                };
+                
+                console.log("간트차트에 추가할 태스크:", ganttData);
+                
+                // 간트차트 데이터 리스트에 추가
+                dlt_gantt_schedule.insertRow(validTaskIndex);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "taskId", ganttData.taskId);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "taskTitle", ganttData.taskTitle);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "startDate", ganttData.startDate);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "endDate", ganttData.endDate);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "boardId", ganttData.boardId);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "boardTitle", ganttData.boardTitle);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "priority", ganttData.priority);
+                dlt_gantt_schedule.setCellData(validTaskIndex, "tags", ganttData.tags);
+                
+                validTaskIndex++;
             }
-            console.log("✅ 칸반 카드 업데이트 완료");
+            
+            console.log("간트차트에 유효한 태스크 수:", validTaskIndex);
+            
+            console.log("간트차트 데이터 로딩 완료. 태스크 수:", scwin.taskList.length);
+            
+            // 간트차트에 태스크 데이터 표시
+            scwin.loadTasksToGantt();
         } else {
-            console.log("태스크 데이터 로드 완료, userName 포함된 데이터 사용 가능");
+            console.log("간트차트에 표시할 태스크가 없습니다.");
         }
-    } catch (error) {
-        console.error("태스크 데이터 처리 중 오류:", error);
+        return; // 간트차트 처리 완료 후 함수 종료
+    }
+
+    // 2. 일반 칸반 보드용 태스크 처리
+    if (scwin.taskList && scwin.taskList.length > 0) {
+        var boardId = scwin.taskList[0].boardId; // 첫 번째 태스크의 boardId를 사용
+        
+        // 2-1. 전체 태스크 데이터를 로컬에 저장 (필터링용)
+        scwin.storeAllTasksData(boardId, scwin.taskList);
+        
+        // 2-2. 필터링과 정렬을 모두 적용하여 태스크 표시
+        scwin.sortAndFilterBoardTasks(boardId);
+        
+        console.log(`보드 [${boardId}]의 태스크 로드 및 처리 완료: ${scwin.taskList.length}개`);
+    } else {
+        console.log("해당 보드에 대한 태스크가 없습니다.");
+        
+        // boardId 추출 (검색 조건에서)
+        var searchCondition = $p.getComponentById("dm_search_task");
+        if (searchCondition) {
+            var boardId = searchCondition.get("boardId");
+            if (boardId) {
+                // 빈 데이터 저장 및 정렬/필터링 적용
+                scwin.storeAllTasksData(boardId, []);
+                scwin.sortAndFilterBoardTasks(boardId);
+            }
+        }
     }
 };
 
