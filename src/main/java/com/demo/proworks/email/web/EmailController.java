@@ -157,23 +157,14 @@ public class EmailController {
     @ElService(key = "SendProjectInviteEmail")
     @RequestMapping(value = "SendProjectInviteEmail", method = RequestMethod.POST)
     @ElDescription(sub = "프로젝트 초대 메일 발송", desc = "프로젝트 초대 메일을 발송합니다")
-    public Map<String, Object> sendProjectInviteEmail(@RequestBody String jsonData, HttpServletRequest request) throws Exception {
+    public Map<String, Object> sendProjectInviteEmail(@RequestBody EmailVo emailVo, HttpServletRequest request) throws Exception {
         Map<String, Object> result = new HashMap<>();
 
         try {
-            
-            
-            // JSON 문자열을 파싱
-            ObjectMapper objectMapper = new ObjectMapper();
-            Map<String, Object> params = objectMapper.readValue(jsonData, Map.class);
-            
-            // JSON에서 값 추출
-            String userId = (String) params.get("userId");
-            String email = (String) params.get("email");
-            String projectId = (String) params.get("projectId");
-            
-            
-            
+            // EmailVo에서 직접 값 추출
+            String userId = emailVo.getUserId();
+            String email = emailVo.getEmail();
+            String projectId = emailVo.getProjectId();
             
             String targetUserEmail = email;     // 초대받을 사용자 이메일
             

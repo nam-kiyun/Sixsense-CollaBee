@@ -44,7 +44,7 @@ public class CommentDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
 
 	public long selectListCountByTaskId(int taskId) throws ElException {
 		CommentVo commentVo = new CommentVo();
-		commentVo.setTaskId(taskId);
+		commentVo.setTaskId(Integer.toString(taskId));
 		return (Long) selectByPk("com.demo.proworks.comment.selectListCountByTaskId", commentVo);
 	}
 
@@ -129,6 +129,17 @@ public class CommentDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstra
 	 */
 	public int deleteCommentByProjectId(CommentVo vo) throws ElException {
 		return delete("com.demo.proworks.comment.deleteCommentByProjectId", vo);
+	}
+	
+	/**
+	 * 프로젝트 ID로 댓글들을 삭제한다.
+	 * 
+	 * @param CommentVo 댓글정보
+	 * @return 번호
+	 * @throws ElException
+	 */
+	public int deleteCommentByTaskId(CommentVo vo) throws ElException {
+		return delete("com.demo.proworks.comment.deleteCommentByTaskId", vo);
 	}
 
 }

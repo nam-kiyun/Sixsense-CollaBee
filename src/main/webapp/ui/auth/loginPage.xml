@@ -152,7 +152,7 @@ scwin.login_button_onclick = async function (e) {
     let email = email_input.getValue();
     let password = password_input.getValue();
     let isValid = true;
-    
+
     // 1. 입력값 체크
     if (!email) {
         email_error_text.setValue("*이메일을 입력해주세요.");
@@ -235,7 +235,8 @@ scwin.sbm_login_submitdone = async function (e) {
         // $p.url("/InsWebApp/ui/user/verifyPasswordPage.xml", option);
         // $p.url("/InsWebApp/ui/mainPage.xml", option);
         // $p.url("/InsWebApp/ui/project/projectMainPage.xml", option);
-        $p.url("/InsWebApp/ui/mainPage.xml");
+        $p.url("/InsWebApp/ui/mobile/taskPage.xml");
+        //$p.url("/InsWebApp/ui/mainPage.xml");
     } else {
         await $c.win.alert("아이디 또는 비밀번호가 잘못 되었습니다.<br/> 아이디와 비밀번호를 정확히 입력해 주세요.");
     }

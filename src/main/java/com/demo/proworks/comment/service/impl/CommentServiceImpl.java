@@ -36,10 +36,9 @@ public class CommentServiceImpl implements CommentService {
 		List<CommentVo> list = commentDAO.selectListCommentByTaskId(searchVo);
 		return list;
 	}
-	
-	
-	public long selectListCountByTaskId(int taskId) throws Exception{
-		//List<CommentVo> list = commentDAO.selectListCommentByTaskId(taskId);
+
+	public long selectListCountByTaskId(int taskId) throws Exception {
+		// List<CommentVo> list = commentDAO.selectListCommentByTaskId(taskId);
 		return commentDAO.selectListCountByTaskId(taskId);
 	}
 

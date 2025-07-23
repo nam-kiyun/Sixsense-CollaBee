@@ -11,31 +11,41 @@
         <link rel="stylesheet" type="text/css" href="/css/cmmn/header.css"/>
         
         <xf:model>
-            <w2:dataCollection baseNode="map">
-                <w2:dataMap baseNode="map" id="dm_header">
-                    <w2:keyInfo>
-                        <w2:key id="userName" name="사용자명" dataType="text"/>
-                    </w2:keyInfo>
-                    <w2:data use="true">
-                        <userName>게스트</userName>
-                    </w2:data>
-                </w2:dataMap>
-            </w2:dataCollection>
-            <w2:workflowCollection/>
+        	<w2:dataCollection baseNode="map">
+        		<w2:dataMap baseNode="map" id="dm_header">
+        			<w2:keyInfo>
+        				<w2:key id="userName" name="사용자명" dataType="text" />
+        			</w2:keyInfo>
+        			<w2:data use="true">
+        				<userName>게스트</userName>
+        			</w2:data>
+        		</w2:dataMap>
+        		<w2:dataMap baseNode="map" id="dma_logout">
+        			<w2:keyInfo>
+        				<w2:key dataType="text" name="아이디" id="id"></w2:key>
+        				<w2:key dataType="text" name="비밀번호" id="password"></w2:key>
+        			</w2:keyInfo>
+        		</w2:dataMap>
+        	</w2:dataCollection>
+        	<w2:workflowCollection />
+        	<xf:submission id="sbm_logout" action="/InsWebApp/user/logout.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_logout","key":"elData"}' target="" encoding="UTF-8"
+        		instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.dma_logout_submitdone"
+        		ev:submiterror="scwin.dma_logout_submiterror" abortTrigger="">
+        	</xf:submission>
+        	<xf:submission id="sbm_session" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json" ref="" target="" encoding="UTF-8"
+        		instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.dma_session_submitdone"
+        		ev:submiterror="scwin.dma_session_submiterror" abortTrigger="">
+        	</xf:submission>
         </xf:model>
         <w2:layoutInfo/>
         <w2:publicInfo method=""/>
-        <script lazy="false" type="text/javascript"><![CDATA[
-scwin.onpageload = function () {
+        <script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
     // 헤더 초기화
+    $p.executeSubmission("sbm_session");
 };
 
 scwin.btn_logout_onclick = function (e) {
-    if (confirm("로그아웃 하시겠습니까?")) {
-        alert("로그아웃 되었습니다.");
-        // 실제 로그아웃 처리 로직 추가
-        // location.href = "/logout";
-    }
+    $p.executeSubmission("sbm_logout");
 };
 
 scwin.grp_userInfo_onclick = function (e) {
@@ -44,6 +54,18 @@ scwin.grp_userInfo_onclick = function (e) {
 
 scwin.grp_logo_onclick = function (e) {
     $p.url("/InsWebApp/ui/mainPage.xml");
+};
+
+scwin.dma_session_submitdone = function (e) {
+    const responseData = e.responseJSON.userVo;
+    dma_logout.set("id", responseData.userId);
+};
+
+scwin.dma_logout_submitdone = function (e) {
+    $p.url("/InsWebApp/ui/landingPage.xml");
+};
+
+scwin.dma_logout_submiterror = function (e) {
 };
 ]]></script>
     </head>

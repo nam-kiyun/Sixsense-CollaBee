@@ -39,6 +39,8 @@ import com.demo.proworks.projectrepo.dao.ProjectRepositoryDAO;
 import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
 import com.demo.proworks.board.dao.BoardDAO;
 import com.demo.proworks.board.vo.BoardVo;
+import com.demo.proworks.comment.dao.CommentDAO;
+import com.demo.proworks.comment.vo.CommentVo;
 import com.demo.proworks.projectuser.dao.ProjectUserDAO;
 import com.demo.proworks.projectuser.vo.ProjectUserVo;
 import com.demo.proworks.redis.service.KanbanRedisService;
@@ -87,6 +89,9 @@ public class TaskServiceImpl implements TaskService {
 
 	@Resource(name = "managerDAO")
 	private ManagerDAO managerDAO;
+	
+	@Resource(name = "commentDAO")
+	private CommentDAO commentDAO;
 
 	@Resource(name = "messageSource")
 	private MessageSource messageSource;
@@ -699,6 +704,14 @@ public class TaskServiceImpl implements TaskService {
 		}
 		
 		// 2. 데이터베이스 삭제 실행
+		CommentVo commentVo = new CommentVo();
+		commentVo.setTaskId(taskVo.getTaskId());
+		commentDAO.deleteCommentByTaskId(commentVo);
+		
+		TaskVersionVo taskVersionVo = new TaskVersionVo();
+		taskVersionVo.setTaskId(taskVo.getTaskId());
+		taskVersionDAO.deleteTaskVersionByTaskId(taskVersionVo);
+		
 		int result = taskDAO.deleteTask(taskVo);
 		
 		// 3. DB 삭제 성공 시 Redis 캐시 무효화
