@@ -127,7 +127,7 @@ scwin.onpageload = function () {
     }
     
     console.log("사용자 인증 확인 완료:", userId);
-    
+    2
     // 페이지 로드 시 데이터 바인딩
     scwin.loadProjectData();
     
@@ -4061,21 +4061,40 @@ scwin.expandModalFromPip = function() {
     scwin.isPipModeActive = false;
     
     try {
-        const modalElement = document.querySelector('[id*="videoChatPopup"]');
-        if (modalElement && scwin.originalModalInfo) {
-            // 원래 크기/위치로 복원
-            modalElement.style.setProperty('width', scwin.originalModalInfo.width, 'important');
-            modalElement.style.setProperty('height', scwin.originalModalInfo.height, 'important');
-            modalElement.style.setProperty('left', scwin.originalModalInfo.left, 'important');
-            modalElement.style.setProperty('top', scwin.originalModalInfo.top, 'important');
+        // resizeModalToPip와 동일한 방식으로 모달 요소 찾기
+        const modalSelectors = [
+            '[id*="videoChatPopup"]',
+            '[id*="mf_wfr_mainContent_videoChatPopup"]'
+        ];
+        
+        let modalElement = null;
+        for (const selector of modalSelectors) {
+            const elements = document.querySelectorAll(selector);
+            for (const element of elements) {
+                if (element.style.display !== 'none' && element.offsetWidth > 0) {
+                    modalElement = element;
+                    break;
+                }
+            }
+            if (modalElement) break;
+        }
+        
+        if (modalElement) {
+            // 정확한 원래 크기로 복원 (1920x940)
+            modalElement.style.setProperty('width', '1920px', 'important');
+            modalElement.style.setProperty('height', '940px', 'important');
+            modalElement.style.setProperty('position', 'absolute', 'important');
+            modalElement.style.setProperty('left', '0px', 'important');
+            modalElement.style.setProperty('top', '0px', 'important');
             modalElement.style.setProperty('bottom', 'auto', 'important');
             modalElement.style.setProperty('right', 'auto', 'important');
+            modalElement.style.setProperty('z-index', '999999', 'important');
             
             // 확대 버튼 제거
             const expandBtn = modalElement.querySelector('.pip-expand-btn');
             if (expandBtn) expandBtn.remove();
             
-            console.log("✅ 모달 확대 복원 완료");
+            console.log("✅ 모달 확대 복원 완료 (1920x940):", modalElement.id);
             
             // 자식 창에 복원 알림
             const iframe = modalElement.querySelector('iframe');
@@ -4084,6 +4103,9 @@ scwin.expandModalFromPip = function() {
                     action: 'restoreFromPip'
                 }, '*');
             }
+            
+        } else {
+            console.error("활성화된 화상통화 모달을 찾을 수 없음");
         }
         
     } catch (error) {
@@ -4116,10 +4138,19 @@ window.addEventListener('message', function(event) {
         console.log("������ PostMessage 수신 - 모달 PIP 크기 축소 요청 받음");
         console.log('수신된 데이터:', event.data);
         console.log('event.origin:', event.origin);
+        console.log('event.source:', event.source);
         
         try {
+            // 즉시 실행
             scwin.resizeModalToPip();
             console.log('✅ 모달 PIP 축소 완료');
+            
+            // 추가로 짧은 지연 후 한 번 더 실행 (안전장치)
+            setTimeout(() => {
+                console.log('������ PIP 축소 안전장치 실행');
+                scwin.resizeModalToPip();
+            }, 50);
+            
         } catch (error) {
             console.error('❌ 모달 PIP 축소 실패:', error);
         }

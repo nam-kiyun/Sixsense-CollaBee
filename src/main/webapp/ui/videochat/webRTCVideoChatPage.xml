@@ -100,6 +100,38 @@
             .pip-btn { background: #6f42c1; color: white; }
             .pip-btn.active { background: #5a2a91; }
             
+            /* PIP 모드 확대 버튼 스타일 */
+            .pip-expand-btn {
+                position: absolute !important;
+                top: 5px !important;
+                right: 5px !important;
+                width: 30px !important;
+                height: 30px !important;
+                background: rgba(255, 184, 35, 0.9) !important;
+                border: none !important;
+                border-radius: 4px !important;
+                color: white !important;
+                font-size: 16px !important;
+                cursor: pointer !important;
+                z-index: 10001 !important;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                transition: all 0.2s ease !important;
+                font-weight: bold !important;
+            }
+            
+            .pip-expand-btn:hover {
+                background: rgba(255, 184, 35, 1) !important;
+                transform: scale(1.1) !important;
+                box-shadow: 0 3px 12px rgba(0,0,0,0.5) !important;
+            }
+            
+            .pip-expand-btn:active {
+                transform: scale(0.95) !important;
+            }
+            
             /* 미니 PIP 컨테이너 스타일 */
             .mini-pip-container {
                 position: fixed !important;
@@ -4423,53 +4455,81 @@ scwin.togglePiP = function() {
                     }
                 }
                 
-                // 대체 방법 3: 직접 DOM 접근 시도 (가장 강력함!)
+                // 대체 방법 3: PostMessage 재시도 + 직접 DOM 조작 백업
                 setTimeout(() => {
-                    try {
-                        console.log('������ 대체 방법: 직접 DOM 접근 시도');
-                        
-                        // 1단계: document에서 모달 찾기
-                        let modalElement = document.querySelector('[id*="videoChatPopup"]');
-                        
-                        // 2단계: parent document에서 찾기
-                        if (!modalElement && window.parent && window.parent.document) {
+                    console.log('������ 대체 방법: PostMessage 재시도 + DOM 백업');
+                    
+                    // 모든 가능한 부모 창에 PostMessage 전송
+                    const targets = [
+                        { win: window.parent, name: 'window.parent' },
+                        { win: window.opener, name: 'window.opener' },
+                        { win: window.top, name: 'window.top' }
+                    ];
+                    
+                    let messagesSent = 0;
+                    targets.forEach(({ win, name }) => {
+                        if (win && win !== window) {
                             try {
-                                modalElement = window.parent.document.querySelector('[id*="videoChatPopup"]');
-                                console.log('������ parent document에서 모달 발견');
-                            } catch (parentDocError) {
-                                console.log('parent document 접근 실패:', parentDocError.message);
+                                win.postMessage({
+                                    action: 'resizeModalToPip',
+                                    source: `videoChatPage_${name}_retry`,
+                                    timestamp: Date.now(),
+                                    retry: true
+                                }, '*');
+                                messagesSent++;
+                                console.log(`✅ ${name} 재시도 PostMessage 전송 완료`);
+                            } catch (error) {
+                                console.error(`${name} 재시도 실패:`, error);
                             }
                         }
-                        
-                        // 3단계: top document에서 찾기
-                        if (!modalElement && window.top && window.top.document) {
+                    });
+                    
+                    // PostMessage가 모두 실패했을 경우 직접 DOM 조작
+                    if (messagesSent === 0) {
+                        setTimeout(() => {
+                            console.log('������ 최후 수단: 직접 DOM 조작 시도');
                             try {
-                                modalElement = window.top.document.querySelector('[id*="videoChatPopup"]');
-                                console.log('������ top document에서 모달 발견');
-                            } catch (topDocError) {
-                                console.log('top document 접근 실패:', topDocError.message);
+                                let modalElement = null;
+                                
+                                // 다양한 방법으로 모달 요소 찾기
+                                const searchMethods = [
+                                    () => document.querySelector('[id*="videoChatPopup"]'),
+                                    () => window.parent?.document?.querySelector('[id*="videoChatPopup"]'),
+                                    () => window.top?.document?.querySelector('[id*="videoChatPopup"]'),
+                                    () => window.parent?.document?.querySelector('[id*="mf_wfr_mainContent_videoChatPopup"]'),
+                                ];
+                                
+                                for (const method of searchMethods) {
+                                    try {
+                                        modalElement = method();
+                                        if (modalElement && modalElement.offsetWidth > 0) {
+                                            console.log('������ 모달 요소 발견:', modalElement.id);
+                                            break;
+                                        }
+                                    } catch (e) {
+                                        // 접근 권한 오류 무시하고 다음 방법 시도
+                                    }
+                                }
+                                
+                                if (modalElement) {
+                                    // 직접 PIP 크기로 변경
+                                    modalElement.style.setProperty('width', '320px', 'important');
+                                    modalElement.style.setProperty('height', '240px', 'important');
+                                    modalElement.style.setProperty('position', 'fixed', 'important');
+                                    modalElement.style.setProperty('bottom', '20px', 'important');
+                                    modalElement.style.setProperty('right', '20px', 'important');
+                                    modalElement.style.setProperty('top', 'auto', 'important');
+                                    modalElement.style.setProperty('left', 'auto', 'important');
+                                    modalElement.style.setProperty('z-index', '999999', 'important');
+                                    
+                                    console.log('✅ 직접 DOM 조작으로 PIP 적용 완료!');
+                                } else {
+                                    console.error('❌ 모든 방법으로 모달 요소를 찾을 수 없음');
+                                }
+                            } catch (domError) {
+                                console.error('직접 DOM 조작 실패:', domError);
                             }
-                        }
-                        
-                        if (modalElement) {
-                            console.log('������ 모달 요소 발견:', modalElement.id);
-                            
-                            // 직접 스타일 수정으로 PIP 모드 적용
-                            modalElement.style.setProperty('width', '320px', 'important');
-                            modalElement.style.setProperty('height', '240px', 'important');
-                            modalElement.style.setProperty('position', 'fixed', 'important');
-                            modalElement.style.setProperty('bottom', '20px', 'important');
-                            modalElement.style.setProperty('right', '20px', 'important');
-                            modalElement.style.setProperty('top', 'auto', 'important');
-                            modalElement.style.setProperty('left', 'auto', 'important');
-                            modalElement.style.setProperty('z-index', '999999', 'important');
-                            
-                            console.log('✅ 직접 DOM 조작으로 모달 PIP 적용 완료!');
-                        } else {
-                            console.log('❌ 모든 document에서 모달 요소를 찾을 수 없음');
-                        }
-                    } catch (domError) {
-                        console.error('직접 DOM 접근 실패:', domError);
+                        }, 200);
                     }
                 }, 100);
             }
@@ -4584,10 +4644,172 @@ scwin.applyPipModeUI = function() {
             console.log('✅ 원격 비디오 그리드 PIP 레이아웃 적용');
         }
         
+        // PIP 모드에서 확대 버튼 추가
+        scwin.addPipExpandButton();
+        
     }, 100);
 };
 
-// PIP에서 복원 메시지 처리
+// PIP 모드에서 확대 버튼 추가
+scwin.addPipExpandButton = function() {
+    console.log('PIP 확대 버튼 추가 시작');
+    
+    // 기존 버튼이 있으면 제거
+    const existingBtn = document.querySelector('.pip-expand-btn');
+    if (existingBtn) {
+        existingBtn.remove();
+        console.log('기존 확대 버튼 제거');
+    }
+    
+    // 확대 버튼 생성
+    const expandBtn = document.createElement('button');
+    expandBtn.className = 'pip-expand-btn';
+    expandBtn.innerHTML = '⛶'; // 확대 아이콘
+    expandBtn.title = '전체화면으로 확대';
+    
+    // 클릭 이벤트 추가
+    expandBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('������ PIP 확대 버튼 클릭됨');
+        
+        // 확대 로직 실행
+        scwin.expandFromPipMode();
+    });
+    
+    // 비디오 컨테이너에 추가
+    const videoContainer = document.querySelector('.video-chat-container');
+    if (videoContainer) {
+        videoContainer.appendChild(expandBtn);
+        console.log('✅ PIP 확대 버튼 추가 완료');
+    } else {
+        console.error('❌ 비디오 컨테이너를 찾을 수 없음');
+    }
+};
+
+// PIP 모드에서 확대 로직
+scwin.expandFromPipMode = function() {
+    console.log('������ PIP 모드에서 확대 시작');
+    
+    // 1. 부모창에 모달 복원 요청 (강화된 방식)
+    try {
+        // 방법 1: window.parent 사용
+        if (window.parent && window.parent !== window) {
+            try {
+                console.log('������ PostMessage 전송 시작 - expandModalFromPip (parent)');
+                window.parent.postMessage({
+                    action: 'expandModalFromPip',
+                    source: 'videoChatPage_expandBtn_parent',
+                    timestamp: Date.now()
+                }, '*');
+                console.log('✅ window.parent로 PostMessage 전송 완료');
+            } catch (parentError) {
+                console.error('window.parent 사용 실패:', parentError);
+            }
+        } else {
+            console.log('⚠️ window.parent를 찾을 수 없습니다 - 대체 방법 시도');
+        }
+        
+        // 방법 2: window.opener 사용
+        if (window.opener && window.opener !== window) {
+            try {
+                console.log('������ 대체 방법: window.opener 사용');
+                window.opener.postMessage({
+                    action: 'expandModalFromPip',
+                    source: 'videoChatPage_expandBtn_opener',
+                    timestamp: Date.now()
+                }, '*');
+                console.log('✅ window.opener로 PostMessage 전송 완료');
+            } catch (openerError) {
+                console.error('window.opener 사용 실패:', openerError);
+            }
+        }
+        
+        // 방법 3: window.top 사용
+        if (window.top && window.top !== window) {
+            try {
+                console.log('������ 대체 방법: window.top 사용');
+                window.top.postMessage({
+                    action: 'expandModalFromPip',
+                    source: 'videoChatPage_expandBtn_top',
+                    timestamp: Date.now()
+                }, '*');
+                console.log('✅ window.top으로 PostMessage 전송 완료');
+            } catch (topError) {
+                console.error('window.top 사용 실패:', topError);
+            }
+        }
+        
+        // 방법 4: 직접 DOM 조작 백업 (PostMessage 실패 시)
+        setTimeout(() => {
+            console.log('������ 최후 수단: 직접 DOM 조작으로 모달 확대 시도');
+            try {
+                let modalElement = null;
+                
+                // 다양한 방법으로 모달 요소 찾기
+                const searchMethods = [
+                    () => document.querySelector('[id*="videoChatPopup"]'),
+                    () => window.parent?.document?.querySelector('[id*="videoChatPopup"]'),
+                    () => window.top?.document?.querySelector('[id*="videoChatPopup"]'),
+                    () => window.parent?.document?.querySelector('[id*="mf_wfr_mainContent_videoChatPopup"]'),
+                ];
+                
+                for (const method of searchMethods) {
+                    try {
+                        modalElement = method();
+                        if (modalElement && modalElement.offsetWidth > 0) {
+                            console.log('������ 모달 요소 발견:', modalElement.id);
+                            break;
+                        }
+                    } catch (e) {
+                        // 접근 권한 오류 무시하고 다음 방법 시도
+                    }
+                }
+                
+                if (modalElement) {
+                    // 직접 모달을 1920x940으로 확대
+                    modalElement.style.setProperty('width', '1920px', 'important');
+                    modalElement.style.setProperty('height', '940px', 'important');
+                    modalElement.style.setProperty('position', 'absolute', 'important');
+                    modalElement.style.setProperty('left', '0px', 'important');
+                    modalElement.style.setProperty('top', '0px', 'important');
+                    modalElement.style.setProperty('bottom', 'auto', 'important');
+                    modalElement.style.setProperty('right', 'auto', 'important');
+                    modalElement.style.setProperty('z-index', '999999', 'important');
+                    
+                    // 확대 버튼 제거
+                    const expandBtn = modalElement.querySelector('.pip-expand-btn');
+                    if (expandBtn) expandBtn.remove();
+                    
+                    console.log('✅ 직접 DOM 조작으로 모달 확대 완료!');
+                } else {
+                    console.error('❌ 모든 방법으로 모달 요소를 찾을 수 없음');
+                }
+            } catch (domError) {
+                console.error('직접 DOM 조작 실패:', domError);
+            }
+        }, 300);
+        
+    } catch (error) {
+        console.error('모달 확대 요청 전체 실패:', error);
+    }
+    
+    // 2. 내부 UI 복원
+    scwin.restoreUIFromPip();
+    isPipMode = false;
+    
+    // 3. PIP 버튼 텍스트 변경
+    const pipBtn = document.getElementById('pipBtn');
+    if (pipBtn) {
+        const pipLabel = pipBtn.querySelector('xf\\:label, label');
+        if (pipLabel) pipLabel.textContent = 'PIP';
+        pipBtn.classList.remove('active');
+    }
+    
+    console.log('✅ PIP 모드에서 확대 완료');
+};
+
+// PIP 에서 복원 메시지 처리
 window.addEventListener('message', function(event) {
     if (event.data && event.data.action === 'restoreFromPip') {
         console.log('PIP에서 복원 요청 받음');
@@ -4658,6 +4880,13 @@ scwin.restoreUIFromPip = function() {
             remoteVideosGrid.style.removeProperty('grid-gap');
             remoteVideosGrid.style.removeProperty('grid-template-columns');
             console.log('✅ 원격 비디오 그리드 복원');
+        }
+        
+        // PIP 확대 버튼 제거
+        const expandBtn = document.querySelector('.pip-expand-btn');
+        if (expandBtn) {
+            expandBtn.remove();
+            console.log('✅ PIP 확대 버튼 제거');
         }
         
         console.log('✅ UI 복원 완료');
