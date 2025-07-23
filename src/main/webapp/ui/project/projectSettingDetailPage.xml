@@ -45,6 +45,14 @@
             background-color: #c82333 !important;
             border-color: #bd2130 !important;
         }
+        
+        /* 확인 버튼 비활성화 스타일 */
+        .confirm-button-disabled {
+            background-color: #f5e6a3 !important;
+            border-color: #f5e6a3 !important;
+            color: #999999 !important;
+            cursor: not-allowed !important;
+        }
         ]]>
         </style>
         <xf:model>
@@ -678,6 +686,9 @@ scwin.openDeleteConfirmModal = function() {
     // 입력 필드 초기화
     input_confirmProjectName.setValue("");
     
+    // 확인 버튼 초기 비활성화
+    scwin.updateConfirmButton();
+    
     // 현재 프로젝트명 표시 업데이트
     try {
         var currentProjectName = dm_projectDetail.get("projectName");
@@ -732,6 +743,31 @@ scwin.closeDeleteConfirmModal = function() {
     grp_modalBackground.setStyle("display", "none");
     
     
+};
+
+// 프로젝트명 입력 시 확인 버튼 활성화/비활성화
+scwin.input_confirmProjectName_oninput = function(e) {
+    scwin.updateConfirmButton();
+};
+
+// 확인 버튼 활성화/비활성화 업데이트
+scwin.updateConfirmButton = function() {
+    try {
+        var inputValue = input_confirmProjectName.getValue();
+        var hasInput = inputValue && inputValue.trim() !== "";
+        
+        if (hasInput) {
+            // 입력이 있으면 버튼 활성화
+            btn_modalConfirm.removeClass("confirm-button-disabled");
+            btn_modalConfirm.setDisabled(false);
+        } else {
+            // 입력이 없으면 버튼 비활성화
+            btn_modalConfirm.addClass("confirm-button-disabled");
+            btn_modalConfirm.setDisabled(true);
+        }
+    } catch (error) {
+        console.error("확인 버튼 업데이트 오류:", error);
+    }
 };
 
 // 모달 배경 클릭 시 닫기
@@ -801,43 +837,58 @@ scwin.executeProjectDelete = function(projectName) {
         data: requestData,
         contentType: 'application/x-www-form-urlencoded',
         success: function(response) {
-            
+            console.log("AJAX 성공 응답:", response);
             
             // 응답 처리
             var isSuccess = false;
             var message = "";
             
             try {
+                console.log("응답 타입:", typeof response);
+                console.log("응답 내용:", JSON.stringify(response));
+                
                 if (response && typeof response === 'object') {
                     if (response.success === true) {
                         isSuccess = true;
                         message = response.message || "프로젝트가 성공적으로 삭제되었습니다.";
+                        console.log("삭제 성공 확인됨");
                     } else {
                         isSuccess = false;
                         message = response.message || "프로젝트 삭제에 실패했습니다.";
+                        console.log("삭제 실패:", message);
                     }
                 } else {
                     // 응답이 없거나 예상과 다른 경우
                     isSuccess = false;
                     message = "서버 응답을 처리할 수 없습니다.";
+                    console.log("예상과 다른 응답:", response);
                 }
             } catch (e) {
                 isSuccess = false;
                 message = "응답 처리 중 오류가 발생했습니다.";
+                console.error("응답 처리 오류:", e);
             }
             
             if (isSuccess) {
-                $c.win.alert("'" + projectName + "' 프로젝트가 삭제되었습니다.\n메인 페이지로 이동합니다.");
+                console.log("삭제 성공, alert 표시");
                 
-                // 부모 창으로 대시보드 이동
-                try {
-                    var parentFrame = $p.parent();
-                    if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
-                        parentFrame.scwin.changeMenu("dashboard");
-                    }
-                } catch(e) {
+                $c.win.alert("'" + projectName + "' 프로젝트가 삭제되었습니다.\n메인 페이지로 이동합니다.", function() {
+                    console.log("alert 확인 버튼 클릭됨");
                     
-                }
+                    // WebSquare 방식으로 페이지 이동
+                    try {
+                        console.log("$p.url로 페이지 이동 시도");
+                        $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/mainPage.xml");
+                    } catch(e) {
+                        console.error("$p.url 이동 실패:", e);
+                        try {
+                            $p.url("/InsWebApp/ui/mainPage.xml");
+                        } catch(e2) {
+                            console.error("대체 이동 실패:", e2);
+                            window.location.href = "/InsWebApp/ui/mainPage.xml";
+                        }
+                    }
+                });
             } else {
                 $c.win.alert("프로젝트 삭제에 실패했습니다: " + message);
             }
@@ -849,14 +900,30 @@ scwin.executeProjectDelete = function(projectName) {
     });
 };
 
+// 뒤로가기 버튼 클릭
+scwin.btn_back_onclick = function(e) {
+    try {
+        // 부모 팝업 창 닫기 (모달 닫기)
+        if (typeof $p !== 'undefined' && $p.closePopup) {
+            $p.closePopup();
+        } else if (window.parent && window.parent.$p && window.parent.$p.closePopup) {
+            window.parent.$p.closePopup();
+        } else {
+            // fallback - 브라우저 뒤로가기
+            window.history.back();
+        }
+    } catch(e) {
+        console.error("뒤로가기 실행 오류:", e);
+        window.history.back();
+    }
+};
+
 ]]></script>
     </head>
     <body ev:onpageload="scwin.onpageload">
         <!-- 세부사항 페이지 컨테이너 -->
         <xf:group style="padding:40px;background-color:#ffffff;min-height:calc(100vh - 80px);position:relative;" id="grp_detailContainer">
             
-            
-            <!-- 페이지 제목 -->
             
             <!-- 프로젝트 이미지 영역 -->
             <xf:group style="text-align:center;margin-bottom:40px;" id="grp_projectImage">
@@ -876,7 +943,7 @@ scwin.executeProjectDelete = function(projectName) {
                         id="btn_changeImage" 
                         type="button" 
                         ev:onclick="scwin.btn_changeImage_onclick">
-                        <xf:label><![CDATA[📷]]></xf:label>
+                        <xf:label><![CDATA[]]></xf:label>
                     </xf:trigger>
                     
                 </xf:group>
@@ -1042,7 +1109,8 @@ scwin.executeProjectDelete = function(projectName) {
                         <xf:input 
                             style="width:100%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;text-align:center;"
                             id="input_confirmProjectName"
-                            placeholder="프로젝트명을 입력하세요"/>
+                            placeholder="프로젝트명을 입력하세요"
+                            ev:oninput="scwin.input_confirmProjectName_oninput"/>
                     </xf:group>
                     
                     <!-- 모달 버튼 영역 -->
