@@ -4093,7 +4093,9 @@ scwin.expandModalFromPip = function() {
 
 // PostMessage 이벤트 리스너 추가 (자식 창에서 보낸 메시지 처리)
 window.addEventListener('message', function(event) {
-    console.log("PostMessage 받음:", event.data);
+    console.log("������ [projectMainPage] PostMessage 받음:", event.data);
+    console.log('event.origin:', event.origin);
+    console.log('event.source:', event.source);
     
     // PIP 창 생성 요청 처리
     if (event.data && event.data.action === 'createPipWindow') {
@@ -4111,8 +4113,30 @@ window.addEventListener('message', function(event) {
     
     // 모달 PIP 크기 축소 요청 처리
     if (event.data && event.data.action === 'resizeModalToPip') {
-        console.log("모달 PIP 크기 축소 요청 받음");
-        scwin.resizeModalToPip();
+        console.log("������ PostMessage 수신 - 모달 PIP 크기 축소 요청 받음");
+        console.log('수신된 데이터:', event.data);
+        console.log('event.origin:', event.origin);
+        
+        try {
+            scwin.resizeModalToPip();
+            console.log('✅ 모달 PIP 축소 완료');
+        } catch (error) {
+            console.error('❌ 모달 PIP 축소 실패:', error);
+        }
+        return;
+    }
+    
+    // 모달 PIP에서 확대 복원 요청 처리
+    if (event.data && event.data.action === 'expandModalFromPip') {
+        console.log("������ PostMessage 수신 - 모달 PIP에서 확대 복원 요청 받음");
+        console.log('수신된 데이터:', event.data);
+        
+        try {
+            scwin.expandModalFromPip();
+            console.log('✅ 모달 확대 복원 완료');
+        } catch (error) {
+            console.error('❌ 모달 확대 복원 실패:', error);
+        }
         return;
     }
     

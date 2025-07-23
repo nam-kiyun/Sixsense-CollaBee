@@ -4320,9 +4320,12 @@ scwin.saveVideoStateToParent = function() {
     }
 };
 
+// Picture-in-Picture 토글 상태 변수
+let isPipMode = false;
+
 // Picture-in-Picture 토글 (Method 1 - 별도 컨테이너 사용)
 scwin.togglePiP = function() {
-    console.log('PIP 버튼 클릭됨 - miniPIP 모드 토글');
+    console.log('PIP 버튼 클릭됨 - miniPIP 모드 토글, 현재 상태:', isPipMode);
     
     // 로컬 비디오와 원격 비디오 확인
     const localVideo = document.getElementById('localVideo');
@@ -4334,82 +4337,232 @@ scwin.togglePiP = function() {
     }
     
     try {
-        console.log('PIP 모드 시작 - showMiniPIP 호출');
-        
-        // 1. 모달을 PIP 크기로 축소
-        console.log('PIP 모드 - 모달 크기 축소 시작');
-        
-        // 부모창에 모달 축소 요청
-        if (window.parent && window.parent !== window) {
-            try {
-                window.parent.postMessage({
-                    action: 'resizeModalToPip'
-                }, '*');
-                console.log('✅ 부모창에 모달 축소 요청 전송');
-            } catch (e) {
-                console.log('모달 축소 요청 실패:', e.message);
+        if (!isPipMode) {
+            // PIP 모드로 전환
+            console.log('일반 모드 → PIP 모드 전환 시작');
+            
+            // 1. 부모창에 모달 축소 요청
+            if (window.parent && window.parent !== window) {
+                try {
+                    console.log('������ PostMessage 전송 시작 - resizeModalToPip');
+                    console.log('window.parent:', window.parent);
+                    console.log('window.parent.location:', window.parent.location.href);
+                    
+                    window.parent.postMessage({
+                        action: 'resizeModalToPip',
+                        source: 'videoChatPage',
+                        timestamp: Date.now()
+                    }, '*');
+                    console.log('✅ 부모창에 모달 축소 요청 전송 완료');
+                    
+                    // 추가 확인을 위한 다중 전송
+                    setTimeout(() => {
+                        window.parent.postMessage({
+                            action: 'resizeModalToPip',
+                            source: 'videoChatPage_retry',
+                            timestamp: Date.now()
+                        }, '*');
+                        console.log('������ PostMessage 재시도 전송');
+                    }, 100);
+                    
+                } catch (e) {
+                    console.error('모달 축소 요청 실패:', e);
+                }
+            } else {
+                console.warn('⚠️ 부모창을 찾을 수 없습니다 - 대체 방법 시도');
+                
+                // 대체 방법 1: window.opener 사용
+                if (window.opener && window.opener !== window) {
+                    try {
+                        console.log('������ 대체 방법: window.opener 사용');
+                        window.opener.postMessage({
+                            action: 'resizeModalToPip',
+                            source: 'videoChatPage_opener',
+                            timestamp: Date.now()
+                        }, '*');
+                        console.log('✅ window.opener로 PostMessage 전송 완료');
+                    } catch (openerError) {
+                        console.error('window.opener 사용 실패:', openerError);
+                    }
+                }
+                
+                // 대체 방법 2: window.top 사용
+                else if (window.top && window.top !== window) {
+                    try {
+                        console.log('������ 대체 방법: window.top 사용');
+                        window.top.postMessage({
+                            action: 'resizeModalToPip',
+                            source: 'videoChatPage_top',
+                            timestamp: Date.now()
+                        }, '*');
+                        console.log('✅ window.top으로 PostMessage 전송 완료');
+                    } catch (topError) {
+                        console.error('window.top 사용 실패:', topError);
+                    }
+                }
+                
+                // 대체 방법 3: 직접 DOM 접근 시도 (가장 강력함!)
+                setTimeout(() => {
+                    try {
+                        console.log('������ 대체 방법: 직접 DOM 접근 시도');
+                        
+                        // 1단계: document에서 모달 찾기
+                        let modalElement = document.querySelector('[id*="videoChatPopup"]');
+                        
+                        // 2단계: parent document에서 찾기
+                        if (!modalElement && window.parent && window.parent.document) {
+                            try {
+                                modalElement = window.parent.document.querySelector('[id*="videoChatPopup"]');
+                                console.log('������ parent document에서 모달 발견');
+                            } catch (parentDocError) {
+                                console.log('parent document 접근 실패:', parentDocError.message);
+                            }
+                        }
+                        
+                        // 3단계: top document에서 찾기
+                        if (!modalElement && window.top && window.top.document) {
+                            try {
+                                modalElement = window.top.document.querySelector('[id*="videoChatPopup"]');
+                                console.log('������ top document에서 모달 발견');
+                            } catch (topDocError) {
+                                console.log('top document 접근 실패:', topDocError.message);
+                            }
+                        }
+                        
+                        if (modalElement) {
+                            console.log('������ 모달 요소 발견:', modalElement.id);
+                            
+                            // 직접 스타일 수정으로 PIP 모드 적용
+                            modalElement.style.setProperty('width', '320px', 'important');
+                            modalElement.style.setProperty('height', '240px', 'important');
+                            modalElement.style.setProperty('position', 'fixed', 'important');
+                            modalElement.style.setProperty('bottom', '20px', 'important');
+                            modalElement.style.setProperty('right', '20px', 'important');
+                            modalElement.style.setProperty('top', 'auto', 'important');
+                            modalElement.style.setProperty('left', 'auto', 'important');
+                            modalElement.style.setProperty('z-index', '999999', 'important');
+                            
+                            console.log('✅ 직접 DOM 조작으로 모달 PIP 적용 완료!');
+                        } else {
+                            console.log('❌ 모든 document에서 모달 요소를 찾을 수 없음');
+                        }
+                    } catch (domError) {
+                        console.error('직접 DOM 접근 실패:', domError);
+                    }
+                }, 100);
+            }
+            
+            // 2. 내부 UI를 PIP 모드로 변경
+            scwin.applyPipModeUI();
+            isPipMode = true;
+            
+            // PIP 버튼 텍스트 변경
+            const pipBtn = document.getElementById('pipBtn');
+            if (pipBtn) {
+                const pipLabel = pipBtn.querySelector('xf\\:label, label');
+                if (pipLabel) pipLabel.textContent = '확대';
+                pipBtn.classList.add('active');
+            }
+            
+        } else {
+            // 일반 모드로 복원
+            console.log('PIP 모드 → 일반 모드 복원 시작');
+            
+            // 1. 부모창에 모달 복원 요청
+            if (window.parent && window.parent !== window) {
+                try {
+                    console.log('������ PostMessage 전송 시작 - expandModalFromPip');
+                    
+                    window.parent.postMessage({
+                        action: 'expandModalFromPip',
+                        source: 'videoChatPage',
+                        timestamp: Date.now()
+                    }, '*');
+                    console.log('✅ 부모창에 모달 복원 요청 전송 완료');
+                    
+                } catch (e) {
+                    console.error('모달 복원 요청 실패:', e);
+                }
+            } else {
+                console.warn('⚠️ 부모창을 찾을 수 없습니다');
+            }
+            
+            // 2. 내부 UI를 일반 모드로 복원
+            scwin.restoreUIFromPip();
+            isPipMode = false;
+            
+            // PIP 버튼 텍스트 변경
+            const pipBtn = document.getElementById('pipBtn');
+            if (pipBtn) {
+                const pipLabel = pipBtn.querySelector('xf\\:label, label');
+                if (pipLabel) pipLabel.textContent = 'PIP';
+                pipBtn.classList.remove('active');
             }
         }
         
-        // 2. 화상통화 UI를 PIP 모드로 변경
-        setTimeout(() => {
-            const mainContainer = document.querySelector('.video-chat-container');
-            const chatSection = document.querySelector('.chat-section');
-            const controlPanel = document.querySelector('.control-panel');
-            const localVideoContainer = document.querySelector('.local-video-container');
-            
-            if (mainContainer) {
-                // 메인 컨테이너를 PIP 레이아웃으로 변경
-                mainContainer.style.setProperty('flex-direction', 'column', 'important');
-                mainContainer.style.setProperty('height', '100%', 'important');
-                console.log('✅ 메인 컨테이너 PIP 레이아웃 적용');
-            }
-            
-            // 채팅 섹션 숨기기
-            if (chatSection) {
-                chatSection.style.setProperty('display', 'none', 'important');
-                console.log('✅ 채팅 섹션 숨김');
-            }
-            
-            // 컨트롤 패널 PIP용으로 축소
-            if (controlPanel) {
-                controlPanel.style.setProperty('bottom', '5px', 'important');
-                controlPanel.style.setProperty('gap', '5px', 'important');
-                
-                // 컨트롤 버튼들 축소
-                const controlBtns = controlPanel.querySelectorAll('.control-btn');
-                controlBtns.forEach(btn => {
-                    btn.style.setProperty('width', '30px', 'important');
-                    btn.style.setProperty('height', '30px', 'important');
-                    btn.style.setProperty('font-size', '10px', 'important');
-                });
-                console.log('✅ 컨트롤 패널 PIP 크기로 축소');
-            }
-            
-            // 로컬 비디오를 더 작게 조정
-            if (localVideoContainer) {
-                localVideoContainer.style.setProperty('width', '80px', 'important');
-                localVideoContainer.style.setProperty('height', '60px', 'important');
-                localVideoContainer.style.setProperty('top', '5px', 'important');
-                localVideoContainer.style.setProperty('right', '5px', 'important');
-                console.log('✅ 로컬 비디오 PIP 크기로 축소');
-            }
-            
-            // 원격 비디오 그리드 조정
-            const remoteVideosGrid = document.getElementById('remoteVideosGrid');
-            if (remoteVideosGrid) {
-                remoteVideosGrid.style.setProperty('padding', '5px', 'important');
-                remoteVideosGrid.style.setProperty('grid-gap', '3px', 'important');
-                remoteVideosGrid.style.setProperty('grid-template-columns', '1fr', 'important');
-                console.log('✅ 원격 비디오 그리드 PIP 레이아웃 적용');
-            }
-            
-        }, 100);
-        
     } catch (error) {
-        console.error('PIP 모드 전환 실패:', error);
-        alert('PIP 모드로 전환할 수 없습니다: ' + error.message);
+        console.error('PIP 토글 실패:', error);
+        alert('PIP 모드 전환에 실패했습니다: ' + error.message);
     }
+};
+
+// PIP 모드 UI 적용
+scwin.applyPipModeUI = function() {
+    console.log('PIP 모드 UI 적용 시작');
+    
+    setTimeout(() => {
+        const mainContainer = document.querySelector('.video-chat-container');
+        const chatSection = document.querySelector('.chat-section');
+        const controlPanel = document.querySelector('.control-panel');
+        const localVideoContainer = document.querySelector('.local-video-container');
+        
+        if (mainContainer) {
+            // 메인 컨테이너를 PIP 레이아웃으로 변경
+            mainContainer.style.setProperty('flex-direction', 'column', 'important');
+            mainContainer.style.setProperty('height', '100%', 'important');
+            console.log('✅ 메인 컨테이너 PIP 레이아웃 적용');
+        }
+        
+        // 채팅 섹션 숨기기
+        if (chatSection) {
+            chatSection.style.setProperty('display', 'none', 'important');
+            console.log('✅ 채팅 섹션 숨김');
+        }
+        
+        // 컨트롤 패널 PIP용으로 축소
+        if (controlPanel) {
+            controlPanel.style.setProperty('bottom', '5px', 'important');
+            controlPanel.style.setProperty('gap', '5px', 'important');
+            
+            // 컨트롤 버튼들 축소
+            const controlBtns = controlPanel.querySelectorAll('.control-btn');
+            controlBtns.forEach(btn => {
+                btn.style.setProperty('width', '30px', 'important');
+                btn.style.setProperty('height', '30px', 'important');
+                btn.style.setProperty('font-size', '10px', 'important');
+            });
+            console.log('✅ 컨트롤 패널 PIP 크기로 축소');
+        }
+        
+        // 로컬 비디오를 더 작게 조정
+        if (localVideoContainer) {
+            localVideoContainer.style.setProperty('width', '80px', 'important');
+            localVideoContainer.style.setProperty('height', '60px', 'important');
+            localVideoContainer.style.setProperty('top', '5px', 'important');
+            localVideoContainer.style.setProperty('right', '5px', 'important');
+            console.log('✅ 로컬 비디오 PIP 크기로 축소');
+        }
+        
+        // 원격 비디오 그리드 조정
+        const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+        if (remoteVideosGrid) {
+            remoteVideosGrid.style.setProperty('padding', '5px', 'important');
+            remoteVideosGrid.style.setProperty('grid-gap', '3px', 'important');
+            remoteVideosGrid.style.setProperty('grid-template-columns', '1fr', 'important');
+            console.log('✅ 원격 비디오 그리드 PIP 레이아웃 적용');
+        }
+        
+    }, 100);
 };
 
 // PIP에서 복원 메시지 처리
@@ -4417,6 +4570,15 @@ window.addEventListener('message', function(event) {
     if (event.data && event.data.action === 'restoreFromPip') {
         console.log('PIP에서 복원 요청 받음');
         scwin.restoreUIFromPip();
+        isPipMode = false;
+        
+        // PIP 버튼 텍스트 변경
+        const pipBtn = document.getElementById('pipBtn');
+        if (pipBtn) {
+            const pipLabel = pipBtn.querySelector('xf\\:label, label');
+            if (pipLabel) pipLabel.textContent = 'PIP';
+            pipBtn.classList.remove('active');
+        }
     }
 });
 
