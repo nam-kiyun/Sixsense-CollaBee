@@ -56,6 +56,28 @@
         </xf:model>
         
         <style>
+            /* 화상통화 모달 헤더 완전히 제거 */
+            [id*="videoChatPopup_header"] {
+                display: none !important;
+                height: 0 !important;
+                visibility: hidden !important;
+            }
+            
+            /* 화상통화 모달 body를 최상단으로 이동 (방법 2: 추천) */
+            [id*="mf_wfr_mainContent_videoChatPopup"][id*="_body"] {
+                top: 0px !important;
+            }
+            
+            /* WebSquare 팝업 헤더 전체 제거 */
+            .w2popup_window .w2window_header,
+            .w2window_header,
+            [id*="videoChatPopup"] .w2window_header {
+                display: none !important;
+                height: 0 !important;
+                min-height: 0 !important;
+                visibility: hidden !important;
+            }
+            
             * { margin: 0; padding: 0; box-sizing: border-box; }
             html { height: 100vh; margin: 0; padding: 0; }
             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; overflow: hidden; margin: 0; padding: 0; height: 100vh; }
