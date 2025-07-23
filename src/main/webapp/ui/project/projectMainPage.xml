@@ -3800,9 +3800,23 @@ scwin.new_task_onclick = function (e) {
 
 };
 
+// 화상통화 팝업 고유 ID 생성 함수
+scwin.generateVideoChatPopupId = function() {
+    var timestamp = Date.now();
+    var random = Math.floor(Math.random() * 1000);
+    return "videoChatPopup_" + timestamp + "_" + random;
+};
+
 // 화상통화 버튼 클릭 이벤트
 scwin.btn_videoCall_onclick = function(e) {
-    // 프로젝트 ID 가져오기
+    // 1. 고유 팝업 ID 생성
+    var uniquePopupId = scwin.generateVideoChatPopupId();
+    console.log("생성된 고유 팝업 ID:", uniquePopupId);
+    
+    // 2. 현재 화상통화 팝업 ID를 전역 변수에 저장 (닫기 시 사용)
+    scwin.currentVideoChatPopupId = uniquePopupId;
+    
+    // 3. 프로젝트 ID 가져오기
     var projectId = null;
     
     // 첫 번째 방법: currentProjectData에서 가져오기
@@ -3842,9 +3856,9 @@ scwin.btn_videoCall_onclick = function(e) {
         }
     };
 
-    // 기본 모달 옵션 설정 (테스트용)
+    // 기본 모달 옵션 설정 (동적 ID 사용)
     var options = {
-        id: "videoChatPopup",
+        id: uniquePopupId,  // 동적 생성된 고유 ID 사용
         type: "wframePopup", 
         width: "1920",      // 고정 크기로 테스트
         height: "940",
@@ -3856,23 +3870,56 @@ scwin.btn_videoCall_onclick = function(e) {
         dataObject: param
     };
 
-    // 화상통화 팝업 열기
-    $p.openPopup("/InsWebApp/ui/videochat/webRTCVideoChatPage.xml", options);
+    // 4. 100ms 대기 후 화상통화 팝업 열기 (DOM 정리 완료 대기)
+    setTimeout(function() {
+        $p.openPopup("/InsWebApp/ui/videochat/webRTCVideoChatPage.xml", options);
+    }, 100);
 };
 
 // 화상통화 팝업 닫기 액션
 scwin.videoChat_closeAction = function() {
     console.log("화상통화 팝업 닫기");
-    // 팝업 닫기
-    $p.closePopup("videoChatPopup");
+    // 동적 생성된 팝업 ID로 닫기
+    if (scwin.currentVideoChatPopupId) {
+        console.log("동적 팝업 ID로 닫기:", scwin.currentVideoChatPopupId);
+        $p.closePopup(scwin.currentVideoChatPopupId);
+        scwin.currentVideoChatPopupId = null; // ID 초기화
+    } else {
+        // 기존 방식으로 fallback
+        console.log("기존 방식으로 팝업 닫기");
+        $p.closePopup("videoChatPopup");
+    }
 };
 
 // 화상통화 모달 닫기 함수 (자식 페이지에서 호출용)
-scwin.closeVideoChatModal = function() {
-    console.log("자식 페이지에서 화상통화 모달 닫기 요청");
+scwin.closeVideoChatModal = function(isPipMode) {
+    console.log("자식 페이지에서 화상통화 모달 닫기 요청", isPipMode ? "(PIP 모드)" : "(일반 모드)");
     
-    // 방법 1: 정상적인 closePopup 호출
-    $p.closePopup("videoChatPopup");
+    // PIP 모드일 때는 모달만 닫고 화상통화는 유지
+    if (isPipMode || scwin.isPipModeActive) {
+        console.log("PIP 모드 - 모달만 닫고 화상통화 유지");
+        scwin.isPipModeActive = true; // PIP 모드 활성화 표시
+        
+        // PIP 모드에서는 간단하게 모달만 닫기
+        if (scwin.currentVideoChatPopupId) {
+            $p.closePopup(scwin.currentVideoChatPopupId);
+        } else {
+            $p.closePopup("videoChatPopup");
+        }
+        return; // 화상통화 종료 없이 여기서 끝
+    }
+    
+    console.log("일반 모드 - 화상통화 완전 종료");
+    
+    // 방법 1: 동적 ID로 정상적인 closePopup 호출
+    if (scwin.currentVideoChatPopupId) {
+        console.log("동적 팝업 ID로 모달 닫기:", scwin.currentVideoChatPopupId);
+        $p.closePopup(scwin.currentVideoChatPopupId);
+        scwin.currentVideoChatPopupId = null;
+    } else {
+        // fallback
+        $p.closePopup("videoChatPopup");
+    }
     
     // 방법 2: 강제 DOM 제거
     setTimeout(function() {
@@ -3882,6 +3929,7 @@ scwin.closeVideoChatModal = function() {
                 '#videoChatPopup',
                 '[id*="videoChatPopup"]',
                 '[id*="popup"][id*="video"]',
+                '[id*="mf_wfr_mainContent_videoChatPopup"]',
                 '.w2popup_window',
                 '.wframe_popup'
             ];
@@ -3907,12 +3955,212 @@ scwin.closeVideoChatModal = function() {
     }, 100);
 };
 
+// PIP 상태 저장을 위한 전역 변수
+scwin.pipVideoState = null;
+scwin.isPipModeActive = false; // PIP 모드 활성화 상태
+scwin.originalModalInfo = null; // 원래 모달 크기/위치 저장
+
+// 모달을 PIP 크기로 축소하는 함수
+scwin.resizeModalToPip = function() {
+    console.log("모달 PIP 크기 축소 시작");
+    scwin.isPipModeActive = true;
+    
+    try {
+        // 현재 활성화된 화상통화 모달 찾기
+        const modalSelectors = [
+            '[id*="videoChatPopup"]',
+            '[id*="mf_wfr_mainContent_videoChatPopup"]'
+        ];
+        
+        let modalElement = null;
+        for (const selector of modalSelectors) {
+            const elements = document.querySelectorAll(selector);
+            for (const element of elements) {
+                if (element.style.display !== 'none' && element.offsetWidth > 0) {
+                    modalElement = element;
+                    break;
+                }
+            }
+            if (modalElement) break;
+        }
+        
+        if (modalElement) {
+            // 원래 크기/위치 저장 (복원용)
+            scwin.originalModalInfo = {
+                width: modalElement.style.width || modalElement.offsetWidth + 'px',
+                height: modalElement.style.height || modalElement.offsetHeight + 'px',
+                left: modalElement.style.left || '',
+                top: modalElement.style.top || '',
+                position: modalElement.style.position || ''
+            };
+            
+            // PIP 크기/위치로 변경
+            modalElement.style.setProperty('width', '320px', 'important');
+            modalElement.style.setProperty('height', '240px', 'important');
+            modalElement.style.setProperty('position', 'fixed', 'important');
+            modalElement.style.setProperty('bottom', '20px', 'important');
+            modalElement.style.setProperty('right', '20px', 'important');
+            modalElement.style.setProperty('top', 'auto', 'important');
+            modalElement.style.setProperty('left', 'auto', 'important');
+            modalElement.style.setProperty('z-index', '999999', 'important');
+            
+            console.log("✅ 모달 PIP 크기로 축소 완료:", modalElement.id);
+            
+            // PIP 확대 버튼 추가
+            scwin.addPipExpandButton(modalElement);
+            
+        } else {
+            console.error("활성화된 화상통화 모달을 찾을 수 없음");
+        }
+        
+    } catch (error) {
+        console.error("모달 PIP 축소 실패:", error);
+    }
+};
+
+// PIP 확대 버튼 추가
+scwin.addPipExpandButton = function(modalElement) {
+    // 기존 확대 버튼이 있으면 제거
+    const existingBtn = modalElement.querySelector('.pip-expand-btn');
+    if (existingBtn) existingBtn.remove();
+    
+    // 확대 버튼 생성
+    const expandBtn = document.createElement('button');
+    expandBtn.className = 'pip-expand-btn';
+    expandBtn.innerHTML = '⛶';
+    expandBtn.style.cssText = `
+        position: absolute !important;
+        top: 5px !important;
+        right: 25px !important;
+        width: 20px !important;
+        height: 20px !important;
+        background: #FFB823 !important;
+        border: none !important;
+        border-radius: 3px !important;
+        color: white !important;
+        font-size: 12px !important;
+        cursor: pointer !important;
+        z-index: 1000000 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    `;
+    
+    // 확대 버튼 클릭 이벤트
+    expandBtn.addEventListener('click', function() {
+        scwin.expandModalFromPip();
+    });
+    
+    modalElement.appendChild(expandBtn);
+    console.log("✅ PIP 확대 버튼 추가 완료");
+};
+
+// PIP에서 모달 확대 복원
+scwin.expandModalFromPip = function() {
+    console.log("PIP에서 모달 확대 시작");
+    scwin.isPipModeActive = false;
+    
+    try {
+        const modalElement = document.querySelector('[id*="videoChatPopup"]');
+        if (modalElement && scwin.originalModalInfo) {
+            // 원래 크기/위치로 복원
+            modalElement.style.setProperty('width', scwin.originalModalInfo.width, 'important');
+            modalElement.style.setProperty('height', scwin.originalModalInfo.height, 'important');
+            modalElement.style.setProperty('left', scwin.originalModalInfo.left, 'important');
+            modalElement.style.setProperty('top', scwin.originalModalInfo.top, 'important');
+            modalElement.style.setProperty('bottom', 'auto', 'important');
+            modalElement.style.setProperty('right', 'auto', 'important');
+            
+            // 확대 버튼 제거
+            const expandBtn = modalElement.querySelector('.pip-expand-btn');
+            if (expandBtn) expandBtn.remove();
+            
+            console.log("✅ 모달 확대 복원 완료");
+            
+            // 자식 창에 복원 알림
+            const iframe = modalElement.querySelector('iframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({
+                    action: 'restoreFromPip'
+                }, '*');
+            }
+        }
+        
+    } catch (error) {
+        console.error("모달 확대 복원 실패:", error);
+    }
+};
+
 // PostMessage 이벤트 리스너 추가 (자식 창에서 보낸 메시지 처리)
 window.addEventListener('message', function(event) {
     console.log("PostMessage 받음:", event.data);
     
+    // PIP 창 생성 요청 처리
+    if (event.data && event.data.action === 'createPipWindow') {
+        console.log("PIP 창 생성 요청 받음");
+        scwin.createPipWindow(event.data.videoState);
+        return;
+    }
+    
+    // 화상통화 상태 저장 요청 처리
+    if (event.data && event.data.action === 'saveVideoChatState') {
+        console.log("화상통화 상태 저장 요청 받음");
+        scwin.pipVideoState = event.data.state;
+        return;
+    }
+    
+    // 모달 PIP 크기 축소 요청 처리
+    if (event.data && event.data.action === 'resizeModalToPip') {
+        console.log("모달 PIP 크기 축소 요청 받음");
+        scwin.resizeModalToPip();
+        return;
+    }
+    
+    // 화상통화 모달 재열기 요청 처리
+    if (event.data && event.data.action === 'reopenVideoChatPopup') {
+        console.log("화상통화 모달 재열기 요청 받음");
+        scwin.isPipModeActive = false; // PIP 모드 해제
+        // 화상통화 버튼 클릭과 동일한 동작 수행
+        scwin.btn_videoCall_onclick();
+        return;
+    }
+    
     if (event.data && event.data.action === 'closeVideoChatPopup') {
-        console.log("화상통화 팝업 닫기 메시지 받음 - 강제 닫기 실행");
+        // PIP 모드와 일반 모드 구분 처리
+        if (event.data.isPipMode) {
+            console.log("PIP 모드 - 모달만 닫기 (화상통화 유지)");
+            scwin.isPipModeActive = true; // PIP 모드 활성화
+            
+            // PIP 모드에서는 모달만 숨기기 (DOM 제거하지 않음)
+            try {
+                console.log("PIP - 모달 숨기기 시작 (DOM 유지)");
+                
+                // 방법 1: 모달 DOM을 숨기기만 함 (제거하지 않음)
+                const selectors = [
+                    '[id*="videoChatPopup"]',
+                    '[id*="mf_wfr_mainContent_videoChatPopup"]'
+                ];
+                
+                let hiddenCount = 0;
+                selectors.forEach(selector => {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(element => {
+                        if (element && element.style) {
+                            element.style.setProperty('display', 'none', 'important');
+                            console.log("PIP - 모달 숨김:", element.id || element.className);
+                            hiddenCount++;
+                        }
+                    });
+                });
+                console.log("PIP - 총", hiddenCount, "개 모달 요소 숨김 완료");
+                
+            } catch (e) {
+                console.error("PIP 모달 숨기기 실패:", e);
+            }
+            return; // 화상통화 종료 없이 여기서 끝
+        }
+        
+        console.log("일반 모드 - 화상통화 팝업 닫기 메시지 받음 - 강제 닫기 실행");
         
         // 간단하고 안전한 모달 닫기
         try {
@@ -3982,6 +4230,350 @@ window.addEventListener('message', function(event) {
 
 // 비디오 연결 상태 저장용 전역 변수
 scwin.videoConnectionState = null;
+
+// PIP 창 생성 함수
+scwin.createPipWindow = function(videoState) {
+    console.log("PIP 창 생성 시작:", videoState);
+    
+    try {
+        // 기존 PIP 창이 있으면 제거
+        const existingPip = document.getElementById('videoChatPipWindow');
+        if (existingPip) {
+            existingPip.remove();
+            console.log("기존 PIP 창 제거됨");
+        }
+        
+        // PIP 창 HTML 생성
+        const pipHTML = `
+            <div id="videoChatPipWindow" style="
+                position: fixed !important;
+                bottom: 20px !important;
+                right: 20px !important;
+                width: 320px !important;
+                height: 240px !important;
+                background: #1a1a1a !important;
+                border: 2px solid #FFB823 !important;
+                border-radius: 12px !important;
+                z-index: 9999 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                overflow: hidden !important;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5) !important;
+                user-select: none !important;
+                cursor: move !important;
+            ">
+                <!-- PIP 헤더 -->
+                <div id="pipHeader" style="
+                    background: #FFB823 !important;
+                    color: #000 !important;
+                    padding: 8px 12px !important;
+                    font-size: 12px !important;
+                    font-weight: bold !important;
+                    display: flex !important;
+                    justify-content: space-between !important;
+                    align-items: center !important;
+                    cursor: move !important;
+                ">
+                    <span>화상통화 - ${videoState && videoState.channelName ? videoState.channelName : '알 수 없음'}</span>
+                    <div>
+                        <button id="pipExpandBtn" style="
+                            background: none !important;
+                            border: none !important;
+                            color: #000 !important;
+                            font-size: 14px !important;
+                            cursor: pointer !important;
+                            margin-right: 8px !important;
+                            padding: 2px !important;
+                        ">⛶</button>
+                        <button id="pipCloseBtn" style="
+                            background: none !important;
+                            border: none !important;
+                            color: #000 !important;
+                            font-size: 14px !important;
+                            cursor: pointer !important;
+                            padding: 2px !important;
+                        ">✕</button>
+                    </div>
+                </div>
+                
+                <!-- PIP 비디오 영역 -->
+                <div id="pipVideoArea" style="
+                    flex: 1 !important;
+                    background: #2a2a2a !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    color: white !important;
+                    font-size: 14px !important;
+                    position: relative !important;
+                ">
+                    <div id="pipVideoGrid" style="
+                        width: 100% !important;
+                        height: 100% !important;
+                        display: grid !important;
+                        grid-template-columns: repeat(2, 1fr) !important;
+                        grid-gap: 2px !important;
+                        padding: 4px !important;
+                    ">
+                        <!-- 비디오들이 여기에 동적으로 추가됨 -->
+                    </div>
+                </div>
+                
+                <!-- 리사이즈 핸들 -->
+                <div class="pip-resize-handle" style="
+                    position: absolute !important;
+                    bottom: 0 !important;
+                    right: 0 !important;
+                    width: 15px !important;
+                    height: 15px !important;
+                    cursor: se-resize !important;
+                    background: transparent !important;
+                "></div>
+            </div>
+        `;
+        
+        // DOM에 PIP 창 추가
+        document.body.insertAdjacentHTML('beforeend', pipHTML);
+        
+        // PIP 창 요소 획득
+        const pipWindow = document.getElementById('videoChatPipWindow');
+        const pipHeader = document.getElementById('pipHeader');
+        const pipExpandBtn = document.getElementById('pipExpandBtn');
+        const pipCloseBtn = document.getElementById('pipCloseBtn');
+        const pipVideoGrid = document.getElementById('pipVideoGrid');
+        const resizeHandle = pipWindow.querySelector('.pip-resize-handle');
+        
+        // 드래그 기능 구현
+        scwin.makePipDraggable(pipWindow, pipHeader);
+        
+        // 리사이즈 기능 구현
+        scwin.makePipResizable(pipWindow, resizeHandle);
+        
+        // 확장 버튼 이벤트
+        pipExpandBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            console.log("PIP 확장 버튼 클릭");
+            scwin.expandVideoChat();
+        });
+        
+        // 닫기 버튼 이벤트
+        pipCloseBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            console.log("PIP 닫기 버튼 클릭");
+            scwin.closePipWindow();
+        });
+        
+        // 비디오 상태 복원 시뮬레이션 (임시)
+        setTimeout(function() {
+            pipVideoGrid.innerHTML = `
+                <div style="
+                    background: #333 !important;
+                    border-radius: 4px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    font-size: 10px !important;
+                    color: #ccc !important;
+                ">내 화면</div>
+                <div style="
+                    background: #333 !important;
+                    border-radius: 4px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    font-size: 10px !important;
+                    color: #ccc !important;
+                ">${videoState && videoState.userName ? videoState.userName : '참가자'}</div>
+            `;
+        }, 500);
+        
+        console.log("PIP 창 생성 완료");
+        
+    } catch (error) {
+        console.error("PIP 창 생성 실패:", error);
+    }
+};
+
+// PIP 창 드래그 기능 구현
+scwin.makePipDraggable = function(pipWindow, dragHandle) {
+    let isDragging = false;
+    let startX, startY, startLeft, startTop;
+    
+    dragHandle.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = parseInt(window.getComputedStyle(pipWindow).left);
+        startTop = parseInt(window.getComputedStyle(pipWindow).top);
+        
+        document.addEventListener('mousemove', handleDrag);
+        document.addEventListener('mouseup', stopDrag);
+        
+        e.preventDefault();
+    });
+    
+    function handleDrag(e) {
+        if (!isDragging) return;
+        
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        let newLeft = startLeft + deltaX;
+        let newTop = startTop + deltaY;
+        
+        // 화면 경계 제한
+        const maxLeft = window.innerWidth - pipWindow.offsetWidth;
+        const maxTop = window.innerHeight - pipWindow.offsetHeight;
+        
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+        
+        pipWindow.style.left = newLeft + 'px';
+        pipWindow.style.top = newTop + 'px';
+        pipWindow.style.right = 'auto';
+        pipWindow.style.bottom = 'auto';
+    }
+    
+    function stopDrag() {
+        isDragging = false;
+        document.removeEventListener('mousemove', handleDrag);
+        document.removeEventListener('mouseup', stopDrag);
+    }
+};
+
+// PIP 창 리사이즈 기능 구현
+scwin.makePipResizable = function(pipWindow, resizeHandle) {
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight;
+    
+    resizeHandle.addEventListener('mousedown', function(e) {
+        isResizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = parseInt(window.getComputedStyle(pipWindow).width);
+        startHeight = parseInt(window.getComputedStyle(pipWindow).height);
+        
+        document.addEventListener('mousemove', handleResize);
+        document.addEventListener('mouseup', stopResize);
+        
+        e.preventDefault();
+        e.stopPropagation();
+    });
+    
+    function handleResize(e) {
+        if (!isResizing) return;
+        
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        let newWidth = startWidth + deltaX;
+        let newHeight = startHeight + deltaY;
+        
+        // 최소/최대 크기 제한
+        newWidth = Math.max(250, Math.min(newWidth, 600));
+        newHeight = Math.max(180, Math.min(newHeight, 400));
+        
+        pipWindow.style.width = newWidth + 'px';
+        pipWindow.style.height = newHeight + 'px';
+    }
+    
+    function stopResize() {
+        isResizing = false;
+        document.removeEventListener('mousemove', handleResize);
+        document.removeEventListener('mouseup', stopResize);
+    }
+};
+
+// PIP 창 닫기 함수
+scwin.closePipWindow = function() {
+    try {
+        const pipWindow = document.getElementById('videoChatPipWindow');
+        if (pipWindow) {
+            pipWindow.remove();
+            console.log("PIP 창 닫기 완료");
+            
+            // PIP 상태 초기화
+            scwin.pipVideoState = null;
+        }
+    } catch (error) {
+        console.error("PIP 창 닫기 실패:", error);
+    }
+};
+
+// PIP에서 전체 화상통화로 확장하는 함수
+scwin.expandVideoChat = function() {
+    console.log("PIP에서 전체 화상통화로 확장 시작");
+    
+    try {
+        // 현재 프로젝트 ID 가져오기
+        var projectId = null;
+        
+        // PIP 상태에서 projectId 가져오기
+        if (scwin.pipVideoState && scwin.pipVideoState.projectId) {
+            projectId = scwin.pipVideoState.projectId;
+        }
+        
+        // 대안: currentProjectData에서 가져오기
+        if (!projectId && scwin.currentProjectData && scwin.currentProjectData.projectId) {
+            projectId = scwin.currentProjectData.projectId;
+        }
+        
+        // 대안: dm_projectVo에서 가져오기
+        if (!projectId) {
+            try {
+                projectId = dm_projectVo.get("projectId");
+            } catch (e) {
+                console.log("dm_projectVo에서 projectId 가져오기 실패:", e);
+            }
+        }
+        
+        if (!projectId) {
+            alert("프로젝트 ID를 찾을 수 없습니다.");
+            console.error("프로젝트 ID를 찾을 수 없습니다.");
+            return;
+        }
+        
+        console.log("화상통화 확장 - 프로젝트 ID:", projectId);
+        
+        // PIP 창 제거
+        const pipWindow = document.getElementById('videoChatPipWindow');
+        if (pipWindow) {
+            pipWindow.remove();
+        }
+        
+        // 전체 화상통화 모달 다시 열기
+        var param = {
+            "type": "json",
+            "name": "projectInfo", 
+            "data": {
+                "projectId": projectId,
+                "fromPip": true  // PIP에서 확장된 것임을 표시
+            }
+        };
+        
+        var options = {
+            id: "videoChatPopup",
+            type: "wframePopup", 
+            width: "1920",
+            height: "940",
+            left : "0",      
+            modal: false,
+            header: false,
+            customTitleBar: false,
+            closeAction: "scwin.videoChat_closeAction",
+            dataObject: param
+        };
+        
+        // 화상통화 팝업 다시 열기
+        $p.openPopup("/InsWebApp/ui/videochat/webRTCVideoChatPage.xml", options);
+        
+        console.log("화상통화 확장 완료");
+        
+    } catch (error) {
+        console.error("화상통화 확장 실패:", error);
+        alert("화상통화를 확장할 수 없습니다: " + error.message);
+    }
+};
 
 // 소형 비디오 채팅 컨테이너 표시 함수
 scwin.showMiniVideoChatContainer = function() {
