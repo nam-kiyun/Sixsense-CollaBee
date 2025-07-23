@@ -161,6 +161,7 @@ scwin.sbm_selectProjectList_submitdone = function(e) {
     // error 수신시
     const elData = e.responseJSON.elData;
     const elHeader = e.responseJSON.elHeader;
+
     if (elHeader == null || elHeader == "" || elHeader == "undefined" || elHeader.resSuc == false) {
         console.error("프로젝트 목록 조회 오류 - 에러코드: " + (elHeader ? elHeader.resCode : "unknown") + ", 에러메시지: " + (elHeader ? elHeader.resMsg : "unknown"));
         // 에러가 발생해도 기본 프로젝트 메뉴는 표시

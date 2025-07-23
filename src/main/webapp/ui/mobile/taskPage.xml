@@ -15,16 +15,122 @@
     					<w2:column dataType="text" name="사용자 이름" id="userName"></w2:column>
     				</w2:columnInfo>
     			</w2:dataList>
+    			<w2:dataMap baseNode="map" id="dma_comment">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="댓글 아이디" id="commentId"></w2:key>
+    					<w2:key dataType="text" name="task 아이디" id="taskId"></w2:key>
+    					<w2:key dataType="text" name="사용자 아이디" id="userId"></w2:key>
+    					<w2:key dataType="text" name="메세지" id="message"></w2:key>
+    					<w2:key dataType="text" name="생성일" id="createdAt"></w2:key>
+    					<w2:key dataType="text" name="사용자 이름" id="userName"></w2:key>
+    					<w2:key dataType="text" name="이미지" id="userImage"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
+    			<w2:dataMap baseNode="map" id="dma_getComment">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="작업 아이디" id="taskId"></w2:key>
+    					<w2:key dataType="text" name="페이지" id="page"></w2:key>
+    					<w2:key dataType="text" name="페이지 사이즈" id="pageSize"></w2:key>
+    					<w2:key dataType="text" name="시작번호" id="startOffset"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
     		</w2:dataCollection>
     		<w2:workflowCollection />
+    		<xf:submission id="sbm_comment_create" action="/InsWebApp/comment/create.pwkjson" method="post" mediatype="application/json"
+    			ref='data:json,{"id":"dma_comment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
+    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_create_submitdone" ev:submiterror="scwin.sbm_comment_create_submiterror" abortTrigger="">
+    		</xf:submission>
+    		<xf:submission id="sbm_comment_get" action="/InsWebApp/comment/{taskId}.pwkjson" method="post" mediatype="application/json"
+    			ref='data:json,{"id":"dma_getComment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
+    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_get_submitdone" ev:submiterror="scwin.sbm_comment_get_submiterror" abortTrigger="">
+    		</xf:submission>
+    		<xf:submission id="sbm_comment_delete" action="/InsWebApp/comment/delete.pwkjson" method="post" mediatype="application/json"
+    			ref='data:json,{"id":"dma_comment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
+    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_delete_submitdone" ev:submiterror="scwin.sbm_comment_delete_submiterror" abortTrigger="">
+    		</xf:submission>
     	</xf:model>
     	<w2:layoutInfo />
     	<w2:publicInfo method="" />
-    	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
-    scwin.getTask(1, 7);
+    	<script lazy="false" type="text/javascript"><![CDATA[const getMediasoupServerUrl = () => {
+    const hostname = window.location.hostname;
+    const port = '3002';
+
+    // localhost인 경우 그대로 유지
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return `https://localhost:${port}`;
+    }
+
+    // 다른 IP인 경우 해당 IP 사용 
+    return `https://${hostname}:${port}`;
+};
+
+const MEDIASOUP_SERVER_URL = getMediasoupServerUrl();
+
+// mediasoup 관련 변수들
+let mediasoupSocket = null;
+let device = null;
+let sendTransport = null;
+let recvTransport = null;
+let videoProducer = null;
+let audioProducer = null;
+let consumers = new Map(); // consumerId -> {consumer, remoteVideo}
+let remoteVideos = new Map(); // peerId -> video element info
+
+// 기존 변수들 (채팅용은 그대로 유지) 
+let localStream = null;
+let chatSocket = null; // 채팅용 WebSocket (그대로 유지)
+let isJoined = false;
+let isMuted = false;
+let isVideoOff = false;
+let remoteUserInfo = new Map(); // 원격 사용자 정보 저장
+
+// 사용자 정보 (고유 ID 생성)
+const generateUserId = () => {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    return `user_${timestamp}_${random}`;
+};
+
+//사용자 정보
+let currentUser = {
+    userId: "",
+    userName: "",
+    userImage: "",
+    channelName: "test"
+};
+
+
+scwin.onpageload = function () {
+    //소켓 초기화 
+    scwin.initializeChatWebSocket();
+
+    scwin.taskId = 1;
+    scwin.getTask(scwin.taskId, 7);
 
     scwin.chat_touch();
     scwin.comment = false;
+
+
+
+    //채팅
+    scwin.currentPage = 1; // 최초 로딩이 1페이지니까 다음은 2부터 시작
+    scwin.isLoading = false; // 중복 호출 방지용 플래그
+    scwin.hasMore = true; // 마지막 페이지에 도달하면 false로 바꾸기
+    scwin.loadMoreData();
+
+    scwin.chatDate = new Set();
+
+    //무한 스크롤
+    const scrollArea = $p.getComponentById("comment_main_group");
+
+
+    scrollArea.bind("onscroll", function () {
+        const scrollTop = scrollArea.render.scrollTop;
+
+        if (scrollTop <= 50) { // 화면 맨 위 근접했을 때
+            scwin.loadMoreData(); // 이전 댓글 불러오기
+        }
+    });
 };
 
 //task 정보 가져오기
@@ -111,7 +217,6 @@ scwin.getTask = function (taskId, projectId) {
     });
 }
 
-
 scwin.chat_touch = function () {
     let touchStartX = 0;
 
@@ -123,25 +228,587 @@ scwin.chat_touch = function () {
         const touchEndX = e.changedTouches[0].clientX;
         const diffX = touchEndX - touchStartX;
         const side = header_group.getWindow().scwin.side;
-//console.log("side"+ side);
-        const sideFrame = $p.getComponentById("comment_group");
 
-        // 왼쪽으로 스와이프 → 열기 (메뉴 닫혀 있을 때)
+        // 오른쪽으로 스와이프 (예: 100px 이상이면 열기)
         if (diffX < -100 && !scwin.comment && !side) {
-            console.log("side: " + side);
-            console.log("comment: " + scwin.comment);
-            sideFrame.addClass("active");
             scwin.comment = true;
+            const sideFrame = $p.getComponentById("comment_group");
+            sideFrame.addClass("active");
+
         }
 
-        // 오른쪽으로 스와이프 → 닫기 (메뉴 열려 있을 때)
-        if (diffX > 100 && scwin.comment && !side) {
+        // 왼쪽으로 스와이프 (메뉴 열려 있을 때 닫기)
+        if (diffX > 100 && scwin.comment) {
+            const sideFrame = $p.getComponentById("comment_group");
             sideFrame.removeClass("active");
-            scwin.comment = false;
+            setTimeout(() => {
+                scwin.comment = false;
+            }, 10); // 아주 짧은 딜레이로 값 반영 기다리기
+
         }
     });
+}
+
+//해당 작업에 대한 채팅 불러오기(20개씩)
+scwin.loadMoreData = function () {
+    if (scwin.isLoading || !scwin.hasMore) return;
+
+    scwin.isLoading = true;
+
+    const param = {
+        page: scwin.currentPage
+    };
+    dma_getComment.setJSON(param);
+    sbm_comment_get.action = `/InsWebApp/comment/${scwin.taskId}.pwkjson`;
+    $c.sbm.execute(sbm_comment_get);
 };
-]]></script>
+
+
+//소켓 초기화
+scwin.initializeChatWebSocket = function () {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.hostname;
+    const port = window.location.port || (protocol === 'wss:' ? '443' : '80');
+
+    // 여러 WebSocket URL 시도
+    const wsUrls = [
+        `${protocol}//${host}:${port}/InsWebApp/chat`,
+        `ws://localhost:9093/InsWebApp/chat`,
+        `wss://localhost:19443/InsWebApp/chat`
+    ];
+
+    let wsUrl = wsUrls[0];
+    console.log("WebSocket 연결 시도:", wsUrl);
+
+    try {
+        chatSocket = new WebSocket(wsUrl);
+
+        chatSocket.onopen = function () {
+            console.log("✅ WebSocket 연결 성공");
+
+            // 채널 참가
+            const joinMessage = {
+                type: 'join',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName
+            };
+            chatSocket.send(JSON.stringify(joinMessage));
+
+            // 채팅 히스토리 요청
+            setTimeout(() => {
+                const historyMessage = {
+                    type: 'history',
+                    channelName: currentUser.channelName,
+                    afterTimestamp: 0
+                };
+                chatSocket.send(JSON.stringify(historyMessage));
+                console.log("채팅 히스토리 요청 전송");
+            }, 1000);
+        };
+
+        chatSocket.onmessage = function (event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log("WebSocket 메시지 수신:", data.type, data);
+
+                switch (data.type) {
+                    // 채팅 메시지 처리 (동일)
+                    case 'message':
+                        if (data.userId !== currentUser.userId) {
+
+                            console.log("다른 사용자 메시지:", data.userName, "->", data.message);
+                            console.log(data);
+                            const todayText = scwin.formatDate(new Date());
+
+                            // chatDate에 오늘 날짜가 없으면 추가
+                            if (!scwin.chatDate.has(todayText)) {
+                                const dateComp = scwin.addChatDate(todayText);
+                                scwin.chatDate.add(todayText);
+                            }
+
+                            scwin.addChatMessage(data.userName, data.message, data.createdAt, false, data.userImage, data.commentId);
+                        } else {
+                            console.log("내 메시지 서버 에코 무시:", data.message);
+                        }
+                        break;
+
+                    case 'history':
+                        if (data.messages && data.messages.length > 0) {
+                            console.log("채팅 히스토리 로드:", data.messages.length, "개");
+
+                            //dlt_chatMessages.removeAll();
+                            //addedMessageIds.clear();
+
+                            // data.messages.forEach(msg => {
+                            //     const isOwn = msg.userId === currentUser.userId;
+                            //     const msgId = msg.messageId || `history_${msg.userId}_${msg.timestamp}`;
+                            //     scwin.addChatMessage(msg.userName, msg.message, isOwn, msgId);
+                            // });
+
+                            //scwin.addChatMessage("시스템", `이전 채팅 ${data.messages.length}개를 불러왔습니다.`, false);
+                        } else {
+                            console.log("채팅 히스토리 없음");
+                        }
+                        break;
+
+                    case 'existing-users':
+                        // 기존 사용자들과 webRTC 연결 시작 (화상통화 중일 때만)
+                        console.log("기존 사용자들:", data.users, "내 화상통화 상태:", isJoined);
+
+                        // 기존 사용자 정보 저장
+                        if (data.userInfos) {
+                            data.userInfos.forEach(user => {
+                                remoteUserInfo.set(user.userId, user);
+                                console.log("기존 사용자 정보 저장:", user.userName, user.userId);
+                            });
+                        }
+
+                        // P2P 관련 코드 제거됨 - mediasoup에서 자동 처리
+                        break;
+
+                    case 'user-joined':
+                        //scwin.addChatMessage("시스템", `${data.userName}님이 참가했습니다.`, false);
+
+                        // 새 사용자 정보 저장
+                        if (data.userId && data.userName) {
+                            remoteUserInfo.set(data.userId, {
+                                userId: data.userId,
+                                userName: data.userName
+                            });
+                            console.log("새 사용자 정보 저장:", data.userName, data.userId);
+                        }
+
+                        // P2P 관련 코드 제거됨 - mediasoup에서 자동 처리
+                        break;
+
+                    case 'user-left':
+                        //scwin.addChatMessage("시스템", `${data.userName}님이 나갔습니다.`, false);
+
+                        if (data.userId) {
+                            remoteUserInfo.delete(data.userId);
+                            console.log("사용자 정보 제거:", data.userName, data.userId);
+                        }
+
+                        scwin.removeRemoteUser(data.userId);
+                        break;
+
+                    // P2P WebRTC 메시지 처리 제거됨 - mediasoup SFU 방식으로 대체됨
+
+                    case 'notification':
+                        //scwin.addChatMessage("시스템", data.message, false);
+                        break;
+                    case 'delete-message':
+                        console.log("삭제 메시지 수신:", data.messageId);
+
+                        const group = $p.getComponentById("mf_comment_main_group");
+                        const children = group.getChildren ? group.getChildren() : [];
+                        // console.log("group: " + group);
+                        // console.log("children: " + children);
+
+
+                        for (let i = 0; i < children.length; i++) {
+                            const comp = children[i];
+                            const compId = comp?.id || "undefined";
+                            const userData = comp?.userData || "없음";
+                            const localMessageId = userData?.commentId;
+                            const match = String(localMessageId) === String(data.commentId);
+
+                            // console.log(`[${i}] 컴포넌트 ID: ${compId}`);
+                            // console.log(` -> userData:`, userData);
+                            // console.log(` -> localMessageId: ${localMessageId} vs 삭제 대상: ${data.commentId}`);
+                            // console.log(` -> 일치 여부: ${match}`);
+                            if (match) {
+                                // console.log(`✅ 매칭 성공 → 컴포넌트 제거: ${compId}`);
+                                scwin.deleteChat(comp);
+                                break;
+                            }
+                        }
+                        break;
+
+                    default:
+                        console.warn("알 수 없는 메시지 타입:", data.type, data);
+                        break;
+                }
+            } catch (error) {
+                console.error("❌ 메시지 처리 오류:", error);
+                //scwin.addChatMessage("시스템", "❌ 메시지 처리 중 오류 발생", false);
+            }
+        };
+
+        chatSocket.onclose = function (event) {
+            console.log("❌ WebSocket 연결 종료:", event.code, event.reason);
+
+            if (event.code !== 1000) {
+                //scwin.addChatMessage("시스템", "⚠️ 서버와의 연결이 끊어졌습니다. 재연결 시도 중...", false);
+
+                setTimeout(() => {
+                    console.log("WebSocket 재연결 시도...");
+                    scwin.initializeChatWebSocket();
+                }, 5000);
+            }
+        };
+
+        chatSocket.onerror = function (error) {
+            console.error("❌ WebSocket 오류:", error);
+            //scwin.addChatMessage("시스템", "❌ 서버 연결 오류 발생", false);
+        };
+
+    } catch (error) {
+        console.error("❌ WebSocket 초기화 실패:", error);
+        //scwin.addChatMessage("시스템", "❌ WebSocket 초기화 실패", false);
+    }
+};
+
+//엔터 누르면 채팅 전송
+scwin.input_onkeyup = function (e) {
+    if (e.keyCode === 13) {
+        comment_send_button.addClass("active")
+
+        // 버튼 클릭
+        comment_send_button.click();
+
+        // 짧은 시간 후 active 스타일 제거
+        setTimeout(() => {
+            comment_send_button.removeClass("active");
+        }, 150); // 150ms 정도면 충분
+    }
+};
+
+
+//채팅 전송 버튼 눌렀을 때
+scwin.comment_send_button_onclick = function () {
+    const message = comment_input.getValue().trim();
+    if (!message || !chatSocket || chatSocket.readyState !== 1) return;
+
+    const param = {
+        taskId: scwin.taskId,
+        userId: currentUser.userId,
+        message: message
+    }
+    dma_comment.setJSON(param);
+
+    $c.sbm.execute(sbm_comment_create);
+    comment_input.setValue("");
+
+    setTimeout(() => {
+        comment_input.focus();
+    }, 30);
+};
+
+
+//화면에 댓글 추가
+scwin.addChatMessage = function (userName, message, time = "", isMine = false, image, commentId = 0, insertBeforeComp) {
+    const group = $p.getComponentById("mf_comment_main_group");
+    const generateUniqueId = (prefix) => {
+        return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    };
+    const wrapperId = generateUniqueId("chat_wrapper");
+    const profileId = generateUniqueId("chat_profile");
+    const nameId = generateUniqueId("chat_name");
+    const textId = generateUniqueId("chat_text");
+    const timeId = generateUniqueId("chat_time");
+
+    const messageStyle = `
+        font-size: 15px;
+        word-break: break-word;
+        padding:3px;
+        box-sizing: border-box;
+    `;
+
+
+    const wrapperClass = `comment-wrapper ${isMine ? "mine" : "other"}`;
+
+    const wrapper = $p.dynamicCreate(wrapperId, "span", {
+        className: wrapperClass,
+    }, group);
+
+    wrapper.userData = { commentId: commentId };
+    if (insertBeforeComp?.render && wrapper?.render) {
+        group.render.insertBefore(wrapper.render, insertBeforeComp.render);
+    }
+
+    const headerRow = $p.dynamicCreate(wrapperId + "_header", "span", {
+        className: "comment-header"
+    }, wrapper);
+
+    const leftGroupId = wrapperId + "_left";
+    const leftGroup = $p.dynamicCreate(leftGroupId, "span", {
+        className: "comment-left"
+    }, headerRow);
+
+    $p.dynamicCreate(profileId, "image", {
+        src: image && image.trim() !== "" ? `${image}` : `${scwin.defaultImage}`,
+        className: "comment-profile"
+    }, leftGroup);
+
+    $p.dynamicCreate(nameId, "span", {
+        label: userName,
+        className: "comment-name"
+    }, leftGroup);
+
+    if (isMine) {
+        const deleteIconId = wrapperId + "_delete";
+        $p.dynamicCreate(deleteIconId, "image", {
+            src: "/InsWebApp/images/trash-solid.svg",
+            className: "comment-delete-button",
+        }, headerRow);
+
+        const deleteIcon = $p.getComponentById(deleteIconId);
+
+        if (deleteIcon) {
+            deleteIcon.bind("onclick", function (e) {
+                const param = { commentId };
+                const chat = $p.getComponentById(wrapperId);
+
+                //만약 이전에 컴포넌트가 날짜라면 함께 삭제하기
+                dma_comment.setJSON(param);
+                scwin.deleteChat(chat);
+                $c.sbm.execute(sbm_comment_delete);
+
+                const payload = {
+                    type: "delete-message",
+                    commentId: commentId,
+                    userId: currentUser.userId,
+                    userName: currentUser.userName,
+                    userImage: currentUser.userImage,
+                    channelName: currentUser.channelName
+                };
+                chatSocket.send(JSON.stringify(payload));
+
+            });
+        }
+    }
+
+    $p.dynamicCreate(textId, "span", {
+        label: message,
+        style: messageStyle
+    }, wrapper);
+
+    $p.dynamicCreate(timeId, "span", {
+        label: time,
+        className: "comment-time"
+    }, wrapper);
+
+    if (!insertBeforeComp) {
+        setTimeout(() => {
+            const scrollArea = $p.getComponentById("comment_main_group");
+            const el = scrollArea.render;
+
+            const isAtBottom = el.scrollTop >= el.scrollHeight - el.clientHeight - 200;
+
+            if (isAtBottom) {
+                el.scrollTop = el.scrollHeight; // 하단 고정
+            }
+        }, 50);
+    }
+
+    return wrapper;
+};
+
+//삭제할 때 날짜와 함께 삭제
+scwin.deleteChat = function (chat) {
+    const group = $p.getComponentById("mf_comment_main_group");
+
+    // 그룹 내부의 자식 컴포넌트 목록 가져오기
+    const children = group.getChildren();
+
+    // 현재 삭제 대상의 인덱스 찾기
+    const idx = children.indexOf(chat);
+
+    if (idx === -1) {
+        console.warn("삭제 대상이 그룹 안에 존재하지 않습니다.");
+        return;
+    }
+
+    if (idx >= 0) {
+        const prevComp = children[idx + 1];
+        const isDateComp = prevComp?.options?.className === "comment-date";
+        const labelText = prevComp?.render?.innerText;
+
+        if (isDateComp) {
+            prevComp.remove();
+            scwin.chatDate.delete(labelText);
+        }
+    }
+    chat.remove();
+};
+
+
+
+//화면에 날짜 표시
+scwin.addChatDate = function (dateText, insertBeforeComp) {
+    const group = $p.getComponentById("mf_comment_main_group");
+    const wrapperId = "chat_date_" + Date.now();
+
+    const dateWrapper = $p.dynamicCreate(wrapperId, "span", {
+        label: dateText,
+        className: "comment-date"
+    }, group);
+
+    if (insertBeforeComp?.render && dateWrapper?.render) {
+        group.render.insertBefore(dateWrapper.render, insertBeforeComp.render);
+    }
+    return dateWrapper;
+};
+
+//댓글 조회 성공(10개씩)
+scwin.sbm_comment_get_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    const commentList = responseData.elData?.commentVoList ?? [];
+    const userInfo = responseData.userHeader
+    const group = $p.getComponentById("mf_comment_main_group");
+    let firstChild = group.render?.children[0] ?? null;
+    let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
+
+    currentUser.userId = userInfo.userId;
+    currentUser.userName = userInfo.userName;
+    currentUser.userImage = userInfo.userImage
+
+    side_frame.getWindow().dm_sideMenu.set("userName", currentUser.userId);
+    side_frame.getWindow().scwin.loadUserProjects();
+
+    if (commentList.length === 0) {
+        scwin.hasMore = false; // 더 이상 불러올 댓글 없음
+        scwin.isLoading = false;
+        return;
+    }
+
+    //날짜 비교후에 이전날짜와 같다면 삭제
+    if (insertBeforeTarget?.options) {
+        const currentDate = insertBeforeTarget?.options.label
+        const nextDate = scwin.formatDate(commentList[0].createdAt);
+
+        if (currentDate === nextDate) {
+            insertBeforeTarget.remove(); // 기존 날짜 컴포넌트 삭제
+            firstChild = group.render?.children[0] ?? null;
+            insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
+        }
+    }
+
+
+    //반복문 돌면서 채팅 내용 삽입
+    for (let i = 0; i < commentList.length; i++) {
+        const comment = commentList[i];
+        const nextComment = commentList[i + 1];
+        const currentDate = scwin.formatDate(comment.createdAt);
+        const nextDate = nextComment ? scwin.formatDate(nextComment.createdAt) : null;
+        const isMine = (comment.userId === currentUser.userId);
+        console.log(comment);
+
+        // 댓글 삽입
+        const commentComp = scwin.addChatMessage(
+            comment.userName,
+            comment.message,
+            scwin.formatTime(comment.createdAt),
+            isMine,
+            comment.userImage,
+            comment.commentId,
+            insertBeforeTarget
+        );
+        insertBeforeTarget = commentComp;
+
+        // 다음 댓글이 없거나 날짜가 다르면 → 지금 날짜를 현재 댓글 앞에 삽입
+        if (currentDate !== nextDate || i === commentList.length - 1) {
+            const dateComp = scwin.addChatDate(currentDate, insertBeforeTarget);
+            insertBeforeTarget = dateComp;
+            scwin.chatDate.add(currentDate);
+            console.log("추가되었어용");
+        }
+        console.log("currentDate !== nextDate: " + (currentDate !== nextDate))
+        console.log("i === commentList.length - 1: " + (i === commentList.length - 1));
+    }
+
+    //처음 페이지일 경우에는 스크롤 아래로
+    if (scwin.currentPage === 1) {
+        setTimeout(() => {
+            const scrollArea = $p.getComponentById("comment_main_group");
+            const el = scrollArea.render;
+            el.scrollTop = el.scrollHeight;
+        }, 30);
+    } else {
+        setTimeout(() => {
+            const scrollArea = $p.getComponentById("comment_main_group");
+            const el = scrollArea.render;
+            el.scrollTop = 300;
+        }, 30);
+    }
+
+    scwin.currentPage++; // 다음 호출 시 페이지 증가
+    scwin.isLoading = false;
+};
+
+
+
+//댓글 조회 실패
+scwin.sbm_comment_get_submiterror = function (e) {
+    const responseData = e.responseJSON;
+    console.log(responseData);
+};
+
+//댓글 삭제 완료
+scwin.sbm_comment_delete_submitdone = function (e) {
+
+};
+
+//댓글 삭제 실패
+scwin.sbm_comment_delete_submiterror = function (e) {
+
+};
+
+//댓글 생성 완료
+scwin.sbm_comment_create_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    const elData = responseData.elData;
+    const todayText = scwin.formatDate(new Date());
+    console.log(elData);
+
+    // chatDate에 오늘 날짜가 없으면 추가
+    if (!scwin.chatDate.has(todayText)) {
+        const dateComp = scwin.addChatDate(todayText);
+        scwin.chatDate.add(todayText);
+    }
+    scwin.addChatMessage(currentUser.userName, elData.message, scwin.formatTime(elData.createdAt), true, currentUser.userImage, elData.commentId);
+
+
+    const payload = {
+        type: "message",
+        userId: currentUser.userId,
+        userName: currentUser.userName,
+        userImage: currentUser.userImage,
+        channelName: currentUser.channelName,
+        createdAt: scwin.formatTime(elData.createdAt),
+        message: elData.message,
+        commentId: elData.commentId
+    };
+
+
+    chatSocket.send(JSON.stringify(payload));
+};
+
+//댓글 생성 실패
+scwin.sbm_comment_create_submiterror = function (e) {
+
+};
+
+
+
+// "2025-07-07 06:03:39.0" → "2025년 07월 07일"
+scwin.formatDate = function (datetimeStr) {
+    const date = new Date(datetimeStr);
+    return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(date.getDate()).padStart(2, "0")}일`;
+};
+
+// "2025-07-07 06:03:39.0" → "오전 6:03"
+scwin.formatTime = function (datetimeStr) {
+    const date = new Date(datetimeStr);
+    let hour = date.getHours();
+    const minute = String(date.getMinutes()).padStart(2, "0");
+    const isAM = hour < 12;
+    if (hour > 12) hour -= 12;
+    if (hour === 0) hour = 12;
+    return `${isAM ? '오전' : '오후'} ${hour}:${minute}`;
+};]]></script>
     	<style type="text/css"><![CDATA[html,
 body {
     margin: 0;
@@ -265,18 +932,200 @@ body {
     position: absolute;
     right: 0;
     top: 0;
-    width: 303px;
+    width: 90%;
     height: 100%;
     display: block;
     transform: translateX(101%);
     transition: transform 0.3s ease;
     z-index: 100;
-    background-color: pink;
+    background-color: rgb(255, 255, 255);
+    overflow: hidden;
+    overflow-y: hidden;
+    border-left: 1px solid rgb(166, 165, 165);
 }
 
 .comment-group.active {
     transform: translateX(0);
-}]]></style>
+}
+
+
+.comment-group .comment-text {
+    width: 100%;
+    height: 8%;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    box-sizing: border-box;
+    font-weight: bolder;
+    font-size: 17px;
+}
+
+.comment-group .comment-main-group {
+    width: 100%;
+    height: 82%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 30px;
+    padding-bottom: 15px;
+    box-sizing: border-box;
+    overflow: scroll;
+    overflow-x: hidden;
+    gap: 10px;
+    /* background-color: bisque; */
+}
+.comment-main-group::-webkit-scrollbar {
+    width: 3px;
+}
+
+.comment-main-group::-webkit-scrollbar-track {
+    background: white; /* 트랙 배경 */
+}
+
+.comment-main-group::-webkit-scrollbar-thumb {
+    background-color: #ffb823; /* 스크롤 핸들 */
+    border-radius: 10px;
+}
+
+/* 채팅 input과 전송버튼 */
+.comment-group .comment-input-group {
+    width: 100%;
+    height: 10%;
+    display: flex;
+    justify-content: center;
+}
+
+.comment-group .comment-input-group .comment-box {
+    width: 85%;
+    height: 70%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    background-color: white;
+    border-radius: 5px;
+    border: 1px solid #D9D9D9;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+
+.comment-group .comment-input-group .comment-box .comment-input {
+    width: 80%;
+    height: 80%;
+    outline: none;
+    border: none;
+}
+
+.comment-group .comment-input-group .comment-box .comment-input:focus {
+    outline: none;
+    border: none;
+    box-shadow: none;
+}
+
+.comment-group .comment-input-group .comment-box .comment-input-button {
+    width: 15%;
+    height: 80%;
+    background-image: url('/InsWebApp/images/send.svg');
+    background-size: 20px 20px;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: none;
+    outline: none;
+    border-radius: 5px;
+    background-color: #FFB823;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.comment-group .comment-input-group .comment-box .comment-input-button:active,
+.comment-input-button.active {
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+    /* transform: translateY(2px);  */
+
+}
+
+
+
+
+/*채팅 스타일*/
+.comment-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 12px;
+  margin: 6px 0;
+  min-width: 70%;
+  max-width: 80%;
+}
+
+.comment-wrapper.mine {
+  background-color: #fff1d3;
+  align-self: flex-end;
+}
+
+.comment-wrapper.other {
+  background-color: #D9D9D9;
+  align-self: flex-start;
+}
+
+.comment-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.comment-left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.comment-profile {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.comment-name {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.comment-text {
+  font-size: 10px;
+  word-break: break-word;
+  padding: 3px;
+  box-sizing: border-box;
+}
+
+.comment-time {
+  font-size: 12px;
+  color: gray;
+  text-align: right;
+  align-self: flex-end;
+}
+
+.comment-delete-button {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.comment-date{
+	font-size: 13px;
+	background-color: #eeeeee;
+	padding: 6px 12px;
+	border-radius: 16px;
+	color: #555;
+	margin: 16px auto 8px;
+	display: inline-block;
+	text-align: center;
+	font-weight: 500;
+}
+]]></style>
     </head>
     <body ev:onpageload="scwin.onpageload">
     	<xf:group style="" id="" class="wrapper ">
@@ -376,7 +1225,19 @@ body {
     					<w2:textbox style="" id="body_text" label='' class="body-text" escape="false"></w2:textbox>
     				</xf:group>
     			</xf:group>
-    			<xf:group style="" id="comment_group" class="comment-group"></xf:group>
+    			<xf:group class="comment-group" id="comment_group" style="">
+    				<w2:textbox class="comment-text" id="" label="댓글" style=""></w2:textbox>
+    				<xf:group class="comment-main-group" id="comment_main_group" style=""></xf:group>
+    				<xf:group class="comment-input-group" id="" style="">
+    					<xf:group class="comment-box" id="" style="">
+    						<xf:input class="comment-input" ev:onkeyup="scwin.input_onkeyup" id="comment_input" style=""></xf:input>
+    						<xf:trigger class="comment-input-button" ev:onclick="scwin.comment_send_button_onclick" id="comment_send_button" style=""
+    							type="button">
+    							<xf:label><![CDATA[]]></xf:label>
+    						</xf:trigger>
+    					</xf:group>
+    				</xf:group>
+    			</xf:group>
     		</xf:group>
     		<w2:pageFrame style="" id="" class="footer-group" src="/InsWebApp/ui/mobile/cmmn/footer.xml"></w2:pageFrame>
     	</xf:group>

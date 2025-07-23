@@ -140,6 +140,9 @@ scwin.sbm_getUserInfo_submitdone = function (e) {
     }
 
     dma_logout.set("id", responseData.userId);
+    
+    side_frame.getWindow().dm_sideMenu.set("userName", responseData.userId);
+    side_frame.getWindow().scwin.loadUserProjects();
     //header.getWindow().output_userName.setValue(responseData.userName);
     //header.getWindow().img_userIcon.setSrc(responseData.profileImageUrl);
 };

@@ -49,28 +49,14 @@
     scwin.side_button_touch();
 };
 
-scwin.btn_logout_onclick = function (e) {
-    //$p.executeSubmission("sbm_logout");
-};
-
-scwin.grp_userInfo_onclick = function (e) {
-    //$p.url("/InsWebApp/ui/user/myPage.xml");
-};
 
 scwin.grp_logo_onclick = function (e) {
-    //$p.url("/InsWebApp/ui/mainPage.xml");
+    $p.url("/InsWebApp/ui/mobile/mainPage.xml");
 };
 
 scwin.dma_session_submitdone = function (e) {
     const responseData = e.responseJSON.userVo;
     dma_logout.set("id", responseData.userId);
-};
-
-scwin.dma_logout_submitdone = function (e) {
-    //$p.url("/InsWebApp/ui/landingPage.xml");
-};
-
-scwin.dma_logout_submiterror = function (e) {
 };
 
 
@@ -88,8 +74,6 @@ scwin.side_button_onclick = function (e) {
 
 scwin.side_button_touch = function () {
     let touchStartX = 0;
-    
-    
 
     document.addEventListener("touchstart", function (e) {
         touchStartX = e.touches[0].clientX;
@@ -99,7 +83,6 @@ scwin.side_button_touch = function () {
         const touchEndX = e.changedTouches[0].clientX;
         const diffX = touchEndX - touchStartX;
         let comment = $p.parent().scwin.comment;
-        console.log($p.parent().scwin.comment); 
 
         // 오른쪽으로 스와이프 (예: 100px 이상이면 열기)
         if (diffX > 100 && !scwin.side && !comment) {
@@ -109,7 +92,7 @@ scwin.side_button_touch = function () {
         }
 
         // 왼쪽으로 스와이프 (메뉴 열려 있을 때 닫기)
-        if (diffX < -100 && scwin.side && !comment) {
+        if (diffX < -100 && scwin.side) {
             const sideFrame = $p.parent().side_frame;
             sideFrame.removeClass("active");
             scwin.side = false;
@@ -190,8 +173,8 @@ scwin.side_button_touch = function () {
             	<xf:trigger type="button" style="" id="side_button" class="btn sidemenu-button" ev:onclick="scwin.side_button_onclick">
             		<xf:label><![CDATA[]]></xf:label>
             	</xf:trigger>
-            	<xf:image src="/InsWebApp/images/collabee.png" style="" id="img_logo" class="img" />
-            	<xf:output style="" id="output_logo" class="logo-text">
+            	<xf:image src="/InsWebApp/images/collabee.png" style="" id="img_logo" class="img" ev:onclick="scwin.grp_logo_onclick"/>
+            	<xf:output style="" id="output_logo" class="logo-text" ev:onclick="scwin.grp_logo_onclick">
             		<xf:label><![CDATA[COLLABEE]]></xf:label>
             	</xf:output>
             </xf:group>
