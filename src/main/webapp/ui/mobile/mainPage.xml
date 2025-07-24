@@ -62,7 +62,7 @@ scwin.loadMainContent = function (menuType, projectData) {
             // 동적 프로젝트 메뉴인 경우
             if (projectData) {
                 // 특정 프로젝트 상세 페이지로 이동
-                srcPath = "/InsWebApp/ui/project/projectMainPage.xml";
+                srcPath = "/InsWebApp/ui/mobile/projectMainPage.xml";
                 console.log("프로젝트 상세 페이지로 이동:", projectData.projectName);
             } else {
                 // 기본 프로젝트 페이지
@@ -72,7 +72,7 @@ scwin.loadMainContent = function (menuType, projectData) {
             // 기존 정적 메뉴들
             switch (menuType) {
                 case "dashboard":
-                    srcPath = "/InsWebApp/ui/mainContent.xml";
+                    srcPath = "/InsWebApp/ui/mobile/mainContent.xml";
                     break;
                 case "project1":
                     srcPath = "/InsWebApp/ui/project1Content.xml";
@@ -81,7 +81,7 @@ scwin.loadMainContent = function (menuType, projectData) {
                     srcPath = "/InsWebApp/ui/project2Content.xml";
                     break;
                 default:
-                    srcPath = "/InsWebApp/ui/mainContent.xml";
+                    srcPath = "/InsWebApp/ui/mobile/mainContent.xml";
                     console.log("기본 대시보드로 설정:", menuType);
                     break;
             }
@@ -95,7 +95,7 @@ scwin.loadMainContent = function (menuType, projectData) {
             console.log("현재 wframe src:", main_frame.getSrc());
 
             // 프레임 소스 변경
-            main_frame.setSrc(srcPath);
+            main_frame.setSrc(srcPath)
 
             // 변경 후 확인
             setTimeout(function () {
@@ -605,7 +605,7 @@ body {
     		<w2:pageFrame style="" id="" class="header-group" src="/InsWebApp/ui/mobile/cmmn/header.xml"></w2:pageFrame>
     		<xf:group style="" id="" class="main-group">
     			<w2:pageFrame src="/InsWebApp/ui/cmmn/sideMenu.xml" style="" id="side_frame" class="side-frame"></w2:pageFrame>
-    			<w2:pageFrame class="main-frame" id="main_frame" src="/InsWebApp/ui/mainContent.xml" style=""></w2:pageFrame>
+    			<w2:pageFrame style="" id="main_frame" class="main-frame" src="/InsWebApp/ui/mobile/mainContent.xml"></w2:pageFrame>
     		</xf:group>
     		<w2:pageFrame style="" id="" class="footer-group" src="/InsWebApp/ui/mobile/cmmn/footer.xml"></w2:pageFrame>
     	</xf:group>

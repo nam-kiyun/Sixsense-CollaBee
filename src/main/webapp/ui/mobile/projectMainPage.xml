@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare"
+	xmlns:xf="http://www.w3.org/2002/xforms">
+	<head>
+		<w2:type>COMPONENT</w2:type>
+		<w2:buildDate />
+		<w2:MSA />
+		<w2:autoJSLoad>false</w2:autoJSLoad>
+		<xf:model>
+			<w2:dataCollection baseNode="map">
+				<w2:dataMap baseNode="map" id="dm_search_task">
+					<w2:keyInfo>
+						<w2:key id="boardId" name="보드 ID" dataType="text"></w2:key>
+						<w2:key id="tags" name="태그 필터" dataType="text"></w2:key>
+						<w2:key id="sortField" name="정렬 필드" dataType="text"></w2:key>
+						<w2:key id="sortOrder" name="정렬 순서" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataList baseNode="list" repeatNode="map" id="dlt_taskList" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column id="taskId" name="taskId" dataType="text"></w2:column>
+						<w2:column id="boardId" name="boardId" dataType="text"></w2:column>
+						<w2:column id="projectUserId" name="projectUserId" dataType="text"></w2:column>
+						<w2:column id="projectRepoId" name="projectRepoId" dataType="text"></w2:column>
+						<w2:column id="taskTitle" name="taskTitle" dataType="text"></w2:column>
+						<w2:column id="priority" name="priority" dataType="text"></w2:column>
+						<w2:column id="startDate" name="startDate" dataType="text"></w2:column>
+						<w2:column id="endDate" name="endDate" dataType="text"></w2:column>
+						<w2:column id="tags" name="tags" dataType="text"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataMap baseNode="map" id="dm_taskVo">
+					<w2:keyInfo>
+						<w2:key id="taskTitle" name="업무 제목" dataType="text"></w2:key>
+						<w2:key id="boardId" name="보드 ID" dataType="text"></w2:key>
+						<w2:key id="taskId" name="업무 ID" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dm_boardVo">
+					<w2:keyInfo>
+						<w2:key id="boardId" name="boardId" dataType="text"></w2:key>
+						<w2:key id="boardTitle" name="boardTitle" dataType="text"></w2:key>
+						<w2:key id="projectId" name="projectId" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataList baseNode="list" repeatNode="map" id="dlt_boardListVo" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column dataType="text" name="boardId" id="boardId"></w2:column>
+						<w2:column dataType="text" name="boardTitle" id="boardTitle"></w2:column>
+						<w2:column dataType="text" name="projectId" id="projectId"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataMap baseNode="map" id="dm_projectVo">
+					<w2:keyInfo>
+						<w2:key id="projectId" name="projectId" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dm_userInfo">
+					<w2:keyInfo>
+						<w2:key id="userId" name="userId" dataType="text"></w2:key>
+						<w2:key id="userName" name="userName" dataType="text"></w2:key>
+						<w2:key id="userImage" name="userImage" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataList baseNode="list" repeatNode="map" id="dlt_calendar_schedule" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column id="id" name="id" dataType="text"></w2:column>
+						<w2:column id="title" name="title" dataType="text"></w2:column>
+						<w2:column id="start" name="start" dataType="text"></w2:column>
+						<w2:column id="end" name="end" dataType="text"></w2:column>
+						<w2:column id="boardId" name="boardId" dataType="text"></w2:column>
+						<w2:column id="boardTitle" name="boardTitle" dataType="text"></w2:column>
+						<w2:column id="priority" name="priority" dataType="text"></w2:column>
+						<w2:column id="tags" name="tags" dataType="text"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataList baseNode="list" repeatNode="map" id="dlt_gantt_schedule" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column id="taskId" name="taskId" dataType="text"></w2:column>
+						<w2:column id="taskTitle" name="taskTitle" dataType="text"></w2:column>
+						<w2:column id="startDate" name="startDate" dataType="text"></w2:column>
+						<w2:column id="endDate" name="endDate" dataType="text"></w2:column>
+						<w2:column id="boardId" name="boardId" dataType="text"></w2:column>
+						<w2:column id="boardTitle" name="boardTitle" dataType="text"></w2:column>
+						<w2:column id="priority" name="priority" dataType="text"></w2:column>
+						<w2:column id="tags" name="tags" dataType="text"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+			</w2:dataCollection>
+			<w2:workflowCollection />
+			<xf:submission id="add_task" action="/InsWebApp/task/create.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dm_taskVo","key":"taskVo"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.add_task_submitdone" ev:submiterror="" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="load_Board" action="/InsWebApp/board/list.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dm_projectVo","key":"projectVo"}' target='data:json,{"id":"dlt_boardListVo","key":"boardListVo"}' encoding="UTF-8" instance="" replace=""
+				errorHandler="" customHandler="" mode="asynchronous" processMsg="보드 데이터를 로딩 중입니다..."
+				ev:submit="scwin.load_Board_submit" ev:submitdone="scwin.load_Board_submitdone" ev:submiterror="scwin.load_Board_submiterror"
+				abortTrigger="">
+			</xf:submission>
+			<xf:submission id="load_Tasks" action="/InsWebApp/TaskList.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dm_search_task","key":"taskVo"}' target='data:json,{"id":"dlt_taskList","key":"taskVoList"}' encoding="UTF-8" instance="" replace="none"
+				errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.load_Tasks_submitdone"
+				ev:submiterror="" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="update_task_board" action="/InsWebApp/task/updateBoard.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dm_taskVo","key":"taskVo"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.update_task_board_submitdone" ev:submiterror="scwin.update_task_board_submiterror" abortTrigger="">
+			</xf:submission>
+		</xf:model>
+		<w2:layoutInfo />
+		<w2:publicInfo method="" />
+		<script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function () {
+    scwin.view = false;
+    scwin.task = "todo";
+};
+
+scwin.view_button_onclick = function (e) {
+    if (scwin.view) {
+        board_button.addClass("active");
+        calender_button.removeClass("active");
+        scwin.view = false;
+    } else {
+        board_button.removeClass("active");
+        calender_button.addClass("active");
+        scwin.view = true;
+    }
+};
+
+scwin.task_button_onclick = function (e) {
+    const targetId = e.target.id;
+    scwin.task_button_init();
+    console.log(targetId.includes("todo_button"));
+    // switch 문으로 처리
+    switch (true) {
+        case targetId.includes("todo_button"):
+            todo_button.addClass("active");
+            break;
+        case targetId.includes("progress_button"):
+            progress_button.addClass("active");
+            break;
+        case targetId.includes("completed_button"):
+            completed_button.addClass("active");
+            break;
+        default:
+            console.log("알 수 없는 버튼:", targetId);
+    }
+};
+
+scwin.task_button_init = function (e) {
+    todo_button.removeClass("active");
+    progress_button.removeClass("active");
+    completed_button.removeClass("active");
+}
+]]></script>
+		<style type="text/css"><![CDATA[/* 공통 */
+.btn {
+    outline: none;
+    border: none;
+    width: 30px;
+    height: 30px;
+    background-size: 20px 20px;
+    background-position: center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+/* 컨테이너 */
+.project-container {
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+/* 위에 nav */
+.nav-group {
+    width: 100%;
+    height: 30%;
+    display: flex;
+    padding-top: 20px;
+    box-sizing: border-box;
+    flex-direction: column;
+    background-color: white;
+}
+
+.nav {
+    width: 100%;
+    height: 33.33%;
+}
+
+.nav-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+    box-sizing: border-box;
+    /* background-color: aquamarine; */
+}
+
+.project-select {
+    width: 50%;
+    height: 100%;
+    outline: none;
+    border: none;
+}
+
+.nav-top .w2selectbox_native_select {
+    font-size: 25px;
+    padding: 0;
+    border-color: #ffffff !important;
+}
+
+.setting-button {
+    background-image: url('/InsWebApp/images/mobile/setting.svg');
+}
+
+
+
+.nav-middle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* background-color: rgb(130, 194, 173); */
+    overflow: hidden;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+
+.middle-btn-group-left {
+    width: 60%;
+    height: 60%;
+    /* background-color: cornsilk; */
+    border-radius: 6px;
+    border: 1px solid #D9D9D9;
+    overflow: hidden;
+}
+
+.middle-left-btn {
+    width: 50%;
+    height: 100%;
+    font-size: 17px;
+    outline: none;
+    border: none;
+}
+
+.middle-left-btn.active {
+    background-color: #FEB823;
+}
+
+.middle-btn-group-right {
+    width: 40%;
+    height: 100%;
+    display: flex;
+    justify-content: right;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+}
+
+.middle-right-btn {
+    border: 1px solid #D9D9D9;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.filter-button {
+    background-image: url('/InsWebApp/images/mobile/sort.svg');
+}
+
+.array-button {
+    background-image: url('/InsWebApp/images/mobile/array.svg');
+}
+
+.nav-bottom {
+    margin-top: auto;
+    /* background-color: rgb(149, 152, 151); */
+}
+
+.bottom-btn-group {
+    width: 100%;
+    height: 100%;
+    /* background-color: cornsilk; */
+    overflow: hidden;
+}
+
+.bottom-btn {
+    width: 30%;
+    height: 100%;
+    font-size: 17px;
+    outline: none;
+    border: none;
+}
+
+.bottom-btn.active {
+    border-bottom: 3px solid #FEB823;
+    box-sizing: border-box;
+}
+
+
+/* 메인 main task */
+.main-group {
+    width: 100%;
+    height: 70%;
+    background-color: #FFF4D6;
+}]]></style>
+	</head>
+	<body ev:onpageload="scwin.onpageload">
+		<xf:group class="sub_contents project-container" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+			style="">
+			<xf:group style="" id="" class="nav-group">
+				<xf:group style="" id="" class="nav nav-top">
+					<xf:select1 id="" chooseOption="" style="" submenuSize="auto" allOption="" disabled="false" direction="auto"
+						appearance="minimal" disabledClass="w2selectbox_disabled" class="project-select" ref="">
+						<xf:choices>
+							<xf:item>
+								<xf:label><![CDATA[테스트1]]></xf:label>
+								<xf:value><![CDATA[]]></xf:value>
+							</xf:item>
+							<xf:item>
+								<xf:label><![CDATA[테스트2]]></xf:label>
+								<xf:value><![CDATA[]]></xf:value>
+							</xf:item>
+						</xf:choices>
+					</xf:select1>
+					<xf:trigger type="button" style="" id="" class="btn setting-button">
+						<xf:label><![CDATA[]]></xf:label>
+					</xf:trigger>
+				</xf:group>
+				<xf:group id="" style="" class="nav nav-middle">
+					<xf:group style="" id="" class="middle-btn-group-left">
+						<xf:trigger type="button" style="" id="board_button" class="middle-left-btn active" ev:onclick="scwin.view_button_onclick">
+							<xf:label><![CDATA[보드]]></xf:label>
+						</xf:trigger>
+						<xf:trigger id="calender_button" style="" type="button" class="middle-left-btn" ev:onclick="scwin.view_button_onclick">
+							<xf:label><![CDATA[캘린더]]></xf:label>
+						</xf:trigger>
+					</xf:group>
+					<xf:group id="" style="" class="middle-btn-group-right">
+						<xf:trigger class="btn middle-right-btn filter-button" id="" style="" type="button">
+							<xf:label><![CDATA[]]></xf:label>
+						</xf:trigger>
+						<xf:trigger class="btn  middle-right-btn array-button" id="" style="" type="button">
+							<xf:label><![CDATA[]]></xf:label>
+						</xf:trigger>
+					</xf:group>
+				</xf:group>
+				<xf:group id="" style="" class="nav nav-bottom">
+					<xf:group class="bottom-btn-group" id="" style="">
+						<xf:trigger class="bottom-btn active" id="todo_button" style="" type="button" ev:onclick="scwin.task_button_onclick">
+							<xf:label><![CDATA[할일]]></xf:label>
+						</xf:trigger>
+						<xf:trigger class="bottom-btn" id="progress_button" style="" type="button" ev:onclick="scwin.task_button_onclick">
+							<xf:label><![CDATA[진행중]]></xf:label>
+						</xf:trigger>
+						<xf:trigger class="bottom-btn" id="completed_button" style="" type="button" ev:onclick="scwin.task_button_onclick">
+							<xf:label><![CDATA[완료]]></xf:label>
+						</xf:trigger>
+					</xf:group>
+				</xf:group>
+			</xf:group>
+			<xf:group style="" id="" class="main-group"></xf:group>
+		</xf:group>
+	</body>
+</html>

@@ -1,0 +1,531 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="메인 콘텐츠">
+    	<w2:type>COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:MSA />
+    	<xf:model>
+    		<w2:dataCollection baseNode="map">
+    			<w2:dataMap baseNode="map" id="dm_userInfo">
+    				<w2:keyInfo>
+    					<w2:key id="userName" name="사용자명" dataType="text" />
+    					<w2:key id="userId" name="사용자ID" dataType="text" />
+    				</w2:keyInfo>
+    				<w2:data use="true">
+    					<userName>식스센스</userName>
+    					<userId>user01</userId>
+    				</w2:data>
+    			</w2:dataMap>
+
+    			<!-- 프로젝트 목록 데이터리스트 -->
+    			<w2:dataList baseNode="list" id="dlt_projectList" repeatNode="map" saveRemovedData="true">
+    				<w2:columnInfo>
+    					<w2:column dataType="text" id="projectId" name="project_id" />
+    					<w2:column dataType="text" id="projectName" name="project_name" />
+    					<w2:column dataType="text" id="description" name="description" />
+    					<w2:column dataType="text" id="projectImageUrl" name="project_image_url" />
+    					<w2:column dataType="text" id="createdAt" name="created_at" />
+    					<w2:column dataType="text" id="emailSendTime" name="email_send_time" />
+    					<w2:column dataType="text" id="userId" name="user_id" />
+    				</w2:columnInfo>
+    			</w2:dataList>
+    			<w2:dataMap baseNode="map" id="dmp_projectVo">
+    				<w2:keyInfo>
+    					<w2:key id="userId" name="사용자ID" dataType="text" />
+    				</w2:keyInfo>
+    			</w2:dataMap>
+    		</w2:dataCollection>
+    		<w2:workflowCollection />
+    		<xf:submission id="sbm_selectProjectList" ref='data:json,{"id":"dmp_projectVo","key":"projectVo"}'
+    			target='data:json,{"id":"dlt_projectList","key":"elData.projectVoList"}' action="/InsWebApp/ProjectList.pwkjson" method="post"
+    			mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+    			processMsg="" ev:submit="" ev:submitdone="scwin.sbm_selectProjectList_submitdone" ev:submiterror="" abortTrigger="">
+    		</xf:submission>
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<w2:publicInfo method="" />
+    	<script lazy="false" type="text/javascript"><![CDATA[
+// 전역 변수
+scwin.dynamicProjectCards = []; // 동적으로 생성된 프로젝트 카드들을 관리
+scwin.cardCounter = 0; // 카드 생성 카운터
+
+scwin.onpageload = function() {
+    console.log("=== 메인 콘텐츠 페이지 로드 시작 ===");
+    // 메인 콘텐츠 초기화
+    scwin.loadUserInfo();
+    
+    // 초기 로드 시에는 프로젝트 목록 조회를 하지 않음
+    // 부모에서 사용자 정보를 받은 후에만 조회
+    
+    console.log("=== 메인 콘텐츠 페이지 로드 완료 ===");
+};
+
+// 사용자 정보 로드
+scwin.loadUserInfo = function() {
+    let parent = $p.parent();
+    try {
+        // 부모 창에서 사용자 정보 가져오기
+        if (parent && parent.dm_userInfo) {
+            const userName = parent.dm_userInfo.get("userName") || "식스센스";
+            const userId = parent.dm_userInfo.get("userId") || "user01";
+            dm_userInfo.set("userName", userName);
+            dm_userInfo.set("userId", userId);
+            dmp_projectVo.set("userId", userId); // 서브미션 파라미터 설정
+            scwin.updateWelcomeMessage();
+        } else {
+            // 기본값 사용
+            dm_userInfo.set("userName", "식스센스");
+            dm_userInfo.set("userId", "user01");
+            dmp_projectVo.set("userId", "user01"); // 서브미션 파라미터 설정
+            scwin.updateWelcomeMessage();
+        }
+    } catch(e) {
+        console.log("사용자 정보 로드 오류:", e);
+        dm_userInfo.set("userName", "식스센스");
+        dm_userInfo.set("userId", "user01");
+        dmp_projectVo.set("userId", "user01"); // 서브미션 파라미터 설정
+        scwin.updateWelcomeMessage();
+    }
+};
+
+// 환영 메시지 업데이트
+scwin.updateWelcomeMessage = function() {
+    try {
+        const userName = dm_userInfo.get("userName") || "식스센스";
+        const welcomeText = userName + "님";
+        if (output_welcomeText) {
+            output_welcomeText.setValue(welcomeText);
+            console.log("환영 메시지 업데이트:", welcomeText);
+        }
+    } catch(e) {
+        console.log("환영 메시지 업데이트 오류:", e);
+    }
+};
+
+// 프로젝트 목록 조회 함수 (외부에서 호출용)
+scwin.loadProjectList = function() {
+    console.log("프로젝트 목록 조회 시작, userId:", dmp_projectVo.get("userId"));
+    if (dmp_projectVo.get("userId")) {
+        $c.sbm.execute(sbm_selectProjectList);
+    } else {
+        console.log("userId가 없어 프로젝트 목록 조회를 하지 않습니다.");
+    }
+};
+
+// 프로젝트 목록 조회 서브미션 완료 콜백
+scwin.sbm_selectProjectList_submitdone = function(e) {
+    console.log("=== 프로젝트 목록 조회 응답 디버깅 ===");
+    console.log("응답 전체 데이터:", JSON.stringify(e.responseJSON, null, 2));
+    
+    const elData = e.responseJSON.elData;
+    console.log("elData:", JSON.stringify(elData, null, 2));
+    
+    if (elData && elData.projectVoList) {
+        console.log("프로젝트 목록 있음, 개수:", elData.projectVoList.length);
+        console.log("첫 번째 프로젝트 샘플:", elData.projectVoList[0] ? JSON.stringify(elData.projectVoList[0], null, 2) : "없음");
+        scwin.renderProjectCards(elData.projectVoList);
+    } else {
+        console.log("프로젝트 목록이 없거나 비어있음");
+        // 데이터가 없을 경우
+        scwin.renderNoProjectsMessage();
+    }
+    console.log("=====================================");
+};
+
+// 프로젝트 카드들을 동적으로 렌더링
+scwin.renderProjectCards = function(projectList) {
+    console.log("=== 프로젝트 카드 렌더링 디버깅 ===");
+    console.log("전달받은 프로젝트 리스트:", JSON.stringify(projectList, null, 2));
+    console.log("프로젝트 개수:", projectList ? projectList.length : 0);
+    
+    console.log("프로젝트 카드 렌더링 시작:", projectList);
+    
+    // 기존 프로젝트 카드들 제거
+    scwin.clearProjectCards();
+    
+    if (!projectList || projectList.length === 0) {
+        scwin.renderNoProjectsMessage();
+        return;
+    }
+    
+    try {
+        // WebSquare dynamicCreate를 사용하여 프로젝트 카드 생성
+        for (let i = 0; i < projectList.length; i++) {
+            const project = projectList[i];
+            scwin.createProjectCard(project, i);
+        }
+        
+        console.log("프로젝트 카드 생성 완료:", projectList.length, "개");
+        
+    } catch(e) {
+        console.error("프로젝트 카드 렌더링 오류:", e);
+    }
+};
+
+// 개별 프로젝트 카드 생성
+scwin.createProjectCard = function(project, index) {
+    const projectId = project.projectId;
+    const cardId = "grp_projectCard_" + projectId + "_" + (++scwin.cardCounter);
+    
+    try {
+        console.log("=== 프로젝트 카드 데이터 디버깅 ===");
+        console.log("프로젝트 전체 데이터:", JSON.stringify(project, null, 2));
+        console.log("프로젝트 ID:", projectId);
+        console.log("프로젝트명:", project.projectName);
+        console.log("설명:", project.description);
+        console.log("이미지 URL:", project.projectImageUrl);
+        console.log("생성일:", project.createdAt);
+        console.log("사용자 ID:", project.userId);
+        console.log("사용자명:", project.userName);
+        console.log("이메일 발송시간:", project.emailSendTime);
+        console.log("인덱스:", index);
+        console.log("카드 ID:", cardId);
+        console.log("=====================================");
+        
+        console.log("프로젝트 카드 생성 시작:", project.projectName, "ID:", cardId);
+        
+        // 1. 메인 카드 컨테이너 생성 ($p.dynamicCreate 사용)
+        const cardGroup = $p.dynamicCreate(
+            cardId,
+            "group",
+            {
+                className: "dynamic-project-card"
+            },
+            grp_projectCards // 부모 컨테이너
+        );
+        
+        if (!cardGroup) {
+            console.error("카드 그룹 생성 실패:", cardId);
+            return;
+        }
+        
+        // 2. 상단 영역 생성 (프로젝트명)
+        const topGroup = $p.dynamicCreate("grp_top_" + projectId + "_" + scwin.cardCounter, "group", { style: "display:flex;flex-direction:column;flex:1;" }, cardGroup);
+        
+        if (!topGroup) {
+            console.error("상단 그룹 생성 실패");
+            return;
+        }
+        
+        // 3. 프로젝트명 텍스트 생성
+        const projectNameOutput = $p.dynamicCreate("output_projectName_" + projectId + "_" + scwin.cardCounter, "output", { style: "font-size:28px;font-weight:600;color:#000000;font-family:Inter,sans-serif;margin-bottom:20px;" }, topGroup);
+        
+        if (projectNameOutput) {
+            projectNameOutput.setValue(project.projectName || "프로젝트 " + (index + 1));
+        }
+        
+        // 4. 하단 영역 생성
+        const bottomGroup = $p.dynamicCreate("grp_bottom_" + projectId + "_" + scwin.cardCounter, "group", { style: "display:flex;flex-direction:column;gap:15px;" }, cardGroup);
+        
+        if (bottomGroup) {
+            // 5. 팀 정보 섹션 생성
+            scwin.createTeamSection(bottomGroup, projectId, scwin.cardCounter);
+            
+            // 6. 구분선 생성
+            $p.dynamicCreate("grp_divider_" + projectId + "_" + scwin.cardCounter, "group", { style: "width:100%;height:1px;background-color:rgba(0,0,0,0.2);" }, bottomGroup);
+            
+            // 7. 업데이트 정보 생성
+            scwin.createUpdateSection(bottomGroup, projectId, project, scwin.cardCounter);
+        }
+        
+        // 8. 클릭 이벤트 바인딩
+        cardGroup.bind("onclick", function() {
+            scwin.onProjectCardClick(project);
+        });
+        
+        // 생성된 컴포넌트들을 전역 객체에 저장
+        scwin.dynamicProjectCards.push({
+            cardGroup: cardGroup,
+            projectId: projectId,
+            project: project,
+            cardId: cardId
+        });
+        
+        console.log("프로젝트 카드 생성 완료:", project.projectName);
+        
+    } catch(e) {
+        console.error("프로젝트 카드 생성 오류:", e);
+    }
+};
+
+// 팀 정보 섹션 생성
+scwin.createTeamSection = function(parentGroup, projectId, counter) {
+    try {
+        const teamInfoGroup = $p.dynamicCreate("grp_teamInfo_" + projectId + "_" + counter, "group", { style: "display:flex;flex-direction:column;" }, parentGroup);
+        if (!teamInfoGroup) return;
+        
+        const teamLabel = $p.dynamicCreate("output_teamLabel_" + projectId + "_" + counter, "output", { style: "font-size:11px;color:rgba(0,0,0,0.5);font-family:Inter,sans-serif;margin-bottom:6px;font-weight:500;" }, teamInfoGroup);
+        if(teamLabel) teamLabel.setValue("TEAM");
+
+        const avatarsGroup = $p.dynamicCreate("grp_teamAvatars_" + projectId + "_" + counter, "group", { style: "display:flex;gap:3px;align-items:center;" }, teamInfoGroup);
+        if (avatarsGroup) {
+            const defaultAvatars = [
+                { color: "#3B82F6", text: "EM" }, { color: "#10B981", text: "JC" }, { color: "#8B5CF6", text: "AK" },
+                { color: "#EC4899", text: "LW" }, { color: "#F59E0B", text: "RB" }, { color: "#6B7280", text: "+7" }
+            ];
+            defaultAvatars.forEach((avatar, i) => scwin.createAvatar(avatarsGroup, projectId, i, avatar.color, avatar.text, counter));
+        }
+    } catch(e) {
+        console.error("팀 섹션 생성 오류:", e);
+    }
+};
+
+// 개별 아바타 생성
+scwin.createAvatar = function(parentGroup, projectId, index, color, text, counter) {
+    try {
+        const avatarGroup = $p.dynamicCreate("grp_avatar_" + projectId + "_" + index + "_" + counter, "group", { style: "width:26px;height:26px;background-color:" + color + ";border-radius:50%;display:flex;align-items:center;justify-content:center;" }, parentGroup);
+        if (avatarGroup) {
+            const avatarText = $p.dynamicCreate("output_avatar_" + projectId + "_" + index + "_" + counter, "output", { style: "color:white;font-size:10px;font-weight:600;" }, avatarGroup);
+            if(avatarText) avatarText.setValue(text);
+        }
+    } catch(e) {
+        console.error("아바타 생성 오류:", e);
+    }
+};
+
+// 업데이트 정보 섹션 생성
+scwin.createUpdateSection = function(parentGroup, projectId, project, counter) {
+    try {
+        const updateGroup = $p.dynamicCreate("grp_updateInfo_" + projectId + "_" + counter, "group", { style: "display:flex;align-items:center;gap:8px;" }, parentGroup);
+        if (updateGroup) {
+            const updateText = $p.dynamicCreate("output_lastUpdate_" + projectId + "_" + counter, "output", { style: "font-size:14px;color:rgba(0,0,0,0.6);font-family:Inter,sans-serif;" }, updateGroup);
+            if (updateText) {
+                const lastUpdate = project.emailSendTime || "5 minutes ago";
+                updateText.setValue("Last Update " + lastUpdate + " ...");
+            }
+        }
+    } catch(e) {
+        console.error("업데이트 섹션 생성 오류:", e);
+    }
+};
+
+// 프로젝트가 없을 때 메시지 표시
+scwin.renderNoProjectsMessage = function() {
+    try {
+        scwin.clearProjectCards();
+        const noProjectsId = "grp_noProjects_" + (++scwin.cardCounter);
+        const noProjectsMessage = $p.dynamicCreate(noProjectsId, "group", { style: "width:400px;height:200px;background-color:#f8f9fa;border:2px dashed #dee2e6;border-radius:16px;padding:30px;display:flex;align-items:center;justify-content:center;" }, grp_projectCards);
+        
+        if (noProjectsMessage) {
+            const messageText = $p.dynamicCreate("output_noProjectsMessage_" + scwin.cardCounter, "output", { style: "font-size:18px;color:#6c757d;font-family:Inter,sans-serif;text-align:center;" }, noProjectsMessage);
+            if(messageText) messageText.setValue("참여 중인 프로젝트가 없습니다.");
+            
+            scwin.dynamicProjectCards.push({ cardGroup: noProjectsMessage, projectId: "no_projects", cardId: noProjectsId });
+        }
+    } catch(e) {
+        console.error("프로젝트 없음 메시지 생성 오류:", e);
+    }
+};
+
+// 기존 프로젝트 카드들 제거
+scwin.clearProjectCards = function() {
+    try {
+        console.log("프로젝트 카드 정리 시작, 현재 카드 수:", (scwin.dynamicProjectCards || []).length);
+        (scwin.dynamicProjectCards || []).forEach(cardInfo => {
+            try {
+                if (cardInfo.cardGroup && cardInfo.cardGroup.remove) {
+                    cardInfo.cardGroup.remove();
+                }
+            } catch(e) { /* ignore */ }
+        });
+        scwin.dynamicProjectCards = [];
+        scwin.cardCounter = 0;
+        console.log("프로젝트 카드 정리 완료");
+    } catch(e) {
+        console.error("프로젝트 카드 정리 오류:", e);
+    }
+};
+
+// 프로젝트 카드 클릭 이벤트 처리
+scwin.onProjectCardClick = function(project) {
+    console.log("프로젝트 카드 클릭:", project);
+    try {
+        const parent = $p.parent();
+        
+        // 1. 부모 창의 사이드 메뉴에서 해당 프로젝트 메뉴 선택
+        if (parent && parent.wfr_sideMenu && parent.wfr_sideMenu.getWindow) {
+            const sideMenuWindow = parent.wfr_sideMenu.getWindow();
+            if (sideMenuWindow && sideMenuWindow.scwin) {
+                console.log("사이드 메뉴로 프로젝트 선택 요청:", project.projectId);
+                
+                // 사이드 메뉴의 외부 선택 함수 호출
+                if (sideMenuWindow.scwin.selectProjectMenuFromExternal) {
+                    sideMenuWindow.scwin.selectProjectMenuFromExternal(project.projectId, project);
+                } else {
+                    // 대체 방법: 개별 함수 호출
+                    const menuKey = "project_" + project.projectId;
+                    if (sideMenuWindow.scwin.changeSelectedMenu) {
+                        sideMenuWindow.scwin.changeSelectedMenu(menuKey);
+                    }
+                    if (sideMenuWindow.scwin.onProjectMenuClick) {
+                        sideMenuWindow.scwin.onProjectMenuClick(project);
+                    }
+                }
+            }
+        }
+        
+        // 2. 부모 창의 메뉴 변경 함수 호출 (페이지 이동)
+        if (parent && parent.scwin && parent.scwin.changeMenu) {
+            parent.scwin.changeMenu("project_" + project.projectId, project);
+        }
+        
+    } catch(e) {
+        console.error("프로젝트 카드 클릭 처리 오류:", e);
+    }
+};
+
+// 프로젝트 추가 아이콘 클릭 이벤트
+scwin.img_addProject_onclick = function(e) {
+    console.log("프로젝트 추가 아이콘 클릭");
+    try {
+        if (parent && parent.scwin && parent.scwin.openProjectAddModal) {
+            parent.scwin.openProjectAddModal();
+        } else {
+            alert("프로젝트 추가 기능을 사용할 수 없습니다.");
+        }
+    } catch(e) {
+        console.error("프로젝트 추가 아이콘 클릭 오류:", e);
+    }
+};
+
+// 사이드 메뉴와 연동하여 프로젝트 데이터 업데이트
+scwin.updateProjectDataFromSideMenu = function(projectList) {
+    console.log("사이드 메뉴로부터 프로젝트 데이터 수신:", projectList);
+    
+    // 기존 프로젝트 목록을 새로운 데이터로 교체
+    if (dlt_projectList) {
+        dlt_projectList.removeAll();
+        
+        if (projectList && projectList.length > 0) {
+            for (let i = 0; i < projectList.length; i++) {
+                dlt_projectList.insertRow("last");
+                const index = dlt_projectList.getRowCount() - 1;
+                dlt_projectList.setCellData(index, "projectId", projectList[i].projectId);
+                dlt_projectList.setCellData(index, "projectName", projectList[i].projectName);
+                dlt_projectList.setCellData(index, "description", projectList[i].description);
+                dlt_projectList.setCellData(index, "projectImageUrl", projectList[i].projectImageUrl);
+                dlt_projectList.setCellData(index, "createdAt", projectList[i].createdAt);
+                dlt_projectList.setCellData(index, "emailSendTime", projectList[i].emailSendTime);
+                dlt_projectList.setCellData(index, "userId", projectList[i].userId);
+            }
+        }
+    }
+    
+    // 프로젝트 카드 다시 렌더링
+    scwin.renderProjectCards(projectList);
+    console.log("메인 콘텐츠 프로젝트 카드 갱신 완료");
+};
+
+/**
+ * 프로젝트 상세 페이지 로드
+ * @param {string} projectId - 로드할 프로젝트의 ID
+ */
+scwin.loadProjectDetail = function(projectId) {
+    // mainContent.xml 내의 특정 영역에 projectMainPage.xml을 로드
+    $p.getComponentById("contentControl").setSrc("/InsWebApp/ui/mobile/projectMainPage.xml?projectId=" + projectId);
+};
+
+]]></script>
+    	<style type="text/css"><![CDATA[
+.main-content-container {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: #fff4d6;
+    padding: 40px 40px 20px 40px;
+    box-sizing: border-box;
+}
+
+/* 메시지 그룹 */
+.message-group {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.message-text {
+    font-size: 50px;
+    font-weight: bold;
+    color: #000000;
+    text-align: left;
+    font-family: 'Andada Pro', serif;
+}
+
+/* 중간 타이틀 그룹 */
+.title-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.title-text {
+    font-size: 24px;
+    font-weight: 400;
+    color: #000000;
+    font-family: Inter, sans-serif;
+}
+
+.title-img {
+    width: 32px;
+    height: 32px;
+    margin-left: 12px;
+    cursor: pointer;
+}
+
+/* 프로젝트 카드 그룹 */
+.project-cards-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 40px;
+    max-width: 100%;
+    /* background-color: pink; */
+    overflow: hidden;
+}
+
+.dynamic-project-card {
+    max-width: 100%;
+    height: 200px;
+    background-color: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 16px;
+    padding: 30px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}]]></style>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+        <!-- 메인 콘텐츠 -->
+        <xf:group style="" id="grp_mainContent" class="main-content-container">
+
+        	<!-- 환영 메시지 -->
+        	<xf:group style="" id="grp_welcomeMessage" class="message-group">
+        		<xf:output style="" id="output_welcomeText" class="message-text">
+        			<xf:label><![CDATA[<a></a>]]></xf:label>
+        		</xf:output>
+        		<xf:output style="" id="output1" class="message-text">
+        			<xf:label><![CDATA[안녕하세요]]></xf:label>
+        		</xf:output>
+        	</xf:group>
+
+        	<!-- 진행중인 프로젝트 섹션 -->
+        	<xf:group style="" id="grp_projectsTitle" class="title-group">
+        		<xf:output style="" id="output_projectsTitle" class="title-text">
+        			<xf:label><![CDATA[진행중인 프로젝트]]></xf:label>
+        		</xf:output>
+        		<!-- 프로젝트 추가 아이콘 -->
+        		<xf:image src="/InsWebApp/assets/images/add_circle.svg" style="" id="img_addProject"
+        			ev:onclick="scwin.img_addProject_onclick" class="title-img" />
+        	</xf:group>
+
+        	<!-- 프로젝트 카드들 컨테이너 (동적으로 생성됨) -->
+        	<xf:group style="" id="grp_projectCards" class="project-cards-group">
+        		<!-- 여기에 동적으로 프로젝트 카드들이 생성됩니다 -->
+        	</xf:group>
+
+        </xf:group>
+    </body>
+</html>
