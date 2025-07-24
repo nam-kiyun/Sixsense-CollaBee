@@ -152,7 +152,89 @@ scwin.task_button_init = function (e) {
     todo_button.removeClass("active");
     progress_button.removeClass("active");
     completed_button.removeClass("active");
-}
+};
+
+// 비디오 팝업 상태 관리
+scwin.videoPopupState = {
+    isOpen: false,
+    currentPopupId: null
+};
+
+// 화상통화 팝업 고유 ID 생성 함수
+scwin.generateVideoChatPopupId = function () {
+    var timestamp = Date.now();
+    var random = Math.floor(Math.random() * 1000);
+    return "videoChatPopup_" + timestamp + "_" + random;
+};
+
+// 화상통화 팝업 열기 함수
+scwin.openVideoChat = function() {
+    console.log("화상통화 팝업 열기");
+    
+    // 이미 팝업이 열려있다면 새로 열지 않음
+    if (scwin.videoPopupState.isOpen && scwin.videoPopupState.currentPopupId) {
+        console.log("화상통화 팝업이 이미 열려있습니다:", scwin.videoPopupState.currentPopupId);
+        return;
+    }
+    
+    // 현재 프로젝트 ID 가져오기
+    var currentProjectId = dm_projectVo.get("projectId") || "default";
+    
+    // 고유한 팝업 ID 생성
+    var uniquePopupId = scwin.generateVideoChatPopupId();
+    
+    var options = {
+        id: uniquePopupId,
+        type: "wframePopup",
+        width: "390",       // 모바일 적정 크기
+        height: "600",      // 모바일 적정 높이
+        modal: false,       // 데스크톱과 동일하게 설정
+        header: false,
+        customTitleBar: false,
+        scrollbars: false,  // 스크롤바 제거
+        overflow: "hidden", // 오버플로우 숨김
+        closeAction: "scwin.videoChat_closeAction",
+        paramObject: {
+            projectId: currentProjectId
+        }
+    };
+    
+    // 팝업 상태 업데이트
+    scwin.videoPopupState.isOpen = true;
+    scwin.videoPopupState.currentPopupId = uniquePopupId;
+    
+    console.log("화상통화 팝업 생성 - ID:", uniquePopupId);
+    $p.openPopup("/InsWebApp/ui/mobile/videoPage.xml", options);
+};
+
+// 화상통화 팝업 닫기 액션
+scwin.videoChat_closeAction = function(argRuntimeID, argJsnInfo) {
+    console.log("화상통화 팝업 닫기 - ID:", argRuntimeID);
+    
+    try {
+        // 팝업 닫기
+        if (argRuntimeID) {
+            $p.closePopup(argRuntimeID);
+        } else if (scwin.videoPopupState.currentPopupId) {
+            $p.closePopup(scwin.videoPopupState.currentPopupId);
+        }
+        
+        // 팝업 상태 초기화
+        scwin.videoPopupState.isOpen = false;
+        scwin.videoPopupState.currentPopupId = null;
+        
+        console.log("화상통화 팝업 상태 초기화 완료");
+        
+    } catch (e) {
+        console.error("화상통화 팝업 닫기 오류:", e);
+        
+        // 오류 발생 시에도 상태 초기화
+        scwin.videoPopupState.isOpen = false;
+        scwin.videoPopupState.currentPopupId = null;
+    }
+    
+    return true;
+};
 ]]></script>
 		<style type="text/css"><![CDATA[/* 공통 */
 .btn {
@@ -304,6 +386,36 @@ scwin.task_button_init = function (e) {
     width: 100%;
     height: 70%;
     background-color: #FFF4D6;
+}
+
+/* 플로팅 화상통화 버튼 */
+.floating-video-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: #FFB823;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(255, 184, 35, 0.4);
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.floating-video-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 184, 35, 0.6);
+}
+
+.floating-video-btn:active {
+    transform: translateY(0px);
 }]]></style>
 	</head>
 	<body ev:onpageload="scwin.onpageload">
@@ -362,5 +474,10 @@ scwin.task_button_init = function (e) {
 			</xf:group>
 			<xf:group style="" id="" class="main-group"></xf:group>
 		</xf:group>
+		
+		<!-- 플로팅 화상통화 버튼 -->
+		<xf:trigger class="floating-video-btn" id="btn_floating_video" type="button" ev:onclick="scwin.openVideoChat">
+			<xf:label>📹</xf:label>
+		</xf:trigger>
 	</body>
 </html>
