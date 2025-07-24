@@ -220,7 +220,7 @@ scwin.btn_back_onclick = function(e) {
     <body ev:onpageload="scwin.onpageload">
         <!-- 설정 사이드메뉴 전체 컨테이너 -->
         <xf:group 
-            style="width:303px;height:924px;background-color:#ffffff;border-right:1px solid #000000;position:relative;padding:0;"
+            style="width:303px;height:100%;background-color:#ffffff;border-right:1px solid #000000;position:relative;padding:0;overflow:hidden;"
             id="grp_settingSideMenu">
             
             <!-- 뒤로가기 버튼 -->
@@ -282,10 +282,6 @@ scwin.btn_back_onclick = function(e) {
                     <xf:group 
                         style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:24px;background-color:#ffb823;display:none;"
                         id="grp_activeBar_github"/>
-                    
-                    <xf:output style="color:#000000;font-size:20px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;" id="output_github">
-                        <xf:label><![CDATA[로그 확인]]></xf:label>
-                    </xf:output>
                 </xf:group>
                 
             </xf:group>

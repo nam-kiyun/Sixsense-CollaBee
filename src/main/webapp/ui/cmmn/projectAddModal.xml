@@ -309,7 +309,7 @@ scwin.btn_save_onclick = function(e) {
         let popupParam = $p.getParameter("project_param");
         // let modalId = $p.parent().scwin.modalManager.modalId;
         if (!projectName || projectName.trim() === "") {
-            alert("프로젝트명을 입력해주세요.");
+            $c.win.alert("프로젝트명을 입력해주세요.");
             return;
         }
         
