@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="공통 헤더">
+    	<w2:type>COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:MSA />
+
+    	<!-- CSS 파일 링크 -->
+    	<link rel="stylesheet" type="text/css" href="/css/cmmn/header.css" />
+
+    	<xf:model>
+    		<w2:dataCollection baseNode="map">
+    			<w2:dataMap baseNode="map" id="dm_header">
+    				<w2:keyInfo>
+    					<w2:key id="userName" name="사용자명" dataType="text" />
+    				</w2:keyInfo>
+    				<w2:data use="true">
+    					<userName>게스트</userName>
+    				</w2:data>
+    			</w2:dataMap>
+    			<w2:dataMap baseNode="map" id="dma_logout">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="아이디" id="id"></w2:key>
+    					<w2:key dataType="text" name="비밀번호" id="password"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
+    		</w2:dataCollection>
+    		<w2:workflowCollection />
+    		<xf:submission id="sbm_logout" action="/InsWebApp/user/logout.pwkjson" method="post" mediatype="application/json"
+    			ref='data:json,{"id":"dma_logout","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+    			mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.dma_logout_submitdone"
+    			ev:submiterror="scwin.dma_logout_submiterror" abortTrigger="">
+    		</xf:submission>
+    		<xf:submission id="sbm_session" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json" ref=""
+    			target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
+    			ev:submitdone="scwin.dma_session_submitdone" ev:submiterror="scwin.dma_session_submiterror" abortTrigger="">
+    		</xf:submission>
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<w2:publicInfo method="" />
+    	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
+    // 헤더 초기화
+    $p.executeSubmission("sbm_session");
+
+    scwin.side = false;
+
+    scwin.side_button_touch();
+};
+
+
+scwin.grp_logo_onclick = function (e) {
+    $p.url("/InsWebApp/ui/mobile/mainPage.xml");
+};
+
+scwin.dma_session_submitdone = function (e) {
+    const responseData = e.responseJSON.userVo;
+    dma_logout.set("id", responseData.userId);
+};
+
+
+scwin.side_button_onclick = function (e) {
+    const sideFrame = $p.parent().side_frame;
+
+    if (!scwin.side) {
+        sideFrame.addClass("active"); // 나타내기
+        scwin.side = true;
+    } else {
+        sideFrame.removeClass("active"); // 숨기기
+        scwin.side = false;
+    }
+};
+
+scwin.side_button_touch = function () {
+    let touchStartX = 0;
+
+    document.addEventListener("touchstart", function (e) {
+        touchStartX = e.touches[0].clientX;
+    });
+
+    document.addEventListener("touchend", function (e) {
+        const touchEndX = e.changedTouches[0].clientX;
+        const diffX = touchEndX - touchStartX;
+        let comment = $p.parent().scwin.comment;
+
+        // 오른쪽으로 스와이프 (예: 100px 이상이면 열기)
+        if (diffX > 100 && !scwin.side && !comment) {
+            const sideFrame = $p.parent().side_frame;
+            sideFrame.addClass("active");
+            scwin.side = true;
+        }
+
+        // 왼쪽으로 스와이프 (메뉴 열려 있을 때 닫기)
+        if (diffX < -100 && scwin.side) {
+            const sideFrame = $p.parent().side_frame;
+            sideFrame.removeClass("active");
+            scwin.side = false;
+        }
+    });
+}
+]]></script>
+    	<style type="text/css"><![CDATA[/* 공통 스타일 */
+.btn {
+    outline: none;
+    border: none;
+    width: 30px;
+    height: 30px;
+    background-size: 30px 30px;
+    background-position: center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+/* 페이지 스타일 */
+.header-container {
+    background-color: #4A3F35;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 50px;
+    width: 100%;
+    position: relative;
+}
+
+.left-group {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.sidemenu-button {
+    background-image: url('/InsWebApp/images/mobile/menu.svg');
+}
+
+.img {
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+}
+
+.logo-text {
+    color: #ffb823;
+    font-weight: bold;
+    font-size: 20px;
+    font-family: Koulen, sans-serif;
+    cursor: pointer;
+}
+
+.right-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-right: 10px;
+}
+
+.right-group .notice-button {
+    background-image: url('/InsWebApp/images/mobile/notice.svg');
+}
+
+.right-group .user-button {
+    background-image: url('/InsWebApp/images/mobile/user.svg');
+}]]></style>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+        <!-- 헤더 전체 컨테이너 -->
+        <xf:group 
+            style=""
+            id="grp_header" class="header-container">
+            
+            <!-- 로고 영역 -->
+            <xf:group style="" id="grp_logo" class="left-group">
+            	<xf:trigger type="button" style="" id="side_button" class="btn sidemenu-button" ev:onclick="scwin.side_button_onclick">
+            		<xf:label><![CDATA[]]></xf:label>
+            	</xf:trigger>
+            	<xf:image src="/InsWebApp/images/collabee.png" style="" id="img_logo" class="img" ev:onclick="scwin.grp_logo_onclick"/>
+            	<xf:output style="" id="output_logo" class="logo-text" ev:onclick="scwin.grp_logo_onclick">
+            		<xf:label><![CDATA[COLLABEE]]></xf:label>
+            	</xf:output>
+            </xf:group>
+
+            <!-- 사용자 영역 -->
+            <xf:group style="" id="grp_userArea" class="right-group">
+
+            	<!-- 사용자 정보 -->
+
+            	<!-- 로그아웃 버튼 -->
+            	<xf:trigger type="button" style="" id="" class="btn notice-button">
+            		<xf:label><![CDATA[]]></xf:label>
+            	</xf:trigger>
+            </xf:group>
+
+        </xf:group>
+    </body>
+</html>

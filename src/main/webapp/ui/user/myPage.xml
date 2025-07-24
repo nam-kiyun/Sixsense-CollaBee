@@ -33,15 +33,14 @@
     		<w2:workflowCollection />
     		<xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json" ref="" target='data:json,{"id":"dma_userInfo","key":"userInfo"}' encoding="UTF-8"
     			instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_getUserInfo_submitdone"
-    			ev:submiterror="" abortTrigger="">
+    			ev:submiterror="scwin.sbm_getUserInfo_submiterror" abortTrigger="">
     		</xf:submission>
     	</xf:model>
     	<w2:layoutInfo />
     	<w2:publicInfo method="" />
     	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
     scwin.onresize();
-    $c.sbm.execute("sbm_getUserInfo");
-    
+    $p.executeSubmission("sbm_getUserInfo");
     //전역변수
     scwin.file = "";
 }
@@ -138,6 +137,7 @@ scwin.update_button_onclick = function (e) {
     });
 
 };
+
 scwin.sbm_getUserInfo_submitdone = function (e) {
     const responseData = e.responseJSON.userVo;
     console.log(responseData);

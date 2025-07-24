@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="/InsWebApp/css/auth/base.css" type="text/css"?>
+<?xml-stylesheet href="/InsWebApp/css/auth/codeCheckPage.css" type="text/css"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+    	<w2:type>COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:MSA />
+    	<xf:model>
+    		<w2:dataCollection baseNode="map">
+    			<w2:dataMap baseNode="map" id="dma_mailParam">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="이메일" id="email"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
+    			<w2:dataMap baseNode="map" id="dma_signupParam">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="아이디" id="userId"></w2:key>
+    					<w2:key dataType="text" name="이름" id="userName"></w2:key>
+    					<w2:key dataType="text" name="비밀번호" id="password"></w2:key>
+    					<w2:key dataType="text" name="이미지 URL" id="profileImageUrl"></w2:key>
+    					<w2:key dataType="text" name="상태" id="isActive"></w2:key>
+    					<w2:key dataType="text" name="가입일" id="createdAt"></w2:key>
+    					<w2:key dataType="text" name="로그인 실패 횟수" id="loginFailCount"></w2:key>
+    					<w2:key dataType="text" name="로그인 실패 시간" id="lastFailTime"></w2:key>
+    					<w2:key dataType="text" name="계정 잠금 여부" id="accountLocked"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
+    		</w2:dataCollection>
+    		<w2:workflowCollection />
+    		<xf:submission id="sbm_email" action="/InsWebApp/send/SendEmail.pwkjson" method="post" mediatype="application/json"
+    			ref='data:json,{"id":"dma_mailParam","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
+    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="" ev:submiterror="" abortTrigger="">
+    		</xf:submission>
+    		<xf:submission id="sbm_signup" action="/InsWebApp/user/signup.pwkjson" method="post" mediatype="application/json" ref='data:json,{"id":"dma_signupParam","key":"elData"}' target="" encoding="UTF-8"
+    			instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_signup_submitdone"
+    			ev:submiterror="" abortTrigger="">
+    		</xf:submission>
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<w2:publicInfo method="" />
+    	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
+    scwin.onresize();
+
+    scwin.code = $p.getParameter("code");
+    scwin.info = JSON.parse($p.getParameter("info"));
+    scwin.time = parseInt($p.getParameter("sendTime"), 10);
+    scwin.startCountdown();
+};
+
+scwin.onresize = function (e) {
+    // resize 이벤트 정의
+    window.onresize = function () {
+        scwin.applyResponsiveWidth();
+    };
+
+    // 페이지 로딩 시에도 한 번 실행
+    scwin.applyResponsiveWidth();
+};
+
+//반응형 width 값 조절
+scwin.applyResponsiveWidth = function () {
+    let width = window.innerWidth;
+
+    if (width <= 650) {
+        signup_form.setStyle("width", "100%");
+        signup_button.setStyle("width", "80%");
+    } else if (width <= 1300) {
+        signup_form.setStyle("width", "70%");
+        signup_button.setStyle("width", "75%");
+    } else {
+        signup_form.setStyle("width", "50%");
+        signup_button.setStyle("width", "40%");
+    }
+};
+
+//input 박스 입력시에 다음으로 넘어가는 기능
+scwin.onInputChar = function (e) {
+    const currentInput = e.target;
+    const currentInputId = currentInput.id;
+    const currentWsComponent = $p.getComponentById(currentInputId); // WebSquare 컴포넌트 객체 가져오기
+    const currentNumber = parseInt(currentInputId.replace('mf_code_input', '')); // ID에서 숫자 부분 추출
+    const length = currentWsComponent.getValue().length;
+
+
+    // 일반 문자 입력 시 다음 InputBox로 포커스 이동
+    if (e.key !== "Backspace" && length === 1) {
+        const nextNumber = currentNumber + 1;
+        const nextInputId = 'mf_code_input' + nextNumber;
+
+        if (nextNumber <= 5) {
+            const nextWsComponent = $p.getComponentById(nextInputId);
+            if (nextWsComponent) {
+                nextWsComponent.focus(); // 다음 InputBox로 포커스 이동
+            }
+        }
+    }
+    // backspace 누른 경우
+    else if (e.key === "Backspace" && length === 0) {
+        const prevNumber = currentNumber - 1;
+        const prevInputId = 'mf_code_input' + prevNumber;
+        console.log(currentWsComponent.getValue().length)
+
+        if (prevNumber >= 1) {
+            const prevWsComponent = $p.getComponentById(prevInputId);
+            if (prevWsComponent) {
+                prevWsComponent.focus();
+            }
+        }
+    }
+
+};
+
+//사용자 입력 코드와 인증코드 비교 함수
+scwin.codeCheck = function (e) {
+    const code = scwin.code;
+
+    for (let i = 0; i < 5; i++) {
+        if (code_input1.getValue().toString() !== code.charAt(i)) {
+            return false;
+        }
+        return true;
+    }
+}
+
+//회원가입 버튼가입 버튼
+scwin.signup_button_onclick = async function (e) {
+    const now = new Date().getTime();
+    const diffMinutes = (now - scwin.time) / (1000 * 60);
+
+    if (diffMinutes > 10) {
+        await $c.win.alert("인증 시간이 만료되었습니다. 이메일을 다시 전송해주세요.");
+        return;
+    }
+
+    if (scwin.codeCheck()) {
+        let param = {
+            userId: scwin.info.email,
+            userName: scwin.info.name,
+            password: scwin.info.password,
+        }
+        dma_signupParam.setJSON(param);
+
+        $c.sbm.execute(sbm_signup);
+    } else {
+        await $c.win.alert("인증 코드가 일치하지 않습니다.");
+    }
+};
+
+//회원가입 완료
+scwin.sbm_signup_submitdone = async function (e) {
+    const responseData = e.responseJSON;
+    console.log(responseData);
+    
+    await $c.win.alert("회원가입이 완료되었습니다.", function () {
+        $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/loginPage.xml");
+    });
+};
+
+//이메일 재전송 버튼
+scwin.resend_button_onclick = function (e) {
+    let param = {
+        email: scwin.info.email
+    }
+    dma_mailParam.setJSON(param);
+    $c.sbm.execute(sbm_email);
+};
+
+//인증코드 10분 시간체크
+scwin.startCountdown = function () {
+    const timer = setInterval(function () {
+        const now = new Date().getTime();
+        const remaining = 600000 - (now - scwin.time); // 10분 = 600,000ms
+
+        if (remaining <= 0) {
+            timeCheck_text.setValue("인증 시간이 만료되었습니다.");
+            clearInterval(timer);
+            return;
+        }
+
+        const min = Math.floor(remaining / (60 * 1000));
+        const sec = Math.floor((remaining % (60 * 1000)) / 1000);
+        timeCheck_text.setValue(`남은 시간: ${min}분 ${sec < 10 ? "0" : ""}${sec}초`);
+    }, 1000);
+};
+
+//input 다음 input으로 커서 가게 하는 기능
+scwin.onKeydownInput = function (e) {
+    scwin.onInputChar(e);
+};
+]]></script>
+    	<style type="text/css"><![CDATA[]]></style>
+    </head>
+    <body ev:onpageload="scwin.onpageload" style="padding: 0;margin: 0;;">
+    	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+    		style="background-color: #FFF4D6;align-items: center;justify-content: center;display: flex;height: 100%;">
+    		<xf:group style="width:60%;height:450px;" id="signup_form" class="auth-form" ev:onclick="scwin.signup_form_onclick">
+
+    			<xf:group style="height:55px;display:flex;flex-direction:row;" id="">
+
+
+    				<xf:image src="/InsWebApp/images/collabee_icon.jpg" style="width:51px;height:48px;display:flex;" id=""></xf:image>
+    				<w2:textbox id="" label="COLLABEE"
+    					style="width:150px;height:37px;color: #FFB823;font-size:30px;font-weight: bold;display: flex;">
+    				</w2:textbox>
+    			</xf:group>
+
+
+    			<w2:textbox id="" label="쉽고 편하게 사용가능한 COLLABEE 사용하기" style="height: 23px;color: #DAD3D3;"></w2:textbox>
+    			<xf:group style="" id="signup_group" class="code-input-group">
+    				<xf:input id="code_input1" style="" class="code-input" maxlength="1"
+    					dataType="number" ev:onkeydown="scwin.onKeydownInput" autocomplete="off">
+    				</xf:input>
+    				<xf:input id="code_input2" style="" class="code-input" maxlength="1"
+    					dataType="number" ev:onkeydown="scwin.onKeydownInput" autocomplete="off">
+    				</xf:input>
+    				<xf:input id="code_input3" style="" class="code-input" maxlength="1"
+    					dataType="number" ev:onkeydown="scwin.onKeydownInput" autocomplete="off">
+    				</xf:input>
+    				<xf:input id="code_input4" style="" class="code-input" maxlength="1"
+    					dataType="number" autocomplete="off" ev:onkeydown="scwin.onKeydownInput">
+    				</xf:input>
+    				<xf:input id="code_input5" style="" class="code-input" maxlength="1"
+    					dataType="number" autocomplete="off" ev:onkeydown="scwin.onKeydownInput">
+    				</xf:input>
+    			</xf:group>
+    			<xf:trigger type="button"
+    				style="width: 60%;height: 35px;border-radius: 6px;background-color: #FFB823;outline: none;border: none;" id="signup_button"
+    				class="auth-button" ev:onclick="scwin.signup_button_onclick">
+    				<xf:label><![CDATA[확인]]></xf:label>
+    			</xf:trigger>
+    			<w2:textbox style="" id="timeCheck_text" label="" class="timeCheck-text"></w2:textbox>
+    			<xf:group style="height:54px;" id="" class="button-group">
+    				<xf:trigger style="width: 80px;height: 23px;" id="resend_button" type="button" class="login-button"
+    					ev:onclick="scwin.resend_button_onclick">
+    					<xf:label><![CDATA[메일 재전송]]></xf:label>
+    				</xf:trigger>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>
