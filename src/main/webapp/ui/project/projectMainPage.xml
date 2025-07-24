@@ -4142,16 +4142,16 @@ scwin.waitForElementReady = function (component, maxAttempts = 50) {
             }
 
             // WebSquare 컴포넌트가 존재하지만 element가 없는 경우 (display:contents 등)
-            if (component && component.id && !component.element) {
-                console.log(`컴포넌트는 존재하지만 DOM 요소가 없습니다 (${attempts}회 시도):`, component.id);
+            // if (component && component.id && !component.element) {
+            //     console.log(`컴포넌트는 존재하지만 DOM 요소가 없습니다 (${attempts}회 시도):`, component.id);
 
-                // 10회 이상 시도했는데도 element가 없으면 컴포넌트 자체를 반환
-                if (attempts >= 10) {
-                    console.warn(`DOM 요소가 없는 컴포넌트를 반환합니다:`, component.id);
-                    resolve(component);
-                    return;
-                }
-            }
+            //     // 10회 이상 시도했는데도 element가 없으면 컴포넌트 자체를 반환
+            //     if (attempts >= 10) {
+            //         console.warn(`DOM 요소가 없는 컴포넌트를 반환합니다:`, component.id);
+            //         resolve(component);
+            //         return;
+            //     }
+            // }
 
             if (attempts >= maxAttempts) {
                 console.error(`컴포넌트 렌더링 실패 (${maxAttempts}회 시도):`, component.id);
