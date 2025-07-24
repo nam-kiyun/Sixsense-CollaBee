@@ -111,9 +111,26 @@
 		<w2:layoutInfo />
 		<w2:publicInfo method="" />
 		<script lazy="false" type="text/javascript"><![CDATA[
+// 전역 프로젝트 데이터 저장소
+scwin.currentProjectData = null;
+
 scwin.onpageload = function () {
     scwin.view = false;
     scwin.task = "todo";
+};
+
+// 프로젝트 데이터 설정 함수 (부모에서 호출)
+scwin.setProjectData = function(projectData) {
+    console.log("모바일 projectMainPage에 프로젝트 데이터 설정:", projectData);
+    
+    // 전역 변수에 저장
+    scwin.currentProjectData = projectData;
+    
+    // dm_projectVo에도 설정
+    if (projectData && projectData.projectId) {
+        dm_projectVo.set("projectId", projectData.projectId);
+        console.log("dm_projectVo에 프로젝트 ID 설정 완료:", projectData.projectId);
+    }
 };
 
 scwin.view_button_onclick = function (e) {
@@ -177,8 +194,42 @@ scwin.openVideoChat = function() {
         return;
     }
     
-    // 현재 프로젝트 ID 가져오기
-    var currentProjectId = dm_projectVo.get("projectId") || "default";
+    // 현재 프로젝트 ID 가져오기 (fallback 로직 사용)
+    var currentProjectId = null;
+    
+    // 1차 시도: dm_projectVo에서 가져오기
+    try {
+        currentProjectId = dm_projectVo.get("projectId");
+        console.log("dm_projectVo에서 프로젝트 ID 검색:", currentProjectId);
+    } catch (e) {
+        console.log("dm_projectVo 접근 실패:", e);
+    }
+    
+    // 2차 시도: 전역 변수에서 가져오기
+    if (!currentProjectId && scwin.currentProjectData && scwin.currentProjectData.projectId) {
+        currentProjectId = scwin.currentProjectData.projectId;
+        console.log("전역 변수에서 프로젝트 ID 검색:", currentProjectId);
+    }
+    
+    // 3차 시도: URL 파라미터에서 가져오기
+    if (!currentProjectId) {
+        try {
+            var urlParams = new URLSearchParams(window.location.search);
+            currentProjectId = urlParams.get('projectId');
+            console.log("URL 파라미터에서 프로젝트 ID 검색:", currentProjectId);
+        } catch (e) {
+            console.log("URL 파라미터 추출 실패:", e);
+        }
+    }
+    
+    // 모든 방법이 실패한 경우
+    if (!currentProjectId) {
+        console.error("모든 방법으로 프로젝트 ID를 찾을 수 없습니다.");
+        alert("프로젝트 정보를 찾을 수 없습니다. 페이지를 새로고침 해주세요.");
+        return;
+    }
+    
+    console.log("화상통화에 사용할 프로젝트 ID:", currentProjectId);
     
     // 고유한 팝업 ID 생성
     var uniquePopupId = scwin.generateVideoChatPopupId();
@@ -195,7 +246,8 @@ scwin.openVideoChat = function() {
         overflow: "hidden", // 오버플로우 숨김
         closeAction: "scwin.videoChat_closeAction",
         paramObject: {
-            projectId: currentProjectId
+            projectId: currentProjectId,
+            fromMobile: true
         }
     };
     

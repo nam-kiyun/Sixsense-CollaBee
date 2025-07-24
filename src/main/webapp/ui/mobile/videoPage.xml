@@ -82,17 +82,52 @@ const iceServers = {
 scwin.onpageload = function() {
     console.log("모바일 화상통화 페이지 로드");
     
-    // 팝업 파라미터에서 프로젝트 ID 받기
+    // 팝업 파라미터에서 프로젝트 ID 받기 (여러 방법 시도)
     try {
-        projectId = $p.getParameter("projectId") || 'default';
-        console.log("전달받은 프로젝트 ID:", projectId);
+        // 1차 시도: paramObject에서 직접 받기
+        var paramObj = $p.getParameter("paramObject");
+        if (paramObj && paramObj.projectId) {
+            projectId = paramObj.projectId;
+            console.log("paramObject에서 프로젝트 ID 획득:", projectId);
+        } else {
+            // 2차 시도: 기본 getParameter 방식
+            projectId = $p.getParameter("projectId");
+            console.log("기본 방식으로 프로젝트 ID 획득:", projectId);
+        }
+        
+        // 3차 시도: 모든 파라미터 확인
+        if (!projectId) {
+            console.log("모든 파라미터 확인:", $p.getParameter());
+            
+            // 4차 시도: 부모 창에서 프로젝트 ID 가져오기
+            try {
+                var parentWindow = $p.parent();
+                if (parentWindow && parentWindow.scwin && parentWindow.scwin.currentProjectData) {
+                    projectId = parentWindow.scwin.currentProjectData.projectId;
+                    console.log("부모 창에서 프로젝트 ID 획득:", projectId);
+                }
+            } catch (parentError) {
+                console.log("부모 창 접근 실패:", parentError);
+            }
+        }
+        
+        // 최종 체크
+        if (!projectId) {
+            console.error("모든 방법으로 프로젝트 ID를 찾을 수 없습니다!");
+            projectId = 'default';
+        } else {
+            console.log("최종 확정된 프로젝트 ID:", projectId);
+        }
+        
     } catch (e) {
-        console.log("프로젝트 ID 추출 실패, 기본값 사용:", e);
+        console.error("프로젝트 ID 추출 중 오류 발생:", e);
         projectId = 'default';
     }
     
-    // 채널명을 프로젝트 ID 기반으로 설정
-    currentUser.channelName = "mobile-webrtc-room-" + projectId;
+    // 채널명을 데스크톱과 동일한 형식으로 설정
+    currentUser.channelName = "webrtc-room-" + projectId;
+    
+    console.log("생성된 채널명:", currentUser.channelName);
     
     // 사용자 정보 설정
     dma_videoChat.set("userId", currentUser.userId);
@@ -202,24 +237,40 @@ scwin.handleWebSocketMessage = function(data) {
     
     switch(data.type) {
         case "join-room":
+        case "user-joined":
             if (data.userId !== currentUser.userId) {
                 scwin.handleUserJoined(data);
             }
             break;
         case "leave-room":
+        case "user-left":
             scwin.handleUserLeft(data);
             break;
         case "OFFER":
+        case "offer":
             scwin.handleOffer(data);
             break;
         case "ANSWER":
+        case "answer":
             scwin.handleAnswer(data);
             break;
         case "ICE_CANDIDATE":
+        case "ice-candidate":
             scwin.handleIceCandidate(data);
             break;
+        case "existing-users":
+            scwin.handleExistingUsers(data);
+            break;
+        case "history":
+            // 채팅 기록 - 무시
+            console.log("채팅 기록 메시지 수신 (무시)");
+            break;
+        case "notification":
+            // 알림 메시지 - 무시  
+            console.log("알림 메시지 수신 (무시)");
+            break;
         default:
-            console.log("알 수 없는 메시지 타입:", data.type);
+            console.log("처리되지 않은 메시지 타입:", data.type);
     }
 };
 
@@ -434,6 +485,20 @@ scwin.handleIceCandidate = async function(data) {
     const pc = peerConnections.get(data.userId);
     if (pc) {
         await pc.addIceCandidate(data.candidate);
+    }
+};
+
+// 기존 사용자 목록 처리
+scwin.handleExistingUsers = function(data) {
+    console.log("기존 사용자 목록 수신:", data.users);
+    
+    if (data.users && data.users.length > 0) {
+        data.users.forEach(user => {
+            if (user.userId !== currentUser.userId) {
+                console.log("기존 사용자와 연결 시도:", user.userName);
+                scwin.handleUserJoined(user);
+            }
+        });
     }
 };
 
