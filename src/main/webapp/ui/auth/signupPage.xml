@@ -200,14 +200,14 @@ scwin.sbm_email_submitdone = function (e) {
 
         $p.url("/InsWebApp/ui/auth/codeCheckPage.xml", option);
     } else {
-        alert("잘못된 이메일 주소입니다");
+        $c.win.alert("잘못된 이메일 주소입니다");
     }
 };
 
 //이메일 전송 오류
 scwin.sbm_email_submiterror = function (e) {
     console.error("이메일 전송 중 오류 발생:", e);
-    alert("이메일 전송 오류");
+    $c.win.alert("이메일 전송 오류");
 };
 
 //중복확인 버튼
@@ -238,7 +238,7 @@ scwin.sbm_checkEmail_submitdone = function (e) {
 
 //이메일 중복확인 실패
 scwin.sbm_checkEmail_submiterror = function (e) {
-    alert("이메일 중복 확인 실패");
+    $c.win.alert("이메일 중복 확인 실패");
 };
 
 //이메일 입력시 중복확인 무효화

@@ -1285,7 +1285,7 @@ scwin.projectCard_onclick = function(e) {
     if (!isNaN(selectedRow)) {
         dlt_projectList.setFocusedRow(selectedRow);
         var projectName = dlt_projectList.getCellData(selectedRow, "projectName");
-        alert("선택된 프로젝트: " + projectName);
+        $c.win.alert("선택된 프로젝트: " + projectName);
     }
 };
 
@@ -2675,7 +2675,7 @@ scwin.github_onclick = function(e) {
     var projectData = scwin.currentProjectData;
     if (!projectData) {
         console.error("프로젝트 데이터가 없습니다.");
-        alert("프로젝트 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+        $c.win.alert("프로젝트 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
         return;
     }
     
@@ -2715,12 +2715,12 @@ scwin.github_onclick = function(e) {
             console.log("최종 사용자 ID:", currentUserId);
         } else {
             console.error("사용자 ID를 찾을 수 없습니다. GitHub 연동이 불가능합니다.");
-            alert("로그인된 사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.");
+            $c.win.alert("로그인된 사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.");
             return;
         }
     } catch (e) {
         console.error("사용자 정보 가져오기 실패:", e);
-        alert("사용자 정보를 가져오는 중 오류가 발생했습니다.");
+        $c.win.alert("사용자 정보를 가져오는 중 오류가 발생했습니다.");
         return;
     }
     
@@ -2782,7 +2782,7 @@ scwin.add_task_submitdone = function (e) {
     
     if (!taskData || !taskData.taskId) {
         console.error("태스크 데이터를 찾을 수 없습니다. 응답 구조:", responseData);
-        alert("태스크 생성은 완료되었지만 UI 업데이트에 실패했습니다.");
+        $c.win.alert("태스크 생성은 완료되었지만 UI 업데이트에 실패했습니다.");
         return;
     }
     
@@ -3809,7 +3809,7 @@ scwin.handleDragStart = function(e) {
     if (scwin.isCardLocked(taskId)) {
         var lockInfo = scwin.lockedCards.get(taskId);
         console.log("드래그 차단: 카드가 락되어 있습니다.", lockInfo.userName);
-        alert(lockInfo.userName + "님이 현재 이 카드를 편집 중입니다. 잠시 후 다시 시도해주세요.");
+        $c.win.alert(lockInfo.userName + "님이 현재 이 카드를 편집 중입니다. 잠시 후 다시 시도해주세요.");
         e.preventDefault();
         return false;
     }
@@ -4011,7 +4011,7 @@ scwin.handleDrop = function(e) {
         
         // 최종 확인: 여전히 정보가 없으면 알림
         if (!scwin.draggedCard || !scwin.draggedCard.taskId) {
-            alert("드래그된 카드 정보가 없습니다. 다시 시도해주세요.");
+            $c.win.alert("드래그된 카드 정보가 없습니다. 다시 시도해주세요.");
             scwin.cleanupDragState();
             return;
         }
@@ -4046,7 +4046,7 @@ scwin.handleDrop = function(e) {
         
     } catch (error) {
         console.error("카드 이동 중 오류 발생:", error);
-        alert("카드 이동 중 오류가 발생했습니다. 다시 시도해주세요.");
+        $c.win.alert("카드 이동 중 오류가 발생했습니다. 다시 시도해주세요.");
     }
     
     // 드롭 존 하이라이트 제거
@@ -4400,7 +4400,7 @@ scwin.moveCardToBoard = function(cardElement, targetBoardId, taskId) {
             
             if (!taskId || taskId === "" || taskId === "null" || taskId === "undefined") {
                 console.error("카드 element에서도 taskId를 찾을 수 없습니다. 이동을 중단합니다.");
-                alert("카드 정보를 찾을 수 없어 이동할 수 없습니다.");
+                $c.win.alert("카드 정보를 찾을 수 없어 이동할 수 없습니다.");
                 return false;
             }
             
@@ -4538,7 +4538,7 @@ scwin.update_task_board_submiterror = function(e) {
             console.log("서버 업데이트 실패로 인한 롤백:", moveInfo.taskId);
             
             // 사용자에게 알림
-            alert("카드 이동에 실패했습니다. 다시 시도해주세요.");
+            $c.win.alert("카드 이동에 실패했습니다. 다시 시도해주세요.");
             
             // 대기 정보 초기화
             scwin.pendingCardMove = null;
@@ -4672,7 +4672,7 @@ scwin.dynamicAddCard_onclick_fixed = function(boardId) {
         
         if (!parentGroup) {
             console.error("카드 컨테이너를 찾을 수 없습니다:", cardContainerId);
-            alert("카드 컨테이너를 찾을 수 없습니다.");
+            $c.win.alert("카드 컨테이너를 찾을 수 없습니다.");
             return;
         }
         
@@ -4717,7 +4717,7 @@ scwin.dynamicAddCard_onclick_fixed = function(boardId) {
     }
  else {
         console.error("boardId가 없습니다.");
-        alert("보드 정보를 찾을 수 없습니다.");
+        $c.win.alert("보드 정보를 찾을 수 없습니다.");
     }
 };
 
@@ -4740,7 +4740,7 @@ scwin.dynamicInput_onkeydown_with_board = function(e, boardId) {
             
             if (!targetBoardId) {
                 console.error("boardId를 찾을 수 없습니다.");
-                alert("보드 정보를 찾을 수 없습니다.");
+                $c.win.alert("보드 정보를 찾을 수 없습니다.");
                 return;
             }
             
@@ -4757,7 +4757,7 @@ scwin.dynamicInput_onkeydown_with_board = function(e, boardId) {
                 cardComponent.remove();
             }
         } else {
-            alert("작업명을 입력해주세요.");
+            $c.win.alert("작업명을 입력해주세요.");
         }
     } else if (keyCode === 27) { // ESC 키
         console.log("ESC 키 - 취소");
@@ -4780,7 +4780,7 @@ scwin.load_Board_submit = function(e) {
     var projectId = dm_projectVo.get("projectId");
     if (!projectId) {
         console.error("프로젝트 ID가 없습니다");
-        alert("프로젝트 ID를 먼저 설정해주세요.");
+        $c.win.alert("프로젝트 ID를 먼저 설정해주세요.");
         return false; // 서브미션 중단
     }
     
@@ -4808,7 +4808,7 @@ scwin.load_Board_submiterror = function(e) {
         }
     }
     
-    alert(errorMessage);
+    $c.win.alert(errorMessage);
     
     // 에러 시 로그만 출력 (정적 컬럼 제거됨)
     console.log("보드 로드 실패로 동적 컬럼 생성 불가");
@@ -4827,7 +4827,7 @@ scwin.btn_settings_onclick = function (e) {
     }
     
     if (!projectId) {
-        $p.alert("프로젝트 ID를 찾을 수 없습니다.");
+        $c.win.alert("프로젝트 ID를 찾을 수 없습니다.");
         return;
     }
     
@@ -4953,7 +4953,7 @@ scwin.new_task_onclick = function (e) {
     var userId = scwin.getCurrentUserId();
     if (!userId) {
         console.error("사용자 정보를 가져올 수 없어 태스크 생성이 불가능합니다.");
-        alert("로그인 정보를 확인할 수 없습니다. 페이지를 새로고침해주세요.");
+        $c.win.alert("로그인 정보를 확인할 수 없습니다. 페이지를 새로고침해주세요.");
         return;
     }
     
@@ -5064,6 +5064,8 @@ scwin.btn_videoCall_onclick = function(e) {
         modal: false,
         header: false,
         customTitleBar: false,
+        scrollbars: false,
+        overflow: "hidden",
         closeAction: "scwin.videoChat_closeAction",
         dataObject: param
     };
@@ -5781,7 +5783,7 @@ scwin.expandVideoChat = function() {
         }
         
         if (!projectId) {
-            alert("프로젝트 ID를 찾을 수 없습니다.");
+            $c.win.alert("프로젝트 ID를 찾을 수 없습니다.");
             console.error("프로젝트 ID를 찾을 수 없습니다.");
             return;
         }
@@ -5824,7 +5826,7 @@ scwin.expandVideoChat = function() {
         
     } catch (error) {
         console.error("화상통화 확장 실패:", error);
-        alert("화상통화를 확장할 수 없습니다: " + error.message);
+        $c.win.alert("화상통화를 확장할 수 없습니다: " + error.message);
     }
 };
 
@@ -6060,7 +6062,7 @@ scwin.add_board_onclick = function(e) {
     }
     
     if (!projectId) {
-        alert("프로젝트 ID를 찾을 수 없습니다.");
+        $c.win.alert("프로젝트 ID를 찾을 수 없습니다.");
         return;
     }
     
@@ -6110,7 +6112,7 @@ scwin.add_board_submiterror = function(e) {
         errorMessage += "\n상태코드: " + e.status;
     }
     
-    alert(errorMessage);
+    $c.win.alert(errorMessage);
     
     // 실패 시 임시 보드 제거
     if (scwin.currentTempBoardId) {
@@ -6273,7 +6275,7 @@ scwin.boardInput_onkeydown = function(e) {
             $p.executeSubmission("add_board");
             
         } else {
-            alert("보드 이름을 입력해주세요.");
+            $c.win.alert("보드 이름을 입력해주세요.");
             inputComponent.focus();
         }
         

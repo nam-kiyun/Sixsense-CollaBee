@@ -555,7 +555,7 @@ scwin.onpageload = function() {
     
     // HTTPS 체크
     if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        alert("⚠️ webRTC는 HTTPS 환경에서만 작동합니다.");
+        $c.win.alert("webRTC는 HTTPS 환경에서만 작동합니다.");
         return;
     }
     
@@ -814,7 +814,7 @@ scwin.joinCall = async function() {
             errorMessage = error.message;
         }
         
-        alert("❌ " + errorMessage);
+        $c.win.alert(errorMessage);
         //scwin.addChatMessage("시스템", "❌ " + errorMessage, false);
     }
 };
@@ -1514,7 +1514,7 @@ scwin.sendChatMessage = function() {
     if (!message) return;
     
     if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) {
-        alert("서버에 연결되지 않았습니다.");
+        $c.win.alert("서버에 연결되지 않았습니다.");
         return;
     }
     
@@ -1536,7 +1536,7 @@ scwin.sendChatMessage = function() {
         //console.log("메시지 전송:", message);
     } catch (error) {
         //console.error("메시지 전송 실패:", error);
-        alert("메시지 전송에 실패했습니다.");
+        $c.win.alert("메시지 전송에 실패했습니다.");
     }
 };
 
@@ -3818,7 +3818,7 @@ async function createProducer() {
 
     } catch (error) {
         //console.error('❌ Producer 생성 실패:', error);
-        alert('카메라/마이크 접근에 실패했습니다: ' + error.message);
+        $c.win.alert('카메라/마이크 접근에 실패했습니다: ' + error.message);
     }
 }
 
@@ -4386,7 +4386,7 @@ scwin.togglePiP = function() {
     const remoteVideos = document.querySelectorAll('#remoteVideosGrid video');
     
     if (!localVideo && remoteVideos.length === 0) {
-        alert('비디오를 찾을 수 없습니다. 먼저 화상통화에 참여해주세요.');
+        $c.win.alert('비디오를 찾을 수 없습니다. 먼저 화상통화에 참여해주세요.');
         return;
     }
     
@@ -4584,7 +4584,7 @@ scwin.togglePiP = function() {
         
     } catch (error) {
         console.error('PIP 토글 실패:', error);
-        alert('PIP 모드 전환에 실패했습니다: ' + error.message);
+        $c.win.alert('PIP 모드 전환에 실패했습니다: ' + error.message);
     }
 };
 
