@@ -1301,7 +1301,7 @@ scwin.file_remove_onclick = function (e) {
     }
 
     if (checkedItemNums.length === 0) {
-        alert("선택된 항목에서 유효한 고유 식별자(num)를 찾을 수 없습니다.");
+        $c.win.alert("선택된 항목에서 유효한 고유 식별자(num)를 찾을 수 없습니다.");
         return;
     }
 
