@@ -2570,13 +2570,26 @@ scwin.createGanttJSONFromDataList_backup = function (ganttTasks, displayYear, di
         }
 
         if (shouldShowTask) {
+            // 1칸씩 밀리는 문제 해결: 시작일만 1일 앞당기고 종료일은 원래대로 유지
+            var adjustedStartDate = new Date(actualStartDate.getTime() - 24 * 60 * 60 * 1000);
+            var adjustedEndDate = actualEndDate;  // 종료일은 원래대로 유지
+            
+            // hover 툴팁에 표시할 원래 날짜 정보
+            var originalStartStr = scwin.convertToMMDDYYYY(actualStartDate);
+            var originalEndStr = scwin.convertToMMDDYYYY(actualEndDate);
+            var tooltipText = task.taskTitle + "<br/>기간: " + originalStartStr + " ~ " + originalEndStr;
+            
             tasks.push({
                 id: task.taskId,
-                start: scwin.convertToMMDDYYYY(actualStartDate),
-                end: scwin.convertToMMDDYYYY(actualEndDate),
+                start: scwin.convertToMMDDYYYY(adjustedStartDate),
+                end: scwin.convertToMMDDYYYY(adjustedEndDate),
                 processid: task.taskId,
                 label: "",  // 라벨 숨기기
-                color: scwin.getTaskColorByIndex(index)  // 인덱스별 다른 색상
+                color: scwin.getTaskColorByIndex(index),  // 인덱스별 다른 색상
+                tooltext: tooltipText,  // 커스텀 툴팁
+                // 테두리 완전 투명하게 설정
+                borderThickness: "0",
+                borderAlpha: "0"
             });
         }
     });
@@ -2618,31 +2631,46 @@ scwin.createDummyTasksForProcesses = function (processes, displayYear, displayMo
 
     var dummyTasks = [];
 
-    // 첫 번째 process에만 완전히 투명한 더미 task 1개 생성
+    // 날짜 매핑 테스트를 위한 여러 개의 더미 태스크 생성
     if (processes.length > 0) {
         var process = processes[0];
-        dummyTasks.push({
-            id: "invisible_dummy_task",
-            processid: process.id,
-            start: scwin.formatDate(new Date(year, month - 1, 1)),
-            end: scwin.formatDate(new Date(year, month - 1, 1)),
-            label: "",  // 빈 라벨
-            color: "FFFFFF",  // 흰색 (# 제거)
-            alpha: "0",  // 완전 투명
-            fontcolor: "FFFFFF",  // 흰색 글자 (# 제거)
-            fontsize: "1",  // 최소 글자 크기
-            showlabel: "0",  // 라벨 숨김
-            // 테두리 및 그림자 제거
-            borderThickness: "0",
-            borderColor: "FFFFFF",
-            borderAlpha: "0",
-            // 그림자 효과 제거
-            shadow: "0",
-            // 추가 투명도 설정
-            fillalpha: "0",
-            // 호버 효과 제거
-            showHoverEffect: "0"
-        });
+        
+        // 1일짜리 태스크들로 각 날짜별 매핑 테스트
+        var testDates = [1, 5, 10, 15, 20, 25];
+        
+        for (var i = 0; i < testDates.length && i < 3; i++) { // 최대 3개만
+            var testDay = testDates[i];
+            // 1칸씩 밀리는 문제 해결: 날짜를 1일 앞당겨서 생성
+            var testDate = new Date(year, month - 1, testDay - 1);
+            // 사용자가 의도한 원래 날짜
+            var intentedDate = new Date(year, month - 1, testDay);
+            
+            dummyTasks.push({
+                id: "test_mapping_" + testDay,
+                processid: process.id,
+                start: scwin.formatDate(testDate),
+                end: scwin.formatDate(testDate),
+                label: "",  // 빈 라벨
+                color: "FFFFFF",  // 흰색
+                alpha: "0",  // 완전 투명
+                fontcolor: "FFFFFF",  // 흰색 글자
+                fontsize: "1",  // 최소 글자 크기
+                showlabel: "0",  // 라벨 숨김
+                // 테두리 완전 투명하게 설정
+                borderThickness: "0",
+                borderColor: "FFFFFF", 
+                borderAlpha: "0",
+                // 그림자 효과 제거
+                shadow: "0",
+                // 추가 투명도 설정
+                fillalpha: "0",
+                // 호버 효과 제거
+                showHoverEffect: "0"
+            });
+            
+            console.log("������ 날짜 매핑 테스트 - " + testDay + "일 위치에 표시하기 위해");
+            console.log("    실제 생성 날짜:", scwin.formatDate(testDate));
+        }
     }
 
     console.log("생성된 더미 tasks:", dummyTasks.length + "개");
@@ -5848,9 +5876,6 @@ scwin.expandModalFromPip = function () {
 
 // PostMessage 이벤트 리스너 추가 (자식 창에서 보낸 메시지 처리)
 window.addEventListener('message', function (event) {
-    console.log("������ [projectMainPage] PostMessage 받음:", event.data);
-    console.log('event.origin:', event.origin);
-    console.log('event.source:', event.source);
 
     // PIP 창 생성 요청 처리
     if (event.data && event.data.action === 'createPipWindow') {
