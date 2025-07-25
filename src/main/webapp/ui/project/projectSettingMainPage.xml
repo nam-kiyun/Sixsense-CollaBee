@@ -17,7 +17,14 @@ iframe[src*="projectSettingMainPage"],
 div[id*="wframe"][style*="position: absolute"],
 div[id*="popup"] iframe,
 [id*="wframe_popup"],
-[class*="wframe_popup"] {
+[class*="wframe_popup"],
+.w2popup_window,
+.w2window,  
+[id*="projectSettingPopup"],
+[id*="mf_wfr_mainContent_projectSettingPopup"],
+#mf_wfr_mainContent_projectSettingPopup,
+[id*="projectSettingPopup_body"],
+[id*="projectSettingPopup_wframe"] {
     border-radius: 0 !important;
     -webkit-border-radius: 0 !important;
     -moz-border-radius: 0 !important;
