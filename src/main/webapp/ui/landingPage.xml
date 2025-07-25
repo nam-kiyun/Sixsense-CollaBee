@@ -312,18 +312,18 @@ body::-webkit-scrollbar {
     </head>
     <body ev:onpageload="scwin.onpageload" style="background-color: #FFF4D6 !important;margin: 0;padding: 0;padding-top: 60px;overflow: hidden !important;width: 100vw !important;height: 100vh !important;max-height: 100vh !important;max-width: 100vw !important;">
     	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
-    		style="background-color:#4A3F35;display: flex;justify-content: space-between;align-items: center;height:60px;padding: 0 20px;width: 100%;position: fixed;top: 0;left: 0;z-index: 1000;">
+    		style="background-color:#4A3F35;display: flex;justify-content: space-between;align-items: center;height:100px;padding: 0 20px;width: 100%;position: fixed;top: 0;left: 0;z-index: 1000;">
     		<xf:group style="width:200px;height:61px;display:flex;align-items:center;gap:10px;" id="">
-    			<xf:image src="/InsWebApp/images/collabee.png" style="width:66px;height:59px;" id=""></xf:image>
-    			<xf:output style="width: 150px;color:#FFB823;font-weight:bold;font-size:1.5em;" label="" id="">
+    			<xf:image src="/InsWebApp/images/collabee.png" style="width:66px;height:65px;" id=""></xf:image>
+    			<xf:output style="width: 150px;color:#FFB823;font-weight:bold;font-size:32px;" label="" id="">
     				<xf:label><![CDATA[COLLABEE]]></xf:label>
     			</xf:output>
     		</xf:group>
     		<xf:group style="display: flex;gap: 10px;align-items: center;margin-right: 30px;" id="" class="rt">
-    					<xf:trigger style=";background-color:#FFB823;" id="btn_login" type="button" class="btn_cm " ev:onclick="scwin.goToLogin">
+    					<xf:trigger style="background-color:#FFB823;width:110px;height:48px;font-size:20px;" id="btn_login" type="button" class="btn_cm " ev:onclick="scwin.goToLogin">
 			<xf:label><![CDATA[로그인]]></xf:label>
 		</xf:trigger>
-    					<xf:trigger style=";background-color:#FFB823;" id="btn_signup" type="button" class="btn_cm " ev:onclick="scwin.goToSignup">
+    					<xf:trigger style="background-color:#FFB823;width:110px;height:48px;font-size:20px;" id="btn_signup" type="button" class="btn_cm " ev:onclick="scwin.goToSignup">
 			<xf:label><![CDATA[회원가입]]></xf:label>
 		</xf:trigger>
     		</xf:group>
