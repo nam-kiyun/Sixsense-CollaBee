@@ -320,10 +320,10 @@ body::-webkit-scrollbar {
     			</xf:output>
     		</xf:group>
     		<xf:group style="display: flex;gap: 10px;align-items: center;margin-right: 30px;" id="" class="rt">
-    					<xf:trigger style="background-color:#FFB823;width:110px;height:48px;font-size:20px;" id="btn_login" type="button" class="btn_cm " ev:onclick="scwin.goToLogin">
+    					<xf:trigger style="background-color:#FFB823;width:110px;height:48px;font-size:20px;border-radius:16px;font-family:Inter,sans-serif;" id="btn_login" type="button" class="btn_cm " ev:onclick="scwin.goToLogin">
 			<xf:label><![CDATA[로그인]]></xf:label>
 		</xf:trigger>
-    					<xf:trigger style="background-color:#FFB823;width:110px;height:48px;font-size:20px;" id="btn_signup" type="button" class="btn_cm " ev:onclick="scwin.goToSignup">
+    					<xf:trigger style="background-color:#FFB823;width:110px;height:48px;font-size:20px;border-radius:16px;font-family:Inter,sans-serif;" id="btn_signup" type="button" class="btn_cm " ev:onclick="scwin.goToSignup">
 			<xf:label><![CDATA[회원가입]]></xf:label>
 		</xf:trigger>
     		</xf:group>
