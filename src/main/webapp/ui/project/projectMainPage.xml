@@ -543,6 +543,21 @@ scwin.handleTaskUpdatedMessage = function (message) {
     console.log("������ 태스크 업데이트 처리 시작:", message.taskId);
     
     try {
+        // 현재 사용자의 변경사항인지 확인
+        var currentUserId = scwin.getCurrentUserId();
+        var isMyChange = (message.userId && message.userId === currentUserId);
+        
+        if (!isMyChange) {
+            console.log("🔄 다른 사용자의 태스크 변경사항 - 보드 새로고침:", message.boardId);
+            
+            // 해당 보드 데이터 새로고침 (다른 사용자의 변경사항만)
+            if (message.boardId && scwin.refreshBoardData) {
+                scwin.refreshBoardData(message.boardId);
+            }
+        } else {
+            console.log("ℹ️ 내가 변경한 태스크이므로 중복 새로고침 방지");
+        }
+        
         // 1. 로컬 캐시 데이터 업데이트
         scwin.updateLocalTaskCache(message);
         

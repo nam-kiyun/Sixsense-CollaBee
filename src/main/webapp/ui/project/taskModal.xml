@@ -1254,7 +1254,7 @@ scwin.saveTask = function () {
         success: async function (res) {
             await $c.win.alert("업무 정보가 저장되었습니다");
             
-            // 칸반보드 데이터 새로고침
+            // 칸반보드 데이터 새로고침 및 WebSocket 메시지 전송
             try {
                 const boardId = scwin.taskInfo.boardId;
                 const parentScwin = $p.parent().scwin;
@@ -1264,6 +1264,23 @@ scwin.saveTask = function () {
                     
                     // 해당 보드의 태스크 데이터 다시 로드
                     parentScwin.refreshBoardData(boardId);
+                    
+                    // WebSocket으로 실시간 동기화 메시지 전송
+                    if (parentScwin.sendWebSocketMessage) {
+                        const userId = parentScwin.getCurrentUserId();
+                        const projectId = parentScwin.$p.getComponentById("dm_projectVo").get("projectId");
+                        const message = {
+                            type: "TASK_UPDATED",
+                            boardId: boardId,
+                            taskId: scwin.taskInfo.taskId,
+                            action: "UPDATE",
+                            userId: userId,
+                            projectId: projectId,
+                            timestamp: new Date().toISOString()
+                        };
+                        parentScwin.sendWebSocketMessage(message);
+                        console.log("������ WebSocket 메시지 전송 (태스크 업데이트):", message);
+                    }
                 }
             } catch (refreshError) {
                 console.warn("칸반보드 새로고침 중 오류 (저장은 완료됨):", refreshError);
@@ -1645,7 +1662,7 @@ scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
 
 //작업 삭제가 완료되었을 때
 scwin.sbm_deleteTask_submitdone = function (e) {
-    // 칸반보드 데이터 새로고침
+    // 칸반보드 데이터 새로고침 및 WebSocket 메시지 전송
     try {
         const boardId = scwin.taskInfo.boardId;
         const parentScwin = $p.parent().scwin;
@@ -1655,6 +1672,23 @@ scwin.sbm_deleteTask_submitdone = function (e) {
             
             // 해당 보드의 태스크 데이터 다시 로드
             parentScwin.refreshBoardData(boardId);
+            
+            // WebSocket으로 실시간 동기화 메시지 전송
+            if (parentScwin.sendWebSocketMessage) {
+                const userId = parentScwin.getCurrentUserId();
+                const projectId = parentScwin.$p.getComponentById("dm_projectVo").get("projectId");
+                const message = {
+                    type: "TASK_UPDATED",
+                    boardId: boardId,
+                    taskId: scwin.taskInfo.taskId,
+                    action: "DELETE",
+                    userId: userId,
+                    projectId: projectId,
+                    timestamp: new Date().toISOString()
+                };
+                parentScwin.sendWebSocketMessage(message);
+                console.log("������️ WebSocket 메시지 전송 (태스크 삭제):", message);
+            }
         }
     } catch (refreshError) {
         console.warn("칸반보드 새로고침 중 오류 (삭제는 완료됨):", refreshError);
