@@ -269,6 +269,10 @@ scwin.handleWebSocketMessage = function(data) {
             // 알림 메시지 - 무시  
             console.log("알림 메시지 수신 (무시)");
             break;
+        case "error":
+            // 서버 오류 메시지 처리
+            console.error("서버 오류:", data.message);
+            break;
         default:
             console.log("처리되지 않은 메시지 타입:", data.type);
     }
@@ -360,13 +364,30 @@ scwin.addLocalVideo = function() {
 
 // 새 사용자 참가 처리
 scwin.handleUserJoined = async function(data) {
-    console.log("새 사용자 참가:", data.userName);
-    await scwin.createPeerConnection(data.userId, data.userName, true);
+    // 데이터 구조 확인 및 보정
+    var userId = data.userId || data;
+    var userName = data.userName || (typeof data === 'string' ? data.split('@')[0] : 'Unknown');
+    
+    console.log("새 사용자 참가. UserId:", userId, "UserName:", userName);
+    
+    if (userId && userId !== currentUser.userId) {
+        await scwin.createPeerConnection(userId, userName, true);
+    } else {
+        console.log("자신과의 연결 시도 무시 또는 잘못된 데이터:", data);
+    }
 };
 
 // P2P 연결 생성
 scwin.createPeerConnection = async function(userId, userName, isOfferer) {
     try {
+        // 이미 연결된 사용자인지 확인
+        if (peerConnections.has(userId)) {
+            console.log("이미 P2P 연결이 존재합니다:", userId);
+            return peerConnections.get(userId);
+        }
+        
+        console.log("P2P 연결 생성 시작:", userId, userName, "isOfferer:", isOfferer);
+        
         const pc = new RTCPeerConnection(iceServers);
         peerConnections.set(userId, pc);
         
@@ -384,12 +405,14 @@ scwin.createPeerConnection = async function(userId, userName, isOfferer) {
         
         // ICE 후보 처리
         pc.onicecandidate = function(event) {
-            if (event.candidate && chatSocket) {
+            if (event.candidate && chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                console.log("ICE candidate 전송:", event.candidate);
                 chatSocket.send(JSON.stringify({
-                    type: "ICE_CANDIDATE",
+                    type: "ice-candidate",
                     targetUserId: userId,
                     userId: currentUser.userId,
-                    candidate: event.candidate
+                    iceCandidate: JSON.stringify(event.candidate),
+                    channelName: currentUser.channelName
                 }));
             }
         };
@@ -399,13 +422,18 @@ scwin.createPeerConnection = async function(userId, userName, isOfferer) {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             
-            chatSocket.send(JSON.stringify({
-                type: "OFFER",
-                targetUserId: userId,
-                userId: currentUser.userId,
-                userName: currentUser.userName,
-                sdp: JSON.stringify(offer)
-            }));
+            console.log("Offer 생성 및 전송:", offer);
+            
+            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({
+                    type: "offer",
+                    targetUserId: userId,
+                    userId: currentUser.userId,
+                    userName: currentUser.userName,
+                    sdp: offer.sdp,
+                    channelName: currentUser.channelName
+                }));
+            }
         }
         
         return pc;
@@ -453,8 +481,30 @@ scwin.addRemoteVideo = function(userId, userName, stream) {
 
 // Offer 처리
 scwin.handleOffer = async function(data) {
-    const offer = JSON.parse(data.sdp);
-    const pc = await scwin.createPeerConnection(data.userId, data.userName, false);
+    console.log("Offer 수신:", data);
+    
+    // SDP 데이터 검증 및 처리
+    let offer;
+    if (typeof data.sdp === 'string') {
+        try {
+            // 문자열인 경우 RTCSessionDescription 객체 생성
+            offer = { sdp: data.sdp, type: 'offer' };
+        } catch (e) {
+            console.error("SDP 파싱 오류:", e);
+            return;
+        }
+    } else if (data.sdp && typeof data.sdp === 'object') {
+        // 이미 객체인 경우 그대로 사용
+        offer = data.sdp;
+    } else {
+        console.error("유효하지 않은 SDP 데이터:", data.sdp);
+        return;
+    }
+    
+    const fromUserId = data.userId || data.fromUserId;
+    const fromUserName = data.userName || data.fromUserName || "Unknown";
+    
+    const pc = await scwin.createPeerConnection(fromUserId, fromUserName, false);
     
     if (!pc) return;
     
@@ -462,29 +512,92 @@ scwin.handleOffer = async function(data) {
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
     
-    chatSocket.send(JSON.stringify({
-        type: "ANSWER",
-        targetUserId: data.userId,
-        userId: currentUser.userId,
-        userName: currentUser.userName,
-        sdp: JSON.stringify(answer)
-    }));
+    console.log("Answer 생성 및 전송:", answer);
+    
+    if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+        chatSocket.send(JSON.stringify({
+            type: "answer",
+            targetUserId: fromUserId,
+            userId: currentUser.userId,
+            userName: currentUser.userName,
+            sdp: answer.sdp,
+            channelName: currentUser.channelName
+        }));
+    }
 };
 
 // Answer 처리
 scwin.handleAnswer = async function(data) {
-    const pc = peerConnections.get(data.userId);
+    console.log("Answer 수신:", data);
+    
+    const fromUserId = data.userId || data.fromUserId;
+    const pc = peerConnections.get(fromUserId);
+    
     if (pc) {
-        const answer = JSON.parse(data.sdp);
+        // SDP 데이터 검증 및 처리
+        let answer;
+        if (typeof data.sdp === 'string') {
+            try {
+                // 문자열인 경우 RTCSessionDescription 객체 생성
+                answer = { sdp: data.sdp, type: 'answer' };
+            } catch (e) {
+                console.error("Answer SDP 파싱 오류:", e);
+                return;
+            }
+        } else if (data.sdp && typeof data.sdp === 'object') {
+            // 이미 객체인 경우 그대로 사용
+            answer = data.sdp;
+        } else {
+            console.error("유효하지 않은 Answer SDP 데이터:", data.sdp);
+            return;
+        }
+        
         await pc.setRemoteDescription(answer);
+        console.log("Answer 설정 완료:", fromUserId);
+    } else {
+        console.error("Answer에 대한 PeerConnection을 찾을 수 없음:", fromUserId);
     }
 };
 
 // ICE 후보 처리
 scwin.handleIceCandidate = async function(data) {
-    const pc = peerConnections.get(data.userId);
-    if (pc) {
-        await pc.addIceCandidate(data.candidate);
+    console.log("ICE candidate 수신:", data);
+    
+    const fromUserId = data.userId || data.fromUserId;
+    const pc = peerConnections.get(fromUserId);
+    
+    // ICE candidate 데이터 검증 및 역직렬화
+    let candidate;
+    if (data.iceCandidate) {
+        try {
+            // 서버에서 문자열로 받은 경우 JSON 파싱
+            candidate = typeof data.iceCandidate === 'string' 
+                ? JSON.parse(data.iceCandidate) 
+                : data.iceCandidate;
+        } catch (parseError) {
+            console.error("ICE candidate JSON 파싱 오류:", parseError);
+            return;
+        }
+    } else if (data.candidate) {
+        // 하위호환성을 위한 기존 candidate 필드 지원
+        candidate = data.candidate;
+    }
+    
+    if (pc && candidate) {
+        try {
+            await pc.addIceCandidate(candidate);
+            console.log("ICE candidate 추가 완료:", fromUserId);
+        } catch (error) {
+            console.error("ICE candidate 추가 실패:", error);
+            console.error("Candidate 데이터:", candidate);
+        }
+    } else {
+        if (!pc) {
+            console.error("ICE candidate에 대한 PeerConnection을 찾을 수 없음:", fromUserId);
+        }
+        if (!candidate) {
+            console.error("유효하지 않은 ICE candidate 데이터:", data);
+        }
     }
 };
 
@@ -493,12 +606,29 @@ scwin.handleExistingUsers = function(data) {
     console.log("기존 사용자 목록 수신:", data.users);
     
     if (data.users && data.users.length > 0) {
-        data.users.forEach(user => {
-            if (user.userId !== currentUser.userId) {
-                console.log("기존 사용자와 연결 시도:", user.userName);
-                scwin.handleUserJoined(user);
+        // 중복 사용자 제거
+        const uniqueUsers = [...new Set(data.users)];
+        console.log("중복 제거 후 사용자 목록:", uniqueUsers);
+        
+        uniqueUsers.forEach(userId => {
+            // userId가 문자열로 전달되므로 직접 비교
+            if (userId !== currentUser.userId && !peerConnections.has(userId)) {
+                console.log("기존 사용자와 연결 시도. UserId:", userId);
+                
+                // 사용자 객체 생성 (userName은 userId에서 추출)
+                var userName = userId.split('@')[0]; // 이메일에서 이름 부분 추출
+                var userObj = {
+                    userId: userId,
+                    userName: userName
+                };
+                
+                scwin.handleUserJoined(userObj);
+            } else if (peerConnections.has(userId)) {
+                console.log("이미 연결된 사용자 무시:", userId);
             }
         });
+    } else {
+        console.log("기존 사용자가 없습니다.");
     }
 };
 

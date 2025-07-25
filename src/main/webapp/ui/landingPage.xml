@@ -314,7 +314,7 @@ body::-webkit-scrollbar {
     	<xf:group class="sub_contents" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
     		style="background-color:#4A3F35;display: flex;justify-content: space-between;align-items: center;height:100px;padding: 0 20px;width: 100%;position: fixed;top: 0;left: 0;z-index: 1000;">
     		<xf:group style="width:200px;height:61px;display:flex;align-items:center;gap:10px;" id="">
-    			<xf:image src="/InsWebApp/images/collabee.png" style="width:66px;height:65px;" id=""></xf:image>
+    			<xf:image src="/InsWebApp/images/collabee.png" style="width:70px;height:65px;" id=""></xf:image>
     			<xf:output style="width: 150px;color:#FFB823;font-weight:bold;font-size:32px;" label="" id="">
     				<xf:label><![CDATA[COLLABEE]]></xf:label>
     			</xf:output>
