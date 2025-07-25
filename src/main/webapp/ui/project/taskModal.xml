@@ -1253,6 +1253,21 @@ scwin.saveTask = function () {
         contentType: false,
         success: async function (res) {
             await $c.win.alert("업무 정보가 저장되었습니다");
+            
+            // 칸반보드 데이터 새로고침
+            try {
+                const boardId = scwin.taskInfo.boardId;
+                const parentScwin = $p.parent().scwin;
+                if (boardId && parentScwin && parentScwin.refreshBoardData) {
+                    // 부모 창의 칸반보드 데이터 새로고침
+                    console.log("태스크 저장 완료 - 칸반보드 데이터 새로고침 시작:", boardId);
+                    
+                    // 해당 보드의 태스크 데이터 다시 로드
+                    parentScwin.refreshBoardData(boardId);
+                }
+            } catch (refreshError) {
+                console.warn("칸반보드 새로고침 중 오류 (저장은 완료됨):", refreshError);
+            }
         },
         error: async function (err) {
             await $c.win.alert("저장 실패! 다시 시도해주세요");
@@ -1630,6 +1645,21 @@ scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
 
 //작업 삭제가 완료되었을 때
 scwin.sbm_deleteTask_submitdone = function (e) {
+    // 칸반보드 데이터 새로고침
+    try {
+        const boardId = scwin.taskInfo.boardId;
+        const parentScwin = $p.parent().scwin;
+        if (boardId && parentScwin && parentScwin.refreshBoardData) {
+            // 부모 창의 칸반보드 데이터 새로고침
+            console.log("태스크 삭제 완료 - 칸반보드 데이터 새로고침 시작:", boardId);
+            
+            // 해당 보드의 태스크 데이터 다시 로드
+            parentScwin.refreshBoardData(boardId);
+        }
+    } catch (refreshError) {
+        console.warn("칸반보드 새로고침 중 오류 (삭제는 완료됨):", refreshError);
+    }
+    
     const close = $p.getComponentById("mf_wfr_mainContent_exa_popup_close");
     close.click();
 };

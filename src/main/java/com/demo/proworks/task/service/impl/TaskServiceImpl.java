@@ -216,6 +216,40 @@ public class TaskServiceImpl implements TaskService {
 			fileSrcDAO.insertFileSrcList(fileSrcVos);
 		}
 
+		// 🔄 Redis 캐시 직접 업데이트 (캐시 무효화 대신 성능 최적화)
+		try {
+			String projectId = this.getProjectIdByBoardId(updateVo.getBoardId());
+			if (projectId != null && kanbanRedisService.isRedisConnected()) {
+				// 업데이트된 태스크 속성들을 캐시에 직접 반영
+				java.util.Map<String, Object> cacheProperties = new java.util.HashMap<>();
+				cacheProperties.put("taskTitle", updateVo.getTaskTitle());
+				cacheProperties.put("priority", updateVo.getPriority());
+				cacheProperties.put("startDate", updateVo.getStartDate());
+				cacheProperties.put("endDate", updateVo.getEndDate());
+				cacheProperties.put("tags", updateVo.getTags());
+				cacheProperties.put("boardId", updateVo.getBoardId());
+				cacheProperties.put("projectUserId", updateVo.getProjectUserId());
+				cacheProperties.put("projectRepoId", updateVo.getProjectRepoId());
+				
+				// null 값들 제거 (캐시에 불필요한 null 저장 방지)
+				cacheProperties.entrySet().removeIf(entry -> entry.getValue() == null);
+				
+				kanbanRedisService.updateTaskPropertiesInCache(projectId, updateVo.getTaskId(), cacheProperties);
+				System.out.println("✅ 태스크 저장 완료 및 Redis 캐시 직접 업데이트: " + updateVo.getTaskId());
+			}
+		} catch (Exception cacheException) {
+			System.err.println("⚠️ Redis 캐시 업데이트 실패, 무효화로 대체: " + cacheException.getMessage());
+			// 캐시 업데이트 실패 시 기존 방식(무효화)으로 대체
+			try {
+				String projectId = this.getProjectIdByBoardId(updateVo.getBoardId());
+				if (projectId != null && kanbanRedisService.isRedisConnected()) {
+					kanbanRedisService.invalidateProjectCache(projectId);
+				}
+			} catch (Exception fallbackException) {
+				System.err.println("❌ 캐시 무효화마저 실패: " + fallbackException.getMessage());
+			}
+		}
+
 		return 1;
 	}
 

@@ -26,6 +26,7 @@ import com.demo.proworks.redis.service.KanbanRedisService;
 import com.demo.proworks.board.service.BoardService;
 import com.demo.proworks.board.vo.BoardVo;
 import com.demo.proworks.taskversion.service.TaskVersionService;
+import com.demo.proworks.websocket.handler.KanbanWebSocketHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.inswave.elfw.annotation.ElDescription;
@@ -69,6 +70,10 @@ public class TaskController {
 	/** KanbanRedisService - Redis 캐싱을 위한 서비스 */
 	@Autowired
 	private KanbanRedisService kanbanRedisService;
+
+	/** KanbanWebSocketHandler - WebSocket 실시간 통신을 위한 핸들러 */
+	@Autowired
+	private KanbanWebSocketHandler kanbanWebSocketHandler;
 
 	/**
 	 * 업무(Task) 정보 목록을 조회합니다. 프로젝트별 태스크 조회 시 Redis 캐싱을 적용하여 성능을 최적화합니다.
@@ -530,6 +535,31 @@ public class TaskController {
 
 		// 4. 기타 처리 및 저장
 		taskService.saveTask(updateVo);
+		
+		// 5. 🔄 WebSocket을 통한 실시간 업데이트 브로드캐스트
+		try {
+			String projectId = getProjectIdByBoardId(updateVo.getBoardId());
+			if (projectId != null) {
+				// 태스크 업데이트 메시지 브로드캐스트
+				java.util.Map<String, Object> broadcastMessage = new java.util.HashMap<>();
+				broadcastMessage.put("type", "TASK_UPDATED");
+				broadcastMessage.put("projectId", projectId);
+				broadcastMessage.put("taskId", updateVo.getTaskId());
+				broadcastMessage.put("boardId", updateVo.getBoardId());
+				broadcastMessage.put("taskTitle", updateVo.getTaskTitle());
+				broadcastMessage.put("priority", updateVo.getPriority());
+				broadcastMessage.put("startDate", updateVo.getStartDate());
+				broadcastMessage.put("endDate", updateVo.getEndDate());
+				broadcastMessage.put("tags", updateVo.getTags());
+				broadcastMessage.put("timestamp", System.currentTimeMillis());
+				
+				// 프로젝트의 모든 사용자에게 실시간 브로드캐스트
+				kanbanWebSocketHandler.broadcastToProject(projectId, broadcastMessage);
+				System.out.println("📡 태스크 업데이트 WebSocket 브로드캐스트 완료: " + updateVo.getTaskId());
+			}
+		} catch (Exception broadcastException) {
+			System.err.println("⚠️ WebSocket 브로드캐스트 실패 (기능은 정상 처리됨): " + broadcastException.getMessage());
+		}
 	}
 
 	private String uploadS3(MultipartFile file) throws IOException {
@@ -629,6 +659,26 @@ public class TaskController {
 
 		// Redis 캐시 무효화 - 프로젝트의 태스크 목록이 변경되었음
 		invalidateProjectCacheByBoardId(taskVo.getBoardId(), "태스크 삭제");
+		
+		// 🔄 WebSocket을 통한 실시간 삭제 브로드캐스트
+		try {
+			String projectId = getProjectIdByBoardId(taskVo.getBoardId());
+			if (projectId != null) {
+				// 태스크 삭제 메시지 브로드캐스트
+				java.util.Map<String, Object> broadcastMessage = new java.util.HashMap<>();
+				broadcastMessage.put("type", "TASK_DELETED");
+				broadcastMessage.put("projectId", projectId);
+				broadcastMessage.put("taskId", taskVo.getTaskId());
+				broadcastMessage.put("boardId", taskVo.getBoardId());
+				broadcastMessage.put("timestamp", System.currentTimeMillis());
+				
+				// 프로젝트의 모든 사용자에게 실시간 브로드캐스트
+				kanbanWebSocketHandler.broadcastToProject(projectId, broadcastMessage);
+				System.out.println("📡 태스크 삭제 WebSocket 브로드캐스트 완료: " + taskVo.getTaskId());
+			}
+		} catch (Exception broadcastException) {
+			System.err.println("⚠️ WebSocket 브로드캐스트 실패 (기능은 정상 처리됨): " + broadcastException.getMessage());
+		}
 	}
 
 	/**
@@ -675,6 +725,30 @@ public class TaskController {
 	}
 
  
+    /**
+     * boardId를 통해 projectId를 반환
+     */
+    private String getProjectIdByBoardId(String boardId) throws Exception {
+        if (boardId == null) {
+            return null;
+        }
+        
+        try {
+            BoardVo boardVo = new BoardVo();
+            boardVo.setBoardId(boardId);
+            BoardVo board = boardService.selectBoard(boardVo);
+            
+            if (board != null && board.getProjectId() != null) {
+                return board.getProjectId();
+            }
+        } catch (Exception e) {
+            System.err.println("❌ boardId로 projectId 조회 중 오류 발생: " + e.getMessage());
+            throw e;
+        }
+        
+        return null;
+    }
+
     /**
      * boardId를 통해 projectId를 찾아 Redis 캐시 무효화
      */

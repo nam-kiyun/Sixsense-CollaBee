@@ -455,6 +455,12 @@ scwin.handleWebSocketMessage = function (message) {
         case "CARD_LOCK":
             scwin.handleCardLockMessage(message);
             break;
+        case "TASK_UPDATED":
+            scwin.handleTaskUpdatedMessage(message);
+            break;
+        case "TASK_DELETED":
+            scwin.handleTaskDeletedMessage(message);
+            break;
         case "PONG":
             console.log("PONG 수신");
             break;
@@ -512,6 +518,256 @@ scwin.handleCardMovedMessage = function (message) {
 
     // 실제 카드 이동 처리
     scwin.updateCardPositionFromMessage(message);
+};
+
+/**
+ * 태스크 업데이트 메시지 처리 (다른 사용자의 실시간 태스크 수정 반영)
+ */
+scwin.handleTaskUpdatedMessage = function (message) {
+    console.log("=== 태스크 업데이트 메시지 수신 ===");
+    console.log("전체 메시지:", message);
+    
+    // 메시지 유효성 검증
+    if (!message.taskId || !message.projectId) {
+        console.error("❌ 잘못된 태스크 업데이트 메시지:", message);
+        return;
+    }
+    
+    // 현재 프로젝트가 아니면 무시
+    var currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
+    if (message.projectId !== currentProjectId) {
+        console.log("ℹ️ 다른 프로젝트의 태스크 업데이트이므로 무시합니다.");
+        return;
+    }
+    
+    console.log("������ 태스크 업데이트 처리 시작:", message.taskId);
+    
+    try {
+        // 1. 로컬 캐시 데이터 업데이트
+        scwin.updateLocalTaskCache(message);
+        
+        // 2. 칸반 보드의 해당 카드 업데이트
+        scwin.updateKanbanCardFromMessage(message);
+        
+        // 3. 열려있는 태스크 모달이 해당 태스크라면 새로고침 알림
+        scwin.checkAndNotifyOpenTaskModal(message);
+        
+        console.log("✅ 태스크 업데이트 반영 완료:", message.taskId);
+        
+    } catch (error) {
+        console.error("❌ 태스크 업데이트 처리 실패:", error);
+    }
+};
+
+/**
+ * 로컬 태스크 캐시 데이터 업데이트
+ */
+scwin.updateLocalTaskCache = function (message) {
+    if (scwin.allTasksData && scwin.allTasksData.length > 0) {
+        for (var i = 0; i < scwin.allTasksData.length; i++) {
+            var task = scwin.allTasksData[i];
+            if (task.taskId === message.taskId) {
+                // 업데이트된 속성들을 로컬 캐시에 반영
+                if (message.taskTitle !== undefined) task.taskTitle = message.taskTitle;
+                if (message.priority !== undefined) task.priority = message.priority;
+                if (message.startDate !== undefined) task.startDate = message.startDate;
+                if (message.endDate !== undefined) task.endDate = message.endDate;
+                if (message.tags !== undefined) task.tags = message.tags;
+                if (message.boardId !== undefined) task.boardId = message.boardId;
+                
+                console.log("������ 로컬 태스크 캐시 업데이트 완료:", task.taskId);
+                break;
+            }
+        }
+    }
+};
+
+/**
+ * 칸반 보드의 카드 업데이트
+ */
+scwin.updateKanbanCardFromMessage = function (message) {
+    try {
+        // 칸반 보드에서 해당 태스크 카드 찾기
+        var cardElement = document.querySelector('[data-task-id="' + message.taskId + '"]');
+        if (cardElement) {
+            // 카드 제목 업데이트
+            if (message.taskTitle !== undefined) {
+                var titleElement = cardElement.querySelector('.card-title');
+                if (titleElement) {
+                    titleElement.textContent = message.taskTitle;
+                }
+            }
+            
+            // 우선순위 배지 업데이트
+            if (message.priority !== undefined) {
+                var priorityElement = cardElement.querySelector('.priority-badge');
+                if (priorityElement) {
+                    priorityElement.className = 'priority-badge priority-' + (message.priority || 'none');
+                    priorityElement.textContent = message.priority || '';
+                }
+            }
+            
+            // 날짜 정보 업데이트
+            if (message.startDate !== undefined || message.endDate !== undefined) {
+                var dateElement = cardElement.querySelector('.task-dates');
+                if (dateElement && (message.startDate || message.endDate)) {
+                    var dateText = '';
+                    if (message.startDate && message.endDate) {
+                        dateText = message.startDate + ' ~ ' + message.endDate;
+                    } else if (message.startDate) {
+                        dateText = '시작: ' + message.startDate;
+                    } else if (message.endDate) {
+                        dateText = '마감: ' + message.endDate;
+                    }
+                    dateElement.textContent = dateText;
+                }
+            }
+            
+            // 카드에 업데이트 애니메이션 효과 추가
+            cardElement.style.boxShadow = '0 0 10px rgba(0, 123, 255, 0.5)';
+            setTimeout(function() {
+                cardElement.style.boxShadow = '';
+            }, 2000);
+            
+            console.log("������ 칸반 카드 UI 업데이트 완료:", message.taskId);
+        } else {
+            console.log("⚠️ 칸반 보드에서 해당 카드를 찾을 수 없음:", message.taskId);
+        }
+    } catch (error) {
+        console.error("❌ 칸반 카드 업데이트 실패:", error);
+    }
+};
+
+/**
+ * 열려있는 태스크 모달 확인 및 알림
+ */
+scwin.checkAndNotifyOpenTaskModal = function (message) {
+    try {
+        // 현재 열려있는 팝업이 해당 태스크의 모달인지 확인
+        var openPopups = $p.getPopupList();
+        for (var i = 0; i < openPopups.length; i++) {
+            var popup = openPopups[i];
+            if (popup.id === "exa_popup" && popup.dataObject && popup.dataObject.data) {
+                var popupTaskId = popup.dataObject.data.taskId;
+                if (popupTaskId === message.taskId) {
+                    // 같은 태스크 모달이 열려있으면 알림 표시
+                    console.log("������ 현재 편집 중인 태스크가 다른 사용자에 의해 수정되었습니다:", message.taskId);
+                    // TODO: 사용자에게 알림 표시 (예: 토스트 메시지)
+                    break;
+                }
+            }
+        }
+    } catch (error) {
+        console.error("❌ 태스크 모달 확인 실패:", error);
+    }
+};
+
+/**
+ * 태스크 삭제 메시지 처리 (다른 사용자의 실시간 태스크 삭제 반영)
+ */
+scwin.handleTaskDeletedMessage = function (message) {
+    console.log("=== 태스크 삭제 메시지 수신 ===");
+    console.log("전체 메시지:", message);
+    
+    // 메시지 유효성 검증
+    if (!message.taskId || !message.projectId) {
+        console.error("❌ 잘못된 태스크 삭제 메시지:", message);
+        return;
+    }
+    
+    // 현재 프로젝트가 아니면 무시
+    var currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
+    if (message.projectId !== currentProjectId) {
+        console.log("ℹ️ 다른 프로젝트의 태스크 삭제이므로 무시합니다.");
+        return;
+    }
+    
+    console.log("������️ 태스크 삭제 처리 시작:", message.taskId);
+    
+    try {
+        // 1. 로컬 캐시 데이터에서 제거
+        scwin.removeTaskFromLocalCache(message.taskId);
+        
+        // 2. 칸반 보드에서 해당 카드 제거
+        scwin.removeKanbanCardFromUI(message.taskId);
+        
+        // 3. 열려있는 태스크 모달이 해당 태스크라면 닫기
+        scwin.closeOpenTaskModalIfMatches(message.taskId);
+        
+        console.log("✅ 태스크 삭제 반영 완료:", message.taskId);
+        
+    } catch (error) {
+        console.error("❌ 태스크 삭제 처리 실패:", error);
+    }
+};
+
+/**
+ * 로컬 태스크 캐시에서 삭제된 태스크 제거
+ */
+scwin.removeTaskFromLocalCache = function (taskId) {
+    if (scwin.allTasksData && scwin.allTasksData.length > 0) {
+        for (var i = scwin.allTasksData.length - 1; i >= 0; i--) {
+            if (scwin.allTasksData[i].taskId === taskId) {
+                scwin.allTasksData.splice(i, 1);
+                console.log("������ 로컬 태스크 캐시에서 삭제 완료:", taskId);
+                break;
+            }
+        }
+    }
+};
+
+/**
+ * 칸반 보드에서 삭제된 카드 제거
+ */
+scwin.removeKanbanCardFromUI = function (taskId) {
+    try {
+        // 칸반 보드에서 해당 태스크 카드 찾기
+        var cardElement = document.querySelector('[data-task-id="' + taskId + '"]');
+        if (cardElement) {
+            // 삭제 애니메이션 효과
+            cardElement.style.transition = 'all 0.3s ease-out';
+            cardElement.style.transform = 'scale(0)';
+            cardElement.style.opacity = '0';
+            
+            // 애니메이션 완료 후 DOM에서 제거
+            setTimeout(function() {
+                if (cardElement.parentNode) {
+                    cardElement.parentNode.removeChild(cardElement);
+                }
+            }, 300);
+            
+            console.log("������ 칸반 카드 UI에서 삭제 완료:", taskId);
+        } else {
+            console.log("⚠️ 칸반 보드에서 해당 카드를 찾을 수 없음:", taskId);
+        }
+    } catch (error) {
+        console.error("❌ 칸반 카드 삭제 실패:", error);
+    }
+};
+
+/**
+ * 삭제된 태스크의 모달이 열려있으면 닫기
+ */
+scwin.closeOpenTaskModalIfMatches = function (taskId) {
+    try {
+        // 현재 열려있는 팝업 확인
+        var openPopups = $p.getPopupList();
+        for (var i = 0; i < openPopups.length; i++) {
+            var popup = openPopups[i];
+            if (popup.id === "exa_popup" && popup.dataObject && popup.dataObject.data) {
+                var popupTaskId = popup.dataObject.data.taskId;
+                if (popupTaskId === taskId) {
+                    // 삭제된 태스크의 모달이면 닫기
+                    console.log("������ 삭제된 태스크의 모달을 닫습니다:", taskId);
+                    $p.closePopup(popup.id);
+                    // TODO: 사용자에게 삭제 알림 표시
+                    break;
+                }
+            }
+        }
+    } catch (error) {
+        console.error("❌ 태스크 모달 닫기 실패:", error);
+    }
 };
 
 /**
@@ -4213,12 +4469,12 @@ scwin.requestCardLock = function (taskId) {
 };
 
 /**
- * 카드 락 해제
+ * 카드 락 해제 (편집용)
  */
 scwin.releaseCardLock = function (taskId, isAutoRelease) {
     var currentUserId = scwin.getCurrentUserId();
 
-    console.log("카드 락 해제:", taskId, isAutoRelease ? "(자동)" : "(수동)");
+    console.log("카드 편집 락 해제:", taskId, isAutoRelease ? "(자동)" : "(수동)");
 
     // 내가 락한 카드인지 확인
     if (!scwin.myLockedCards.has(taskId)) {
@@ -4235,6 +4491,85 @@ scwin.releaseCardLock = function (taskId, isAutoRelease) {
     // 락 시각적 표시 제거
     scwin.updateCardLockVisual(taskId, null);
 
+    return true;
+};
+
+/**
+ * ������ 카드 이동 락 요청 (신규)
+ */
+scwin.requestCardMoveLock = function (taskId) {
+    var currentUserId = scwin.getCurrentUserId();
+    var currentUserName = scwin.getCurrentUserName();
+
+    console.log("������ 카드 이동 락 요청:", taskId, "by", currentUserName);
+
+    // 이미 다른 사용자가 락을 보유하고 있는지 확인
+    if (scwin.lockedCards.has(taskId)) {
+        var lockInfo = scwin.lockedCards.get(taskId);
+        if (lockInfo.userId !== currentUserId) {
+            console.log("카드가 이미 락되어 있습니다:", lockInfo.userName, lockInfo.type);
+            return false;
+        }
+    }
+
+    // 이동 락 정보 설정
+    var moveLockInfo = {
+        userId: currentUserId,
+        userName: currentUserName,
+        timestamp: Date.now(),
+        type: "move"
+    };
+
+    scwin.lockedCards.set(taskId, moveLockInfo);
+    scwin.myLockedCards.add(taskId);
+
+    // WebSocket으로 이동 락 상태 전파
+    scwin.sendCardMoveLockMessage(taskId, "MOVE_LOCK");
+
+    // 자동 락 해제 타이머 설정 (이동은 짧게 10초)
+    setTimeout(function () {
+        scwin.releaseCardMoveLock(taskId, true);
+    }, 10000);
+
+    // 락된 카드에 시각적 표시 추가
+    scwin.updateCardMoveLockVisual(taskId, moveLockInfo);
+
+    console.log("✅ 카드 이동 락 획득 완료:", taskId);
+    return true;
+};
+
+/**
+ * ������ 카드 이동 락 해제 (신규)
+ */
+scwin.releaseCardMoveLock = function (taskId, isAutoRelease) {
+    var currentUserId = scwin.getCurrentUserId();
+
+    console.log("������ 카드 이동 락 해제:", taskId, isAutoRelease ? "(자동)" : "(수동)");
+
+    // 내가 락한 카드인지 확인
+    if (!scwin.myLockedCards.has(taskId)) {
+        console.log("⚠️ 해제할 이동 락이 없음:", taskId);
+        return false;
+    }
+
+    // 현재 락이 이동 락인지 확인
+    var currentLock = scwin.lockedCards.get(taskId);
+    if (!currentLock || currentLock.type !== "move" || currentLock.userId !== currentUserId) {
+        console.log("⚠️ 이동 락이 아니거나 소유자가 다름:", taskId);
+        return false;
+    }
+
+    // 락 정보 제거
+    scwin.lockedCards.delete(taskId);
+    scwin.myLockedCards.delete(taskId);
+
+    // WebSocket으로 이동 락 해제 상태 전파
+    scwin.sendCardMoveLockMessage(taskId, "MOVE_UNLOCK");
+
+    // 락 시각적 표시 제거
+    scwin.updateCardMoveLockVisual(taskId, null);
+
+    console.log("✅ 카드 이동 락 해제 완료:", taskId);
     return true;
 };
 
@@ -4272,7 +4607,26 @@ scwin.sendCardLockMessage = function (taskId, action) {
 };
 
 /**
- * 카드 락 시각적 표시 업데이트
+ * ������ 카드 이동 락 WebSocket 메시지 전송 (신규)
+ */
+scwin.sendCardMoveLockMessage = function (taskId, action) {
+    var currentUserId = scwin.getCurrentUserId();
+    var currentUserName = scwin.getCurrentUserName();
+
+    var message = {
+        type: "CARD_LOCK",
+        taskId: taskId,
+        userId: currentUserId,
+        message: action + "|" + currentUserName, // "MOVE_LOCK|사용자명" 또는 "MOVE_UNLOCK|사용자명"
+        timestamp: Date.now()
+    };
+
+    console.log("������ 카드 이동 락 메시지 전송:", message);
+    scwin.sendWebSocketMessage(message);
+};
+
+/**
+ * 카드 락 시각적 표시 업데이트 (편집용)
  */
 scwin.updateCardLockVisual = function (taskId, lockInfo) {
     try {
@@ -4283,20 +4637,55 @@ scwin.updateCardLockVisual = function (taskId, lockInfo) {
         }
 
         if (lockInfo) {
-            // 락 표시 추가 - 빨간 테두리와 툴팁만
+            // 편집 락 표시 추가 - 빨간 테두리와 툴팁
             cardElement.classList.add("card-locked");
             cardElement.title = lockInfo.userName + "님이 편집 중입니다";
             cardElement.setAttribute("data-locked-by", lockInfo.userName);
-
-            // 툴팁 또는 락 표시 아이콘 추가
         } else {
-            // 락 표시 제거
+            // 편집 락 표시 제거
             cardElement.classList.remove("card-locked");
             cardElement.removeAttribute("title");
             cardElement.removeAttribute("data-locked-by");
         }
     } catch (e) {
-        console.error("카드 락 시각적 표시 업데이트 오류:", e);
+        console.error("카드 편집 락 시각적 표시 업데이트 오류:", e);
+    }
+};
+
+/**
+ * 카드 이동 락 시각적 표시 업데이트 (이동용)
+ */
+scwin.updateCardMoveLockVisual = function (taskId, lockInfo) {
+    try {
+        var cardElement = document.querySelector('[data-task-id="' + taskId + '"]');
+        if (!cardElement) {
+            console.log("카드 요소를 찾을 수 없습니다:", taskId);
+            return;
+        }
+
+        if (lockInfo) {
+            // 이동 락 표시 추가 - 주황색 테두리와 툴팁
+            cardElement.classList.add("card-move-locked");
+            cardElement.title = lockInfo.userName + "님이 이동 중입니다";
+            cardElement.setAttribute("data-move-locked-by", lockInfo.userName);
+            
+            // 드래그 비활성화
+            cardElement.setAttribute("draggable", "false");
+            
+            console.log("������ 카드 이동 락 시각 표시 적용:", taskId, "by", lockInfo.userName);
+        } else {
+            // 이동 락 표시 제거
+            cardElement.classList.remove("card-move-locked");
+            cardElement.removeAttribute("title");
+            cardElement.removeAttribute("data-move-locked-by");
+            
+            // 드래그 다시 활성화
+            cardElement.setAttribute("draggable", "true");
+            
+            console.log("������ 카드 이동 락 시각 표시 제거:", taskId);
+        }
+    } catch (e) {
+        console.error("카드 이동 락 시각적 표시 업데이트 오류:", e);
     }
 };
 
@@ -4313,28 +4702,56 @@ scwin.handleCardLockMessage = function (message) {
         return;
     }
 
-    // message 필드에서 액션과 사용자명 파싱 ("LOCK|사용자명" 또는 "UNLOCK|사용자명")
+    // message 필드에서 액션과 사용자명 파싱 ("LOCK|사용자명", "UNLOCK|사용자명", "MOVE_LOCK|사용자명", "MOVE_UNLOCK|사용자명")
     var messageParts = message.message ? message.message.split("|") : [];
     var action = messageParts[0];
     var userName = messageParts[1] || message.userId;
 
     if (action === "LOCK") {
+        // 편집용 락킹 (기존 로직)
         var lockInfo = {
             userId: message.userId,
             userName: userName,
-            timestamp: message.timestamp
+            timestamp: message.timestamp,
+            type: "edit"
         };
 
         scwin.lockedCards.set(message.taskId, lockInfo);
         scwin.updateCardLockVisual(message.taskId, lockInfo);
 
-        console.log("카드가 락되었습니다:", message.taskId, "by", userName);
+        console.log("카드가 편집 락되었습니다:", message.taskId, "by", userName);
 
     } else if (action === "UNLOCK") {
+        // 편집용 언락 (기존 로직)
         scwin.lockedCards.delete(message.taskId);
         scwin.updateCardLockVisual(message.taskId, null);
 
-        console.log("카드 락이 해제되었습니다:", message.taskId);
+        console.log("카드 편집 락이 해제되었습니다:", message.taskId);
+        
+    } else if (action === "MOVE_LOCK") {
+        // ������ 이동용 락킹 (신규 로직)
+        var moveLockInfo = {
+            userId: message.userId,
+            userName: userName,
+            timestamp: message.timestamp,
+            type: "move"
+        };
+
+        scwin.lockedCards.set(message.taskId, moveLockInfo);
+        scwin.updateCardMoveLockVisual(message.taskId, moveLockInfo);
+
+        console.log("������ 카드가 이동 락되었습니다:", message.taskId, "by", userName);
+
+    } else if (action === "MOVE_UNLOCK") {
+        // ������ 이동용 언락 (신규 로직)
+        var currentLock = scwin.lockedCards.get(message.taskId);
+        
+        // 이동 락만 해제 (편집 락은 유지)
+        if (currentLock && currentLock.type === "move") {
+            scwin.lockedCards.delete(message.taskId);
+            scwin.updateCardMoveLockVisual(message.taskId, null);
+            console.log("������ 카드 이동 락이 해제되었습니다:", message.taskId);
+        }
     }
 };
 
@@ -4359,18 +4776,19 @@ scwin.handleDragStart = function (e) {
         return false;
     }
 
-    // 카드 락 확인 - 다른 사용자가 편집 중인지 체크
+    // 카드 락 확인 - 다른 사용자가 편집하거나 이동 중인지 체크
     if (scwin.isCardLocked(taskId)) {
         var lockInfo = scwin.lockedCards.get(taskId);
-        console.log("드래그 차단: 카드가 락되어 있습니다.", lockInfo.userName);
-        $c.win.alert(lockInfo.userName + "님이 현재 이 카드를 편집 중입니다. 잠시 후 다시 시도해주세요.");
+        var lockType = lockInfo.type === "move" ? "이동" : "편집";
+        console.log("드래그 차단: 카드가 " + lockType + " 락되어 있습니다.", lockInfo.userName);
+        $c.win.alert(lockInfo.userName + "님이 현재 이 카드를 " + lockType + " 중입니다. 잠시 후 다시 시도해주세요.");
         e.preventDefault();
         return false;
     }
 
-    // 카드 락 요청
-    if (!scwin.requestCardLock(taskId)) {
-        console.log("드래그 차단: 카드 락 획득 실패");
+    // ������ 카드 이동 락 요청 (편집 락 대신 이동 락 사용)
+    if (!scwin.requestCardMoveLock(taskId)) {
+        console.log("드래그 차단: 카드 이동 락 획득 실패");
         e.preventDefault();
         return false;
     }
@@ -4423,10 +4841,10 @@ scwin.handleDragEnd = function (e) {
         zone.classList.remove("drag-over");
     });
 
-    // 드래그가 끝났으므로 카드 락 해제
+    // ������ 드래그가 끝났으므로 카드 이동 락 해제
     if (scwin.draggedCard && scwin.draggedCard.taskId) {
-        scwin.releaseCardLock(scwin.draggedCard.taskId, false);
-        console.log("드래그 종료: 카드 락 해제:", scwin.draggedCard.taskId);
+        scwin.releaseCardMoveLock(scwin.draggedCard.taskId, false);
+        console.log("드래그 종료: 카드 이동 락 해제:", scwin.draggedCard.taskId);
     }
 };
 
@@ -6894,25 +7312,35 @@ scwin.load_Tasks_With_UserName_submitdone = function (e) {
     // 1. 응답에서 직접 태스크 목록 추출
     var responseData = e.responseJSON;
 
-    // 다중 보드 데이터 누적을 위해 기존 데이터에 추가
+    // 새로운 태스크만 처리 (누적하지 않음)
     var newTasks = responseData.elData.taskVoList || [];
-    if (!scwin.taskList) {
-        scwin.taskList = [];
-    }
-    scwin.taskList = scwin.taskList.concat(newTasks);
-    console.log("서버로부터 직접 받은 태스크 목록:", scwin.taskList);
+    console.log("서버로부터 받은 새 태스크 목록:", newTasks);
 
-    // 칸반 보드용 태스크 처리
-    if (scwin.taskList && scwin.taskList.length > 0) {
-        var boardId = scwin.taskList[0].boardId; // 첫 번째 태스크의 boardId를 사용
+    // 칸반 보드용 태스크 처리 (보드별로 분리 저장)
+    if (newTasks && newTasks.length > 0) {
+        // 보드별로 태스크 데이터 분리
+        var tasksByBoard = {};
+        for (var i = 0; i < newTasks.length; i++) {
+            var task = newTasks[i];
+            if (!tasksByBoard[task.boardId]) {
+                tasksByBoard[task.boardId] = [];
+            }
+            tasksByBoard[task.boardId].push(task);
+        }
 
-        // 전체 태스크 데이터를 로컬에 저장 (필터링용)
-        scwin.storeAllTasksData(boardId, scwin.taskList);
+        // 각 보드별로 데이터 저장 및 표시
+        for (var boardId in tasksByBoard) {
+            var boardTasks = tasksByBoard[boardId];
+            console.log(`보드 [${boardId}]에 태스크 ${boardTasks.length}개 저장`);
+            
+            // 전체 태스크 데이터를 로컬에 저장 (필터링용)
+            scwin.storeAllTasksData(boardId, boardTasks);
 
-        // 필터링과 정렬을 모두 적용하여 태스크 표시
-        scwin.sortAndFilterBoardTasks(boardId);
-
-        console.log(`보드 [${boardId}]의 태스크 로드 및 처리 완료: ${scwin.taskList.length}개`);
+            // 필터링과 정렬을 모두 적용하여 태스크 표시
+            scwin.sortAndFilterBoardTasks(boardId);
+        }
+        
+        console.log(`전체 태스크 로드 및 처리 완료: ${newTasks.length}개 (보드 수: ${Object.keys(tasksByBoard).length})`);
     } else {
         console.log("해당 보드에 대한 태스크가 없습니다.");
 
@@ -6924,6 +7352,7 @@ scwin.load_Tasks_With_UserName_submitdone = function (e) {
                 // 빈 데이터 저장 및 정렬/필터링 적용
                 scwin.storeAllTasksData(boardId, []);
                 scwin.sortAndFilterBoardTasks(boardId);
+                console.log(`빈 보드 [${boardId}] 처리 완료`);
             }
         }
     }
@@ -6986,6 +7415,33 @@ scwin.loadTasksWithUserNameAsync = function () {
             reject(error);
         }
     });
+};
+
+/**
+ * 특정 보드의 데이터를 새로고침 (taskModal 저장/삭제 후 호출)
+ */
+scwin.refreshBoardData = function (boardId) {
+  console.log("🔄 보드 데이터 새로고침 시작:", boardId);
+  
+  try {
+    // 1. 해당 보드의 로컬 캐시 데이터 초기화
+    if (scwin.allTasksData && scwin.allTasksData[boardId]) {
+      delete scwin.allTasksData[boardId];
+      console.log("로컬 캐시 데이터 삭제 완료:", boardId);
+    }
+    
+    // 2. 서버에서 최신 데이터 다시 로드
+    dm_search_task.set("boardId", boardId);
+    dm_search_task.set("sortField", scwin.currentSortField);
+    dm_search_task.set("sortOrder", scwin.currentSortOrder);
+    
+    // 3. 태스크 목록 다시 로드
+    $p.executeSubmission("load_Tasks_With_UserName");
+    
+    console.log("✅ 보드 데이터 새로고침 요청 완료:", boardId);
+  } catch (error) {
+    console.error("❌ 보드 데이터 새로고침 실패:", boardId, error);
+  }
 };
 
 ]]>
@@ -7506,7 +7962,7 @@ html, body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* 락된 카드 스타일 */
+/* 편집 락된 카드 스타일 (빨간 테두리) */
 .card-locked {
     background-color: #f8f9fa;
     border: 2px solid #dc3545;
@@ -7518,6 +7974,29 @@ html, body {
 .card-locked:hover {
     transform: none !important;
     box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2) !important;
+}
+
+/* 이동 락된 카드 스타일 (주황 테두리) */
+.card-move-locked {
+    background-color: #fff3cd;
+    border: 2px solid #fd7e14;
+    opacity: 0.8;
+    cursor: not-allowed;
+    position: relative;
+}
+
+.card-move-locked:hover {
+    transform: none !important;
+    box-shadow: 0 2px 4px rgba(253, 126, 20, 0.3) !important;
+}
+
+/* 이동 락된 카드는 드래그 불가 표시 */
+.card-move-locked[draggable="false"] {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
 }
 
 /* 드래그 중인 카드 스타일 */
