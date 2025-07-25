@@ -723,6 +723,48 @@ public class KanbanRedisService {
     }
     
     /**
+     * 태스크의 여러 속성을 캐시에서 직접 업데이트
+     * @param projectId 프로젝트 ID
+     * @param taskId 태스크 ID  
+     * @param properties 업데이트할 속성들 (key-value 형태)
+     */
+    public void updateTaskPropertiesInCache(String projectId, String taskId, java.util.Map<String, Object> properties) {
+        try {
+            String key = PROJECT_TASKS_CACHE_KEY + projectId;
+            String json = (String) kanbanRedisTemplate.opsForValue().get(key);
+            
+            if (json != null) {
+                java.util.List<java.util.Map<String, Object>> tasks = objectMapper.readValue(json, java.util.List.class);
+                
+                // 해당 태스크 찾아서 속성들 업데이트
+                for (java.util.Map<String, Object> task : tasks) {
+                    if (taskId.equals(task.get("taskId"))) {
+                        // 전달받은 속성들을 모두 업데이트
+                        for (java.util.Map.Entry<String, Object> entry : properties.entrySet()) {
+                            task.put(entry.getKey(), entry.getValue());
+                            System.out.println("🔄 Redis 캐시 태스크 속성 업데이트: " + taskId + " [" + entry.getKey() + "] → " + entry.getValue());
+                        }
+                        break;
+                    }
+                }
+                
+                // 업데이트된 데이터를 다시 캐싱
+                String updatedJson = objectMapper.writeValueAsString(tasks);
+                kanbanRedisTemplate.opsForValue().set(key, updatedJson, PROJECT_DATA_CACHE_TTL, TimeUnit.SECONDS);
+                
+                System.out.println("✅ Redis 캐시 태스크 속성 업데이트 완료: " + taskId + " (" + properties.size() + "개 속성)");
+            } else {
+                System.out.println("⚠️ Redis에 프로젝트 태스크 캐시가 없어 업데이트 불가: " + projectId);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Redis 캐시 태스크 속성 업데이트 실패: " + e.getMessage());
+            // 캐시 업데이트 실패 시 해당 프로젝트 캐시 무효화로 대체
+            System.out.println("🗑️ 캐시 업데이트 실패로 인한 프로젝트 캐시 무효화: " + projectId);
+            invalidateProjectCache(projectId);
+        }
+    }
+    
+    /**
      * 프로젝트 관련 캐시 무효화 (보드 및 태스크)
      */
     public void invalidateProjectCache(String projectId) {
