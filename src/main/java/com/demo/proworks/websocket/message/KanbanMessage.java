@@ -13,6 +13,7 @@ public class KanbanMessage {
     private String taskId;         // 태스크 ID
     private String fromBoardId;    // 출발 보드 ID
     private String toBoardId;      // 도착 보드 ID
+    private String boardId;        // 보드 ID (일반적인 보드 참조용)
     private String projectId;      // 프로젝트 ID
     private String userId;         // 사용자 ID
     private String message;        // 메시지 내용
@@ -61,6 +62,14 @@ public class KanbanMessage {
         this.toBoardId = toBoardId;
     }
 
+    public String getBoardId() {
+        return boardId;
+    }
+
+    public void setBoardId(String boardId) {
+        this.boardId = boardId;
+    }
+
     public String getUserId() {
         return userId;
     }
@@ -100,6 +109,7 @@ public class KanbanMessage {
                 ", taskId='" + taskId + '\'' +
                 ", fromBoardId='" + fromBoardId + '\'' +
                 ", toBoardId='" + toBoardId + '\'' +
+                ", boardId='" + boardId + '\'' +
                 ", projectId='" + projectId + '\'' +
                 ", userId='" + userId + '\'' +
                 ", message='" + message + '\'' +
