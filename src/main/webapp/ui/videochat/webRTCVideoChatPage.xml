@@ -2998,13 +2998,8 @@ scwin.leaveCall = function() {
             }
         }
         
-        // 다른 팝업들의 헤더 복원
-        scwin.restoreOtherPopupHeaders();
-        
     } catch (error) {
         //console.error("❌ 화상통화 나가기 실패:", error);
-        // 오류가 발생해도 헤더는 복원
-        scwin.restoreOtherPopupHeaders();
     }
 };
 
@@ -4245,9 +4240,6 @@ scwin.leaveCall = function() {
             }
         }
         
-        // 다른 팝업들의 헤더 복원 (정상 경로)
-        scwin.restoreOtherPopupHeaders();
-        
     } catch (error) {
         //console.error("❌ 화상통화 종료 실패:", error);
         // 오류 발생 시 모달 닫기 시도
@@ -4260,9 +4252,6 @@ scwin.leaveCall = function() {
         } catch (backError) {
             window.location.href = '/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/mainPage.xml';
         }
-        
-        // 다른 팝업들의 헤더 복원
-        scwin.restoreOtherPopupHeaders();
     }
 };
 
