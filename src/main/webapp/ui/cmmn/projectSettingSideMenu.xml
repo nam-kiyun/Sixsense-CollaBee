@@ -72,13 +72,7 @@ scwin.menu_access_onclick = function(e) {
     scwin.callParentMenuChange("projectSettingAccess");
 };
 
-// GitHub 연동 메뉴 클릭 이벤트
-scwin.menu_github_onclick = function(e) {
-    console.log("=== GitHub 연동 메뉴 클릭 ===");
-    scwin.changeSelectedMenu("github");
-    // 부모 창의 메뉴 변경 함수 호출
-    scwin.callParentMenuChange("projectSettingGithub");
-};
+
 
 // 부모 창의 메뉴 변경 함수 호출
 scwin.callParentMenuChange = function(menuType) {
@@ -111,17 +105,15 @@ scwin.changeSelectedMenu = function(selectedMenu) {
         // 모든 메뉴에서 selected-setting-menu 클래스 제거
         grp_detail.removeClass("selected-setting-menu");
         grp_access.removeClass("selected-setting-menu");
-        grp_github.removeClass("selected-setting-menu");
         
         // 모든 선택 표시 바 숨기기
         grp_activeBar_detail.hide();
         grp_activeBar_access.hide();
-        grp_activeBar_github.hide();
+        
         
         // 모든 메뉴의 배경색을 투명하게 강제 설정
         grp_detail.setStyle("background-color", "transparent");
         grp_access.setStyle("background-color", "transparent");
-        grp_github.setStyle("background-color", "transparent");
         
         // 선택된 메뉴에만 스타일 적용
         switch(selectedMenu) {
@@ -134,11 +126,6 @@ scwin.changeSelectedMenu = function(selectedMenu) {
                 grp_access.addClass("selected-setting-menu");
                 grp_access.setStyle("background-color", "rgba(255,184,35,0.2)");
                 grp_activeBar_access.show();
-                break;
-            case "github":
-                grp_github.addClass("selected-setting-menu");
-                grp_github.setStyle("background-color", "rgba(255,184,35,0.2)");
-                grp_activeBar_github.show();
                 break;
         }
         
@@ -271,18 +258,7 @@ scwin.btn_back_onclick = function(e) {
                     </xf:output>
                 </xf:group>
                 
-                <!-- GitHub 연동 메뉴 -->
-                <xf:group 
-                    style="padding:16px 24px;margin-bottom:8px;cursor:pointer;background-color:transparent;border-radius:10px;margin:0 16px 8px 16px;position:relative;"
-                    id="grp_github"
-                    class="setting-menu-item"
-                    ev:onclick="scwin.menu_github_onclick">
-                    
-                    <!-- 선택 표시 바 -->
-                    <xf:group 
-                        style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:24px;background-color:#ffb823;display:none;"
-                        id="grp_activeBar_github"/>
-                </xf:group>
+                
                 
             </xf:group>
             
