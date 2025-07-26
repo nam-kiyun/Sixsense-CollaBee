@@ -52,6 +52,9 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
     @ElDtoField(logicalName = "project_id", physicalName = "projectId", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "", attr = "")
     private String projectId;
 
+    @ElDtoField(logicalName = "board_ids", physicalName = "boardIds", type = "String", typeKind = "", fldYn = "", delimeterYn = "", cryptoGbn = "", cryptoKind = "", length = 0, dotLen = 0, baseValue = "", desc = "배치 로드용 보드 ID 목록 (콤마 구분)", attr = "")
+    private String boardIds;
+
     @ElVoField(physicalName = "taskId")
     public String getTaskId(){
         String ret = this.taskId;
@@ -195,6 +198,17 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
         this.projectId = projectId;
     }
 
+    @ElVoField(physicalName = "boardIds")
+    public String getBoardIds(){
+        String ret = this.boardIds;
+        return ret;
+    }
+
+    @ElVoField(physicalName = "boardIds")
+    public void setBoardIds(String boardIds){
+        this.boardIds = boardIds;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -209,7 +223,8 @@ public class TaskVo extends com.demo.proworks.cmmn.ProworksCommVO {
         sb.append("endDate").append("=").append(endDate).append(",");
         sb.append("tags").append("=").append(tags).append(",");
         sb.append("userName").append("=").append(userName).append(",");
-        sb.append("projectId").append("=").append(projectId);
+        sb.append("projectId").append("=").append(projectId).append(",");
+        sb.append("boardIds").append("=").append(boardIds);
         sb.append("]");
         return sb.toString();
 

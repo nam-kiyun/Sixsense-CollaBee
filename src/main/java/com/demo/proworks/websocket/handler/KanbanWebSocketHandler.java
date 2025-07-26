@@ -106,6 +106,21 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 		case "CARD_LOCK":
 			handleCardLock(session, message);
 			break;
+		case "TASK_UPDATED":
+			handleTaskUpdated(session, message);
+			break;
+		case "TASK_DELETED":
+			handleTaskDeleted(session, message);
+			break;
+		case "BOARD_CREATED":
+			handleBoardCreated(session, message);
+			break;
+		case "BOARD_DELETED":
+			handleBoardDeleted(session, message);
+			break;
+		case "TASK_CREATED":
+			handleTaskCreated(session, message);
+			break;
 		case "PING":
 			handlePing(session, message);
 			break;
@@ -247,6 +262,216 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 			// 전체 브로드캐스트 (fallback)
 			broadcastToAll(broadcastMessage);
 			System.out.println("📡 전체 락 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
+		}
+	}
+
+	/**
+	 * 태스크 업데이트 처리 (태스크 정보 변경 시 실시간 동기화)
+	 */
+	private void handleTaskUpdated(WebSocketSession session, KanbanMessage message) {
+		System.out.println("=== 태스크 업데이트 처리 시작 ===");
+		System.out.println("📦 받은 메시지: " + message.getTaskId() + " (보드: " + message.getBoardId() + ")");
+		System.out.println("👤 사용자: " + message.getUserId());
+		System.out.println("🏷️ 프로젝트: " + message.getProjectId());
+
+		// 메시지 유효성 검증
+		if (message.getTaskId() == null || message.getBoardId() == null) {
+			System.err.println("❌ 잘못된 태스크 업데이트 메시지: " + message);
+			return;
+		}
+
+		// 브로드캐스트용 메시지 생성
+		KanbanMessage broadcastMessage = new KanbanMessage();
+		broadcastMessage.setType("TASK_UPDATED");
+		broadcastMessage.setTaskId(message.getTaskId());
+		broadcastMessage.setBoardId(message.getBoardId());
+		broadcastMessage.setUserId(message.getUserId());
+		broadcastMessage.setProjectId(message.getProjectId());
+		broadcastMessage.setMessage("태스크가 업데이트되었습니다.");
+		broadcastMessage.setTimestamp(System.currentTimeMillis());
+
+		// 전체 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
+		broadcastToAll(broadcastMessage);
+		System.out.println("📡 태스크 업데이트 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
+	}
+
+	/**
+	 * 태스크 삭제 처리 (태스크 삭제 시 실시간 동기화)
+	 */
+	private void handleTaskDeleted(WebSocketSession session, KanbanMessage message) {
+		System.out.println("=== 태스크 삭제 처리 시작 ===");
+		System.out.println("📦 받은 메시지: " + message.getTaskId() + " (보드: " + message.getBoardId() + ")");
+		System.out.println("👤 사용자: " + message.getUserId());
+		System.out.println("🏷️ 프로젝트: " + message.getProjectId());
+
+		// 메시지 유효성 검증
+		if (message.getTaskId() == null || message.getBoardId() == null) {
+			System.err.println("❌ 잘못된 태스크 삭제 메시지: " + message);
+			return;
+		}
+
+		// 브로드캐스트용 메시지 생성
+		KanbanMessage broadcastMessage = new KanbanMessage();
+		broadcastMessage.setType("TASK_DELETED");
+		broadcastMessage.setTaskId(message.getTaskId());
+		broadcastMessage.setBoardId(message.getBoardId());
+		broadcastMessage.setUserId(message.getUserId());
+		broadcastMessage.setProjectId(message.getProjectId());
+		broadcastMessage.setMessage("태스크가 삭제되었습니다.");
+		broadcastMessage.setTimestamp(System.currentTimeMillis());
+
+		// 전체 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
+		broadcastToAll(broadcastMessage);
+		System.out.println("📡 태스크 삭제 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
+	}
+
+	/**
+	 * 보드 생성 처리 (보드 생성 시 실시간 동기화)
+	 */
+	private void handleBoardCreated(WebSocketSession session, KanbanMessage message) {
+		System.out.println("=== 보드 생성 처리 시작 ===");
+		System.out.println("📦 받은 메시지: " + message.getBoardId() + " (제목: " + message.getMessage() + ")");
+		System.out.println("👤 사용자: " + message.getUserId());
+		System.out.println("🏷️ 프로젝트: " + message.getProjectId());
+
+		// 메시지 유효성 검증
+		if (message.getBoardId() == null || message.getProjectId() == null) {
+			System.err.println("❌ 잘못된 보드 생성 메시지: " + message);
+			return;
+		}
+
+		// 브로드캐스트용 메시지 생성
+		KanbanMessage broadcastMessage = new KanbanMessage();
+		broadcastMessage.setType("BOARD_CREATED");
+		broadcastMessage.setBoardId(message.getBoardId());
+		broadcastMessage.setUserId(message.getUserId());
+		broadcastMessage.setProjectId(message.getProjectId());
+		broadcastMessage.setMessage(message.getMessage()); // 보드 제목 등 추가 정보
+		broadcastMessage.setTimestamp(System.currentTimeMillis());
+
+		// 전체 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
+		broadcastToAll(broadcastMessage);
+		System.out.println("📡 보드 생성 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
+	}
+
+	/**
+	 * 외부에서 보드 생성 메시지를 처리할 수 있는 public 메서드
+	 */
+	public void handleBoardCreatedMessage(java.util.Map<String, Object> messageData) {
+		try {
+			// Map을 KanbanMessage 객체로 변환
+			KanbanMessage message = new KanbanMessage();
+			message.setType((String) messageData.get("type"));
+			message.setBoardId((String) messageData.get("boardId"));
+			message.setProjectId((String) messageData.get("projectId"));
+			message.setMessage((String) messageData.get("boardTitle")); // 보드 제목을 message 필드에 저장
+			message.setTimestamp((Long) messageData.getOrDefault("timestamp", System.currentTimeMillis()));
+			
+			// 내부 핸들러 호출
+			handleBoardCreated(null, message);
+		} catch (Exception e) {
+			System.err.println("❌ 보드 생성 메시지 처리 실패: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * 보드 삭제 처리 (보드 삭제 시 실시간 동기화)
+	 */
+	private void handleBoardDeleted(WebSocketSession session, KanbanMessage message) {
+		System.out.println("=== 보드 삭제 처리 시작 ===");
+		System.out.println("📦 받은 메시지: " + message.getBoardId() + " (제목: " + message.getMessage() + ")");
+		System.out.println("👤 사용자: " + message.getUserId());
+		System.out.println("🏷️ 프로젝트: " + message.getProjectId());
+
+		// 메시지 유효성 검증
+		if (message.getBoardId() == null || message.getProjectId() == null) {
+			System.err.println("❌ 잘못된 보드 삭제 메시지: " + message);
+			return;
+		}
+
+		// 브로드캐스트용 메시지 생성
+		KanbanMessage broadcastMessage = new KanbanMessage();
+		broadcastMessage.setType("BOARD_DELETED");
+		broadcastMessage.setBoardId(message.getBoardId());
+		broadcastMessage.setUserId(message.getUserId());
+		broadcastMessage.setProjectId(message.getProjectId());
+		broadcastMessage.setMessage(message.getMessage()); // 보드 제목 등 추가 정보
+		broadcastMessage.setTimestamp(System.currentTimeMillis());
+
+		// 전체 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
+		broadcastToAll(broadcastMessage);
+		System.out.println("📡 보드 삭제 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
+	}
+
+	/**
+	 * 외부에서 보드 삭제 메시지를 처리할 수 있는 public 메서드
+	 */
+	public void handleBoardDeletedMessage(java.util.Map<String, Object> messageData) {
+		try {
+			// Map을 KanbanMessage 객체로 변환
+			KanbanMessage message = new KanbanMessage();
+			message.setType((String) messageData.get("type"));
+			message.setBoardId((String) messageData.get("boardId"));
+			message.setProjectId((String) messageData.get("projectId"));
+			message.setMessage((String) messageData.get("boardTitle")); // 보드 제목을 message 필드에 저장
+			message.setTimestamp((Long) messageData.getOrDefault("timestamp", System.currentTimeMillis()));
+			
+			// 내부 핸들러 호출
+			handleBoardDeleted(null, message);
+		} catch (Exception e) {
+			System.err.println("❌ 보드 삭제 메시지 처리 실패: " + e.getMessage());
+		}
+	}
+
+	/**
+	 * 태스크 생성 처리 (태스크 생성 시 실시간 동기화)
+	 */
+	private void handleTaskCreated(WebSocketSession session, KanbanMessage message) {
+		System.out.println("=== 태스크 생성 처리 시작 ===");
+		System.out.println("📦 받은 메시지: " + message.getTaskId() + " (보드: " + message.getBoardId() + ")");
+		System.out.println("👤 사용자: " + message.getUserId());
+		System.out.println("🏷️ 프로젝트: " + message.getProjectId());
+
+		// 메시지 유효성 검증
+		if (message.getTaskId() == null || message.getBoardId() == null) {
+			System.err.println("❌ 잘못된 태스크 생성 메시지: " + message);
+			return;
+		}
+
+		// 브로드캐스트용 메시지 생성
+		KanbanMessage broadcastMessage = new KanbanMessage();
+		broadcastMessage.setType("TASK_CREATED");
+		broadcastMessage.setTaskId(message.getTaskId());
+		broadcastMessage.setBoardId(message.getBoardId());
+		broadcastMessage.setUserId(message.getUserId());
+		broadcastMessage.setProjectId(message.getProjectId());
+		broadcastMessage.setMessage("새 태스크가 생성되었습니다.");
+		broadcastMessage.setTimestamp(System.currentTimeMillis());
+
+		// 전체 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
+		broadcastToAll(broadcastMessage);
+		System.out.println("📡 태스크 생성 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
+	}
+
+	/**
+	 * 외부에서 태스크 생성 메시지를 처리할 수 있는 public 메서드
+	 */
+	public void handleTaskCreatedMessage(java.util.Map<String, Object> messageData) {
+		try {
+			// Map을 KanbanMessage 객체로 변환
+			KanbanMessage message = new KanbanMessage();
+			message.setType((String) messageData.get("type"));
+			message.setTaskId((String) messageData.get("taskId"));
+			message.setBoardId((String) messageData.get("boardId"));
+			message.setProjectId((String) messageData.get("projectId"));
+			message.setUserId((String) messageData.get("userId"));
+			message.setMessage((String) messageData.get("taskTitle")); // 태스크 제목을 message 필드에 저장
+			message.setTimestamp((Long) messageData.getOrDefault("timestamp", System.currentTimeMillis()));
+			
+			// 내부 핸들러 호출
+			handleTaskCreated(null, message);
+		} catch (Exception e) {
+			System.err.println("❌ 태스크 생성 메시지 처리 실패: " + e.getMessage());
 		}
 	}
 

@@ -35,7 +35,7 @@ public class RedisConfig {
         
         JedisConnectionFactory factory = new JedisConnectionFactory();
         factory.setHostName("localhost");  // Redis 서버 호스트
-        factory.setPort(6379);             // Redis 서버 포트
+        factory.setPort(6379);             // Redis 서버 포트	
         factory.setDatabase(0);            // 기본 데이터베이스
         factory.setTimeout(10000);         // 10초 타임아웃
         factory.setUsePool(true);

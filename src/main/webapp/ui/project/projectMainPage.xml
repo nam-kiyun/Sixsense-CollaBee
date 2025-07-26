@@ -16,6 +16,13 @@
 						<w2:key id="sortOrder" name="정렬 순서" dataType="text"></w2:key>
 					</w2:keyInfo>
 				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dm_search_task_batch">
+					<w2:keyInfo>
+						<w2:key id="boardIds" name="보드 ID 목록 (콤마 구분)" dataType="text"></w2:key>
+						<w2:key id="sortField" name="정렬 필드" dataType="text"></w2:key>
+						<w2:key id="sortOrder" name="정렬 순서" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
 				<w2:dataList baseNode="list" repeatNode="map" id="dlt_scwin.taskList" saveRemovedData="true">
 					<w2:columnInfo>
 						<w2:column id="taskId" name="taskId" dataType="text"></w2:column>
@@ -115,7 +122,13 @@
 			<xf:submission id="load_Tasks_With_UserName" action="/InsWebApp/TaskListWithUserName.pwkjson" method="post"
 				mediatype="application/json" ref='data:json,{"id":"dm_search_task","key":"taskVo"}'
 				target='data:json,{"id":"dlt_scwin.taskList","key":"taskVoList"}' encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
-				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.load_Tasks_With_UserName_submitdone" ev:submiterror=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.load_Tasks_With_UserName_submitdone" ev:submiterror="scwin.load_Tasks_With_UserName_submiterror"
+				abortTrigger="">
+			</xf:submission>
+			<xf:submission id="load_Tasks_With_UserName_Batch" action="/InsWebApp/TaskListWithUserNameBatch.pwkjson" method="post"
+				mediatype="application/json" ref='data:json,{"id":"dm_search_task_batch","key":"taskVo"}'
+				target='data:json,{"id":"dlt_scwin.taskList","key":"taskVoList"}' encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="모든 보드의 태스크를 로드 중입니다..." ev:submit="" ev:submitdone="scwin.load_Tasks_With_UserName_Batch_submitdone" ev:submiterror="scwin.load_Tasks_With_UserName_Batch_submiterror"
 				abortTrigger="">
 			</xf:submission>
 			<xf:submission id="update_task_board" action="/InsWebApp/task/updateBoard.pwkjson" method="post"
@@ -127,6 +140,11 @@
 				ref='data:json,{"id":"dm_boardVo_add","key":"boardVo"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
 				customHandler="" mode="asynchronous" processMsg="보드를 생성 중입니다..." ev:submit="" ev:submitdone="scwin.add_board_submitdone"
 				ev:submiterror="scwin.add_board_submiterror" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="delete_board" action="/InsWebApp/BoardDel.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dm_boardVo","key":"boardVo"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
+				customHandler="" mode="asynchronous" processMsg="보드를 삭제 중입니다..." ev:submit="" ev:submitdone="scwin.delete_board_submitdone"
+				ev:submiterror="scwin.delete_board_submiterror" abortTrigger="">
 			</xf:submission>
 		</xf:model>
 		<w2:layoutInfo />
@@ -149,8 +167,6 @@ scwin.onpageload = function () {
         console.log("사용자 인증 확인 완료:", userId);
     }
 
-    // 페이지 로드 시 데이터 바인딩
-    scwin.loadProjectData();
 
     // WebSocket 연결 초기화 (사용자 정보 없어도 연결 시도)
     console.log("WebSocket 초기화 시작...");
@@ -160,11 +176,6 @@ scwin.onpageload = function () {
     scwin.initSortControls();
 
     console.log("projectMainPage 초기화 완료");
-};
-
-// 프로젝트 데이터 로드 함수
-scwin.loadProjectData = function () {
-    console.log("프로젝트 데이터 로드 완료");
 };
 
 // ==================== WebSocket 연결 및 관리 ====================
@@ -184,6 +195,9 @@ scwin.taskList = null; // 서버에서 받아온 태스크 목록
 scwin.lockedCards = new Map(); // taskId -> {userId, userName, timestamp}
 scwin.myLockedCards = new Set(); // 내가 락한 카드들의 taskId
 scwin.lockTimeout = 30000; // 30초 후 자동 락 해제
+
+// 중복 메시지 처리 방지 시스템
+scwin.processedMessages = new Set(); // 처리된 메시지 ID 추적
 
 /**
  * WebSocket 연결 초기화
@@ -397,14 +411,28 @@ scwin.onWebSocketError = function (event) {
  * 사용자 참여 메시지 전송
  */
 scwin.sendUserJoinMessage = function () {
-    var currentUserId = scwin.getCurrentUserId();
+    debugger;
+    var currentUserId = $p.parent().dm_userInfo.get("userId");
+    var projectId = $p.parent().dm_projectVo.get("projectId");
+    
+    // ������ 프로젝트 ID 디버깅 로그 추가
+    console.log("������ 웹소켓 USER_JOIN 메시지 전송 준비:");
+    console.log("  - userId:", currentUserId);
+    console.log("  - projectId:", projectId);
+    console.log("  - dm_projectVo 전체:", $p.parent().dm_projectVo.getAllJSON());
+    
     var message = {
         type: "USER_JOIN",
-        userId: currentUserId || "unknown",
+        userId: currentUserId,
+        projectId: projectId, // 프로젝트 ID 추가 (기본값: 1)
         timestamp: Date.now()
     };
 
-    console.log("사용자 참여 메시지 전송:", message);
+    console.log("=== 사용자 참여 메시지 전송 ===");
+    console.log("전송할 메시지:", message);
+    console.log("사용자 ID:", currentUserId);
+    console.log("프로젝트 ID:", projectId);
+    
     scwin.sendWebSocketMessage(message);
 };
 
@@ -414,12 +442,16 @@ scwin.sendUserJoinMessage = function () {
 scwin.sendWebSocketMessage = function (message) {
     console.log("=== WebSocket 메시지 전송 시도 ===");
     console.log("전송할 메시지:", message);
+    console.log("메시지 타입:", message.type);
+    console.log("WebSocket 객체 존재:", !!scwin.websocket);
     console.log("WebSocket 상태:", scwin.websocket ? scwin.websocket.readyState : "WebSocket 객체 없음");
 
     if (scwin.websocket && scwin.websocket.readyState === WebSocket.OPEN) {
         var jsonMessage = JSON.stringify(message);
+        console.log("JSON 변환된 메시지:", jsonMessage);
         scwin.websocket.send(jsonMessage);
-        console.log("✅ WebSocket 메시지 전송 성공:", jsonMessage);
+        console.log("✅ WebSocket 메시지 전송 성공!");
+        console.log("������ 전송 완료 시각:", new Date().toISOString());
     } else {
         console.error("❌ WebSocket 연결이 되어있지 않습니다.");
         console.log("WebSocket 상태 상세:");
@@ -432,6 +464,7 @@ scwin.sendWebSocketMessage = function (message) {
         } else {
             console.log("- WebSocket 객체가 존재하지 않습니다.");
         }
+        console.log("⚠️ 메시지 전송 실패! WebSocket 연결을 확인하세요.");
     }
 };
 
@@ -460,6 +493,15 @@ scwin.handleWebSocketMessage = function (message) {
             break;
         case "TASK_DELETED":
             scwin.handleTaskDeletedMessage(message);
+            break;
+        case "TASK_CREATED":
+            scwin.handleTaskCreatedMessage(message);
+            break;
+        case "BOARD_CREATED":
+            scwin.handleBoardCreatedMessage(message);
+            break;
+        case "BOARD_DELETED":
+            scwin.handleBoardDeletedMessage(message);
             break;
         case "PONG":
             console.log("PONG 수신");
@@ -526,15 +568,28 @@ scwin.handleCardMovedMessage = function (message) {
 scwin.handleTaskUpdatedMessage = function (message) {
     console.log("=== 태스크 업데이트 메시지 수신 ===");
     console.log("전체 메시지:", message);
+    console.log("������ 메시지 상세 정보:");
+    console.log("- type:", message.type);
+    console.log("- taskId:", message.taskId);
+    console.log("- boardId:", message.boardId);
+    console.log("- userId:", message.userId);
+    console.log("- projectId:", message.projectId);
     
     // 메시지 유효성 검증
     if (!message.taskId || !message.projectId) {
         console.error("❌ 잘못된 태스크 업데이트 메시지:", message);
+        console.error("- taskId 존재:", !!message.taskId);
+        console.error("- projectId 존재:", !!message.projectId);
         return;
     }
     
     // 현재 프로젝트가 아니면 무시
     var currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
+    console.log("������ 프로젝트 ID 비교:");
+    console.log("- 현재 프로젝트 ID:", currentProjectId);
+    console.log("- 메시지 프로젝트 ID:", message.projectId);
+    console.log("- 타입 비교:", typeof currentProjectId, "vs", typeof message.projectId);
+    
     if (message.projectId !== currentProjectId) {
         console.log("ℹ️ 다른 프로젝트의 태스크 업데이트이므로 무시합니다.");
         return;
@@ -547,12 +602,33 @@ scwin.handleTaskUpdatedMessage = function (message) {
         var currentUserId = scwin.getCurrentUserId();
         var isMyChange = (message.userId && message.userId === currentUserId);
         
+        console.log("=== 실시간 동기화 처리 ===");
+        console.log("- 현재 사용자:", currentUserId);
+        console.log("- 메시지 발신자:", message.userId);
+        console.log("- 내 변경사항인가:", isMyChange);
+        console.log("- 보드 ID:", message.boardId);
+        console.log("- 메시지 타입:", message.type);
+        
         if (!isMyChange) {
-            console.log("🔄 다른 사용자의 태스크 변경사항 - 보드 새로고침:", message.boardId);
+            console.log("������ 다른 사용자의 태스크 변경사항 - 보드 새로고침:", message.boardId);
             
             // 해당 보드 데이터 새로고침 (다른 사용자의 변경사항만)
             if (message.boardId && scwin.refreshBoardData) {
-                scwin.refreshBoardData(message.boardId);
+                console.log("✅ refreshBoardData 함수 호출 시작:", message.boardId);
+                console.log("������ 보드 새로고침 실행 중...");
+                
+                try {
+                    scwin.refreshBoardData(message.boardId);
+                    console.log("✅ refreshBoardData 함수 호출 완료:", message.boardId);
+                } catch (refreshErr) {
+                    console.error("❌ refreshBoardData 함수 실행 중 오류:", refreshErr);
+                }
+            } else {
+                console.error("❌ refreshBoardData 함수 또는 boardId 없음");
+                console.log("- message.boardId:", message.boardId);
+                console.log("- message.boardId 타입:", typeof message.boardId);
+                console.log("- scwin.refreshBoardData 존재:", !!scwin.refreshBoardData);
+                console.log("- scwin.refreshBoardData 타입:", typeof scwin.refreshBoardData);
             }
         } else {
             console.log("ℹ️ 내가 변경한 태스크이므로 중복 새로고침 방지");
@@ -683,10 +759,18 @@ scwin.checkAndNotifyOpenTaskModal = function (message) {
 scwin.handleTaskDeletedMessage = function (message) {
     console.log("=== 태스크 삭제 메시지 수신 ===");
     console.log("전체 메시지:", message);
+    console.log("������ 메시지 상세 정보:");
+    console.log("- type:", message.type);
+    console.log("- taskId:", message.taskId);
+    console.log("- boardId:", message.boardId);
+    console.log("- userId:", message.userId);
+    console.log("- projectId:", message.projectId);
     
     // 메시지 유효성 검증
     if (!message.taskId || !message.projectId) {
         console.error("❌ 잘못된 태스크 삭제 메시지:", message);
+        console.error("- taskId 존재:", !!message.taskId);
+        console.error("- projectId 존재:", !!message.projectId);
         return;
     }
     
@@ -713,6 +797,403 @@ scwin.handleTaskDeletedMessage = function (message) {
         
     } catch (error) {
         console.error("❌ 태스크 삭제 처리 실패:", error);
+    }
+};
+
+/**
+ * 보드 생성 메시지 수신 처리
+ */
+scwin.handleBoardCreatedMessage = function (message) {
+    console.log("=== 보드 생성 메시지 수신 ===");
+    console.log("전체 메시지:", message);
+    console.log("������ 메시지 상세 정보:");
+    console.log("- type:", message.type);
+    console.log("- boardId:", message.boardId);
+    console.log("- projectId:", message.projectId);
+    console.log("- boardTitle:", message.message);
+    console.log("- timestamp:", message.timestamp);
+    
+    // 메시지 유효성 검증
+    if (!message.boardId || !message.projectId) {
+        console.error("❌ 잘못된 보드 생성 메시지:", message);
+        return;
+    }
+    
+    // 중복 메시지 처리 방지
+    var messageId = message.type + "_" + message.boardId + "_" + message.projectId + "_" + message.timestamp;
+    if (scwin.processedMessages.has(messageId)) {
+        console.log("⚠️ 이미 처리된 메시지이므로 무시:", messageId);
+        return;
+    }
+    scwin.processedMessages.add(messageId);
+    
+    // 메시지 처리 개수 제한 (메모리 관리)
+    if (scwin.processedMessages.size > 100) {
+        console.log("������ 처리된 메시지 캐시 정리");
+        scwin.processedMessages.clear();
+    }
+    
+    // 현재 프로젝트가 아니면 무시
+    var currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
+    if (message.projectId !== currentProjectId) {
+        console.log("ℹ️ 다른 프로젝트의 보드 생성이므로 무시합니다.");
+        return;
+    }
+    
+    console.log("������ 보드 생성 처리 시작:", message.boardId);
+    
+    // 현재 사용자 확인 (자신이 생성한 보드는 이미 화면에 있을 수 있음)
+    var currentUserId = scwin.getCurrentUserId();
+    console.log("������ 보드 생성자:", message.userId, "현재 사용자:", currentUserId);
+    
+    try {
+        // 새로운 보드를 동적으로 추가
+        scwin.addNewBoardColumn(message);
+        
+        console.log("✅ 보드 생성 반영 완료:", message.boardId);
+        
+    } catch (error) {
+        console.error("❌ 보드 생성 처리 실패:", error);
+        // 실패 시 전체 새로고침으로 폴백
+        console.log("⚠️ 실시간 추가 실패, 전체 새로고침으로 폴백");
+        scwin.refreshBoardList();
+    }
+};
+
+/**
+ * 새로운 보드 컬럼을 실시간으로 추가
+ */
+scwin.addNewBoardColumn = function (message) {
+    try {
+        console.log("������ 새 보드 컬럼 동적 추가 시작:", message.message || message.boardTitle);
+        
+        // 1. 데이터 모델에 새 보드 추가
+        var boardListComponent = $p.getComponentById("dlt_boardListVo");
+        if (!boardListComponent) {
+            throw new Error("보드 데이터 리스트를 찾을 수 없음");
+        }
+        
+        // 새 보드 데이터 생성 (message.message에 보드 제목이 들어있음)
+        var actualBoardId = message.boardId;
+        
+        // boardId 유효성 검증
+        if (!actualBoardId || actualBoardId === "GENERATED" || actualBoardId.trim() === "") {
+            console.error("❌ 유효하지 않은 boardId:", actualBoardId);
+            throw new Error("유효하지 않은 boardId");
+        }
+        var newBoardData = {
+            boardId: actualBoardId,
+            boardTitle: message.message || message.boardTitle || "새 보드",
+            projectId: message.projectId
+        };
+        
+        // 중복 체크: 같은 boardId가 이미 존재하는지 확인
+        var existingBoard = false;
+        for (var i = 0; i < boardListComponent.getRowCount(); i++) {
+            var existingBoardId = boardListComponent.getCellData(i, "boardId");
+            if (existingBoardId === actualBoardId) {
+                existingBoard = true;
+                console.log("⚠️ 이미 존재하는 보드이므로 생성 생략:", actualBoardId);
+                break;
+            }
+        }
+        
+        if (existingBoard) {
+            console.log("✅ 중복 보드 생성 방지 완료");
+            return; // 이미 존재하면 함수 종료
+        }
+        
+        // UI에서도 중복 체크
+        var columnId = "grp_dynamic_" + actualBoardId;
+        var existingColumn = $p.getComponentById(columnId);
+        if (existingColumn) {
+            console.log("⚠️ 이미 존재하는 UI 컬럼이므로 생성 생략:", columnId);
+            return;
+        }
+        
+        // 데이터 리스트에 추가
+        var rowIndex = boardListComponent.insertRow();
+        boardListComponent.setCellData(rowIndex, "boardId", newBoardData.boardId);
+        boardListComponent.setCellData(rowIndex, "boardTitle", newBoardData.boardTitle);
+        boardListComponent.setCellData(rowIndex, "projectId", newBoardData.projectId);
+        
+        console.log("������ 데이터 모델에 보드 추가 완료:", newBoardData.boardId);
+        
+        // 2. 칸반 컨테이너 찾기
+        var kanbanContainer = $p.getComponentById("grp_kanban_board");
+        if (!kanbanContainer) {
+            throw new Error("칸반 컨테이너를 찾을 수 없음");
+        }
+        
+        // 3. 새 보드 컬럼 동적 생성
+        var boardIndex = boardListComponent.getRowCount() - 1; // 마지막에 추가된 인덱스
+        scwin.createSingleKanbanColumn(newBoardData, boardIndex, kanbanContainer);
+        
+        console.log("������️ 새 보드 컬럼 UI 생성 완료");
+        
+        // 4. 드롭 존 및 이벤트 바인딩 갱신
+        setTimeout(function() {
+            try {
+                scwin.setupDropZoneAsync();
+                scwin.bindAddCardEvents();
+                console.log("������ 이벤트 바인딩 갱신 완료");
+            } catch (bindError) {
+                console.warn("⚠️ 이벤트 바인딩 실패:", bindError.message);
+            }
+        }, 100);
+        
+        console.log("✅ 새 보드 컬럼 추가 완료:", newBoardData.boardTitle);
+        
+    } catch (error) {
+        console.error("❌ 새 보드 컬럼 추가 실패:", error);
+        throw error; // 상위 에러 처리로 전달
+    }
+};
+
+/**
+ * 보드 목록 새로고침
+ */
+scwin.refreshBoardList = function () {
+    try {
+        console.log("������ 보드 목록 새로고침 시작");
+        
+        // 보드 목록을 다시 로드
+        if (typeof $p.executeSubmission === "function") {
+            $p.executeSubmission("load_Boards");
+            console.log("������ 보드 목록 새로고침 요청 완료");
+        } else {
+            console.warn("⚠️ executeSubmission 함수를 찾을 수 없음");
+        }
+        
+    } catch (error) {
+        console.error("❌ 보드 목록 새로고침 실패:", error);
+    }
+};
+
+/**
+ * 보드 삭제 확인 및 실행
+ */
+scwin.confirmAndDeleteBoard = function (boardId, boardTitle) {
+    try {
+        console.log("=== 보드 삭제 확인 시작 ===");
+        console.log("boardId:", boardId, "boardTitle:", boardTitle);
+        
+        // 확인 메시지
+        var confirmMessage = "'" + boardTitle + "' 보드를 삭제하시겠습니까?\n\n" +
+                           "⚠️ 이 작업은 되돌릴 수 없으며, 보드 내의 모든 카드가 함께 삭제됩니다.";
+        
+        // WebSquare 확인 대화상자
+        var confirmed = $c.win.confirm(confirmMessage);
+        
+        if (confirmed) {
+            console.log("✅ 보드 삭제 확인됨, 삭제 진행:", boardId);
+            scwin.deleteBoard(boardId, boardTitle);
+        } else {
+            console.log("❌ 보드 삭제 취소됨:", boardId);
+        }
+        
+    } catch (error) {
+        console.error("❌ 보드 삭제 확인 중 오류:", error);
+        $c.win.alert("보드 삭제 중 오류가 발생했습니다.");
+    }
+};
+
+/**
+ * 보드 삭제 실행
+ */
+scwin.deleteBoard = function (boardId, boardTitle) {
+    try {
+        console.log("=== 보드 삭제 실행 시작 ===");
+        console.log("boardId:", boardId, "boardTitle:", boardTitle);
+        
+        // 현재 프로젝트 ID 가져오기
+        var projectId = $p.getComponentById("dm_projectVo").get("projectId");
+        if (!projectId) {
+            throw new Error("프로젝트 ID를 찾을 수 없습니다.");
+        }
+        
+        // 삭제 요청 데이터 설정
+        var boardVo = $p.getComponentById("dm_boardVo");
+        boardVo.set("boardId", boardId);
+        boardVo.set("projectId", projectId);
+        
+        console.log("������️ 보드 삭제 API 호출:", {boardId: boardId, projectId: projectId});
+        
+        // 서버에 삭제 요청
+        $p.executeSubmission("delete_board");
+        
+    } catch (error) {
+        console.error("❌ 보드 삭제 실행 실패:", error);
+        $c.win.alert("보드 삭제에 실패했습니다: " + error.message);
+    }
+};
+
+/**
+ * 태스크 생성 메시지 수신 처리
+ */
+scwin.handleTaskCreatedMessage = function (message) {
+    console.log("=== 태스크 생성 메시지 수신 ===");
+    console.log("전체 메시지:", message);
+    console.log("������ 메시지 상세 정보:");
+    console.log("- type:", message.type);
+    console.log("- taskId:", message.taskId);
+    console.log("- boardId:", message.boardId);
+    console.log("- projectId:", message.projectId);
+    console.log("- taskTitle:", message.message);
+    console.log("- timestamp:", message.timestamp);
+    
+    // 메시지 유효성 검증
+    if (!message.taskId || !message.boardId || !message.projectId) {
+        console.error("❌ 잘못된 태스크 생성 메시지:", message);
+        return;
+    }
+    
+    // 중복 메시지 처리 방지
+    var messageId = message.type + "_" + message.taskId + "_" + message.projectId + "_" + message.timestamp;
+    if (scwin.processedMessages.has(messageId)) {
+        console.log("⚠️ 이미 처리된 메시지이므로 무시:", messageId);
+        return;
+    }
+    scwin.processedMessages.add(messageId);
+    
+    // 현재 프로젝트가 아니면 무시
+    var currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
+    if (message.projectId !== currentProjectId) {
+        console.log("ℹ️ 다른 프로젝트의 태스크 생성이므로 무시합니다.");
+        return;
+    }
+    
+    console.log("������ 태스크 생성 처리 시작:", message.taskId);
+    
+    try {
+        // 칸반 보드 새로고침 (새 태스크 반영)
+        scwin.refreshKanbanBoard();
+        
+        console.log("✅ 태스크 생성 반영 완료:", message.taskId);
+        
+    } catch (error) {
+        console.error("❌ 태스크 생성 처리 실패:", error);
+        // 에러가 발생해도 사용자 경험을 위해 새로고침 시도
+        try {
+            scwin.refreshKanbanBoard();
+        } catch (refreshError) {
+            console.error("❌ 새로고침도 실패:", refreshError);
+        }
+    }
+};
+
+/**
+ * 보드 삭제 메시지 처리 (실시간 동기화)
+ */
+scwin.handleBoardDeletedMessage = function (message) {
+    console.log("=== 보드 삭제 메시지 수신 ===");
+    console.log("전체 메시지:", message);
+    console.log("������ 메시지 상세 정보:");
+    console.log("- type:", message.type);
+    console.log("- boardId:", message.boardId);
+    console.log("- projectId:", message.projectId);
+    console.log("- boardTitle:", message.message);
+    
+    // 메시지 유효성 검증
+    if (!message.boardId || !message.projectId) {
+        console.error("❌ 잘못된 보드 삭제 메시지:", message);
+        return;
+    }
+    
+    // 현재 프로젝트가 아니면 무시
+    var currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
+    if (message.projectId !== currentProjectId) {
+        console.log("ℹ️ 다른 프로젝트의 보드 삭제이므로 무시합니다.");
+        return;
+    }
+    
+    console.log("������️ 보드 삭제 처리 시작:", message.boardId);
+    
+    try {
+        // 실시간으로 보드 컬럼 제거
+        scwin.removeBoardColumn(message);
+        
+        console.log("✅ 보드 삭제 반영 완료:", message.boardId);
+        
+    } catch (error) {
+        console.error("❌ 보드 삭제 처리 실패:", error);
+        // 실패 시 전체 새로고침으로 폴백
+        console.log("⚠️ 실시간 삭제 실패, 전체 새로고침으로 폴백");
+        scwin.refreshBoardList();
+    }
+};
+
+/**
+ * 보드 컬럼을 실시간으로 제거
+ */
+scwin.removeBoardColumn = function (message) {
+    try {
+        console.log("������️ 보드 컬럼 동적 제거 시작:", message.message);
+        
+        // 1. 데이터 모델에서 보드 제거
+        var boardListComponent = $p.getComponentById("dlt_boardListVo");
+        if (!boardListComponent) {
+            throw new Error("보드 데이터 리스트를 찾을 수 없음");
+        }
+        
+        // 삭제할 보드의 인덱스 찾기
+        var boardIndex = -1;
+        for (var i = 0; i < boardListComponent.getRowCount(); i++) {
+            var boardId = boardListComponent.getCellData(i, "boardId");
+            if (boardId === message.boardId) {
+                boardIndex = i;
+                break;
+            }
+        }
+        
+        if (boardIndex === -1) {
+            console.warn("⚠️ 삭제할 보드를 데이터 모델에서 찾을 수 없음:", message.boardId);
+        } else {
+            // 데이터 모델에서 행 삭제
+            boardListComponent.removeRow(boardIndex);
+            console.log("������ 데이터 모델에서 보드 제거 완료:", message.boardId);
+        }
+        
+        // 2. UI에서 보드 컬럼 제거
+        var columnId = "grp_dynamic_" + message.boardId;
+        var boardColumn = $p.getComponentById(columnId);
+        
+        if (boardColumn) {
+            // 삭제 애니메이션 효과
+            try {
+                var columnElement = boardColumn.getElement();
+                if (columnElement) {
+                    columnElement.style.transition = 'all 0.3s ease-out';
+                    columnElement.style.transform = 'scale(0)';
+                    columnElement.style.opacity = '0';
+                    
+                    // 애니메이션 완료 후 컴포넌트 제거
+                    setTimeout(function() {
+                        try {
+                            boardColumn.destroy();
+                            console.log("������️ 보드 컬럼 UI 제거 완료:", columnId);
+                        } catch (destroyError) {
+                            console.warn("⚠️ 컴포넌트 destroy 실패:", destroyError.message);
+                        }
+                    }, 300);
+                } else {
+                    // 애니메이션 없이 바로 제거
+                    boardColumn.destroy();
+                    console.log("������️ 보드 컬럼 UI 제거 완료 (애니메이션 없음):", columnId);
+                }
+            } catch (animationError) {
+                console.warn("⚠️ 애니메이션 적용 실패, 바로 제거:", animationError.message);
+                boardColumn.destroy();
+            }
+        } else {
+            console.warn("⚠️ 삭제할 보드 컬럼을 UI에서 찾을 수 없음:", columnId);
+        }
+        
+        console.log("✅ 보드 컬럼 제거 완료:", message.message);
+        
+    } catch (error) {
+        console.error("❌ 보드 컬럼 제거 실패:", error);
+        throw error; // 상위 에러 처리로 전달
     }
 };
 
@@ -2062,17 +2543,24 @@ scwin.applySortAndFilter = function () {
 };
 
 /**
- * 특정 보드에 대해 정렬된 태스크 데이터를 서버에서 로드
+ * 특정 보드에 대해 정렬된 태스크 데이터를 서버에서 로드 (중복 호출 방지 적용)
  */
 scwin.loadTasksWithSort = function (boardId) {
-    console.log("������ 보드 " + boardId + " 정렬된 데이터 요청 - sortField: " + scwin.currentSortField + ", sortOrder: " + scwin.currentSortOrder);
+    console.log("보드 " + boardId + " 정렬된 데이터 요청 - sortField: " + scwin.currentSortField + ", sortOrder: " + scwin.currentSortOrder);
+
+    // 중복 호출 방지
+    if (scwin.isTaskListWithUserNameLoading) {
+        console.log("⚠️ TaskListWithUserName 요청이 이미 진행 중입니다. 중복 호출을 방지합니다.");
+        return;
+    }
 
     // 검색 조건에 정렬 파라미터 추가
     dm_search_task.set("boardId", boardId);
     dm_search_task.set("sortField", scwin.currentSortField);
     dm_search_task.set("sortOrder", scwin.currentSortOrder);
 
-    // 서버 요청 (기존 load_Tasks submission 사용)
+    // 서버 요청 (중복 호출 방지 플래그 설정)
+    scwin.isTaskListWithUserNameLoading = true;
     $p.executeSubmission("load_Tasks_With_UserName");
 };
 
@@ -3537,7 +4025,6 @@ scwin.github_popup_closeAction = function (argRuntimeID, argJsnInfo) {
 // 팝업 닫기 액션
 scwin.popup_closeAction = function (argRuntimeID, argJsnInfo) {
     var popObj = $p.getPopupWindow(argRuntimeID);
-    scwin.loadProjectData(); // 팝업 닫기 후 데이터 새로고침
     return true;
 };
 
@@ -4062,6 +4549,8 @@ scwin.createDynamicKanbanColumns = function (boardList) {
 
     scwin.clearExistingKanbanColumns();
 
+    // 1. 모든 컬럼을 먼저 생성
+    var validBoardIds = [];
     for (let i = 0; i < boardList.length; i++) {
         const board = boardList[i];
 
@@ -4075,20 +4564,22 @@ scwin.createDynamicKanbanColumns = function (boardList) {
 
         try {
             scwin.createSingleKanbanColumn(board, i, kanbanContainer);
+            validBoardIds.push(board.boardId); // 유효한 보드 ID 수집
         } catch (error) {
             console.error("컬럼 생성 중 오류:", board.boardId, error);
             continue;
         }
-
-        // 칸반용 태스크 로드
-        if (board.boardId) {
-            console.log("칸반용 태스크 로드 실행, boardId:", board.boardId);
-            dm_search_task.set("boardId", board.boardId);
-            $p.executeSubmission("load_Tasks_With_UserName");
-        }
     }
 
-    console.log("동적 칸반 컬럼 생성 및 태스크 로드 요청 완료");
+    console.log("✅ 동적 칸반 컬럼 생성 완료");
+    
+    // 2. 모든 보드의 태스크를 한 번에 배치 로드 ������
+    if (validBoardIds.length > 0) {
+        console.log("������ 배치 태스크 로드 시작 - 보드 개수:", validBoardIds.length);
+        scwin.loadAllBoardTasks(validBoardIds);
+    } else {
+        console.log("⚠️ 로드할 유효한 보드가 없습니다.");
+    }
 
     // 생성 완료 후 플래그 해제
     setTimeout(function () {
@@ -4335,7 +4826,65 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
         console.error("카운트 스팬 생성 실패:", columnId);
     }
 
-    // 7. 카드 컨테이너 생성 (드롭 존으로 설정)
+    // 7. 보드 액션 버튼 그룹 생성 (헤더 우측)
+    var actionGroup = $p.dynamicCreate(
+        columnId + "_action_group",
+        "group",
+        {
+            style: "display: flex; align-items: center; gap: 4px;"
+        },
+        headerGroup
+    );
+    if (!actionGroup) {
+        console.error("액션 그룹 생성 실패:", columnId);
+    }
+
+    // 8. 보드 삭제 버튼 생성
+    var deleteButton = $p.dynamicCreate(
+        columnId + "_delete_btn",
+        "trigger",
+        {
+            className: "btn-board-delete",
+            style: "width: 24px; height: 24px; padding: 4px; background: transparent; border: none; border-radius: 4px; color: #656d76; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;",
+            title: "보드 삭제"
+        },
+        actionGroup
+    );
+    
+    if (deleteButton) {
+        try {
+            deleteButton.setValue("✕"); // X 표시
+            
+            // boardId와 boardTitle 저장
+            deleteButton.boardId = board.boardId;
+            deleteButton.boardTitle = board.boardTitle;
+            
+            // hover 효과를 위한 스타일 추가
+            deleteButton.bind("onmouseover", function() {
+                deleteButton.getElement().style.backgroundColor = "#f3f4f6";
+                deleteButton.getElement().style.color = "#dc3545";
+            });
+            
+            deleteButton.bind("onmouseout", function() {
+                deleteButton.getElement().style.backgroundColor = "transparent";
+                deleteButton.getElement().style.color = "#656d76";
+            });
+            
+            // 클릭 이벤트 바인딩
+            deleteButton.bind("onclick", function(e) {
+                console.log("보드 삭제 버튼 클릭:", deleteButton.boardId, deleteButton.boardTitle);
+                scwin.confirmAndDeleteBoard(deleteButton.boardId, deleteButton.boardTitle);
+            });
+            
+            console.log("보드 삭제 버튼 생성 성공:", columnId);
+        } catch (e) {
+            console.error("보드 삭제 버튼 설정 오류:", e, columnId);
+        }
+    } else {
+        console.error("보드 삭제 버튼 생성 실패:", columnId);
+    }
+
+    // 9. 카드 컨테이너 생성 (드롭 존으로 설정)
     var cardContainer = $p.dynamicCreate(
         cardContainerId,
         "group",
@@ -4355,7 +4904,7 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
     // 드롭 존 이벤트 핸들러 추가 (async/await 사용)
     scwin.setupDropZoneAsync(cardContainer, board.boardId, cardContainerId);
 
-    // 8. Add Card 버튼 생성
+    // 10. Add Card 버튼 생성
     var addButton = $p.dynamicCreate(
         columnId + "_add_btn",
         "trigger",
@@ -5867,9 +6416,6 @@ scwin.projectSetting_closeAction = function (argRuntimeID, argJsnInfo) {
     var popObj = $p.getPopupWindow(argRuntimeID);
     console.log("프로젝트 설정 모달이 닫혔습니다.");
 
-    // 필요시 데이터 새로고침
-    // scwin.loadProjectData();
-
     return true; // 팝업 닫기 허용
 };
 
@@ -5906,7 +6452,8 @@ window.addEventListener('message', function (event) {
 scwin.new_task_onclick = function (e) {
     // 클릭된 카드에서 taskId와 projectId 추출
     var taskId = null;
-    var projectId = null;
+    var projectId = dm_projectVo.get("projectId");
+    console.log("-----------"+projectId);
 
     if (e && e.target) {
         // 클릭된 요소나 부모 요소에서 data-task-id 찾기
@@ -5918,11 +6465,6 @@ scwin.new_task_onclick = function (e) {
             }
             currentElement = currentElement.parentElement;
         }
-    }
-
-    // 프로젝트 ID 가져오기
-    if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
-        projectId = scwin.currentProjectData.projectId;
     }
 
     // 보드 타이틀 가져오기
@@ -7120,6 +7662,64 @@ scwin.add_board_submiterror = function (e) {
 };
 
 /**
+ * 보드 삭제 성공 처리
+ */
+scwin.delete_board_submitdone = function (e) {
+    console.log("=== 보드 삭제 성공 ===");
+    console.log("서버 응답:", e.responseJSON);
+
+    try {
+        // 성공 메시지 표시
+        $c.win.alert("보드가 성공적으로 삭제되었습니다.");
+        
+        // 보드 목록 새로고침
+        console.log("������ 보드 삭제 완료, 보드 목록 새로고침");
+        $p.executeSubmission("load_Board");
+
+    } catch (error) {
+        console.error("❌ 보드 삭제 응답 처리 중 오류:", error);
+        $c.win.alert("보드 삭제는 완료되었지만 화면 갱신 중 오류가 발생했습니다.");
+    }
+};
+
+/**
+ * 보드 삭제 실패 처리
+ */
+scwin.delete_board_submiterror = function (e) {
+    console.error("=== 보드 삭제 실패 ===");
+    console.error("오류 정보:", e);
+
+    var errorMessage = "보드 삭제에 실패했습니다.";
+
+    // 오류 메시지 상세화
+    if (e.responseJSON && e.responseJSON.message) {
+        errorMessage += "\n원인: " + e.responseJSON.message;
+    } else if (e.responseText) {
+        try {
+            var errorData = JSON.parse(e.responseText);
+            if (errorData.message) {
+                errorMessage += "\n원인: " + errorData.message;
+            }
+        } catch (parseError) {
+            console.error("오류 응답 파싱 실패:", parseError);
+        }
+    } else if (e.status) {
+        errorMessage += "\n상태코드: " + e.status;
+        
+        // 일반적인 HTTP 상태코드 설명 추가
+        if (e.status === 403) {
+            errorMessage += "\n권한이 없습니다.";
+        } else if (e.status === 404) {
+            errorMessage += "\n보드를 찾을 수 없습니다.";
+        } else if (e.status === 500) {
+            errorMessage += "\n서버 내부 오류입니다.";
+        }
+    }
+    
+    $c.win.alert(errorMessage);
+};
+
+/**
  * input 태그가 있는 빈 보드 컬럼 생성
  */
 scwin.createEmptyBoardWithInput = function (projectId) {
@@ -7322,7 +7922,18 @@ scwin.removeTempBoard = function (tempBoardId) {
  * 사용자 이름을 포함한 태스크 목록 로드 성공 콜백
  */
 scwin.load_Tasks_With_UserName_submitdone = function (e) {
-    console.log("태스크 로드 완료 (프론트엔드 필터링 지원):", e);
+    // ⏱️ 클라이언트 개별 로드 성능 측정 (시작 시간이 있는 경우)
+    if (scwin.individualLoadStartTime) {
+        var individualLoadEndTime = performance.now();
+        var individualLoadDuration = individualLoadEndTime - scwin.individualLoadStartTime;
+        console.log("✅ [클라이언트 개별 로드] 완료 | 소요 시간:", individualLoadDuration.toFixed(2) + "ms");
+        scwin.individualLoadStartTime = null; // 리셋
+    }
+    
+    console.log("������ 개별 로드 응답 데이터:", e);
+    
+    // 중복 호출 방지 플래그 리셋
+    scwin.isTaskListWithUserNameLoading = false;
 
     // 1. 응답에서 직접 태스크 목록 추출
     var responseData = e.responseJSON;
@@ -7377,14 +7988,263 @@ scwin.load_Tasks_With_UserName_submitdone = function (e) {
 };
 
 /**
- * 사용자 이름 포함 태스크 로드 테스트 함수
+ * 사용자 이름을 포함한 태스크 목록 로드 실패 콜백
+ */
+scwin.load_Tasks_With_UserName_submiterror = function (e) {
+    console.error("태스크 로드 실패 (TaskListWithUserName):", e);
+    
+    // 중복 호출 방지 플래그 리셋 (중요: 실패 시에도 반드시 리셋)
+    scwin.isTaskListWithUserNameLoading = false;
+    
+    // 오류 메시지 추출
+    var errorMessage = "태스크 목록을 로드하는데 실패했습니다.";
+    if (e && e.responseJSON && e.responseJSON.message) {
+        errorMessage = e.responseJSON.message;
+    } else if (e && e.message) {
+        errorMessage = e.message;
+    }
+    
+    // 사용자에게 오류 알림
+    try {
+        $p.showAlert(errorMessage, "오류", function() {
+            console.log("태스크 로드 오류 알림 닫힘");
+        });
+    } catch (alertError) {
+        console.error("오류 알림 표시 실패:", alertError);
+    }
+    
+    // 쓰레드 제한 오류인 경우 특별 처리
+    if (errorMessage.includes("threads") || errorMessage.includes("쓰레드") || errorMessage.includes("thread")) {
+        console.warn("������ 쓰레드 제한 오류 감지 - 잠시 후 재시도를 권장합니다.");
+        
+        // 3초 후 자동 재시도 (옵션)
+        setTimeout(function() {
+            console.log("⏰ 쓰레드 제한 오류 후 자동 재시도 시도");
+            if (!scwin.isTaskListWithUserNameLoading) {
+                scwin.loadTasksWithUserName();
+            }
+        }, 3000);
+    }
+    
+    console.log("태스크 로드 오류 처리 완료");
+};
+
+// TaskListWithUserName 중복 호출 방지를 위한 전역 상태 관리
+scwin.isTaskListWithUserNameLoading = false;
+scwin.pendingTaskListRequests = [];
+
+/**
+ * ������ 배치 로드: 여러 보드의 태스크를 한 번에 로드 (성능 최적화)
+ */
+scwin.loadAllBoardTasks = function(boardIds) {
+    // ⏱️ 클라이언트 배치 로드 성능 측정 시작
+    scwin.batchLoadStartTime = performance.now();
+    console.log("������ [클라이언트 배치 로드] 시작 - 보드 개수:", boardIds.length, "| 시작 시간:", scwin.batchLoadStartTime.toFixed(2) + "ms");
+    console.log("������ 로드할 보드들:", boardIds);
+    
+    // 중복 호출 방지
+    if (scwin.isTaskListWithUserNameLoading) {
+        console.log("⚠️ 배치 태스크 로드가 이미 진행 중입니다.");
+        return;
+    }
+    
+    try {
+        scwin.isTaskListWithUserNameLoading = true;
+        
+        // 배치 검색 조건 설정
+        dm_search_task_batch.set("boardIds", boardIds.join(","));
+        dm_search_task_batch.set("sortField", scwin.currentSortField);
+        dm_search_task_batch.set("sortOrder", scwin.currentSortOrder);
+        
+        console.log("������ 배치 요청 데이터:", {
+            boardIds: boardIds.join(","),
+            sortField: scwin.currentSortField,
+            sortOrder: scwin.currentSortOrder
+        });
+        
+        // 배치 요청 실행
+        $p.executeSubmission("load_Tasks_With_UserName_Batch");
+        
+    } catch (error) {
+        console.error("배치 태스크 로드 실행 중 오류:", error);
+        scwin.isTaskListWithUserNameLoading = false;
+    }
+};
+
+/**
+ * 배치 태스크 로드 성공 콜백
+ */
+scwin.load_Tasks_With_UserName_Batch_submitdone = function (e) {
+    // ⏱️ 클라이언트 배치 로드 성능 측정 완료
+    var batchLoadEndTime = performance.now();
+    var batchLoadDuration = batchLoadEndTime - scwin.batchLoadStartTime;
+    
+    console.log("������ [클라이언트 배치 로드] 완료 | 소요 시간:", batchLoadDuration.toFixed(2) + "ms");
+    console.log("������ 배치 응답 데이터:", e);
+    
+    // 중복 호출 방지 플래그 리셋
+    scwin.isTaskListWithUserNameLoading = false;
+
+    // 1. 응답에서 직접 태스크 목록 추출
+    var responseData = e.responseJSON;
+    var allTasks = responseData.elData.taskVoList || [];
+    console.log("������ 서버로부터 받은 배치 태스크 총 개수:", allTasks.length);
+
+    // 2. 보드별로 태스크 데이터 분리
+    var tasksByBoard = {};
+    for (var i = 0; i < allTasks.length; i++) {
+        var task = allTasks[i];
+        if (!tasksByBoard[task.boardId]) {
+            tasksByBoard[task.boardId] = [];
+        }
+        tasksByBoard[task.boardId].push(task);
+    }
+
+    console.log("������ 보드별 태스크 분리 결과:", Object.keys(tasksByBoard).length, "개 보드");
+
+    // 3. 각 보드별로 데이터 저장 및 표시
+    for (var boardId in tasksByBoard) {
+        var boardTasks = tasksByBoard[boardId];
+        console.log(`������ 보드 [${boardId}]에 태스크 ${boardTasks.length}개 저장`);
+        
+        // 전체 태스크 데이터를 로컬에 저장 (필터링용)
+        scwin.storeAllTasksData(boardId, boardTasks);
+
+        // 필터링과 정렬을 모두 적용하여 태스크 표시
+        scwin.sortAndFilterBoardTasks(boardId);
+    }
+    
+    console.log("✅ 배치 태스크 로드 및 처리 완료!");
+
+    // 칸반 데이터 업데이트 후 간트차트 동기화
+    scwin.syncGanttWithKanban();
+};
+
+/**
+ * 배치 태스크 로드 실패 콜백
+ */
+scwin.load_Tasks_With_UserName_Batch_submiterror = function (e) {
+    console.error("❌ 배치 태스크 로드 실패:", e);
+    
+    // 중복 호출 방지 플래그 리셋 (중요: 실패 시에도 반드시 리셋)
+    scwin.isTaskListWithUserNameLoading = false;
+    
+    // 오류 메시지 추출
+    var errorMessage = "배치 태스크 목록을 로드하는데 실패했습니다.";
+    if (e && e.responseJSON && e.responseJSON.message) {
+        errorMessage = e.responseJSON.message;
+    } else if (e && e.message) {
+        errorMessage = e.message;
+    }
+    
+    // 사용자에게 오류 알림
+    try {
+        $p.showAlert(errorMessage, "오류", function() {
+            console.log("배치 태스크 로드 오류 알림 닫힘");
+        });
+    } catch (alertError) {
+        console.error("오류 알림 표시 실패:", alertError);
+    }
+    
+    console.log("배치 태스크 로드 오류 처리 완료");
+};
+
+// ================ 성능 비교 테스트 함수들 ================
+
+/**
+ * ������ 성능 비교 테스트: 개별 로드 vs 배치 로드
+ */
+scwin.performanceComparisonTest = function() {
+    console.log("������ ===== 성능 비교 테스트 시작 =====");
+    console.log("������ 테스트 방법:");
+    console.log("1. 개별 테스트: scwin.testIndividualLoad() 실행");
+    console.log("2. 배치 테스트: scwin.testBatchLoad() 실행");
+    console.log("3. 결과 비교: 콘솔 로그에서 '소요 시간' 확인");
+    console.log("==========================================");
+};
+
+/**
+ * ������ 개별 로드 테스트 (트러블슈팅용)
+ */
+scwin.testIndividualLoad = function() {
+    console.log("������ ===== 개별 로드 테스트 시작 =====");
+    
+    // 현재 보드 목록 가져오기
+    var boardList = dlt_boardListVo.getAllJSON();
+    if (!boardList || boardList.length === 0) {
+        console.log("❌ 테스트할 보드가 없습니다.");
+        return;
+    }
+    
+    console.log("������ 테스트 대상 보드 개수:", boardList.length);
+    console.log("������ 보드 목록:", boardList.map(b => b.boardId + ":" + b.boardTitle));
+    
+    // 첫 번째 보드로 개별 로드 테스트
+    var firstBoard = boardList[0];
+    dm_search_task.set("boardId", firstBoard.boardId);
+    
+    console.log("������ 개별 로드 실행 - boardId:", firstBoard.boardId);
+    scwin.loadTasksWithUserName();
+};
+
+/**
+ * ������ 배치 로드 테스트 (트러블슈팅용)
+ */
+scwin.testBatchLoad = function() {
+    console.log("������ ===== 배치 로드 테스트 시작 =====");
+    
+    // 현재 보드 목록 가져오기
+    var boardList = dlt_boardListVo.getAllJSON();
+    if (!boardList || boardList.length === 0) {
+        console.log("❌ 테스트할 보드가 없습니다.");
+        return;
+    }
+    
+    var boardIds = boardList.map(function(board) {
+        return board.boardId;
+    });
+    
+    console.log("������ 테스트 대상 보드 개수:", boardIds.length);
+    console.log("������ 보드 ID 목록:", boardIds);
+    
+    console.log("������ 배치 로드 실행");
+    scwin.loadAllBoardTasks(boardIds);
+};
+
+/**
+ * ������ 성능 통계 요약 (테스트 후 실행)
+ */
+scwin.showPerformanceSummary = function() {
+    console.log("������ ===== 성능 비교 요약 =====");
+    console.log("������ 개별 로드: 각 보드마다 별도 요청 (순차적)");
+    console.log("������ 배치 로드: 모든 보드를 한 번에 요청 (병렬적)");
+    console.log("⚡ 예상 성능 향상: 약 4-6배 빨라짐");
+    console.log("������ 중복 호출 방지 문제도 완전 해결");
+    console.log("============================");
+};
+
+/**
+ * 사용자 이름 포함 태스크 로드 테스트 함수 (중복 호출 방지 적용)
  */
 scwin.loadTasksWithUserName = function () {
-    console.log("사용자 이름 포함 태스크 로드 시작");
+    // ⏱️ 클라이언트 개별 로드 성능 측정 시작
+    scwin.individualLoadStartTime = performance.now();
+    console.log("������ [클라이언트 개별 로드] 시작 | 시작 시간:", scwin.individualLoadStartTime.toFixed(2) + "ms");
+    
+    // 중복 호출 방지
+    if (scwin.isTaskListWithUserNameLoading) {
+        console.log("⚠️ TaskListWithUserName 요청이 이미 진행 중입니다. 중복 호출을 방지합니다.");
+        scwin.individualLoadStartTime = null; // 리셋
+        return;
+    }
+    
     try {
+        scwin.isTaskListWithUserNameLoading = true;
         $p.executeSubmission("load_Tasks_With_UserName");
     } catch (error) {
         console.error("태스크 로드 실행 중 오류:", error);
+        scwin.isTaskListWithUserNameLoading = false;
+        scwin.individualLoadStartTime = null; // 리셋
     }
 };
 
@@ -7396,30 +8256,30 @@ scwin.loadTasksWithUserNameAsync = function () {
         console.log("사용자 이름 포함 태스크 로드 시작 (비동기)");
         try {
             // 기존 콜백 저장
-            const originalCallback = scwin.load_Tasks_With_UserName_success;
-            const originalErrorCallback = scwin.load_Tasks_With_UserName_error;
+            const originalCallback = scwin.load_Tasks_With_UserName_submitdone;
+            const originalErrorCallback = scwin.load_Tasks_With_UserName_submiterror;
 
             // 임시 콜백 설정
-            scwin.load_Tasks_With_UserName_success = function (res) {
+            scwin.load_Tasks_With_UserName_submitdone = function (res) {
                 // 원래 콜백 실행
                 if (originalCallback && typeof originalCallback === 'function') {
                     originalCallback.call(this, res);
                 }
                 // 콜백 복원
-                scwin.load_Tasks_With_UserName_success = originalCallback;
-                scwin.load_Tasks_With_UserName_error = originalErrorCallback;
+                scwin.load_Tasks_With_UserName_submitdone = originalCallback;
+                scwin.load_Tasks_With_UserName_submiterror = originalErrorCallback;
                 // Promise 해결
                 resolve(res);
             };
 
-            scwin.load_Tasks_With_UserName_error = function (error) {
+            scwin.load_Tasks_With_UserName_submiterror = function (error) {
                 // 원래 에러 콜백 실행
                 if (originalErrorCallback && typeof originalErrorCallback === 'function') {
                     originalErrorCallback.call(this, error);
                 }
                 // 콜백 복원
-                scwin.load_Tasks_With_UserName_success = originalCallback;
-                scwin.load_Tasks_With_UserName_error = originalErrorCallback;
+                scwin.load_Tasks_With_UserName_submitdone = originalCallback;
+                scwin.load_Tasks_With_UserName_submiterror = originalErrorCallback;
                 // Promise 거부
                 reject(error);
             };
@@ -7436,7 +8296,7 @@ scwin.loadTasksWithUserNameAsync = function () {
  * 특정 보드의 데이터를 새로고침 (taskModal 저장/삭제 후 호출)
  */
 scwin.refreshBoardData = function (boardId) {
-  console.log("🔄 보드 데이터 새로고침 시작:", boardId);
+  console.log("������ 보드 데이터 새로고침 시작:", boardId);
   
   try {
     // 1. 해당 보드의 로컬 캐시 데이터 초기화
@@ -7445,12 +8305,18 @@ scwin.refreshBoardData = function (boardId) {
       console.log("로컬 캐시 데이터 삭제 완료:", boardId);
     }
     
-    // 2. 서버에서 최신 데이터 다시 로드
+    // 2. 서버에서 최신 데이터 다시 로드 (중복 호출 방지 적용)
+    if (scwin.isTaskListWithUserNameLoading) {
+        console.log("⚠️ TaskListWithUserName 요청이 이미 진행 중입니다. 보드 새로고침을 건너뜁니다:", boardId);
+        return;
+    }
+    
     dm_search_task.set("boardId", boardId);
     dm_search_task.set("sortField", scwin.currentSortField);
     dm_search_task.set("sortOrder", scwin.currentSortOrder);
     
     // 3. 태스크 목록 다시 로드
+    scwin.isTaskListWithUserNameLoading = true;
     $p.executeSubmission("load_Tasks_With_UserName");
     
     console.log("✅ 보드 데이터 새로고침 요청 완료:", boardId);

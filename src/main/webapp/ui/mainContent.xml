@@ -495,16 +495,17 @@ scwin.clearProjectCards = function() {
 
 // 프로젝트 카드 클릭 이벤트 처리
 scwin.onProjectCardClick = function(project) {
-    console.log("프로젝트 카드 클릭:", project);
+    debugger;
+    console.log("프로젝트 카드 클릭1:", project);
     try {
         const parent = $p.parent();
-        
+        parent.dm_projectVo.set("projectId",project.projectId);
         // 1. 부모 창의 사이드 메뉴에서 해당 프로젝트 메뉴 선택
         if (parent && parent.wfr_sideMenu && parent.wfr_sideMenu.getWindow) {
             const sideMenuWindow = parent.wfr_sideMenu.getWindow();
             if (sideMenuWindow && sideMenuWindow.scwin) {
                 console.log("사이드 메뉴로 프로젝트 선택 요청:", project.projectId);
-                
+                parent.dm_projectVo.set("projectId",project.projectId);
                 // 사이드 메뉴의 외부 선택 함수 호출
                 if (sideMenuWindow.scwin.selectProjectMenuFromExternal) {
                     sideMenuWindow.scwin.selectProjectMenuFromExternal(project.projectId, project);
