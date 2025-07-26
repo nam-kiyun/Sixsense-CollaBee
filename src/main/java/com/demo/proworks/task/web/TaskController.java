@@ -26,6 +26,7 @@ import com.demo.proworks.redis.service.KanbanRedisService;
 import com.demo.proworks.board.service.BoardService;
 import com.demo.proworks.board.vo.BoardVo;
 import com.demo.proworks.taskversion.service.TaskVersionService;
+import com.demo.proworks.websocket.handler.KanbanWebSocketHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.inswave.elfw.annotation.ElDescription;
@@ -71,6 +72,10 @@ public class TaskController {
 	/** KanbanRedisService - Redis 캐싱을 위한 서비스 */
 	@Autowired
 	private KanbanRedisService kanbanRedisService;
+
+	/** KanbanWebSocketHandler - WebSocket 실시간 통신을 위한 핸들러 */
+	@Autowired
+	private KanbanWebSocketHandler kanbanWebSocketHandler;
 
 	/**
 	 * 업무(Task) 정보 목록을 조회합니다. 프로젝트별 태스크 조회 시 Redis 캐싱을 적용하여 성능을 최적화합니다.
@@ -534,6 +539,31 @@ public class TaskController {
 
 		// 4. 기타 처리 및 저장
 		taskService.saveTask(updateVo);
+		
+		// 5. 🔄 WebSocket을 통한 실시간 업데이트 브로드캐스트
+		try {
+			String projectId = getProjectIdByBoardId(updateVo.getBoardId());
+			if (projectId != null) {
+				// 태스크 업데이트 메시지 브로드캐스트
+				java.util.Map<String, Object> broadcastMessage = new java.util.HashMap<>();
+				broadcastMessage.put("type", "TASK_UPDATED");
+				broadcastMessage.put("projectId", projectId);
+				broadcastMessage.put("taskId", updateVo.getTaskId());
+				broadcastMessage.put("boardId", updateVo.getBoardId());
+				broadcastMessage.put("taskTitle", updateVo.getTaskTitle());
+				broadcastMessage.put("priority", updateVo.getPriority());
+				broadcastMessage.put("startDate", updateVo.getStartDate());
+				broadcastMessage.put("endDate", updateVo.getEndDate());
+				broadcastMessage.put("tags", updateVo.getTags());
+				broadcastMessage.put("timestamp", System.currentTimeMillis());
+				
+				// 프로젝트의 모든 사용자에게 실시간 브로드캐스트
+				kanbanWebSocketHandler.broadcastToProject(projectId, broadcastMessage);
+				System.out.println("📡 태스크 업데이트 WebSocket 브로드캐스트 완료: " + updateVo.getTaskId());
+			}
+		} catch (Exception broadcastException) {
+			System.err.println("⚠️ WebSocket 브로드캐스트 실패 (기능은 정상 처리됨): " + broadcastException.getMessage());
+		}
 	}
 
 	private String uploadS3(MultipartFile file) throws IOException {
@@ -670,6 +700,26 @@ public class TaskController {
 
 		// Redis 캐시 무효화 - 프로젝트의 태스크 목록이 변경되었음
 		invalidateProjectCacheByBoardId(taskVo.getBoardId(), "태스크 삭제");
+		
+		// 🔄 WebSocket을 통한 실시간 삭제 브로드캐스트
+		try {
+			String projectId = getProjectIdByBoardId(taskVo.getBoardId());
+			if (projectId != null) {
+				// 태스크 삭제 메시지 브로드캐스트
+				java.util.Map<String, Object> broadcastMessage = new java.util.HashMap<>();
+				broadcastMessage.put("type", "TASK_DELETED");
+				broadcastMessage.put("projectId", projectId);
+				broadcastMessage.put("taskId", taskVo.getTaskId());
+				broadcastMessage.put("boardId", taskVo.getBoardId());
+				broadcastMessage.put("timestamp", System.currentTimeMillis());
+				
+				// 프로젝트의 모든 사용자에게 실시간 브로드캐스트
+				kanbanWebSocketHandler.broadcastToProject(projectId, broadcastMessage);
+				System.out.println("📡 태스크 삭제 WebSocket 브로드캐스트 완료: " + taskVo.getTaskId());
+			}
+		} catch (Exception broadcastException) {
+			System.err.println("⚠️ WebSocket 브로드캐스트 실패 (기능은 정상 처리됨): " + broadcastException.getMessage());
+		}
 	}
 
 	/**
@@ -715,69 +765,94 @@ public class TaskController {
 		}
 	}
 
-	/**
-	 * boardId를 통해 projectId를 찾아 Redis 캐시 무효화
-	 */
-	private void invalidateProjectCacheByBoardId(String boardId, String action) {
-		if (boardId == null) {
-			System.out.println("⚠️ boardId가 null이어서 캐시 무효화를 건너뜁니다.");
-			return;
-		}
+ 
+    /**
+     * boardId를 통해 projectId를 반환
+     */
+    private String getProjectIdByBoardId(String boardId) throws Exception {
+        if (boardId == null) {
+            return null;
+        }
+        
+        try {
+            BoardVo boardVo = new BoardVo();
+            boardVo.setBoardId(boardId);
+            BoardVo board = boardService.selectBoard(boardVo);
+            
+            if (board != null && board.getProjectId() != null) {
+                return board.getProjectId();
+            }
+        } catch (Exception e) {
+            System.err.println("❌ boardId로 projectId 조회 중 오류 발생: " + e.getMessage());
+            throw e;
+        }
+        
+        return null;
+    }
 
-		try {
-			BoardVo boardVo = new BoardVo();
-			boardVo.setBoardId(boardId);
-			BoardVo board = boardService.selectBoard(boardVo);
-
-			if (board != null && board.getProjectId() != null) {
-				kanbanRedisService.invalidateProjectCache(board.getProjectId());
-				System.out.println("🗑️ " + action + "으로 인한 프로젝트 캐시 무효화: " + board.getProjectId());
-			} else {
-				System.out.println("⚠️ boardId로 프로젝트를 찾을 수 없어 캐시 무효화를 건너뜁니다: " + boardId);
-			}
-		} catch (Exception e) {
-			System.err.println("❌ 캐시 무효화 중 오류 발생: " + e.getMessage());
-		}
-	}
-
-	/**
-	 * boardId를 통해 projectId를 찾아 Redis 캐시에 새 태스크 추가
-	 */
-	private void addTaskToProjectCacheByBoardId(String boardId, TaskVo taskVo, String action) {
-		if (boardId == null) {
-			System.out.println("⚠️ boardId가 null이어서 캐시 업데이트를 건너뜁니다.");
-			return;
-		}
-
-		try {
-			BoardVo boardVo = new BoardVo();
-			boardVo.setBoardId(boardId);
-			BoardVo board = boardService.selectBoard(boardVo);
-
-			if (board != null && board.getProjectId() != null) {
-				kanbanRedisService.addTaskToProjectCache(board.getProjectId(), taskVo);
-				System.out.println("✅ " + action + "으로 인한 프로젝트 캐시 업데이트: " + board.getProjectId());
-			} else {
-				System.out.println("⚠️ boardId로 프로젝트를 찾을 수 없어 캐시 업데이트를 건너뜁니다: " + boardId);
-			}
-		} catch (Exception e) {
-			System.err.println("❌ 캐시 업데이트 중 오류 발생: " + e.getMessage());
-			// 실패 시 기존 방식으로 대체
-			invalidateProjectCacheByBoardId(boardId, action + " (캐시 업데이트 실패로 무효화)");
-		}
-	}
-
-	/**
-	 * 사용자 이름을 포함한 업무(Task) 정보 목록 조회 처리한다.
-	 *
-	 * @param taskVo 업무(Task) 정보 TaskVo
-	 * @return TaskListVo 사용자 이름이 포함된 업무(Task) 정보 목록 TaskListVo
-	 * @throws Exception
-	 */
-	@ElService(key = "TaskListWithUserName")
-	@RequestMapping(value = "TaskListWithUserName")
-	@ElDescription(sub = "사용자 이름을 포함한 업무(Task) 정보 목록 조회", desc = "조건에 맞는 사용자 이름을 포함한 업무(Task) 정보 목록을 조회한다.")
-	public TaskListVo selectTaskListWithUserName(TaskVo taskVo) throws Exception {
+    /**
+     * boardId를 통해 projectId를 찾아 Redis 캐시 무효화
+     */
+    private void invalidateProjectCacheByBoardId(String boardId, String action) {
+        if (boardId == null) {
+            System.out.println("⚠️ boardId가 null이어서 캐시 무효화를 건너뜁니다.");
+            return;
+        }
+        
+        try {
+            BoardVo boardVo = new BoardVo();
+            boardVo.setBoardId(boardId);
+            BoardVo board = boardService.selectBoard(boardVo);
+            
+            if (board != null && board.getProjectId() != null) {
+                kanbanRedisService.invalidateProjectCache(board.getProjectId());
+                System.out.println("🗑️ " + action + "으로 인한 프로젝트 캐시 무효화: " + board.getProjectId());
+            } else {
+                System.out.println("⚠️ boardId로 프로젝트를 찾을 수 없어 캐시 무효화를 건너뜁니다: " + boardId);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ 캐시 무효화 중 오류 발생: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * boardId를 통해 projectId를 찾아 Redis 캐시에 새 태스크 추가
+     */
+    private void addTaskToProjectCacheByBoardId(String boardId, TaskVo taskVo, String action) {
+        if (boardId == null) {
+            System.out.println("⚠️ boardId가 null이어서 캐시 업데이트를 건너뜁니다.");
+            return;
+        }
+        
+        try {
+            BoardVo boardVo = new BoardVo();
+            boardVo.setBoardId(boardId);
+            BoardVo board = boardService.selectBoard(boardVo);
+            
+            if (board != null && board.getProjectId() != null) {
+                kanbanRedisService.addTaskToProjectCache(board.getProjectId(), taskVo);
+                System.out.println("✅ " + action + "으로 인한 프로젝트 캐시 업데이트: " + board.getProjectId());
+            } else {
+                System.out.println("⚠️ boardId로 프로젝트를 찾을 수 없어 캐시 업데이트를 건너뜁니다: " + boardId);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ 캐시 업데이트 중 오류 발생: " + e.getMessage());
+            // 실패 시 기존 방식으로 대체
+            invalidateProjectCacheByBoardId(boardId, action + " (캐시 업데이트 실패로 무효화)");
+        }
+    }
+    
+    /**
+     * 사용자 이름을 포함한 업무(Task) 정보 목록 조회 처리한다.
+     *
+     * @param taskVo 업무(Task) 정보 TaskVo
+     * @return TaskListVo 사용자 이름이 포함된 업무(Task) 정보 목록 TaskListVo
+     * @throws Exception
+     */
+    @ElService(key = "TaskListWithUserName")
+    @RequestMapping(value = "TaskListWithUserName")
+    @ElDescription(sub = "사용자 이름을 포함한 업무(Task) 정보 목록 조회", desc = "조건에 맞는 사용자 이름을 포함한 업무(Task) 정보 목록을 조회한다.")
+    public TaskListVo selectTaskListWithUserName(TaskVo taskVo) throws Exception {
 
 		System.out.println("🔍 TaskListWithUserName 호출 - 입력 파라미터: " + taskVo.toString());
 		System.out.println("  - boardId: " + taskVo.getBoardId());
