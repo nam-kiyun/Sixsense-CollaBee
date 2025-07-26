@@ -7,7 +7,7 @@ body {
 }
 
 /* 전체 컨테이너 */
-.modal-container {
+.task-modal-container {
     display: flex;
     align-items: center;
     justify-content: center;

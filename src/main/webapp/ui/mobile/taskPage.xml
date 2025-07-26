@@ -38,15 +38,22 @@
     		<w2:workflowCollection />
     		<xf:submission id="sbm_comment_create" action="/InsWebApp/comment/create.pwkjson" method="post" mediatype="application/json"
     			ref='data:json,{"id":"dma_comment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
-    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_create_submitdone" ev:submiterror="scwin.sbm_comment_create_submiterror" abortTrigger="">
+    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_create_submitdone"
+    			ev:submiterror="scwin.sbm_comment_create_submiterror" abortTrigger="">
     		</xf:submission>
     		<xf:submission id="sbm_comment_get" action="/InsWebApp/comment/{taskId}.pwkjson" method="post" mediatype="application/json"
     			ref='data:json,{"id":"dma_getComment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
-    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_get_submitdone" ev:submiterror="scwin.sbm_comment_get_submiterror" abortTrigger="">
+    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_get_submitdone"
+    			ev:submiterror="scwin.sbm_comment_get_submiterror" abortTrigger="">
     		</xf:submission>
     		<xf:submission id="sbm_comment_delete" action="/InsWebApp/comment/delete.pwkjson" method="post" mediatype="application/json"
     			ref='data:json,{"id":"dma_comment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
-    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_delete_submitdone" ev:submiterror="scwin.sbm_comment_delete_submiterror" abortTrigger="">
+    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_delete_submitdone"
+    			ev:submiterror="scwin.sbm_comment_delete_submiterror" abortTrigger="">
+    		</xf:submission>
+    		<xf:submission id="sbm_session" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json" ref=""
+    			target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
+    			ev:submitdone="scwin.sbm_session_submitdone" ev:submiterror="" abortTrigger="">
     		</xf:submission>
     	</xf:model>
     	<w2:layoutInfo />
@@ -104,12 +111,13 @@ scwin.onpageload = function () {
     //소켓 초기화 
     scwin.initializeChatWebSocket();
 
+    $p.executeSubmission("sbm_session");
+
     scwin.taskId = 1;
     scwin.getTask(scwin.taskId, 7);
 
     scwin.chat_touch();
     scwin.comment = false;
-
 
 
     //채팅
@@ -179,7 +187,6 @@ scwin.getTask = function (taskId, projectId) {
             data.userName ? userName_input.setValue(data.userName) : "";
 
             body_text.setValue(data.content);
-
 
             // const fileList = data.fileSrcVo;
 
@@ -615,6 +622,8 @@ scwin.deleteChat = function (chat) {
 
     // 현재 삭제 대상의 인덱스 찾기
     const idx = children.indexOf(chat);
+    let firstChild = group.render?.children[idx-1] ?? null;
+    let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
 
     if (idx === -1) {
         console.warn("삭제 대상이 그룹 안에 존재하지 않습니다.");
@@ -622,9 +631,10 @@ scwin.deleteChat = function (chat) {
     }
 
     if (idx >= 0) {
-        const prevComp = children[idx + 1];
+        const prevComp = insertBeforeTarget;
         const isDateComp = prevComp?.options?.className === "comment-date";
         const labelText = prevComp?.render?.innerText;
+        
 
         if (isDateComp) {
             prevComp.remove();
@@ -808,7 +818,15 @@ scwin.formatTime = function (datetimeStr) {
     if (hour > 12) hour -= 12;
     if (hour === 0) hour = 12;
     return `${isAM ? '오전' : '오후'} ${hour}:${minute}`;
-};]]></script>
+};
+
+scwin.sbm_session_submitdone = function (e) {
+    const userInfo = e.responseJSON.userVo;
+    currentUser.userId = userInfo.userId;
+    currentUser.userName = userInfo.userName;
+    currentUser.userImage = userInfo.profileImageUrl;
+};
+]]></script>
     	<style type="text/css"><![CDATA[html,
 body {
     margin: 0;
@@ -1157,7 +1175,7 @@ body {
     					<xf:group style="" id="" class="dec-group">
     						<w2:textbox style="" id="" label="중요도" class="dec-name"></w2:textbox>
     						<xf:select1 submenuSize="auto" ref="" chooseOptionLabel="" appearance="minimal"
-    							disabledClass="w2selectbox_disabled" chooseOption="true" style="width: 148px;height: 21px;" disabled="true" id="" allOption=""
+    							disabledClass="w2selectbox_disabled" chooseOption="true" style="width: 148px;height: 21px;" disabled="true" id="priority_select" allOption=""
     							direction="auto">
     							<xf:choices>
     								<xf:item>
@@ -1179,7 +1197,7 @@ body {
     						<w2:textbox style="" id="" label="태그" class="dec-name"></w2:textbox>
     						<xf:select1 chooseOptionLabel="" ref="" submenuSize="auto" appearance="minimal"
     							disabledClass="w2selectbox_disabled" chooseOption="true" disabled="true" style="width: 148px;height: 21px;" allOption=""
-    							id="selectbox1" class="input-text" direction="auto">
+    							id="tags_input" class="input-text" direction="auto">
     							<xf:choices>
     								<xf:item>
     									<xf:label><![CDATA[기획]]></xf:label>

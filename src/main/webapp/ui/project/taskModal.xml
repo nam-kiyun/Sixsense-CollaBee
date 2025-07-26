@@ -123,6 +123,10 @@
 				ref='data:json,{"id":"dma_task","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
 				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_deleteTask_submitdone" ev:submiterror="" abortTrigger="">
 			</xf:submission>
+			<xf:submission id="sbm_session" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json" ref=""
+				target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
+				ev:submitdone="scwin.sbm_session_submitdone" ev:submiterror="" abortTrigger="">
+			</xf:submission>
 		</xf:model>
 		<w2:layoutInfo />
 		<w2:publicInfo method="" />
@@ -179,12 +183,13 @@ scwin.onpageload = function () {
     //소켓 초기화 
     scwin.initializeChatWebSocket();
 
+    $p.executeSubmission("sbm_session");
+
     //버전관리
     scwin.snapShot = false; //버전에서 현재상태 저장여부
     scwin.originalData = {};
     scwin.changeEditor();
     scwin.previousHTML = "";
-
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -273,9 +278,7 @@ scwin.onpageload = function () {
     //사용자 정보
     let userInfo = $p.getParameter("userInfo");
     scwin.defaultImage = "https://raw.githubusercontent.com/dorazi0423/test/refs/heads/main/group1.png";
-    currentUser.userId = userInfo.userId;
-    currentUser.userName = userInfo.userName;
-    currentUser.userImage = userInfo.userImage
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //문서 내용 불러오기
@@ -315,10 +318,31 @@ scwin.onpageload = function () {
 
     scwin.chatDate = new Set();
 
-
+    scwin.link();
 };
 
 
+
+scwin.link = function () {
+    const ckInstance = CKEDITOR.instances["mf_wfr_mainContent_exa_popup_wframe_contents_editor_"];
+
+    // 에디터에서 HTML 추출하기
+    const contentHtml = ckInstance.getData();
+    console.log(contentHtml);
+
+    // 하이퍼링크가 있을 경우 클릭 시 새창 열기 (편집모드에서는 직접 구현 필요)
+    ckInstance.on('contentDom', function () {
+        ckInstance.document.on('click', function (event) {
+            const element = event.data.getTarget();
+
+            if (element.is('a') && element.getAttribute('href')) {
+                const href = element.getAttribute('href');
+                window.open(href, '_blank');
+                event.data.preventDefault(); // 기본 클릭 동작 막기
+            }
+        });
+    });
+}
 
 
 scwin.changeEditor = function () {
@@ -396,6 +420,7 @@ scwin.changeEditor = function () {
 
             scwin.previousHTML = currentHTML;
         });
+
     });
 };
 
@@ -618,7 +643,7 @@ scwin.getTask = function (taskId, projectId) {
                 }
             });
 
-            contents_editor.setHTML(container.innerHTML);
+            //contents_editor.setHTML(container.innerHTML);
             scwin.previousHTML = contents_editor.getHTML();
 
             dls_allFile.setJSON(data.fileSrcVo);
@@ -1005,16 +1030,19 @@ scwin.deleteChat = function (chat) {
 
     // 현재 삭제 대상의 인덱스 찾기
     const idx = children.indexOf(chat);
+    let firstChild = group.render?.children[idx - 1] ?? null;
+    let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
 
     if (idx === -1) {
         console.warn("삭제 대상이 그룹 안에 존재하지 않습니다.");
         return;
     }
-
+    console.log(insertBeforeTarget);
     if (idx >= 0) {
-        const prevComp = children[idx + 1];
+        const prevComp = insertBeforeTarget;
         const isDateComp = prevComp?.options?.className === "comment-date";
         const labelText = prevComp?.render?.innerText;
+
 
         if (isDateComp) {
             prevComp.remove();
@@ -1052,11 +1080,6 @@ scwin.sbm_comment_get_submitdone = function (e) {
     const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
     let firstChild = group.render?.children[0] ?? null;
     let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
-
-    currentUser.userId = userInfo.userId;
-    currentUser.userName = userInfo.userName;
-    currentUser.userImage = userInfo.userImage
-
 
     if (commentList.length === 0) {
         scwin.hasMore = false; // 더 이상 불러올 댓글 없음
@@ -1253,6 +1276,7 @@ scwin.saveTask = function () {
         contentType: false,
         success: async function (res) {
             await $c.win.alert("업무 정보가 저장되었습니다");
+            scwin.getTask(scwin.taskId, scwin.projectId);
         },
         error: async function (err) {
             await $c.win.alert("저장 실패! 다시 시도해주세요");
@@ -1650,13 +1674,28 @@ scwin.end_date_onchange = function () {
     }
 };
 
+
+scwin.sbm_session_submitdone = function (e) {
+    const userInfo = e.responseJSON.userVo;
+    currentUser.userId = userInfo.userId;
+    currentUser.userName = userInfo.userName;
+    currentUser.userImage = userInfo.profileImageU
+};
 ]]></script>
-		<style type="text/css"><![CDATA[]]>
+		<style type="text/css"><![CDATA[.task-modal-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    border: none;
+    height: 90%;
+}]]>
 		</style>
 	</head>
 	<body ev:onpageload="scwin.onpageload">
 
-		<xf:group class="sub_contents modal-container" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true"
+		<xf:group class="sub_contents task-modal-container" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true"
 			meta_snippetName="0_01 페이지시작" style="">
 			<xf:group style="" id="" class="contents-group">
 				<xf:group style="" id="" class="contents-header-group">
@@ -1721,20 +1760,20 @@ scwin.end_date_onchange = function () {
 						</xf:group>
 						<xf:group class="header-input-box" id="" style="">
 							<w2:textbox class="header-input-text input-text text-bold" id="" label="중요도" style=""></w2:textbox>
-							<xf:select1 allOption="" appearance="minimal" chooseOption="true" chooseOptionLabel="" class="input-text" direction="auto"
-								disabled="false" disabledClass="w2selectbox_disabled" id="priority_select" ref="" style="width: 148px;height: 21px;font-size:26em;"
-								submenuSize="auto">
+							<xf:select1 allOption="" appearance="minimal" chooseOption="" chooseOptionLabel="" class="input-text"
+								direction="auto" disabled="false" disabledClass="w2selectbox_disabled" id="priority_select" ref=""
+								style="width: 148px;height: 21px;font-size:26em;" submenuSize="auto">
 								<xf:choices>
 									<xf:item>
-										<xf:label><![CDATA[상]]></xf:label>
+										<xf:label><![CDATA[높음]]></xf:label>
 										<xf:value><![CDATA[high]]></xf:value>
 									</xf:item>
 									<xf:item>
-										<xf:label><![CDATA[중]]></xf:label>
+										<xf:label><![CDATA[보통]]></xf:label>
 										<xf:value><![CDATA[medium]]></xf:value>
 									</xf:item>
 									<xf:item>
-										<xf:label><![CDATA[하]]></xf:label>
+										<xf:label><![CDATA[낮음]]></xf:label>
 										<xf:value><![CDATA[low]]></xf:value>
 									</xf:item>
 								</xf:choices>

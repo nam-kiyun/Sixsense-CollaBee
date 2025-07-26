@@ -35,6 +35,8 @@ import com.inswave.elfw.annotation.ElValidator;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
@@ -527,6 +529,8 @@ public class TaskController {
 
 		// 3. 치환된 HTML로 반영
 		updateVo.setContent(doc.body().html());
+		String html = convertLinksWithTitle(updateVo.getContent());
+		//updateVo.setContent(html);
 
 		// 4. 기타 처리 및 저장
 		taskService.saveTask(updateVo);
@@ -546,6 +550,43 @@ public class TaskController {
 		amazonS3.putObject(new PutObjectRequest(bucketName, s3Key, file.getInputStream(), metadata));
 
 		return "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/" + s3Key;
+	}
+
+	public String convertLinksWithTitle(String html) {
+		Document doc = Jsoup.parse(html);
+
+		// 텍스트 노드 중 링크 형태를 찾아 처리
+		for (Element el : doc.getAllElements()) {
+			for (TextNode tn : el.textNodes()) {
+				String text = tn.text();
+				if (text.matches(".*(www\\.|http).*")) {
+					String[] parts = text.split("\\s+");
+					for (String part : parts) {
+						if (part.matches("(www\\.[^\\s]+)|(https?://[^\\s]+)")) {
+							String url = part.startsWith("www.") ? "http://" + part : part;
+							try {
+								String title = Jsoup.connect(url).get().title();
+								Element link = doc.createElement("a");
+								link.attr("href", url);
+								link.text(title);
+
+								Node parentNode = tn.parent();
+								if (parentNode instanceof Element) {
+									Element parent = (Element) parentNode;
+									tn.remove();
+									parent.appendChild(link);
+								}
+
+							} catch (Exception e) {
+								// 실패 시 원래 텍스트 유지
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return doc.body().html();
 	}
 
 	/**
@@ -674,93 +715,92 @@ public class TaskController {
 		}
 	}
 
- 
-    /**
-     * boardId를 통해 projectId를 찾아 Redis 캐시 무효화
-     */
-    private void invalidateProjectCacheByBoardId(String boardId, String action) {
-        if (boardId == null) {
-            System.out.println("⚠️ boardId가 null이어서 캐시 무효화를 건너뜁니다.");
-            return;
-        }
-        
-        try {
-            BoardVo boardVo = new BoardVo();
-            boardVo.setBoardId(boardId);
-            BoardVo board = boardService.selectBoard(boardVo);
-            
-            if (board != null && board.getProjectId() != null) {
-                kanbanRedisService.invalidateProjectCache(board.getProjectId());
-                System.out.println("🗑️ " + action + "으로 인한 프로젝트 캐시 무효화: " + board.getProjectId());
-            } else {
-                System.out.println("⚠️ boardId로 프로젝트를 찾을 수 없어 캐시 무효화를 건너뜁니다: " + boardId);
-            }
-        } catch (Exception e) {
-            System.err.println("❌ 캐시 무효화 중 오류 발생: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * boardId를 통해 projectId를 찾아 Redis 캐시에 새 태스크 추가
-     */
-    private void addTaskToProjectCacheByBoardId(String boardId, TaskVo taskVo, String action) {
-        if (boardId == null) {
-            System.out.println("⚠️ boardId가 null이어서 캐시 업데이트를 건너뜁니다.");
-            return;
-        }
-        
-        try {
-            BoardVo boardVo = new BoardVo();
-            boardVo.setBoardId(boardId);
-            BoardVo board = boardService.selectBoard(boardVo);
-            
-            if (board != null && board.getProjectId() != null) {
-                kanbanRedisService.addTaskToProjectCache(board.getProjectId(), taskVo);
-                System.out.println("✅ " + action + "으로 인한 프로젝트 캐시 업데이트: " + board.getProjectId());
-            } else {
-                System.out.println("⚠️ boardId로 프로젝트를 찾을 수 없어 캐시 업데이트를 건너뜁니다: " + boardId);
-            }
-        } catch (Exception e) {
-            System.err.println("❌ 캐시 업데이트 중 오류 발생: " + e.getMessage());
-            // 실패 시 기존 방식으로 대체
-            invalidateProjectCacheByBoardId(boardId, action + " (캐시 업데이트 실패로 무효화)");
-        }
-    }
-    
-    /**
-     * 사용자 이름을 포함한 업무(Task) 정보 목록 조회 처리한다.
-     *
-     * @param taskVo 업무(Task) 정보 TaskVo
-     * @return TaskListVo 사용자 이름이 포함된 업무(Task) 정보 목록 TaskListVo
-     * @throws Exception
-     */
-    @ElService(key = "TaskListWithUserName")
-    @RequestMapping(value = "TaskListWithUserName")
-    @ElDescription(sub = "사용자 이름을 포함한 업무(Task) 정보 목록 조회", desc = "조건에 맞는 사용자 이름을 포함한 업무(Task) 정보 목록을 조회한다.")
-    public TaskListVo selectTaskListWithUserName(TaskVo taskVo) throws Exception {
+	/**
+	 * boardId를 통해 projectId를 찾아 Redis 캐시 무효화
+	 */
+	private void invalidateProjectCacheByBoardId(String boardId, String action) {
+		if (boardId == null) {
+			System.out.println("⚠️ boardId가 null이어서 캐시 무효화를 건너뜁니다.");
+			return;
+		}
 
-        System.out.println("🔍 TaskListWithUserName 호출 - 입력 파라미터: " + taskVo.toString());
-        System.out.println("  - boardId: " + taskVo.getBoardId());
-        System.out.println("  - projectUserId: " + taskVo.getProjectUserId());
-        System.out.println("  - tags: " + taskVo.getTags());
+		try {
+			BoardVo boardVo = new BoardVo();
+			boardVo.setBoardId(boardId);
+			BoardVo board = boardService.selectBoard(boardVo);
 
-        List<TaskVo> taskVoList = taskService.selectTaskListWithUserName(taskVo);
-        
-        System.out.println("📊 TaskListWithUserName 결과 개수: " + (taskVoList != null ? taskVoList.size() : 0));
-        if (taskVoList != null && !taskVoList.isEmpty()) {
-            System.out.println("📋 조회된 태스크 목록:");
-            for (TaskVo task : taskVoList) {
-                System.out.println("  - taskId: " + task.getTaskId() + ", boardId: " + task.getBoardId() + 
-                                 ", title: " + task.getTaskTitle() + ", userName: " + task.getUserName());
-            }
-        } else {
-            System.out.println("⚠️ 조회된 태스크가 없습니다. boardId=" + taskVo.getBoardId() + " 조건 확인 필요");
-        }
+			if (board != null && board.getProjectId() != null) {
+				kanbanRedisService.invalidateProjectCache(board.getProjectId());
+				System.out.println("🗑️ " + action + "으로 인한 프로젝트 캐시 무효화: " + board.getProjectId());
+			} else {
+				System.out.println("⚠️ boardId로 프로젝트를 찾을 수 없어 캐시 무효화를 건너뜁니다: " + boardId);
+			}
+		} catch (Exception e) {
+			System.err.println("❌ 캐시 무효화 중 오류 발생: " + e.getMessage());
+		}
+	}
 
-        TaskListVo taskListVo = new TaskListVo();
-        taskListVo.setTaskVoList(taskVoList);
+	/**
+	 * boardId를 통해 projectId를 찾아 Redis 캐시에 새 태스크 추가
+	 */
+	private void addTaskToProjectCacheByBoardId(String boardId, TaskVo taskVo, String action) {
+		if (boardId == null) {
+			System.out.println("⚠️ boardId가 null이어서 캐시 업데이트를 건너뜁니다.");
+			return;
+		}
 
-        return taskListVo;
-    }
-   
+		try {
+			BoardVo boardVo = new BoardVo();
+			boardVo.setBoardId(boardId);
+			BoardVo board = boardService.selectBoard(boardVo);
+
+			if (board != null && board.getProjectId() != null) {
+				kanbanRedisService.addTaskToProjectCache(board.getProjectId(), taskVo);
+				System.out.println("✅ " + action + "으로 인한 프로젝트 캐시 업데이트: " + board.getProjectId());
+			} else {
+				System.out.println("⚠️ boardId로 프로젝트를 찾을 수 없어 캐시 업데이트를 건너뜁니다: " + boardId);
+			}
+		} catch (Exception e) {
+			System.err.println("❌ 캐시 업데이트 중 오류 발생: " + e.getMessage());
+			// 실패 시 기존 방식으로 대체
+			invalidateProjectCacheByBoardId(boardId, action + " (캐시 업데이트 실패로 무효화)");
+		}
+	}
+
+	/**
+	 * 사용자 이름을 포함한 업무(Task) 정보 목록 조회 처리한다.
+	 *
+	 * @param taskVo 업무(Task) 정보 TaskVo
+	 * @return TaskListVo 사용자 이름이 포함된 업무(Task) 정보 목록 TaskListVo
+	 * @throws Exception
+	 */
+	@ElService(key = "TaskListWithUserName")
+	@RequestMapping(value = "TaskListWithUserName")
+	@ElDescription(sub = "사용자 이름을 포함한 업무(Task) 정보 목록 조회", desc = "조건에 맞는 사용자 이름을 포함한 업무(Task) 정보 목록을 조회한다.")
+	public TaskListVo selectTaskListWithUserName(TaskVo taskVo) throws Exception {
+
+		System.out.println("🔍 TaskListWithUserName 호출 - 입력 파라미터: " + taskVo.toString());
+		System.out.println("  - boardId: " + taskVo.getBoardId());
+		System.out.println("  - projectUserId: " + taskVo.getProjectUserId());
+		System.out.println("  - tags: " + taskVo.getTags());
+
+		List<TaskVo> taskVoList = taskService.selectTaskListWithUserName(taskVo);
+
+		System.out.println("📊 TaskListWithUserName 결과 개수: " + (taskVoList != null ? taskVoList.size() : 0));
+		if (taskVoList != null && !taskVoList.isEmpty()) {
+			System.out.println("📋 조회된 태스크 목록:");
+			for (TaskVo task : taskVoList) {
+				System.out.println("  - taskId: " + task.getTaskId() + ", boardId: " + task.getBoardId() + ", title: "
+						+ task.getTaskTitle() + ", userName: " + task.getUserName());
+			}
+		} else {
+			System.out.println("⚠️ 조회된 태스크가 없습니다. boardId=" + taskVo.getBoardId() + " 조건 확인 필요");
+		}
+
+		TaskListVo taskListVo = new TaskListVo();
+		taskListVo.setTaskVoList(taskVoList);
+
+		return taskListVo;
+	}
+
 }
