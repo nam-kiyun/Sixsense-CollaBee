@@ -1558,10 +1558,10 @@ scwin.makeProfileImagesRound = function() {
             </xf:group>
             
             <!-- 검색 및 추가 영역 -->
-            <xf:group style="background-color:#f8f9fa;border-radius:12px;padding:24px;margin-bottom:32px;max-width:1200px;margin:0 auto 32px auto;width:95%;" id="grp_searchArea">
+            <xf:group style="background-color:#f8f9fa;border-radius:12px;padding:24px;margin-bottom:12px;max-width:1200px;margin:0 auto 12px auto;width:95%;" id="grp_searchArea">
                 
                 <!-- 검색 바 -->
-                <xf:group style="display:flex;gap:16px;align-items:center;margin-bottom:20px;" id="grp_searchBar">
+                <xf:group style="display:flex;gap:16px;align-items:center;" id="grp_searchBar">
                 	<xf:input
                 		style="flex:1;max-width:400px;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 16px;font-size:16px;font-family:Inter,sans-serif;"
                 		ref="dm_search.searchValue" id="input_search" placeholder="이메일로 검색" ev:onkeyup="scwin.input_search_onkeyup" />
@@ -1569,7 +1569,7 @@ scwin.makeProfileImagesRound = function() {
                 	<xf:trigger
                 		style="width:80px;height:48px;background-color:#ffb823;border:1px solid #ffb823;border-radius:8px;color:#000000;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
                 		id="btn_search" type="button" ev:onclick="scwin.btn_search_onclick">
-                		<xf:label><![CDATA[검색]]></xf:label>
+                		<xf:label><![CDATA[확인]]></xf:label>
                 	</xf:trigger>
                 	<xf:trigger
                 		style="width:140px;height:48px;background-color:#ffb823;border:1px solid #ffb823;border-radius:8px;color:#000000s;font-size:16px;font-family:Inter,sans-serif;cursor:pointer;font-weight:500;"
@@ -1579,7 +1579,7 @@ scwin.makeProfileImagesRound = function() {
                 </xf:group>
 
                 <!-- 검색 결과 메시지 영역 -->
-                <xf:group style="margin-top:16px;margin-bottom:8px;" id="grp_searchMessage">
+                <xf:group id="grp_searchMessage">
                     <xf:output 
                         style="font-size:14px;font-family:Inter,sans-serif;display:none;" 
                         id="output_searchMessage">

@@ -6153,6 +6153,44 @@ scwin.closeVideoChatModal = function (isPipMode) {
         } catch (e) {
             console.error("강제 DOM 제거 실패:", e);
         }
+        
+        // 화상통화 모달이 완전히 닫힌 후 다른 팝업들의 헤더 복원
+        setTimeout(function() {
+            try {
+                console.log("다른 팝업들의 헤더 복원 시작");
+                
+                // 모든 WebSquare 팝업 헤더를 다시 표시
+                var allHeaders = document.querySelectorAll('.w2window_header');
+                for (var i = 0; i < allHeaders.length; i++) {
+                    var header = allHeaders[i];
+                    // 화상통화 팝업이 아닌 헤더들만 복원
+                    if (!header.closest('[id*="videoChatPopup"]')) {
+                        header.style.display = '';
+                        header.style.height = '';
+                        header.style.minHeight = '';
+                        header.style.visibility = '';
+                    }
+                }
+                
+                // 추가로 WebSquare 기본 헤더 스타일 복원
+                var popupHeaders = document.querySelectorAll('.w2popup_window .w2window_header');
+                for (var j = 0; j < popupHeaders.length; j++) {
+                    var popupHeader = popupHeaders[j];
+                    // 화상통화 팝업이 아닌 헤더들만 복원
+                    if (!popupHeader.closest('[id*="videoChatPopup"]')) {
+                        popupHeader.style.display = '';
+                        popupHeader.style.height = '';
+                        popupHeader.style.minHeight = '';
+                        popupHeader.style.visibility = '';
+                    }
+                }
+                
+                console.log("다른 팝업들의 헤더 복원 완료");
+            } catch (error) {
+                console.error("헤더 복원 중 오류:", error);
+            }
+        }, 200);
+        
     }, 100);
 };
 
