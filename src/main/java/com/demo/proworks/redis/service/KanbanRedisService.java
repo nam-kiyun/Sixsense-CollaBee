@@ -832,4 +832,40 @@ public class KanbanRedisService {
         
         return stats;
     }
+    
+    // ================== 사용자 이름 포함 태스크 캐싱 메서드 (성능 최적화) ==================
+    
+    /**
+     * 사용자 이름 포함 태스크 목록을 Redis에 캐싱
+     */
+    public void cacheTasksWithUserName(String cacheKey, java.util.List<java.util.Map<String, Object>> tasks) {
+        try {
+            String json = objectMapper.writeValueAsString(tasks);
+            kanbanRedisTemplate.opsForValue().set(cacheKey, json, PROJECT_DATA_CACHE_TTL, TimeUnit.SECONDS);
+            System.out.println("🔧 Redis에 사용자 이름 포함 태스크 목록 캐싱: " + cacheKey + " (태스크 수: " + tasks.size() + ")");
+        } catch (JsonProcessingException e) {
+            System.err.println("❌ 사용자 이름 포함 태스크 목록 캐싱 실패: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 사용자 이름 포함 태스크 목록을 Redis에서 조회
+     */
+    @SuppressWarnings("unchecked")
+    public java.util.List<java.util.Map<String, Object>> getCachedTasksWithUserName(String cacheKey) {
+        try {
+            String json = (String) kanbanRedisTemplate.opsForValue().get(cacheKey);
+            
+            if (json != null) {
+                System.out.println("✅ Redis에서 사용자 이름 포함 태스크 목록 조회 성공: " + cacheKey);
+                return objectMapper.readValue(json, java.util.List.class);
+            } else {
+                System.out.println("⚠️ Redis에 사용자 이름 포함 태스크 목록 캐시 없음: " + cacheKey);
+            }
+        } catch (JsonProcessingException e) {
+            System.err.println("❌ 사용자 이름 포함 태스크 목록 조회 실패: " + e.getMessage());
+        }
+        
+        return null;
+    }
 }

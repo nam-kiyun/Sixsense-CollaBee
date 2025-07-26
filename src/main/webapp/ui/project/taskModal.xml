@@ -1291,20 +1291,34 @@ scwin.saveTask = function () {
                     parentScwin.refreshBoardData(boardId);
                     
                     // WebSocket으로 실시간 동기화 메시지 전송
+                    console.log("=== 태스크 저장 후 WebSocket 메시지 전송 시도 ===");
+                    console.log("parentScwin.sendWebSocketMessage 존재:", !!parentScwin.sendWebSocketMessage);
+                    
                     if (parentScwin.sendWebSocketMessage) {
                         const userId = parentScwin.getCurrentUserId();
-                        const projectId = parentScwin.$p.getComponentById("dm_projectVo").get("projectId");
+                        const projectId = scwin.projectId; // taskModal에서 이미 가지고 있는 프로젝트 ID 사용
+                        
+                        console.log("사용자 정보:");
+                        console.log("- userId:", userId);
+                        console.log("- projectId:", projectId);
+                        console.log("- boardId:", boardId);
+                        console.log("- taskId:", scwin.taskInfo.taskId);
+                        
                         const message = {
-                            type: "TASK_UPDATED",
+                            type: "TASK_UPDATED", // 태스크 업데이트 메시지 타입으로 변경
                             boardId: boardId,
                             taskId: scwin.taskInfo.taskId,
-                            action: "UPDATE",
                             userId: userId,
-                            projectId: projectId,
-                            timestamp: new Date().toISOString()
+                            projectId: projectId
                         };
+                        
+                        console.log("������ WebSocket 메시지 전송 시도 (태스크 업데이트):", message);
                         parentScwin.sendWebSocketMessage(message);
-                        console.log("������ WebSocket 메시지 전송 (태스크 업데이트):", message);
+                        console.log("✅ WebSocket 메시지 전송 완료");
+                    } else {
+                        console.error("❌ parentScwin.sendWebSocketMessage 함수를 찾을 수 없음");
+                        console.log("parentScwin 객체:", parentScwin);
+                        console.log("parentScwin의 속성들:", Object.keys(parentScwin || {}));
                     }
                 }
             } catch (refreshError) {
@@ -1699,20 +1713,34 @@ scwin.sbm_deleteTask_submitdone = function (e) {
             parentScwin.refreshBoardData(boardId);
             
             // WebSocket으로 실시간 동기화 메시지 전송
+            console.log("=== 태스크 삭제 후 WebSocket 메시지 전송 시도 ===");
+            console.log("parentScwin.sendWebSocketMessage 존재:", !!parentScwin.sendWebSocketMessage);
+            
             if (parentScwin.sendWebSocketMessage) {
                 const userId = parentScwin.getCurrentUserId();
-                const projectId = parentScwin.$p.getComponentById("dm_projectVo").get("projectId");
+                const projectId = scwin.projectId; // taskModal에서 이미 가지고 있는 프로젝트 ID 사용
+                
+                console.log("사용자 정보:");
+                console.log("- userId:", userId);
+                console.log("- projectId:", projectId);
+                console.log("- boardId:", boardId);
+                console.log("- taskId:", scwin.taskInfo.taskId);
+                
                 const message = {
-                    type: "TASK_UPDATED",
+                    type: "TASK_DELETED",
                     boardId: boardId,
                     taskId: scwin.taskInfo.taskId,
-                    action: "DELETE",
                     userId: userId,
-                    projectId: projectId,
-                    timestamp: new Date().toISOString()
+                    projectId: projectId
                 };
+                
+                console.log("������️ WebSocket 메시지 전송 시도 (태스크 삭제):", message);
                 parentScwin.sendWebSocketMessage(message);
-                console.log("������️ WebSocket 메시지 전송 (태스크 삭제):", message);
+                console.log("✅ WebSocket 메시지 전송 완료");
+            } else {
+                console.error("❌ parentScwin.sendWebSocketMessage 함수를 찾을 수 없음");
+                console.log("parentScwin 객체:", parentScwin);
+                console.log("parentScwin의 속성들:", Object.keys(parentScwin || {}));
             }
         }
     } catch (refreshError) {

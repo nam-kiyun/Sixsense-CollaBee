@@ -13,6 +13,7 @@ import com.demo.proworks.board.vo.BoardVo;
 import com.demo.proworks.project.vo.ProjectVo;
 import com.demo.proworks.board.vo.BoardListVo;
 import com.demo.proworks.redis.service.KanbanRedisService;
+import com.demo.proworks.websocket.handler.KanbanWebSocketHandler;
 
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
@@ -41,6 +42,10 @@ public class BoardController {
     /** KanbanRedisService - Redis 캐싱을 위한 서비스 */
     @Autowired
     private KanbanRedisService kanbanRedisService;
+    
+    /** KanbanWebSocketHandler - WebSocket 메시지 전송을 위한 핸들러 */
+    @Autowired
+    private KanbanWebSocketHandler kanbanWebSocketHandler;
 	
     
     /**
@@ -94,12 +99,51 @@ public class BoardController {
     @RequestMapping(value = "board/create")
     @ElDescription(sub = "보드 등록처리", desc = "보드를 등록 처리 한다.")
     public void insertBoard(BoardVo boardVo) throws Exception {    	 
+    	System.out.println("🔍 보드 생성 전 boardId: " + boardVo.getBoardId());
+    	
     	boardService.insertBoard(boardVo);
+    	
+    	System.out.println("🔍 보드 생성 후 boardId: " + boardVo.getBoardId());
     	
     	// Redis 캐시 무효화 - 프로젝트의 보드 목록이 변경되었음
     	if (boardVo.getProjectId() != null) {
     	    kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
     	    System.out.println("🗑️ 보드 등록으로 인한 프로젝트 캐시 무효화: " + boardVo.getProjectId());
+    	}
+    	
+    	// 🔄 WebSocket을 통한 실시간 보드 생성 브로드캐스트
+    	try {
+    	    System.out.println("🔍 보드 생성 후 WebSocket 브로드캐스트 시도");
+    	    System.out.println("- projectId: " + boardVo.getProjectId());
+    	    System.out.println("- boardId: " + boardVo.getBoardId());
+    	    System.out.println("- boardTitle: " + boardVo.getBoardTitle());
+    	    
+    	    if (boardVo.getProjectId() != null) {
+    	        // 실제 생성된 boardId 사용 (GENERATED 대신)
+    	        String actualBoardId = boardVo.getBoardId();
+    	        if (actualBoardId == null || actualBoardId.trim().isEmpty()) {
+    	            System.err.println("⚠️ 보드 생성 후에도 boardId가 null입니다. WebSocket 브로드캐스트 생략");
+    	            return;
+    	        }
+    	        
+    	        // 보드 생성 메시지 브로드캐스트
+    	        java.util.Map<String, Object> messageData = new java.util.HashMap<>();
+    	        messageData.put("type", "BOARD_CREATED");
+    	        messageData.put("projectId", boardVo.getProjectId());
+    	        messageData.put("boardId", actualBoardId);
+    	        messageData.put("boardTitle", boardVo.getBoardTitle());
+    	        messageData.put("timestamp", System.currentTimeMillis());
+    	        
+    	        System.out.println("🔄 WebSocket 핸들러 호출 시작 (실제 boardId: " + actualBoardId + ")");
+    	        // 모든 사용자에게 실시간 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
+    	        kanbanWebSocketHandler.handleBoardCreatedMessage(messageData);
+    	        System.out.println("📡 보드 생성 WebSocket 브로드캐스트 완료: " + actualBoardId);
+    	    } else {
+    	        System.out.println("⚠️ projectId가 null이어서 WebSocket 브로드캐스트 생략");
+    	    }
+    	} catch (Exception broadcastException) {
+    	    System.err.println("⚠️ WebSocket 브로드캐스트 실패 (기능은 정상 처리됨): " + broadcastException.getMessage());
+    	    broadcastException.printStackTrace();
     	}
     }
        
@@ -126,7 +170,7 @@ public class BoardController {
 
     /**
      * 보드를 삭제 처리한다.
-     * 삭제 후 관련 프로젝트의 Redis 캐시를 무효화합니다.
+     * 삭제 후 관련 프로젝트의 Redis 캐시를 무효화하고 WebSocket 메시지를 전송합니다.
      *
      * @param  boardVo 보드    
      * @throws Exception
@@ -135,12 +179,63 @@ public class BoardController {
     @RequestMapping(value="BoardDel")
     @ElDescription(sub = "보드 삭제처리", desc = "보드를 삭제 처리한다.")    
     public void deleteBoard(BoardVo boardVo) throws Exception {
+        System.out.println("🗑️ 보드 삭제 요청: " + boardVo.getBoardId() + " (프로젝트: " + boardVo.getProjectId() + ")");
+        
+        // 삭제 전 보드 정보 백업 (WebSocket 메시지용)
+        String deletedBoardId = boardVo.getBoardId();
+        String deletedBoardTitle = boardVo.getBoardTitle();
+        String projectId = boardVo.getProjectId();
+        
+        // 보드 제목이 없으면 DB에서 조회
+        if (deletedBoardTitle == null || deletedBoardTitle.trim().isEmpty()) {
+            try {
+                BoardVo existingBoard = boardService.selectBoard(boardVo);
+                if (existingBoard != null) {
+                    deletedBoardTitle = existingBoard.getBoardTitle();
+                    System.out.println("📋 DB에서 보드 제목 조회: " + deletedBoardTitle);
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ 보드 제목 조회 실패, 기본값 사용: " + e.getMessage());
+                deletedBoardTitle = "삭제된 보드";
+            }
+        }
+        
+        // 보드 삭제 실행
         boardService.deleteBoard(boardVo);
+        System.out.println("✅ 보드 DB 삭제 완료: " + deletedBoardId);
         
         // Redis 캐시 무효화 - 프로젝트의 보드 목록이 변경되었음
-        if (boardVo.getProjectId() != null) {
-            kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
-            System.out.println("🗑️ 보드 삭제로 인한 프로젝트 캐시 무효화: " + boardVo.getProjectId());
+        if (projectId != null) {
+            kanbanRedisService.invalidateProjectCache(projectId);
+            System.out.println("🗑️ 보드 삭제로 인한 프로젝트 캐시 무효화: " + projectId);
+        }
+        
+        // 🔄 WebSocket을 통한 실시간 보드 삭제 브로드캐스트
+        try {
+            System.out.println("🔍 보드 삭제 후 WebSocket 브로드캐스트 시도");
+            System.out.println("- projectId: " + projectId);
+            System.out.println("- deletedBoardId: " + deletedBoardId);
+            System.out.println("- deletedBoardTitle: " + deletedBoardTitle);
+            
+            if (projectId != null && deletedBoardId != null) {
+                // 보드 삭제 메시지 브로드캐스트
+                java.util.Map<String, Object> messageData = new java.util.HashMap<>();
+                messageData.put("type", "BOARD_DELETED");
+                messageData.put("projectId", projectId);
+                messageData.put("boardId", deletedBoardId);
+                messageData.put("boardTitle", deletedBoardTitle != null ? deletedBoardTitle : "삭제된 보드");
+                messageData.put("timestamp", System.currentTimeMillis());
+                
+                System.out.println("🔄 WebSocket 핸들러 호출 시작");
+                // 모든 사용자에게 실시간 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
+                kanbanWebSocketHandler.handleBoardDeletedMessage(messageData);
+                System.out.println("📡 보드 삭제 WebSocket 브로드캐스트 완료: " + deletedBoardId);
+            } else {
+                System.out.println("⚠️ projectId 또는 boardId가 null이어서 WebSocket 브로드캐스트 생략");
+            }
+        } catch (Exception broadcastException) {
+            System.err.println("⚠️ WebSocket 브로드캐스트 실패 (기능은 정상 처리됨): " + broadcastException.getMessage());
+            broadcastException.printStackTrace();
         }
     }
     

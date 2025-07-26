@@ -19,16 +19,21 @@
 ]]></style>
         <xf:model>
             <w2:dataCollection baseNode="map">
-                <w2:dataMap baseNode="map" id="dm_userInfo">
-                    <w2:keyInfo>
-                        <w2:key id="userName" name="사용자명" dataType="text"/>
-                        <w2:key id="userId" name="사용자ID" dataType="text"/>
-                    </w2:keyInfo>
-                    <w2:data use="true">
-                        <userName>식스센스</userName>
-                        <userId>user01</userId>
-                    </w2:data>
-                </w2:dataMap>
+            	<w2:dataMap baseNode="map" id="dm_userInfo">
+            		<w2:keyInfo>
+            			<w2:key id="userName" name="사용자명" dataType="text" />
+            			<w2:key id="userId" name="사용자ID" dataType="text" />
+            		</w2:keyInfo>
+            		<w2:data use="true">
+            			<userName>식스센스</userName>
+            			<userId>user01</userId>
+            		</w2:data>
+            	</w2:dataMap>
+            	<w2:dataMap baseNode="map" id="dm_projectVo">
+            		<w2:keyInfo>
+            			<w2:key id="proejctId" name="projectId" dataType="number"></w2:key>
+            		</w2:keyInfo>
+            	</w2:dataMap>
             </w2:dataCollection>
             <w2:workflowCollection>
             </w2:workflowCollection>
