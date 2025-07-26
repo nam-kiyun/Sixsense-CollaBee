@@ -6,25 +6,19 @@ services:
     container_name: inswebapp-container
     restart: unless-stopped
     ports:
-      - "8080:9093" # HTTP 포트
+      - "8080:9093"
     volumes:
-      # 로그 볼륨 (호스트에서 로그 확인 가능)
+      # --- [수정] 아래 볼륨 경로들이 활성화되어 있는지 확인 ---
       - ./logs:/usr/local/tomcat/logs
-      # 웹스퀘어 관련 볼륨 (설정 파일, 업로드 파일 등)
       - ./volume/matrix_mobile_home:/usr/local/tomcat/volume/matrix_mobile_home
       - ./volume/websquare_home:/usr/local/tomcat/volume/websquare_home
       - ./volume/wmatrix_home:/usr/local/tomcat/volume/wmatrix_home
-      # 추가 설정 파일 볼륨 (필요시)
-      # - ./config/server.xml:/usr/local/tomcat/conf/server.xml:ro
     environment:
-      # JVM 옵션
-      - CATALINA_OPTS=-Xms512m -Xmx2g -server -XX:+UseG1GC
-      - JAVA_OPTS=-Dfile.encoding=UTF-8 -Duser.timezone=Asia/Seoul
-      # 애플리케이션 환경변수
+      # .env 파일을 사용한다면 이 부분은 비워둘 수 있습니다.
       - SPRING_PROFILES_ACTIVE=prod
       - TZ=Asia/Seoul
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      test: ["CMD", "curl", "-f", "http://localhost:9093/"] # 내부 톰캣 포트와 일치
       interval: 30s
       timeout: 10s
       retries: 3
@@ -33,7 +27,7 @@ services:
       - inswebapp-network
     depends_on:
       redis-server:
-        condition: service_healthy # redis-server의 healthcheck가 정상이 될 때까지 대기
+        condition: service_healthy
 
   redis-server:
     image: redis:7-alpine
@@ -42,33 +36,13 @@ services:
     ports:
       - "6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"] # Redis가 정상 응답하는지 확인
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - inswebapp-network
-  # 필요시 데이터베이스 서비스 추가
-  # database:
-  #   image: mysql:8.0
-  #   container_name: inswebapp-db
-  #   restart: unless-stopped
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: rootpassword
-  #     MYSQL_DATABASE: inswebapp
-  #     MYSQL_USER: inswebapp
-  #     MYSQL_PASSWORD: password
-  #   volumes:
-  #     - db_data:/var/lib/mysql
-  #     - ./sql:/docker-entrypoint-initdb.d
-  #   ports:
-  #     - "3306:3306"
-  #   networks:
-  #     - inswebapp-network
 
 networks:
   inswebapp-network:
     driver: bridge
-# volumes:
-#   db_data:
-#     driver: local
