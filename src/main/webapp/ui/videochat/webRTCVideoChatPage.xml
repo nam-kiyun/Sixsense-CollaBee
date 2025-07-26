@@ -68,10 +68,10 @@
                 top: 0px !important;
             }
             
-            /* WebSquare 팝업 헤더 전체 제거 */
-            .w2popup_window .w2window_header,
-            .w2window_header,
-            [id*="videoChatPopup"] .w2window_header {
+            /* 화상통화 팝업 헤더만 제거 (다른 팝업에 영향 없음) */
+            [id*="videoChatPopup"] .w2popup_window .w2window_header,
+            [id*="videoChatPopup"] .w2window_header,
+            [id*="videoChatPopup_"] .w2window_header {
                 display: none !important;
                 height: 0 !important;
                 min-height: 0 !important;
@@ -2825,6 +2825,43 @@ scwin.removeRemoteUser = function(peerId) {
     //console.log('✅ 원격 사용자 정리 완료:', peerId);
 };
 
+// 다른 팝업들의 헤더 복원 함수
+scwin.restoreOtherPopupHeaders = function() {
+    try {
+        console.log("다른 팝업들의 헤더 복원 시작");
+        
+        // 모든 WebSquare 팝업 헤더를 다시 표시
+        var allHeaders = document.querySelectorAll('.w2window_header');
+        for (var i = 0; i < allHeaders.length; i++) {
+            var header = allHeaders[i];
+            // 화상통화 팝업이 아닌 헤더들만 복원
+            if (!header.closest('[id*="videoChatPopup"]')) {
+                header.style.display = '';
+                header.style.height = '';
+                header.style.minHeight = '';
+                header.style.visibility = '';
+            }
+        }
+        
+        // 추가로 WebSquare 기본 헤더 스타일 복원
+        var popupHeaders = document.querySelectorAll('.w2popup_window .w2window_header');
+        for (var j = 0; j < popupHeaders.length; j++) {
+            var popupHeader = popupHeaders[j];
+            // 화상통화 팝업이 아닌 헤더들만 복원
+            if (!popupHeader.closest('[id*="videoChatPopup"]')) {
+                popupHeader.style.display = '';
+                popupHeader.style.height = '';
+                popupHeader.style.minHeight = '';
+                popupHeader.style.visibility = '';
+            }
+        }
+        
+        console.log("다른 팝업들의 헤더 복원 완료");
+    } catch (error) {
+        console.error("헤더 복원 중 오류:", error);
+    }
+};
+
 // 화상통화 나가기
 scwin.leaveCall = function() {
     console.log("=== leaveCall 함수 시작 ===");
@@ -2960,7 +2997,6 @@ scwin.leaveCall = function() {
                 console.error("history.back도 실패:", e2);
             }
         }
-        
         
     } catch (error) {
         //console.error("❌ 화상통화 나가기 실패:", error);
@@ -5590,6 +5626,9 @@ scwin.closeMiniPIP = function() {
     // 상태 업데이트
     isMiniPipActive = false;
     scwin.updatePiPButton(false);
+    
+    // 다른 팝업들의 헤더 복원
+    scwin.restoreOtherPopupHeaders();
     
     console.log('미니 PIP 모드 종료 완료');
 };

@@ -36,6 +36,13 @@ import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
 import com.inswave.elfw.annotation.ElValidator;
 
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
+import org.springframework.web.bind.annotation.RequestMethod;
+
 /**
  * @subject : 업무(Task) 정보 관련 처리를 담당하는 컨트롤러
  * @description : 업무(Task) 정보 관련 처리를 담당하는 컨트롤러
@@ -555,6 +562,8 @@ public class TaskController {
 
 		// 3. 치환된 HTML로 반영
 		updateVo.setContent(doc.body().html());
+		String html = convertLinksWithTitle(updateVo.getContent());
+		//updateVo.setContent(html);
 
 		// 4. 기타 처리 및 저장
 		taskService.saveTask(updateVo);
@@ -599,6 +608,43 @@ public class TaskController {
 		amazonS3.putObject(new PutObjectRequest(bucketName, s3Key, file.getInputStream(), metadata));
 
 		return "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/" + s3Key;
+	}
+
+	public String convertLinksWithTitle(String html) {
+		Document doc = Jsoup.parse(html);
+
+		// 텍스트 노드 중 링크 형태를 찾아 처리
+		for (Element el : doc.getAllElements()) {
+			for (TextNode tn : el.textNodes()) {
+				String text = tn.text();
+				if (text.matches(".*(www\\.|http).*")) {
+					String[] parts = text.split("\\s+");
+					for (String part : parts) {
+						if (part.matches("(www\\.[^\\s]+)|(https?://[^\\s]+)")) {
+							String url = part.startsWith("www.") ? "http://" + part : part;
+							try {
+								String title = Jsoup.connect(url).get().title();
+								Element link = doc.createElement("a");
+								link.attr("href", url);
+								link.text(title);
+
+								Node parentNode = tn.parent();
+								if (parentNode instanceof Element) {
+									Element parent = (Element) parentNode;
+									tn.remove();
+									parent.appendChild(link);
+								}
+
+							} catch (Exception e) {
+								// 실패 시 원래 텍스트 유지
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return doc.body().html();
 	}
 
 	/**
@@ -863,8 +909,8 @@ public class TaskController {
             System.out.println("⚠️ 조회된 태스크가 없습니다. boardId=" + taskVo.getBoardId() + " 조건 확인 필요");
         }
 
-        TaskListVo taskListVo = new TaskListVo();
-        taskListVo.setTaskVoList(taskVoList);
+		TaskListVo taskListVo = new TaskListVo();
+		taskListVo.setTaskVoList(taskVoList);
 
         // ⏱️ 개별 로드 성능 측정 완료
         long endTime = System.currentTimeMillis();

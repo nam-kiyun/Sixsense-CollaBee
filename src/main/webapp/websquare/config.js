@@ -617,7 +617,7 @@ export default {
     },
     "fusionchart": {
       "version": {
-        "@value": "3.19"
+        "@value": "4.0"
       }
     },
     "scheduleCalendar": {

@@ -6695,6 +6695,44 @@ scwin.closeVideoChatModal = function (isPipMode) {
         } catch (e) {
             console.error("강제 DOM 제거 실패:", e);
         }
+        
+        // 화상통화 모달이 완전히 닫힌 후 다른 팝업들의 헤더 복원
+        setTimeout(function() {
+            try {
+                console.log("다른 팝업들의 헤더 복원 시작");
+                
+                // 모든 WebSquare 팝업 헤더를 다시 표시
+                var allHeaders = document.querySelectorAll('.w2window_header');
+                for (var i = 0; i < allHeaders.length; i++) {
+                    var header = allHeaders[i];
+                    // 화상통화 팝업이 아닌 헤더들만 복원
+                    if (!header.closest('[id*="videoChatPopup"]')) {
+                        header.style.display = '';
+                        header.style.height = '';
+                        header.style.minHeight = '';
+                        header.style.visibility = '';
+                    }
+                }
+                
+                // 추가로 WebSquare 기본 헤더 스타일 복원
+                var popupHeaders = document.querySelectorAll('.w2popup_window .w2window_header');
+                for (var j = 0; j < popupHeaders.length; j++) {
+                    var popupHeader = popupHeaders[j];
+                    // 화상통화 팝업이 아닌 헤더들만 복원
+                    if (!popupHeader.closest('[id*="videoChatPopup"]')) {
+                        popupHeader.style.display = '';
+                        popupHeader.style.height = '';
+                        popupHeader.style.minHeight = '';
+                        popupHeader.style.visibility = '';
+                    }
+                }
+                
+                console.log("다른 팝업들의 헤더 복원 완료");
+            } catch (error) {
+                console.error("헤더 복원 중 오류:", error);
+            }
+        }, 200);
+        
     }, 100);
 };
 
@@ -6861,24 +6899,24 @@ window.addEventListener('message', function (event) {
 
     // PIP 창 생성 요청 처리
     if (event.data && event.data.action === 'createPipWindow') {
-        console.log("PIP 창 생성 요청 받음");
+        // console.log("PIP 창 생성 요청 받음");
         scwin.createPipWindow(event.data.videoState);
         return;
     }
 
     // 화상통화 상태 저장 요청 처리
     if (event.data && event.data.action === 'saveVideoChatState') {
-        console.log("화상통화 상태 저장 요청 받음");
+        // console.log("화상통화 상태 저장 요청 받음");
         scwin.pipVideoState = event.data.state;
         return;
     }
 
     // 모달 PIP 크기 축소 요청 처리
     if (event.data && event.data.action === 'resizeModalToPip') {
-        console.log("������ PostMessage 수신 - 모달 PIP 크기 축소 요청 받음");
-        console.log('수신된 데이터:', event.data);
-        console.log('event.origin:', event.origin);
-        console.log('event.source:', event.source);
+        // console.log("������ PostMessage 수신 - 모달 PIP 크기 축소 요청 받음");
+        // console.log('수신된 데이터:', event.data);
+        // console.log('event.origin:', event.origin);
+        // console.log('event.source:', event.source);
 
         try {
             // 즉시 실행
@@ -6887,7 +6925,7 @@ window.addEventListener('message', function (event) {
 
             // 추가로 짧은 지연 후 한 번 더 실행 (안전장치)
             setTimeout(() => {
-                console.log('������ PIP 축소 안전장치 실행');
+                // console.log('������ PIP 축소 안전장치 실행');
                 scwin.resizeModalToPip();
             }, 50);
 

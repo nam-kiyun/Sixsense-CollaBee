@@ -53,7 +53,7 @@ public class KanbanBatchService {
             
             long queueSize = redisService.getBatchQueueSize();
             if (queueSize == 0) {
-                System.out.println("배치 처리할 태스크가 없습니다.");
+                //System.out.println("배치 처리할 태스크가 없습니다.");
                 return;
             }
 

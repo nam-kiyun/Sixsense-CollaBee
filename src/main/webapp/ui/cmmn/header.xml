@@ -59,6 +59,7 @@ scwin.grp_logo_onclick = function (e) {
 scwin.dma_session_submitdone = function (e) {
     const responseData = e.responseJSON.userVo;
     dma_logout.set("id", responseData.userId);
+    img_userIcon.setSrc(responseData.profileImageUrl);
 };
 
 scwin.dma_logout_submitdone = function (e) {

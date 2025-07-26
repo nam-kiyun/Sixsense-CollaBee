@@ -1,6 +1,6 @@
-appID: inswave.matrix.mobile
+appID: matrix.mobile.collabee
 matrixMobile:
-  startPage: /InsWebApp/main/logIn.xml
+  startPage: /InsWebApp/ui/mobile/auth/loginPage.xml
   frameworkType: WebSquare
   storageType: I
   localUpdatePolicy: false

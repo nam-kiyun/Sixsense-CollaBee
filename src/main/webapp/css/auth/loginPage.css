@@ -28,7 +28,12 @@ body{
     flex-direction: column;
     justify-content: center;
 }
-
+.recaptcha-group{
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
 .recaptcha-span{
 	width:100%;	
 	background-color:"black";
