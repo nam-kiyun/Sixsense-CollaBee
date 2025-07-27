@@ -59,7 +59,8 @@ scwin.grp_logo_onclick = function (e) {
 scwin.dma_session_submitdone = function (e) {
     const responseData = e.responseJSON.userVo;
     dma_logout.set("id", responseData.userId);
-    img_userIcon.setSrc(responseData.profileImageUrl);
+    console.log(responseData.profileImageUrl ?? "없어");
+    img_userIcon.setSrc(responseData.profileImageUrl ?? "https://collabee.s3.ap-northeast-2.amazonaws.com/defaultUserImage.png");
 };
 
 scwin.dma_logout_submitdone = function (e) {
