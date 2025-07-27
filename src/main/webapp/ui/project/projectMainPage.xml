@@ -6395,7 +6395,7 @@ scwin.btn_settings_onclick = function (e) {
         id: "projectSettingPopup",
         type: "wframePopup",
         width: "1922",
-        height: "845",
+        height: "855",
         top: "100",
         left: "0",
         popupName: " ",
