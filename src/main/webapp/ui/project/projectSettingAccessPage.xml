@@ -1544,7 +1544,7 @@ scwin.makeProfileImagesRound = function() {
     </head>
     <body ev:onpageload="scwin.onpageload">
         <!-- 액세스 페이지 컨테이너 -->
-        <xf:group style="padding:40px;background-color:#ffffff;min-height:100vh;height:100vh;position:relative;display:flex;flex-direction:column;" id="grp_accessContainer">
+        <xf:group style="padding:40px;background-color:#ffffff;min-height:1400px;height:1400px;position:relative;display:flex;flex-direction:column;" id="grp_accessContainer">
             
             
             <!-- 페이지 제목 -->
