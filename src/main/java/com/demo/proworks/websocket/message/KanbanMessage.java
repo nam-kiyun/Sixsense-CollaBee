@@ -19,6 +19,15 @@ public class KanbanMessage {
     private String message;        // 메시지 내용
     private Long timestamp;        // 타임스탬프
     
+    // 태스크 상세 정보 필드들
+    private String taskTitle;      // 태스크 제목
+    private String projectUserId;  // 프로젝트 사용자 ID
+    private String priority;       // 우선순위
+    private String startDate;      // 시작일
+    private String endDate;        // 종료일
+    private String tags;           // 태그
+    private String userName;       // 사용자 이름
+    
     // 기본 생성자
     public KanbanMessage() {}
     
@@ -102,6 +111,62 @@ public class KanbanMessage {
         this.timestamp = timestamp;
     }
 
+    public String getTaskTitle() {
+        return taskTitle;
+    }
+
+    public void setTaskTitle(String taskTitle) {
+        this.taskTitle = taskTitle;
+    }
+
+    public String getProjectUserId() {
+        return projectUserId;
+    }
+
+    public void setProjectUserId(String projectUserId) {
+        this.projectUserId = projectUserId;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
+    }
+
+    public String getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(String startDate) {
+        this.startDate = startDate;
+    }
+
+    public String getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(String endDate) {
+        this.endDate = endDate;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
     @Override
     public String toString() {
         return "KanbanMessage{" +
@@ -113,6 +178,13 @@ public class KanbanMessage {
                 ", projectId='" + projectId + '\'' +
                 ", userId='" + userId + '\'' +
                 ", message='" + message + '\'' +
+                ", taskTitle='" + taskTitle + '\'' +
+                ", projectUserId='" + projectUserId + '\'' +
+                ", priority='" + priority + '\'' +
+                ", startDate='" + startDate + '\'' +
+                ", endDate='" + endDate + '\'' +
+                ", tags='" + tags + '\'' +
+                ", userName='" + userName + '\'' +
                 ", timestamp=" + timestamp +
                 '}';
     }

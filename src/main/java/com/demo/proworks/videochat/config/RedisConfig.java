@@ -34,7 +34,8 @@ public class RedisConfig {
         //System.out.println("🔧 Redis 연결 설정: localhost:6379");
         
         JedisConnectionFactory factory = new JedisConnectionFactory();
-        factory.setHostName("localhost");  // Redis 서버 호스트
+        factory.setHostName("localhost");
+//        factory.setHostName("redis-server");  // Redis 서버 호스트
         factory.setPort(6379);             // Redis 서버 포트	
         factory.setDatabase(0);            // 기본 데이터베이스
         factory.setTimeout(10000);         // 10초 타임아웃
@@ -101,7 +102,8 @@ public class RedisConfig {
         System.out.println("🔧 칸반보드용 Redis 연결 설정: localhost:6379, DB:1");
         
         JedisConnectionFactory factory = new JedisConnectionFactory();
-        factory.setHostName("localhost");  // Redis 서버 호스트
+        factory.setHostName("localhost");
+//        factory.setHostName("redis-server");  // Redis 서버 호스트
         factory.setPort(6379);             // Redis 서버 포트
         factory.setDatabase(1);            // 칸반보드 전용 데이터베이스
         factory.setTimeout(10000);         // 10초 타임아웃

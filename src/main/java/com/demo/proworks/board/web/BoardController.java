@@ -90,7 +90,7 @@ public class BoardController {
  
     /**
      * 보드를 등록 처리 한다.
-     * 등록 후 관련 프로젝트의 Redis 캐시를 무효화합니다.
+     * 등록 후 관련 프로젝트의 Redis 캐시를 업데이트합니다.
      *
      * @param  boardVo 보드
      * @throws Exception
@@ -105,10 +105,15 @@ public class BoardController {
     	
     	System.out.println("🔍 보드 생성 후 boardId: " + boardVo.getBoardId());
     	
-    	// Redis 캐시 무효화 - 프로젝트의 보드 목록이 변경되었음
+    	// Redis 캐시에 새 보드 추가 (캐시 무효화 대신 직접 업데이트)
     	if (boardVo.getProjectId() != null) {
-    	    kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
-    	    System.out.println("🗑️ 보드 등록으로 인한 프로젝트 캐시 무효화: " + boardVo.getProjectId());
+    	    try {
+    	        kanbanRedisService.addBoardToProjectCache(boardVo.getProjectId(), boardVo);
+    	        System.out.println("✅ 보드 등록으로 인한 프로젝트 캐시 업데이트: " + boardVo.getProjectId());
+    	    } catch (Exception cacheException) {
+    	        System.err.println("⚠️ 캐시 업데이트 실패, 캐시 무효화로 처리: " + cacheException.getMessage());
+    	        kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
+    	    }
     	}
     	
     	// 🔄 WebSocket을 통한 실시간 보드 생성 브로드캐스트
@@ -161,7 +166,7 @@ public class BoardController {
  
     	boardService.updateBoard(boardVo);
     	
-    	// Redis 캐시 무효화 - 프로젝트의 보드 정보가 변경되었음
+    	// Redis 캐시 무효화 - 보드 정보 변경은 복잡하므로 무효화 유지
     	if (boardVo.getProjectId() != null) {
     	    kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
     	    System.out.println("🗑️ 보드 갱신으로 인한 프로젝트 캐시 무효화: " + boardVo.getProjectId());
@@ -170,7 +175,7 @@ public class BoardController {
 
     /**
      * 보드를 삭제 처리한다.
-     * 삭제 후 관련 프로젝트의 Redis 캐시를 무효화하고 WebSocket 메시지를 전송합니다.
+     * 삭제 후 관련 프로젝트의 Redis 캐시를 업데이트합니다.
      *
      * @param  boardVo 보드    
      * @throws Exception
@@ -204,10 +209,15 @@ public class BoardController {
         boardService.deleteBoard(boardVo);
         System.out.println("✅ 보드 DB 삭제 완료: " + deletedBoardId);
         
-        // Redis 캐시 무효화 - 프로젝트의 보드 목록이 변경되었음
-        if (projectId != null) {
-            kanbanRedisService.invalidateProjectCache(projectId);
-            System.out.println("🗑️ 보드 삭제로 인한 프로젝트 캐시 무효화: " + projectId);
+        // Redis 캐시에서 보드 제거 (캐시 무효화 대신 직접 업데이트)
+        if (projectId != null && deletedBoardId != null) {
+            try {
+                kanbanRedisService.removeBoardFromProjectCache(projectId, deletedBoardId);
+                System.out.println("✅ 보드 삭제로 인한 프로젝트 캐시 업데이트: " + projectId);
+            } catch (Exception cacheException) {
+                System.err.println("⚠️ 캐시 업데이트 실패, 캐시 무효화로 처리: " + cacheException.getMessage());
+                kanbanRedisService.invalidateProjectCache(projectId);
+            }
         }
         
         // 🔄 WebSocket을 통한 실시간 보드 삭제 브로드캐스트

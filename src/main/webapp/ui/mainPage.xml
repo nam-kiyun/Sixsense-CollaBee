@@ -31,7 +31,7 @@
             	</w2:dataMap>
             	<w2:dataMap baseNode="map" id="dm_projectVo">
             		<w2:keyInfo>
-            			<w2:key id="proejctId" name="projectId" dataType="number"></w2:key>
+            			<w2:key id="projectId" name="projectId" dataType="number"></w2:key>
             		</w2:keyInfo>
             	</w2:dataMap>
             </w2:dataCollection>

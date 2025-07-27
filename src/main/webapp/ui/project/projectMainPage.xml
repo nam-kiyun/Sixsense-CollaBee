@@ -319,11 +319,15 @@ scwin.setupWebSocketHandlers = function (websocketUrl) {
 
     scwin.websocket.onmessage = function (event) {
         console.log("=== WebSocket 메시지 수신 ===");
+        console.log("원본 메시지:", event.data);
         try {
             var message = JSON.parse(event.data);
+            console.log("파싱된 메시지:", message);
+            console.log("메시지 타입:", message.type);
             scwin.handleWebSocketMessage(message);
         } catch (error) {
             console.error("메시지 파싱 오류:", error);
+            console.error("파싱 실패한 원본 데이터:", event.data);
         }
     };
 
@@ -411,7 +415,6 @@ scwin.onWebSocketError = function (event) {
  * 사용자 참여 메시지 전송
  */
 scwin.sendUserJoinMessage = function () {
-    debugger;
     var currentUserId = $p.parent().dm_userInfo.get("userId");
     var projectId = $p.parent().dm_projectVo.get("projectId");
     
@@ -969,7 +972,20 @@ scwin.refreshBoardList = function () {
         console.error("❌ 보드 목록 새로고침 실패:", error);
     }
 };
+scwin.deleteBoardConfirmCallback = function(result) {
+      if (result) {
+          // 확인 클릭 시
+          scwin.deleteBoard(scwin.pendingDeleteBoardId, scwin.pendingDeleteBoardTitle);
+      } else {
+          // 취소 클릭 시
+          console.log("❌ 보드 삭제 취소됨");
+      }
 
+      // 임시 변수 정리
+      scwin.pendingDeleteBoardId = null;
+      scwin.pendingDeleteBoardTitle = null;
+  };
+  
 /**
  * 보드 삭제 확인 및 실행
  */
@@ -982,15 +998,13 @@ scwin.confirmAndDeleteBoard = function (boardId, boardTitle) {
         var confirmMessage = "'" + boardTitle + "' 보드를 삭제하시겠습니까?\n\n" +
                            "⚠️ 이 작업은 되돌릴 수 없으며, 보드 내의 모든 카드가 함께 삭제됩니다.";
         
-        // WebSquare 확인 대화상자
-        var confirmed = $c.win.confirm(confirmMessage);
         
-        if (confirmed) {
-            console.log("✅ 보드 삭제 확인됨, 삭제 진행:", boardId);
-            scwin.deleteBoard(boardId, boardTitle);
-        } else {
-            console.log("❌ 보드 삭제 취소됨:", boardId);
-        }
+        // WebSquare 올바른 사용법 - 콜백 함수 방식
+        scwin.pendingDeleteBoardId = boardId;
+        scwin.pendingDeleteBoardTitle = boardTitle;
+        $c.win.confirm(confirmMessage, "scwin.deleteBoardConfirmCallback");
+        
+        
         
     } catch (error) {
         console.error("❌ 보드 삭제 확인 중 오류:", error);
@@ -1017,7 +1031,7 @@ scwin.deleteBoard = function (boardId, boardTitle) {
         boardVo.set("boardId", boardId);
         boardVo.set("projectId", projectId);
         
-        console.log("������️ 보드 삭제 API 호출:", {boardId: boardId, projectId: projectId});
+        console.log("️ 보드 삭제 API 호출:", {boardId: boardId, projectId: projectId});
         
         // 서버에 삭제 요청
         $p.executeSubmission("delete_board");
@@ -1066,19 +1080,67 @@ scwin.handleTaskCreatedMessage = function (message) {
     console.log("������ 태스크 생성 처리 시작:", message.taskId);
     
     try {
-        // 칸반 보드 새로고침 (새 태스크 반영)
-        scwin.refreshKanbanBoard();
+        // 새 카드를 동적으로 생성하여 해당 보드에 추가
+        scwin.addNewTaskCardToBoardDynamically(message);
         
         console.log("✅ 태스크 생성 반영 완료:", message.taskId);
         
     } catch (error) {
         console.error("❌ 태스크 생성 처리 실패:", error);
-        // 에러가 발생해도 사용자 경험을 위해 새로고침 시도
+        // 에러가 발생하면 전체 새로고침으로 폴백
         try {
+            console.log("⚠️ 동적 추가 실패, 전체 새로고침으로 폴백");
             scwin.refreshKanbanBoard();
         } catch (refreshError) {
             console.error("❌ 새로고침도 실패:", refreshError);
         }
+    }
+};
+
+/**
+ * 새로운 태스크 카드를 동적으로 보드에 추가하는 함수
+ * @param {Object} message - 태스크 생성 메시지 (taskId, boardId, taskTitle, priority 등)
+ */
+scwin.addNewTaskCardToBoardDynamically = function (message) {
+    console.log("������ 새 태스크 카드 동적 추가 시작:", message);
+    
+    try {
+        // 1. 메시지 데이터 검증
+        if (!message.taskId || !message.boardId || (!message.taskTitle && !message.message)) {
+            throw new Error("필수 태스크 정보가 누락됨: " + JSON.stringify(message));
+        }
+        
+        // 2. 해당 보드의 카드 컨테이너 찾기
+        var boardId = message.boardId;
+        var cardsContainer = document.querySelector(`[data-board-id="${boardId}"].kanban-cards-container`);
+        
+        if (!cardsContainer) {
+            throw new Error(`보드 ${boardId}의 카드 컨테이너를 찾을 수 없음`);
+        }
+        
+        console.log("������ 보드 컨테이너 찾음:", boardId);
+        
+        // 3. 태스크 데이터 구성 (기존 createKanbanCardInBoard와 호환되도록)
+        var taskData = {
+            taskId: message.taskId,
+            taskTitle: message.taskTitle || message.message, // taskTitle 우선, 없으면 message 사용
+            boardId: message.boardId,
+            projectUserId: message.projectUserId || '', // projectUserId 추가
+            priority: message.priority || 'MEDIUM',
+            startDate: message.startDate || null,
+            endDate: message.endDate || null,
+            tags: message.tags || null,
+            userName: message.userName || '' // 사용자 이름
+        };
+        
+        // 4. 기존 함수를 사용하여 카드 생성
+        scwin.createKanbanCardInBoard(taskData);
+        
+        console.log("✅ 새 태스크 카드 동적 추가 완료:", message.taskId);
+        
+    } catch (error) {
+        console.error("❌ 새 태스크 카드 동적 추가 실패:", error);
+        throw error; // 상위에서 폴백 처리할 수 있도록 에러 재발생
     }
 };
 
@@ -4515,6 +4577,69 @@ scwin.load_Board_submitdone = function (e) {
     scwin.createDynamicKanbanColumns(boardList);
 };
 
+/**
+ * 현재 프로젝트 ID를 가져오는 함수
+ * 여러 소스에서 프로젝트 ID를 조회하여 반환
+ */
+scwin.getProjectId = function () {
+    var projectId = null;
+    
+    // 1. 현재 프로젝트 데이터에서 가져오기
+    if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
+        projectId = scwin.currentProjectData.projectId;
+    }
+    
+    // 2. dm_projectVo에서 가져오기
+    if (!projectId) {
+        try {
+            projectId = dm_projectVo.get("projectId");
+        } catch (e) {
+            console.log("dm_projectVo에서 projectId 가져오기 실패:", e);
+        }
+    }
+    
+    // 3. URL 파라미터에서 가져오기
+    if (!projectId) {
+        try {
+            var urlParams = new URLSearchParams(window.location.search);
+            projectId = urlParams.get('projectId');
+        } catch (e) {
+            console.log("URL에서 projectId 가져오기 실패:", e);
+        }
+    }
+    
+    console.log("getProjectId 결과:", projectId);
+    return projectId;
+};
+
+/**
+ * 칸반 보드 전체 새로고침 함수
+ * 보드 목록과 태스크 목록을 다시 로드하여 칸반 보드를 업데이트
+ */
+scwin.refreshKanbanBoard = function () {
+    console.log("칸반 보드 새로고침 시작");
+    
+    try {
+        // 1. 보드 목록 재로드
+        var projectId = scwin.getProjectId();
+        if (!projectId) {
+            console.error("프로젝트 ID를 찾을 수 없습니다");
+            return;
+        }
+        
+        // 2. 현재 프로젝트 정보 설정
+        dm_projectVo.set("projectId", projectId);
+        
+        // 3. 보드 목록 로드 (이것이 완료되면 자동으로 태스크도 로드됨)
+        $p.executeSubmission("load_Board");
+        
+        console.log("칸반 보드 새로고침 요청 완료");
+        
+    } catch (error) {
+        console.error("칸반 보드 새로고침 실패:", error);
+        throw error;
+    }
+};
 
 /**
  * 보드 데이터를 기반으로 동적 칸반 컬럼들을 생성하는 함수 (순차 실행)
@@ -4728,7 +4853,7 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
         "group",
         {
             className: "kanban-column",
-            style: "flex: 1; margin: 0 8px; background: #f6f8fa; border-radius: 8px; padding: 16px;",
+            style: "flex: 0 0 300px; margin: 0 8px; background: #f6f8fa; border-radius: 8px; padding: 16px;",
             "data-board-id": board.boardId
         },
         container
@@ -7653,6 +7778,17 @@ scwin.add_board_onclick = function (e) {
  */
 scwin.add_board_submitdone = function (e) {
     console.log("보드 생성 성공:", e.responseJSON);
+    
+    // WebSocket 연결 상태 확인
+    console.log("=== WebSocket 연결 상태 확인 ===");
+    console.log("- isWebSocketConnected:", scwin.isWebSocketConnected);
+    console.log("- websocket 객체:", scwin.websocket);
+    if (scwin.websocket) {
+        console.log("- websocket.readyState:", scwin.websocket.readyState);
+        console.log("- readyState 의미:", scwin.websocket.readyState === 0 ? "CONNECTING" : 
+                   scwin.websocket.readyState === 1 ? "OPEN" : 
+                   scwin.websocket.readyState === 2 ? "CLOSING" : "CLOSED");
+    }
 
     try {
         // 생성 성공 시 임시 보드 제거
@@ -7707,16 +7843,13 @@ scwin.delete_board_submitdone = function (e) {
     console.log("서버 응답:", e.responseJSON);
 
     try {
-        // 성공 메시지 표시
+        // 성공 메시지 표시 (WebSocket이 실시간으로 UI 업데이트하므로 새로고침 불필요)
         $c.win.alert("보드가 성공적으로 삭제되었습니다.");
-        
-        // 보드 목록 새로고침
-        console.log("������ 보드 삭제 완료, 보드 목록 새로고침");
-        $p.executeSubmission("load_Board");
+        console.log("✅ 보드 삭제 완료 - WebSocket 실시간 업데이트로 UI가 자동 갱신됩니다.");
 
     } catch (error) {
         console.error("❌ 보드 삭제 응답 처리 중 오류:", error);
-        $c.win.alert("보드 삭제는 완료되었지만 화면 갱신 중 오류가 발생했습니다.");
+        $c.win.alert("보드 삭제 중 오류가 발생했습니다.");
     }
 };
 
@@ -7780,7 +7913,7 @@ scwin.createEmptyBoardWithInput = function (projectId) {
             "group",
             {
                 className: "kanban-column",
-                style: "flex: 1; margin: 0 8px; background: #f6f8fa; border-radius: 8px; padding: 16px;",
+                style: "flex: 0 0 300px; margin: 0 8px; background: #f6f8fa; border-radius: 8px; padding: 16px;",
                 "data-board-id": tempBoardId,
                 "data-temp-board": "true"
             },
@@ -8472,9 +8605,11 @@ html, body {
     display: flex;
     gap: 16px;
     align-items: flex-start;  /* 상단 정렬 */
-    max-width: 80%;
-    margin: 0 2%;
-    padding-bottom: 60px;  /* 하단 여백 추가 */
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding: 0 20px 60px 20px;  /* 좌우 여백 추가 */
+    overflow-y: visible;
 }
 
 /* 칸반 열 */
@@ -8825,8 +8960,7 @@ html, body {
 /* 반응형 */
 @media (max-width: 1200px) {
     .kanban-container {
-        padding: 0 5% 40px 5%;
-        max-width: 85%;
+        padding: 0 16px 40px 16px;
     }
     
     .kanban-column {
@@ -8842,8 +8976,8 @@ html, body {
 @media (max-width: 768px) {
     .kanban-container {
         flex-direction: column;
-        padding: 0 16px 40px 16px;
-        max-width: 95%;
+        padding: 0 12px 40px 12px;
+        overflow-x: visible;
     }
     
     .kanban-column {

@@ -458,18 +458,30 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 	 */
 	public void handleTaskCreatedMessage(java.util.Map<String, Object> messageData) {
 		try {
-			// Map을 KanbanMessage 객체로 변환
+			// Map을 KanbanMessage 객체로 변환하되, 모든 태스크 정보를 포함
 			KanbanMessage message = new KanbanMessage();
 			message.setType((String) messageData.get("type"));
 			message.setTaskId((String) messageData.get("taskId"));
 			message.setBoardId((String) messageData.get("boardId"));
 			message.setProjectId((String) messageData.get("projectId"));
 			message.setUserId((String) messageData.get("userId"));
-			message.setMessage((String) messageData.get("taskTitle")); // 태스크 제목을 message 필드에 저장
 			message.setTimestamp((Long) messageData.getOrDefault("timestamp", System.currentTimeMillis()));
 			
-			// 내부 핸들러 호출
-			handleTaskCreated(null, message);
+			// 태스크 상세 정보 설정
+			message.setTaskTitle((String) messageData.get("taskTitle"));
+			message.setProjectUserId((String) messageData.get("projectUserId")); // projectUserId 추가
+			message.setPriority((String) messageData.get("priority"));
+			message.setStartDate((String) messageData.get("startDate"));
+			message.setEndDate((String) messageData.get("endDate"));
+			message.setTags((String) messageData.get("tags"));
+			message.setUserName((String) messageData.get("userName")); // 사용자 이름 추가
+			
+			// message 필드는 태스크 제목으로 설정 (기존 호환성 유지)
+			message.setMessage((String) messageData.get("taskTitle"));
+			
+			// 브로드캐스트 실행
+			broadcastToAll(message);
+			System.out.println("📡 태스크 생성 상세 정보 브로드캐스트 완료: " + message.getTaskId());
 		} catch (Exception e) {
 			System.err.println("❌ 태스크 생성 메시지 처리 실패: " + e.getMessage());
 		}

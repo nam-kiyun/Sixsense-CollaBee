@@ -495,7 +495,6 @@ scwin.clearProjectCards = function() {
 
 // 프로젝트 카드 클릭 이벤트 처리
 scwin.onProjectCardClick = function(project) {
-    debugger;
     console.log("프로젝트 카드 클릭1:", project);
     try {
         const parent = $p.parent();
