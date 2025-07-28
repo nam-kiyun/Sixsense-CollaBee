@@ -110,15 +110,8 @@ public class BoardServiceImpl implements BoardService {
 	public int insertBoard(BoardVo boardVo) throws Exception {
 		int result = boardDAO.insertBoard(boardVo);
 		
-		// 새 보드 생성 시 Redis 캐시 무효화
-		if (result > 0 && boardVo.getProjectId() != null && kanbanRedisService.isRedisConnected()) {
-			try {
-				kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
-				System.out.println("🗑️ 새 보드 생성으로 인한 프로젝트 캐시 무효화: " + boardVo.getProjectId());
-			} catch (Exception e) {
-				System.err.println("❌ 캐시 무효화 실패: " + e.getMessage());
-			}
-		}
+		// 보드 생성 시 캐시 업데이트는 BoardController에서 처리하므로 여기서는 생략
+		// (중복 처리 방지 및 성능 최적화)
 		
 		return result;	
 	}
@@ -162,15 +155,8 @@ public class BoardServiceImpl implements BoardService {
 	public int deleteBoard(BoardVo boardVo) throws Exception {
 		int result = boardDAO.deleteBoard(boardVo);
 		
-		// 보드 삭제 시 Redis 캐시 무효화
-		if (result > 0 && boardVo.getProjectId() != null && kanbanRedisService.isRedisConnected()) {
-			try {
-				kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
-				System.out.println("🗑️ 보드 삭제로 인한 프로젝트 캐시 무효화: " + boardVo.getProjectId());
-			} catch (Exception e) {
-				System.err.println("❌ 캐시 무효화 실패: " + e.getMessage());
-			}
-		}
+		// 보드 삭제 시 캐시 업데이트는 BoardController에서 처리하므로 여기서는 생략
+		// (중복 처리 방지 및 성능 최적화)
 		
 		return result;
 	}

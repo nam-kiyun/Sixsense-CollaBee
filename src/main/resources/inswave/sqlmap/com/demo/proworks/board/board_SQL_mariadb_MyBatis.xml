@@ -15,20 +15,23 @@
 	2025/07/01              국다인             최초 생성
  -->
 <mapper namespace="com.demo.proworks.board">
-    <insert id="insertBoard" parameterType="com.demo.proworks.board.vo.BoardVo">
+    <insert id="insertBoard" parameterType="com.demo.proworks.board.vo.BoardVo" 
+            useGeneratedKeys="true" keyProperty="boardId" keyColumn="BOARD_ID">
     	<!-- 보드를 등록한다. -->	
     		
         INSERT INTO BOARD   /* QueryID : com.demo.proworks.board.insertBoard */
         ( 
-            BOARD_ID
-            <if test="projectId != null"> , PROJECT_ID  </if>
-            <if test="boardTitle!= null"> , BOARD_TITLE </if>
+            <if test="projectId != null"> PROJECT_ID  </if>
+            <if test="boardTitle!= null"> 
+                <if test="projectId != null">,</if> BOARD_TITLE 
+            </if>
         )
         VALUES  
         ( 
-            #{boardId}
-            <if test="projectId != null"> , #{projectId}  </if>
-            <if test="boardTitle!= null"> , #{boardTitle} </if> 
+            <if test="projectId != null"> #{projectId}  </if>
+            <if test="boardTitle!= null"> 
+                <if test="projectId != null">,</if> #{boardTitle} 
+            </if> 
         )          
     </insert>	
 	

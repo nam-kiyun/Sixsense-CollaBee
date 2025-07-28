@@ -144,4 +144,15 @@ public class TaskDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstractD
         return (List<TaskVo>)list("com.demo.proworks.task.selectTaskListWithUserName", vo);
     }
 
+    /**
+     * 여러 보드의 사용자 이름을 포함한 업무(Task) 정보를 한 번의 쿼리로 배치 조회한다. (진짜 배치)
+     *  
+     * @param  boardIds 보드 ID 리스트
+     * @return List<TaskVo> 사용자 이름이 포함된 업무(Task) 정보
+     * @throws ElException
+     */
+    public List<TaskVo> selectTaskListWithUserNameBatch(List<String> boardIds) throws ElException {      	
+        return (List<TaskVo>)list("com.demo.proworks.task.selectTaskListWithUserNameBatch", boardIds);
+    }
+
 }

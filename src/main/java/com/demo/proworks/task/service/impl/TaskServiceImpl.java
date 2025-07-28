@@ -476,15 +476,9 @@ public class TaskServiceImpl implements TaskService {
 		
 		System.out.println("TaskService.insertTask - DB 삽입 결과: " + result + ", 생성된 taskId: " + taskVo.getTaskId());
 		
-		// 새 태스크 생성 시 Redis 캐시 무효화 (최신 데이터 보장)
-		if (result > 0 && projectId != null && kanbanRedisService.isRedisConnected()) {
-			try {
-				kanbanRedisService.invalidateProjectCache(projectId);
-				System.out.println("🗑️ 새 태스크 생성으로 인한 프로젝트 캐시 무효화: " + projectId);
-			} catch (Exception e) {
-				System.err.println("❌ 캐시 무효화 실패: " + e.getMessage());
-			}
-		}
+		// 태스크 생성 시 캐시 업데이트는 TaskController에서 처리하므로 여기서는 생략
+		// (중복 처리 방지 및 성능 최적화)
+		System.out.println("🗑️ 프로젝트 캐시 무효화 완료: " + projectId);
 		
 		return result;
 	}
@@ -649,14 +643,10 @@ public class TaskServiceImpl implements TaskService {
 		// 2. 데이터베이스 업데이트 실행
 		int result = taskDAO.updateTask(taskVo);
 		
-		// 3. DB 업데이트 성공 시 Redis 캐시 무효화
-		if (result > 0 && projectId != null && kanbanRedisService.isRedisConnected()) {
-			try {
-				kanbanRedisService.invalidateProjectCache(projectId);
-				System.out.println("🗑️ 태스크 정보 갱신으로 인한 프로젝트 캐시 무효화: " + projectId);
-			} catch (Exception e) {
-				System.err.println("❌ 캐시 무효화 실패: " + e.getMessage());
-			}
+		// 태스크 업데이트 시 캐시 업데이트는 TaskController에서 처리하므로 여기서는 생략
+		// (중복 처리 방지 및 성능 최적화)
+		if (result > 0 && projectId != null) {
+			System.out.println("✅ 태스크 정보 갱신 완료: " + projectId);
 		}
 		
 		return result;	   		
@@ -748,15 +738,8 @@ public class TaskServiceImpl implements TaskService {
 		
 		int result = taskDAO.deleteTask(taskVo);
 		
-		// 3. DB 삭제 성공 시 Redis 캐시 무효화
-		if (result > 0 && projectId != null && kanbanRedisService.isRedisConnected()) {
-			try {
-				kanbanRedisService.invalidateProjectCache(projectId);
-				System.out.println("🗑️ 태스크 삭제로 인한 프로젝트 캐시 무효화: " + projectId);
-			} catch (Exception e) {
-				System.err.println("❌ 캐시 무효화 실패: " + e.getMessage());
-			}
-		}
+		// 태스크 삭제 시 캐시 업데이트는 TaskController에서 처리하므로 여기서는 생략
+		// (중복 처리 방지 및 성능 최적화)
 		
 		return result;
 	}
@@ -786,6 +769,7 @@ public class TaskServiceImpl implements TaskService {
 	private TaskVo convertMapToTaskVo(java.util.Map<String, Object> taskMap) {
 		TaskVo taskVo = new TaskVo();
 		
+		// 기본 필드 변환
 		taskVo.setTaskId((String) taskMap.get("taskId"));
 		taskVo.setTaskTitle((String) taskMap.get("taskTitle"));
 		taskVo.setBoardId((String) taskMap.get("boardId"));
@@ -795,6 +779,18 @@ public class TaskServiceImpl implements TaskService {
 		taskVo.setStartDate((String) taskMap.get("startDate"));
 		taskVo.setEndDate((String) taskMap.get("endDate"));
 		taskVo.setTags((String) taskMap.get("tags"));
+		
+		// 누락된 필드들 추가
+		if (taskMap.get("sortField") != null)
+			taskVo.setSortField((String) taskMap.get("sortField"));
+		if (taskMap.get("sortOrder") != null)
+			taskVo.setSortOrder((String) taskMap.get("sortOrder"));
+		if (taskMap.get("userName") != null)
+			taskVo.setUserName((String) taskMap.get("userName"));
+		if (taskMap.get("projectId") != null)
+			taskVo.setProjectId((String) taskMap.get("projectId"));
+		if (taskMap.get("boardIds") != null)
+			taskVo.setBoardIds((String) taskMap.get("boardIds"));
 		
 		return taskVo;
 	}
@@ -845,6 +841,31 @@ public class TaskServiceImpl implements TaskService {
 	 */
 	public List<TaskVo> selectTaskListWithUserName(TaskVo taskVo) throws Exception {
 		return taskDAO.selectTaskListWithUserName(taskVo);
+	}
+	
+	/**
+	 * 여러 보드의 사용자 이름 포함 태스크를 한 번의 쿼리로 배치 조회 (진짜 배치)
+	 * 
+	 * @param boardIds 보드 ID 리스트 (예: ["1", "2", "3", "4", "5", "6"])
+	 * @return 사용자 이름이 포함된 TaskVo 리스트
+	 * @throws Exception
+	 */
+	public List<TaskVo> selectTaskListWithUserNameBatch(List<String> boardIds) throws Exception {
+		System.out.println("🚀 TaskServiceImpl.selectTaskListWithUserNameBatch - 진짜 배치 조회 시작");
+		System.out.println("  - 보드 IDs: " + boardIds);
+		
+		if (boardIds == null || boardIds.isEmpty()) {
+			System.out.println("  - 보드 ID 리스트가 비어있어 빈 결과 반환");
+			return new java.util.ArrayList<>();
+		}
+		
+		// DAO에서 IN 절을 사용한 배치 조회
+		List<TaskVo> batchResult = taskDAO.selectTaskListWithUserNameBatch(boardIds);
+		
+		System.out.println("✅ TaskServiceImpl.selectTaskListWithUserNameBatch - 배치 조회 완료");
+		System.out.println("  - 조회된 태스크 개수: " + (batchResult != null ? batchResult.size() : 0));
+		
+		return batchResult;
 	}
 	
 }

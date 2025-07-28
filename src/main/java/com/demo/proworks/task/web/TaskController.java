@@ -10,6 +10,8 @@ import javax.annotation.Resource;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -26,6 +28,8 @@ import com.demo.proworks.board.vo.BoardVo;
 import com.demo.proworks.filesrc.vo.FileSrcVo;
 import com.demo.proworks.redis.service.KanbanRedisService;
 import com.demo.proworks.task.service.TaskService;
+import com.demo.proworks.cmmn.ProworksUserHeader;
+import com.inswave.elfw.util.ControllerContextUtil;
 import com.demo.proworks.task.vo.TaskListVo;
 import com.demo.proworks.task.vo.TaskUpdateVo;
 import com.demo.proworks.task.vo.TaskVo;
@@ -35,13 +39,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
 import com.inswave.elfw.annotation.ElValidator;
-
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
  * @subject : 업무(Task) 정보 관련 처리를 담당하는 컨트롤러
@@ -194,6 +191,10 @@ public class TaskController {
 
 			// 3. 캐시 미스 - DB에서 프로젝트 전체 태스크 조회
 			System.out.println("⚠️ Redis 캐시 미스 - 프로젝트 전체 태스크 DB 조회 시작");
+			
+			// 🔍 디버깅: 캐시 상태 확인
+			kanbanRedisService.debugProjectCache(projectId);
+			kanbanRedisService.debugAllCacheKeys();
 
 			// 프로젝트 전체 태스크 조회 (새로운 메서드 사용)
 			List<TaskVo> allProjectTasks = taskService.selectTasksByProject(projectId);
@@ -308,7 +309,7 @@ public class TaskController {
 	private TaskVo convertMapToTaskVo(java.util.Map<String, Object> map) {
 		TaskVo task = new TaskVo();
 
-		// Map에서 TaskVo 필드로 변환 (실제 VO 필드명에 맞게 수정)
+		// Map에서 TaskVo 필드로 변환 (모든 필드 포함)
 		if (map.get("taskId") != null)
 			task.setTaskId(map.get("taskId").toString());
 		if (map.get("boardId") != null)
@@ -327,6 +328,17 @@ public class TaskController {
 			task.setEndDate(map.get("endDate").toString());
 		if (map.get("tags") != null)
 			task.setTags(map.get("tags").toString());
+		// 누락된 필드들 추가
+		if (map.get("sortField") != null)
+			task.setSortField(map.get("sortField").toString());
+		if (map.get("sortOrder") != null)
+			task.setSortOrder(map.get("sortOrder").toString());
+		if (map.get("userName") != null)
+			task.setUserName(map.get("userName").toString());
+		if (map.get("projectId") != null)
+			task.setProjectId(map.get("projectId").toString());
+		if (map.get("boardIds") != null)
+			task.setBoardIds(map.get("boardIds").toString());
 
 		return task;
 	}
@@ -340,7 +352,7 @@ public class TaskController {
 		for (TaskVo task : taskList) {
 			java.util.Map<String, Object> map = new java.util.HashMap<>();
 
-			// TaskVo 필드를 Map으로 변환 (실제 DB 컬럼명에 맞춤)
+			// TaskVo 필드를 Map으로 변환 (모든 필드 포함)
 			map.put("taskId", task.getTaskId());
 			map.put("taskTitle", task.getTaskTitle());
 			map.put("boardId", task.getBoardId());
@@ -350,6 +362,12 @@ public class TaskController {
 			map.put("startDate", task.getStartDate());
 			map.put("endDate", task.getEndDate());
 			map.put("tags", task.getTags());
+			// 누락된 필드들 추가
+			map.put("sortField", task.getSortField());
+			map.put("sortOrder", task.getSortOrder());
+			map.put("userName", task.getUserName());
+			map.put("projectId", task.getProjectId());
+			map.put("boardIds", task.getBoardIds());
 
 			mapList.add(map);
 		}
@@ -463,18 +481,68 @@ public class TaskController {
 	public TaskVo insertTask(TaskVo taskVo) throws Exception {
 		System.out.println("TaskController.insertTask - 요청 데이터: " + taskVo.toString());
 
+		// 📝 태스크 생성 전 사용자 정보 설정 (projectUserId + userName)
+		try {
+			ProworksUserHeader userHeader = (ProworksUserHeader) ControllerContextUtil.getUserHeader();
+			if (userHeader != null) {
+				taskVo.setProjectUserId(userHeader.getUserId());  // projectUserId 설정
+				taskVo.setUserName(userHeader.getUserName());     // userName 설정
+				System.out.println("✅ 태스크에 사용자 정보 설정: userId=" + userHeader.getUserId() + ", userName=" + userHeader.getUserName());
+			} else {
+				System.out.println("⚠️ 사용자 헤더를 찾을 수 없습니다.");
+			}
+		} catch (Exception e) {
+			System.err.println("⚠️ 사용자 정보 설정 실패: " + e.getMessage());
+		}
+
 		int result = taskService.insertTask(taskVo);
 
 		if (result > 0) {
-			System.out.println("TaskController.insertTask - 생성 성공, taskId: " + taskVo.getTaskId());
+			System.out.println("TaskController.insertTask - 생성 성공, taskId: " + taskVo.getTaskId() + ", projectUserId: " + taskVo.getProjectUserId() + ", userName: " + taskVo.getUserName());
 
 			// Redis 캐시에 새 태스크 추가 (캐시 무효화 대신 캐시 업데이트)
 			addTaskToProjectCacheByBoardId(taskVo.getBoardId(), taskVo, "태스크 등록");
+			
+			// 🔍 디버깅: 태스크 추가 후 캐시 상태 확인 (두 캐시 모두 확인)
+			try {
+				String projectId = getProjectIdByBoardId(taskVo.getBoardId());
+				if (projectId != null) {
+					System.out.println("🔍 태스크 추가 후 캐시 상태 확인:");
+					kanbanRedisService.debugProjectCache(projectId);
+					
+					// 사용자 이름 포함 캐시도 확인
+					System.out.println("🔍 사용자 이름 포함 태스크 캐시 확인:");
+					String userNameCacheKey = "kanban:project:" + projectId + ":tasks_with_username";
+					java.util.List<java.util.Map<String, Object>> userNameTasks = kanbanRedisService.getCachedTasksWithUserName(userNameCacheKey);
+					if (userNameTasks != null) {
+						System.out.println("✅ 사용자 이름 포함 캐시 존재: " + userNameTasks.size() + "개");
+						
+						// 방금 추가한 태스크가 있는지 확인
+						boolean foundInUserNameCache = false;
+						for (java.util.Map<String, Object> task : userNameTasks) {
+							if (taskVo.getTaskId().equals(task.get("taskId"))) {
+								foundInUserNameCache = true;
+								System.out.println("✅ 새 태스크가 사용자 이름 포함 캐시에서 발견됨: " + task.get("taskId"));
+								break;
+							}
+						}
+						if (!foundInUserNameCache) {
+							System.out.println("⚠️ 새 태스크가 사용자 이름 포함 캐시에서 발견되지 않음: " + taskVo.getTaskId());
+						}
+					} else {
+						System.out.println("❌ 사용자 이름 포함 캐시 없음: " + userNameCacheKey);
+					}
+				}
+			} catch (Exception e) {
+				System.err.println("디버깅 중 오류: " + e.getMessage());
+			}
 
 			// 🔄 WebSocket을 통한 실시간 태스크 생성 브로드캐스트
 			try {
 				String projectId = getProjectIdByBoardId(taskVo.getBoardId());
 				if (projectId != null) {
+					System.out.println("🔍 태스크 생성자 이름: " + taskVo.getUserName());
+					
 					// 태스크 생성 메시지 브로드캐스트
 					java.util.Map<String, Object> broadcastMessage = new java.util.HashMap<>();
 					broadcastMessage.put("type", "TASK_CREATED");
@@ -482,15 +550,17 @@ public class TaskController {
 					broadcastMessage.put("taskId", taskVo.getTaskId());
 					broadcastMessage.put("boardId", taskVo.getBoardId());
 					broadcastMessage.put("taskTitle", taskVo.getTaskTitle());
+					broadcastMessage.put("projectUserId", taskVo.getProjectUserId()); // projectUserId 추가
 					broadcastMessage.put("priority", taskVo.getPriority());
 					broadcastMessage.put("startDate", taskVo.getStartDate());
 					broadcastMessage.put("endDate", taskVo.getEndDate());
 					broadcastMessage.put("tags", taskVo.getTags());
+					broadcastMessage.put("userName", taskVo.getUserName()); // 이미 설정된 사용자 이름 사용
 					broadcastMessage.put("timestamp", System.currentTimeMillis());
 					
 					// 프로젝트의 모든 사용자에게 실시간 브로드캐스트
 					kanbanWebSocketHandler.handleTaskCreatedMessage(broadcastMessage);
-					System.out.println("📡 태스크 생성 WebSocket 브로드캐스트 완료: " + taskVo.getTaskId());
+					System.out.println("📡 태스크 생성 WebSocket 브로드캐스트 완료: " + taskVo.getTaskId() + " (생성자: " + taskVo.getUserName() + ")");
 				}
 			} catch (Exception broadcastException) {
 				System.err.println("⚠️ WebSocket 브로드캐스트 실패 (기능은 정상 처리됨): " + broadcastException.getMessage());
@@ -726,8 +796,8 @@ public class TaskController {
 	public void deleteTask(TaskVo taskVo) throws Exception {
 		taskService.deleteTask(taskVo);
 
-		// Redis 캐시 무효화 - 프로젝트의 태스크 목록이 변경되었음
-		invalidateProjectCacheByBoardId(taskVo.getBoardId(), "태스크 삭제");
+		// Redis 캐시에서 태스크 제거 (캐시 무효화 대신 직접 업데이트)
+		removeTaskFromProjectCacheByBoardId(taskVo.getBoardId(), taskVo.getTaskId(), "태스크 삭제");
 		
 		// 🔄 WebSocket을 통한 실시간 삭제 브로드캐스트
 		try {
@@ -867,6 +937,33 @@ public class TaskController {
             System.err.println("❌ 캐시 업데이트 중 오류 발생: " + e.getMessage());
             // 실패 시 기존 방식으로 대체
             invalidateProjectCacheByBoardId(boardId, action + " (캐시 업데이트 실패로 무효화)");
+        }
+    }
+    
+    /**
+     * 보드 ID로 프로젝트 캐시에서 태스크 제거
+     */
+    private void removeTaskFromProjectCacheByBoardId(String boardId, String taskId, String action) {
+        if (boardId == null || taskId == null) {
+            System.out.println("⚠️ boardId 또는 taskId가 null이어서 캐시 제거를 건너뜁니다.");
+            return;
+        }
+        
+        try {
+            BoardVo boardVo = new BoardVo();
+            boardVo.setBoardId(boardId);
+            BoardVo board = boardService.selectBoard(boardVo);
+            
+            if (board != null && board.getProjectId() != null) {
+                kanbanRedisService.removeTaskFromProjectCache(board.getProjectId(), taskId);
+                System.out.println("✅ " + action + "으로 인한 프로젝트 캐시 업데이트: " + board.getProjectId());
+            } else {
+                System.out.println("⚠️ boardId로 프로젝트를 찾을 수 없어 캐시 제거를 건너뜁니다: " + boardId);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ 캐시 제거 중 오류 발생: " + e.getMessage());
+            // 실패 시 기존 방식으로 대체
+            invalidateProjectCacheByBoardId(boardId, action + " (캐시 제거 실패로 무효화)");
         }
     }
     
@@ -1147,5 +1244,13 @@ public class TaskController {
         
         return mapList;
     }
+   
+    
+    
+    
+    
+    
+    
+    
    
 }
