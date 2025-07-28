@@ -34,15 +34,10 @@ public class WebSocketConfig implements WebSocketConfigurer {
                     .setAllowedOriginPatterns("*");
             System.out.println("✅ 화상채팅 WebSocket 등록 성공: /chat");
             
-            // 칸반보드용 WebSocket (순수 WebSocket) - 다양한 경로로 등록
-            registry.addHandler(kanbanWebSocketHandler, "/websocket/kanban")
-                    .setAllowedOriginPatterns("*");
-            System.out.println("✅ 칸반보드 WebSocket 등록 성공: /websocket/kanban");
-            
-            // 추가 경로로도 등록 (디버깅용)
+            // 칸반보드용 WebSocket (단일 경로로 통일)
             registry.addHandler(kanbanWebSocketHandler, "/kanban")
                     .setAllowedOriginPatterns("*");
-            System.out.println("✅ 칸반보드 WebSocket 대체 경로 등록: /kanban");
+            System.out.println("✅ 칸반보드 WebSocket 등록 성공: /kanban");
             
         } catch (Exception e) {
             System.err.println("❌ WebSocket 핸들러 등록 실패: " + e.getMessage());
@@ -50,8 +45,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
         }
         
         System.out.println("🔧 통합 WebSocket 핸들러 등록 완료");
-        System.out.println("🌐 WebSocket 엔드포인트 접근 가능 URL:");
-        System.out.println("   - ws://localhost:[PORT]/InsWebApp/websocket/kanban");
-        System.out.println("   - ws://localhost:[PORT]/InsWebApp/kanban (대체)");
+        System.out.println("🌐 WebSocket 엔드포인트:");
+        System.out.println("   - /InsWebApp/kanban (칸반보드)");
     }
 } 

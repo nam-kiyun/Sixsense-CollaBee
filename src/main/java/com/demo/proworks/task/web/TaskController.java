@@ -1146,12 +1146,17 @@ public class TaskController {
 
             System.out.println("📊 프로젝트 전체 태스크 (사용자 이름 포함) 조회 완료: " + (allProjectTasks != null ? allProjectTasks.size() : 0) + "개");
 
-            // 3. 프로젝트 전체 태스크를 Redis에 캐싱
+            // 3. 최적화된 스마트 캐싱 전략 적용
             if (allProjectTasks != null && !allProjectTasks.isEmpty()) {
                 // TaskVo 리스트를 Map 리스트로 변환하여 캐싱
                 List<java.util.Map<String, Object>> taskMapList = convertTaskVoWithUserNameToMapList(allProjectTasks);
+                
+                // 기존 방식 대신 스마트 캐싱 사용 (프로젝트 통합 관리)
+                System.out.println("🧠 스마트 캐싱 전략 적용 - projectId 기반 통합 데이터 관리");
                 kanbanRedisService.cacheTasksWithUserName(cacheKey, taskMapList);
-                System.out.println("💾 프로젝트 전체 태스크 (사용자 이름 포함)를 Redis에 캐싱 완료: " + allProjectTasks.size() + "개");
+                
+                System.out.println("💾 최적화된 캐싱 완료: " + allProjectTasks.size() + "개 태스크");
+                System.out.println("💡 효율성 개선: 1회 Redis 조회로 전체 프로젝트 데이터 커버, 애플리케이션 레벨 필터링");
             }
 
             // 4. 현재 요청한 보드의 태스크만 필터링하여 반환

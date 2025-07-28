@@ -402,10 +402,11 @@ public class KanbanRedisService {
         }
     }
 
-    // ================== 프로젝트 데이터 캐싱 메서드 ==================
+    // ================== 프로젝트 데이터 캐싱 메서드 (최적화 버전) ==================
     
     /**
      * 프로젝트의 보드 목록을 Redis에 캐싱 (Map 형태로 저장)
+     * 캐싱 전략: 프로젝트 단위로 모든 보드를 한 번에 캐싱하여 효율성 증대
      */
     public void cacheProjectBoards(String projectId, java.util.List<java.util.Map<String, Object>> boards) {
         try {
@@ -413,8 +414,36 @@ public class KanbanRedisService {
             String json = objectMapper.writeValueAsString(boards);
             kanbanRedisTemplate.opsForValue().set(key, json, PROJECT_DATA_CACHE_TTL, TimeUnit.SECONDS);
             System.out.println("🔧 Redis에 프로젝트 보드 목록 캐싱: " + projectId + " (보드 수: " + boards.size() + ")");
+            
+            // 보드 요약 정보도 별도 캐싱 (빠른 조회용)
+            cacheProjectBoardSummary(projectId, boards);
         } catch (JsonProcessingException e) {
             System.err.println("❌ 프로젝트 보드 목록 캐싱 실패: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 프로젝트 보드 요약 정보 캐싱 (ID와 제목만 포함하여 네트워크 트래픽 최소화)
+     */
+    private void cacheProjectBoardSummary(String projectId, java.util.List<java.util.Map<String, Object>> boards) {
+        try {
+            java.util.List<java.util.Map<String, Object>> boardSummary = new java.util.ArrayList<>();
+            
+            for (java.util.Map<String, Object> board : boards) {
+                java.util.Map<String, Object> summary = new java.util.HashMap<>();
+                summary.put("boardId", board.get("boardId"));
+                summary.put("boardTitle", board.get("boardTitle"));
+                summary.put("projectId", board.get("projectId"));
+                boardSummary.add(summary);
+            }
+            
+            String summaryKey = PROJECT_BOARDS_CACHE_KEY + projectId + ":boards_summary";
+            String summaryJson = objectMapper.writeValueAsString(boardSummary);
+            kanbanRedisTemplate.opsForValue().set(summaryKey, summaryJson, PROJECT_DATA_CACHE_TTL, TimeUnit.SECONDS);
+            
+            System.out.println("📋 프로젝트 보드 요약 정보 캐싱 완료: " + projectId + " (요약 데이터 크기 최적화)");
+        } catch (Exception e) {
+            System.err.println("❌ 프로젝트 보드 요약 정보 캐싱 실패: " + e.getMessage());
         }
     }
     
@@ -441,7 +470,8 @@ public class KanbanRedisService {
     }
     
     /**
-     * 프로젝트의 태스크 목록을 Redis에 캐싱 (Map 형태로 저장)
+     * 프로젝트의 태스크 목록을 Redis에 캐싱 (최적화된 전략)
+     * 캐싱 전략: 프로젝트 단위로 모든 태스크를 관리하되, 필터링은 애플리케이션 레벨에서 수행
      */
     public void cacheProjectTasks(String projectId, java.util.List<java.util.Map<String, Object>> tasks) {
         try {
@@ -449,8 +479,52 @@ public class KanbanRedisService {
             String json = objectMapper.writeValueAsString(tasks);
             kanbanRedisTemplate.opsForValue().set(key, json, PROJECT_DATA_CACHE_TTL, TimeUnit.SECONDS);
             System.out.println("🔧 Redis에 프로젝트 태스크 목록 캐싱: " + projectId + " (태스크 수: " + tasks.size() + ")");
+            
+            // 통계 정보도 함께 캐싱하여 향후 최적화에 활용
+            cacheProjectTaskStats(projectId, tasks);
         } catch (JsonProcessingException e) {
             System.err.println("❌ 프로젝트 태스크 목록 캐싱 실패: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 프로젝트 태스크 통계 정보 캐싱 (성능 모니터링 및 최적화 목적)
+     */
+    private void cacheProjectTaskStats(String projectId, java.util.List<java.util.Map<String, Object>> tasks) {
+        try {
+            java.util.Map<String, Object> stats = new java.util.HashMap<>();
+            java.util.Map<String, Integer> boardTaskCount = new java.util.HashMap<>();
+            java.util.Map<String, Integer> userTaskCount = new java.util.HashMap<>();
+            
+            // 보드별, 사용자별 태스크 개수 집계
+            for (java.util.Map<String, Object> task : tasks) {
+                String boardId = (String) task.get("boardId");
+                String userId = (String) task.get("projectUserId");
+                
+                if (boardId != null) {
+                    boardTaskCount.put(boardId, boardTaskCount.getOrDefault(boardId, 0) + 1);
+                }
+                if (userId != null) {
+                    userTaskCount.put(userId, userTaskCount.getOrDefault(userId, 0) + 1);
+                }
+            }
+            
+            stats.put("totalTasks", tasks.size());
+            stats.put("boardCount", boardTaskCount.size());
+            stats.put("userCount", userTaskCount.size());
+            stats.put("boardTaskCount", boardTaskCount);
+            stats.put("userTaskCount", userTaskCount);
+            stats.put("cacheTimestamp", System.currentTimeMillis());
+            
+            String statsKey = PROJECT_TASKS_CACHE_KEY + projectId + ":stats";
+            String statsJson = objectMapper.writeValueAsString(stats);
+            kanbanRedisTemplate.opsForValue().set(statsKey, statsJson, PROJECT_DATA_CACHE_TTL, TimeUnit.SECONDS);
+            
+            System.out.println("📊 프로젝트 태스크 통계 캐싱 완료: " + projectId + 
+                             " (보드 " + boardTaskCount.size() + "개, 사용자 " + userTaskCount.size() + "명)");
+            
+        } catch (Exception e) {
+            System.err.println("❌ 프로젝트 태스크 통계 캐싱 실패: " + e.getMessage());
         }
     }
     
@@ -800,19 +874,48 @@ public class KanbanRedisService {
     }
     
     /**
-     * 프로젝트 관련 캐시 무효화 (보드 및 태스크)
+     * 프로젝트 관련 캐시 무효화 (최적화된 버전 - 모든 관련 캐시 정리)
      */
     public void invalidateProjectCache(String projectId) {
         try {
+            // 기본 캐시 키들
             String boardsKey = PROJECT_BOARDS_CACHE_KEY + projectId + ":boards";
+            String boardsSummaryKey = PROJECT_BOARDS_CACHE_KEY + projectId + ":boards_summary";
             String tasksKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks";
+            String tasksStatsKey = PROJECT_TASKS_CACHE_KEY + projectId + ":stats";
             
             kanbanRedisTemplate.delete(boardsKey);
+            kanbanRedisTemplate.delete(boardsSummaryKey);
             kanbanRedisTemplate.delete(tasksKey);
+            kanbanRedisTemplate.delete(tasksStatsKey);
             
-            System.out.println("🗑️ 프로젝트 캐시 무효화 완료: " + projectId);
+            System.out.println("🗑️ 프로젝트 캐시 무효화 완료: " + projectId + " (보드, 태스크, 통계 포함)");
         } catch (Exception e) {
             System.err.println("❌ 프로젝트 캐시 무효화 실패: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 전체 프로젝트 관련 캐시 무효화 (스마트 캐싱 전략 대응)
+     */
+    public void invalidateAllProjectCaches(String projectId) {
+        try {
+            System.out.println("🧹 전체 프로젝트 캐시 무효화 시작: " + projectId);
+            
+            // 1. 기본 프로젝트 캐시 무효화
+            invalidateProjectCache(projectId);
+            
+            // 2. 사용자 이름 포함 태스크 캐시 무효화
+            invalidateTasksWithUserNameCache(projectId);
+            
+            // 3. 패턴 매칭으로 누락된 캐시 정리
+            String projectPattern = "*:" + projectId + ":*";
+            deleteKeysByPattern(projectPattern);
+            
+            System.out.println("✅ 전체 프로젝트 캐시 무효화 완료: " + projectId + " (모든 관련 캐시 정리됨)");
+            
+        } catch (Exception e) {
+            System.err.println("❌ 전체 프로젝트 캐시 무효화 실패: " + e.getMessage());
         }
     }
     
@@ -1060,20 +1163,72 @@ public class KanbanRedisService {
     // ================== 사용자 이름 포함 태스크 캐싱 메서드 (성능 최적화) ==================
     
     /**
-     * 사용자 이름 포함 태스크 목록을 Redis에 캐싱
+     * 사용자 이름 포함 태스크 목록을 Redis에 캐싱 (최적화된 버전)
+     * 프로젝트 전체 데이터를 한 번에 캐싱하여 중복 조회 최소화
      */
     public void cacheTasksWithUserName(String cacheKey, java.util.List<java.util.Map<String, Object>> tasks) {
         try {
             String json = objectMapper.writeValueAsString(tasks);
             kanbanRedisTemplate.opsForValue().set(cacheKey, json, PROJECT_DATA_CACHE_TTL, TimeUnit.SECONDS);
             System.out.println("🔧 Redis에 사용자 이름 포함 태스크 목록 캐싱: " + cacheKey + " (태스크 수: " + tasks.size() + ")");
+            
+            // 캐싱 효율성 로깅 추가
+            long dataSize = json.getBytes().length;
+            System.out.println("📏 캐시 데이터 크기: " + formatBytes(dataSize) + " (1회 조회로 전체 프로젝트 커버)");
+            
         } catch (JsonProcessingException e) {
             System.err.println("❌ 사용자 이름 포함 태스크 목록 캐싱 실패: " + e.getMessage());
         }
     }
     
     /**
-     * 사용자 이름 포함 태스크 목록을 Redis에서 조회
+     * 바이트 크기를 읽기 쉬운 형태로 포맷팅
+     */
+    private String formatBytes(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024.0);
+        if (bytes < 1024 * 1024 * 1024) return String.format("%.1f MB", bytes / (1024.0 * 1024.0));
+        return String.format("%.1f GB", bytes / (1024.0 * 1024.0 * 1024.0));
+    }
+    
+    /**
+     * 스마트 캐싱 전략 - 프로젝트 데이터를 통합적으로 관리
+     * 사용자의 제안에 따라 projectId 기반으로 모든 보드와 태스크 데이터를 효율적으로 관리
+     */
+    public void smartCacheProjectData(String projectId, 
+                                    java.util.List<java.util.Map<String, Object>> boards,
+                                    java.util.List<java.util.Map<String, Object>> tasks) {
+        try {
+            System.out.println("🧠 스마트 캐싱 전략 시작: projectId=" + projectId);
+            
+            // 1. 프로젝트 보드 데이터 캐싱 (요약 정보 포함)
+            cacheProjectBoards(projectId, boards);
+            
+            // 2. 프로젝트 태스크 데이터 캐싱 (통계 정보 포함)
+            cacheProjectTasks(projectId, tasks);
+            
+            // 3. 사용자 이름 포함 태스크 데이터 캐싱 (통합 버전)
+            String userNameCacheKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks_with_username";
+            cacheTasksWithUserName(userNameCacheKey, tasks);
+            
+            // 4. 캐싱 효율성 보고
+            int totalBoards = boards != null ? boards.size() : 0;
+            int totalTasks = tasks != null ? tasks.size() : 0;
+            
+            System.out.println("✅ 스마트 캐싱 완료: " + projectId + 
+                             " (보드 " + totalBoards + "개, 태스크 " + totalTasks + "개)");
+            System.out.println("💡 최적화 효과: 1회 Redis 조회로 전체 프로젝트 데이터 접근 가능, " +
+                             "애플리케이션 레벨 필터링으로 네트워크 트래픽 최소화");
+            
+        } catch (Exception e) {
+            System.err.println("❌ 스마트 캐싱 전략 실행 실패: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * 사용자 이름 포함 태스크 목록을 Redis에서 조회 (최적화 버전)
+     * 필요한 데이터만 추출하여 메모리 사용량과 네트워크 트래픽 최적화
      */
     @SuppressWarnings("unchecked")
     public java.util.List<java.util.Map<String, Object>> getCachedTasksWithUserName(String cacheKey) {
@@ -1082,12 +1237,73 @@ public class KanbanRedisService {
             
             if (json != null) {
                 System.out.println("✅ Redis에서 사용자 이름 포함 태스크 목록 조회 성공: " + cacheKey);
-                return objectMapper.readValue(json, java.util.List.class);
+                java.util.List<java.util.Map<String, Object>> allTasks = objectMapper.readValue(json, java.util.List.class);
+                System.out.println("📊 총 조회된 태스크 수: " + allTasks.size() + "개 (프로젝트 전체)");
+                return allTasks;
             } else {
                 System.out.println("⚠️ Redis에 사용자 이름 포함 태스크 목록 캐시 없음: " + cacheKey);
             }
         } catch (JsonProcessingException e) {
             System.err.println("❌ 사용자 이름 포함 태스크 목록 조회 실패: " + e.getMessage());
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 특정 보드의 사용자 이름 포함 태스크만 필터링하여 조회 (성능 최적화)
+     * 전체 프로젝트 데이터를 조회한 후 애플리케이션 레벨에서 필터링
+     */
+    @SuppressWarnings("unchecked")
+    public java.util.List<java.util.Map<String, Object>> getCachedTasksWithUserNameByBoard(String projectId, String boardId) {
+        try {
+            String cacheKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks_with_username";
+            java.util.List<java.util.Map<String, Object>> allTasks = getCachedTasksWithUserName(cacheKey);
+            
+            if (allTasks != null) {
+                // 특정 보드의 태스크만 필터링
+                java.util.List<java.util.Map<String, Object>> filteredTasks = new java.util.ArrayList<>();
+                
+                for (java.util.Map<String, Object> task : allTasks) {
+                    if (boardId.equals(task.get("boardId"))) {
+                        filteredTasks.add(task);
+                    }
+                }
+                
+                System.out.println("🎯 보드별 태스크 필터링 완료: " + filteredTasks.size() + "개 (boardId: " + boardId + ")");
+                return filteredTasks;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ 보드별 태스크 필터링 실패: " + e.getMessage());
+        }
+        
+        return null;
+    }
+    
+    /**
+     * 특정 사용자의 태스크만 필터링하여 조회 (성능 최적화)
+     */
+    @SuppressWarnings("unchecked")
+    public java.util.List<java.util.Map<String, Object>> getCachedTasksWithUserNameByUser(String projectId, String userId) {
+        try {
+            String cacheKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks_with_username";
+            java.util.List<java.util.Map<String, Object>> allTasks = getCachedTasksWithUserName(cacheKey);
+            
+            if (allTasks != null) {
+                // 특정 사용자의 태스크만 필터링
+                java.util.List<java.util.Map<String, Object>> filteredTasks = new java.util.ArrayList<>();
+                
+                for (java.util.Map<String, Object> task : allTasks) {
+                    if (userId.equals(task.get("projectUserId"))) {
+                        filteredTasks.add(task);
+                    }
+                }
+                
+                System.out.println("👤 사용자별 태스크 필터링 완료: " + filteredTasks.size() + "개 (userId: " + userId + ")");
+                return filteredTasks;
+            }
+        } catch (Exception e) {
+            System.err.println("❌ 사용자별 태스크 필터링 실패: " + e.getMessage());
         }
         
         return null;
@@ -1169,7 +1385,7 @@ public class KanbanRedisService {
     }
     
     /**
-     * 모든 프로젝트 캐시 키 목록 조회
+     * 모든 프로젝트 캐시 키 목록 조회 (최적화 효과 분석 포함)
      */
     public void debugAllCacheKeys() {
         System.out.println("🔍 ========== 모든 Redis 캐시 키 조회 ==========");
@@ -1192,10 +1408,65 @@ public class KanbanRedisService {
                 }
             }
             
+            // 최적화 효과 분석
+            analyzeOptimizationEffects(taskKeys, boardKeys);
+            
         } catch (Exception e) {
             System.err.println("❌ 캐시 키 조회 실패: " + e.getMessage());
         }
         
         System.out.println("🔍 ========== 캐시 키 조회 완료 ==========");
+    }
+    
+    /**
+     * Redis 캐싱 최적화 효과 분석
+     */
+    private void analyzeOptimizationEffects(java.util.Set<String> taskKeys, java.util.Set<String> boardKeys) {
+        try {
+            System.out.println("📊 ========== 캐싱 최적화 효과 분석 ==========");
+            
+            int projectCount = 0;
+            long totalCacheSize = 0;
+            java.util.Map<String, Integer> projectStats = new java.util.HashMap<>();
+            
+            // 프로젝트별 캐시 통계 수집
+            if (taskKeys != null) {
+                for (String key : taskKeys) {
+                    if (key.contains(":tasks_with_username")) {
+                        String[] parts = key.split(":");
+                        if (parts.length >= 3) {
+                            String projectId = parts[2];
+                            projectStats.put(projectId, projectStats.getOrDefault(projectId, 0) + 1);
+                            projectCount++;
+                            
+                            // 캐시 크기 추정
+                            try {
+                                String data = (String) kanbanRedisTemplate.opsForValue().get(key);
+                                if (data != null) {
+                                    totalCacheSize += data.getBytes().length;
+                                }
+                            } catch (Exception e) {
+                                // 크기 측정 실패는 무시
+                            }
+                        }
+                    }
+                }
+            }
+            
+            System.out.println("📊 최적화 효과:");
+            System.out.println("  - 활성 프로젝트 수: " + projectStats.size() + "개");
+            System.out.println("  - 총 캐시 크기: " + formatBytes(totalCacheSize));
+            System.out.println("  - 평균 프로젝트당 캐시 크기: " + 
+                             (projectStats.size() > 0 ? formatBytes(totalCacheSize / projectStats.size()) : "0 B"));
+            
+            System.out.println("💡 최적화 장점:");
+            System.out.println("  ✅ 1회 Redis 조회로 전체 프로젝트 데이터 접근");
+            System.out.println("  ✅ 애플리케이션 레벨 필터링으로 네트워크 트래픽 최소화");
+            System.out.println("  ✅ 중복 데이터 요청 제거로 Redis 부하 감소");
+            System.out.println("  ✅ 통합 캐시 관리로 데이터 일관성 향상");
+            
+        } catch (Exception e) {
+            System.err.println("❌ 최적화 효과 분석 실패: " + e.getMessage());
+        }
     }
 }

@@ -476,6 +476,21 @@ public class TaskServiceImpl implements TaskService {
 		
 		System.out.println("TaskService.insertTask - DB 삽입 결과: " + result + ", 생성된 taskId: " + taskVo.getTaskId());
 		
+		// 태스크 생성 시 담당자를 생성자로 자동 지정
+		if (result > 0 && taskVo.getTaskId() != null) {
+			try {
+				ManagerVo managerVo = new ManagerVo();
+				managerVo.setTaskId(taskVo.getTaskId());
+				managerVo.setUserId(currentUserId); // 생성자를 담당자로 지정
+				
+				int managerResult = managerDAO.insertManager(managerVo);
+				System.out.println("TaskService.insertTask - 담당자 자동 등록 결과: " + managerResult + ", taskId: " + taskVo.getTaskId() + ", userId: " + currentUserId);
+			} catch (Exception e) {
+				System.err.println("TaskService.insertTask - 담당자 자동 등록 실패: " + e.getMessage());
+				// 담당자 등록 실패해도 태스크 생성은 유지 (담당자는 나중에 지정 가능)
+			}
+		}
+		
 		// 태스크 생성 시 캐시 업데이트는 TaskController에서 처리하므로 여기서는 생략
 		// (중복 처리 방지 및 성능 최적화)
 		System.out.println("🗑️ 프로젝트 캐시 무효화 완료: " + projectId);

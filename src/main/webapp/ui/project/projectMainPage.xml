@@ -212,24 +212,18 @@ scwin.initWebSocket = function () {
     console.log("현재 위치:", window.location.href);
     console.log("현재 프로토콜:", window.location.protocol);
     console.log("현재 호스트:", window.location.host);
+    console.log("배포환경 여부:", window.location.host.includes('collabee.live'));
 
     // 간단한 WebSocket URL
     var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     var host = window.location.host;
 
-    // 다양한 WebSocket 경로 시도
-    var possibleUrls = [
-        protocol + '//' + host + '/InsWebApp/kanban',
-        protocol + '//' + host + '/kanban',
-        protocol + '//' + host + '/websocket',
-        protocol + '//' + host + '/ws',
-        protocol + '//' + host + '/InsWebApp/ws'
-    ];
-
-    console.log("시도할 WebSocket URL 목록:", possibleUrls);
-    var websocketUrl = possibleUrls[0]; // 첫 번째 URL 시도
+    // 단일 칸반 웹소켓 경로 (중복 세션 방지)
+    var websocketUrl = protocol + '//' + host + '/InsWebApp/kanban';
 
     console.log("연결 시도 URL:", websocketUrl);
+    console.log("WebSocket 프로토콜:", protocol);
+    console.log("대상 호스트:", host);
 
     try {
         console.log("WebSocket 객체 생성 시도...");
@@ -240,72 +234,32 @@ scwin.initWebSocket = function () {
         // 핸들러 설정
         scwin.setupWebSocketHandlers(websocketUrl);
 
-        // 연결 상태 모니터링
+        // 연결 상태 모니터링 (대체 URL 시도 없음)
         setTimeout(function () {
             if (scwin.websocket) {
                 console.log("5초 후 WebSocket 상태 체크:");
                 console.log("- 상태:", scwin.websocket.readyState);
                 console.log("- 연결됨:", scwin.isWebSocketConnected);
                 if (scwin.websocket.readyState !== WebSocket.OPEN) {
-                    console.warn("⚠️ WebSocket이 5초 내에 연결되지 않았습니다.");
-                    console.warn("다른 URL을 시도합니다...");
-                    scwin.tryAlternativeWebSocketUrl();
+                    console.error("❌ WebSocket 연결 실패 - 서버 상태를 확인해주세요");
+                    console.error("시도한 URL:", websocketUrl);
                 }
             } else {
-                console.error(" WebSocket 객체가 사라졌습니다.");
+                console.error("❌ WebSocket 객체가 사라졌습니다.");
             }
         }, 5000);
 
     } catch (error) {
-        console.error(" WebSocket 생성 중 치명적 오류 발생!");
+        console.error("❌ WebSocket 생성 중 치명적 오류 발생!");
         console.error("- 오류 메시지:", error.message);
         console.error("- 오류 스택:", error.stack);
         console.error("- 브라우저 WebSocket 지원:", typeof WebSocket !== 'undefined');
         console.error("- 시도한 URL:", websocketUrl);
         scwin.websocket = null;
         scwin.isWebSocketConnected = false;
-
-        // 대체 URL 시도
-        scwin.tryAlternativeWebSocketUrl();
     }
 };
 
-/**
- * 대체 WebSocket URL 시도
- */
-scwin.currentUrlIndex = 0;
-scwin.tryAlternativeWebSocketUrl = function () {
-    scwin.currentUrlIndex = (scwin.currentUrlIndex || 0) + 1;
-
-    var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    var host = window.location.host;
-    var possibleUrls = [
-        protocol + '//' + host + '/InsWebApp/kanban',
-        protocol + '//' + host + '/kanban',
-        protocol + '//' + host + '/websocket',
-        protocol + '//' + host + '/ws',
-        protocol + '//' + host + '/InsWebApp/ws'
-    ];
-
-    if (scwin.currentUrlIndex < possibleUrls.length) {
-        var nextUrl = possibleUrls[scwin.currentUrlIndex];
-        console.log("대체 WebSocket URL 시도:", nextUrl, "(", scwin.currentUrlIndex + 1, "/", possibleUrls.length, ")");
-
-        setTimeout(function () {
-            try {
-                scwin.websocket = new WebSocket(nextUrl);
-                scwin.setupWebSocketHandlers(nextUrl);
-            } catch (error) {
-                console.error("대체 URL 연결 실패:", error);
-                scwin.tryAlternativeWebSocketUrl();
-            }
-        }, 2000); // 2초 후 재시도
-    } else {
-        console.error(" 모든 WebSocket URL 시도 실패. WebSocket 연결을 포기합니다.");
-        scwin.websocket = null;
-        scwin.isWebSocketConnected = false;
-    }
-};
 
 /**
  * WebSocket 핸들러 설정 (재사용 가능한 함수)
@@ -332,15 +286,30 @@ scwin.setupWebSocketHandlers = function (websocketUrl) {
     };
 
     scwin.websocket.onclose = function (event) {
-        console.log(" WebSocket 연결 종료");
+        console.log("������ WebSocket 연결 종료");
+        console.log("- 종료 코드:", event.code);
+        console.log("- 종료 이유:", event.reason);
+        console.log("- 정상 종료:", event.wasClean);
         scwin.isWebSocketConnected = false;
         scwin.websocket = null;
     };
 
     scwin.websocket.onerror = function (event) {
-        console.error(" WebSocket 연결 오류:", websocketUrl);
+        console.error("❌ WebSocket 연결 오류 발생!");
+        console.error("- 시도한 URL:", websocketUrl);
+        console.error("- 현재 환경:", window.location.host.includes('collabee.live') ? '배포환경' : '로컬환경');
+        console.error("- 프로토콜:", protocol);
+        console.error("- 브라우저 WebSocket 지원:", typeof WebSocket !== 'undefined');
+        console.error("- 이벤트 정보:", event);
+        
+        // 네트워크 연결 상태 확인
+        if (navigator.onLine) {
+            console.error("- 네트워크 상태: 온라인");
+        } else {
+            console.error("- 네트워크 상태: 오프라인");
+        }
+        
         scwin.isWebSocketConnected = false;
-        scwin.tryAlternativeWebSocketUrl();
     };
 };
 
@@ -2873,6 +2842,19 @@ scwin.list_onclick = async function (e) {
 scwin.calendar_onclick = function (e) {
     console.log("캘린더 보기 버튼 클릭");
 
+    // 데이터 존재 여부 미리 확인 (성능 최적화)
+    var hasData = false;
+    if (scwin.allTasksData) {
+        for (var boardId in scwin.allTasksData) {
+            if (scwin.allTasksData[boardId] && scwin.allTasksData[boardId].length > 0) {
+                hasData = true;
+                break;
+            }
+        }
+    }
+
+    console.log("캘린더 표시 가능한 데이터 존재:", hasData);
+
     // 칸반 보드 숨기기
     var kanbanBoard = $p.getComponentById("grp_kanban_board");
     if (kanbanBoard) {
@@ -2898,7 +2880,17 @@ scwin.calendar_onclick = function (e) {
     }
 
     // 태스크 데이터를 캘린더 형식으로 변환하여 로드
-    scwin.loadTasksToCalendar();
+    if (hasData) {
+        console.log("캘린더 데이터 로딩 시작");
+        scwin.loadTasksToCalendar();
+    } else {
+        console.warn("캘린더에 표시할 데이터가 없습니다. 빈 캘린더를 표시합니다.");
+        // 빈 데이터로 캘린더 초기화
+        var calendarDataList = $p.getComponentById("dlt_calendar_schedule");
+        if (calendarDataList) {
+            calendarDataList.removeAll();
+        }
+    }
 };
 
 /**
@@ -2917,33 +2909,21 @@ scwin.loadTasksToCalendar = function () {
     // 기존 데이터 모두 제거
     calendarDataList.removeAll();
 
-    // 현재 allTasksData 상태 확인
-    console.log("현재 allTasksData:", scwin.allTasksData);
-
-    // 모든 보드의 태스크 데이터를 수집
+    // allTasksData에서 직접 데이터 가져오기
     var allTasks = [];
     if (scwin.allTasksData) {
+        console.log("allTasksData에서 캘린더 데이터 가져오기");
         for (var boardId in scwin.allTasksData) {
             if (scwin.allTasksData.hasOwnProperty(boardId)) {
                 var boardTasks = scwin.allTasksData[boardId];
-                console.log("보드 " + boardId + "의 태스크:", boardTasks);
                 if (boardTasks && boardTasks.length > 0) {
                     allTasks = allTasks.concat(boardTasks);
                 }
             }
         }
+        console.log("allTasksData에서 가져온 총 데이터 수:", allTasks.length);
     } else {
-        console.warn("allTasksData가 없습니다. 대체 방법으로 dlt_scwin.taskList에서 데이터를 가져옵니다.");
-
-        // 대체 방법: dlt_scwin.taskList에서 직접 데이터 가져오기
-        scwin.taskList = $p.getComponentById("dlt_scwin.taskList");
-        if (scwin.taskList) {
-            var taskData = scwin.taskList.getAllJSON();
-            console.log("dlt_scwin.taskList에서 가져온 데이터:", taskData);
-            if (taskData && taskData.length > 0) {
-                allTasks = taskData;
-            }
-        }
+        console.warn("allTasksData가 없습니다. 캘린더에 표시할 데이터가 없습니다.");
     }
 
     console.log("캘린더에 표시할 총 태스크 수:", allTasks.length);
@@ -3124,22 +3104,95 @@ scwin.loadTasksToGantt = function (allTasks, displayYear, displayMonth) {
     }
 
     console.log("=== 로드할 태스크 " + ganttTasks.length + "개 ===");
+    
+    // 전체 태스크를 해당 월 우선으로 정렬 (해당 월 태스크 위쪽, 나머지 아래쪽)
+    if (ganttTasks && ganttTasks.length > 0) {
+        var currentYear = displayYear || scwin.currentGanttYear || (new Date()).getFullYear();
+        var currentMonth = displayMonth || scwin.currentGanttMonth || ((new Date()).getMonth() + 1);
+        
+        // 해당 월의 시작일과 종료일 계산
+        var monthStart = new Date(currentYear, currentMonth - 1, 1);
+        var monthEnd = new Date(currentYear, currentMonth, 0);
+        console.log("정렬 기준 월 범위:", monthStart.toDateString(), "~", monthEnd.toDateString());
+        
+        // 1단계: 유효한 날짜를 가진 태스크만 필터링
+        var validTasks = ganttTasks.filter(function(task) {
+            // 시작날짜와 종료날짜가 모두 존재하고 비어있지 않은 경우만
+            if (!task.startDate || !task.endDate || 
+                task.startDate.trim() === "" || task.endDate.trim() === "") {
+                console.log("날짜 정보가 없는 태스크 제외:", task.taskTitle || task.taskId);
+                return false;
+            }
+            
+            // 날짜 파싱이 가능한 경우만
+            var startDate = scwin.parseValidDate(task.startDate);
+            var endDate = scwin.parseValidDate(task.endDate);
+            if (!startDate || !endDate) {
+                console.log("날짜 파싱 실패한 태스크 제외:", task.taskTitle || task.taskId);
+                return false;
+            }
+            
+            return true;
+        });
+        
+        console.log("유효한 태스크:", validTasks.length + "개 (전체: " + ganttTasks.length + "개)");
+        
+        // 2단계: 해당 월 태스크와 다른 월 태스크로 분리
+        var currentMonthTasks = [];
+        var otherMonthTasks = [];
+        
+        validTasks.forEach(function(task) {
+            var startDate = scwin.parseValidDate(task.startDate);
+            var endDate = scwin.parseValidDate(task.endDate);
+            
+            // 해당 월과 겹치는지 확인 (시작일이 월 종료일 이전이고, 종료일이 월 시작일 이후)
+            var isOverlapping = startDate <= monthEnd && endDate >= monthStart;
+            
+            if (isOverlapping) {
+                currentMonthTasks.push(task);
+                console.log("해당 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+            } else {
+                otherMonthTasks.push(task);
+                console.log("다른 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+            }
+        });
+        
+        // 3단계: 각 그룹을 시작날짜 순으로 정렬
+        currentMonthTasks.sort(function(a, b) {
+            var dateA = scwin.parseValidDate(a.startDate);
+            var dateB = scwin.parseValidDate(b.startDate);
+            return dateA.getTime() - dateB.getTime();
+        });
+        
+        otherMonthTasks.sort(function(a, b) {
+            var dateA = scwin.parseValidDate(a.startDate);
+            var dateB = scwin.parseValidDate(b.startDate);
+            return dateA.getTime() - dateB.getTime();
+        });
+        
+        // 4단계: 해당 월 태스크를 위에, 다른 월 태스크를 아래에 배치
+        ganttTasks = currentMonthTasks.concat(otherMonthTasks);
+        
+        console.log("간트차트 태스크 정렬 완료:");
+        console.log("- 해당 월(" + currentYear + "년 " + currentMonth + "월) 태스크:", currentMonthTasks.length + "개 (위쪽)");
+        console.log("- 다른 월 태스크:", otherMonthTasks.length + "개 (아래쪽)");
+        console.log("- 전체:", ganttTasks.length + "개");
+    }
 
-    // 태스크 개수에 따른 동적 높이 조절 (row 높이 2배 증가)
+    // 스크롤 컨테이너 사용으로 높이를 자연스럽게 증가 (최대 높이 제한 없음)
     var taskCount = ganttTasks.length;
-    var baseHeight = 150;  // 기본 높이 증가 (100 → 150)
-    var taskHeight = 30;   // 태스크당 추가 높이 2배 (15 → 30)  
-    var minHeight = 120;   // 최소 높이 증가 (80 → 120)
-    var maxHeight = 600;   // 최대 높이 2배 (300 → 600)
+    var baseHeight = 150;  // 기본 높이
+    var taskHeight = 45;   // 태스크당 높이 (더 여유있게)
+    var minHeight = 400;   // 최소 높이 (스크롤 컨테이너 내에서)
 
     var dynamicHeight = Math.max(minHeight, baseHeight + (taskCount * taskHeight));
 
-    console.log("동적 높이 조절 (1/3 크기): " + taskCount + "개 태스크 → " + dynamicHeight + "px");
+    console.log("스크롤 가능한 간트차트 높이 설정: " + taskCount + "개 태스크 → " + dynamicHeight + "px");
 
     try {
-        // width는 원래대로 90% 유지, height만 동적 조절
+        // 스크롤 컨테이너 내에서 자연스러운 높이 설정
         gantt_chart.setStyle("height", dynamicHeight + "px");
-        console.log("간트차트 높이 설정 완료: " + dynamicHeight + "px");
+        console.log("간트차트 높이 설정 완료 (스크롤 가능): " + dynamicHeight + "px");
     } catch (sizeError) {
         console.log("크기 설정 오류:", sizeError);
     }
@@ -3793,12 +3846,82 @@ scwin.refreshGanttChart = function () {
     }
 
     console.log("전체 taskList:", scwin.taskList.length + "개");
+    
+    // 전체 taskList를 현재 월 우선으로 정렬 (현재 월 태스크 위쪽, 나머지 아래쪽)
+    
+    // 해당 월의 시작일과 종료일 계산
+    var monthStart = new Date(scwin.currentGanttYear, scwin.currentGanttMonth - 1, 1);
+    var monthEnd = new Date(scwin.currentGanttYear, scwin.currentGanttMonth, 0);
+    console.log("새로고침 월 범위:", monthStart.toDateString(), "~", monthEnd.toDateString());
+    
+    // 1단계: 유효한 날짜를 가진 태스크만 필터링
+    var validTaskList = scwin.taskList.filter(function(task) {
+        // 시작날짜와 종료일이 있는 태스크만 
+        if (!task.startDate || !task.endDate || 
+            task.startDate.trim() === "" || task.endDate.trim() === "") {
+            console.log("새로고침에서 날짜 정보가 없는 태스크 제외:", task.taskTitle || task.taskId);
+            return false;
+        }
+        
+        // 날짜 파싱이 가능한 경우만
+        var startDate = scwin.parseValidDate(task.startDate);
+        var endDate = scwin.parseValidDate(task.endDate);
+        if (!startDate || !endDate) {
+            console.log("새로고침에서 날짜 파싱 실패한 태스크 제외:", task.taskTitle || task.taskId);
+            return false;
+        }
+        
+        return true;
+    });
+    
+    console.log("새로고침: 유효한 태스크:", validTaskList.length + "개 (전체: " + scwin.taskList.length + "개)");
+    
+    // 2단계: 현재 월 태스크와 다른 월 태스크로 분리
+    var currentMonthTasks = [];
+    var otherMonthTasks = [];
+    
+    validTaskList.forEach(function(task) {
+        var startDate = scwin.parseValidDate(task.startDate);
+        var endDate = scwin.parseValidDate(task.endDate);
+        
+        // 현재 월과 겹치는지 확인 (시작일이 월 종료일 이전이고, 종료일이 월 시작일 이후)
+        var isOverlapping = startDate <= monthEnd && endDate >= monthStart;
+        
+        if (isOverlapping) {
+            currentMonthTasks.push(task);
+            console.log("새로고침 현재 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+        } else {
+            otherMonthTasks.push(task);
+            console.log("새로고침 다른 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+        }
+    });
+    
+    // 3단계: 각 그룹을 시작날짜 순으로 정렬
+    currentMonthTasks.sort(function(a, b) {
+        var dateA = scwin.parseValidDate(a.startDate);
+        var dateB = scwin.parseValidDate(b.startDate);
+        return dateA.getTime() - dateB.getTime();
+    });
+    
+    otherMonthTasks.sort(function(a, b) {
+        var dateA = scwin.parseValidDate(a.startDate);
+        var dateB = scwin.parseValidDate(b.startDate);
+        return dateA.getTime() - dateB.getTime();
+    });
+    
+    // 4단계: 현재 월 태스크를 위에, 다른 월 태스크를 아래에 배치
+    var sortedTaskList = currentMonthTasks.concat(otherMonthTasks);
+    
+    console.log("간트차트 새로고침 정렬 완료:");
+    console.log("- 현재 월(" + scwin.currentGanttYear + "년 " + scwin.currentGanttMonth + "월) 태스크:", currentMonthTasks.length + "개 (위쪽)");
+    console.log("- 다른 월 태스크:", otherMonthTasks.length + "개 (아래쪽)");
+    console.log("- 전체:", sortedTaskList.length + "개");
 
-    // 간트차트 데이터 리스트를 전체 태스크로 구성 (모든 태스크를 row로 표시)
+    // 간트차트 데이터 리스트를 정렬된 태스크로 구성 (모든 태스크를 row로 표시)
     dlt_gantt_schedule.removeAll();
 
-    for (var i = 0; i < scwin.taskList.length; i++) {
-        var task = scwin.taskList[i];
+    for (var i = 0; i < sortedTaskList.length; i++) {
+        var task = sortedTaskList[i];
 
         // 시작일과 종료일이 있는 태스크만 추가 (모든 태스크를 row로 표시)
         if (task.startDate && task.endDate &&
@@ -3825,8 +3948,8 @@ scwin.refreshGanttChart = function () {
         gantt_chart.setCategories(categoryData);
     }
 
-    // 간트차트 다시 그리기 (전체 태스크로 호출하되, 카테고리는 해당 월만)
-    scwin.loadTasksToGantt(scwin.taskList, scwin.currentGanttYear, scwin.currentGanttMonth);
+    // 간트차트 다시 그리기 (정렬된 전체 태스크로 호출하되, 카테고리는 해당 월만)
+    scwin.loadTasksToGantt(sortedTaskList, scwin.currentGanttYear, scwin.currentGanttMonth);
 };
 
 /**
@@ -3942,9 +4065,81 @@ scwin.loadGanttData = function () {
         scwin.taskList = [];
     }
 
-    // 칸반의 태스크 데이터를 간트차트용으로 변환
+    // 전체 태스크를 현재 월 우선으로 정렬 (현재 월 태스크 위쪽, 나머지 아래쪽)
     console.log("=== 간트차트 데이터 변환 시작 ===");
-    console.log("사용할 태스크 수:", taskData.length);
+    console.log("전체 태스크 수:", taskData.length);
+    
+    // 현재 간트차트 월 정보
+    var currentYear = scwin.currentGanttYear || (new Date()).getFullYear();
+    var currentMonth = scwin.currentGanttMonth || ((new Date()).getMonth() + 1);
+    
+    // 해당 월의 시작일과 종료일 계산
+    var monthStart = new Date(currentYear, currentMonth - 1, 1);
+    var monthEnd = new Date(currentYear, currentMonth, 0);
+    console.log("정렬 기준 월 범위:", monthStart.toDateString(), "~", monthEnd.toDateString());
+    
+    // 1단계: 유효한 날짜를 가진 태스크만 필터링
+    var validTasks = taskData.filter(function(task) {
+        // 시작날짜와 종료날짜가 모두 존재하고 비어있지 않은 경우만
+        if (!task.startDate || !task.endDate || 
+            task.startDate.trim() === "" || task.endDate.trim() === "") {
+            console.log("날짜 정보가 없는 태스크 제외:", task.taskTitle || task.taskId);
+            return false;
+        }
+        
+        // 날짜 파싱이 가능한 경우만
+        var startDate = scwin.parseValidDate(task.startDate);
+        var endDate = scwin.parseValidDate(task.endDate);
+        if (!startDate || !endDate) {
+            console.log("날짜 파싱 실패한 태스크 제외:", task.taskTitle || task.taskId, task.startDate, task.endDate);
+            return false;
+        }
+        
+        return true;
+    });
+    
+    console.log("유효한 태스크:", validTasks.length + "개");
+    
+    // 2단계: 현재 월 태스크와 다른 월 태스크로 분리
+    var currentMonthTasks = [];
+    var otherMonthTasks = [];
+    
+    validTasks.forEach(function(task) {
+        var startDate = scwin.parseValidDate(task.startDate);
+        var endDate = scwin.parseValidDate(task.endDate);
+        
+        // 현재 월과 겹치는지 확인 (시작일이 월 종료일 이전이고, 종료일이 월 시작일 이후)
+        var isOverlapping = startDate <= monthEnd && endDate >= monthStart;
+        
+        if (isOverlapping) {
+            currentMonthTasks.push(task);
+            console.log("현재 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+        } else {
+            otherMonthTasks.push(task);
+            console.log("다른 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+        }
+    });
+    
+    // 3단계: 각 그룹을 시작날짜 순으로 정렬
+    currentMonthTasks.sort(function(a, b) {
+        var dateA = scwin.parseValidDate(a.startDate);
+        var dateB = scwin.parseValidDate(b.startDate);
+        return dateA.getTime() - dateB.getTime();
+    });
+    
+    otherMonthTasks.sort(function(a, b) {
+        var dateA = scwin.parseValidDate(a.startDate);
+        var dateB = scwin.parseValidDate(b.startDate);
+        return dateA.getTime() - dateB.getTime();
+    });
+    
+    // 4단계: 현재 월 태스크를 위에, 다른 월 태스크를 아래에 배치
+    taskData = currentMonthTasks.concat(otherMonthTasks);
+    
+    console.log("간트차트 데이터 정렬 완료:");
+    console.log("- 현재 월(" + currentYear + "년 " + currentMonth + "월) 태스크:", currentMonthTasks.length + "개 (위쪽)");
+    console.log("- 다른 월 태스크:", otherMonthTasks.length + "개 (아래쪽)");
+    console.log("- 전체:", taskData.length + "개");
 
     var validTaskIndex = 0;
     for (var i = 0; i < taskData.length; i++) {
@@ -4364,7 +4559,8 @@ scwin.createKanbanCardInBoard = function (cardData) {
             metaGroup
         );
         if (assigneeSpan) {
-            var userName = scwin.getUserNameByUserId(cardData.projectUserId, cardData);
+            // 서버에서 담당자 우선으로 보내준 userName 사용
+            var userName = cardData.userName || scwin.getUserNameByUserId(cardData.projectUserId, cardData);
             assigneeSpan.setValue("담당자: " + userName);
         }
     }
@@ -4539,15 +4735,12 @@ scwin.createKanbanCard = function (cardData, columnType) {
         assigneeGroup
     );
     if (avatarSpan) {
-        if (cardData.projectUserId) {
-            var userName = scwin.getUserNameByUserId(cardData.projectUserId, cardData);
-            if (userName && typeof userName === 'string' && userName.length > 0) {
-                avatarSpan.setValue(userName.charAt(0)); // 사용자 이름의 첫 글자
-            } else {
-                avatarSpan.setValue('?'); // 기본값
-            }
+        // 서버에서 담당자 우선으로 보내준 userName 사용
+        var userName = cardData.userName || scwin.getUserNameByUserId(cardData.projectUserId, cardData);
+        if (userName && typeof userName === 'string' && userName.length > 0) {
+            avatarSpan.setValue(userName.charAt(0)); // 사용자 이름의 첫 글자
         } else {
-            avatarSpan.setValue('?'); // 사용자 없음 기본값
+            avatarSpan.setValue('?'); // 기본값
         }
     } else {
         console.error("아바타 스팬 생성 실패:", cardId);
@@ -4561,15 +4754,12 @@ scwin.createKanbanCard = function (cardData, columnType) {
         assigneeGroup
     );
     if (assigneeNameSpan) {
-        if (cardData.projectUserId) {
-            var userName = scwin.getUserNameByUserId(cardData.projectUserId, cardData);
-            if (userName && typeof userName === 'string') {
-                assigneeNameSpan.setValue(userName);
-            } else {
-                assigneeNameSpan.setValue('담당자 없음');
-            }
+        // 서버에서 담당자 우선으로 보내준 userName 사용
+        var userName = cardData.userName || scwin.getUserNameByUserId(cardData.projectUserId, cardData);
+        if (userName && typeof userName === 'string') {
+            assigneeNameSpan.setValue(userName);
         } else {
-            assigneeNameSpan.setValue('담당자 없음'); // 사용자 없음 기본값
+            assigneeNameSpan.setValue('담당자 없음');
         }
     } else {
         console.error("담당자 이름 스팬 생성 실패:", cardId);
@@ -8662,6 +8852,7 @@ html, body {
     margin: 0;
     padding: 0 20px 60px 20px;  /* 좌우 여백 추가 */
     overflow-y: visible;
+    border: none;  /* 테두리 제거 */
 }
 
 /* 칸반 열 */
@@ -8672,7 +8863,7 @@ html, body {
     background: #f6f8fa;
     border-radius: 6px;
     padding: 12px;
-    border: 1px solid #d1d9e0;
+    border: none;  /* 테두리 제거 */
 }
 
 .kanban-column-header {
@@ -9689,9 +9880,12 @@ html, body {
 					</xf:trigger>
 				</xf:group>
 
-				<w2:fwGanttChart id="gantt_chart" style="width: 90%; height: 600px; margin: 10px auto;" 
-					title="프로젝트 일정 간트차트">
-				</w2:fwGanttChart>
+				<!-- 간트차트 스크롤 컨테이너 -->
+				<xf:group id="grp_gantt_scroll" style="width: 95%; height: 600px; margin: 10px auto; overflow: auto; border: 1px solid #000;">
+					<w2:fwGanttChart id="gantt_chart" style="width: 100%; height: auto; min-height: 400px; border: none !important; outline: none;" 
+						title="프로젝트 일정 간트차트">
+					</w2:fwGanttChart>
+				</xf:group>
 			</xf:group>
 		</xf:group>
 		
