@@ -47,7 +47,16 @@ scwin.onpageload = async function () {
 
     // 기본적으로 대시보드 로드 (사용자 정보 로드 후 진행)
     await scwin.loadMainContent("dashboard");
+    scwin.notice();
 };
+
+scwin.notice = function () {
+    var eventSource = new EventSource("/InsWebApp/user/notice.pwkjson");
+    eventSource.addEventListener("task-reminder", function (event) {
+        console.log("받은 알림:", event.data);
+    });
+}
+
 
 // 메인 콘텐츠 동적 로드 함수
 scwin.loadMainContent = function (menuType, projectData) {
@@ -86,7 +95,7 @@ scwin.loadMainContent = function (menuType, projectData) {
                     break;
             }
         }
-   
+
         console.log("결정된 소스 경로:", srcPath);
 
         // wframe 존재 확인
@@ -101,7 +110,7 @@ scwin.loadMainContent = function (menuType, projectData) {
             setTimeout(function () {
                 console.log("변경 후 wframe src:", main_frame.getSrc());
                 console.log("프레임 소스 변경 성공:", srcPath);
-                
+
                 // 프로젝트 데이터가 있으면 메인 콘텐츠에 전달
                 if (projectData) {
                     setTimeout(() => {
@@ -111,7 +120,7 @@ scwin.loadMainContent = function (menuType, projectData) {
                                 mainContentWindow.scwin.setProjectData(projectData);
                                 console.log("메인 콘텐츠에 프로젝트 데이터 전달 성공");
                             }
-                        } catch(e) {
+                        } catch (e) {
                             console.log("프로젝트 데이터 전달 오류:", e);
                         }
                     }, 800);
@@ -146,19 +155,19 @@ scwin.updateMainContentUserInfo = function () {
             if (mainContentWindow && mainContentWindow.dm_userInfo) {
                 const userName = dm_userInfo.get("userName");
                 const userId = dm_userInfo.get("userId");
-                
+
                 console.log("메인페이지에서 가져온 사용자 정보:");
                 console.log("- userName:", userName);
                 console.log("- userId:", userId);
-                
+
                 // 사용자 정보 업데이트
                 mainContentWindow.dm_userInfo.set("userName", userName);
                 mainContentWindow.dm_userInfo.set("userId", userId);
-                
+
                 console.log("하위 콘텐츠로 전달한 사용자 정보:");
                 console.log("- userName:", userName);
                 console.log("- userId:", userId);
-                
+
                 // 프로젝트 조회 파라미터도 업데이트
                 if (mainContentWindow.dmp_projectVo) {
                     mainContentWindow.dmp_projectVo.set("userId", userId);
@@ -211,10 +220,10 @@ scwin.changeMenu = function (menuType, projectData) {
 scwin.loadUserInfo = function () {
     try {
         console.log("세션에서 사용자 정보를 가져오는 중...");
-        
+
         // 서버에 세션 사용자 정보 요청
         $p.executeSubmission("sbm_getUserInfo");
-        
+
     } catch (e) {
         // console.log("사용자 정보 로드 오류:", e);
         // // 오류 시 기본값 사용
@@ -295,7 +304,7 @@ scwin.updateUserInfoInComponents = async function () {
         } catch (e) {
             console.log("사이드메뉴 업데이트 오류:", e);
         }
-        
+
     } catch (e) {
         console.log("컴포넌트 업데이트 오류:", e);
     }
@@ -334,7 +343,7 @@ scwin.sbm_getUserInfo_submitdone = function (e) {
     try {
         var responseData = e.responseJSON;
         console.log("서버에서 받은 사용자 정보:", responseData);
-        
+
         if (responseData && responseData.userVo) {
             var userData = responseData.userVo;
             console.log(userData);
@@ -388,7 +397,7 @@ scwin.openProjectAddModal = function () {
         scwin.cleanupModal();
 
         console.log("=== 프로젝트 추가 모달 열기 ===");
-        
+
         // 모달 생성
         scwin.createProjectAddModal();
 
@@ -399,7 +408,7 @@ scwin.openProjectAddModal = function () {
 };
 
 // 기존 모달 완전히 정리하는 함수
-scwin.cleanupModal = function() {
+scwin.cleanupModal = function () {
     try {
         // WebSquare 팝업이 열려있는지 확인하고 닫기
         if ($p.getPopupWindow(scwin.modalManager.modalId)) {
@@ -413,7 +422,7 @@ scwin.cleanupModal = function() {
 
         // DOM에서 혹시 남아있을 수 있는 모달 엘리먼트들 제거
         var existingModals = document.querySelectorAll('[id*="' + scwin.modalManager.modalId + '"]');
-        existingModals.forEach(function(modal) {
+        existingModals.forEach(function (modal) {
             if (modal && modal.parentNode) {
                 modal.parentNode.removeChild(modal);
                 console.log("DOM에서 모달 엘리먼트 제거:", modal.id);
@@ -466,10 +475,10 @@ scwin.createProjectAddModal = function () {
         scwin.modalManager.modalInstance = $p.openPopup("/InsWebApp/ui/cmmn/projectAddModal.xml", options);
         scwin.modalManager.isModalOpen = true;
         scwin.modalManager.modalId = uniqueModalId; // 새로운 ID로 업데이트
-        
+
         console.log("WebSquare 모달 생성 완료 - 팀장:", userName);
         console.log("모달 인스턴스:", scwin.modalManager.modalInstance);
-        
+
     } catch (e) {
         console.error("모달 생성 중 오류:", e);
         scwin.modalManager.isModalOpen = false;
@@ -514,17 +523,17 @@ scwin.refreshMainContent = function () {
 };
 
 // 팝업 닫기 액션 (최종 버전)
-scwin.popup_closeAction = function(argRuntimeID, argJsnInfo) {
+scwin.popup_closeAction = function (argRuntimeID, argJsnInfo) {
     console.log("팝업 닫기 액션 호출:", argRuntimeID);
     console.log("팝업 정보:", argJsnInfo);
     try {
         // 팝업 객체 접근
         let popObj = $p.getPopupWindow(argRuntimeID);
-        
+
         // 모달 상태 초기화
         scwin.modalManager.isModalOpen = false;
         scwin.modalManager.modalInstance = null;
-        
+
         // 프로젝트가 추가되었다면 사이드메뉴 새로고침
         if (argJsnInfo && argJsnInfo.projectAdded) {
             console.log("프로젝트가 추가되어 사이드메뉴를 새로고침합니다.");
@@ -532,18 +541,18 @@ scwin.popup_closeAction = function(argRuntimeID, argJsnInfo) {
                 scwin.refreshSideMenu();
             }, 500);
         }
-     
+
         console.log("팝업 닫기 액션 완료");
-        
+
         return true; // 팝업 닫기 허용
-        
+
     } catch (e) {
         console.error("팝업 닫기 액션 오류:", e);
-        
+
         // 오류가 있어도 레이아웃과 모달 상태는 초기화
         scwin.modalManager.isModalOpen = false;
         scwin.modalManager.modalInstance = null;
-        
+
         return true; // 팝업 닫기 허용
     }
 };
