@@ -138,10 +138,17 @@ scwin.onpageload = function() {
     dma_videoChat.set("isVideoOff", "false");
     
     // HTTPS 체크
+    console.log("현재 프로토콜:", location.protocol, "호스트:", location.hostname);
+    alert("현재 프로토콜: " + location.protocol + ", 호스트: " + location.hostname);
     if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
         alert("WebRTC는 HTTPS 환경에서만 작동합니다.");
         return;
     }
+    
+    // Matrix Mobile 카메라 플러그인 설치 상태 확인
+    console.log("$h 객체 확인:", typeof $h);
+    console.log("$h.camera 확인:", typeof $h.camera);
+    alert("$h: " + (typeof $h) + ", $h.camera: " + (typeof $h.camera));
     
     // 사용자 정보 로드
     $p.executeSubmission("sbm_getUserInfo");
@@ -149,9 +156,9 @@ scwin.onpageload = function() {
     // WebSocket 초기화
     scwin.initializeWebSocket();
     
-    // 자동으로 화상통화 시작
+    // 자동으로 카메라 권한 요청 후 화상통화 시작
     setTimeout(function() {
-        scwin.joinCall();
+        scwin.requestCameraPermission();
     }, 1000);
 };
 
@@ -231,6 +238,81 @@ scwin.initializeWebSocket = function() {
     }
 };
 
+// 카메라 권한 요청 (Cordova Camera Plugin 사용)
+scwin.requestCameraPermission = async function() {
+    try {
+        alert("requestCameraPermission 함수 시작");
+        scwin.showLoading("카메라 권한 요청 중...");
+        
+        alert("$h.camera 객체 확인: " + (typeof $h.camera));
+        
+        let options = {
+            "quality": 100, 
+            "sourceType": $h.camera.PictureSourceType.CAMERA, 
+            "allowEdit": false, 
+            "encodingType": $h.camera.EncodingType.JPEG
+        };
+        
+        alert("capturePhoto 실행 전");
+        const data = await $h.camera.capturePhoto(options);
+        console.log(data);
+        alert("capturePhoto 실행 성공");
+        
+        // 권한 획득 후 임시 파일 정리
+        $h.camera.cleanup(function(result) {
+            console.log("임시 파일 정리 완료:", result);
+        });
+        
+        // 실제 화상통화 시작
+        scwin.startWebRTCCall();
+        
+    } catch (error) {
+        console.error("카메라 권한 요청 실패:", error);
+        alert("에러 상세: " + error.message);
+        scwin.hideLoading();
+        alert("화상통화를 위해 카메라 권한이 필요합니다.\n설정에서 카메라 권한을 허용해주세요.");
+    }
+};
+
+// WebRTC 화상통화 시작 (권한 획득 후 실행)
+scwin.startWebRTCCall = async function() {
+    try {
+        scwin.showLoading("화상통화 연결 중...");
+        
+        // 로컬 미디어 스트림 가져오기
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 640, height: 480 },
+            audio: true
+        });
+        
+        // 본인 비디오 추가
+        scwin.addLocalVideo();
+        
+        // 화상통화 방 참가 알림
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            const joinRoomMessage = {
+                type: 'join-room',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName,
+                timestamp: Date.now()
+            };
+            chatSocket.send(JSON.stringify(joinRoomMessage));
+        }
+        
+        isJoined = true;
+        dma_videoChat.set("isJoined", "true");
+        
+        scwin.hideLoading();
+        console.log("화상통화 시작 완료");
+        
+    } catch (error) {
+        console.error("WebRTC 연결 실패:", error);
+        scwin.hideLoading();
+        alert("화상통화 연결에 실패했습니다.\n네트워크 상태를 확인해주세요.");
+    }
+};
+
 // WebSocket 메시지 처리
 scwin.handleWebSocketMessage = function(data) {
     console.log("WebSocket 메시지 수신:", data);
@@ -278,44 +360,7 @@ scwin.handleWebSocketMessage = function(data) {
     }
 };
 
-// 화상통화 참가
-scwin.joinCall = async function() {
-    try {
-        scwin.showLoading("카메라 연결 중...");
-        
-        // 로컬 미디어 스트림 가져오기
-        localStream = await navigator.mediaDevices.getUserMedia({
-            video: { width: 640, height: 480 },
-            audio: true
-        });
-        
-        // 본인 비디오 추가
-        scwin.addLocalVideo();
-        
-        // 화상통화 방 참가 알림
-        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
-            const joinRoomMessage = {
-                type: 'join-room',
-                channelName: currentUser.channelName,
-                userId: currentUser.userId,
-                userName: currentUser.userName,
-                timestamp: Date.now()
-            };
-            chatSocket.send(JSON.stringify(joinRoomMessage));
-        }
-        
-        isJoined = true;
-        dma_videoChat.set("isJoined", "true");
-        
-        scwin.hideLoading();
-        console.log("화상통화 참가 완료");
-        
-    } catch (error) {
-        console.error("화상통화 참가 실패:", error);
-        scwin.hideLoading();
-        alert("카메라/마이크 접근 권한이 필요합니다.");
-    }
-};
+// 기존 joinCall 함수는 startWebRTCCall로 대체됨 (위에서 정의됨)
 
 // 로딩 표시
 scwin.showLoading = function(message) {
