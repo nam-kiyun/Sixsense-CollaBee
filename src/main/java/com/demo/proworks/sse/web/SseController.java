@@ -6,6 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PostConstruct;
 
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -22,36 +27,63 @@ public class SseController {
 
 	// 사용자별 emitter 관리
 	private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
+	
+	private final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
+	
 
 	@ElService(key = "user/notice")
 	@RequestMapping(value = "/user/notice", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-	@ResponseBody
 	@ElDescription(sub = "메일 발송을 전달", desc = "메일 발송을 전달")
 	public SseEmitter connect() {
-		SseEmitter emitter = new SseEmitter(10 * 60 * 1000L); // 10분 타임아웃
-//		String emitterId = UUID.randomUUID().toString(); // 임시 식별자
-//
-//		emitters.put(emitterId, emitter);
-//
-//		emitter.onCompletion(() -> emitters.remove(emitterId));
-//		emitter.onTimeout(() -> emitters.remove(emitterId));
-//		emitter.onError((e) -> emitters.remove(emitterId));
+		System.out.println("📡 SSE 접속됨");
+		SseEmitter emitter = new SseEmitter(null); // 10분 타임아웃
+		System.out.println("여기까지 왔어요");
+		String emitterId = UUID.randomUUID().toString(); // 임시 식별자
+		System.out.println("emitterId: " + emitterId);
+
+		emitters.put(emitterId, emitter);
+		System.out.println("emitter: " + emitters.size());
+		emitter.onCompletion(() -> {
+			System.out.println("❌ emitter 완료됨: " + emitterId);
+			emitters.remove(emitterId);
+		});
+
+		emitter.onTimeout(() -> {
+			System.out.println("⌛ emitter 타임아웃됨: " + emitterId);
+			emitters.remove(emitterId);
+		});
+
+		emitter.onError((e) -> {
+			System.out.println("⚠️ emitter 에러 발생: " + emitterId + " / " + e.getMessage());
+			emitters.remove(emitterId);
+		});
+
+		try {
+			emitter.send(SseEmitter.event().name("task-reminder").data("테스트 알림입니다!"));
+		} catch (IOException e) {
+			emitter.completeWithError(e);
+		}
+
+		System.out.println("emitter: " + emitter);
+		System.out.println("emitter 등록됨: " + emitterId);
+		System.out.println("전체 emitter 수: " + emitters.size());
+		System.out.println("Emitter timeout 설정값: {}" + emitter.getTimeout()); // 실제 값 확인
+		System.out.println("sendNotification 호출 후 emitter 수: " + emitters.size());
 
 		return emitter;
 	}
 
-	public void broadcast(String message) {
-		List<String> deadEmitters = new ArrayList<>();
-
-		emitters.forEach((id, emitter) -> {
-			try {
-				emitter.send(SseEmitter.event().name("mail-event").data(message));
-			} catch (Exception e) {
-				deadEmitters.add(id); // 실패한 emitter 제거 대상
-			}
-		});
-
-		deadEmitters.forEach(emitters::remove);
+	@PostConstruct
+	public void startHeartbeatScheduler() {
+		heartbeatExecutor.scheduleAtFixedRate(() -> {
+			emitters.forEach((id, em) -> {
+				try {
+					em.send(":\n");
+				} catch (IOException e) {
+					em.completeWithError(e);
+				}
+			});
+		}, 0, 10, TimeUnit.SECONDS);
 	}
 
 	// 전체 사용자에게 알림 전송
@@ -61,13 +93,18 @@ public class SseController {
 
 		// 끊긴 emitter를 따로 수집
 		emitters.forEach((userId, emitter) -> {
+			System.out.println(userId);
+			System.out.println(emitter);
 			try {
 				emitter.send(SseEmitter.event().name("task-reminder").data(message));
+				System.out.println("보내고 있음");
 			} catch (IOException e) {
 				emitter.completeWithError(e);
 				emitters.remove(userId);
+				System.out.println("보내지지 않네요...." + e);
 			}
 		});
+		System.out.println(emitters.size());
 	}
 
 	// 특정 사용자에게만 알림 전송

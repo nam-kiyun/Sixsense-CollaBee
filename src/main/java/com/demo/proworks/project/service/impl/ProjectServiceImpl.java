@@ -422,7 +422,7 @@ public class ProjectServiceImpl implements ProjectService {
 	}
 
 	@Override
-	@Scheduled(cron = "0 0 * * * *")
+	@Scheduled(cron = "0 0/1 * * * *")
 	public void sendTaskReminder() throws Exception {
 		try {
 			Calendar cal = Calendar.getInstance();

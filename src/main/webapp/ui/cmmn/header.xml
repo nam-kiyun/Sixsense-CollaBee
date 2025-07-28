@@ -40,7 +40,6 @@
         <w2:layoutInfo/>
         <w2:publicInfo method=""/>
         <script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
-    // 헤더 초기화
     $p.executeSubmission("sbm_session");
 };
 
@@ -59,7 +58,6 @@ scwin.grp_logo_onclick = function (e) {
 scwin.dma_session_submitdone = function (e) {
     const responseData = e.responseJSON.userVo;
     dma_logout.set("id", responseData.userId);
-    console.log(responseData.profileImageUrl ?? "없어");
     img_userIcon.setSrc(responseData.profileImageUrl ?? "https://collabee.s3.ap-northeast-2.amazonaws.com/defaultUserImage.png");
 };
 

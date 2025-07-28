@@ -55,6 +55,9 @@ scwin.notice = function () {
     eventSource.addEventListener("task-reminder", function (event) {
         console.log("받은 알림:", event.data);
     });
+
+    eventSource.onopen = () => console.log("연결완료");
+    eventSource.onerror = (err) => console.log("오류발생", err);
 }
 
 
