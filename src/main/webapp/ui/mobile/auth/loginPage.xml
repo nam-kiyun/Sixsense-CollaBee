@@ -295,7 +295,7 @@ scwin.sbm_login_submitdone = async function (e) {
 						</xf:group>
 						<w2:textbox id="password_error_text" label="" style="" class="error-text"></w2:textbox>
 					</xf:group>
-					<xf:group>
+					<xf:group class="recaptcha-group">
 						<w2:span style="" label="" id="recaptcha-container" class="recaptch-span"></w2:span>
 					</xf:group>
 				</xf:group>

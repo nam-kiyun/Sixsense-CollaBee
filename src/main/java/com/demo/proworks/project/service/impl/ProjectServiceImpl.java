@@ -441,6 +441,7 @@ public class ProjectServiceImpl implements ProjectService {
 							if (emailHour == currentHour) {
 							sendTodoTasksToUsers(project.getProjectId());
 							System.out.println("메일 발송됩니다");
+							
 							sseController
 									.sendNotification("📬 프로젝트 " + project.getProjectId() + " 할 일 알림 메일이 전송되었습니다.");
 

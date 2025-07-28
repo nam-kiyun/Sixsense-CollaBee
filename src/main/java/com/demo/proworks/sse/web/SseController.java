@@ -1,7 +1,10 @@
 package com.demo.proworks.sse.web;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.http.MediaType;
@@ -25,15 +28,30 @@ public class SseController {
 	@ResponseBody
 	@ElDescription(sub = "메일 발송을 전달", desc = "메일 발송을 전달")
 	public SseEmitter connect() {
-		String userId = "test";
 		SseEmitter emitter = new SseEmitter(10 * 60 * 1000L); // 10분 타임아웃
-		emitters.put(userId, emitter);
-
-		emitter.onCompletion(() -> emitters.remove(userId));
-		emitter.onTimeout(() -> emitters.remove(userId));
-		emitter.onError((e) -> emitters.remove(userId));
+//		String emitterId = UUID.randomUUID().toString(); // 임시 식별자
+//
+//		emitters.put(emitterId, emitter);
+//
+//		emitter.onCompletion(() -> emitters.remove(emitterId));
+//		emitter.onTimeout(() -> emitters.remove(emitterId));
+//		emitter.onError((e) -> emitters.remove(emitterId));
 
 		return emitter;
+	}
+
+	public void broadcast(String message) {
+		List<String> deadEmitters = new ArrayList<>();
+
+		emitters.forEach((id, emitter) -> {
+			try {
+				emitter.send(SseEmitter.event().name("mail-event").data(message));
+			} catch (Exception e) {
+				deadEmitters.add(id); // 실패한 emitter 제거 대상
+			}
+		});
+
+		deadEmitters.forEach(emitters::remove);
 	}
 
 	// 전체 사용자에게 알림 전송

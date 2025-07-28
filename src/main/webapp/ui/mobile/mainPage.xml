@@ -52,10 +52,9 @@ scwin.onpageload = async function () {
 
 scwin.notice = function () {
     var eventSource = new EventSource("/InsWebApp/user/notice.pwkjson");
-    console.log("실행");
-    eventSource.onmessage = function (event) {
-        alert("실시간 알림: " + event.data);
-    };
+    eventSource.addEventListener("task-reminder", function (event) {
+        console.log("받은 알림:", event.data);
+    });
 }
 
 
