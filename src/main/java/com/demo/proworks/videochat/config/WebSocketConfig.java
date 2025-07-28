@@ -7,7 +7,6 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 import com.demo.proworks.videochat.websocket.ChatWebSocketHandler;
-import com.demo.proworks.videochat.websocket.TaskChatWebSocketHandler;
 import com.demo.proworks.websocket.handler.KanbanWebSocketHandler;
 
 /**
