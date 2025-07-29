@@ -28,6 +28,12 @@ public class KanbanRedisService {
     @Autowired
     private RedisTemplate<String, Object> kanbanRedisTemplate;
     
+    @Autowired
+    private com.demo.proworks.task.service.TaskService taskService;
+    
+    @Autowired
+    private com.demo.proworks.board.service.BoardService boardService;
+    
     private final ObjectMapper objectMapper;
     
     // 생성자에서 ObjectMapper 설정
@@ -470,12 +476,12 @@ public class KanbanRedisService {
     }
     
     /**
-     * 프로젝트의 태스크 목록을 Redis에 캐싱 (최적화된 전략)
-     * 캐싱 전략: 프로젝트 단위로 모든 태스크를 관리하되, 필터링은 애플리케이션 레벨에서 수행
+     * 프로젝트의 태스크 목록을 Redis에 캐싱 (통일된 캐시 사용)
+     * tasks_with_username 키만 사용하여 일관성 보장
      */
     public void cacheProjectTasks(String projectId, java.util.List<java.util.Map<String, Object>> tasks) {
         try {
-            String key = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks";
+            String key = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks_with_username";
             String json = objectMapper.writeValueAsString(tasks);
             kanbanRedisTemplate.opsForValue().set(key, json, PROJECT_DATA_CACHE_TTL, TimeUnit.SECONDS);
             System.out.println("🔧 Redis에 프로젝트 태스크 목록 캐싱: " + projectId + " (태스크 수: " + tasks.size() + ")");
@@ -529,38 +535,73 @@ public class KanbanRedisService {
     }
     
     /**
-     * 프로젝트의 태스크 목록을 Redis에서 조회 (성능 최적화 버전)
-     * 통합 캐시(tasks_with_username)에서 데이터를 추출하여 반환
+     * 프로젝트의 태스크 목록을 Redis에서 조회 (통일된 캐시 사용)
+     * tasks_with_username 키만 사용하여 일관성 보장
+     * 임시 이동 데이터도 실시간으로 적용하여 최신 상태 반영
      */
     @SuppressWarnings("unchecked")
     public java.util.List<java.util.Map<String, Object>> getProjectTasksFromCache(String projectId) {
+        System.out.println("🔍 ========== Redis 캐시 조회 디버깅 시작 ==========");
+        System.out.println("📋 요청 프로젝트 ID: " + projectId);
+        System.out.println("⏰ 조회 시각: " + new java.util.Date());
+        
         try {
-            // 1. 먼저 기존 일반 태스크 캐시 확인
-            String tasksKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks";
-            String json = (String) kanbanRedisTemplate.opsForValue().get(tasksKey);
+            String tasksWithUserNameKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks_with_username";
+            System.out.println("🔑 Redis 캐시 키: " + tasksWithUserNameKey);
+            
+            String json = (String) kanbanRedisTemplate.opsForValue().get(tasksWithUserNameKey);
             
             if (json != null) {
-                System.out.println("✅ Redis에서 일반 태스크 캐시 조회 성공: " + projectId);
-                return objectMapper.readValue(json, java.util.List.class);
-            }
-            
-            // 2. 일반 캐시가 없으면 통합 캐시(사용자 이름 포함)에서 추출
-            String userNameKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks_with_username";
-            String userNameJson = (String) kanbanRedisTemplate.opsForValue().get(userNameKey);
-            
-            if (userNameJson != null) {
-                System.out.println("🔄 통합 캐시에서 일반 태스크 데이터 추출 시도: " + projectId);
-                java.util.List<java.util.Map<String, Object>> userNameTasks = objectMapper.readValue(userNameJson, java.util.List.class);
+                System.out.println("✅ Redis에서 프로젝트 태스크 캐시 조회 성공: " + projectId);
+                System.out.println("📄 캐시 JSON 길이: " + json.length() + " 문자");
                 
-                // 사용자 이름 제거한 일반 태스크 데이터로 변환 (필요시)
-                // 현재는 동일한 데이터 구조이므로 그대로 반환
-                System.out.println("✅ 통합 캐시에서 태스크 목록 추출 성공: " + userNameTasks.size() + "개");
-                return userNameTasks;
+                java.util.List<java.util.Map<String, Object>> tasks = objectMapper.readValue(json, java.util.List.class);
+                System.out.println("📊 캐시에서 파싱된 태스크 수: " + tasks.size() + "개");
+                
+                // 캐시 데이터 상태 디버깅 (처음 5개만)
+                System.out.println("📋 캐시 원본 데이터 상태 (처음 5개):");
+                for (int i = 0; i < Math.min(5, tasks.size()); i++) {
+                    java.util.Map<String, Object> task = tasks.get(i);
+                    System.out.println("  [" + i + "] taskId: " + task.get("taskId") + 
+                                     ", boardId: " + task.get("boardId") + 
+                                     ", title: " + task.get("taskTitle"));
+                }
+                
+                // 🚀 Redis 임시 이동 데이터를 실시간으로 적용하여 최신 상태 반영
+                System.out.println("🔄 Redis 임시 이동 데이터 적용 시작...");
+                java.util.List<java.util.Map<String, Object>> updatedTasks = applyPendingMovesToTasks(tasks);
+                System.out.println("✅ Redis 임시 이동 데이터 적용 완료: " + updatedTasks.size() + "개");
+                
+                // 임시 이동 적용 후 데이터 상태 디버깅 (처음 5개만)
+                System.out.println("📋 임시 이동 적용 후 데이터 상태 (처음 5개):");
+                for (int i = 0; i < Math.min(5, updatedTasks.size()); i++) {
+                    java.util.Map<String, Object> task = updatedTasks.get(i);
+                    System.out.println("  [" + i + "] taskId: " + task.get("taskId") + 
+                                     ", boardId: " + task.get("boardId") + 
+                                     ", title: " + task.get("taskTitle"));
+                }
+                
+                System.out.println("🔍 ========== Redis 캐시 조회 디버깅 완료 ==========");
+                return updatedTasks;
             } else {
-                System.out.println("⚠️ Redis에 프로젝트 태스크 캐시 없음 (일반/통합 모두): " + projectId);
+                System.out.println("⚠️ Redis에 프로젝트 태스크 캐시 없음: " + projectId);
+                System.out.println("🔍 캐시 키 존재 여부 재확인: " + tasksWithUserNameKey);
+                
+                // 관련 키들이 있는지 확인
+                java.util.Set<String> relatedKeys = kanbanRedisTemplate.keys("kanban:project:" + projectId + "*");
+                System.out.println("🔍 프로젝트 관련 Redis 키들: " + (relatedKeys != null ? relatedKeys.size() : 0) + "개");
+                if (relatedKeys != null) {
+                    for (String key : relatedKeys) {
+                        System.out.println("  - " + key);
+                    }
+                }
+                
+                System.out.println("🔍 ========== Redis 캐시 조회 디버깅 완료 (캐시 없음) ==========");
             }
         } catch (JsonProcessingException e) {
             System.err.println("❌ 프로젝트 태스크 목록 조회 실패: " + e.getMessage());
+            e.printStackTrace();
+            System.out.println("🔍 ========== Redis 캐시 조회 디버깅 완료 (오류) ==========");
         }
         
         return null;
@@ -780,35 +821,75 @@ public class KanbanRedisService {
     
     /**
      * 특정 태스크를 Redis 캐시에서 업데이트 (실시간 반영)
+     * 통합 캐시(tasks_with_username)만 사용하여 일관성 보장
      */
     @SuppressWarnings("unchecked")
     public void updateTaskInCache(String projectId, String taskId, String newBoardId) {
         try {
-            String key = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks";
-            String json = (String) kanbanRedisTemplate.opsForValue().get(key);
+            String tasksWithUserNameKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks_with_username";
+            String userNameJson = (String) kanbanRedisTemplate.opsForValue().get(tasksWithUserNameKey);
             
-            if (json != null) {
-                java.util.List<java.util.Map<String, Object>> tasks = objectMapper.readValue(json, java.util.List.class);
+            if (userNameJson != null) {
+                java.util.List<java.util.Map<String, Object>> userNameTasks = objectMapper.readValue(userNameJson, java.util.List.class);
+                
+                System.out.println("🔍 캐시에서 태스크 업데이트 시도: taskId=" + taskId + ", 캐시 내 태스크 수=" + userNameTasks.size());
                 
                 // 해당 태스크 찾아서 보드 ID 업데이트
-                for (java.util.Map<String, Object> task : tasks) {
+                boolean taskFound = false;
+                for (java.util.Map<String, Object> task : userNameTasks) {
                     if (taskId.equals(task.get("taskId"))) {
+                        String oldBoardId = (String) task.get("boardId");
                         task.put("boardId", newBoardId);
-                        System.out.println("🔄 Redis 캐시에서 태스크 업데이트: " + taskId + " → " + newBoardId);
+                        System.out.println("🔄 Redis 캐시에서 태스크 업데이트: " + taskId + " (" + oldBoardId + " → " + newBoardId + ")");
+                        taskFound = true;
                         break;
                     }
                 }
                 
-                // 업데이트된 데이터를 다시 캐싱
-                String updatedJson = objectMapper.writeValueAsString(tasks);
-                kanbanRedisTemplate.opsForValue().set(key, updatedJson, PROJECT_DATA_CACHE_TTL, TimeUnit.SECONDS);
-                
-                System.out.println("✅ Redis 캐시 태스크 업데이트 완료: " + taskId);
+                if (taskFound) {
+                    // 업데이트된 데이터를 다시 캐싱
+                    String updatedUserNameJson = objectMapper.writeValueAsString(userNameTasks);
+                    kanbanRedisTemplate.opsForValue().set(tasksWithUserNameKey, updatedUserNameJson, PROJECT_DATA_CACHE_TTL, TimeUnit.SECONDS);
+                    
+                    System.out.println("✅ Redis 캐시 태스크 업데이트 완료: " + taskId);
+                } else {
+                    // 태스크를 찾을 수 없는 경우 캐시 상태 디버깅 정보 출력
+                    System.out.println("⚠️ 업데이트할 태스크를 캐시에서 찾을 수 없음: " + taskId);
+                    System.out.println("📊 현재 캐시 내 태스크 ID 목록 (처음 10개):");
+                    for (int i = 0; i < Math.min(10, userNameTasks.size()); i++) {
+                        java.util.Map<String, Object> task = userNameTasks.get(i);
+                        System.out.println("  - taskId: " + task.get("taskId") + ", boardId: " + task.get("boardId"));
+                    }
+                    
+                    // 캐시에 태스크가 없는 경우 캐시를 무효화하여 다음 조회 시 DB에서 최신 데이터 로드
+                    System.out.println("🗑️ 프로젝트 캐시 무효화 완료: " + projectId + " (보드, 태스크, 통계 포함)");
+                    invalidateProjectCache(projectId);
+                    System.out.println("🗑️ 프로젝트 캐시 무효화 완료 - 다음 조회 시 최신 DB 데이터로 캐시 재생성: " + projectId);
+                    
+                    System.out.println("❌ Redis 캐시 태스크 업데이트 실패: 캐시에서 태스크를 찾을 수 없음: " + taskId);
+                    throw new RuntimeException("캐시에서 태스크를 찾을 수 없음: " + taskId);
+                }
             } else {
                 System.out.println("⚠️ Redis에 프로젝트 태스크 캐시가 없어 업데이트 불가: " + projectId);
+                System.out.println("🔄 캐시 워밍업을 통해 빈 캐시라도 생성 시도");
+                
+                // 캐시 워밍업 시도
+                try {
+                    warmUpProjectCache(projectId);
+                    System.out.println("✅ 프로젝트 캐시 워밍업 완료: " + projectId + " (빈 캐시 생성, 첫 조회 시 자동 로드됩니다)");
+                } catch (Exception warmupException) {
+                    System.err.println("❌ 캐시 워밍업 실패: " + warmupException.getMessage());
+                }
+                
+                System.out.println("❌ Redis 캐시 태스크 업데이트 실패: 프로젝트 캐시가 존재하지 않음: " + projectId);
+                throw new RuntimeException("프로젝트 캐시가 존재하지 않음: " + projectId);
             }
+        } catch (JsonProcessingException e) {
+            System.err.println("❌ JSON 처리 실패: " + e.getMessage());
+            throw new RuntimeException("JSON 처리 실패", e);
         } catch (Exception e) {
             System.err.println("❌ Redis 캐시 태스크 업데이트 실패: " + e.getMessage());
+            throw new RuntimeException("Redis 캐시 업데이트 실패", e);
         }
     }
     
@@ -874,19 +955,19 @@ public class KanbanRedisService {
     }
     
     /**
-     * 프로젝트 관련 캐시 무효화 (최적화된 버전 - 모든 관련 캐시 정리)
+     * 프로젝트 관련 캐시 무효화 (통일된 캐시 사용)
      */
     public void invalidateProjectCache(String projectId) {
         try {
-            // 기본 캐시 키들
+            // 통일된 캐시 키들
             String boardsKey = PROJECT_BOARDS_CACHE_KEY + projectId + ":boards";
             String boardsSummaryKey = PROJECT_BOARDS_CACHE_KEY + projectId + ":boards_summary";
-            String tasksKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks";
+            String tasksWithUserNameKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks_with_username";
             String tasksStatsKey = PROJECT_TASKS_CACHE_KEY + projectId + ":stats";
             
             kanbanRedisTemplate.delete(boardsKey);
             kanbanRedisTemplate.delete(boardsSummaryKey);
-            kanbanRedisTemplate.delete(tasksKey);
+            kanbanRedisTemplate.delete(tasksWithUserNameKey);
             kanbanRedisTemplate.delete(tasksStatsKey);
             
             System.out.println("🗑️ 프로젝트 캐시 무효화 완료: " + projectId + " (보드, 태스크, 통계 포함)");
@@ -1319,40 +1400,22 @@ public class KanbanRedisService {
         System.out.println("🔍 ========== Redis 캐시 디버깅: " + projectId + " ==========");
         
         try {
-            // 1. 일반 태스크 캐시 확인
-            String tasksKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks";
-            String tasksJson = (String) kanbanRedisTemplate.opsForValue().get(tasksKey);
-            
-            if (tasksJson != null) {
-                java.util.List<java.util.Map<String, Object>> tasks = objectMapper.readValue(tasksJson, java.util.List.class);
-                System.out.println("✅ 일반 태스크 캐시 존재: " + tasks.size() + "개");
-                
-                // 최근 5개 태스크 ID 출력
-                System.out.println("📋 최근 태스크들 (일반 캐시):");
-                for (int i = Math.max(0, tasks.size() - 5); i < tasks.size(); i++) {
-                    java.util.Map<String, Object> task = tasks.get(i);
-                    System.out.println("  - taskId: " + task.get("taskId") + ", title: " + task.get("taskTitle"));
-                }
-            } else {
-                System.out.println("❌ 일반 태스크 캐시 없음: " + tasksKey);
-            }
-            
-            // 2. 사용자 이름 포함 태스크 캐시 확인
+            // 통일된 태스크 캐시 확인 (tasks_with_username만 사용)
             String tasksWithUserNameKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks_with_username";
             String userNameTasksJson = (String) kanbanRedisTemplate.opsForValue().get(tasksWithUserNameKey);
             
             if (userNameTasksJson != null) {
                 java.util.List<java.util.Map<String, Object>> userNameTasks = objectMapper.readValue(userNameTasksJson, java.util.List.class);
-                System.out.println("✅ 사용자 이름 포함 태스크 캐시 존재: " + userNameTasks.size() + "개");
+                System.out.println("✅ 프로젝트 태스크 캐시 존재: " + userNameTasks.size() + "개");
                 
                 // 최근 5개 태스크 ID 출력
-                System.out.println("📋 최근 태스크들 (사용자 이름 포함 캐시):");
+                System.out.println("📋 최근 태스크들:");
                 for (int i = Math.max(0, userNameTasks.size() - 5); i < userNameTasks.size(); i++) {
                     java.util.Map<String, Object> task = userNameTasks.get(i);
                     System.out.println("  - taskId: " + task.get("taskId") + ", title: " + task.get("taskTitle") + ", userName: " + task.get("userName"));
                 }
             } else {
-                System.out.println("❌ 사용자 이름 포함 태스크 캐시 없음: " + tasksWithUserNameKey);
+                System.out.println("❌ 프로젝트 태스크 캐시 없음: " + tasksWithUserNameKey);
             }
             
             // 3. 보드 캐시 확인
@@ -1371,10 +1434,9 @@ public class KanbanRedisService {
             }
             
             // 4. TTL 확인
-            Long tasksTtl = kanbanRedisTemplate.getExpire(tasksKey);
             Long userNameTasksTtl = kanbanRedisTemplate.getExpire(tasksWithUserNameKey);
             Long boardsTtl = kanbanRedisTemplate.getExpire(boardsKey);
-            System.out.println("⏰ TTL - 일반 태스크: " + tasksTtl + "초, 사용자 이름 포함 태스크: " + userNameTasksTtl + "초, 보드: " + boardsTtl + "초");
+            System.out.println("⏰ TTL - 태스크: " + userNameTasksTtl + "초, 보드: " + boardsTtl + "초");
             
         } catch (Exception e) {
             System.err.println("❌ Redis 캐시 디버깅 실패: " + e.getMessage());
@@ -1468,5 +1530,113 @@ public class KanbanRedisService {
         } catch (Exception e) {
             System.err.println("❌ 최적화 효과 분석 실패: " + e.getMessage());
         }
+    }
+    
+    /**
+     * 프로젝트 캐시 워밍업 - 사용자 접속 시 미리 캐시 생성
+     * USER_JOIN 시 호출되어 Redis 캐시를 미리 생성하여 카드 이동 시 캐시 업데이트 가능하게 함
+     * 
+     * 개선사항: 빈 캐시 대신 실제 DB 데이터로 캐시를 생성하여 태스크 업데이트 시 오류 방지
+     */
+    public void warmUpProjectCache(String projectId) {
+        if (projectId == null || projectId.trim().isEmpty()) {
+            System.err.println("❌ 프로젝트 캐시 워밍업 실패: 프로젝트 ID가 null 또는 빈값입니다");
+            return;
+        }
+        
+        try {
+            System.out.println("🔥 프로젝트 캐시 워밍업 시작: " + projectId);
+            
+            // 캐시 키 생성
+            String tasksWithUserNameKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks_with_username";
+            
+            // 이미 캐시가 존재하는지 확인
+            String existingCache = (String) kanbanRedisTemplate.opsForValue().get(tasksWithUserNameKey);
+            if (existingCache != null) {
+                System.out.println("ℹ️ 프로젝트 캐시가 이미 존재함: " + projectId + " (워밍업 생략)");
+                return;
+            }
+            
+            // 🚀 실제 DB에서 프로젝트 태스크 데이터 조회하여 캐시 생성
+            System.out.println("📊 DB에서 프로젝트 태스크 데이터 조회 시작: " + projectId);
+            
+            // 1. 프로젝트의 모든 보드 조회
+            java.util.List<com.demo.proworks.board.vo.BoardVo> boards = boardService.selectBoardsByProject(projectId);
+            
+            if (boards == null || boards.isEmpty()) {
+                System.out.println("⚠️ 프로젝트에 보드가 없음 - 빈 캐시 생성: " + projectId);
+                java.util.List<java.util.Map<String, Object>> emptyTasks = new java.util.ArrayList<>();
+                String emptyJson = objectMapper.writeValueAsString(emptyTasks);
+                kanbanRedisTemplate.opsForValue().set(tasksWithUserNameKey, emptyJson, PROJECT_DATA_CACHE_TTL, TimeUnit.SECONDS);
+                System.out.println("✅ 빈 캐시 생성 완료: " + projectId);
+                return;
+            }
+            
+            // 2. 보드 ID 리스트 생성
+            java.util.List<String> boardIds = new java.util.ArrayList<>();
+            for (com.demo.proworks.board.vo.BoardVo board : boards) {
+                boardIds.add(board.getBoardId());
+            }
+            
+            System.out.println("📋 조회된 보드 개수: " + boards.size() + "개, 보드 IDs: " + boardIds);
+            
+            // 3. 프로젝트의 모든 태스크 조회 (사용자 이름 포함)
+            java.util.List<com.demo.proworks.task.vo.TaskVo> tasks = taskService.selectTaskListWithUserNameBatch(projectId, boardIds);
+            
+            // 4. TaskVo를 Map으로 변환
+            java.util.List<java.util.Map<String, Object>> taskMaps = new java.util.ArrayList<>();
+            if (tasks != null) {
+                for (com.demo.proworks.task.vo.TaskVo task : tasks) {
+                    java.util.Map<String, Object> taskMap = convertTaskVoToMap(task);
+                    taskMaps.add(taskMap);
+                }
+            }
+            
+            // 5. 캐시에 저장
+            String tasksJson = objectMapper.writeValueAsString(taskMaps);
+            kanbanRedisTemplate.opsForValue().set(tasksWithUserNameKey, tasksJson, PROJECT_DATA_CACHE_TTL, TimeUnit.SECONDS);
+            
+            System.out.println("✅ 프로젝트 캐시 워밍업 완료: " + projectId + " (실제 DB 데이터 " + taskMaps.size() + "개로 캐시 생성)");
+            
+        } catch (Exception e) {
+            System.err.println("❌ 프로젝트 캐시 워밍업 실패: " + e.getMessage());
+            e.printStackTrace();
+            
+            // 실패 시 빈 캐시라도 생성하여 업데이트 오류 방지
+            try {
+                String tasksWithUserNameKey = PROJECT_TASKS_CACHE_KEY + projectId + ":tasks_with_username";
+                java.util.List<java.util.Map<String, Object>> emptyTasks = new java.util.ArrayList<>();
+                String emptyJson = objectMapper.writeValueAsString(emptyTasks);
+                kanbanRedisTemplate.opsForValue().set(tasksWithUserNameKey, emptyJson, PROJECT_DATA_CACHE_TTL, TimeUnit.SECONDS);
+                System.out.println("🔄 워밍업 실패로 인한 빈 캐시 생성: " + projectId);
+            } catch (Exception fallbackException) {
+                System.err.println("❌ 빈 캐시 생성도 실패: " + fallbackException.getMessage());
+            }
+        }
+    }
+
+   
+    /**
+     * TaskVo를 Map으로 변환하는 헬퍼 메서드
+     */
+    private java.util.Map<String, Object> convertTaskVoToMap(com.demo.proworks.task.vo.TaskVo task) {
+        java.util.Map<String, Object> map = new java.util.HashMap<>();
+        
+        map.put("taskId", task.getTaskId());
+        map.put("boardId", task.getBoardId());
+        map.put("projectId", task.getProjectId());
+        map.put("taskTitle", task.getTaskTitle());
+        map.put("projectUserId", task.getProjectUserId());
+        map.put("projectRepoId", task.getProjectRepoId());
+        map.put("userName", task.getUserName());
+        map.put("priority", task.getPriority());
+        map.put("startDate", task.getStartDate());
+        map.put("endDate", task.getEndDate());
+        map.put("tags", task.getTags());
+        map.put("sortField", task.getSortField());
+        map.put("sortOrder", task.getSortOrder());
+        map.put("boardIds", task.getBoardIds());
+        
+        return map;
     }
 }

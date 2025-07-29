@@ -168,9 +168,8 @@ scwin.onpageload = function () {
     }
 
 
-    // WebSocket 연결 초기화 (사용자 정보 없어도 연결 시도)
-    console.log("WebSocket 초기화 시작...");
-    scwin.initWebSocket();
+    // WebSocket 연결은 프로젝트 데이터 설정 후에 초기화됩니다
+    console.log("WebSocket 초기화는 프로젝트 데이터 로드 후 진행됩니다");
 
     // 정렬 기본값 설정 (지연 초기화)
     setTimeout(function() {
@@ -387,13 +386,12 @@ scwin.onWebSocketError = function (event) {
  */
 scwin.sendUserJoinMessage = function () {
     var currentUserId = $p.parent().dm_userInfo.get("userId");
-    var projectId = $p.parent().dm_projectVo.get("projectId");
+    var projectId = scwin.currentProjectData.projectId;
     
-    // ������ 프로젝트 ID 디버깅 로그 추가
-    console.log("������ 웹소켓 USER_JOIN 메시지 전송 준비:");
+    // 프로젝트 ID 디버깅 로그 추가
+    console.log("웹소켓 USER_JOIN 메시지 전송 준비:");
     console.log("  - userId:", currentUserId);
     console.log("  - projectId:", projectId);
-    console.log("  - dm_projectVo 전체:", $p.parent().dm_projectVo.getAllJSON());
     
     var message = {
         type: "USER_JOIN",
@@ -2003,6 +2001,12 @@ scwin.setProjectData = function (projectData) {
     
     // 프로젝트 데이터 설정 완료 후 사용자 권한 확인
     scwin.checkUserPermissionForSettings();
+    
+    // 프로젝트 데이터 설정 완료 후 WebSocket 연결 초기화
+    if (projectData && projectData.projectId) {
+        console.log("프로젝트 ID가 설정되었으므로 WebSocket 연결을 시작합니다:", projectData.projectId);
+        scwin.initWebSocket();
+    }
     
     // 플래그 해제
     setTimeout(function () {
@@ -5780,11 +5784,13 @@ scwin.isCardLocked = function (taskId) {
 scwin.sendCardLockMessage = function (taskId, action) {
     var currentUserId = scwin.getCurrentUserId();
     var currentUserName = scwin.getCurrentUserName();
+    var projectId = $p.parent().dm_projectVo.get("projectId");
 
     var message = {
         type: "CARD_LOCK",
         taskId: taskId,
         userId: currentUserId,
+        projectId: projectId,
         message: action + "|" + currentUserName, // "LOCK|사용자명" 또는 "UNLOCK|사용자명"
         timestamp: Date.now()
     };
@@ -5798,11 +5804,13 @@ scwin.sendCardLockMessage = function (taskId, action) {
 scwin.sendCardMoveLockMessage = function (taskId, action) {
     var currentUserId = scwin.getCurrentUserId();
     var currentUserName = scwin.getCurrentUserName();
+    var projectId = $p.parent().dm_projectVo.get("projectId");
 
     var message = {
         type: "CARD_LOCK",
         taskId: taskId,
         userId: currentUserId,
+        projectId: projectId,
         message: action + "|" + currentUserName, // "MOVE_LOCK|사용자명" 또는 "MOVE_UNLOCK|사용자명"
         timestamp: Date.now()
     };
@@ -6664,11 +6672,13 @@ scwin.update_task_board_submitdone = function (e) {
 
         // WebSocket을 통해 다른 사용자에게 알림
         if (scwin.isWebSocketConnected) {
+            var projectId = $p.parent().dm_projectVo.get("projectId");
             scwin.sendWebSocketMessage({
                 type: "CARD_MOVED",
                 taskId: moveInfo.taskId,
                 fromBoardId: moveInfo.sourceBoardId,
                 toBoardId: moveInfo.targetBoardId,
+                projectId: projectId,
                 timestamp: Date.now()
             });
         }
@@ -8699,15 +8709,6 @@ scwin.load_Tasks_With_UserName_submiterror = function (e) {
         errorMessage = e.message;
     }
     
-    // 사용자에게 오류 알림
-    try {
-        $p.showAlert(errorMessage, "오류", function() {
-            console.log("태스크 로드 오류 알림 닫힘");
-        });
-    } catch (alertError) {
-        console.error("오류 알림 표시 실패:", alertError);
-    }
-    
     // 쓰레드 제한 오류인 경우 특별 처리
     if (errorMessage.includes("threads") || errorMessage.includes("쓰레드") || errorMessage.includes("thread")) {
         console.warn("������ 쓰레드 제한 오류 감지 - 잠시 후 재시도를 권장합니다.");
@@ -8845,15 +8846,6 @@ scwin.load_Tasks_With_UserName_Batch_submiterror = function (e) {
         errorMessage = e.responseJSON.message;
     } else if (e && e.message) {
         errorMessage = e.message;
-    }
-    
-    // 사용자에게 오류 알림
-    try {
-        $p.showAlert(errorMessage, "오류", function() {
-            console.log("배치 태스크 로드 오류 알림 닫힘");
-        });
-    } catch (alertError) {
-        console.error("오류 알림 표시 실패:", alertError);
     }
     
     console.log("배치 태스크 로드 오류 처리 완료");

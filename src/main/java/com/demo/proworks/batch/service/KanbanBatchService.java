@@ -111,9 +111,17 @@ public class KanbanBatchService {
                     successCount++;
                     System.out.println("태스크 업데이트 성공: " + taskId + " -> " + moveMessage.getToBoardId());
                     
-                    // 태스크 이동 후 Redis 캐시 업데이트
+                    // 태스크 이동 후 Redis 캐시 업데이트 (안전한 방식으로)
                     if (moveMessage.getProjectId() != null) {
-                        redisService.updateTaskInCache(moveMessage.getProjectId(), taskId, moveMessage.getToBoardId());
+                        try {
+                            redisService.updateTaskInCache(moveMessage.getProjectId(), taskId, moveMessage.getToBoardId());
+                            System.out.println("✅ Redis 캐시 업데이트 성공: " + taskId + " -> " + moveMessage.getToBoardId());
+                        } catch (Exception cacheUpdateException) {
+                            System.err.println("❌ Redis 캐시 업데이트 실패: " + cacheUpdateException.getMessage());
+                            System.out.println("ℹ️ DB 업데이트는 성공했으므로 다음 조회 시 최신 데이터가 반영됩니다: " + taskId);
+                            // 캐시 업데이트 실패해도 DB 업데이트는 성공했으므로 계속 진행
+                            // 다음 조회 시 DB에서 최신 데이터를 가져올 것임
+                        }
                     }
                 } else {
                     failCount++;

@@ -167,6 +167,17 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 			// 프로젝트별 세션 목록에 추가
 			projectSessions.computeIfAbsent(projectId, k -> ConcurrentHashMap.newKeySet()).add(sessionId);
 			
+			// 프로젝트 첫 참여자인 경우 Redis 캐시 워밍
+			if (projectSessions.get(projectId).size() == 1) {
+				System.out.println("🔥 프로젝트 첫 참여자 - Redis 캐시 워밍 시작: " + projectId);
+				try {
+					kanbanRedisService.warmUpProjectCache(projectId);
+					System.out.println("✅ 프로젝트 캐시 워밍 완료: " + projectId);
+				} catch (Exception e) {
+					System.err.println("❌ 프로젝트 캐시 워밍 실패: " + e.getMessage());
+				}
+			}
+			
 			System.out.println("사용자 참여: " + userId + " (세션: " + sessionId + ", 프로젝트: " + projectId + ")");
 		} else {
 			System.out.println("사용자 참여: " + userId + " (세션: " + sessionId + ", 프로젝트 정보 없음)");

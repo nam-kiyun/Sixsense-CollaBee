@@ -111,12 +111,13 @@ public interface TaskService {
 	public List<TaskVo> selectTaskListWithUserName(TaskVo taskVo) throws Exception;
 	
 	/**
-	 * 여러 보드의 사용자 이름 포함 태스크를 한 번의 쿼리로 배치 조회 (진짜 배치)
+	 * 특정 프로젝트의 여러 보드에서 사용자 이름 포함 태스크를 한 번의 쿼리로 배치 조회
 	 * 
+	 * @param projectId 프로젝트 ID
 	 * @param boardIds 보드 ID 리스트 (예: ["1", "2", "3", "4", "5", "6"])
 	 * @return 사용자 이름이 포함된 TaskVo 리스트
 	 * @throws Exception
 	 */
-	public List<TaskVo> selectTaskListWithUserNameBatch(List<String> boardIds) throws Exception;
+	public List<TaskVo> selectTaskListWithUserNameBatch(String projectId, List<String> boardIds) throws Exception;
 	
 }
