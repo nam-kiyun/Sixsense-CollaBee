@@ -12,6 +12,7 @@ import javax.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -63,6 +64,10 @@ public class GitHubController {
 
     @Autowired
     private GithubAppTokenService githubAppTokenService;
+    
+    // baseUrl을 하드코딩으로 변경
+    private String baseUrl = "https://collabee.live";
+//    private String baseUrl = "http://localhost:9093";
     
     // 중복 웹훅 방지를 위한 배송 ID 캐시 (간단한 메모리 기반)
     private static final java.util.Set<String> processedDeliveryIds = 
@@ -130,6 +135,9 @@ public class GitHubController {
             HttpServletRequest request, 
             HttpServletResponse response) {
         logger.info("GitHub OAuth 인증 시작 (projectId: {}, 요청된 userId: {})", projectId, userId);
+        System.out.println("=== GITHUB OAUTH START ===");
+        System.out.println("ProjectId: " + projectId);
+        System.out.println("UserId: " + userId);
         
         try {
             HttpSession session = request.getSession();
@@ -174,15 +182,17 @@ public class GitHubController {
                 logger.info("세션에 실제 사용자 ID 백업 저장: {}", actualUserId);
             }
             
-            // GitHub OAuth URL 생성
-            String redirectUri = request.getScheme() + "://" + request.getServerName() + 
-                    ":" + request.getServerPort() + "/InsWebApp/github/auth/callback";
+            // GitHub OAuth URL 생성 (하드코딩으로 고정)
+            String redirectUri = "https://collabee.live/InsWebApp/github/auth/callback";
+//            String redirectUri = "http://localhost:9093/InsWebApp/github/auth/callback";
             
             String clientId = System.getProperty("GITHUB_CLIENT_ID", "Iv23liShQFpINkvH7lCV");
+            
+            // URL 인코딩 없이 시도
             String authUrl = "https://github.com/login/oauth/authorize?" +
                     "client_id=" + clientId + "&" +
-                    "redirect_uri=" + java.net.URLEncoder.encode(redirectUri, "UTF-8") + "&" +
-                    "scope=repo read:user admin:repo_hook&" +
+                    "redirect_uri=" + redirectUri + "&" +
+                    "scope=repo%20read:user%20admin:repo_hook&" +
                     "state=" + state;
             
             logger.info("=== GitHub OAuth 정보 ===");
@@ -190,7 +200,15 @@ public class GitHubController {
             logger.info("Redirect URI: {}", redirectUri);
             logger.info("State: {}", state);
             logger.info("Full OAuth URL: {}", authUrl);
+            logger.info("URL Encoded Redirect URI: {}", java.net.URLEncoder.encode(redirectUri, "UTF-8"));
             logger.info("========================");
+            
+            // 콘솔에도 출력
+            System.out.println("=== GitHub OAuth DEBUG ===");
+            System.out.println("Client ID: " + clientId);
+            System.out.println("Redirect URI: " + redirectUri);
+            System.out.println("Full OAuth URL: " + authUrl);
+            System.out.println("========================");
             
             // Node.js 방식처럼 직접 리다이렉트
             return new ModelAndView("redirect:" + authUrl);
@@ -224,7 +242,8 @@ public class GitHubController {
             if (error != null) {
                 logger.error("GitHub OAuth 인증 실패: {}", error);
                 ModelAndView errorMv = new ModelAndView();
-                errorMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                errorMv.setViewName("redirect:https://collabee.live/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" +
+//                errorMv.setViewName("redirect:http://localhost:9093/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
                     java.net.URLEncoder.encode("GitHub 인증이 거부되었습니다.", "UTF-8"));
                 return errorMv;
             }
@@ -232,7 +251,8 @@ public class GitHubController {
             if (code == null) {
                 logger.error("GitHub OAuth 코드가 없습니다");
                 ModelAndView noCodeMv = new ModelAndView();
-                noCodeMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                noCodeMv.setViewName("redirect:https://collabee.live/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" +
+//                noCodeMv.setViewName("redirect:http://localhost:9093/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
                     java.net.URLEncoder.encode("인증 코드가 제공되지 않았습니다.", "UTF-8"));
                 return noCodeMv;
             }
@@ -243,7 +263,8 @@ public class GitHubController {
             if (!state.equals(sessionState)) {
                 logger.error("GitHub OAuth state 불일치");
                 ModelAndView stateMv = new ModelAndView();
-                stateMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                stateMv.setViewName("redirect:https://collabee.live/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" +
+//                stateMv.setViewName("redirect:http://localhost:9093/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
                     java.net.URLEncoder.encode("인증 상태가 유효하지 않습니다.", "UTF-8"));
                 return stateMv;
             }
@@ -289,7 +310,8 @@ public class GitHubController {
             if (finalUserId == null) {
                 logger.error("사용자 ID를 찾을 수 없습니다. OAuth 연동을 진행할 수 없습니다.");
                 ModelAndView userNotFoundMv = new ModelAndView();
-                userNotFoundMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
+                userNotFoundMv.setViewName("redirect:https://collabee.live/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" +
+//                userNotFoundMv.setViewName("redirect:http://localhost:9093/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_callback.xml&status=error&message=" + 
                     java.net.URLEncoder.encode("로그인된 사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.", "UTF-8"));
                 return userNotFoundMv;
             }
@@ -469,7 +491,9 @@ public class GitHubController {
                         // GitHub 연동 성공 페이지로 리다이렉트 (OAuth + App 설치 모두 완료)
                         String username = (String) session.getAttribute("githubUsername");
                         String redirectUrl = String.format(
-                            "/websquare/websquare.html?w2xPath=/InsWebApp/ui/github_callback.xml&status=success&username=%s&hasSelectedRepo=false&appInstalled=true&installation_id=%s", 
+                            "https://collabee.live/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/github_callback.xml&status=success&username=%s&hasSelectedRepo=false&appInstalled=true&installation_id=%s", 
+//                        String redirectUrl = String.format(
+//                            "http://localhost:9093/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/github_callback.xml&status=success&username=%s&hasSelectedRepo=false&appInstalled=true&installation_id=%s", 
                             java.net.URLEncoder.encode(username != null ? username : "", "UTF-8"),
                             installation_id
                         );
@@ -497,7 +521,9 @@ public class GitHubController {
                 // 일반적인 GitHub 연동 성공 페이지로 리다이렉트
                 String username = (String) session.getAttribute("githubUsername");
                 String redirectUrl = String.format(
-                    "/websquare/websquare.html?w2xPath=/InsWebApp/ui/github_callback.xml&status=success&username=%s&hasSelectedRepo=false&appInstalled=true&installation_id=%s", 
+                    "https://collabee.live/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/github_callback.xml&status=success&username=%s&hasSelectedRepo=false&appInstalled=true&installation_id=%s", 
+//                String redirectUrl = String.format(
+//                    "http://localhost:9093/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/github_callback.xml&status=success&username=%s&hasSelectedRepo=false&appInstalled=true&installation_id=%s", 
                     java.net.URLEncoder.encode(username != null ? username : "", "UTF-8"),
                     installation_id
                 );
@@ -1068,7 +1094,8 @@ public class GitHubController {
                     result.put("status", "oauth_required");
                     result.put("message", "GitHub OAuth 인증이 필요합니다.");
                     result.put("next_step", "oauth_auth");
-                    result.put("redirect_url", "/InsWebApp/github/auth");
+                    result.put("redirect_url", "https://collabee.live/InsWebApp/github/auth");
+//                result.put("redirect_url", "http://localhost:9093/InsWebApp/github/auth");
                     return result;
                 }
                 
@@ -1080,7 +1107,8 @@ public class GitHubController {
                 result.put("status", "oauth_required");
                 result.put("message", "GitHub OAuth 인증이 필요합니다.");
                 result.put("next_step", "oauth_auth");
-                result.put("redirect_url", "/InsWebApp/github/auth");
+                result.put("redirect_url", "https://collabee.live/InsWebApp/github/auth");
+//                result.put("redirect_url", "http://localhost:9093/InsWebApp/github/auth");
                 return result;
             }
             
@@ -1101,7 +1129,8 @@ public class GitHubController {
                     result.put("status", "app_install_required");
                     result.put("message", "GitHub App 설치가 필요합니다.");
                     result.put("next_step", "app_install");
-                    result.put("redirect_url", "/InsWebApp/github/app/install");
+                    result.put("redirect_url", "https://collabee.live/InsWebApp/github/app/install");
+//                    result.put("redirect_url", "http://localhost:9093/InsWebApp/github/app/install");
                     return result;
                 }
                 
@@ -1123,7 +1152,7 @@ public class GitHubController {
                 result.put("status", "app_install_required");
                 result.put("message", "GitHub App 설치가 필요합니다.");
                 result.put("next_step", "app_install");
-                result.put("redirect_url", "/InsWebApp/github/app/install");
+                result.put("redirect_url", "https://collabee.live/InsWebApp/github/app/install");
                 return result;
             }
             
@@ -1169,7 +1198,8 @@ public class GitHubController {
                 case "fully_connected":
                     logger.info("GitHub 연동 완료 - 메인 페이지로 이동");
                     ModelAndView successMv = new ModelAndView();
-                    successMv.setViewName("redirect:/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_main.xml");
+                    successMv.setViewName("redirect:https://collabee.live/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_main.xml");
+//                    successMv.setViewName("redirect:http://localhost:9093/InsWebApp/websquare/websquare.html?w2xPath=/ui/github_main.xml");
                     successMv.addObject("status", "connected");
                     successMv.addObject("message", "GitHub 연동이 완료되었습니다.");
                     return successMv;
@@ -2206,12 +2236,19 @@ public class GitHubController {
             }
             
             // 6. Collaborator가 아닌 경우 자동 초대 실행 - 저장소 관리자 토큰 사용
+            // 변수 선언을 try 블록 밖으로 이동하여 catch 블록에서도 접근 가능하도록 수정
+            String adminUserId = repoInfo.getConnectedBy();
+            String adminAccessToken = null;
+            
             try {
+                System.out.println("=== 배포 환경 GitHub 초대 디버깅 시작 ===");
                 System.out.println("🔄 자동 초대 실행 중...");
+                System.out.println("🌍 현재 서버 환경: 배포(collabee.live)");
+                System.out.println("📋 초대 대상 사용자: " + githubUsername);
+                System.out.println("📦 대상 레포지토리: " + repoFullName);
+                System.out.println("🔑 권한 레벨: push");
                 
                 // 저장소 관리자의 토큰 조회 (repoInfo.connectedBy)
-                String adminUserId = repoInfo.getConnectedBy();
-                String adminAccessToken = null;
                 
                 if (adminUserId != null && !adminUserId.isEmpty()) {
                     com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo adminTokenSearchVo = 
@@ -2223,6 +2260,10 @@ public class GitHubController {
                     if (adminToken != null && adminToken.getAccessToken() != null) {
                         adminAccessToken = adminToken.getAccessToken();
                         System.out.println("✅ 저장소 관리자(" + adminUserId + ")의 토큰으로 초대 실행");
+                        System.out.println("🔐 관리자 토큰 상태 배포체크:");
+                        System.out.println("   - 토큰 길이: " + adminAccessToken.length());
+                        System.out.println("   - 토큰 앞자리: " + adminAccessToken.substring(0, Math.min(8, adminAccessToken.length())));
+                        System.out.println("   - 토큰 뒤자리: ..." + adminAccessToken.substring(Math.max(0, adminAccessToken.length() - 4)));
                     } else {
                         System.out.println("⚠️ 저장소 관리자의 토큰이 없음, 현재 사용자 토큰 사용");
                         adminAccessToken = accessToken;
@@ -2232,8 +2273,40 @@ public class GitHubController {
                     adminAccessToken = accessToken;
                 }
                 
+                System.out.println("📡 배포환경 GitHub API 초대 요청 시작...");
+                System.out.println("🔗 API 호출 파라미터(배포체크):");
+                System.out.println("   - 사용 토큰: " + (adminAccessToken.equals(accessToken) ? "현재사용자" : "관리자"));
+                System.out.println("   - 레포지토리: " + repoFullName);
+                System.out.println("   - 사용자명: " + githubUsername);
+                System.out.println("   - 권한: push");
+                
+                long startTime = System.currentTimeMillis();
                 Map<String, Object> inviteResult = gitHubApiUtil.inviteCollaborator(
                     adminAccessToken, repoFullName, githubUsername, "push");
+                long endTime = System.currentTimeMillis();
+                
+                System.out.println("📡 배포환경 GitHub API 응답(소요시간: " + (endTime - startTime) + "ms):");
+                System.out.println("   - 응답 데이터: " + inviteResult);
+                
+                // HTTP 상태코드 분석
+                if (inviteResult.containsKey("statusCode")) {
+                    System.out.println("🔍 HTTP 상태코드 분석:");
+                    Object statusCode = inviteResult.get("statusCode");
+                    System.out.println("   - 상태코드: " + statusCode);
+                    
+                    if (statusCode != null) {
+                        int code = (Integer) statusCode;
+                        if (code == 201) {
+                            System.out.println("   - 201: 초대 성공 (새 초대 생성)");
+                        } else if (code == 204) {
+                            System.out.println("   - 204: 이미 콜라보레이터임 (초대 불필요)");
+                        } else if (code == 422) {
+                            System.out.println("   - 422: 초대 불가능 (사용자 없음 또는 권한 부족)");
+                        } else {
+                            System.out.println("   - 기타 상태: " + code);
+                        }
+                    }
+                }
                 
                 result.put("success", true);
                 result.put("message", "GitHub 레포지토리에 초대장을 발송했습니다. 이메일을 확인하여 초대를 수락해주세요.");
@@ -2243,12 +2316,30 @@ public class GitHubController {
                 result.put("permission", "push");
                 result.put("next_step", "GitHub에서 초대를 수락한 후 다시 시도해주세요.");
                 
-                System.out.println("✅ 초대 발송 완료");
+                System.out.println("✅ 배포환경 초대 API 호출 완료!");
+                System.out.println("📧 초대 메일 발송 상태: API 성공");
+                System.out.println("📝 사용자 다음 단계: GitHub 이메일 확인 → 초대 수락");
+                System.out.println("⚠️ 배포환경 주의사항:");
+                System.out.println("   - 메일이 오지 않으면 스팸함 여부 확인");
+                System.out.println("   - GitHub 설정 > Notifications 확인");
+                System.out.println("   - 초대 대상 사용자가 존재하는지 확인");
+                System.out.println("=== 배포환경 GitHub 초대 디버깅 완료 ===");
                 return result;
                 
             } catch (Exception inviteError) {
                 // 초대 실패 시
+                System.out.println("=== 배포환경 GitHub 초대 실패 ===");
                 System.out.println("❌ 초대 실패: " + inviteError.getMessage());
+                System.out.println("🔍 배포환경 에러 상세:");
+                System.out.println("   - 에러 타입: " + inviteError.getClass().getSimpleName());
+                System.out.println("   - 레포지토리: " + repoFullName);
+                System.out.println("   - 대상 사용자: " + githubUsername);
+                System.out.println("   - 사용된 토큰 타입: " + (adminAccessToken != null && adminAccessToken.equals(accessToken) ? "현재사용자" : "관리자"));
+                System.out.println("   - 토큰 상태: " + (adminAccessToken != null ? "존재(" + adminAccessToken.length() + "자)" : "null"));
+                
+                // 스택 트레이스 출력
+                System.out.println("🔍 스택 트레이스:");
+                inviteError.printStackTrace();
                 result.put("success", false);
                 result.put("message", "GitHub 레포지토리 초대에 실패했습니다: " + inviteError.getMessage());
                 result.put("action", "invitation_failed");
@@ -2256,6 +2347,7 @@ public class GitHubController {
                 result.put("repository", repoFullName);
                 result.put("manual_invite_guide", "관리자에게 " + githubUsername + " 사용자를 " + repoFullName + " 레포지토리에 초대해달라고 요청하세요.");
                 
+                System.out.println("=== 배포환경 GitHub 초대 실패 완료 ===");
                 return result;
             }
             

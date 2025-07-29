@@ -132,7 +132,7 @@ public class GitHubApiUtil {
             
             // JSON 응답 파싱
             Map<String, Object> result = new HashMap<>();
-            result.put("status_code", responseCode);
+            result.put("statusCode", responseCode);  // statusCode로 통일
             result.put("success", responseCode >= 200 && responseCode < 300);
             
             // 401 에러 감지 및 표시
@@ -162,8 +162,12 @@ public class GitHubApiUtil {
                         }
                     }
                 } catch (Exception e) {
+                    System.out.println("⚠️ JSON 파싱 실패: " + e.getMessage());
                     result.put("data", response.toString());
                 }
+            } else {
+                System.out.println("💭 빈 응답 본문");
+                result.put("data", null);
             }
             
             // API 레이트 리미트 정보 추가
@@ -234,7 +238,7 @@ public class GitHubApiUtil {
             reader.close();
             
             Map<String, Object> result = new HashMap<>();
-            result.put("status_code", responseCode);
+            result.put("statusCode", responseCode);  // statusCode로 통일
             result.put("success", responseCode >= 200 && responseCode < 300);
             
             if (response.length() > 0) {
@@ -485,24 +489,103 @@ public class GitHubApiUtil {
      * @throws Exception
      */
     public Map<String, Object> inviteCollaborator(String accessToken, String repoFullName, String username, String permission) throws Exception {
+        System.out.println("=== 배포환경 GitHubApiUtil.inviteCollaborator ===");
         logger.info("Collaborator 초대: {} to {} with {}", username, repoFullName, permission);
         
+        System.out.println("🌍 배포환경 API 호출 상세:");
+        System.out.println("   - 대상 사용자: " + username);
+        System.out.println("   - 레포지토리: " + repoFullName);
+        System.out.println("   - 권한: " + permission);
+        System.out.println("   - 토큰 상태: " + (accessToken != null ? "존재(" + accessToken.length() + "자)" : "null"));
+        if (accessToken != null && accessToken.length() > 8) {
+            System.out.println("   - 토큰 형식 체크: " + accessToken.substring(0, 4) + "..." + accessToken.substring(accessToken.length() - 4));
+        }
+        
         String endpoint = String.format("/repos/%s/collaborators/%s", repoFullName, username);
+        System.out.println("   - API 엔드포인트: " + endpoint);
         
         Map<String, Object> payload = new HashMap<>();
         payload.put("permission", permission);
+        System.out.println("   - 요청 데이터: " + payload);
         
+        System.out.println("📡 배포환경 GitHub API PUT 요청 시작...");
         Map<String, Object> response = put(endpoint, payload, accessToken);
+        System.out.println("📡 배포환경 GitHub API PUT 응답: " + response);
+        
+        System.out.println("🔍 배포환경 응답 분석:");
+        System.out.println("   - success: " + response.get("success"));
+        System.out.println("   - statusCode: " + response.get("statusCode"));
+        System.out.println("   - data: " + response.get("data"));
         
         if ((Boolean) response.get("success")) {
+            System.out.println("✅ 배포환경 초대 API 성공!");
+            
+            // 상태코드 별 상세 분석
+            Object statusCode = response.get("statusCode");
+            if (statusCode == null) {
+                // status_code로 다시 시도 (호환성)
+                statusCode = response.get("status_code");
+            }
+            
+            if (statusCode != null) {
+                int code = (Integer) statusCode;
+                System.out.println("🔍 상태코드 분석: " + code);
+                if (code == 201) {
+                    System.out.println("   ✅ 201 Created: 새로운 초대가 성공적으로 생성됨");
+                    System.out.println("   📧 GitHub에서 이메일 발송됨 (이것이 메일이 안 오는 원인!)");
+                    System.out.println("   📬 대상 사용자(asdfasfdvnvqwv)의 GitHub 설정 확인 필요:");
+                    System.out.println("     - GitHub > Settings > Notifications > Email");
+                    System.out.println("     - 이메일 주소 인증 상태");
+                    System.out.println("     - 스팸함 확인");
+                } else if (code == 204) {
+                    System.out.println("   ✅ 204 No Content: 사용자가 이미 콜라보레이터임");
+                    System.out.println("   ⚠️ 이미 권한이 있어 새 초대 메일이 발송되지 않음");
+                } else {
+                    System.out.println("   🔍 기타 상태코드: " + code);
+                }
+            } else {
+                System.out.println("   ⚠️ 상태코드를 찾을 수 없음");
+            }
+            
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
             result.put("message", "사용자 " + username + "을(를) " + repoFullName + " 레포지토리에 초대했습니다.");
             result.put("username", username);
             result.put("repository", repoFullName);
             result.put("permission", permission);
+            System.out.println("=== 배포환경 GitHubApiUtil 성공 ===");
             return result;
         } else {
+            System.out.println("❌ 배포환경 초대 API 실패!");
+            System.out.println("🔍 실패 상세 분석:");
+            
+            Object statusCode = response.get("statusCode");
+            Object errorData = response.get("data");
+            
+            System.out.println("   - HTTP 상태코드: " + statusCode);
+            System.out.println("   - 에러 데이터: " + errorData);
+            
+            if (statusCode != null) {
+                int code = (Integer) statusCode;
+                switch (code) {
+                    case 401:
+                        System.out.println("   ❌ 401 Unauthorized: 토큰이 만료되었거나 권한이 부족함");
+                        break;
+                    case 403:
+                        System.out.println("   ❌ 403 Forbidden: 레포지토리에 대한 권한이 없음");
+                        break;
+                    case 404:
+                        System.out.println("   ❌ 404 Not Found: 레포지토리 또는 사용자를 찾을 수 없음");
+                        break;
+                    case 422:
+                        System.out.println("   ❌ 422 Unprocessable Entity: 요청 데이터에 문제가 있음");
+                        break;
+                    default:
+                        System.out.println("   ❌ " + code + ": 알 수 없는 오류");
+                }
+            }
+            
+            System.out.println("=== 배포환경 GitHubApiUtil 실패 ===");
             throw new Exception("Collaborator 초대 실패: " + response.get("data"));
         }
     }
