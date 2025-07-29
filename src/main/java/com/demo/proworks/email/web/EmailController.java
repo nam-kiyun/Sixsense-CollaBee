@@ -203,7 +203,7 @@ public class EmailController {
             // 3. 동적 서버 URL 생성
             // String baseUrl = request.getScheme() + "://" + request.getServerName() + 
             //                ":" + request.getServerPort() + request.getContextPath();
-            String baseUrl = "https://collabee.live";
+            String baseUrl = "https://collabee.live/InsWebApp" ;
             
             // 4. HTML 이메일 내용 작성
             String content = createProjectInviteEmailContent(projectInfo, targetUserEmail, baseUrl);
