@@ -265,7 +265,7 @@ scwin.testDirectWebRTCImplementation = async function() {
                 height: 480, 
                 facingMode: "user" // 전면 카메라 
             },
-            audio: true
+            audio: false
         });
         
         alert("2-2. ✅ getUserMedia 성공! 스트림 획득됨");
@@ -609,7 +609,7 @@ scwin.requestCameraPermission = async function() {
                 height: 480,
                 facingMode: "user" // 전면 카메라 우선
             },
-            audio: true
+            audio: false
         });
         
         alert("1단계 성공! ✅ 카메라/마이크 권한 획득 완료");
