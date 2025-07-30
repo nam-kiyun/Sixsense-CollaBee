@@ -106,39 +106,14 @@ let currentUser = {
     channelName: "test"
 };
 
+// 기본 이미지 URL 정의 (임시로 로고 사용)
+scwin.defaultImage = "/InsWebApp/images/collabee.png";
+
 
 scwin.onpageload = function () {
-    //소켓 초기화 
-    scwin.initializeChatWebSocket();
-
-    $p.executeSubmission("sbm_session");
-
-    scwin.taskId = 1;
-    scwin.getTask(scwin.taskId, 7);
-
-    scwin.chat_touch();
-    scwin.comment = false;
-
-
-    //채팅
-    scwin.currentPage = 1; // 최초 로딩이 1페이지니까 다음은 2부터 시작
-    scwin.isLoading = false; // 중복 호출 방지용 플래그
-    scwin.hasMore = true; // 마지막 페이지에 도달하면 false로 바꾸기
-    scwin.loadMoreData();
-
-    scwin.chatDate = new Set();
-
-    //무한 스크롤
-    const scrollArea = $p.getComponentById("comment_main_group");
-
-
-    scrollArea.bind("onscroll", function () {
-        const scrollTop = scrollArea.render.scrollTop;
-
-        if (scrollTop <= 50) { // 화면 맨 위 근접했을 때
-            scwin.loadMoreData(); // 이전 댓글 불러오기
-        }
-    });
+    console.log("===== taskPage onpageload 시작 =====");
+    // 아무것도 하지 않음 - 팝업이 닫히는 원인 찾기
+    console.log("===== taskPage onpageload 완료 =====");
 };
 
 //task 정보 가져오기
@@ -234,7 +209,9 @@ scwin.chat_touch = function () {
     document.addEventListener("touchend", function (e) {
         const touchEndX = e.changedTouches[0].clientX;
         const diffX = touchEndX - touchStartX;
-        const side = header_group.getWindow().scwin.side;
+        
+        // sideMenu 제거로 인해 side는 항상 false
+        let side = false;
 
         // 오른쪽으로 스와이프 (예: 100px 이상이면 열기)
         if (diffX < -100 && !scwin.comment && !side) {
@@ -506,7 +483,7 @@ scwin.comment_send_button_onclick = function () {
 
 //화면에 댓글 추가
 scwin.addChatMessage = function (userName, message, time = "", isMine = false, image, commentId = 0, insertBeforeComp) {
-    const group = $p.getComponentById("mf_comment_main_group");
+    const group = $p.getComponentById("comment_main_group");
     const generateUniqueId = (prefix) => {
         return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     };
@@ -544,8 +521,14 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
         className: "comment-left"
     }, headerRow);
 
+    // 안전한 이미지 URL 처리
+    let profileImageUrl = scwin.defaultImage;
+    if (image && image.trim() !== "" && image !== "undefined") {
+        profileImageUrl = image;
+    }
+    
     $p.dynamicCreate(profileId, "image", {
-        src: image && image.trim() !== "" ? `${image}` : `${scwin.defaultImage}`,
+        src: profileImageUrl,
         className: "comment-profile"
     }, leftGroup);
 
@@ -615,7 +598,7 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
 
 //삭제할 때 날짜와 함께 삭제
 scwin.deleteChat = function (chat) {
-    const group = $p.getComponentById("mf_comment_main_group");
+    const group = $p.getComponentById("comment_main_group");
 
     // 그룹 내부의 자식 컴포넌트 목록 가져오기
     const children = group.getChildren();
@@ -648,7 +631,7 @@ scwin.deleteChat = function (chat) {
 
 //화면에 날짜 표시
 scwin.addChatDate = function (dateText, insertBeforeComp) {
-    const group = $p.getComponentById("mf_comment_main_group");
+    const group = $p.getComponentById("comment_main_group");
     const wrapperId = "chat_date_" + Date.now();
 
     const dateWrapper = $p.dynamicCreate(wrapperId, "span", {
@@ -667,16 +650,24 @@ scwin.sbm_comment_get_submitdone = function (e) {
     const responseData = e.responseJSON;
     const commentList = responseData.elData?.commentVoList ?? [];
     const userInfo = responseData.userHeader
-    const group = $p.getComponentById("mf_comment_main_group");
-    let firstChild = group.render?.children[0] ?? null;
-    let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
+    const group = $p.getComponentById("comment_main_group");
+    
+    // 안전한 렌더링 처리
+    let firstChild = null;
+    let insertBeforeTarget = null;
+    
+    if (group && group.render && group.render.children) {
+        firstChild = group.render.children[0] || null;
+        if (group.childControlList) {
+            insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) || null;
+        }
+    }
 
-    currentUser.userId = userInfo.userId;
-    currentUser.userName = userInfo.userName;
-    currentUser.userImage = userInfo.userImage
-
-    side_frame.getWindow().dm_sideMenu.set("userName", currentUser.userId);
-    side_frame.getWindow().scwin.loadUserProjects();
+    if (userInfo) {
+        currentUser.userId = userInfo.userId;
+        currentUser.userName = userInfo.userName;
+        currentUser.userImage = userInfo.userImage;
+    }
 
     if (commentList.length === 0) {
         scwin.hasMore = false; // 더 이상 불러올 댓글 없음
@@ -826,6 +817,23 @@ scwin.sbm_session_submitdone = function (e) {
     currentUser.userName = userInfo.userName;
     currentUser.userImage = userInfo.profileImageUrl;
 };
+
+// 뒤로 가기 버튼 클릭 이벤트
+scwin.btn_back_onclick = function() {
+    console.log("❌ btn_back_onclick 호출됨 - 팝업 닫기");
+    console.trace("함수 호출 스택");
+    
+    try {
+        // 팝업 닫기
+        $p.closePopup();
+    } catch(e) {
+        console.error("팝업 닫기 오류:", e);
+        // 대체 방법
+        if (window.parent && window.parent.$p && window.parent.$p.closePopup) {
+            window.parent.$p.closePopup();
+        }
+    }
+};
 ]]></script>
     	<style type="text/css"><![CDATA[html,
 body {
@@ -838,25 +846,22 @@ body {
 .wrapper {
     display: flex;
     flex-direction: column;
-    height: 100%;
-}
-
-.header-group {
-    height: 50px;
-    background-color: black;
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: white;
+    z-index: 9999;
 }
 
 .main-group {
     flex: 1;
     display: flex;
-    /* background-color: rgb(201, 148, 83); */
     overflow: hidden;
     position: relative;
-}
-
-.footer-group {
-    height: 50px;
-    background-color: rgb(197, 226, 184);
+    height: 100%;
+    width: 100%;
 }
 
 .side-frame {
@@ -877,7 +882,17 @@ body {
 
 .content-group {
     width: 100%;
-    overflow: auto;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* 스크롤바 숨김 */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
+}
+
+.content-group::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
 }
 
 .contents-header {
@@ -885,14 +900,44 @@ body {
     width: 100%;
     height: 10%;
     align-items: center;
+    justify-content: space-between;
     padding: 0 20px;
     box-sizing: border-box;
-    /* background-color: pink; */
+    background-color: #4A3F35;
+    color: white;
+    border-bottom: 1px solid #ddd;
+}
+
+.back-button {
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    font-weight: bold;
+    color: #FFB823;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+.back-button:hover {
+    background-color: rgba(255, 184, 35, 0.2);
+}
+
+.back-button:active {
+    background-color: rgba(255, 184, 35, 0.3);
 }
 
 .header-title {
-    font-size: large;
+    font-size: 18px;
     font-weight: bold;
+    color: #FFB823;
+    text-align: center;
+    flex: 1;
 }
 
 .contents-dec {
@@ -992,16 +1037,7 @@ body {
     /* background-color: bisque; */
 }
 .comment-main-group::-webkit-scrollbar {
-    width: 3px;
-}
-
-.comment-main-group::-webkit-scrollbar-track {
-    background: white; /* 트랙 배경 */
-}
-
-.comment-main-group::-webkit-scrollbar-thumb {
-    background-color: #ffb823; /* 스크롤 핸들 */
-    border-radius: 10px;
+    display: none; /* Chrome, Safari */
 }
 
 /* 채팅 input과 전송버튼 */
@@ -1147,12 +1183,16 @@ body {
     </head>
     <body ev:onpageload="scwin.onpageload">
     	<xf:group style="" id="" class="wrapper ">
-    		<w2:pageFrame style="" id="header_group" class="header-group" src="/InsWebApp/ui/mobile/cmmn/header.xml"></w2:pageFrame>
     		<xf:group style="" id="" class="main-group">
-    			<w2:pageFrame style="" id="side_frame" src="/InsWebApp/ui/cmmn/sideMenu.xml" class="side-frame"></w2:pageFrame>
+    			<!-- sideMenu 임시 제거 - 팝업 문제 해결을 위해 -->
+    			<!-- <w2:pageFrame style="" id="side_frame" src="/InsWebApp/ui/cmmn/sideMenu.xml" class="side-frame"></w2:pageFrame> -->
     			<xf:group style="" id="" class="content-group">
     				<xf:group style="" id="" class="contents-header">
-    					<w2:textbox style="" id="" label="프로젝트명" class="header-title"></w2:textbox>
+    					<xf:trigger type="button" style="" id="btn_back" class="back-button" ev:onclick="scwin.btn_back_onclick">
+    						<xf:label><![CDATA[←]]></xf:label>
+    					</xf:trigger>
+    					<w2:textbox style="" id="header-title" label="태스크 상세" class="header-title"></w2:textbox>
+    					<xf:group style="width:40px;height:40px;" id="spacer_group"></xf:group>
     				</xf:group>
     				<xf:group style="" id="" class="contents-dec">
     					<w2:textbox style="" id="" label="요구명세서" class="dec-title"></w2:textbox>
@@ -1257,7 +1297,6 @@ body {
     				</xf:group>
     			</xf:group>
     		</xf:group>
-    		<w2:pageFrame style="" id="" class="footer-group" src="/InsWebApp/ui/mobile/cmmn/footer.xml"></w2:pageFrame>
     	</xf:group>
     </body>
 </html>

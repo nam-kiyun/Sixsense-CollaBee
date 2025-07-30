@@ -27,6 +27,7 @@
 						<w2:column id="startDate" name="startDate" dataType="text"></w2:column>
 						<w2:column id="endDate" name="endDate" dataType="text"></w2:column>
 						<w2:column id="tags" name="tags" dataType="text"></w2:column>
+						<w2:column id="userName" name="userName" dataType="text"></w2:column>
 					</w2:columnInfo>
 				</w2:dataList>
 				<w2:dataMap baseNode="map" id="dm_taskVo">
@@ -103,6 +104,12 @@
 				errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.load_Tasks_submitdone"
 				ev:submiterror="" abortTrigger="">
 			</xf:submission>
+			<xf:submission id="load_Tasks_With_UserName" action="/InsWebApp/TaskListWithUserName.pwkjson" method="post"
+				mediatype="application/json" ref='data:json,{"id":"dm_search_task","key":"taskVo"}'
+				target='data:json,{"id":"dlt_taskList","key":"taskVoList"}' encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.load_Tasks_With_UserName_submitdone" ev:submiterror="scwin.load_Tasks_With_UserName_submiterror"
+				abortTrigger="">
+			</xf:submission>
 			<xf:submission id="update_task_board" action="/InsWebApp/task/updateBoard.pwkjson" method="post" mediatype="application/json"
 				ref='data:json,{"id":"dm_taskVo","key":"taskVo"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
 				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.update_task_board_submitdone" ev:submiterror="scwin.update_task_board_submiterror" abortTrigger="">
@@ -113,10 +120,16 @@
 		<script lazy="false" type="text/javascript"><![CDATA[
 // 전역 프로젝트 데이터 저장소
 scwin.currentProjectData = null;
+scwin.currentBoardList = [];
+scwin.currentTaskList = [];
+scwin.selectedBoardId = null;
+scwin.dynamicComponents = []; // 동적으로 생성된 컴포넌트들을 관리
 
 scwin.onpageload = function () {
     scwin.view = false;
     scwin.task = "todo";
+    
+    console.log("모바일 프로젝트 페이지 로드 완료");
 };
 
 // 프로젝트 데이터 설정 함수 (부모에서 호출)
@@ -126,10 +139,28 @@ scwin.setProjectData = function(projectData) {
     // 전역 변수에 저장
     scwin.currentProjectData = projectData;
     
-    // dm_projectVo에도 설정
+    // dm_projectVo에 설정
     if (projectData && projectData.projectId) {
         dm_projectVo.set("projectId", projectData.projectId);
         console.log("dm_projectVo에 프로젝트 ID 설정 완료:", projectData.projectId);
+        
+        // 프로젝트명 업데이트
+        scwin.updateProjectName(projectData.projectName);
+        
+        // 보드 목록 로드
+        scwin.loadBoardList();
+    }
+};
+
+// 프로젝트명 업데이트
+scwin.updateProjectName = function(projectName) {
+    try {
+        if (output_projectName) {
+            output_projectName.setValue(projectName);
+            console.log("프로젝트명 업데이트:", projectName);
+        }
+    } catch(e) {
+        console.error("프로젝트명 업데이트 오류:", e);
     }
 };
 
@@ -143,32 +174,6 @@ scwin.view_button_onclick = function (e) {
         calender_button.addClass("active");
         scwin.view = true;
     }
-};
-
-scwin.task_button_onclick = function (e) {
-    const targetId = e.target.id;
-    scwin.task_button_init();
-    console.log(targetId.includes("todo_button"));
-    // switch 문으로 처리
-    switch (true) {
-        case targetId.includes("todo_button"):
-            todo_button.addClass("active");
-            break;
-        case targetId.includes("progress_button"):
-            progress_button.addClass("active");
-            break;
-        case targetId.includes("completed_button"):
-            completed_button.addClass("active");
-            break;
-        default:
-            console.log("알 수 없는 버튼:", targetId);
-    }
-};
-
-scwin.task_button_init = function (e) {
-    todo_button.removeClass("active");
-    progress_button.removeClass("active");
-    completed_button.removeClass("active");
 };
 
 // 비디오 팝업 상태 관리
@@ -286,6 +291,583 @@ scwin.videoChat_closeAction = function(argRuntimeID, argJsnInfo) {
     }
     
     return true;
+};
+
+// 보드 목록 로드
+scwin.loadBoardList = function() {
+    console.log("보드 목록 로드 시작");
+    if (dm_projectVo.get("projectId")) {
+        $c.sbm.execute(load_Board);
+    } else {
+        console.log("프로젝트 ID가 없어 보드 목록을 로드하지 않습니다.");
+    }
+};
+
+// 보드 목록 로드 완료 콜백
+scwin.load_Board_submitdone = function(e) {
+    console.log("보드 목록 로드 응답:", e.responseJSON);
+    
+    const boardListVo = e.responseJSON.boardVoList;
+    if (boardListVo && boardListVo.length > 0) {
+        scwin.currentBoardList = boardListVo;
+        scwin.renderBoardButtons(boardListVo);
+        
+        // 첫 번째 보드를 기본 선택
+        if (boardListVo[0]) {
+            scwin.selectedBoardId = boardListVo[0].boardId;
+            scwin.loadTaskList(boardListVo[0].boardId);
+        }
+    } else {
+        console.log("보드 목록이 비어있습니다.");
+        scwin.renderNoBoardsMessage();
+    }
+};
+
+// 보드 버튼들 동적 생성
+scwin.renderBoardButtons = function(boardList) {
+    console.log("보드 버튼 렌더링:", boardList);
+    
+    try {
+        // 기존 버튼들 제거
+        scwin.clearBoardButtons();
+        
+        const buttonContainer = grp_boardButtons;
+        if (!buttonContainer) {
+            console.error("보드 버튼 컨테이너를 찾을 수 없습니다.");
+            return;
+        }
+        
+        // 각 보드별로 버튼 생성
+        for (let i = 0; i < boardList.length; i++) {
+            const board = boardList[i];
+            const buttonId = "btn_board_" + board.boardId;
+            
+            const boardButton = $p.dynamicCreate(
+                buttonId,
+                "trigger",
+                {
+                    className: i === 0 ? "bottom-btn active" : "bottom-btn"
+                },
+                buttonContainer
+            );
+            
+            if (boardButton) {
+                boardButton.setValue(board.boardTitle || "보드" + (i + 1));
+                
+                // 클릭 이벤트 바인딩
+                boardButton.bind("onclick", function() {
+                    scwin.onBoardButtonClick(board.boardId, board.boardTitle, buttonId);
+                });
+                
+                // 동적 컴포넌트 목록에 추가
+                scwin.dynamicComponents.push({
+                    component: boardButton,
+                    id: buttonId,
+                    type: "board_button"
+                });
+            }
+        }
+        
+        console.log("보드 버튼 렌더링 완료:", boardList.length + "개");
+        
+    } catch(e) {
+        console.error("보드 버튼 렌더링 오류:", e);
+    }
+};
+
+// 보드 버튼 클릭 이벤트
+scwin.onBoardButtonClick = function(boardId, boardTitle, buttonId) {
+    console.log("보드 버튼 클릭:", boardId, boardTitle);
+    
+    try {
+        // 모든 보드 버튼에서 active 클래스 제거
+        scwin.dynamicComponents.forEach(comp => {
+            if (comp.type === "board_button" && comp.component) {
+                comp.component.removeClass("active");
+                console.log("active 클래스 제거:", comp.id);
+            }
+        });
+        
+        // 클릭된 버튼에 active 클래스 추가
+        const clickedButton = $p.getComponentById(buttonId);
+        if (clickedButton) {
+            clickedButton.addClass("active");
+            console.log("active 클래스 추가:", buttonId);
+        } else {
+            console.error("클릭된 버튼을 찾을 수 없습니다:", buttonId);
+        }
+        
+        // 선택된 보드 ID 저장
+        scwin.selectedBoardId = boardId;
+        
+        // 해당 보드의 태스크 목록 로드
+        scwin.loadTaskList(boardId);
+        
+    } catch(e) {
+        console.error("보드 버튼 클릭 처리 오류:", e);
+    }
+};
+
+// 태스크 목록 로드
+scwin.loadTaskList = function(boardId) {
+    console.log("태스크 목록 로드 시작:", boardId);
+    
+    try {
+        // 검색 조건 설정
+        dm_search_task.set("boardId", boardId);
+        dm_search_task.set("sortField", "taskId");
+        dm_search_task.set("sortOrder", "ASC");
+        
+        // 사용자 이름을 포함한 태스크 목록 조회
+        $c.sbm.execute(load_Tasks_With_UserName);
+        
+    } catch(e) {
+        console.error("태스크 목록 로드 오류:", e);
+    }
+};
+
+// 태스크 목록 로드 완료 콜백
+scwin.load_Tasks_submitdone = function(e) {
+    console.log("태스크 목록 로드 응답:", e.responseJSON);
+    
+    const taskVoList = e.responseJSON.elData.taskVoList;
+    if (taskVoList) {
+        scwin.currentTaskList = taskVoList;
+        scwin.renderTaskCards(taskVoList);
+    } else {
+        console.log("태스크 목록이 비어있습니다.");
+        scwin.renderNoTasksMessage();
+    }
+};
+
+// 사용자 이름을 포함한 태스크 목록 로드 완료 콜백
+scwin.load_Tasks_With_UserName_submitdone = function(e) {
+    console.log("사용자 이름 포함 태스크 목록 로드 응답:", e.responseJSON);
+    
+    try {
+        const taskVoList = e.responseJSON.elData.taskVoList;
+        if (taskVoList && taskVoList.length > 0) {
+            console.log("태스크 데이터 확인:", taskVoList[0]);
+            scwin.currentTaskList = taskVoList;
+            scwin.renderTaskCards(taskVoList);
+        } else {
+            console.log("태스크 목록이 비어있습니다.");
+            scwin.renderNoTasksMessage();
+        }
+    } catch (error) {
+        console.error("태스크 데이터 처리 중 오류:", error);
+        scwin.renderNoTasksMessage();
+    }
+};
+
+// 사용자 이름을 포함한 태스크 목록 로드 오류 콜백
+scwin.load_Tasks_With_UserName_submiterror = function(e) {
+    console.error("사용자 이름 포함 태스크 목록 로드 실패:", e);
+    scwin.renderNoTasksMessage();
+};
+
+// 태스크 카드들 동적 생성
+scwin.renderTaskCards = function(taskList) {
+    console.log("태스크 카드 렌더링:", taskList);
+    
+    try {
+        // 기존 태스크 카드들 제거
+        scwin.clearTaskCards();
+        
+        const mainGroup = grp_mainGroup;
+        if (!mainGroup) {
+            console.error("메인 그룹을 찾을 수 없습니다.");
+            return;
+        }
+        
+        if (!taskList || taskList.length === 0) {
+            scwin.renderNoTasksMessage();
+            return;
+        }
+        
+        // 각 태스크별로 카드 생성
+        for (let i = 0; i < taskList.length; i++) {
+            const task = taskList[i];
+            scwin.createTaskCard(task, i);
+        }
+        
+        console.log("태스크 카드 렌더링 완료:", taskList.length + "개");
+        
+    } catch(e) {
+        console.error("태스크 카드 렌더링 오류:", e);
+    }
+};
+
+// 개별 태스크 카드 생성
+scwin.createTaskCard = function(task, index) {
+    try {
+        const cardId = "grp_taskCard_" + task.taskId + "_" + index;
+        
+        // 태스크 카드 컨테이너 생성 (단일 컬럼) - 흰색 배경
+        const taskCard = $p.dynamicCreate(
+            cardId,
+            "group",
+            {
+                style: "width:calc(100% - 20px);margin:8px 10px;background-color:white;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.1);box-sizing:border-box;cursor:pointer;display:block;position:relative;"
+            },
+            grp_mainGroup
+        );
+        
+        if (!taskCard) {
+            console.error("태스크 카드 생성 실패:", cardId);
+            return;
+        }
+        
+        // 우선순위 태그 (오른쪽 상단 절대 위치)
+        if (task.priority) {
+            const priorityTag = $p.dynamicCreate(
+                "output_priority_" + task.taskId + "_" + index,
+                "output",
+                {
+                    style: "position:absolute;top:16px;right:16px;display:inline-block;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;color:white;" + scwin.getPriorityBackgroundStyle(task.priority)
+                },
+                taskCard
+            );
+            
+            if (priorityTag) {
+                priorityTag.setValue(scwin.getPriorityLabel(task.priority));
+            }
+        }
+        
+        // 태스크 제목 (맨 위에 크게)
+        const titleOutput = $p.dynamicCreate(
+            "output_taskTitle_" + task.taskId + "_" + index,
+            "output",
+            {
+                style: "font-size:24px;font-weight:700;color:#333333;font-family:Inter,sans-serif;margin-bottom:12px;display:block;line-height:1.2;padding-right:80px;"
+            },
+            taskCard
+        );
+        
+        if (titleOutput) {
+            titleOutput.setValue(task.taskTitle || "제목 없음");
+        }
+        
+        // 담당자 정보 (제목 아래)
+        const assigneeInfo = $p.dynamicCreate(
+            "output_assignee_" + task.taskId + "_" + index,
+            "output",
+            {
+                style: "font-size:16px;color:#888888;font-family:Inter,sans-serif;display:block;"
+            },
+            taskCard
+        );
+        
+        if (assigneeInfo) {
+            // 웹 버전과 동일한 사용자 이름 조회 로직 사용
+            const assigneeName = scwin.getUserNameByUserId(task.projectUserId, task);
+            assigneeInfo.setValue("담당자: " + assigneeName);
+        }
+        
+        // 클릭 이벤트 바인딩
+        taskCard.bind("onclick", function() {
+            scwin.onTaskCardClick(task);
+        });
+        
+        // 동적 컴포넌트 목록에 추가
+        scwin.dynamicComponents.push({
+            component: taskCard,
+            id: cardId,
+            type: "task_card",
+            taskId: task.taskId
+        });
+        
+    } catch(e) {
+        console.error("태스크 카드 생성 오류:", e);
+    }
+};
+
+// 우선순위 스타일 반환
+scwin.getPriorityStyle = function(priority) {
+    switch(priority) {
+        case "high":
+            return "background-color:#FFE5E5;color:#D32F2F;";
+        case "medium":
+            return "background-color:#FFF3E0;color:#F57C00;";
+        case "low":
+            return "background-color:#E8F5E8;color:#388E3C;";
+        default:
+            return "background-color:#F5F5F5;color:#666666;";
+    }
+};
+
+// 우선순위 배경 스타일 반환 (태그용)
+scwin.getPriorityBackgroundStyle = function(priority) {
+    switch(priority) {
+        case "high":
+            return "background-color:#DC3545;"; // Bootstrap danger 색상 (빨간색)
+        case "medium":
+            return "background-color:#FFC107;"; // Bootstrap warning 색상 (노란색)
+        case "low":
+            return "background-color:#28A745;"; // Bootstrap success 색상 (초록색)
+        default:
+            return "background-color:#6C757D;"; // Bootstrap secondary 색상 (회색)
+    }
+};
+
+
+// 우선순위 라벨 반환
+scwin.getPriorityLabel = function(priority) {
+    switch(priority) {
+        case "high": return "높음";
+        case "medium": return "보통";
+        case "low": return "낮음";
+        default: return priority || "일반";
+    }
+};
+
+// 태스크 카드 클릭 이벤트
+scwin.onTaskCardClick = function(task) {
+    console.log("태스크 카드 클릭:", task);
+    debugger;
+    try {
+        // 고유한 팝업 ID 생성 (타임스탬프 사용으로 중복 방지)
+        const uniquePopupId = "taskPagePopup_" + task.taskId + "_" + Date.now();
+        
+        // taskPage 팝업 열기 (modal false로 시도)
+        const taskPageOptions = {
+            id: uniquePopupId,
+            type: "wframePopup",
+            width: "100%",
+            height: "100%",
+            modal: false,
+            paramObject: {
+                taskId: task.taskId,
+                taskTitle: task.taskTitle,
+                boardId: task.boardId,
+                projectUserId: task.projectUserId,
+                priority: task.priority,
+                startDate: task.startDate,
+                endDate: task.endDate,
+                tags: task.tags,
+                userName: task.userName,
+                fromMobile: true,
+                projectId: scwin.currentProjectData ? scwin.currentProjectData.projectId : dm_projectVo.get("projectId")
+            }
+        };
+        
+        console.log("taskPage 팝업 열기 - 태스크 ID:", task.taskId);
+        $p.openPopup("/InsWebApp/ui/mobile/taskPage.xml", taskPageOptions);
+        
+    } catch(e) {
+        console.error("태스크 페이지 열기 오류:", e);
+        alert("태스크 상세 페이지를 열 수 없습니다.");
+    }
+};
+
+// taskPage 팝업 닫기 액션
+scwin.taskPage_closeAction = function(argRuntimeID, argJsnInfo) {
+    console.log("taskPage 팝업 닫기 - ID:", argRuntimeID);
+    
+    try {
+        // 태스크 데이터가 변경되었을 수 있으므로 태스크 목록 새로고침
+        if (scwin.selectedBoardId) {
+            console.log("태스크 목록 새로고침:", scwin.selectedBoardId);
+            scwin.loadTaskList(scwin.selectedBoardId);
+        }
+        
+        console.log("taskPage 팝업 닫기 완료");
+        
+    } catch (e) {
+        console.error("taskPage 팝업 닫기 오류:", e);
+    }
+    
+    // closeAction 함수에서는 true를 반환해야 팝업이 정상적으로 닫힘
+    return true;
+};
+
+// 태스크가 없을 때 메시지 표시
+scwin.renderNoTasksMessage = function() {
+    try {
+        scwin.clearTaskCards();
+        
+        const noTasksMessage = $p.dynamicCreate(
+            "grp_noTasks",
+            "group",
+            {
+                style: "width:calc(100% - 20px);margin:50px 10px;text-align:center;padding:30px;background-color:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);display:block;"
+            },
+            grp_mainGroup
+        );
+        
+        if (noTasksMessage) {
+            const messageText = $p.dynamicCreate(
+                "output_noTasksMessage",
+                "output",
+                {
+                    style: "font-size:16px;color:#666666;font-family:Inter,sans-serif;"
+                },
+                noTasksMessage
+            );
+            
+            if (messageText) {
+                messageText.setValue("이 보드에는 태스크가 없습니다.");
+            }
+            
+            scwin.dynamicComponents.push({
+                component: noTasksMessage,
+                id: "grp_noTasks",
+                type: "no_tasks_message"
+            });
+        }
+    } catch(e) {
+        console.error("태스크 없음 메시지 생성 오류:", e);
+    }
+};
+
+// 보드가 없을 때 메시지 표시
+scwin.renderNoBoardsMessage = function() {
+    try {
+        scwin.clearBoardButtons();
+        
+        const noBoardsMessage = $p.dynamicCreate(
+            "grp_noBoards",
+            "group",
+            {
+                style: "width:90%;margin:20px auto;text-align:center;padding:20px;background-color:#FFF3E0;border-radius:8px;"
+            },
+            grp_boardButtons
+        );
+        
+        if (noBoardsMessage) {
+            const messageText = $p.dynamicCreate(
+                "output_noBoardsMessage",
+                "output",
+                {
+                    style: "font-size:14px;color:#F57C00;font-family:Inter,sans-serif;"
+                },
+                noBoardsMessage
+            );
+            
+            if (messageText) {
+                messageText.setValue("이 프로젝트에는 보드가 없습니다.");
+            }
+            
+            scwin.dynamicComponents.push({
+                component: noBoardsMessage,
+                id: "grp_noBoards",
+                type: "no_boards_message"
+            });
+        }
+    } catch(e) {
+        console.error("보드 없음 메시지 생성 오류:", e);
+    }
+};
+
+// 태스크 카드만 제거
+scwin.clearTaskCards = function() {
+    try {
+        const taskComponents = scwin.dynamicComponents.filter(comp => 
+            comp.type === "task_card" || comp.type === "no_tasks_message"
+        );
+        
+        taskComponents.forEach(comp => {
+            try {
+                if (comp.component && comp.component.remove) {
+                    comp.component.remove();
+                }
+            } catch(e) { /* ignore */ }
+        });
+        
+        // 태스크 관련 컴포넌트만 배열에서 제거
+        scwin.dynamicComponents = scwin.dynamicComponents.filter(comp => 
+            comp.type !== "task_card" && comp.type !== "no_tasks_message"
+        );
+        
+    } catch(e) {
+        console.error("태스크 카드 정리 오류:", e);
+    }
+};
+
+// 보드 버튼만 제거
+scwin.clearBoardButtons = function() {
+    try {
+        const boardComponents = scwin.dynamicComponents.filter(comp => 
+            comp.type === "board_button" || comp.type === "no_boards_message"
+        );
+        
+        boardComponents.forEach(comp => {
+            try {
+                if (comp.component && comp.component.remove) {
+                    comp.component.remove();
+                }
+            } catch(e) { /* ignore */ }
+        });
+        
+        // 보드 관련 컴포넌트만 배열에서 제거
+        scwin.dynamicComponents = scwin.dynamicComponents.filter(comp => 
+            comp.type !== "board_button" && comp.type !== "no_boards_message"
+        );
+        
+    } catch(e) {
+        console.error("보드 버튼 정리 오류:", e);
+    }
+};
+
+// 모든 동적 컴포넌트 제거
+scwin.clearDynamicComponents = function() {
+    try {
+        scwin.dynamicComponents.forEach(comp => {
+            try {
+                if (comp.component && comp.component.remove) {
+                    comp.component.remove();
+                }
+            } catch(e) { /* ignore */ }
+        });
+        scwin.dynamicComponents = [];
+    } catch(e) {
+        console.error("동적 컴포넌트 정리 오류:", e);
+    }
+};
+
+/**
+ * 사용자 ID로 사용자 이름 가져오기 (웹 버전과 동일한 로직)
+ */
+scwin.getUserNameByUserId = function (userId, taskData) {
+    if (!userId) {
+        return "담당자 없음";
+    }
+
+    try {
+        // taskData에 userName이 있으면 우선 사용
+        if (taskData && taskData.userName) {
+            return taskData.userName;
+        }
+
+        // 태스크 리스트에서 해당 userId의 userName 찾기
+        if (dlt_taskList) {
+            var rowCount = dlt_taskList.getRowCount();
+            for (var i = 0; i < rowCount; i++) {
+                var projectUserId = dlt_taskList.getCellData(i, "projectUserId");
+                var userName = dlt_taskList.getCellData(i, "userName");
+                if (projectUserId === userId && userName) {
+                    return userName;
+                }
+            }
+        }
+
+        // 현재 로그인한 사용자의 정보인지 확인
+        if (dm_userInfo) {
+            var currentUserId = dm_userInfo.get("userId");
+            if (userId === currentUserId) {
+                var userName = dm_userInfo.get("userName");
+                if (userName) {
+                    return userName;
+                }
+            }
+        }
+
+        // 모든 방법이 실패하면 userId 반환
+        return userId;
+    } catch (e) {
+        console.error("사용자 이름 조회 실패:", e);
+        return userId || "알 수 없음";
+    }
 };
 ]]></script>
 		<style type="text/css"><![CDATA[/* 공통 */
@@ -415,16 +997,32 @@ scwin.videoChat_closeAction = function(argRuntimeID, argJsnInfo) {
 .bottom-btn-group {
     width: 100%;
     height: 100%;
-    /* background-color: cornsilk; */
-    overflow: hidden;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.bottom-btn-group::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
 }
 
 .bottom-btn {
-    width: 30%;
+    min-width: 100px;
+    max-width: 150px;
+    flex-shrink: 0;
     height: 100%;
     font-size: 17px;
     outline: none;
     border: none;
+    transition: all 0.3s ease;
+    background-color: transparent;
+    color: #666666;
+    white-space: nowrap;
+    padding: 0 15px;
 }
 
 .bottom-btn.active {
@@ -438,6 +1036,17 @@ scwin.videoChat_closeAction = function(argRuntimeID, argJsnInfo) {
     width: 100%;
     height: 70%;
     background-color: #FFF4D6;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px 0;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.main-group::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
 }
 
 /* 플로팅 화상통화 버튼 */
@@ -475,19 +1084,9 @@ scwin.videoChat_closeAction = function(argRuntimeID, argJsnInfo) {
 			style="">
 			<xf:group style="" id="" class="nav-group">
 				<xf:group style="" id="" class="nav nav-top">
-					<xf:select1 id="" chooseOption="" style="" submenuSize="auto" allOption="" disabled="false" direction="auto"
-						appearance="minimal" disabledClass="w2selectbox_disabled" class="project-select" ref="">
-						<xf:choices>
-							<xf:item>
-								<xf:label><![CDATA[테스트1]]></xf:label>
-								<xf:value><![CDATA[]]></xf:value>
-							</xf:item>
-							<xf:item>
-								<xf:label><![CDATA[테스트2]]></xf:label>
-								<xf:value><![CDATA[]]></xf:value>
-							</xf:item>
-						</xf:choices>
-					</xf:select1>
+					<xf:output style="font-size:25px;font-weight:600;color:#000000;font-family:Inter,sans-serif;" id="output_projectName">
+						<xf:label><![CDATA[프로젝트명]]></xf:label>
+					</xf:output>
 					<xf:trigger type="button" style="" id="" class="btn setting-button">
 						<xf:label><![CDATA[]]></xf:label>
 					</xf:trigger>
@@ -511,20 +1110,14 @@ scwin.videoChat_closeAction = function(argRuntimeID, argJsnInfo) {
 					</xf:group>
 				</xf:group>
 				<xf:group id="" style="" class="nav nav-bottom">
-					<xf:group class="bottom-btn-group" id="" style="">
-						<xf:trigger class="bottom-btn active" id="todo_button" style="" type="button" ev:onclick="scwin.task_button_onclick">
-							<xf:label><![CDATA[할일]]></xf:label>
-						</xf:trigger>
-						<xf:trigger class="bottom-btn" id="progress_button" style="" type="button" ev:onclick="scwin.task_button_onclick">
-							<xf:label><![CDATA[진행중]]></xf:label>
-						</xf:trigger>
-						<xf:trigger class="bottom-btn" id="completed_button" style="" type="button" ev:onclick="scwin.task_button_onclick">
-							<xf:label><![CDATA[완료]]></xf:label>
-						</xf:trigger>
+					<xf:group class="bottom-btn-group" id="grp_boardButtons" style="">
+						<!-- 보드 버튼들이 동적으로 생성됩니다 -->
 					</xf:group>
 				</xf:group>
 			</xf:group>
-			<xf:group style="" id="" class="main-group"></xf:group>
+			<xf:group style="display: block !important;" id="grp_mainGroup" class="main-group">
+				<!-- task 카드들이 동적으로 생성됩니다 -->
+			</xf:group>
 		</xf:group>
 		
 		<!-- 플로팅 화상통화 버튼 -->

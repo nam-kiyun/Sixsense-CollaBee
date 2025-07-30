@@ -563,12 +563,29 @@ body {
     padding: 0;
     height: 100%;
     /* 전체 높이 설정 */
+    /* 스크롤바 숨김 */
+    overflow: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
 }
 
 .wrapper {
     display: flex;
     flex-direction: column;
     height: 100%;
+    /* 스크롤바 숨김 */
+    overflow: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.wrapper::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
 }
 
 .header-group {
@@ -582,6 +599,13 @@ body {
     display: flex;
     overflow: hidden;
     position: relative;
+    /* 스크롤바 숨김 */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.main-group::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
 }
 
 .footer-group {
@@ -599,6 +623,14 @@ body {
     transform: translateX(-101%);
     transition: transform 0.3s ease;
     z-index: 100;
+    /* 스크롤바 숨김 */
+    overflow: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.side-frame::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
 }
 
 .side-frame.active {
@@ -607,6 +639,14 @@ body {
 
 .main-frame {
     width: 100%;
+    /* 스크롤바 숨김 */
+    overflow: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.main-frame::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
 }]]></style>
     </head>
     <body ev:onpageload="scwin.onpageload">
