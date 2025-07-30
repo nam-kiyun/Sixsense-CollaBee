@@ -180,6 +180,11 @@ let currentUser = {
 
 //페이지 로드 되었을 때 
 scwin.onpageload = function () {
+
+
+
+    scwin.popup_closeAction();
+
     $p.executeSubmission("sbm_session");
 
     //사용자 정보
@@ -192,11 +197,15 @@ scwin.onpageload = function () {
     scwin.taskInfo = "";
     scwin.taskId = userInfo.taskId;
     scwin.projectId = userInfo.projectId;
-    currentUser.channelName = scwin.taskId;
+    currentUser.channelName = "task" + scwin.taskId;
     scwin.getTask(scwin.taskId, scwin.projectId);
 
     //소켓 초기화 
     scwin.initializeChatWebSocket();
+
+
+
+
 
     //버전관리
     scwin.snapShot = false; //버전에서 현재상태 저장여부
@@ -211,10 +220,14 @@ scwin.onpageload = function () {
     };
     const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_header"); // 헤더의 버튼 영역
     const close = $p.getComponentById("mf_wfr_mainContent_exa_popup_header_control");
+
     const btnGroupId = generateUniqueId("btn_group");
     const saveId = generateUniqueId("btn_save");
     const versionId = generateUniqueId("btn_version");
     const deleteId = generateUniqueId("btn_delete");
+
+
+
 
     // 버튼 그룹 생성
     const btnGroup = $p.dynamicCreate(btnGroupId, "group", {
@@ -266,6 +279,9 @@ scwin.onpageload = function () {
             }
         });
     })
+
+
+
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -751,6 +767,8 @@ scwin.initializeChatWebSocket = function () {
                             }
                         }
                         break;
+                    case "leave":
+                        break;
 
                     default:
                         console.warn("알 수 없는 메시지 타입:", data.type, data);
@@ -779,6 +797,28 @@ scwin.initializeChatWebSocket = function () {
             console.error("❌ WebSocket 오류:", error);
             //scwin.addChatMessage("시스템", "❌ 서버 연결 오류 발생", false);
         };
+
+
+        setTimeout(function () {
+            const closeBtn = $p.getComponentById("mf_wfr_mainContent_exa_popup_close");
+
+            if (closeBtn && closeBtn.addEventListener) {
+                closeBtn.addEventListener("click", function () {
+                    const send = {
+                        type: "leave",
+                        userId: currentUser.userId,
+                        userName: currentUser.userName,
+                        userImage: currentUser.userImage,
+                        channelName: currentUser.channelName
+                    };
+                    chatSocket.send(JSON.stringify(send)); // send 객체를 전송
+                    console.log("ddd");
+                    //$p.parent().scwin.popup_closeAction();
+                });
+            } else {
+                console.warn("closeBtn이 존재하지 않거나 이벤트 리스너를 설정할 수 없습니다.");
+            }
+        }, 2000);
 
     } catch (error) {
         console.error("❌ WebSocket 초기화 실패:", error);
@@ -1204,17 +1244,17 @@ scwin.saveTask = function () {
                     // WebSocket으로 실시간 동기화 메시지 전송
                     console.log("=== 태스크 저장 후 WebSocket 메시지 전송 시도 ===");
                     console.log("parentScwin.sendWebSocketMessage 존재:", !!parentScwin.sendWebSocketMessage);
-                    
+
                     if (parentScwin.sendWebSocketMessage) {
                         const userId = parentScwin.getCurrentUserId();
                         const projectId = scwin.projectId; // taskModal에서 이미 가지고 있는 프로젝트 ID 사용
-                        
+
                         console.log("사용자 정보:");
                         console.log("- userId:", userId);
                         console.log("- projectId:", projectId);
                         console.log("- boardId:", boardId);
                         console.log("- taskId:", scwin.taskInfo.taskId);
-                        
+
                         const message = {
                             type: "TASK_UPDATED", // 태스크 업데이트 메시지 타입으로 변경
                             boardId: boardId,
@@ -1222,7 +1262,7 @@ scwin.saveTask = function () {
                             userId: userId,
                             projectId: projectId
                         };
-                        
+
                         console.log("������ WebSocket 메시지 전송 시도 (태스크 업데이트):", message);
                         parentScwin.sendWebSocketMessage(message);
                         console.log("✅ WebSocket 메시지 전송 완료");
@@ -1626,17 +1666,17 @@ scwin.sbm_deleteTask_submitdone = function (e) {
             // WebSocket으로 실시간 동기화 메시지 전송
             console.log("=== 태스크 삭제 후 WebSocket 메시지 전송 시도 ===");
             console.log("parentScwin.sendWebSocketMessage 존재:", !!parentScwin.sendWebSocketMessage);
-            
+
             if (parentScwin.sendWebSocketMessage) {
                 const userId = parentScwin.getCurrentUserId();
                 const projectId = scwin.projectId; // taskModal에서 이미 가지고 있는 프로젝트 ID 사용
-                
+
                 console.log("사용자 정보:");
                 console.log("- userId:", userId);
                 console.log("- projectId:", projectId);
                 console.log("- boardId:", boardId);
                 console.log("- taskId:", scwin.taskInfo.taskId);
-                
+
                 const message = {
                     type: "TASK_DELETED",
                     boardId: boardId,
@@ -1644,7 +1684,7 @@ scwin.sbm_deleteTask_submitdone = function (e) {
                     userId: userId,
                     projectId: projectId
                 };
-                
+
                 console.log("������️ WebSocket 메시지 전송 시도 (태스크 삭제):", message);
                 parentScwin.sendWebSocketMessage(message);
                 console.log("✅ WebSocket 메시지 전송 완료");
@@ -1662,6 +1702,7 @@ scwin.sbm_deleteTask_submitdone = function (e) {
     close.click();
 };
 
+scwin.popup_closeAction
 //시작일
 scwin.start_date_onchange = function () {
     let value = start_date.getValue();
