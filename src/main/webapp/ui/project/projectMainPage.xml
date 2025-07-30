@@ -176,6 +176,11 @@ scwin.onpageload = function () {
         scwin.initSortControls();
     }, 100);
 
+    // 필터 컴포넌트 존재 여부 확인 (지연 초기화)
+    setTimeout(function() {
+        scwin.validateFilterComponents();
+    }, 200);
+
     console.log("projectMainPage 초기화 완료");
 };
 
@@ -765,6 +770,11 @@ scwin.handleTaskDeletedMessage = function (message) {
         // 3. 열려있는 태스크 모달이 해당 태스크라면 닫기
         scwin.closeOpenTaskModalIfMatches(message.taskId);
         
+        // 4. 해당 보드의 카드 개수 업데이트
+        if (message.boardId) {
+            scwin.debouncedUpdateSingleBoardCount(message.boardId);
+        }
+        
         console.log("✅ 태스크 삭제 반영 완료:", message.taskId);
         
     } catch (error) {
@@ -1106,6 +1116,9 @@ scwin.addNewTaskCardToBoardDynamically = function (message) {
         scwin.createKanbanCardInBoard(taskData);
         
         console.log("✅ 새 태스크 카드 동적 추가 완료:", message.taskId);
+        
+        // 해당 보드의 카드 개수 업데이트
+        scwin.debouncedUpdateSingleBoardCount(message.boardId);
         
     } catch (error) {
         console.error("❌ 새 태스크 카드 동적 추가 실패:", error);
@@ -1775,20 +1788,40 @@ scwin.animateCardMove = function (cardElement, targetContainer, fromBoardId, toB
     }
 };
 
+// 카운트 업데이트 디바운싱을 위한 타이머 저장
+scwin.countUpdateTimers = {};
+
+// 보드별 필터링 상태 추적 (필터링 중에는 DOM 기반 업데이트 방지)
+scwin.boardFilteringState = {};
+
 /**
- * 보드별 카드 개수 업데이트
+ * 보드별 카드 개수 업데이트 - 카드 이동 시 간단한 증감 처리
  */
 scwin.updateBoardCardCounts = function (sourceBoardId, targetBoardId) {
-    console.log("보드 카운트 업데이트:", sourceBoardId, "->", targetBoardId);
+    console.log("������ 카드 이동으로 인한 카운트 업데이트:", sourceBoardId, "->", targetBoardId);
 
-    // 출발 보드 카운트 감소
+    // 출발 보드에서 1개 감소
     if (sourceBoardId) {
-        scwin.updateSingleBoardCardCount(sourceBoardId, -1);
+        var sourceCountSpanId = "grp_dynamic_" + sourceBoardId + "_count";
+        var sourceCountSpan = eval(sourceCountSpanId);
+        if (sourceCountSpan) {
+            var currentCount = parseInt(sourceCountSpan.getValue() || "0");
+            var newCount = Math.max(0, currentCount - 1); // 0 이하로 내려가지 않도록
+            sourceCountSpan.setValue(newCount);
+            console.log(`������ 출발 보드 [${sourceBoardId}] 카운트: ${currentCount} → ${newCount}`);
+        }
     }
-
-    // 목적지 보드 카운트 증가
-    if (targetBoardId) {
-        scwin.updateSingleBoardCardCount(targetBoardId, 1);
+    
+    // 도착 보드에서 1개 증가
+    if (targetBoardId && targetBoardId !== sourceBoardId) {
+        var targetCountSpanId = "grp_dynamic_" + targetBoardId + "_count";
+        var targetCountSpan = eval(targetCountSpanId);
+        if (targetCountSpan) {
+            var currentCount = parseInt(targetCountSpan.getValue() || "0");
+            var newCount = currentCount + 1;
+            targetCountSpan.setValue(newCount);
+            console.log(`������ 도착 보드 [${targetBoardId}] 카운트: ${currentCount} → ${newCount}`);
+        }
     }
 };
 
@@ -2089,28 +2122,121 @@ scwin.selectedTags = [];
 scwin.isTagFilterVisible = false;
 
 // 태그 목록 (중앙 관리)
-scwin.availableTags = ["dev", "test", "doc", "plan", "analytics", "collabo", "untagged"];
+scwin.availableTags = ["dev", "test", "doc", "plan", "analytics", "collabo"];
 scwin.allTasksData = {}; // 전체 태스크 데이터를 보드별로 저장
 
 // 정렬 관련 전역 변수
 scwin.currentSortField = "startDate"; // 기본값: 시작일
 scwin.currentSortOrder = "asc"; // 기본값: 오름차순
 
+/**
+ * 필터 컴포넌트들의 존재 여부를 검증하는 함수
+ */
+scwin.validateFilterComponents = function () {
+    console.log("������ [DEBUG] 필터 컴포넌트 검증 시작");
+    
+    try {
+        // 필수 컴포넌트 목록
+        var requiredComponents = [
+            { id: "btn_filter", name: "필터 버튼" },
+            { id: "grp_tag_filter", name: "필터 패널" }
+        ];
+        
+        var missingComponents = [];
+        var foundComponents = [];
+        
+        // 각 컴포넌트 존재 여부 확인
+        for (var i = 0; i < requiredComponents.length; i++) {
+            var comp = requiredComponents[i];
+            var component = $p.getComponentById(comp.id);
+            
+            if (component) {
+                foundComponents.push(comp);
+                console.log("✅ [SUCCESS] " + comp.name + " (" + comp.id + ") 발견됨");
+                
+                // DOM 요소도 확인 (WebSquare 방식)
+                var element = document.getElementById(comp.id);
+                if (!element) {
+                    element = $("#" + comp.id)[0];
+                }
+                if (element) {
+                    console.log("✅ [SUCCESS] " + comp.name + " DOM 요소도 정상");
+                } else {
+                    console.warn("⚠️ [WARN] " + comp.name + " DOM 요소 없음");
+                }
+            } else {
+                missingComponents.push(comp);
+                console.error("❌ [ERROR] " + comp.name + " (" + comp.id + ") 찾을 수 없음");
+            }
+        }
+        
+        // 결과 요약
+        console.log("������ [SUMMARY] 컴포넌트 검증 결과:");
+        console.log("  - 발견된 컴포넌트: " + foundComponents.length + "개");
+        console.log("  - 누락된 컴포넌트: " + missingComponents.length + "개");
+        
+        if (missingComponents.length > 0) {
+            console.error("❌ [ERROR] 누락된 컴포넌트들:");
+            for (var j = 0; j < missingComponents.length; j++) {
+                console.error("  - " + missingComponents[j].name + " (" + missingComponents[j].id + ")");
+            }
+        } else {
+            console.log("✅ [SUCCESS] 모든 필터 컴포넌트가 정상적으로 로드됨");
+        }
+        
+        // 전역 플래그 초기화
+        if (typeof scwin.isTagFilterVisible === 'undefined') {
+            scwin.isTagFilterVisible = false;
+            console.log("������ [DEBUG] isTagFilterVisible 플래그 초기화: false");
+        }
+        
+    } catch (error) {
+        console.error("❌ [ERROR] 컴포넌트 검증 중 오류:", error);
+        console.error("❌ [ERROR] 스택 트레이스:", error.stack);
+    }
+};
+
 // 필터 버튼 클릭 - 태그 필터링 패널 표시/숨기기
 scwin.filter_onclick = function (e) {
-    scwin.toggleTagFilterPanel();
+    console.log("������ [DEBUG] 필터 버튼 클릭됨!");
+    console.log("������ [DEBUG] 이벤트 객체:", e);
+    console.log("������ [DEBUG] 현재 필터 표시 상태:", scwin.isTagFilterVisible);
+    
+    try {
+        scwin.toggleTagFilterPanel();
+    } catch (error) {
+        console.error("❌ [ERROR] 필터 버튼 클릭 처리 중 오류:", error);
+    }
 };
 
 /**
  * 태그 필터링 패널 표시/숨기기
  */
 scwin.toggleTagFilterPanel = function () {
+    console.log("������ [DEBUG] toggleTagFilterPanel 호출됨");
+    
     var filterPanel = $p.getComponentById("grp_tag_filter");
+    console.log("������ [DEBUG] 필터 패널 객체:", filterPanel);
+    console.log("������ [DEBUG] 필터 패널 존재 여부:", !!filterPanel);
+    
     if (filterPanel) {
+        console.log("������ [DEBUG] 현재 표시 상태:", scwin.isTagFilterVisible);
         if (scwin.isTagFilterVisible) {
+            console.log("������ [DEBUG] 필터 패널 숨기기 실행");
             scwin.hideTagFilter();
         } else {
+            console.log("������ [DEBUG] 필터 패널 표시 실행");
             scwin.showTagFilter();
+        }
+    } else {
+        console.error("❌ [ERROR] 필터 패널을 찾을 수 없습니다! ID: grp_tag_filter");
+        // 모든 컴포넌트 확인
+        console.log("������ [DEBUG] 전체 컴포넌트 목록 확인...");
+        try {
+            var allComponents = $p.getChildren();
+            console.log("������ [DEBUG] 전체 컴포넌트 개수:", allComponents.length);
+        } catch (e) {
+            console.error("❌ [ERROR] 컴포넌트 목록 조회 실패:", e);
         }
     }
 };
@@ -2119,21 +2245,204 @@ scwin.toggleTagFilterPanel = function () {
  * 태그 필터링 패널 표시
  */
 scwin.showTagFilter = function () {
+    console.log("������ [DEBUG] showTagFilter 함수 시작");
+    
     try {
         var filterPanel = $p.getComponentById("grp_tag_filter");
-        if (filterPanel) {
-            filterPanel.show();
+        var filterButton = $p.getComponentById("btn_filter");
+        
+        console.log("������ [DEBUG] 필터 패널 객체:", filterPanel);
+        console.log("������ [DEBUG] 필터 버튼 객체:", filterButton);
+        
+        if (filterPanel && filterButton) {
+            console.log("������ [DEBUG] 두 컴포넌트 모두 발견됨");
+            
+            // WebSquare 방식으로 DOM 요소 가져오기 - 다양한 방법 시도
+            var panelElement = null;
+            var buttonElement = null;
+            
+            // 방법 1: document.getElementById
+            panelElement = document.getElementById("grp_tag_filter");
+            console.log("������ [DEBUG] 패널 DOM 요소 (getElementById):", panelElement);
+            
+            // 방법 2: jQuery 선택자
+            if (!panelElement && typeof $ !== 'undefined') {
+                panelElement = $("#grp_tag_filter")[0];
+                console.log("������ [DEBUG] 패널 DOM 요소 (jQuery):", panelElement);
+            }
+            
+            // 방법 3: WebSquare 특수 방법 시도 (혹시 WebSquare에서 다른 방식으로 ID를 생성하는 경우)
+            if (!panelElement) {
+                var allElements = document.querySelectorAll('[id*="grp_tag_filter"]');
+                console.log("������ [DEBUG] grp_tag_filter를 포함하는 모든 요소:", allElements);
+                if (allElements.length > 0) {
+                    panelElement = allElements[0];
+                    console.log("������ [DEBUG] 패널 DOM 요소 (querySelectorAll):", panelElement);
+                }
+            }
+            
+            // 방법 4: 클래스명으로 찾기
+            if (!panelElement) {
+                panelElement = document.querySelector('.tag-filter-container');
+                console.log("������ [DEBUG] 패널 DOM 요소 (class selector):", panelElement);
+            }
+            
+            // 버튼도 동일하게 시도
+            buttonElement = document.getElementById("btn_filter");
+            console.log("������ [DEBUG] 버튼 DOM 요소 (getElementById):", buttonElement);
+            
+            if (!buttonElement && typeof $ !== 'undefined') {
+                buttonElement = $("#btn_filter")[0];
+                console.log("������ [DEBUG] 버튼 DOM 요소 (jQuery):", buttonElement);
+            }
+            
+            if (!buttonElement) {
+                var buttonElements = document.querySelectorAll('[id*="btn_filter"]');
+                console.log("������ [DEBUG] btn_filter를 포함하는 모든 요소:", buttonElements);
+                if (buttonElements.length > 0) {
+                    buttonElement = buttonElements[0];
+                    console.log("������ [DEBUG] 버튼 DOM 요소 (querySelectorAll):", buttonElement);
+                }
+            }
+            
+            if (!panelElement) {
+                console.error("❌ [ERROR] 패널 DOM 요소를 가져올 수 없음");
+                // WebSquare 컴포넌트 setStyle 방식으로 직접 표시 시도
+                console.log("������ [DEBUG] WebSquare setStyle 방식으로 컴포넌트 표시 시도");
+                
+                try {
+                    // WebSquare 방식으로 스타일 설정
+                    filterPanel.setStyle("position", "fixed");
+                    filterPanel.setStyle("top", "120px");
+                    filterPanel.setStyle("right", "20px");
+                    filterPanel.setStyle("zIndex", "9999");
+                    filterPanel.setStyle("display", "block");
+                    filterPanel.setStyle("visibility", "visible");
+                    filterPanel.setStyle("opacity", "1");
+                    
+                    console.log("������ [DEBUG] WebSquare setStyle 설정 완료");
+                    
+                    filterPanel.show();
+                    scwin.isTagFilterVisible = true;
+                    
+                    console.log("✅ [SUCCESS] WebSquare 방식으로 패널 표시 완료");
+                    return;
+                } catch (styleError) {
+                    console.error("❌ [ERROR] setStyle 설정 중 오류:", styleError);
+                    // 기본 show만 시도
+                    filterPanel.show();
+                    scwin.isTagFilterVisible = true;
+                    return;
+                }
+            }
+            
+            if (!buttonElement) {
+                console.error("❌ [ERROR] 버튼 DOM 요소를 가져올 수 없음");
+                // WebSquare setStyle 방식으로 고정 위치 표시
+                console.log("������ [DEBUG] WebSquare setStyle로 고정 위치 패널 표시");
+                
+                try {
+                    filterPanel.setStyle("position", "fixed");
+                    filterPanel.setStyle("top", "120px");
+                    filterPanel.setStyle("right", "20px");
+                    filterPanel.setStyle("zIndex", "9999");
+                    filterPanel.setStyle("display", "block");
+                    filterPanel.setStyle("visibility", "visible");
+                    
+                    filterPanel.show();
+                    scwin.isTagFilterVisible = true;
+                    console.log("✅ [SUCCESS] 고정 위치로 패널 표시 완료");
+                    return;
+                } catch (styleError) {
+                    console.error("❌ [ERROR] 고정 위치 setStyle 설정 중 오류:", styleError);
+                    // DOM 스타일 직접 설정으로 폴백
+                    if (panelElement) {
+                        panelElement.style.position = 'fixed';
+                        panelElement.style.top = '120px';
+                        panelElement.style.right = '20px';
+                        panelElement.style.zIndex = '9999';
+                        panelElement.style.display = 'block';
+                    }
+                    filterPanel.show();
+                    scwin.isTagFilterVisible = true;
+                    return;
+                }
+            }
+            
+            var buttonRect = buttonElement.getBoundingClientRect();
+            console.log("������ [DEBUG] 버튼 위치 정보:", buttonRect);
+            
+            // WebSquare setStyle 방식으로 패널 위치 설정
+            console.log("������ [DEBUG] WebSquare setStyle로 패널 위치 설정 시작");
+            
+            try {
+                var topPosition = (buttonRect.bottom + 8) + "px";
+                var leftPosition = buttonRect.left + "px";
+                
+                filterPanel.setStyle("position", "fixed");
+                filterPanel.setStyle("top", topPosition);
+                filterPanel.setStyle("left", leftPosition);
+                filterPanel.setStyle("zIndex", "9999");
+                filterPanel.setStyle("display", "block");
+                filterPanel.setStyle("visibility", "visible");
+                
+                console.log("������ [DEBUG] WebSquare setStyle 설정 완료:", {
+                    position: "fixed",
+                    top: topPosition,
+                    left: leftPosition,
+                    zIndex: "9999",
+                    display: "block"
+                });
+                
+                // 패널 표시
+                console.log("������ [DEBUG] filterPanel.show() 호출");
+                filterPanel.show();
+                
+            } catch (styleError) {
+                console.error("❌ [ERROR] WebSquare setStyle 설정 중 오류:", styleError);
+                console.log("������ [DEBUG] DOM 스타일 직접 설정으로 폴백");
+                
+                // DOM 스타일 직접 설정으로 폴백
+                if (panelElement) {
+                    panelElement.style.position = 'fixed';
+                    panelElement.style.top = (buttonRect.bottom + 8) + 'px';
+                    panelElement.style.left = buttonRect.left + 'px';
+                    panelElement.style.zIndex = '9999';
+                    panelElement.style.display = 'block';
+                    
+                    // 강제로 display 설정 및 클래스 추가
+                    setTimeout(function() {
+                        if (panelElement) {
+                            panelElement.style.display = 'block !important';
+                            panelElement.classList.add('force-visible');
+                            console.log("������ [DEBUG] 강제 display 설정 및 클래스 추가 완료");
+                        }
+                    }, 100);
+                }
+                
+                filterPanel.show();
+            }
+            
             scwin.isTagFilterVisible = true;
+            console.log("������ [DEBUG] 표시 상태 플래그 설정: true");
 
             // 현재 선택된 태그들을 UI에 반영
-            scwin.updateTagFilterUI();
+            if (typeof scwin.updateTagFilterUI === 'function') {
+                console.log("������ [DEBUG] updateTagFilterUI 호출");
+                scwin.updateTagFilterUI();
+            } else {
+                console.warn("⚠️ [WARN] updateTagFilterUI 함수가 존재하지 않음");
+            }
 
-            console.log("태그 필터링 패널 표시됨");
+            console.log("✅ [SUCCESS] 태그 필터링 패널 표시 완료");
         } else {
-            console.error("태그 필터링 패널을 찾을 수 없습니다.");
+            console.error("❌ [ERROR] 필수 컴포넌트를 찾을 수 없습니다:");
+            console.error("  - 필터 패널:", !!filterPanel);
+            console.error("  - 필터 버튼:", !!filterButton);
         }
     } catch (error) {
-        console.error("태그 필터링 패널 표시 중 오류:", error);
+        console.error("❌ [ERROR] 태그 필터링 패널 표시 중 오류:", error);
+        console.error("❌ [ERROR] 스택 트레이스:", error.stack);
     }
 };
 
@@ -2210,10 +2519,6 @@ scwin.toggleTag_analytics = function (e) {
 
 scwin.toggleTag_collabo = function (e) {
     scwin.toggleTagFilter("collabo");
-};
-
-scwin.toggleTag_untagged = function (e) {
-    scwin.toggleTagFilter("untagged");
 };
 
 /**
@@ -2452,6 +2757,12 @@ scwin.isTaskMatchesTags = function (task, selectedTags) {
 scwin.displayFilteredTasks = function (boardId, filteredTasks) {
     console.log("������ displayFilteredTasks 시작 - 보드 " + boardId + ", 태스크 " + filteredTasks.length + "개");
     
+    // 필터링 상태 설정 (DOM 기반 업데이트 방지)
+    scwin.boardFilteringState[boardId] = true;
+    
+    // 필터링 시작 시 카운트 숨기기
+    scwin.hideBoardCardCount(boardId);
+    
     // 기존 카드들 제거
     scwin.clearBoardCards(boardId);
     console.log("������️ 기존 카드 제거 완료 - 보드 " + boardId);
@@ -2472,14 +2783,27 @@ scwin.displayFilteredTasks = function (boardId, filteredTasks) {
         }
     }
 
-    // 카드 개수 업데이트
+    // 카드 개수를 필터링된 태스크 개수로 즉시 업데이트
+    console.log(`������ 보드 [${boardId}] 카드 생성 완료: ${filteredTasks.length}개`);
     scwin.updateBoardCardCount(boardId, filteredTasks.length);
-    console.log("✅ displayFilteredTasks 완료 - 보드 " + boardId + ", " + filteredTasks.length + "개 카드 생성");
     
-    // 최종 확인: 컨테이너 내 카드 순서 검증
+    // 디바운싱 타이머가 있다면 취소 (직접 업데이트했으므로 불필요)
+    if (scwin.countUpdateTimers[boardId]) {
+        clearTimeout(scwin.countUpdateTimers[boardId]);
+        delete scwin.countUpdateTimers[boardId];
+        console.log(`������ 보드 [${boardId}] 디바운싱 타이머 취소 - 직접 업데이트 완료`);
+    }
+    
+    // 필터링 완료 - 상태 해제 (카운트는 이미 직접 업데이트됨)
+    setTimeout(function() {
+        scwin.boardFilteringState[boardId] = false;
+        console.log(`✅ 보드 [${boardId}] 필터링 완료 - 카운트는 이미 업데이트됨`);
+    }, 300);
+    
+    // 카드 순서 검증은 별도로 실행
     setTimeout(function() {
         scwin.verifyCardOrder(boardId, filteredTasks);
-    }, 500);
+    }, 100);
 };
 
 /**
@@ -2554,11 +2878,246 @@ scwin.updateBoardCardCount = function (boardId, count) {
         var countSpanId = "grp_dynamic_" + boardId + "_count";
         var countSpan = eval(countSpanId);
         if (countSpan) {
+            console.log(`������ 보드 [${boardId}] 카운트 직접 업데이트: ${count}`);
             countSpan.setValue(count);
+        } else {
+            console.warn(`⚠️ 카운트 스팬을 찾을 수 없음: ${countSpanId}`);
         }
     } catch (error) {
         console.error("카드 개수 업데이트 실패:", boardId, error);
     }
+};
+
+/**
+ * 보드 카드 개수 숨기기 (필터링 중일 때 사용)
+ */
+scwin.hideBoardCardCount = function (boardId) {
+    try {
+        var countSpanId = "grp_dynamic_" + boardId + "_count";
+        var countSpan = eval(countSpanId);
+        if (countSpan) {
+            countSpan.setValue(""); // 빈 문자열로 설정하여 숨김
+        }
+    } catch (error) {
+        console.error("카드 개수 숨기기 실패:", boardId, error);
+    }
+};
+
+/**
+ * 실제 DOM의 카드 개수를 세어서 정확한 카운트로 수정
+ */
+scwin.fixBoardCardCountFromDOM = function (boardId) {
+    console.log(`������ DOM 기반 카드 개수 수정 시작: 보드 [${boardId}]`);
+    
+    try {
+        // 해당 보드의 카드 컨테이너 찾기 (WebSquare 컴포넌트와 DOM 둘 다 확인)
+        var cardContainerId = "card_container_" + boardId;
+        var actualCardCount = 0;
+        
+        console.log(`������ 카드 컨테이너 ID: ${cardContainerId}`);
+        
+        // 방법 1: DOM에서 직접 카드 개수 확인 (우선 시도)
+        try {
+            // 특정 보드 컨테이너 내부의 카드만 정확히 세기
+            var containerElement = document.getElementById(cardContainerId);
+            console.log(`������ DOM 컨테이너 찾기 결과:`, !!containerElement);
+            
+            if (containerElement) {
+                // 해당 컨테이너 내부에 있으면서 data-task-id 속성을 가진 요소만 세기
+                var cardsInContainer = containerElement.querySelectorAll('[data-task-id]');
+                actualCardCount = cardsInContainer.length;
+                
+                console.log(`������ DOM 컨테이너 [${cardContainerId}] 내부 카드: ${actualCardCount}개`);
+                
+                // 발견된 카드들의 taskId 로그
+                if (cardsInContainer.length > 0) {
+                    console.log(`������ 발견된 카드들:`);
+                    for (var j = 0; j < cardsInContainer.length; j++) {
+                        var card = cardsInContainer[j];
+                        console.log(`  - 카드 ${j+1}: taskId=${card.getAttribute('data-task-id')}, id=${card.id}`);
+                    }
+                }
+            } else {
+                console.log(`⚠️ DOM 컨테이너 [${cardContainerId}]를 찾을 수 없음`);
+                
+                // 전체 페이지에서 해당 보드의 카드 찾기 시도
+                var allCards = document.querySelectorAll(`[data-board-id="${boardId}"][data-task-id]`);
+                console.log(`������ 전체 페이지에서 보드 [${boardId}] 카드 검색: ${allCards.length}개 발견`);
+                actualCardCount = allCards.length;
+            }
+        } catch (e) {
+            console.log("DOM 직접 검색 실패:", e.message);
+        }
+        
+        // 방법 2: WebSquare 컴포넌트에서 자식 개수 확인 (백업)
+        if (actualCardCount === 0) {
+            console.log(`������ DOM 방법으로 카드를 찾지 못해 WebSquare 방법 시도`);
+            try {
+                var cardContainer = eval(cardContainerId);
+                console.log(`������ WebSquare 컴포넌트 찾기 결과:`, !!cardContainer);
+                
+                if (cardContainer && cardContainer.getChildren) {
+                    var children = cardContainer.getChildren();
+                    var validCardCount = 0;
+                    
+                    console.log(`������ WebSquare 컴포넌트 자식 수: ${children.length}`);
+                    
+                    for (var i = 0; i < children.length; i++) {
+                        var child = children[i];
+                        console.log(`������ 자식 ${i+1}: element=${!!child.element}, getAttribute=${!!(child.element && child.element.getAttribute)}`);
+                        
+                        // 실제 태스크 카드인지 확인 (data-task-id 속성이 있는지)
+                        if (child.element && child.element.getAttribute && child.element.getAttribute('data-task-id')) {
+                            var taskId = child.element.getAttribute('data-task-id');
+                            console.log(`������ 유효한 카드 발견: taskId=${taskId}`);
+                            validCardCount++;
+                        }
+                    }
+                    
+                    actualCardCount = validCardCount;
+                    console.log(`������ WebSquare 컴포넌트 [${cardContainerId}]: 전체 ${children.length}개 자식 중 실제 카드 ${validCardCount}개`);
+                }
+            } catch (e) {
+                console.log("WebSquare 컴포넌트 접근 실패:", e.message);
+            }
+        }
+        
+        // 카운트 스팬 업데이트
+        var countSpanId = "grp_dynamic_" + boardId + "_count";
+        console.log(`������ 카운트 스팬 업데이트 시도: ${countSpanId}`);
+        
+        var countSpan = eval(countSpanId);
+        console.log(`������ 카운트 스팬 찾기 결과:`, !!countSpan);
+        
+        if (countSpan) {
+            var currentDisplayValue = countSpan.getValue() || "";
+            var currentDisplayCount = currentDisplayValue === "" ? -1 : parseInt(currentDisplayValue);
+            
+            console.log(`������ 현재 표시값: "${currentDisplayValue}" (정수: ${currentDisplayCount}), 실제 카드 수: ${actualCardCount}`);
+            
+            // 실제 카드 개수가 0보다 크거나, 현재 표시값과 다른 경우 업데이트
+            if (actualCardCount > 0 || currentDisplayCount !== actualCardCount) {
+                console.log(`������ 카운트 업데이트 필요: actualCardCount=${actualCardCount} > 0 OR currentDisplayCount=${currentDisplayCount} !== actualCardCount=${actualCardCount}`);
+                countSpan.setValue(actualCardCount);
+                console.log(`������ 보드 [${boardId}] 카운트 수정: "${currentDisplayValue}" → ${actualCardCount} (실제 카드 기준)`);
+            } else {
+                console.log(`✅ 보드 [${boardId}] 카운트 이미 정확함: ${actualCardCount}개`);
+            }
+        } else {
+            console.warn(`⚠️ 카운트 스팬을 찾을 수 없음: ${countSpanId}`);
+        }
+        
+        console.log(`������ DOM 기반 카드 개수 수정 완료: 보드 [${boardId}] → ${actualCardCount}개`);
+        
+        return actualCardCount;
+    } catch (error) {
+        console.error("DOM 기반 카드 개수 수정 실패:", boardId, error);
+        return 0;
+    }
+};
+
+/**
+ * 단일 보드의 카드 개수를 간단하게 업데이트 (카드 생성/삭제 시 사용)
+ */
+scwin.debouncedUpdateSingleBoardCount = function (boardId) {
+    console.log("������ 단일 보드 카운트 업데이트 생략:", boardId);
+    // DOM 기반 재계산 대신 아무것도 하지 않음 (직접 업데이트된 값 유지)
+};
+
+/**
+ * 모든 보드의 카드 개수 초기화 (DOM 기반 재계산 없이)
+ */
+scwin.fixAllBoardCardCounts = function () {
+    console.log("������ 모든 보드 필터링 상태 초기화 (카운트는 개별 업데이트됨)");
+    
+    try {
+        // 보드 목록 가져오기
+        var boardList = $p.getComponentById("dlt_boardListVo");
+        if (boardList && boardList.getRowCount() > 0) {
+            var boards = boardList.getAllJSON();
+            
+            for (var i = 0; i < boards.length; i++) {
+                var boardId = boards[i].boardId;
+                
+                // 필터링 상태만 초기화 (카운트는 이미 개별적으로 업데이트됨)
+                scwin.boardFilteringState[boardId] = false;
+                console.log(`������ 보드 [${boardId}]: 필터링 상태 초기화`);
+            }
+            
+            console.log("✅ 모든 보드 상태 초기화 완료");
+        }
+    } catch (error) {
+        console.error("보드 상태 초기화 실패:", error);
+    }
+};
+
+/**
+ * 디버깅용: 보드별 카드 개수 현황 출력
+ */
+scwin.debugBoardCardCounts = function () {
+    console.log("������ === 보드별 카드 개수 현황 디버깅 ===");
+    
+    try {
+        var boardList = $p.getComponentById("dlt_boardListVo");
+        if (boardList && boardList.getRowCount() > 0) {
+            var boards = boardList.getAllJSON();
+            var totalDisplayed = 0;
+            var totalDOM = 0;
+            
+            for (var i = 0; i < boards.length; i++) {
+                var boardId = boards[i].boardId;
+                var boardTitle = boards[i].boardTitle;
+                
+                // 표시된 카운트 가져오기
+                var countSpanId = "grp_dynamic_" + boardId + "_count";
+                var countSpan = eval(countSpanId);
+                var displayedCount = countSpan ? parseInt(countSpan.getValue() || "0") : 0;
+                
+                // 실제 DOM의 카드 개수 세기 (WebSquare 컴포넌트 우선)
+                var cardContainerId = "card_container_" + boardId;
+                var actualCardCount = 0;
+                
+                try {
+                    var cardContainer = eval(cardContainerId);
+                    if (cardContainer && cardContainer.getChildren) {
+                        var children = cardContainer.getChildren();
+                        var validCardCount = 0;
+                        
+                        for (var j = 0; j < children.length; j++) {
+                            var child = children[j];
+                            if (child.element && child.element.getAttribute && child.element.getAttribute('data-task-id')) {
+                                validCardCount++;
+                            }
+                        }
+                        actualCardCount = validCardCount;
+                    }
+                } catch (e) {
+                    // DOM 방식으로 폴백
+                    var containerElement = document.getElementById(cardContainerId);
+                    if (containerElement) {
+                        actualCardCount = containerElement.querySelectorAll('[data-task-id]').length;
+                    }
+                }
+                
+                totalDisplayed += displayedCount;
+                totalDOM += actualCardCount;
+                
+                var status = displayedCount === actualCardCount ? "✅" : "❌";
+                console.log(`${status} 보드 [${boardId}] ${boardTitle}: 표시=${displayedCount}, 실제DOM=${actualCardCount}`);
+            }
+            
+            console.log(`������ 전체 합계: 표시=${totalDisplayed}, 실제DOM=${totalDOM}`);
+            
+            // 전체 페이지의 카드 개수도 확인
+            var allCards = document.querySelectorAll('[data-task-id]');
+            console.log(`������ 전체 페이지 카드 개수: ${allCards.length}개`);
+            
+        }
+    } catch (error) {
+        console.error("보드 카드 개수 디버깅 실패:", error);
+    }
+    
+    console.log("=== 디버깅 완료 ===");
 };
 
 /**
@@ -2896,12 +3455,38 @@ scwin.sortAndFilterBoardTasks = function (boardId) {
 
     // 태그 필터링만 적용 (정렬은 이미 서버에서 처리됨)
     var filteredTasks = [];
-    if (scwin.selectedTags.length === 0) {
-        // 선택된 태그가 없으면 모든 태스크 표시 (서버 정렬 순서 유지)
+    var isFiltering = scwin.selectedTags.length > 0;
+    
+    if (!isFiltering) {
+        // 선택된 태그가 없으면 모든 태스크 표시 (서버 정렬 순서 유지) - 정상 상태
         filteredTasks = allTasks;
-        console.log("������️ 태그 필터 없음 - 서버 정렬된 모든 태스크 표시");
+        console.log("������️ 태그 필터 없음 - 서버 정렬된 모든 태스크 표시 (정상 상태)");
+        
+        // 정상 상태에서는 카운트를 표시하고 필터링 상태가 아님을 표시
+        scwin.boardFilteringState[boardId] = false;
+        
+        // 기존 카드들 제거
+        scwin.clearBoardCards(boardId);
+        
+        // 카드 생성
+        for (var i = 0; i < filteredTasks.length; i++) {
+            var task = filteredTasks[i];
+            console.log("������ 카드 생성 " + (i + 1) + "/" + filteredTasks.length + ": " + task.taskTitle + " (정상 상태)");
+            
+            try {
+                scwin.createKanbanCardInBoard(task);
+                console.log("✅ 카드 생성 완료: card_" + task.taskId + " (순서: " + (i + 1) + ")");
+            } catch (error) {
+                console.error("❌ 카드 생성 실패:", task.taskId, error);
+            }
+        }
+        
+        // 정상 상태에서는 카드 개수를 즉시 업데이트
+        console.log(`������ 보드 [${boardId}] 정상 상태 카드 생성 완료: ${filteredTasks.length}개`);
+        scwin.updateBoardCardCount(boardId, filteredTasks.length);
+        
     } else {
-        // 선택된 태그가 있으면 필터링 (서버 정렬 순서 유지)
+        // 선택된 태그가 있으면 필터링 (서버 정렬 순서 유지) - 필터링 상태
         console.log("������️ 태그 필터링 적용:", scwin.selectedTags);
         for (var i = 0; i < allTasks.length; i++) {
             var task = allTasks[i];
@@ -2910,12 +3495,13 @@ scwin.sortAndFilterBoardTasks = function (boardId) {
             }
         }
         console.log("������️ 태그 필터링 결과:", filteredTasks.length + "개 (서버 정렬 순서 유지)");
+        
+        // 필터링 상태에서는 기존 displayFilteredTasks 사용 (카운트 숨김 처리됨)
+        scwin.displayFilteredTasks(boardId, filteredTasks);
+        return;
     }
 
     console.log("✅ 보드 " + boardId + " 처리 완료: " + filteredTasks.length + "개 (서버 정렬 적용됨)");
-
-    // 화면에 표시 (이미 서버에서 정렬된 데이터)
-    scwin.displayFilteredTasks(boardId, filteredTasks);
 };
 
 // 보드 보기 버튼 클릭
@@ -5444,7 +6030,7 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
     );
     if (countSpan) {
         try {
-            countSpan.setValue("0"); // 초기값, 나중에 태스크 로드 시 업데이트
+            countSpan.setValue(""); // 초기값은 빈 문자열로 설정하여 0 표시 방지
         } catch (e) {
             console.error("카운트 스팬 setValue 오류:", e, columnId);
         }
@@ -6771,28 +7357,7 @@ scwin.updateLocalTaskCache = function (taskId, newBoardId) {
     }
 };
 
-// 보드별 카드 카운트 업데이트
-scwin.updateBoardCardCounts = function (sourceBoardId, targetBoardId) {
-    try {
-        // 소스 보드 카운트 감소
-        var sourceCountSpan = eval("grp_dynamic_" + sourceBoardId + "_count");
-        if (sourceCountSpan) {
-            var currentCount = parseInt(sourceCountSpan.getValue() || "0");
-            sourceCountSpan.setValue(Math.max(0, currentCount - 1));
-        }
-
-        // 타겟 보드 카운트 증가
-        var targetCountSpan = eval("grp_dynamic_" + targetBoardId + "_count");
-        if (targetCountSpan) {
-            var currentCount = parseInt(targetCountSpan.getValue() || "0");
-            targetCountSpan.setValue(currentCount + 1);
-        }
-
-        console.log("보드 카운트 업데이트 완료:", sourceBoardId, "->", targetBoardId);
-    } catch (error) {
-        console.error("보드 카운트 업데이트 중 오류:", error);
-    }
-};
+// 중복 함수 제거됨 - 위쪽의 DOM 기반 updateBoardCardCounts 함수 사용
 
 // 보드 ID로 보드 제목 가져오기 (유틸리티 함수)
 scwin.getBoardTitle = function (boardId) {
@@ -8672,6 +9237,10 @@ scwin.load_Tasks_With_UserName_submitdone = function (e) {
         }
         
         console.log(`전체 태스크 로드 및 처리 완료: ${newTasks.length}개 (보드 수: ${Object.keys(tasksByBoard).length})`);
+        
+        // 초기 로딩 완료 표시 (카드별 개별 업데이트 되므로 별도 처리 불필요)
+        scwin.initialLoadComplete = true;
+        console.log("������ 초기 로딩 완료 - 카드 개수는 개별 업데이트됨");
     } else {
         console.log("해당 보드에 대한 태스크가 없습니다.");
 
@@ -8826,6 +9395,10 @@ scwin.load_Tasks_With_UserName_Batch_submitdone = function (e) {
     }
     
     console.log("✅ 배치 태스크 로드 및 처리 완료!");
+
+    // 초기 로딩 완료 표시 (카드별 개별 업데이트 되므로 별도 처리 불필요)
+    scwin.initialLoadComplete = true;
+    console.log("������ 배치 로딩 완료 - 카드 개수는 개별 업데이트됨");
 
     // 칸반 데이터 업데이트 후 간트차트 동기화
     scwin.syncGanttWithKanban();
@@ -9084,6 +9657,7 @@ html, body {
     display: flex;
     gap: 8px;
     align-items: center;
+    position: relative;
 }
 
 /* GitHub 스타일 버튼들 */
@@ -9334,14 +9908,34 @@ html, body {
 
 /* 태그 필터링 UI 스타일 */
 .tag-filter-container {
-    background: #f6f8fa;
-    border: 1px solid #d1d9e0;
-    border-radius: 8px;
-    margin: 16px auto;
-    padding: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    max-width: 600px;
-    width: 100%;
+    background: #f6f8fa !important;
+    border: 1px solid #d1d9e0 !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    max-width: 400px !important;
+    width: auto !important;
+    min-width: 350px !important;
+    position: fixed !important;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* 필터 컨테이너가 표시될 때 강제 적용 */
+.tag-filter-container[style*="display: block"],
+.tag-filter-container[style*="display:block"] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* 숨겨진 상태에서도 강제로 보이게 하는 클래스 */
+.tag-filter-container.force-visible {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .tag-filter-header {
@@ -9427,13 +10021,14 @@ html, body {
 }
 
 .tag-buttons {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
+    width: 100%;
 }
 
 .btn-tag {
-    padding: 8px 12px;
+    padding: 10px 8px;
     border: 1px solid #d1d9e0;
     border-radius: 16px;
     background: white;
@@ -9443,7 +10038,11 @@ html, body {
     transition: all 0.15s ease;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
+    text-align: center;
+    white-space: nowrap;
+    min-height: 36px;
 }
 
 .btn-tag:hover {
@@ -10053,10 +10652,6 @@ html, body {
 						<xf:label><![CDATA[필터]]></xf:label>
 					</xf:trigger>
 
-					<xf:trigger type="button" class="btn-github" id="btn_sort" ev:onclick="scwin.sort_onclick">
-						<xf:label><![CDATA[정렬]]></xf:label>
-					</xf:trigger>
-
 					<xf:trigger type="button" class="btn-github" id="btn_board" ev:onclick="scwin.board_onclick">
 						<xf:label><![CDATA[칸반보드]]></xf:label>
 					</xf:trigger>
@@ -10091,33 +10686,6 @@ html, body {
 						</xf:trigger>
 					</xf:group>
 					<w2:textbox class="filter-title" readonly="true">🏷️ 태그 필터</w2:textbox>
-					<xf:group class="sort-controls">
-						<w2:textbox class="sort-label" readonly="true">📅 정렬:</w2:textbox>
-						<w2:select1 id="sel_sort_field" class="sort-dropdown">
-							<w2:choices>
-								<w2:item>
-									<w2:label>시작일</w2:label>
-									<w2:value>startDate</w2:value>
-								</w2:item>
-								<w2:item>
-									<w2:label>종료일</w2:label>
-									<w2:value>endDate</w2:value>
-								</w2:item>
-							</w2:choices>
-						</w2:select1>
-						<w2:select1 id="sel_sort_order" class="sort-dropdown">
-							<w2:choices>
-								<w2:item>
-									<w2:label>오름차순</w2:label>
-									<w2:value>asc</w2:value>
-								</w2:item>
-								<w2:item>
-									<w2:label>내림차순</w2:label>
-									<w2:value>desc</w2:value>
-								</w2:item>
-							</w2:choices>
-						</w2:select1>
-					</xf:group>
 					<xf:group class="filter-header-actions">
 						<xf:trigger type="button" class="btn-filter-close" id="btn_filter_close" ev:onclick="scwin.hideTagFilter">
 							<xf:label>✕</xf:label>
@@ -10143,9 +10711,6 @@ html, body {
 						</xf:trigger>
 						<xf:trigger type="button" class="btn-tag" id="btn_tag_collabo" ev:onclick="scwin.toggleTag_collabo">
 							<xf:label>👥 협업</xf:label>
-						</xf:trigger>
-						<xf:trigger type="button" class="btn-tag" id="btn_tag_untagged" ev:onclick="scwin.toggleTag_untagged">
-							<xf:label>🏷️ 태그없음</xf:label>
 						</xf:trigger>
 					</xf:group>
 				</xf:group>

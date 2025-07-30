@@ -356,7 +356,7 @@ scwin.btn_save_onclick = function(e) {
         });
     } catch(e) {
         console.error("프로젝트 저장 오류:", e);
-        alert("프로젝트 저장 중 오류가 발생했습니다.");
+        $c.win.alert("프로젝트 저장 중 오류가 발생했습니다.");
         scwin.modalClose(scwin.modalId,modalArgJsnInfo);
     }
 };
@@ -367,11 +367,11 @@ scwin.handleSaveSuccess = function(response) {
         // 서버 응답 검증
         const elHeader = response && response.elHeader;
         if (elHeader && elHeader.resSuc === false) {
-            alert("에러코드: " + elHeader.resCode + "\n에러메시지: " + elHeader.resMsg);
+            $c.win.alert("에러코드: " + elHeader.resCode + "\n에러메시지: " + elHeader.resMsg);
             return;
         }
         
-        alert("프로젝트가 성공적으로 저장되었습니다!");
+        $c.win.alert("프로젝트가 성공적으로 저장되었습니다!");
         
         // 부모 창의 refreshSideMenu 함수 호출 (사이드메뉴 새로고침)
         const parentFrame = $p.parent();
@@ -398,7 +398,7 @@ scwin.handleSaveSuccess = function(response) {
         
     } catch (error) {
         console.error("저장 성공 처리 중 오류:", error);
-        alert("프로젝트가 저장되었지만 화면 처리 중 오류가 발생했습니다.");
+        $c.win.alert("프로젝트가 저장되었지만 화면 처리 중 오류가 발생했습니다.");
         
         // 오류가 발생해도 팝업은 닫기 시도
         try {
@@ -426,7 +426,7 @@ scwin.handleSaveError = function(xhr, status, error) {
         errorMessage += "\n상세: " + xhr.responseText;
     }
     
-    alert(errorMessage);
+    $c.win.alert(errorMessage);
 };
 
 // 이름 입력 키보드 이벤트
@@ -465,13 +465,13 @@ scwin.fileInput_change = function(e) {
         
         // 파일 타입 검증
         if (!file.type.startsWith('image/')) {
-            alert('이미지 파일만 업로드할 수 있습니다.');
+            $c.win.alert('이미지 파일만 업로드할 수 있습니다.');
             return;
         }
         
         // 파일 크기 검증 (10MB 제한)
         if (file.size > 10 * 1024 * 1024) {
-            alert('파일 크기가 10MB를 초과합니다.');
+            $c.win.alert('파일 크기가 10MB를 초과합니다.');
             return;
         }
         
@@ -505,7 +505,7 @@ scwin.fileInput_change = function(e) {
         
     } catch(error) {
         console.error("파일 처리 오류:", error);
-        alert("파일 처리 중 오류가 발생했습니다.");
+        $c.win.alert("파일 처리 중 오류가 발생했습니다.");
     }
 };
 
