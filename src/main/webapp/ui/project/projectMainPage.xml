@@ -2542,18 +2542,18 @@ scwin.verifyCardOrder = function (boardId, expectedTasks) {
             
             if (expectedCardId !== actualCardId) {
                 isCorrectOrder = false;
-                console.warn("❌ 순서 불일치 - 위치 " + (i + 1) + ": 예상=" + expectedCardId + ", 실제=" + actualCardId);
+                // console.warn("❌ 순서 불일치 - 위치 " + (i + 1) + ": 예상=" + expectedCardId + ", 실제=" + actualCardId);
             }
         }
         
         if (isCorrectOrder) {
             console.log("✅ 카드 순서 검증 성공 - 보드 " + boardId);
         } else {
-            console.error("❌ 카드 순서가 올바르지 않습니다 - 보드 " + boardId);
+            // console.error("❌ 카드 순서가 올바르지 않습니다 - 보드 " + boardId);
         }
         
     } catch (error) {
-        console.error("❌ 카드 순서 검증 중 오류:", boardId, error);
+        // console.error("❌ 카드 순서 검증 중 오류:", boardId, error);
     }
 };
 
@@ -5494,47 +5494,6 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
 
 // ==================== 드래그 앤 드롭 테스트 및 디버깅 ====================
 
-// WebSquare 컴포넌트 렌더링 대기 유틸리티
-scwin.waitForElementReady = function (component, maxAttempts = 50) {
-    return new Promise((resolve, reject) => {
-        let attempts = 0;
-
-        const checkElement = () => {
-            attempts++;
-
-            // WebSquare 컴포넌트 체크
-            if (component && component.element && component.element.nodeType === 1) {
-                console.log(`컴포넌트 렌더링 완료 (${attempts}회 시도):`, component.id);
-                resolve(component.element);
-                return;
-            }
-
-            // WebSquare 컴포넌트가 존재하지만 element가 없는 경우 (display:contents 등)
-            // if (component && component.id && !component.element) {
-            //     console.log(`컴포넌트는 존재하지만 DOM 요소가 없습니다 (${attempts}회 시도):`, component.id);
-
-            //     // 10회 이상 시도했는데도 element가 없으면 컴포넌트 자체를 반환
-            //     if (attempts >= 10) {
-            //         console.warn(`DOM 요소가 없는 컴포넌트를 반환합니다:`, component.id);
-            //         resolve(component);
-            //         return;
-            //     }
-            // }
-
-            if (attempts >= maxAttempts) {
-                console.error(`컴포넌트 렌더링 실패 (${maxAttempts}회 시도):`, component.id);
-                // 에러 대신 컴포넌트 자체를 반환하여 계속 진행
-                resolve(component);
-                return;
-            }
-
-            // 비동기적으로 다음 체크 예약
-            setTimeout(checkElement, 10);
-        };
-
-        checkElement();
-    });
-};
 
 // ==================== 드래그 락 시스템 ====================
 
@@ -6186,15 +6145,15 @@ scwin.moveCardToBoard = function (cardElement, targetBoardId, taskId) {
     }
 };
 
-// async/await를 사용한 드래그 이벤트 설정
-scwin.setupDragEventsAsync = async function (cardGroup, cardData, cardId) {
+// 드래그 이벤트 설정
+scwin.setupDragEventsAsync = function (cardGroup, cardData, cardId) {
     console.log("=== 드래그 이벤트 설정 시작 ===", cardId);
 
     try {
-        // 컴포넌트 렌더링 완료 대기
-        const elementOrComponent = await scwin.waitForElementReady(cardGroup);
+        // 컴포넌트 직접 처리
+        const elementOrComponent = cardGroup;
 
-        console.log("컴포넌트 렌더링 완료:", cardId, elementOrComponent);
+        console.log("컴포넌트 처리:", cardId, elementOrComponent);
 
         // 실제 DOM 요소 찾기 (WebSquare 컴포넌트 대응)
         let targetElement = null;
@@ -6253,15 +6212,15 @@ scwin.setupDragEventsAsync = async function (cardGroup, cardData, cardId) {
 };
 
 
-// async/await를 사용한 드롭 존 설정
-scwin.setupDropZoneAsync = async function (cardContainer, boardId, cardContainerId) {
+// 드롭 존 설정
+scwin.setupDropZoneAsync = function (cardContainer, boardId, cardContainerId) {
     console.log("=== 드롭 존 설정 시작 ===", cardContainerId);
 
     try {
-        // 컴포넌트 렌더링 완료 대기
-        const elementOrComponent = await scwin.waitForElementReady(cardContainer);
+        // 컴포넌트 직접 처리
+        const elementOrComponent = cardContainer;
 
-        console.log("드롭 존 렌더링 완료:", cardContainerId, elementOrComponent);
+        console.log("드롭 존 처리:", cardContainerId, elementOrComponent);
 
         // DOM 요소가 있는 경우와 없는 경우 처리
         let targetElement = elementOrComponent;
