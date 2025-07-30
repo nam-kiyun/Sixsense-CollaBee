@@ -14,8 +14,8 @@
                         <w2:key id="userId" name="사용자ID" dataType="text"/>
                     </w2:keyInfo>
                     <w2:data use="true">
-                        <userName>식스센스</userName>
-                        <userId>user01</userId>
+                        <userName></userName>
+                        <userId></userId>
                     </w2:data>
                 </w2:dataMap>
                 
@@ -53,13 +53,31 @@ scwin.cardCounter = 0; // 카드 생성 카운터
 
 scwin.onpageload = function() {
     console.log("=== 메인 콘텐츠 페이지 로드 시작 ===");
-    // 메인 콘텐츠 초기화
-    scwin.loadUserInfo();
     
-    // 초기 로드 시에는 프로젝트 목록 조회를 하지 않음
-    // 부모에서 사용자 정보를 받은 후에만 조회
+    // 초기에는 UI를 숨김
+    if (grp_mainContent) {
+        grp_mainContent.hide();
+    }
+    
+    // 사용자 정보를 먼저 로드한 후 UI 표시
+    scwin.loadUserInfoAndShowUI();
     
     console.log("=== 메인 콘텐츠 페이지 로드 완료 ===");
+};
+
+// 사용자 정보 로드 후 UI 표시
+scwin.loadUserInfoAndShowUI = function() {
+    scwin.loadUserInfo();
+    
+    // 사용자 정보 로드 후 프로젝트 목록도 함께 조회
+    setTimeout(function() {
+        scwin.loadProjectList();
+        
+        // UI 표시
+        if (grp_mainContent) {
+            grp_mainContent.show();
+        }
+    }, 100);
 };
 
 // 사용자 정보 로드
@@ -68,36 +86,32 @@ scwin.loadUserInfo = function() {
     try {
         // 부모 창에서 사용자 정보 가져오기
         if (parent && parent.dm_userInfo) {
-            const userName = parent.dm_userInfo.get("userName") || "식스센스";
-            const userId = parent.dm_userInfo.get("userId") || "user01";
-            dm_userInfo.set("userName", userName);
-            dm_userInfo.set("userId", userId);
-            dmp_projectVo.set("userId", userId); // 서브미션 파라미터 설정
-            scwin.updateWelcomeMessage();
-        } else {
-            // 기본값 사용
-            dm_userInfo.set("userName", "식스센스");
-            dm_userInfo.set("userId", "user01");
-            dmp_projectVo.set("userId", "user01"); // 서브미션 파라미터 설정
-            scwin.updateWelcomeMessage();
+            const userName = parent.dm_userInfo.get("userName") || "";
+            const userId = parent.dm_userInfo.get("userId") || "";
+            
+            if (userName && userId) {
+                dm_userInfo.set("userName", userName);
+                dm_userInfo.set("userId", userId);
+                dmp_projectVo.set("userId", userId); // 서브미션 파라미터 설정
+                scwin.updateWelcomeMessage();
+            }
         }
     } catch(e) {
         console.log("사용자 정보 로드 오류:", e);
-        dm_userInfo.set("userName", "식스센스");
-        dm_userInfo.set("userId", "user01");
-        dmp_projectVo.set("userId", "user01"); // 서브미션 파라미터 설정
-        scwin.updateWelcomeMessage();
+        // 에러 발생 시에는 빈 값으로 유지
     }
 };
 
 // 환영 메시지 업데이트
 scwin.updateWelcomeMessage = function() {
     try {
-        const userName = dm_userInfo.get("userName") || "식스센스";
-        const welcomeText = userName + "님 안녕하세요";
-        if (output_welcomeText) {
-            output_welcomeText.setValue(welcomeText);
-            console.log("환영 메시지 업데이트:", welcomeText);
+        const userName = dm_userInfo.get("userName");
+        if (userName) {
+            const welcomeText = userName + "님 안녕하세요";
+            if (output_welcomeText) {
+                output_welcomeText.setValue(welcomeText);
+                console.log("환영 메시지 업데이트:", welcomeText);
+            }
         }
     } catch(e) {
         console.log("환영 메시지 업데이트 오류:", e);
@@ -106,11 +120,14 @@ scwin.updateWelcomeMessage = function() {
 
 // 프로젝트 목록 조회 함수 (외부에서 호출용)
 scwin.loadProjectList = function() {
-    console.log("프로젝트 목록 조회 시작, userId:", dmp_projectVo.get("userId"));
-    if (dmp_projectVo.get("userId")) {
+    const userId = dmp_projectVo.get("userId");
+    console.log("프로젝트 목록 조회 시작, userId:", userId);
+    
+    if (userId) {
         $c.sbm.execute(sbm_selectProjectList);
     } else {
         console.log("userId가 없어 프로젝트 목록 조회를 하지 않습니다.");
+        // 빈 프로젝트 메시지 표시하지 않음
     }
 };
 

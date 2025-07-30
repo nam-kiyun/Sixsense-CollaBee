@@ -350,34 +350,23 @@ scwin.sbm_getUserInfo_submitdone = function (e) {
                 console.log("세션에서 가져온 사용자 정보 설정 성공:", userData.userName);
                 scwin.updateUserInfoInComponents();
             } else {
-                // 사용자 정보가 없는 경우 기본값 사용
-                console.log("서버에서 받은 사용자 정보가 불완전합니다. 기본값 사용.");
-                dm_userInfo.set("userId", "user01");
-                dm_userInfo.set("userName", "식스센스");
-                scwin.updateUserInfoInComponents();
+                // 사용자 정보가 없는 경우 빈 값으로 유지
+                console.log("서버에서 받은 사용자 정보가 불완전합니다.");
             }
         } else {
-            // 응답 데이터가 없는 경우 기본값 사용
-            console.log("서버 응답 데이터가 없습니다. 기본값 사용.");
-            dm_userInfo.set("userId", "user01");
-            dm_userInfo.set("userName", "식스센스");
-            scwin.updateUserInfoInComponents();
+            // 응답 데이터가 없는 경우 빈 값으로 유지
+            console.log("서버 응답 데이터가 없습니다.");
         }
     } catch (err) {
         console.log("사용자 정보 처리 오류:", err);
-        // 오류 시 기본값 사용
-        dm_userInfo.set("userId", "user01");
-        dm_userInfo.set("userName", "식스센스");
-        scwin.updateUserInfoInComponents();
+        // 오류 시에는 빈 값으로 유지
     }
 };
 
 // 사용자 정보 서버 요청 실패
 scwin.sbm_getUserInfo_submiterror = function (e) {
     console.log("사용자 정보 요청 실패:", e);
-    // 실패 시 기본값 사용
-    dm_userInfo.set("userName", "식스센스");
-    scwin.updateUserInfoInComponents();
+    // 실패 시에는 빈 값으로 유지
 };
 
 // 전역 변수로 모달 상태 관리 개선
