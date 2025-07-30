@@ -71,10 +71,10 @@ public class ProjectController {
         // userId가 있으면 사용자 참여 프로젝트 조회, 없으면 전체 조회
         List<ProjectVo> projectList;
         if (projectVo.getUserId() != null && !projectVo.getUserId().trim().isEmpty()) {
-            System.out.println("사용자 참여 프로젝트 조회: " + projectVo.getUserId());
+            //System.out.println("사용자 참여 프로젝트 조회: " + projectVo.getUserId());
             projectList = projectService.selectUserParticipatedProjects(projectVo.getUserId());
         } else {
-            System.out.println("전체 프로젝트 조회");
+            //System.out.println("전체 프로젝트 조회");
             projectList = projectService.selectListProject(projectVo);
         }
         
@@ -209,13 +209,13 @@ public class ProjectController {
     public void insertProjectWithFile(@ModelAttribute ProjectVo projectVo,
             @RequestParam(value = "file", required = false) MultipartFile file) throws Exception {
         
-        System.out.println("=== 프로젝트 생성 요청 ===");
-        System.out.println("프로젝트명: " + projectVo.getProjectName());
-        System.out.println("설명: " + projectVo.getDescription());
-        System.out.println("이메일 전송시간: " + projectVo.getEmailSendTime());
-        System.out.println("사용자ID: " + projectVo.getUserId());
-        System.out.println("파일 존재 여부: " + (file != null && !file.isEmpty()));
-        
+//        System.out.println("=== 프로젝트 생성 요청 ===");
+//        System.out.println("프로젝트명: " + projectVo.getProjectName());
+//        System.out.println("설명: " + projectVo.getDescription());
+//        System.out.println("이메일 전송시간: " + projectVo.getEmailSendTime());
+//        System.out.println("사용자ID: " + projectVo.getUserId());
+//        System.out.println("파일 존재 여부: " + (file != null && !file.isEmpty()));
+//        
         String bucketName = "collabee";
         
         // 1. 이미지 파일이 있으면 S3 업로드 처리

@@ -47,16 +47,65 @@
     scwin.side = false;
 
     scwin.side_button_touch();
+
+    // scwin.notice();
+    // notice_button.sendPush();
 };
 
+scwin.notice = function () {
+    console.log(dma_logout.getJSON());
+    const eventSource = new EventSource(`/InsWebApp/user/notice.pwkjson?userId=${dma_logout.get("id")}`);
+    eventSource.addEventListener(dma_logout.get("id"), function (event) {
+
+        fetchAndConvertToBase64("/InsWebApp/images/mobile/notice.svg")
+            .then(base64 => {
+                var callback = function (result) { console.log(result); };
+                let cleaned = msg.replace(/"/g, "");  
+                var opt = { "title": "오늘의 할일 메일", "message": cleaned, "icon": base64};
+                $h.view.notification(callback, opt);
+            })
+            .catch(err => {
+                console.error("인코딩 중 오류 발생:", err);
+            });
+
+    });
+
+    eventSource.onopen = () => console.log("연결완료");
+    eventSource.onerror = (err) => console.log("오류발생", err);
+}
+async function fetchAndConvertToBase64(url) {
+    const response = await fetch(url);
+    const blob = await response.blob();
+
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result); // Data URL with Base64
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+scwin.fetchAndConvertToBase64 = async function (url) {
+    const response = await fetch(url);
+    const blob = await response.blob();
+
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result); // Data URL with Base64
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
 
 scwin.grp_logo_onclick = function (e) {
-    $p.url("/InsWebApp/ui/mobile/mainPage.xml");
+    scwin.notice_button_sendPush();
+    //$p.url("/InsWebApp/ui/mobile/mainPage.xml");
 };
 
 scwin.dma_session_submitdone = function (e) {
     const responseData = e.responseJSON.userVo;
     dma_logout.set("id", responseData.userId);
+    scwin.notice();
 };
 
 
@@ -98,7 +147,13 @@ scwin.side_button_touch = function () {
             scwin.side = false;
         }
     });
+
+
 }
+
+scwin.notice_button_sendPush = function (result) {
+
+};
 ]]></script>
     	<style type="text/css"><![CDATA[/* 공통 스타일 */
 .btn {
@@ -155,12 +210,14 @@ scwin.side_button_touch = function () {
 }
 
 .right-group .notice-button {
+
     background-image: url('/InsWebApp/images/mobile/notice.svg');
 }
 
 .right-group .user-button {
     background-image: url('/InsWebApp/images/mobile/user.svg');
 }]]></style>
+    	<w2:require as="udc_notification" type="page" variableClone="" src="/InsWebApp/cm/udc/matrix/notification.xml"></w2:require>
     </head>
     <body ev:onpageload="scwin.onpageload">
         <!-- 헤더 전체 컨테이너 -->
@@ -185,9 +242,7 @@ scwin.side_button_touch = function () {
             	<!-- 사용자 정보 -->
 
             	<!-- 로그아웃 버튼 -->
-            	<xf:trigger type="button" style="" id="" class="btn notice-button">
-            		<xf:label><![CDATA[]]></xf:label>
-            	</xf:trigger>
+            	<w2:udc_notification style="width: 30px;height: 30px;" title="" message=""></w2:udc_notification>
             </xf:group>
 
         </xf:group>

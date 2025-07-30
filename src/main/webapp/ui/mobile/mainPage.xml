@@ -34,8 +34,8 @@
     		<w2:workflowCollection />
     		<xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json"
     			ref="" target='data:json,{"id":"dma_userInfo","key":"userInfo"}' encoding="UTF-8" instance="" replace="" errorHandler=""
-    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_getUserInfo_submitdone" ev:submiterror="scwin.sbm_getUserInfo_submiterror"
-    			abortTrigger="">
+    			customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_getUserInfo_submitdone"
+    			ev:submiterror="scwin.sbm_getUserInfo_submiterror" abortTrigger="">
     		</xf:submission>
     	</xf:model>
     	<w2:layoutInfo />
@@ -47,18 +47,7 @@ scwin.onpageload = async function () {
 
     // 기본적으로 대시보드 로드 (사용자 정보 로드 후 진행)
     await scwin.loadMainContent("dashboard");
-    scwin.notice();
 };
-
-scwin.notice = function () {
-    var eventSource = new EventSource("/InsWebApp/user/notice.pwkjson");
-    eventSource.addEventListener("task-reminder", function (event) {
-        console.log("받은 알림:", event.data);
-    });
-
-    eventSource.onopen = () => console.log("연결완료");
-    eventSource.onerror = (err) => console.log("오류발생", err);
-}
 
 
 // 메인 콘텐츠 동적 로드 함수

@@ -14,35 +14,34 @@ import javax.annotation.PostConstruct;
 
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.demo.proworks.email.vo.EmailVo;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
+import org.springframework.web.bind.annotation.RequestMethod;
+import com.inswave.elfw.annotation.ElValidator;
 
 @Controller
 public class SseController {
 
 	// 사용자별 emitter 관리
-	private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
-	
-	private final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
-	
+	private static final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
+
+	private static final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
 
 	@ElService(key = "user/notice")
-	@RequestMapping(value = "/user/notice", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	@RequestMapping(value = "user/notice")
 	@ElDescription(sub = "메일 발송을 전달", desc = "메일 발송을 전달")
-	public SseEmitter connect() {
-		System.out.println("📡 SSE 접속됨");
-		SseEmitter emitter = new SseEmitter(null); // 10분 타임아웃
-		System.out.println("여기까지 왔어요");
-		String emitterId = UUID.randomUUID().toString(); // 임시 식별자
-		System.out.println("emitterId: " + emitterId);
-
+	public SseEmitter connect(@RequestParam String userId) {
+		SseEmitter emitter = new SseEmitter(600_000L); 
+		String emitterId = UUID.randomUUID().toString(); 
 		emitters.put(emitterId, emitter);
-		System.out.println("emitter: " + emitters.size());
+
 		emitter.onCompletion(() -> {
 			System.out.println("❌ emitter 완료됨: " + emitterId);
 			emitters.remove(emitterId);
@@ -58,18 +57,6 @@ public class SseController {
 			emitters.remove(emitterId);
 		});
 
-		try {
-			emitter.send(SseEmitter.event().name("task-reminder").data("테스트 알림입니다!"));
-		} catch (IOException e) {
-			emitter.completeWithError(e);
-		}
-
-		System.out.println("emitter: " + emitter);
-		System.out.println("emitter 등록됨: " + emitterId);
-		System.out.println("전체 emitter 수: " + emitters.size());
-		System.out.println("Emitter timeout 설정값: {}" + emitter.getTimeout()); // 실제 값 확인
-		System.out.println("sendNotification 호출 후 emitter 수: " + emitters.size());
-
 		return emitter;
 	}
 
@@ -78,7 +65,7 @@ public class SseController {
 		heartbeatExecutor.scheduleAtFixedRate(() -> {
 			emitters.forEach((id, em) -> {
 				try {
-					em.send(":\n");
+					em.send(SseEmitter.event().name("heartBeat").data("alive"));
 				} catch (IOException e) {
 					em.completeWithError(e);
 				}
@@ -86,37 +73,18 @@ public class SseController {
 		}, 0, 10, TimeUnit.SECONDS);
 	}
 
-	// 전체 사용자에게 알림 전송
-	public void sendNotification(String message) {
-		System.out.println("알림 도착");
-		System.out.println(message);
-
-		// 끊긴 emitter를 따로 수집
-		emitters.forEach((userId, emitter) -> {
-			System.out.println(userId);
-			System.out.println(emitter);
+	public void sendNotification(EmailVo message) {
+		String notice = message.getUserName() + "님 오늘의 할일 메일이 발송되었습니다";
+		System.out.println(notice);
+		emitters.forEach((id, em) -> {
 			try {
-				emitter.send(SseEmitter.event().name("task-reminder").data(message));
-				System.out.println("보내고 있음");
+				em.send(SseEmitter.event().name(message.getUserId()).data(notice));
+				System.out.println("알림 발송");
 			} catch (IOException e) {
-				emitter.completeWithError(e);
-				emitters.remove(userId);
-				System.out.println("보내지지 않네요...." + e);
+				em.completeWithError(e);
+				System.out.println("알림 XXXX" + e);
 			}
 		});
-		System.out.println(emitters.size());
 	}
 
-	// 특정 사용자에게만 알림 전송
-	public void sendToUser(String userId, String message) {
-		SseEmitter emitter = emitters.get(userId);
-		if (emitter != null) {
-			try {
-				emitter.send(SseEmitter.event().name("task-reminder").data(message));
-			} catch (IOException e) {
-				emitter.completeWithError(e);
-				emitters.remove(userId);
-			}
-		}
-	}
 }

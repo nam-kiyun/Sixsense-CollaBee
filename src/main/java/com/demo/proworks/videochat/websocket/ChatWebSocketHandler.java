@@ -65,24 +65,24 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
 		// 사용자 정보 저장
 		sessionUsers.put(session.getId(), chatMessage);
-		System.out.println("채널목록");
-		for (Map.Entry<String, List<WebSocketSession>> entry : channelSessions.entrySet()) {
-			String channel = entry.getKey();
-			List<WebSocketSession> sessions = entry.getValue();
-			System.out.println("채널: " + channel);
-			for (WebSocketSession s : sessions) {
-				System.out.println(" - 세션ID: " + s.getId());
-			}
-		}
+//		System.out.println("채널목록");
+//		for (Map.Entry<String, List<WebSocketSession>> entry : channelSessions.entrySet()) {
+//			String channel = entry.getKey();
+//			List<WebSocketSession> sessions = entry.getValue();
+//			System.out.println("채널: " + channel);
+//			for (WebSocketSession s : sessions) {
+//				System.out.println(" - 세션ID: " + s.getId());
+//			}
+//		}
 
-		System.out.println("사용자 정보");
-		for (Map.Entry<String, ChatMessageVo> entry : sessionUsers.entrySet()) {
-			String sessionId = entry.getKey();
-			ChatMessageVo userInfo = entry.getValue();
-			System.out.println("세션ID: " + sessionId + " / 사용자 정보: " + userInfo);
-		}
-
-		System.out.println("입장: " + userName + " " + channelName);
+//		System.out.println("사용자 정보");
+//		for (Map.Entry<String, ChatMessageVo> entry : sessionUsers.entrySet()) {
+//			String sessionId = entry.getKey();
+//			ChatMessageVo userInfo = entry.getValue();
+//			System.out.println("세션ID: " + sessionId + " / 사용자 정보: " + userInfo);
+//		}
+//
+//		System.out.println("입장: " + userName + " " + channelName);
 		logger.info("사용자 {}가 채널 {}에 참가했습니다.", userName, channelName);
 
 		// 🎯 새 기능: 참가 시 이전 채팅 히스토리 자동 전송
