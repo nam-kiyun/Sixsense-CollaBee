@@ -1782,26 +1782,21 @@ scwin.animateCardMove = function (cardElement, targetContainer, fromBoardId, toB
 };
 
 /**
- * 보드별 카드 개수 업데이트
+ * 보드별 카드 개수 업데이트 (비활성화됨)
  */
 scwin.updateBoardCardCounts = function (sourceBoardId, targetBoardId) {
-    console.log("보드 카운트 업데이트:", sourceBoardId, "->", targetBoardId);
-
-    // 출발 보드 카운트 감소
-    if (sourceBoardId) {
-        scwin.updateSingleBoardCardCount(sourceBoardId, -1);
-    }
-
-    // 목적지 보드 카운트 증가
-    if (targetBoardId) {
-        scwin.updateSingleBoardCardCount(targetBoardId, 1);
-    }
+    // 카운트 표시 제거로 인해 비활성화됨
+    return;
 };
 
 /**
- * 단일 보드의 카드 개수 업데이트
+ * 단일 보드의 카드 개수 업데이트 - 비활성화됨 (카운트 표시 제거됨)
  */
 scwin.updateSingleBoardCardCount = function (boardId, delta) {
+    // 카운트 표시가 제거되어 이 함수는 비활성화됨
+    return;
+    
+    /*
     var countSpanId = "grp_dynamic_" + boardId + "_count";
 
     try {
@@ -1822,6 +1817,7 @@ scwin.updateSingleBoardCardCount = function (boardId, delta) {
     } catch (error) {
         console.error("카운트 업데이트 중 오류:", countSpanId, error);
     }
+    */
 };
 
 /**
@@ -2144,19 +2140,32 @@ scwin.showTagFilter = function () {
 };
 
 /**
- * 태그 필터링 패널 숨기기
+ * 태그 필터링 패널 숨기기 (필터 초기화 및 데이터 재로드 포함)
  */
 scwin.hideTagFilter = function () {
     try {
+        // 1. 필터 패널 숨기기
         var filterPanel = $p.getComponentById("grp_tag_filter");
         if (filterPanel) {
             filterPanel.hide();
             scwin.isTagFilterVisible = false;
-
             console.log("태그 필터링 패널 숨겨짐");
         } else {
             console.error("태그 필터링 패널을 찾을 수 없습니다.");
         }
+
+        // 2. 무조건 필터 초기화하고 데이터 재로드
+        console.log("🔄 필터 드롭다운 닫기 - 무조건 데이터 초기화 및 재로드 실행");
+        
+        // 필터 초기화
+        scwin.selectedTags = [];
+        scwin.updateTagFilterUI();
+        
+        // 모든 보드 데이터 다시 로드
+        scwin.loadTasksWithUserName();
+        
+        console.log("✅ 필터 초기화 및 데이터 재로드 완료");
+        
     } catch (error) {
         console.error("태그 필터링 패널 숨기기 중 오류:", error);
     }
@@ -2553,18 +2562,11 @@ scwin.verifyCardOrder = function (boardId, expectedTasks) {
 };
 
 /**
- * 보드 카드 개수 업데이트
+ * 보드 카드 개수 업데이트 (비활성화됨)
  */
 scwin.updateBoardCardCount = function (boardId, count) {
-    try {
-        var countSpanId = "grp_dynamic_" + boardId + "_count";
-        var countSpan = eval(countSpanId);
-        if (countSpan) {
-            countSpan.setValue(count);
-        }
-    } catch (error) {
-        console.error("카드 개수 업데이트 실패:", boardId, error);
-    }
+    // 카운트 표시 제거로 인해 비활성화됨
+    return;
 };
 
 /**
@@ -5451,25 +5453,7 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
         console.error("제목 스팬 생성 실패:", columnId);
     }
 
-    // 6. 태스크 카운트 생성
-    var countSpan = $p.dynamicCreate(
-        columnId + "_count",
-        "output",
-        {
-            className: "task-count",
-            style: "background: #d1d9e0; color: #656d76; padding: 2px 6px; border-radius: 12px; font-size: 12px; font-weight: 500;"
-        },
-        titleGroup
-    );
-    if (countSpan) {
-        try {
-            countSpan.setValue("0"); // 초기값, 나중에 태스크 로드 시 업데이트
-        } catch (e) {
-            console.error("카운트 스팬 setValue 오류:", e, columnId);
-        }
-    } else {
-        console.error("카운트 스팬 생성 실패:", columnId);
-    }
+    // 6. 태스크 카운트 생성 (제거됨)
 
     // 7. 보드 액션 버튼 그룹 생성 (헤더 우측)
     var actionGroup = $p.dynamicCreate(
@@ -10070,10 +10054,6 @@ html, body {
 
 					<xf:trigger type="button" class="btn-github" id="btn_filter" ev:onclick="scwin.filter_onclick">
 						<xf:label><![CDATA[필터]]></xf:label>
-					</xf:trigger>
-
-					<xf:trigger type="button" class="btn-github" id="btn_sort" ev:onclick="scwin.sort_onclick">
-						<xf:label><![CDATA[정렬]]></xf:label>
 					</xf:trigger>
 
 					<xf:trigger type="button" class="btn-github" id="btn_board" ev:onclick="scwin.board_onclick">
