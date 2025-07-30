@@ -1,0 +1,321 @@
+[2025-07-29 13:55:32] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 13:55:32] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 13:55:32] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 13:55:32] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 13:55:32] [INFO] ::  MATRIX_MOBILE_HOME = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home
+[2025-07-29 13:55:32] [INFO] [RefreshUpdatePatchGenerator] queue wait.
+[2025-07-29 13:55:32] [INFO] ::  MATRIX_MOBILE_HOME Config Path = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\config
+[2025-07-29 13:55:32] [INFO] #########################################
+[2025-07-29 13:55:33] [INFO] appID = matrix.mobile.collabee
+[2025-07-29 13:55:33] [INFO] YAMLParser new Instance!!!
+[2025-07-29 13:55:33] [INFO] [MatrixMobileServlet]method = license
+[2025-07-29 13:55:33] [SEVERE] [Matrix Mobile License] Loading License. PATH: /C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\license\license
+[2025-07-29 13:55:33] [SEVERE] [Matrix Mobile License] ############### MATRIX Mobile LICENSE File[1] ####################
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] ############### LICENSE INFO ####################
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] License ID : 1373
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] Customer ID: 2488
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] Name       : 2488
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] License Type: (Demo License)
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] HOST Name  : any
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] IP Address : 0.0.0.0
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] Product ID : 14
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] CPU Number : 256
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] Expiration : Tue Nov 11 00:00:00 KST 2025
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] appID[0] : inswave.wmatrix.template
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] appID[1] : inswave.wmatrix.template
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] #################################################
+
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] ############### SYSTEM INFO #####################
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] CPU Number : 8
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] HOST Name  : DESKTOP-F9QVQBK
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] IP[0]      : 127.0.0.1
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] IP[1]      : 0:0:0:0:0:0:0:1
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] IP[2]      : fe80:0:0:0:8fca:1461:9763:5939%wlan0
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] IP[3]      : fe80:0:0:0:818:56c3:47ab:1c22%eth5
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] IP[4]      : 192.168.5.230
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] IP[5]      : fe80:0:0:0:76a6:a207:d576:58d4%wlan1
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] IP[6]      : fe80:0:0:0:6e0a:45c3:fb08:6996%wlan2
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] IP[7]      : 172.30.96.1
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] IP[8]      : fe80:0:0:0:b54b:c057:451f:fcc2%eth13
+[2025-07-29 13:55:35] [SEVERE] [Matrix Mobile License] #################################################
+[2025-07-29 14:10:09] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 14:10:09] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 14:10:09] [INFO] [MatrixMobileServlet]method = license
+[2025-07-29 14:19:26] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 14:19:26] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 14:19:27] [INFO] [MatrixMobileServlet]method = license
+[2025-07-29 14:33:50] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 14:33:50] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 14:33:50] [INFO] [MatrixMobileServlet]method = license
+[2025-07-29 14:38:28] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 14:38:28] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 14:38:28] [INFO] ::  MATRIX_MOBILE_HOME = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home
+[2025-07-29 14:38:28] [INFO] [RefreshUpdatePatchGenerator] queue wait.
+[2025-07-29 14:38:28] [INFO] ::  MATRIX_MOBILE_HOME Config Path = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\config
+[2025-07-29 14:38:28] [INFO] #########################################
+[2025-07-29 14:38:28] [INFO] appID = matrix.mobile.collabee
+[2025-07-29 14:38:29] [INFO] YAMLParser new Instance!!!
+[2025-07-29 14:38:29] [INFO] [MatrixMobileServlet]method = license
+[2025-07-29 14:38:29] [SEVERE] [Matrix Mobile License] Loading License. PATH: /C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\license\license
+[2025-07-29 14:38:29] [SEVERE] [Matrix Mobile License] ############### MATRIX Mobile LICENSE File[1] ####################
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] ############### LICENSE INFO ####################
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] License ID : 1373
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] Customer ID: 2488
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] Name       : 2488
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] License Type: (Demo License)
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] HOST Name  : any
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] IP Address : 0.0.0.0
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] Product ID : 14
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] CPU Number : 256
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] Expiration : Tue Nov 11 00:00:00 KST 2025
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] appID[0] : inswave.wmatrix.template
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] appID[1] : inswave.wmatrix.template
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] #################################################
+
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] ############### SYSTEM INFO #####################
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] CPU Number : 8
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] HOST Name  : DESKTOP-F9QVQBK
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] IP[0]      : 127.0.0.1
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] IP[1]      : 0:0:0:0:0:0:0:1
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] IP[2]      : fe80:0:0:0:8fca:1461:9763:5939%wlan0
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] IP[3]      : fe80:0:0:0:818:56c3:47ab:1c22%eth5
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] IP[4]      : 192.168.5.230
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] IP[5]      : fe80:0:0:0:76a6:a207:d576:58d4%wlan1
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] IP[6]      : fe80:0:0:0:6e0a:45c3:fb08:6996%wlan2
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] IP[7]      : 172.30.96.1
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] IP[8]      : fe80:0:0:0:b54b:c057:451f:fcc2%eth13
+[2025-07-29 14:38:31] [SEVERE] [Matrix Mobile License] #################################################
+[2025-07-29 14:52:31] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 14:52:31] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 14:52:31] [INFO] ::  MATRIX_MOBILE_HOME = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home
+[2025-07-29 14:52:31] [INFO] [RefreshUpdatePatchGenerator] queue wait.
+[2025-07-29 14:52:31] [INFO] ::  MATRIX_MOBILE_HOME Config Path = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\config
+[2025-07-29 14:52:31] [INFO] #########################################
+[2025-07-29 14:52:31] [INFO] appID = matrix.mobile.collabee
+[2025-07-29 14:52:31] [INFO] YAMLParser new Instance!!!
+[2025-07-29 14:52:31] [INFO] [MatrixMobileServlet]method = license
+[2025-07-29 14:52:32] [SEVERE] [Matrix Mobile License] Loading License. PATH: /C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\license\license
+[2025-07-29 14:52:32] [SEVERE] [Matrix Mobile License] ############### MATRIX Mobile LICENSE File[1] ####################
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] ############### LICENSE INFO ####################
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] License ID : 1373
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] Customer ID: 2488
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] Name       : 2488
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] License Type: (Demo License)
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] HOST Name  : any
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] IP Address : 0.0.0.0
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] Product ID : 14
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] CPU Number : 256
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] Expiration : Tue Nov 11 00:00:00 KST 2025
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] appID[0] : inswave.wmatrix.template
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] appID[1] : inswave.wmatrix.template
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] #################################################
+
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] ############### SYSTEM INFO #####################
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] CPU Number : 8
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] HOST Name  : DESKTOP-F9QVQBK
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] IP[0]      : 127.0.0.1
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] IP[1]      : 0:0:0:0:0:0:0:1
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] IP[2]      : fe80:0:0:0:8fca:1461:9763:5939%wlan0
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] IP[3]      : fe80:0:0:0:818:56c3:47ab:1c22%eth5
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] IP[4]      : 192.168.5.230
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] IP[5]      : fe80:0:0:0:76a6:a207:d576:58d4%wlan1
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] IP[6]      : fe80:0:0:0:6e0a:45c3:fb08:6996%wlan2
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] IP[7]      : 172.30.96.1
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] IP[8]      : fe80:0:0:0:b54b:c057:451f:fcc2%eth13
+[2025-07-29 14:52:33] [SEVERE] [Matrix Mobile License] #################################################
+[2025-07-29 14:55:41] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 14:55:41] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 14:55:41] [INFO] ::  MATRIX_MOBILE_HOME = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home
+[2025-07-29 14:55:41] [INFO] ::  MATRIX_MOBILE_HOME Config Path = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\config
+[2025-07-29 14:55:41] [INFO] [RefreshUpdatePatchGenerator] queue wait.
+[2025-07-29 14:55:41] [INFO] #########################################
+[2025-07-29 14:55:41] [INFO] appID = matrix.mobile.collabee
+[2025-07-29 14:55:41] [INFO] YAMLParser new Instance!!!
+[2025-07-29 14:55:42] [INFO] [MatrixMobileServlet]method = license
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] Loading License. PATH: /C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\license\license
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] ############### MATRIX Mobile LICENSE File[1] ####################
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] ############### LICENSE INFO ####################
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] License ID : 1373
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] Customer ID: 2488
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] Name       : 2488
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] License Type: (Demo License)
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] HOST Name  : any
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] IP Address : 0.0.0.0
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] Product ID : 14
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] CPU Number : 256
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] Expiration : Tue Nov 11 00:00:00 KST 2025
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] appID[0] : inswave.wmatrix.template
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] appID[1] : inswave.wmatrix.template
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] #################################################
+
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] ############### SYSTEM INFO #####################
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] CPU Number : 8
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] HOST Name  : DESKTOP-F9QVQBK
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] IP[0]      : 127.0.0.1
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] IP[1]      : 0:0:0:0:0:0:0:1
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] IP[2]      : fe80:0:0:0:8fca:1461:9763:5939%wlan0
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] IP[3]      : fe80:0:0:0:818:56c3:47ab:1c22%eth5
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] IP[4]      : 192.168.5.230
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] IP[5]      : fe80:0:0:0:76a6:a207:d576:58d4%wlan1
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] IP[6]      : fe80:0:0:0:6e0a:45c3:fb08:6996%wlan2
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] IP[7]      : 172.30.96.1
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] IP[8]      : fe80:0:0:0:b54b:c057:451f:fcc2%eth13
+[2025-07-29 14:55:42] [SEVERE] [Matrix Mobile License] #################################################
+[2025-07-29 14:56:45] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 14:56:45] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 14:56:45] [INFO] [MatrixMobileServlet]method = license
+[2025-07-29 15:02:27] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 15:02:27] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 15:02:27] [INFO] ::  MATRIX_MOBILE_HOME = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home
+[2025-07-29 15:02:27] [INFO] [RefreshUpdatePatchGenerator] queue wait.
+[2025-07-29 15:02:27] [INFO] ::  MATRIX_MOBILE_HOME Config Path = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\config
+[2025-07-29 15:02:27] [INFO] #########################################
+[2025-07-29 15:02:27] [INFO] appID = matrix.mobile.collabee
+[2025-07-29 15:02:27] [INFO] YAMLParser new Instance!!!
+[2025-07-29 15:02:27] [INFO] [MatrixMobileServlet]method = license
+[2025-07-29 15:02:27] [SEVERE] [Matrix Mobile License] Loading License. PATH: /C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\license\license
+[2025-07-29 15:02:27] [SEVERE] [Matrix Mobile License] ############### MATRIX Mobile LICENSE File[1] ####################
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] ############### LICENSE INFO ####################
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] License ID : 1373
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] Customer ID: 2488
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] Name       : 2488
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] License Type: (Demo License)
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] HOST Name  : any
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] IP Address : 0.0.0.0
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] Product ID : 14
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] CPU Number : 256
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] Expiration : Tue Nov 11 00:00:00 KST 2025
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] appID[0] : inswave.wmatrix.template
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] appID[1] : inswave.wmatrix.template
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] #################################################
+
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] ############### SYSTEM INFO #####################
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] CPU Number : 8
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] HOST Name  : DESKTOP-F9QVQBK
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] IP[0]      : 127.0.0.1
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] IP[1]      : 0:0:0:0:0:0:0:1
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] IP[2]      : fe80:0:0:0:8fca:1461:9763:5939%wlan0
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] IP[3]      : fe80:0:0:0:818:56c3:47ab:1c22%eth5
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] IP[4]      : 192.168.5.230
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] IP[5]      : fe80:0:0:0:76a6:a207:d576:58d4%wlan1
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] IP[6]      : fe80:0:0:0:6e0a:45c3:fb08:6996%wlan2
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] IP[7]      : 172.30.96.1
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] IP[8]      : fe80:0:0:0:b54b:c057:451f:fcc2%eth13
+[2025-07-29 15:02:28] [SEVERE] [Matrix Mobile License] #################################################
+[2025-07-29 15:20:55] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 15:20:55] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 15:20:56] [INFO] ::  MATRIX_MOBILE_HOME = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home
+[2025-07-29 15:20:56] [INFO] [RefreshUpdatePatchGenerator] queue wait.
+[2025-07-29 15:20:56] [INFO] ::  MATRIX_MOBILE_HOME Config Path = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\config
+[2025-07-29 15:20:56] [INFO] #########################################
+[2025-07-29 15:20:56] [INFO] appID = matrix.mobile.collabee
+[2025-07-29 15:20:56] [INFO] YAMLParser new Instance!!!
+[2025-07-29 15:20:56] [INFO] [MatrixMobileServlet]method = license
+[2025-07-29 15:20:56] [SEVERE] [Matrix Mobile License] Loading License. PATH: /C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\license\license
+[2025-07-29 15:20:56] [SEVERE] [Matrix Mobile License] ############### MATRIX Mobile LICENSE File[1] ####################
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] ############### LICENSE INFO ####################
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] License ID : 1373
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] Customer ID: 2488
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] Name       : 2488
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] License Type: (Demo License)
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] HOST Name  : any
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] IP Address : 0.0.0.0
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] Product ID : 14
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] CPU Number : 256
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] Expiration : Tue Nov 11 00:00:00 KST 2025
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] appID[0] : inswave.wmatrix.template
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] appID[1] : inswave.wmatrix.template
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] #################################################
+
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] ############### SYSTEM INFO #####################
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] CPU Number : 8
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] HOST Name  : DESKTOP-F9QVQBK
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] IP[0]      : 127.0.0.1
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] IP[1]      : 0:0:0:0:0:0:0:1
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] IP[2]      : fe80:0:0:0:8fca:1461:9763:5939%wlan0
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] IP[3]      : fe80:0:0:0:818:56c3:47ab:1c22%eth5
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] IP[4]      : 192.168.5.230
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] IP[5]      : fe80:0:0:0:76a6:a207:d576:58d4%wlan1
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] IP[6]      : fe80:0:0:0:6e0a:45c3:fb08:6996%wlan2
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] IP[7]      : 172.30.96.1
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] IP[8]      : fe80:0:0:0:b54b:c057:451f:fcc2%eth13
+[2025-07-29 15:20:57] [SEVERE] [Matrix Mobile License] #################################################
+[2025-07-29 17:59:46] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 17:59:46] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 17:59:46] [INFO] ::  MATRIX_MOBILE_HOME = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home
+[2025-07-29 17:59:46] [INFO] ::  MATRIX_MOBILE_HOME Config Path = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\config
+[2025-07-29 17:59:46] [INFO] [RefreshUpdatePatchGenerator] queue wait.
+[2025-07-29 17:59:46] [INFO] #########################################
+[2025-07-29 17:59:47] [INFO] appID = matrix.mobile.collabee
+[2025-07-29 17:59:48] [INFO] YAMLParser new Instance!!!
+[2025-07-29 17:59:48] [INFO] [MatrixMobileServlet]method = license
+[2025-07-29 17:59:48] [SEVERE] [Matrix Mobile License] Loading License. PATH: /C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\license\license
+[2025-07-29 17:59:48] [SEVERE] [Matrix Mobile License] ############### MATRIX Mobile LICENSE File[1] ####################
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] ############### LICENSE INFO ####################
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] License ID : 1373
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] Customer ID: 2488
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] Name       : 2488
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] License Type: (Demo License)
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] HOST Name  : any
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] IP Address : 0.0.0.0
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] Product ID : 14
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] CPU Number : 256
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] Expiration : Tue Nov 11 00:00:00 KST 2025
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] appID[0] : inswave.wmatrix.template
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] appID[1] : inswave.wmatrix.template
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] #################################################
+
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] ############### SYSTEM INFO #####################
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] CPU Number : 8
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] HOST Name  : DESKTOP-F9QVQBK
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] IP[0]      : 127.0.0.1
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] IP[1]      : 0:0:0:0:0:0:0:1
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] IP[2]      : fe80:0:0:0:8fca:1461:9763:5939%wlan0
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] IP[3]      : fe80:0:0:0:818:56c3:47ab:1c22%eth5
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] IP[4]      : 192.168.5.230
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] IP[5]      : fe80:0:0:0:76a6:a207:d576:58d4%wlan1
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] IP[6]      : fe80:0:0:0:6e0a:45c3:fb08:6996%wlan2
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] IP[7]      : 172.30.96.1
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] IP[8]      : fe80:0:0:0:b54b:c057:451f:fcc2%eth13
+[2025-07-29 17:59:51] [SEVERE] [Matrix Mobile License] #################################################
+[2025-07-29 18:11:02] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 18:11:02] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 18:11:02] [INFO] [MatrixMobileServlet]method = license
+[2025-07-29 18:51:41] [INFO] [MatrixMobileServlet]method = matrix-mobile-config
+[2025-07-29 18:51:41] [INFO] [MatrixMobileServlet][matrixMobileConfig] Version = 1.3.7.0, appID = matrix.mobile.collabee
+[2025-07-29 18:51:41] [INFO] ::  MATRIX_MOBILE_HOME = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home
+[2025-07-29 18:51:41] [INFO] [RefreshUpdatePatchGenerator] queue wait.
+[2025-07-29 18:51:41] [INFO] ::  MATRIX_MOBILE_HOME Config Path = C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\config
+[2025-07-29 18:51:41] [INFO] #########################################
+[2025-07-29 18:51:41] [INFO] appID = matrix.mobile.collabee
+[2025-07-29 18:51:42] [INFO] YAMLParser new Instance!!!
+[2025-07-29 18:51:42] [INFO] [MatrixMobileServlet]method = license
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] Loading License. PATH: /C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home\license\license
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] ############### MATRIX Mobile LICENSE File[1] ####################
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] ############### LICENSE INFO ####################
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] License ID : 1373
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] Customer ID: 2488
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] Name       : 2488
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] License Type: (Demo License)
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] HOST Name  : any
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] IP Address : 0.0.0.0
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] Product ID : 14
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] CPU Number : 256
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] Expiration : Tue Nov 11 00:00:00 KST 2025
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] appID[0] : inswave.wmatrix.template
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] appID[1] : inswave.wmatrix.template
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] #################################################
+
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] ############### SYSTEM INFO #####################
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] CPU Number : 8
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] HOST Name  : DESKTOP-F9QVQBK
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] IP[0]      : 127.0.0.1
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] IP[1]      : 0:0:0:0:0:0:0:1
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] IP[2]      : fe80:0:0:0:8fca:1461:9763:5939%wlan0
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] IP[3]      : fe80:0:0:0:818:56c3:47ab:1c22%eth5
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] IP[4]      : 192.168.5.230
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] IP[5]      : fe80:0:0:0:76a6:a207:d576:58d4%wlan1
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] IP[6]      : fe80:0:0:0:6e0a:45c3:fb08:6996%wlan2
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] IP[7]      : 172.30.96.1
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] IP[8]      : fe80:0:0:0:b54b:c057:451f:fcc2%eth13
+[2025-07-29 18:51:42] [SEVERE] [Matrix Mobile License] #################################################

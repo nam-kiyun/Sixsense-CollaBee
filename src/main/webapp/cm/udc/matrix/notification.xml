@@ -182,6 +182,6 @@ scwin.sendPush = function () {
 }]]></script>
     </head>
      <body ev:onpageload="scwin.onpageload">
-    	<xf:group id="anchor_notification" style="position:relative;width:30px;height:30px;font-size:0;background:url(/InsWebApp/cm/images/mobile/m_ico_alarm.svg) no-repeat center center;" ev:onclick="scwin.anchor_notification_onclick"></xf:group>
+    	<xf:group id="anchor_notification" style="position:relative;width:30px;height:30px;font-size:0;background-image: url('/InsWebApp/images/mobile/notice.svg');"></xf:group>
     </body>
 </html>

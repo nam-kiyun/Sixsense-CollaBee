@@ -108,13 +108,16 @@ let currentUser = {
 
 
 scwin.onpageload = function () {
-    //소켓 초기화 
-    scwin.initializeChatWebSocket();
-
     $p.executeSubmission("sbm_session");
 
-    scwin.taskId = 1;
-    scwin.getTask(scwin.taskId, 7);
+
+    scwin.taskId = 165;
+    scwin.projectId = 58;
+    scwin.getTask(scwin.taskId, scwin.projectId);
+    currentUser.channelName = scwin.taskId;
+
+     //소켓 초기화 
+    scwin.initializeChatWebSocket();
 
     scwin.chat_touch();
     scwin.comment = false;
@@ -179,7 +182,8 @@ scwin.getTask = function (taskId, projectId) {
 
                 manager_input.setValue(selectedUserIds);
             }
-
+          
+            data.taskTitle ? dec_title.setValue(data.taskTitle) : ""
             data.priority ? priority_select.setValue(data.priority) : "";
             data.tags ? tags_input.setValue(data.tags) : "";
             data.startDate ? start_date.setValue(data.startDate) : "";
@@ -187,36 +191,6 @@ scwin.getTask = function (taskId, projectId) {
             data.userName ? userName_input.setValue(data.userName) : "";
 
             body_text.setValue(data.content);
-
-            // const fileList = data.fileSrcVo;
-
-            // // HTML 에디터의 기존 내용 가져오기
-            // let html = contents_editor.getHTML();
-
-            // // DOM 파싱을 위한 임시 컨테이너 생성
-            // const container = document.createElement("div");
-            // container.innerHTML = html;
-
-            // // file-data 클래스를 가진 태그들을 순서대로 가져오기
-            // const fileTags = container.querySelectorAll(".file-data");
-
-            // // fileList 순서와 fileTags 순서가 일치한다고 가정하고 data-num 추가
-            // fileList.forEach((item, index) => {
-            //     item.num = ++scwin.filePageNum;
-
-            //     const el = fileTags[fileTags.length - 1 - index];
-
-            //     if (el) {
-            //         el.setAttribute("data-num", item.num);
-            //     }
-            // });
-
-            // contents_editor.setHTML(container.innerHTML);
-            // scwin.previousHTML = contents_editor.getHTML();
-
-            // dls_allFile.setJSON(data.fileSrcVo);
-            // dls_file.setJSON(data.fileSrcVo);
-
         },
         error: async function (err) {
             await $c.win.alert("저장 실패! 다시 시도해주세요");
@@ -300,18 +274,7 @@ scwin.initializeChatWebSocket = function () {
                 userId: currentUser.userId,
                 userName: currentUser.userName
             };
-            chatSocket.send(JSON.stringify(joinMessage));
-
-            // 채팅 히스토리 요청
-            setTimeout(() => {
-                const historyMessage = {
-                    type: 'history',
-                    channelName: currentUser.channelName,
-                    afterTimestamp: 0
-                };
-                chatSocket.send(JSON.stringify(historyMessage));
-                console.log("채팅 히스토리 요청 전송");
-            }, 1000);
+            chatSocket.send(JSON.stringify(joinMessage));s
         };
 
         chatSocket.onmessage = function (event) {
@@ -320,100 +283,24 @@ scwin.initializeChatWebSocket = function () {
                 console.log("WebSocket 메시지 수신:", data.type, data);
 
                 switch (data.type) {
-                    // 채팅 메시지 처리 (동일)
+                    case 'join':
+                        consolel.log(data);
                     case 'message':
                         if (data.userId !== currentUser.userId) {
-
-                            console.log("다른 사용자 메시지:", data.userName, "->", data.message);
-                            console.log(data);
                             const todayText = scwin.formatDate(new Date());
-
-                            // chatDate에 오늘 날짜가 없으면 추가
                             if (!scwin.chatDate.has(todayText)) {
                                 const dateComp = scwin.addChatDate(todayText);
                                 scwin.chatDate.add(todayText);
                             }
-
                             scwin.addChatMessage(data.userName, data.message, data.createdAt, false, data.userImage, data.commentId);
                         } else {
                             console.log("내 메시지 서버 에코 무시:", data.message);
                         }
                         break;
-
-                    case 'history':
-                        if (data.messages && data.messages.length > 0) {
-                            console.log("채팅 히스토리 로드:", data.messages.length, "개");
-
-                            //dlt_chatMessages.removeAll();
-                            //addedMessageIds.clear();
-
-                            // data.messages.forEach(msg => {
-                            //     const isOwn = msg.userId === currentUser.userId;
-                            //     const msgId = msg.messageId || `history_${msg.userId}_${msg.timestamp}`;
-                            //     scwin.addChatMessage(msg.userName, msg.message, isOwn, msgId);
-                            // });
-
-                            //scwin.addChatMessage("시스템", `이전 채팅 ${data.messages.length}개를 불러왔습니다.`, false);
-                        } else {
-                            console.log("채팅 히스토리 없음");
-                        }
-                        break;
-
-                    case 'existing-users':
-                        // 기존 사용자들과 webRTC 연결 시작 (화상통화 중일 때만)
-                        console.log("기존 사용자들:", data.users, "내 화상통화 상태:", isJoined);
-
-                        // 기존 사용자 정보 저장
-                        if (data.userInfos) {
-                            data.userInfos.forEach(user => {
-                                remoteUserInfo.set(user.userId, user);
-                                console.log("기존 사용자 정보 저장:", user.userName, user.userId);
-                            });
-                        }
-
-                        // P2P 관련 코드 제거됨 - mediasoup에서 자동 처리
-                        break;
-
-                    case 'user-joined':
-                        //scwin.addChatMessage("시스템", `${data.userName}님이 참가했습니다.`, false);
-
-                        // 새 사용자 정보 저장
-                        if (data.userId && data.userName) {
-                            remoteUserInfo.set(data.userId, {
-                                userId: data.userId,
-                                userName: data.userName
-                            });
-                            console.log("새 사용자 정보 저장:", data.userName, data.userId);
-                        }
-
-                        // P2P 관련 코드 제거됨 - mediasoup에서 자동 처리
-                        break;
-
-                    case 'user-left':
-                        //scwin.addChatMessage("시스템", `${data.userName}님이 나갔습니다.`, false);
-
-                        if (data.userId) {
-                            remoteUserInfo.delete(data.userId);
-                            console.log("사용자 정보 제거:", data.userName, data.userId);
-                        }
-
-                        scwin.removeRemoteUser(data.userId);
-                        break;
-
-                    // P2P WebRTC 메시지 처리 제거됨 - mediasoup SFU 방식으로 대체됨
-
-                    case 'notification':
-                        //scwin.addChatMessage("시스템", data.message, false);
-                        break;
                     case 'delete-message':
-                        console.log("삭제 메시지 수신:", data.messageId);
-
                         const group = $p.getComponentById("mf_comment_main_group");
                         const children = group.getChildren ? group.getChildren() : [];
-                        // console.log("group: " + group);
-                        // console.log("children: " + children);
-
-
+   
                         for (let i = 0; i < children.length; i++) {
                             const comp = children[i];
                             const compId = comp?.id || "undefined";
@@ -421,12 +308,7 @@ scwin.initializeChatWebSocket = function () {
                             const localMessageId = userData?.commentId;
                             const match = String(localMessageId) === String(data.commentId);
 
-                            // console.log(`[${i}] 컴포넌트 ID: ${compId}`);
-                            // console.log(` -> userData:`, userData);
-                            // console.log(` -> localMessageId: ${localMessageId} vs 삭제 대상: ${data.commentId}`);
-                            // console.log(` -> 일치 여부: ${match}`);
                             if (match) {
-                                // console.log(`✅ 매칭 성공 → 컴포넌트 제거: ${compId}`);
                                 scwin.deleteChat(comp);
                                 break;
                             }
@@ -622,7 +504,7 @@ scwin.deleteChat = function (chat) {
 
     // 현재 삭제 대상의 인덱스 찾기
     const idx = children.indexOf(chat);
-    let firstChild = group.render?.children[idx-1] ?? null;
+    let firstChild = group.render?.children[idx - 1] ?? null;
     let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
 
     if (idx === -1) {
@@ -634,7 +516,7 @@ scwin.deleteChat = function (chat) {
         const prevComp = insertBeforeTarget;
         const isDateComp = prevComp?.options?.className === "comment-date";
         const labelText = prevComp?.render?.innerText;
-        
+
 
         if (isDateComp) {
             prevComp.remove();
@@ -723,10 +605,10 @@ scwin.sbm_comment_get_submitdone = function (e) {
             const dateComp = scwin.addChatDate(currentDate, insertBeforeTarget);
             insertBeforeTarget = dateComp;
             scwin.chatDate.add(currentDate);
-            console.log("추가되었어용");
+            // console.log("추가되었어용");
         }
-        console.log("currentDate !== nextDate: " + (currentDate !== nextDate))
-        console.log("i === commentList.length - 1: " + (i === commentList.length - 1));
+        // console.log("currentDate !== nextDate: " + (currentDate !== nextDate))
+        // console.log("i === commentList.length - 1: " + (i === commentList.length - 1));
     }
 
     //처음 페이지일 경우에는 스크롤 아래로
@@ -1155,7 +1037,7 @@ body {
     					<w2:textbox style="" id="" label="프로젝트명" class="header-title"></w2:textbox>
     				</xf:group>
     				<xf:group style="" id="" class="contents-dec">
-    					<w2:textbox style="" id="" label="요구명세서" class="dec-title"></w2:textbox>
+    					<w2:textbox style="" id="dec_title" label="" class="dec-title"></w2:textbox>
     					<xf:group style="" id="" class="dec-group">
     						<w2:textbox style="" id="" label="작성자" class="dec-name"></w2:textbox>
     						<w2:textbox style="width:134px;height:23px;" id="userName_input" label="다인"></w2:textbox>
