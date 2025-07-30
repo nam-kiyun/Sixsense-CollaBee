@@ -208,6 +208,7 @@ scwin.createProjectCard = function(project, index) {
             cardId,
             "group",
             {
+                style: "width:100%;max-width:400px;height:200px;background-color:#ffffff;border:1px solid #e0e0e0;border-radius:16px;padding:20px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box;",
                 className: "dynamic-project-card"
             },
             grp_projectCards // 부모 컨테이너
@@ -219,7 +220,7 @@ scwin.createProjectCard = function(project, index) {
         }
         
         // 2. 상단 영역 생성 (프로젝트명)
-        const topGroup = $p.dynamicCreate("grp_top_" + projectId + "_" + scwin.cardCounter, "group", { style: "display:flex;flex-direction:column;flex:1;" }, cardGroup);
+        const topGroup = $p.dynamicCreate("grp_top_" + projectId + "_" + scwin.cardCounter, "group", { style: "display:flex;flex-direction:column;flex:1;min-height:60px;" }, cardGroup);
         
         if (!topGroup) {
             console.error("상단 그룹 생성 실패");
@@ -227,14 +228,14 @@ scwin.createProjectCard = function(project, index) {
         }
         
         // 3. 프로젝트명 텍스트 생성
-        const projectNameOutput = $p.dynamicCreate("output_projectName_" + projectId + "_" + scwin.cardCounter, "output", { style: "font-size:28px;font-weight:600;color:#000000;font-family:Inter,sans-serif;margin-bottom:20px;" }, topGroup);
+        const projectNameOutput = $p.dynamicCreate("output_projectName_" + projectId + "_" + scwin.cardCounter, "output", { style: "font-size:22px;font-weight:600;color:#000000;font-family:Inter,sans-serif;margin-bottom:12px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" }, topGroup);
         
         if (projectNameOutput) {
             projectNameOutput.setValue(project.projectName || "프로젝트 " + (index + 1));
         }
         
         // 4. 하단 영역 생성
-        const bottomGroup = $p.dynamicCreate("grp_bottom_" + projectId + "_" + scwin.cardCounter, "group", { style: "display:flex;flex-direction:column;gap:15px;" }, cardGroup);
+        const bottomGroup = $p.dynamicCreate("grp_bottom_" + projectId + "_" + scwin.cardCounter, "group", { style: "display:flex;flex-direction:column;gap:12px;height:auto;" }, cardGroup);
         
         if (bottomGroup) {
             // 5. 팀 정보 섹션 생성
@@ -270,13 +271,13 @@ scwin.createProjectCard = function(project, index) {
 // 팀 정보 섹션 생성
 scwin.createTeamSection = function(parentGroup, projectId, project, counter) {
     try {
-        const teamInfoGroup = $p.dynamicCreate("grp_teamInfo_" + projectId + "_" + counter, "group", { style: "display:flex;flex-direction:column;" }, parentGroup);
+        const teamInfoGroup = $p.dynamicCreate("grp_teamInfo_" + projectId + "_" + counter, "group", { style: "display:flex;flex-direction:column;height:50px;" }, parentGroup);
         if (!teamInfoGroup) return;
         
-        const teamLabel = $p.dynamicCreate("output_teamLabel_" + projectId + "_" + counter, "output", { style: "font-size:11px;color:rgba(0,0,0,0.5);font-family:Inter,sans-serif;margin-bottom:6px;font-weight:500;" }, teamInfoGroup);
+        const teamLabel = $p.dynamicCreate("output_teamLabel_" + projectId + "_" + counter, "output", { style: "font-size:11px;color:rgba(0,0,0,0.5);font-family:Inter,sans-serif;margin-bottom:8px;font-weight:500;" }, teamInfoGroup);
         if(teamLabel) teamLabel.setValue("TEAM");
 
-        const avatarsGroup = $p.dynamicCreate("grp_teamAvatars_" + projectId + "_" + counter, "group", { style: "display:flex;gap:3px;align-items:center;" }, teamInfoGroup);
+        const avatarsGroup = $p.dynamicCreate("grp_teamAvatars_" + projectId + "_" + counter, "group", { style: "display:flex;gap:4px;align-items:center;flex-wrap:wrap;" }, teamInfoGroup);
         if (avatarsGroup) {
             // 실제 프로젝트 참여자 정보 사용
             if (project.projectUsers && project.projectUsers.length > 0) {
@@ -327,7 +328,7 @@ scwin.createUserAvatar = function(parentGroup, projectId, index, user, counter) 
         if (user.profileImageUrl && user.profileImageUrl.trim() !== '') {
             // 프로필 이미지가 있는 경우
             const avatarGroup = $p.dynamicCreate(avatarId, "group", { 
-                style: "width:26px;height:26px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid #e0e0e0;" 
+                style: "width:28px;height:28px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid #e0e0e0;flex-shrink:0;" 
             }, parentGroup);
             
             if (avatarGroup) {
@@ -376,7 +377,7 @@ scwin.createInitialAvatar = function(parentGroup, projectId, index, user, counte
         
         const avatarId = replaceId || "grp_userAvatar_" + projectId + "_" + index + "_" + counter;
         const avatarGroup = $p.dynamicCreate(avatarId, "group", { 
-            style: "width:26px;height:26px;background-color:" + avatarColor + ";border-radius:50%;display:flex;align-items:center;justify-content:center;" 
+            style: "width:28px;height:28px;background-color:" + avatarColor + ";border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;" 
         }, parentGroup);
         
         if (avatarGroup) {
@@ -429,7 +430,7 @@ scwin.getUserAvatarColor = function(userId) {
 // 개별 아바타 생성 (기본 아바타용)
 scwin.createAvatar = function(parentGroup, projectId, index, color, text, counter) {
     try {
-        const avatarGroup = $p.dynamicCreate("grp_avatar_" + projectId + "_" + index + "_" + counter, "group", { style: "width:26px;height:26px;background-color:" + color + ";border-radius:50%;display:flex;align-items:center;justify-content:center;" }, parentGroup);
+        const avatarGroup = $p.dynamicCreate("grp_avatar_" + projectId + "_" + index + "_" + counter, "group", { style: "width:28px;height:28px;background-color:" + color + ";border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;" }, parentGroup);
         if (avatarGroup) {
             const avatarText = $p.dynamicCreate("output_avatar_" + projectId + "_" + index + "_" + counter, "output", { style: "color:white;font-size:10px;font-weight:600;" }, avatarGroup);
             if(avatarText) avatarText.setValue(text);
@@ -442,9 +443,9 @@ scwin.createAvatar = function(parentGroup, projectId, index, color, text, counte
 // 업데이트 정보 섹션 생성
 scwin.createUpdateSection = function(parentGroup, projectId, project, counter) {
     try {
-        const updateGroup = $p.dynamicCreate("grp_updateInfo_" + projectId + "_" + counter, "group", { style: "display:flex;align-items:center;gap:8px;" }, parentGroup);
+        const updateGroup = $p.dynamicCreate("grp_updateInfo_" + projectId + "_" + counter, "group", { style: "display:flex;align-items:center;gap:8px;height:24px;" }, parentGroup);
         if (updateGroup) {
-            const updateText = $p.dynamicCreate("output_lastUpdate_" + projectId + "_" + counter, "output", { style: "font-size:14px;color:rgba(0,0,0,0.6);font-family:Inter,sans-serif;" }, updateGroup);
+            const updateText = $p.dynamicCreate("output_lastUpdate_" + projectId + "_" + counter, "output", { style: "font-size:12px;color:rgba(0,0,0,0.6);font-family:Inter,sans-serif;line-height:1.2;" }, updateGroup);
             if (updateText) {
                 const lastUpdate = project.emailSendTime || "09:00";
                 updateText.setValue("메일 발송시각 " + lastUpdate);
@@ -460,7 +461,7 @@ scwin.renderNoProjectsMessage = function() {
     try {
         scwin.clearProjectCards();
         const noProjectsId = "grp_noProjects_" + (++scwin.cardCounter);
-        const noProjectsMessage = $p.dynamicCreate(noProjectsId, "group", { style: "width:400px;height:200px;background-color:#f8f9fa;border:2px dashed #dee2e6;border-radius:16px;padding:30px;display:flex;align-items:center;justify-content:center;" }, grp_projectCards);
+        const noProjectsMessage = $p.dynamicCreate(noProjectsId, "group", { style: "width:100%;max-width:400px;height:200px;background-color:#f8f9fa;border:2px dashed #dee2e6;border-radius:16px;padding:30px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;" }, grp_projectCards);
         
         if (noProjectsMessage) {
             const messageText = $p.dynamicCreate("output_noProjectsMessage_" + scwin.cardCounter, "output", { style: "font-size:18px;color:#6c757d;font-family:Inter,sans-serif;text-align:center;" }, noProjectsMessage);
@@ -689,7 +690,7 @@ body::-webkit-scrollbar {
         	<!-- 환영 메시지 -->
         	<xf:group style="" id="grp_welcomeMessage" class="message-group">
         		<xf:output style="" id="output_welcomeText" class="message-text">
-        			<xf:label><![CDATA[<a></a>]]></xf:label>
+        			<xf:label><![CDATA[]]></xf:label>
         		</xf:output>
         		<xf:output style="" id="output1" class="message-text">
         			<xf:label><![CDATA[안녕하세요]]></xf:label>
@@ -707,7 +708,7 @@ body::-webkit-scrollbar {
         	</xf:group>
 
         	<!-- 프로젝트 카드들 컨테이너 (동적으로 생성됨) -->
-        	<xf:group style="" id="grp_projectCards" class="project-cards-group">
+        	<xf:group style="display:flex;flex-direction:column;gap:16px;width:100%;padding:0 16px;" id="grp_projectCards" class="project-cards-group">
         		<!-- 여기에 동적으로 프로젝트 카드들이 생성됩니다 -->
         	</xf:group>
 

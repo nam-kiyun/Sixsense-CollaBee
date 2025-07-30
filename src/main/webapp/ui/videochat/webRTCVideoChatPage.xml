@@ -569,11 +569,6 @@ console.log("프로젝트 ID:", projectId);
 scwin.onpageload = function() {
     //console.log("webRTC 다대다 화상통화 페이지 초기화");
     //카메라 촬영
-    $h.camera.capturePhoto((r)=>{},{});
-
-    //오디오 레코드
-    $h.audioRecorder.recordAudio((r)=>{},{}); //녹음
-    $h.audioRecorder.recordFinish((r)=>{},{}) //녹음종료
     
     // HTTPS 체크
     if (location.protocol !== 'https:' && location.hostname !== 'localhost') {

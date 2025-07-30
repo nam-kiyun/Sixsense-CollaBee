@@ -222,11 +222,8 @@ scwin.loadUserInfo = function () {
         $p.executeSubmission("sbm_getUserInfo");
 
     } catch (e) {
-        // console.log("사용자 정보 로드 오류:", e);
-        // // 오류 시 기본값 사용
-        // dm_userInfo.set("userId", "user01");
-        // dm_userInfo.set("userName", "식스센스");
-        // scwin.updateUserInfoInComponents();
+        console.log("사용자 정보 로드 오류:", e);
+        // 오류 시에는 빈 값으로 유지
     }
 };
 
@@ -350,11 +347,11 @@ scwin.sbm_getUserInfo_submitdone = function (e) {
                 console.log("세션에서 가져온 사용자 정보 설정 성공:", userData.userName);
                 scwin.updateUserInfoInComponents();
             } else {
-                // 사용자 정보가 없는 경우 빈 값으로 유지
+                // 사용자 정보가 없는 경우에는 빈 값으로 유지
                 console.log("서버에서 받은 사용자 정보가 불완전합니다.");
             }
         } else {
-            // 응답 데이터가 없는 경우 빈 값으로 유지
+            // 응답 데이터가 없는 경우에는 빈 값으로 유지
             console.log("서버 응답 데이터가 없습니다.");
         }
     } catch (err) {
