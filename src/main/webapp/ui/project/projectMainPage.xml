@@ -2695,10 +2695,10 @@ scwin.sortTasksOnClient = function(tasks, sortField, sortOrder) {
         var valueA = a[sortField];
         var valueB = b[sortField];
         
-        // null 또는 undefined 처리
+        // null 또는 undefined 처리 - 빈값은 뒤로 정렬
         if (!valueA && !valueB) return 0;
-        if (!valueA) return 1; // null은 뒤로
-        if (!valueB) return -1; // null은 뒤로
+        if (!valueA) return 1; // A가 null이면 뒤로 (A > B)
+        if (!valueB) return -1; // B가 null이면 A를 앞으로 (A < B)
         
         try {
             // 날짜 필드인 경우 날짜로 파싱하여 비교
@@ -4348,45 +4348,57 @@ scwin.loadGanttData = function () {
     var monthEnd = new Date(currentYear, currentMonth, 0);
     console.log("정렬 기준 월 범위:", monthStart.toDateString(), "~", monthEnd.toDateString());
     
-    // 1단계: 유효한 날짜를 가진 태스크만 필터링
-    var validTasks = taskData.filter(function(task) {
-        // 시작날짜와 종료날짜가 모두 존재하고 비어있지 않은 경우만
-        if (!task.startDate || !task.endDate || 
-            task.startDate.trim() === "" || task.endDate.trim() === "") {
-            console.log("날짜 정보가 없는 태스크 제외:", task.taskTitle || task.taskId);
-            return false;
+    // 1단계: 모든 태스크를 유효/무효로 구분 (제외하지 않음)
+    var tasksWithDateStatus = taskData.map(function(task) {
+        // 날짜 유효성 검사
+        var hasValidDates = false;
+        var startDate = null;
+        var endDate = null;
+        
+        if (task.startDate && task.endDate && 
+            task.startDate.trim() !== "" && task.endDate.trim() !== "") {
+            startDate = scwin.parseValidDate(task.startDate);
+            endDate = scwin.parseValidDate(task.endDate);
+            hasValidDates = !!(startDate && endDate);
         }
         
-        // 날짜 파싱이 가능한 경우만
-        var startDate = scwin.parseValidDate(task.startDate);
-        var endDate = scwin.parseValidDate(task.endDate);
-        if (!startDate || !endDate) {
-            console.log("날짜 파싱 실패한 태스크 제외:", task.taskTitle || task.taskId, task.startDate, task.endDate);
-            return false;
+        if (!hasValidDates) {
+            console.log("날짜 정보가 없는 태스크 (맨 아래 표시):", task.taskTitle || task.taskId);
         }
         
-        return true;
+        return {
+            task: task,
+            hasValidDates: hasValidDates,
+            startDate: startDate,
+            endDate: endDate
+        };
     });
     
-    console.log("유효한 태스크:", validTasks.length + "개");
+    console.log("전체 태스크:", tasksWithDateStatus.length + "개");
     
-    // 2단계: 현재 월 태스크와 다른 월 태스크로 분리
+    // 2단계: 현재 월 태스크, 다른 월 태스크, 날짜 없는 태스크로 분리
     var currentMonthTasks = [];
     var otherMonthTasks = [];
+    var tasksWithoutDates = [];
     
-    validTasks.forEach(function(task) {
-        var startDate = scwin.parseValidDate(task.startDate);
-        var endDate = scwin.parseValidDate(task.endDate);
+    tasksWithDateStatus.forEach(function(item) {
+        var task = item.task;
         
-        // 현재 월과 겹치는지 확인 (시작일이 월 종료일 이전이고, 종료일이 월 시작일 이후)
-        var isOverlapping = startDate <= monthEnd && endDate >= monthStart;
-        
-        if (isOverlapping) {
-            currentMonthTasks.push(task);
-            console.log("현재 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+        if (!item.hasValidDates) {
+            // 날짜가 없는 태스크는 맨 아래로
+            tasksWithoutDates.push(task);
+            console.log("날짜 없는 태스크:", task.taskTitle || task.taskId);
         } else {
-            otherMonthTasks.push(task);
-            console.log("다른 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+            // 현재 월과 겹치는지 확인
+            var isOverlapping = item.startDate <= monthEnd && item.endDate >= monthStart;
+            
+            if (isOverlapping) {
+                currentMonthTasks.push(task);
+                console.log("현재 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+            } else {
+                otherMonthTasks.push(task);
+                console.log("다른 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+            }
         }
     });
     
@@ -4403,12 +4415,13 @@ scwin.loadGanttData = function () {
         return dateA.getTime() - dateB.getTime();
     });
     
-    // 4단계: 현재 월 태스크를 위에, 다른 월 태스크를 아래에 배치
-    taskData = currentMonthTasks.concat(otherMonthTasks);
+    // 4단계: 우선순위에 따라 배치 (현재 월 → 다른 월 → 날짜 없는 태스크)
+    taskData = currentMonthTasks.concat(otherMonthTasks).concat(tasksWithoutDates);
     
     console.log("간트차트 데이터 정렬 완료:");
     console.log("- 현재 월(" + currentYear + "년 " + currentMonth + "월) 태스크:", currentMonthTasks.length + "개 (위쪽)");
-    console.log("- 다른 월 태스크:", otherMonthTasks.length + "개 (아래쪽)");
+    console.log("- 다른 월 태스크:", otherMonthTasks.length + "개 (중간)");
+    console.log("- 날짜 없는 태스크:", tasksWithoutDates.length + "개 (아래쪽)");
     console.log("- 전체:", taskData.length + "개");
 
     var validTaskIndex = 0;
@@ -5647,10 +5660,10 @@ scwin.requestCardLock = function (taskId) {
     // WebSocket으로 락 상태 전파
     scwin.sendCardLockMessage(taskId, "LOCK");
 
-    // 자동 락 해제 타이머 설정
-    setTimeout(function () {
-        scwin.releaseCardLock(taskId, true);
-    }, scwin.lockTimeout);
+    // 자동 락 해제 타이머 설정 (주석처리)
+    // setTimeout(function () {
+    //     scwin.releaseCardLock(taskId, true);
+    // }, scwin.lockTimeout);
 
     // 락된 카드에 시각적 표시 추가
     scwin.updateCardLockVisual(taskId, lockInfo);
@@ -5716,10 +5729,10 @@ scwin.requestCardMoveLock = function (taskId) {
     // WebSocket으로 이동 락 상태 전파
     scwin.sendCardMoveLockMessage(taskId, "MOVE_LOCK");
 
-    // 자동 락 해제 타이머 설정 (이동은 짧게 10초)
-    setTimeout(function () {
-        scwin.releaseCardMoveLock(taskId, true);
-    }, 10000);
+    // 자동 락 해제 타이머 설정 (이동은 짧게 10초) - 주석처리
+    // setTimeout(function () {
+    //     scwin.releaseCardMoveLock(taskId, true);
+    // }, 10000);
 
     // 락된 카드에 시각적 표시 추가
     scwin.updateCardMoveLockVisual(taskId, moveLockInfo);
@@ -5891,10 +5904,10 @@ scwin.handleCardLockMessage = function (message) {
 
     var currentUserId = scwin.getCurrentUserId();
 
-    // 내가 보낸 메시지는 무시
-    if (message.userId === currentUserId) {
-        return;
-    }
+    // 내가 보낸 메시지도 처리 (시각적 표시를 위해)
+    // if (message.userId === currentUserId) {
+    //     return;
+    // }
 
     // message 필드에서 액션과 사용자명 파싱 ("LOCK|사용자명", "UNLOCK|사용자명", "MOVE_LOCK|사용자명", "MOVE_UNLOCK|사용자명")
     var messageParts = message.message ? message.message.split("|") : [];

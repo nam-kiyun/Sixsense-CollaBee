@@ -270,29 +270,9 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 		broadcastMessage.setProjectId(message.getProjectId());
 		broadcastMessage.setTimestamp(System.currentTimeMillis());
 
-		// 실시간 브로드캐스트 (프로젝트별 또는 전체)
-		if (message.getProjectId() != null) {
-			// 프로젝트별 브로드캐스트 (성능 최적화)
-			try {
-				java.util.Map<String, Object> messageData = new java.util.HashMap<>();
-				messageData.put("type", "CARD_LOCK");
-				messageData.put("taskId", message.getTaskId());
-				messageData.put("userId", message.getUserId());
-				messageData.put("message", message.getMessage());
-				messageData.put("projectId", message.getProjectId());
-				messageData.put("timestamp", System.currentTimeMillis());
-				
-				broadcastToProject(message.getProjectId(), messageData);
-				System.out.println("📡 프로젝트별 락 브로드캐스트 완료: " + message.getProjectId());
-			} catch (Exception e) {
-				System.err.println("❌ 프로젝트별 브로드캐스트 실패, 전체 브로드캐스트로 대체");
-				broadcastToAll(broadcastMessage);
-			}
-		} else {
-			// 전체 브로드캐스트 (fallback)
-			broadcastToAll(broadcastMessage);
-			System.out.println("📡 전체 락 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
-		}
+		// CARD_LOCK 메시지는 taskId 기반이므로 항상 모든 세션에 브로드캐스트
+		broadcastToAll(broadcastMessage);
+		System.out.println("📡 카드 락 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
 	}
 
 	/**
