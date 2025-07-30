@@ -176,14 +176,13 @@ scwin.onpageload = function () {
     // WebSocket 연결은 프로젝트 데이터 설정 후에 초기화됩니다
     console.log("WebSocket 초기화는 프로젝트 데이터 로드 후 진행됩니다");
 
-    // 정렬 기본값 설정 (지연 초기화)
-    setTimeout(function() {
-        scwin.initSortControls();
-    }, 100);
+
+    // 버튼 아이콘은 CSS로 직접 설정됨
 
     console.log("projectMainPage 초기화 완료");
     scwin.projectId = $p.parent().dm_projectVo.get("projectId");
 };
+
 
 // ==================== WebSocket 연결 및 관리 ====================
 
@@ -2094,9 +2093,6 @@ scwin.isTagFilterVisible = false;
 scwin.availableTags = ["dev", "test", "doc", "plan", "analytics", "collabo", "untagged"];
 scwin.allTasksData = {}; // 전체 태스크 데이터를 보드별로 저장
 
-// 정렬 관련 전역 변수
-scwin.currentSortField = "startDate"; // 기본값: 시작일
-scwin.currentSortOrder = "asc"; // 기본값: 오름차순
 
 // 필터 버튼 클릭 - 태그 필터링 패널 표시/숨기기
 scwin.filter_onclick = function (e) {
@@ -2577,56 +2573,6 @@ scwin.storeAllTasksData = function (boardId, tasksArray) {
     console.log("보드 " + boardId + " 전체 태스크 데이터 저장:", tasksArray.length + "개");
 };
 
-// ==================== 정렬 기능 ====================
-
-/**
- * 정렬 컨트롤 초기화 및 이벤트 바인딩 (수정된 버전)
- */
-scwin.initSortControls = function () {
-    try {
-        console.log("정렬 컨트롤 초기화 시작...");
-        
-        // 컴포넌트 존재 확인
-        var sortFieldComponent = $p.getComponentById("sel_sort_field");
-        var sortOrderComponent = $p.getComponentById("sel_sort_order");
-        
-        if (sortFieldComponent) {
-            console.log("정렬 필드 컴포넌트 발견, 기본값 설정:", scwin.currentSortField);
-            sortFieldComponent.setValue(scwin.currentSortField);
-            
-            // 기존 이벤트 핸들러 제거 후 새로 바인딩
-            try {
-                sortFieldComponent.unbind("onchange");
-            } catch (e) {
-                // 이벤트 핸들러가 없는 경우 무시
-            }
-            sortFieldComponent.bind("onchange", scwin.onSortFieldChange);
-            console.log("✅ 정렬 필드 이벤트 바인딩 완료");
-        } else {
-            console.warn("⚠️ sel_sort_field 컴포넌트를 찾을 수 없습니다.");
-        }
-
-        if (sortOrderComponent) {
-            console.log("정렬 순서 컴포넌트 발견, 기본값 설정:", scwin.currentSortOrder);
-            sortOrderComponent.setValue(scwin.currentSortOrder);
-            
-            // 기존 이벤트 핸들러 제거 후 새로 바인딩
-            try {
-                sortOrderComponent.unbind("onchange");
-            } catch (e) {
-                // 이벤트 핸들러가 없는 경우 무시
-            }
-            sortOrderComponent.bind("onchange", scwin.onSortOrderChange);
-            console.log("✅ 정렬 순서 이벤트 바인딩 완료");
-        } else {
-            console.warn("⚠️ sel_sort_order 컴포넌트를 찾을 수 없습니다.");
-        }
-
-        console.log("✅ 정렬 컨트롤 초기화 완료 - 필드:", scwin.currentSortField, "순서:", scwin.currentSortOrder);
-    } catch (error) {
-        console.error("❌ 정렬 컨트롤 초기화 실패:", error);
-    }
-};
 
 /**
  * 정렬 필드 변경 이벤트 (수정된 버전)
@@ -4101,45 +4047,53 @@ scwin.refreshGanttChart = function () {
     var monthEnd = new Date(scwin.currentGanttYear, scwin.currentGanttMonth, 0);
     console.log("새로고침 월 범위:", monthStart.toDateString(), "~", monthEnd.toDateString());
     
-    // 1단계: 유효한 날짜를 가진 태스크만 필터링
-    var validTaskList = scwin.taskList.filter(function(task) {
-        // 시작날짜와 종료일이 있는 태스크만 
-        if (!task.startDate || !task.endDate || 
-            task.startDate.trim() === "" || task.endDate.trim() === "") {
-            console.log("새로고침에서 날짜 정보가 없는 태스크 제외:", task.taskTitle || task.taskId);
-            return false;
+    // 1단계: 모든 태스크를 날짜 상태에 따라 분류
+    var tasksWithDateStatus = scwin.taskList.map(function(task) {
+        var hasValidDates = task.startDate && task.endDate && 
+                           task.startDate.trim() !== "" && task.endDate.trim() !== "";
+        
+        var startDate = null;
+        var endDate = null;
+        
+        if (hasValidDates) {
+            startDate = scwin.parseValidDate(task.startDate);
+            endDate = scwin.parseValidDate(task.endDate);
+            hasValidDates = startDate && endDate; // 파싱도 성공해야 유효
         }
         
-        // 날짜 파싱이 가능한 경우만
-        var startDate = scwin.parseValidDate(task.startDate);
-        var endDate = scwin.parseValidDate(task.endDate);
-        if (!startDate || !endDate) {
-            console.log("새로고침에서 날짜 파싱 실패한 태스크 제외:", task.taskTitle || task.taskId);
-            return false;
-        }
-        
-        return true;
+        return {
+            task: task,
+            hasValidDates: hasValidDates,
+            startDate: startDate,
+            endDate: endDate
+        };
     });
     
-    console.log("새로고침: 유효한 태스크:", validTaskList.length + "개 (전체: " + scwin.taskList.length + "개)");
+    console.log("새로고침: 전체 태스크:", tasksWithDateStatus.length + "개");
     
-    // 2단계: 현재 월 태스크와 다른 월 태스크로 분리
+    // 2단계: 현재 월 태스크, 다른 월 태스크, 날짜 없는 태스크로 분리
     var currentMonthTasks = [];
     var otherMonthTasks = [];
+    var tasksWithoutDates = [];
     
-    validTaskList.forEach(function(task) {
-        var startDate = scwin.parseValidDate(task.startDate);
-        var endDate = scwin.parseValidDate(task.endDate);
+    tasksWithDateStatus.forEach(function(item) {
+        var task = item.task;
         
-        // 현재 월과 겹치는지 확인 (시작일이 월 종료일 이전이고, 종료일이 월 시작일 이후)
-        var isOverlapping = startDate <= monthEnd && endDate >= monthStart;
-        
-        if (isOverlapping) {
-            currentMonthTasks.push(task);
-            console.log("새로고침 현재 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+        if (!item.hasValidDates) {
+            // 날짜가 없는 태스크는 맨 아래로
+            tasksWithoutDates.push(task);
+            console.log("새로고침 날짜 없는 태스크:", task.taskTitle || task.taskId);
         } else {
-            otherMonthTasks.push(task);
-            console.log("새로고침 다른 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+            // 현재 월과 겹치는지 확인
+            var isOverlapping = item.startDate <= monthEnd && item.endDate >= monthStart;
+            
+            if (isOverlapping) {
+                currentMonthTasks.push(task);
+                console.log("새로고침 현재 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+            } else {
+                otherMonthTasks.push(task);
+                console.log("새로고침 다른 월 태스크:", task.taskTitle || task.taskId, "(" + task.startDate + " ~ " + task.endDate + ")");
+            }
         }
     });
     
@@ -4156,12 +4110,13 @@ scwin.refreshGanttChart = function () {
         return dateA.getTime() - dateB.getTime();
     });
     
-    // 4단계: 현재 월 태스크를 위에, 다른 월 태스크를 아래에 배치
-    var sortedTaskList = currentMonthTasks.concat(otherMonthTasks);
+    // 4단계: 우선순위에 따라 배치 (현재 월 → 다른 월 → 날짜 없는 태스크)
+    var sortedTaskList = currentMonthTasks.concat(otherMonthTasks).concat(tasksWithoutDates);
     
     console.log("간트차트 새로고침 정렬 완료:");
     console.log("- 현재 월(" + scwin.currentGanttYear + "년 " + scwin.currentGanttMonth + "월) 태스크:", currentMonthTasks.length + "개 (위쪽)");
-    console.log("- 다른 월 태스크:", otherMonthTasks.length + "개 (아래쪽)");
+    console.log("- 다른 월 태스크:", otherMonthTasks.length + "개 (중간)");
+    console.log("- 날짜 없는 태스크:", tasksWithoutDates.length + "개 (아래쪽)");
     console.log("- 전체:", sortedTaskList.length + "개");
 
     // 간트차트 데이터 리스트를 정렬된 태스크로 구성 (모든 태스크를 row로 표시)
@@ -4170,20 +4125,19 @@ scwin.refreshGanttChart = function () {
     for (var i = 0; i < sortedTaskList.length; i++) {
         var task = sortedTaskList[i];
 
-        // 시작일과 종료일이 있는 태스크만 추가 (모든 태스크를 row로 표시)
-        if (task.startDate && task.endDate &&
-            task.startDate.trim() !== "" && task.endDate.trim() !== "") {
+        // 모든 태스크를 간트차트에 추가 (날짜 없는 태스크도 포함하여 정렬 순서 유지)
+        var hasValidDates = task.startDate && task.endDate && 
+                           task.startDate.trim() !== "" && task.endDate.trim() !== "";
 
-            dlt_gantt_schedule.insertRow(i);
-            dlt_gantt_schedule.setCellData(i, "taskId", task.taskId);
-            dlt_gantt_schedule.setCellData(i, "taskTitle", task.taskTitle);
-            dlt_gantt_schedule.setCellData(i, "startDate", task.startDate);
-            dlt_gantt_schedule.setCellData(i, "endDate", task.endDate);
-            dlt_gantt_schedule.setCellData(i, "boardId", task.boardId);
-            dlt_gantt_schedule.setCellData(i, "boardTitle", task.boardTitle || "보드");
-            dlt_gantt_schedule.setCellData(i, "priority", task.priority || "MEDIUM");
-            dlt_gantt_schedule.setCellData(i, "tags", task.tags || "");
-        }
+        dlt_gantt_schedule.insertRow(i);
+        dlt_gantt_schedule.setCellData(i, "taskId", task.taskId);
+        dlt_gantt_schedule.setCellData(i, "taskTitle", task.taskTitle);
+        dlt_gantt_schedule.setCellData(i, "startDate", hasValidDates ? task.startDate : ""); // 빈값은 빈 문자열로
+        dlt_gantt_schedule.setCellData(i, "endDate", hasValidDates ? task.endDate : "");     // 빈값은 빈 문자열로
+        dlt_gantt_schedule.setCellData(i, "boardId", task.boardId);
+        dlt_gantt_schedule.setCellData(i, "boardTitle", task.boardTitle || "보드");
+        dlt_gantt_schedule.setCellData(i, "priority", task.priority || "MEDIUM");
+        dlt_gantt_schedule.setCellData(i, "tags", task.tags || "");
     }
 
     console.log("dlt_gantt_schedule 업데이트 완료 (전체 태스크):", dlt_gantt_schedule.getRowCount() + "개");
@@ -4412,19 +4366,15 @@ scwin.loadGanttData = function () {
             boardId: task.boardId
         });
 
-        // 시작일과 종료일이 모두 있는 태스크만 간트차트에 표시
-        if (!task.startDate || !task.endDate ||
-            task.startDate.trim() === "" || task.endDate.trim() === "") {
-            console.log("날짜 정보가 없는 태스크 제외:", task.taskTitle);
-            continue;
-        }
-
-        // 간트차트 데이터 생성
+        // 간트차트 데이터 생성 (날짜 없는 태스크도 포함하여 정렬 순서 유지)
+        var hasValidDates = task.startDate && task.endDate && 
+                           task.startDate.trim() !== "" && task.endDate.trim() !== "";
+        
         var ganttData = {
             taskId: task.taskId,
             taskTitle: task.taskTitle,
-            startDate: task.startDate,
-            endDate: task.endDate,
+            startDate: hasValidDates ? task.startDate : "", // 빈값은 빈 문자열로 설정
+            endDate: hasValidDates ? task.endDate : "",     // 빈값은 빈 문자열로 설정
             boardId: task.boardId,
             boardTitle: task.boardTitle || "보드",
             priority: task.priority || "MEDIUM",
@@ -9304,16 +9254,20 @@ html, body {
     background-color: #f6ffed;
 }
 
-/* 태그 필터링 UI 스타일 */
+/* 태그 필터링 UI 스타일 - 드롭다운 형태 */
 .tag-filter-container {
-    background: #f6f8fa;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 9999;
+    background: white;
     border: 1px solid #d1d9e0;
     border-radius: 8px;
-    margin: 16px auto;
+    margin-top: 4px;
     padding: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    max-width: 600px;
-    width: 100%;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    min-width: 300px;
+    max-width: 400px;
 }
 
 .tag-filter-header {
@@ -10021,9 +9975,52 @@ html, body {
 						<xf:label><![CDATA[GitHub]]></xf:label>
 					</xf:trigger>
 
-					<xf:trigger type="button" class="btn-github" id="btn_filter" ev:onclick="scwin.filter_onclick">
-						<xf:label><![CDATA[필터]]></xf:label>
-					</xf:trigger>
+					<xf:group class="filter-button-wrapper" style="position: relative; display: inline-block;">
+						<xf:trigger type="button" class="btn-github" id="btn_filter" ev:onclick="scwin.filter_onclick">
+							<xf:label><![CDATA[필터]]></xf:label>
+						</xf:trigger>
+						<!-- 태그 필터링 영역 -->
+						<xf:group id="grp_tag_filter" class="tag-filter-container" style="display:none;">
+							<xf:group class="tag-filter-header">
+								<xf:group class="filter-header-left">
+									<xf:trigger type="button" class="btn-tag-all" id="btn_tag_all" ev:onclick="scwin.selectAllTags">
+										<xf:label>전체</xf:label>
+									</xf:trigger>
+									<xf:trigger type="button" class="btn-tag-clear" id="btn_tag_clear" ev:onclick="scwin.clearTagFilter">
+										<xf:label>초기화</xf:label>
+									</xf:trigger>
+								</xf:group>
+								<w2:textbox class="filter-title" readonly="true">🏷️ 태그 필터</w2:textbox>
+								<xf:group class="filter-header-actions">
+									<xf:trigger type="button" class="btn-filter-close" id="btn_filter_close" ev:onclick="scwin.hideTagFilter">
+										<xf:label>✕</xf:label>
+									</xf:trigger>
+								</xf:group>
+							</xf:group>
+							<xf:group class="tag-filter-content">
+								<xf:group class="tag-buttons">
+									<xf:trigger type="button" class="btn-tag" id="btn_tag_dev" ev:onclick="scwin.toggleTag_dev">
+										<xf:label>🔧 개발</xf:label>
+									</xf:trigger>
+									<xf:trigger type="button" class="btn-tag" id="btn_tag_test" ev:onclick="scwin.toggleTag_test">
+										<xf:label>🧪 테스트</xf:label>
+									</xf:trigger>
+									<xf:trigger type="button" class="btn-tag" id="btn_tag_doc" ev:onclick="scwin.toggleTag_doc">
+										<xf:label>📝 문서</xf:label>
+									</xf:trigger>
+									<xf:trigger type="button" class="btn-tag" id="btn_tag_plan" ev:onclick="scwin.toggleTag_plan">
+										<xf:label>📋 기획</xf:label>
+									</xf:trigger>
+									<xf:trigger type="button" class="btn-tag" id="btn_tag_analytics" ev:onclick="scwin.toggleTag_analytics">
+										<xf:label>📊 분석</xf:label>
+									</xf:trigger>
+									<xf:trigger type="button" class="btn-tag" id="btn_tag_collabo" ev:onclick="scwin.toggleTag_collabo">
+										<xf:label>👥 협업</xf:label>
+									</xf:trigger>
+								</xf:group>
+							</xf:group>
+						</xf:group>
+					</xf:group>
 
 					<xf:trigger type="button" class="btn-github" id="btn_board" ev:onclick="scwin.board_onclick">
 						<xf:label><![CDATA[칸반보드]]></xf:label>
@@ -10047,77 +10044,6 @@ html, body {
 				</xf:group>
 			</xf:group>
 
-			<!-- 태그 필터링 영역 -->
-			<xf:group id="grp_tag_filter" class="tag-filter-container" style="display:none;">
-				<xf:group class="tag-filter-header">
-					<xf:group class="filter-header-left">
-						<xf:trigger type="button" class="btn-tag-all" id="btn_tag_all" ev:onclick="scwin.selectAllTags">
-							<xf:label>전체</xf:label>
-						</xf:trigger>
-						<xf:trigger type="button" class="btn-tag-clear" id="btn_tag_clear" ev:onclick="scwin.clearTagFilter">
-							<xf:label>초기화</xf:label>
-						</xf:trigger>
-					</xf:group>
-					<w2:textbox class="filter-title" readonly="true">🏷️ 태그 필터</w2:textbox>
-					<xf:group class="sort-controls">
-						<w2:textbox class="sort-label" readonly="true">📅 정렬:</w2:textbox>
-						<w2:select1 id="sel_sort_field" class="sort-dropdown">
-							<w2:choices>
-								<w2:item>
-									<w2:label>시작일</w2:label>
-									<w2:value>startDate</w2:value>
-								</w2:item>
-								<w2:item>
-									<w2:label>종료일</w2:label>
-									<w2:value>endDate</w2:value>
-								</w2:item>
-							</w2:choices>
-						</w2:select1>
-						<w2:select1 id="sel_sort_order" class="sort-dropdown">
-							<w2:choices>
-								<w2:item>
-									<w2:label>오름차순</w2:label>
-									<w2:value>asc</w2:value>
-								</w2:item>
-								<w2:item>
-									<w2:label>내림차순</w2:label>
-									<w2:value>desc</w2:value>
-								</w2:item>
-							</w2:choices>
-						</w2:select1>
-					</xf:group>
-					<xf:group class="filter-header-actions">
-						<xf:trigger type="button" class="btn-filter-close" id="btn_filter_close" ev:onclick="scwin.hideTagFilter">
-							<xf:label>✕</xf:label>
-						</xf:trigger>
-					</xf:group>
-				</xf:group>
-				<xf:group class="tag-filter-content">
-					<xf:group class="tag-buttons">
-						<xf:trigger type="button" class="btn-tag" id="btn_tag_dev" ev:onclick="scwin.toggleTag_dev">
-							<xf:label>🔧 개발</xf:label>
-						</xf:trigger>
-						<xf:trigger type="button" class="btn-tag" id="btn_tag_test" ev:onclick="scwin.toggleTag_test">
-							<xf:label>🧪 테스트</xf:label>
-						</xf:trigger>
-						<xf:trigger type="button" class="btn-tag" id="btn_tag_doc" ev:onclick="scwin.toggleTag_doc">
-							<xf:label>📝 문서</xf:label>
-						</xf:trigger>
-						<xf:trigger type="button" class="btn-tag" id="btn_tag_plan" ev:onclick="scwin.toggleTag_plan">
-							<xf:label>📋 계획</xf:label>
-						</xf:trigger>
-						<xf:trigger type="button" class="btn-tag" id="btn_tag_analytics" ev:onclick="scwin.toggleTag_analytics">
-							<xf:label>📊 분석</xf:label>
-						</xf:trigger>
-						<xf:trigger type="button" class="btn-tag" id="btn_tag_collabo" ev:onclick="scwin.toggleTag_collabo">
-							<xf:label>👥 협업</xf:label>
-						</xf:trigger>
-						<xf:trigger type="button" class="btn-tag" id="btn_tag_untagged" ev:onclick="scwin.toggleTag_untagged">
-							<xf:label>🏷️ 태그없음</xf:label>
-						</xf:trigger>
-					</xf:group>
-				</xf:group>
-			</xf:group>
 
 			<!-- 칸반 보드 영역 -->
 			<xf:group id="grp_kanban_board" class="kanban-container">
