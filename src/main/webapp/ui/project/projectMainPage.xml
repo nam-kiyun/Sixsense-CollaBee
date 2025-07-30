@@ -2155,7 +2155,7 @@ scwin.hideTagFilter = function () {
         }
 
         // 2. 무조건 필터 초기화하고 데이터 재로드
-        console.log("🔄 필터 드롭다운 닫기 - 무조건 데이터 초기화 및 재로드 실행");
+        console.log("������ 필터 드롭다운 닫기 - 무조건 데이터 초기화 및 재로드 실행");
         
         // 필터 초기화
         scwin.selectedTags = [];
@@ -3172,25 +3172,21 @@ scwin.calendar_onclick = function (e) {
 };
 
 /**
- * 태스크 데이터를 캘린더 형식으로 변환하여 로드
+ * 태스크 데이터를 캘린더 형식으로 변환하여 로드 (고성능 JSON 방식)
  */
 scwin.loadTasksToCalendar = function () {
-    console.log("태스크 데이터를 캘린더로 변환 시작");
+    console.log("캘린더 데이터 로딩 시작 (고성능 모드)");
 
-    // 캘린더 데이터 리스트 초기화
+    // 캘린더 데이터 리스트 가져오기
     var calendarDataList = $p.getComponentById("dlt_calendar_schedule");
     if (!calendarDataList) {
         console.error("dlt_calendar_schedule 컴포넌트를 찾을 수 없습니다.");
         return;
     }
 
-    // 기존 데이터 모두 제거
-    calendarDataList.removeAll();
-
-    // allTasksData에서 직접 데이터 가져오기
+    // allTasksData에서 데이터 수집
     var allTasks = [];
     if (scwin.allTasksData) {
-        console.log("allTasksData에서 캘린더 데이터 가져오기");
         for (var boardId in scwin.allTasksData) {
             if (scwin.allTasksData.hasOwnProperty(boardId)) {
                 var boardTasks = scwin.allTasksData[boardId];
@@ -3199,83 +3195,56 @@ scwin.loadTasksToCalendar = function () {
                 }
             }
         }
-        console.log("allTasksData에서 가져온 총 데이터 수:", allTasks.length);
-    } else {
-        console.warn("allTasksData가 없습니다. 캘린더에 표시할 데이터가 없습니다.");
     }
 
-    console.log("캘린더에 표시할 총 태스크 수:", allTasks.length);
+    console.log("변환할 총 태스크 수:", allTasks.length);
 
-    // 태스크 데이터 샘플 출력
-    if (allTasks.length > 0) {
-        console.log("첫 번째 태스크 샘플:", allTasks[0]);
-    }
+    // 색상 배열
+    var colors = [
+        "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD", 
+        "#98D8C8", "#F7DC6F", "#FF8A65", "#81C784", "#64B5F6", "#FFB74D", 
+        "#BA68C8", "#4DB6AC", "#A1C181", "#F48FB1"
+    ];
 
-    // 태스크 데이터를 캘린더 형식으로 변환
+    // 캘린더 데이터 JSON 배열 생성 (고성능)
+    var calendarJsonData = [];
     for (var i = 0; i < allTasks.length; i++) {
         var task = allTasks[i];
 
-        console.log("태스크 " + (i + 1) + ":", {
-            taskId: task.taskId,
-            taskTitle: task.taskTitle,
-            startDate: task.startDate,
-            endDate: task.endDate,
-            boardId: task.boardId
-        });
-
-        // 시작일이 있는 태스크만 캘린더에 표시 (종료일이 없으면 시작일과 같게)
+        // 시작일이 있는 태스크만 포함
         if (task.startDate) {
             var startDate = scwin.formatDateForCalendar(task.startDate);
             var endDate = task.endDate ? scwin.formatDateForCalendar(task.endDate) : startDate;
-            var scheduleData = {
-                id: task.taskId,
-                title: task.taskTitle || "제목 없음",
-                start: startDate,
-                end: endDate,
-                boardId: task.boardId,
-                boardTitle: scwin.getBoardTitle(task.boardId),
-                priority: task.priority || "normal",
-                tags: task.tags || ""
-            };
-
-            // 순서대로 다양한 색상 적용 (우선순위/보드 구분 없이)
-            var colors = [
-                "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD", 
-                "#98D8C8", "#F7DC6F", "#FF8A65", "#81C784", "#64B5F6", "#FFB74D", 
-                "#BA68C8", "#4DB6AC", "#A1C181", "#F48FB1"
-            ];
-            var colorIndex = i % colors.length;
-            var backgroundColor = colors[colorIndex];
+            var backgroundColor = colors[i % colors.length];
             
-            // themeColumn에 사용할 JSON 데이터 생성
-            var themeData = {
+            // themeColumn JSON 생성
+            var themeJson = JSON.stringify({
                 "backgroundColor": backgroundColor,
                 "borderColor": backgroundColor,
                 "textColor": "#FFFFFF"
-            };
-            var themeJson = JSON.stringify(themeData);
+            });
 
-            console.log("캘린더에 추가할 일정:", scheduleData, "테마:", themeJson);
-
-            // 캘린더 데이터 리스트에 추가
-            calendarDataList.insertRow();
-            var newRowIndex = calendarDataList.getRowCount() - 1;
-
-            calendarDataList.setCellData(newRowIndex, "id", scheduleData.id);
-            calendarDataList.setCellData(newRowIndex, "title", scheduleData.title);
-            calendarDataList.setCellData(newRowIndex, "start", scheduleData.start);
-            calendarDataList.setCellData(newRowIndex, "end", scheduleData.end);
-            calendarDataList.setCellData(newRowIndex, "boardId", scheduleData.boardId);
-            calendarDataList.setCellData(newRowIndex, "boardTitle", scheduleData.boardTitle);
-            calendarDataList.setCellData(newRowIndex, "priority", scheduleData.priority);
-            calendarDataList.setCellData(newRowIndex, "tags", scheduleData.tags);
-            calendarDataList.setCellData(newRowIndex, "theme", themeJson);
-
-            console.log("캘린더에 태스크 추가:", scheduleData.title, scheduleData.start, "~", scheduleData.end, "색상:", backgroundColor);
+            // 캘린더 행 데이터 생성
+            calendarJsonData.push({
+                "id": task.taskId,
+                "title": task.taskTitle || "제목 없음",
+                "start": startDate,
+                "end": endDate,
+                "boardId": task.boardId,
+                "boardTitle": scwin.getBoardTitle(task.boardId),
+                "priority": task.priority || "normal",
+                "tags": task.tags || "",
+                "theme": themeJson
+            });
         }
     }
 
-    console.log("캘린더 데이터 로드 완료:", calendarDataList.getRowCount() + "개 일정");
+    console.log("생성된 캘린더 데이터 수:", calendarJsonData.length);
+
+    // 한번에 JSON 데이터로 설정 (고성능)
+    calendarDataList.setJSON(calendarJsonData);
+
+    console.log("캘린더 데이터 로드 완료 (고성능):", calendarDataList.getRowCount() + "개 일정");
 
     // 캘린더 컴포넌트 새로고침
     var calendarComponent = $p.getComponentById("calendar_schedule");
