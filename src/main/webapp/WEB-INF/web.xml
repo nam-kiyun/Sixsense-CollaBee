@@ -6,7 +6,9 @@
 	<display-name>GInsWebApp.InsWebApp</display-name>
 	<filter>
 		<filter-name>encodingFilter</filter-name>
+
 		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<async-supported>true</async-supported>
 		<init-param>
 			<param-name>encoding</param-name>
 			<param-value>utf-8</param-value>
@@ -15,6 +17,7 @@
 	<filter>
 		<filter-name>HTMLTagFilter</filter-name>
 		<filter-class>com.inswave.elfw.mvc.filter.HTMLTagFilter</filter-class>
+		<async-supported>true</async-supported>
 	</filter>
 	<filter-mapping>
 		<filter-name>encodingFilter</filter-name>
@@ -28,6 +31,7 @@
 	<filter>
 		<filter-name>elFilter</filter-name>
 		<filter-class>com.inswave.elfw.intercept.ElServletFilter</filter-class>
+		<async-supported>true</async-supported>
 	</filter>
 	<filter-mapping>
 		<filter-name>elFilter</filter-name>
@@ -87,8 +91,11 @@
 				/WEB-INF/config/inswave/springmvc/urlfilename-servlet.xml
 			</param-value>
 		</init-param>
+
 		<load-on-startup>1</load-on-startup>
+		<async-supported>true</async-supported>
 	</servlet>
+
 	<servlet-mapping>
 		<servlet-name>action</servlet-name>
 		<url-pattern>*.do</url-pattern>
@@ -125,16 +132,16 @@
 		<servlet-name>action</servlet-name>
 		<url-pattern>/github/*</url-pattern>
 	</servlet-mapping>
-  
+
 	<!-- WebSocket 경로 추가 -->
 	<servlet-mapping>
 		<servlet-name>action</servlet-name>
 		<url-pattern>/chat</url-pattern>
-	</servlet-mapping>		
+	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>action</servlet-name>
 		<url-pattern>/kanban</url-pattern>
-	</servlet-mapping>		
+	</servlet-mapping>
 	<!-- servlet>
 		<servlet-name>CXFServlet</servlet-name>
 		<servlet-class>
@@ -146,6 +153,13 @@
 		<servlet-name>CXFServlet</servlet-name>
 		<url-pattern>/webservice/*</url-pattern>
 		</servlet-mapping -->
+
+
+	<!-- SSE -->
+	<servlet-mapping>
+		<servlet-name>action</servlet-name>
+		<url-pattern>/user/notice</url-pattern>
+	</servlet-mapping>
 
 
 	<welcome-file-list>

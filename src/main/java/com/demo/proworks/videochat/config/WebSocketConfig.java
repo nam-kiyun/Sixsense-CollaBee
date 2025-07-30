@@ -10,18 +10,18 @@ import com.demo.proworks.videochat.websocket.ChatWebSocketHandler;
 import com.demo.proworks.websocket.handler.KanbanWebSocketHandler;
 
 /**
- * 통합 WebSocket 설정 클래스
- * 화상채팅과 칸반보드 WebSocket을 모두 관리
+ * 통합 WebSocket 설정 클래스 화상채팅과 칸반보드 WebSocket을 모두 관리
  */
 @Configuration
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    @Autowired
-    private ChatWebSocketHandler chatWebSocketHandler;
-    
-    @Autowired
-    private KanbanWebSocketHandler kanbanWebSocketHandler;
+	@Autowired
+	private ChatWebSocketHandler chatWebSocketHandler;
+
+	@Autowired
+	private KanbanWebSocketHandler kanbanWebSocketHandler;
+	
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {

@@ -52,53 +52,71 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
 		this.objectMapper.setFilterProvider(filterProvider);
 	}
-    private void handleJoin(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
-        String channelName = chatMessage.getChannelName();
-        String userId = chatMessage.getUserId();
-        String userName = chatMessage.getUserName();
-        
-        // 채널에 세션 추가
-        channelSessions.computeIfAbsent(channelName, k -> new CopyOnWriteArrayList<>()).add(session);
-        
-        // 사용자 정보 저장
-        sessionUsers.put(session.getId(), chatMessage);
-        
-        logger.info("사용자 {}가 채널 {}에 참가했습니다.", userName, channelName);
-        
-        // 🎯 새 기능: 참가 시 이전 채팅 히스토리 자동 전송
-        try {
-            List<ChatMessageVo> history = chatService.getChannelMessages(channelName);
-            
-            if (!history.isEmpty()) {
-                // 히스토리 응답 메시지 생성
-                Map<String, Object> historyResponse = new ConcurrentHashMap<>();
-                historyResponse.put("type", "history");
-                historyResponse.put("messages", history);
-                historyResponse.put("channelName", channelName);
-                
-                String historyJson = objectMapper.writeValueAsString(historyResponse);
-                session.sendMessage(new TextMessage(historyJson));
-                
-                //System.out.println("📜 채팅 히스토리 전송: " + channelName + " (" + history.size() + "개 메시지)");
-            }
-        } catch (Exception e) {
-            //System.err.println("❌ 히스토리 전송 실패: " + e.getMessage());
-        }
-        
-        // 참가 알림 메시지 생성 및 브로드캐스트
-        ChatMessageVo joinNotification = new ChatMessageVo();
-        joinNotification.setType("notification");
-        joinNotification.setChannelName(channelName);
-        joinNotification.setUserId("system");
-        joinNotification.setUserName("시스템");
-        //joinNotification.setMessage(userName + "님이 채팅방에 참가했습니다.");
-        joinNotification.setTimestamp(System.currentTimeMillis());
-        
-        // 참가 알림은 저장하지 않고 브로드캐스트만
-        broadcastToChannel(channelName, joinNotification, session);
-    
 
-		
+	private void handleJoin(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
+		String channelName = chatMessage.getChannelName();
+		String userId = chatMessage.getUserId();
+		String userName = chatMessage.getUserName();
+
+		System.out.println(channelSessions.size());
+
+		// 채널에 세션 추가
+		channelSessions.computeIfAbsent(channelName, k -> new CopyOnWriteArrayList<>()).add(session);
+
+		// 사용자 정보 저장
+		sessionUsers.put(session.getId(), chatMessage);
+//		System.out.println("채널목록");
+//		for (Map.Entry<String, List<WebSocketSession>> entry : channelSessions.entrySet()) {
+//			String channel = entry.getKey();
+//			List<WebSocketSession> sessions = entry.getValue();
+//			System.out.println("채널: " + channel);
+//			for (WebSocketSession s : sessions) {
+//				System.out.println(" - 세션ID: " + s.getId());
+//			}
+//		}
+
+//		System.out.println("사용자 정보");
+//		for (Map.Entry<String, ChatMessageVo> entry : sessionUsers.entrySet()) {
+//			String sessionId = entry.getKey();
+//			ChatMessageVo userInfo = entry.getValue();
+//			System.out.println("세션ID: " + sessionId + " / 사용자 정보: " + userInfo);
+//		}
+//
+//		System.out.println("입장: " + userName + " " + channelName);
+		logger.info("사용자 {}가 채널 {}에 참가했습니다.", userName, channelName);
+
+		// 🎯 새 기능: 참가 시 이전 채팅 히스토리 자동 전송
+		try {
+			List<ChatMessageVo> history = chatService.getChannelMessages(channelName);
+
+			if (!history.isEmpty()) {
+				// 히스토리 응답 메시지 생성
+				Map<String, Object> historyResponse = new ConcurrentHashMap<>();
+				historyResponse.put("type", "history");
+				historyResponse.put("messages", history);
+				historyResponse.put("channelName", channelName);
+
+				String historyJson = objectMapper.writeValueAsString(historyResponse);
+				session.sendMessage(new TextMessage(historyJson));
+
+				// System.out.println("📜 채팅 히스토리 전송: " + channelName + " (" + history.size() +
+				// "개 메시지)");
+			}
+		} catch (Exception e) {
+			// System.err.println("❌ 히스토리 전송 실패: " + e.getMessage());
+		}
+
+		// 참가 알림 메시지 생성 및 브로드캐스트
+		ChatMessageVo joinNotification = new ChatMessageVo();
+		joinNotification.setType("notification");
+		joinNotification.setChannelName(channelName);
+		joinNotification.setUserId("system");
+		joinNotification.setUserName("시스템");
+		// joinNotification.setMessage(userName + "님이 채팅방에 참가했습니다.");
+		joinNotification.setTimestamp(System.currentTimeMillis());
+
+		// 참가 알림은 저장하지 않고 브로드캐스트만
+		broadcastToChannel(channelName, joinNotification, session);
 
 		// System.out.println("🔧 WebSocket ObjectMapper 초기화 완료 (elExcludeFilter 설정됨)");
 	}
@@ -115,57 +133,55 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 		// System.out.println("🔗 웹소켓 연결 성공! Session ID: " + session.getId());
 	}
 
+	private void removeSession(WebSocketSession session) {
+		ChatMessageVo userInfo = sessionUsers.remove(session.getId());
 
-    private void removeSession(WebSocketSession session) {
-        ChatMessageVo userInfo = sessionUsers.remove(session.getId());
-        
-        if (userInfo != null) {
-            String channelName = userInfo.getChannelName();
-            String userId = userInfo.getUserId();
-            String userName = userInfo.getUserName();
-            
-            logger.info("세션 제거 - 사용자: {} ({}), 채널: {}", userName, userId, channelName);
-            
-            List<WebSocketSession> sessions = channelSessions.get(channelName);
-            
-            if (sessions != null) {
-                sessions.remove(session);
-                
-                // 🎥 다른 사용자들에게 자동 퇴장 알림 (브라우저 닫기 등)
-                try {
-                    ChatMessageVo userLeftMessage = new ChatMessageVo();
-                    userLeftMessage.setType("user-left");
-                    userLeftMessage.setChannelName(channelName);
-                    userLeftMessage.setUserId(userId);
-                    userLeftMessage.setUserName(userName);
-                    userLeftMessage.setTimestamp(System.currentTimeMillis());
-                    
-                    // 남은 사용자들에게 퇴장 알림 브로드캐스트
-                    broadcastToChannel(channelName, userLeftMessage, null);
-                    
-                    logger.info("사용자 {}의 자동 퇴장 알림 전송 완료", userName);
-                    
-                } catch (Exception e) {
-                    logger.error("자동 퇴장 알림 전송 실패: " + userName, e);
-                }
-                
-                // 채널에 세션이 없으면 채널 제거
-                if (sessions.isEmpty()) {
-                    channelSessions.remove(channelName);
-                    logger.info("빈 채널 제거: {}", channelName);
-                }
-            }
-        } else {
-            logger.warn("제거할 세션의 사용자 정보를 찾을 수 없음: {}", session.getId());
-        }
-    }
+		if (userInfo != null) {
+			String channelName = userInfo.getChannelName();
+			String userId = userInfo.getUserId();
+			String userName = userInfo.getUserName();
+
+			logger.info("세션 제거 - 사용자: {} ({}), 채널: {}", userName, userId, channelName);
+
+			List<WebSocketSession> sessions = channelSessions.get(channelName);
+
+			if (sessions != null) {
+				sessions.remove(session);
+
+				// 🎥 다른 사용자들에게 자동 퇴장 알림 (브라우저 닫기 등)
+				try {
+					ChatMessageVo userLeftMessage = new ChatMessageVo();
+					userLeftMessage.setType("user-left");
+					userLeftMessage.setChannelName(channelName);
+					userLeftMessage.setUserId(userId);
+					userLeftMessage.setUserName(userName);
+					userLeftMessage.setTimestamp(System.currentTimeMillis());
+
+					// 남은 사용자들에게 퇴장 알림 브로드캐스트
+					broadcastToChannel(channelName, userLeftMessage, null);
+
+					logger.info("사용자 {}의 자동 퇴장 알림 전송 완료", userName);
+
+				} catch (Exception e) {
+					logger.error("자동 퇴장 알림 전송 실패: " + userName, e);
+				}
+
+				// 채널에 세션이 없으면 채널 제거
+				if (sessions.isEmpty()) {
+					channelSessions.remove(channelName);
+					logger.info("빈 채널 제거: {}", channelName);
+				}
+			}
+		} else {
+			logger.warn("제거할 세션의 사용자 정보를 찾을 수 없음: {}", session.getId());
+		}
+	}
 
 	@Override
 	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
 		try {
 			String payload = message.getPayload();
 			logger.info("메시지 수신: {}", payload);
-
 
 			ChatMessageVo chatMessage = objectMapper.readValue(payload, ChatMessageVo.class);
 
@@ -211,7 +227,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 		}
 	}
 
-	
 	private void handleDeleteMessage(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
 		String channelName = chatMessage.getChannelName();
 
@@ -226,10 +241,10 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 		}
 	}
 
-	
-
 	private void handleMessage(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
 		String channelName = chatMessage.getChannelName();
+		System.out.println("메시지 보냄");
+		System.out.println(chatMessage.toString());
 
 		// 🕒 서버에서 실제 메시지 입력 시간으로 타임스탬프 설정 (중요!)
 		chatMessage.setTimestamp(System.currentTimeMillis());
@@ -285,7 +300,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 		leaveNotification.setChannelName(channelName);
 		leaveNotification.setUserId("system");
 		leaveNotification.setUserName("시스템");
-		leaveNotification.setMessage(userName + "님이 채팅방을 나갔습니다.");
+		//leaveNotification.setMessage(userName + "님이 채팅방을 나갔습니다.");
 		leaveNotification.setTimestamp(System.currentTimeMillis());
 		broadcastToChannel(channelName, leaveNotification, session);
 
@@ -305,8 +320,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 		logger.error("웹소켓 전송 오류: " + session.getId(), exception);
 		removeSession(session);
 	}
-
-	
 
 	// 🔧 동시 전송 문제 해결을 위한 동기화된 브로드캐스트
 	private synchronized void broadcastToChannel(String channelName, ChatMessageVo message,
