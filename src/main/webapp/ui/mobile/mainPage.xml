@@ -30,6 +30,11 @@
     					<w2:key dataType="text" name="사용자 이미지" id="profileImageUrl"></w2:key>
     				</w2:keyInfo>
     			</w2:dataMap>
+    			<w2:dataMap baseNode="map" id="dm_projectVo">
+    				<w2:keyInfo>
+    					<w2:key id="projectId" name="projectId" dataType="text"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
     		</w2:dataCollection>
     		<w2:workflowCollection />
     		<xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json"

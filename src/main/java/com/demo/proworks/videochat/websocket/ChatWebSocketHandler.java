@@ -65,24 +65,24 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
 		// 사용자 정보 저장
 		sessionUsers.put(session.getId(), chatMessage);
-//		System.out.println("채널목록");
-//		for (Map.Entry<String, List<WebSocketSession>> entry : channelSessions.entrySet()) {
-//			String channel = entry.getKey();
-//			List<WebSocketSession> sessions = entry.getValue();
-//			System.out.println("채널: " + channel);
-//			for (WebSocketSession s : sessions) {
-//				System.out.println(" - 세션ID: " + s.getId());
-//			}
-//		}
+		System.out.println("채널목록");
+		for (Map.Entry<String, List<WebSocketSession>> entry : channelSessions.entrySet()) {
+			String channel = entry.getKey();
+			List<WebSocketSession> sessions = entry.getValue();
+			System.out.println("채널: " + channel);
+			for (WebSocketSession s : sessions) {
+				System.out.println(" - 세션ID: " + s.getId());
+			}
+		}
 
-//		System.out.println("사용자 정보");
-//		for (Map.Entry<String, ChatMessageVo> entry : sessionUsers.entrySet()) {
-//			String sessionId = entry.getKey();
-//			ChatMessageVo userInfo = entry.getValue();
-//			System.out.println("세션ID: " + sessionId + " / 사용자 정보: " + userInfo);
-//		}
-//
-//		System.out.println("입장: " + userName + " " + channelName);
+		System.out.println("사용자 정보");
+		for (Map.Entry<String, ChatMessageVo> entry : sessionUsers.entrySet()) {
+			String sessionId = entry.getKey();
+			ChatMessageVo userInfo = entry.getValue();
+			System.out.println("세션ID: " + sessionId + " / 사용자 정보: " + userInfo);
+		}
+
+		System.out.println("입장: " + userName + " " + channelName);
 		logger.info("사용자 {}가 채널 {}에 참가했습니다.", userName, channelName);
 
 		// 🎯 새 기능: 참가 시 이전 채팅 히스토리 자동 전송
@@ -245,6 +245,10 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 		String channelName = chatMessage.getChannelName();
 		System.out.println("메시지 보냄");
 		System.out.println(chatMessage.toString());
+		
+		System.out.println("시작부분");
+		System.out.println(channelName);
+		System.out.println(session);
 
 		// 🕒 서버에서 실제 메시지 입력 시간으로 타임스탬프 설정 (중요!)
 		chatMessage.setTimestamp(System.currentTimeMillis());
@@ -293,6 +297,10 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 	private void handleLeave(WebSocketSession session, ChatMessageVo chatMessage) throws IOException {
 		String channelName = chatMessage.getChannelName();
 		String userName = chatMessage.getUserName();
+		
+		System.out.println("삭제");
+		System.out.println(userName);
+		System.out.println(channelName);
 
 		// 다른 사용자들에게 퇴장 알림
 		ChatMessageVo leaveNotification = new ChatMessageVo();
@@ -325,6 +333,11 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 	private synchronized void broadcastToChannel(String channelName, ChatMessageVo message,
 			WebSocketSession excludeSession) {
 		List<WebSocketSession> sessions = channelSessions.get(channelName);
+		
+		System.out.println("브로드캐스트");
+		for(int i=0; i < sessions.size(); i++){
+			System.out.println(sessions.get(i));
+		}
 
 		if (sessions == null || sessions.isEmpty()) {
 			return;

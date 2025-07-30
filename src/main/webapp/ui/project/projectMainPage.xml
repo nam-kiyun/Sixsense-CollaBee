@@ -102,6 +102,11 @@
 						<w2:column id="tags" name="tags" dataType="text"></w2:column>
 					</w2:columnInfo>
 				</w2:dataList>
+				<w2:dataMap baseNode="map" id="dataMap1">
+					<w2:keyInfo>
+						<w2:key id="projectId" name="projectId" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
 			</w2:dataCollection>
 			<w2:workflowCollection />
 			<xf:submission id="add_task" action="/InsWebApp/task/create.pwkjson" method="post" mediatype="application/json"
@@ -177,6 +182,7 @@ scwin.onpageload = function () {
     }, 100);
 
     console.log("projectMainPage 초기화 완료");
+    scwin.projectId = $p.parent().dm_projectVo.get("projectId");
 };
 
 // ==================== WebSocket 연결 및 관리 ====================

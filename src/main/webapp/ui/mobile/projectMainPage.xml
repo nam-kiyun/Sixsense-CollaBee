@@ -120,7 +120,6 @@
 		<script lazy="false" type="text/javascript"><![CDATA[
 // 전역 프로젝트 데이터 저장소
 scwin.currentProjectData = null;
-scwin.currentBoardList = [];
 scwin.currentTaskList = [];
 scwin.selectedBoardId = null;
 scwin.dynamicComponents = []; // 동적으로 생성된 컴포넌트들을 관리
@@ -239,6 +238,14 @@ scwin.openVideoChat = function() {
     // 고유한 팝업 ID 생성
     var uniquePopupId = scwin.generateVideoChatPopupId();
     
+    var param = {
+        "type": "json",
+        "name": "projectInfo",
+        "data": {
+            "projectId": currentProjectId
+        }
+    }
+    
     var options = {
         id: uniquePopupId,
         type: "wframePopup",
@@ -250,10 +257,7 @@ scwin.openVideoChat = function() {
         scrollbars: false,  // 스크롤바 제거
         overflow: "hidden", // 오버플로우 숨김
         closeAction: "scwin.videoChat_closeAction",
-        paramObject: {
-            projectId: currentProjectId,
-            fromMobile: true
-        }
+        dataObject: param
     };
     
     // 팝업 상태 업데이트
@@ -261,7 +265,7 @@ scwin.openVideoChat = function() {
     scwin.videoPopupState.currentPopupId = uniquePopupId;
     
     console.log("화상통화 팝업 생성 - ID:", uniquePopupId);
-    $p.openPopup("/InsWebApp/ui/mobile/videoPage.xml", options);
+    $p.openPopup("/InsWebApp/ui/videochat/webRTCVideoChatPage.xml", options);
 };
 
 // 화상통화 팝업 닫기 액션
