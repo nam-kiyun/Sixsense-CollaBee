@@ -285,7 +285,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 		leaveNotification.setChannelName(channelName);
 		leaveNotification.setUserId("system");
 		leaveNotification.setUserName("시스템");
-		leaveNotification.setMessage(userName + "님이 채팅방을 나갔습니다.");
+		//leaveNotification.setMessage(userName + "님이 채팅방을 나갔습니다.");
 		leaveNotification.setTimestamp(System.currentTimeMillis());
 		broadcastToChannel(channelName, leaveNotification, session);
 
