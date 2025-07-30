@@ -604,7 +604,7 @@ scwin.loadProjectDetail = function(projectId) {
             <!-- 환영 메시지 -->
             <xf:group style="text-align:center;margin-bottom:40px;" id="grp_welcomeMessage">
                 <xf:output style="font-size:60px;font-weight:bold;color:#000000;font-family:'Andada Pro',serif;" id="output_welcomeText">
-                    <xf:label><![CDATA[식스센스님 안녕하세요]]></xf:label>
+                    <xf:label><![CDATA[]]></xf:label>
                 </xf:output>
             </xf:group>
             

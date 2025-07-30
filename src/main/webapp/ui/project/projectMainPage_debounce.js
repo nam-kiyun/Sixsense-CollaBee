@@ -32,6 +32,7 @@ scwin.sendCardMoveMessageWithDebounce = function(taskId, fromBoardId, toBoardId)
             fromBoardId: fromBoardId,
             toBoardId: toBoardId,
             userId: "user01", // 실제 사용자 ID로 변경 필요
+            projectId: $p.parent().dm_projectVo.get("projectId"), // 프로젝트 ID 추가
             timestamp: Date.now()
         };
         

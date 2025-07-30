@@ -221,7 +221,7 @@ scwin.createProjectCard = function(project, index) {
         
         if (bottomGroup) {
             // 5. 팀 정보 섹션 생성
-            scwin.createTeamSection(bottomGroup, projectId, scwin.cardCounter);
+            scwin.createTeamSection(bottomGroup, projectId, project, scwin.cardCounter);
             
             // 6. 구분선 생성
             $p.dynamicCreate("grp_divider_" + projectId + "_" + scwin.cardCounter, "group", { style: "width:100%;height:1px;background-color:rgba(0,0,0,0.2);" }, bottomGroup);
@@ -251,7 +251,7 @@ scwin.createProjectCard = function(project, index) {
 };
 
 // 팀 정보 섹션 생성
-scwin.createTeamSection = function(parentGroup, projectId, counter) {
+scwin.createTeamSection = function(parentGroup, projectId, project, counter) {
     try {
         const teamInfoGroup = $p.dynamicCreate("grp_teamInfo_" + projectId + "_" + counter, "group", { style: "display:flex;flex-direction:column;" }, parentGroup);
         if (!teamInfoGroup) return;
@@ -261,18 +261,155 @@ scwin.createTeamSection = function(parentGroup, projectId, counter) {
 
         const avatarsGroup = $p.dynamicCreate("grp_teamAvatars_" + projectId + "_" + counter, "group", { style: "display:flex;gap:3px;align-items:center;" }, teamInfoGroup);
         if (avatarsGroup) {
-            const defaultAvatars = [
-                { color: "#3B82F6", text: "EM" }, { color: "#10B981", text: "JC" }, { color: "#8B5CF6", text: "AK" },
-                { color: "#EC4899", text: "LW" }, { color: "#F59E0B", text: "RB" }, { color: "#6B7280", text: "+7" }
-            ];
-            defaultAvatars.forEach((avatar, i) => scwin.createAvatar(avatarsGroup, projectId, i, avatar.color, avatar.text, counter));
+            // 실제 프로젝트 참여자 정보 사용
+            if (project.projectUsers && project.projectUsers.length > 0) {
+                console.log("������ 프로젝트 참여자 정보:", project.projectUsers);
+                
+                // 최대 6명까지만 표시하고, 나머지는 +N으로 표시
+                const maxDisplayUsers = 6;
+                const displayUsers = project.projectUsers.slice(0, maxDisplayUsers);
+                const remainingCount = project.projectUsers.length - maxDisplayUsers;
+                
+                // 실제 사용자들의 아바타 생성
+                displayUsers.forEach((user, i) => {
+                    scwin.createUserAvatar(avatarsGroup, projectId, i, user, counter);
+                });
+                
+                // 나머지 사용자 수가 있으면 +N 아바타 추가
+                if (remainingCount > 0) {
+                    const plusAvatar = {
+                        color: "#6B7280",
+                        text: "+" + remainingCount,
+                        isPlus: true
+                    };
+                    scwin.createAvatar(avatarsGroup, projectId, displayUsers.length, plusAvatar.color, plusAvatar.text, counter);
+                }
+            } else {
+                console.log("프로젝트 참여자 정보가 없어 기본 아바타 사용");
+                // 기본 아바타 사용 (기존 로직)  
+                const defaultAvatars = [
+                    { color: "#3B82F6", text: "EM" }, { color: "#10B981", text: "JC" }, { color: "#8B5CF6", text: "AK" },
+                    { color: "#EC4899", text: "LW" }, { color: "#F59E0B", text: "RB" }, { color: "#6B7280", text: "+7" }
+                ];
+                defaultAvatars.forEach((avatar, i) => scwin.createAvatar(avatarsGroup, projectId, i, avatar.color, avatar.text, counter));
+            }
         }
     } catch(e) {
         console.error("팀 섹션 생성 오류:", e);
     }
 };
 
-// 개별 아바타 생성
+// 실제 사용자 아바타 생성
+scwin.createUserAvatar = function(parentGroup, projectId, index, user, counter) {
+    try {
+        console.log("������ 사용자 아바타 생성:", user);
+        
+        const avatarId = "grp_userAvatar_" + projectId + "_" + index + "_" + counter;
+        
+        // 프로필 이미지가 있으면 이미지 사용, 없으면 이니셜 사용
+        if (user.profileImageUrl && user.profileImageUrl.trim() !== '') {
+            // 프로필 이미지가 있는 경우
+            const avatarGroup = $p.dynamicCreate(avatarId, "group", { 
+                style: "width:26px;height:26px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid #e0e0e0;" 
+            }, parentGroup);
+            
+            if (avatarGroup) {
+                const avatarImage = $p.dynamicCreate("img_userAvatar_" + projectId + "_" + index + "_" + counter, "image", { 
+                    style: "width:100%;height:100%;object-fit:cover;",
+                    src: user.profileImageUrl,
+                    alt: user.userName || user.userId || "User"
+                }, avatarGroup);
+                
+                // 이미지 로드 실패 시 이니셜로 대체
+                if (avatarImage && avatarImage.bind) {
+                    avatarImage.bind("onerror", function() {
+                        console.log("이미지 로드 실패, 이니셜로 대체:", user.userName);
+                        scwin.createInitialAvatar(parentGroup, projectId, index, user, counter, avatarId);
+                    });
+                }
+            }
+        } else {
+            // 프로필 이미지가 없는 경우 이니셜 사용
+            scwin.createInitialAvatar(parentGroup, projectId, index, user, counter, avatarId);
+        }
+    } catch(e) {
+        console.error("사용자 아바타 생성 오류:", e);
+        // 오류 발생 시 기본 아바타 생성
+        scwin.createAvatar(parentGroup, projectId, index, "#6B7280", "U", counter);
+    }
+};
+
+// 이니셜 아바타 생성
+scwin.createInitialAvatar = function(parentGroup, projectId, index, user, counter, replaceId) {
+    try {
+        // 기존 아바타가 있으면 제거
+        if (replaceId) {
+            const existingAvatar = $p.getComponentById(replaceId);
+            if (existingAvatar && existingAvatar.remove) {
+                existingAvatar.remove();
+            }
+        }
+        
+        // 사용자 이름에서 이니셜 추출
+        const userName = user.userName || user.userId || "User";
+        const initials = scwin.getInitials(userName);
+        
+        // 사용자별 고유 색상 생성
+        const avatarColor = scwin.getUserAvatarColor(user.userId || user.userName);
+        
+        const avatarId = replaceId || "grp_userAvatar_" + projectId + "_" + index + "_" + counter;
+        const avatarGroup = $p.dynamicCreate(avatarId, "group", { 
+            style: "width:26px;height:26px;background-color:" + avatarColor + ";border-radius:50%;display:flex;align-items:center;justify-content:center;" 
+        }, parentGroup);
+        
+        if (avatarGroup) {
+            const avatarText = $p.dynamicCreate("output_userAvatar_" + projectId + "_" + index + "_" + counter, "output", { 
+                style: "color:white;font-size:10px;font-weight:600;" 
+            }, avatarGroup);
+            if(avatarText) avatarText.setValue(initials);
+        }
+    } catch(e) {
+        console.error("이니셜 아바타 생성 오류:", e);
+    }
+};
+
+// 사용자 이름에서 이니셜 추출
+scwin.getInitials = function(name) {
+    if (!name) return "U";
+    
+    // 한글 이름의 경우 첫 글자만 사용
+    if (/[가-힣]/.test(name)) {
+        return name.charAt(0);
+    }
+    
+    // 영문 이름의 경우 단어별 첫 글자 사용 (최대 2글자)
+    const words = name.trim().split(/\s+/);
+    if (words.length >= 2) {
+        return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+    } else {
+        return words[0].charAt(0).toUpperCase();
+    }
+};
+
+// 사용자별 고유 색상 생성
+scwin.getUserAvatarColor = function(userId) {
+    const colors = [
+        "#3B82F6", "#10B981", "#8B5CF6", "#EC4899", "#F59E0B", 
+        "#EF4444", "#06B6D4", "#84CC16", "#F97316", "#6366F1"
+    ];
+    
+    if (!userId) return colors[0];
+    
+    // userId를 기반으로 해시값 생성하여 일관된 색상 선택
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+        hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    return colors[Math.abs(hash) % colors.length];
+};
+
+// 개별 아바타 생성 (기본 아바타용)
 scwin.createAvatar = function(parentGroup, projectId, index, color, text, counter) {
     try {
         const avatarGroup = $p.dynamicCreate("grp_avatar_" + projectId + "_" + index + "_" + counter, "group", { style: "width:26px;height:26px;background-color:" + color + ";border-radius:50%;display:flex;align-items:center;justify-content:center;" }, parentGroup);
@@ -292,8 +429,8 @@ scwin.createUpdateSection = function(parentGroup, projectId, project, counter) {
         if (updateGroup) {
             const updateText = $p.dynamicCreate("output_lastUpdate_" + projectId + "_" + counter, "output", { style: "font-size:14px;color:rgba(0,0,0,0.6);font-family:Inter,sans-serif;" }, updateGroup);
             if (updateText) {
-                const lastUpdate = project.emailSendTime || "5 minutes ago";
-                updateText.setValue("Last Update " + lastUpdate + " ...");
+                const lastUpdate = project.emailSendTime || "09:00";
+                updateText.setValue("메일 발송시각 " + lastUpdate);
             }
         }
     } catch(e) {
@@ -429,6 +566,29 @@ scwin.loadProjectDetail = function(projectId) {
 
 ]]></script>
     	<style type="text/css"><![CDATA[
+/* 모바일 스크롤바 숨김 설정 */
+html, body {
+    overflow: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+
+/* 모든 스크롤 가능한 영역에 스크롤바 숨김 적용 */
+* {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+
 .main-content-container {
     width: 100%;
     height: 100%;
@@ -437,6 +597,13 @@ scwin.loadProjectDetail = function(projectId) {
     background-color: #fff4d6;
     padding: 40px 40px 20px 40px;
     box-sizing: border-box;
+    /* 스크롤바 숨김 */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.main-content-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
 }
 
 /* 메시지 그룹 */

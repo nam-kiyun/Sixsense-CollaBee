@@ -88,8 +88,27 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 
 	@Override
 	public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-		System.err.println("WebSocket 전송 오류: " + session.getId());
-		exception.printStackTrace();
+		String sessionId = session.getId();
+		System.err.println("WebSocket 전송 오류: " + sessionId);
+		
+		// EOFException은 클라이언트 연결 끊김으로 인한 정상적인 상황
+		if (exception instanceof java.io.EOFException) {
+			System.out.println("클라이언트 연결 종료로 인한 EOFException (정상): " + sessionId);
+			// 세션 정리는 afterConnectionClosed에서 처리되므로 여기서는 로깅만
+		} else {
+			// 다른 전송 오류는 상세 로그 출력
+			System.err.println("예상치 못한 WebSocket 전송 오류: " + exception.getClass().getSimpleName());
+			exception.printStackTrace();
+		}
+		
+		// 세션이 여전히 열려있다면 정리
+		if (session.isOpen()) {
+			try {
+				session.close();
+			} catch (Exception e) {
+				System.err.println("세션 종료 중 오류: " + e.getMessage());
+			}
+		}
 	}
 
 	/**
@@ -147,6 +166,17 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 			
 			// 프로젝트별 세션 목록에 추가
 			projectSessions.computeIfAbsent(projectId, k -> ConcurrentHashMap.newKeySet()).add(sessionId);
+			
+			// 프로젝트 첫 참여자인 경우 Redis 캐시 워밍
+			if (projectSessions.get(projectId).size() == 1) {
+				System.out.println("🔥 프로젝트 첫 참여자 - Redis 캐시 워밍 시작: " + projectId);
+				try {
+					kanbanRedisService.warmUpProjectCache(projectId);
+					System.out.println("✅ 프로젝트 캐시 워밍 완료: " + projectId);
+				} catch (Exception e) {
+					System.err.println("❌ 프로젝트 캐시 워밍 실패: " + e.getMessage());
+				}
+			}
 			
 			System.out.println("사용자 참여: " + userId + " (세션: " + sessionId + ", 프로젝트: " + projectId + ")");
 		} else {
@@ -502,13 +532,28 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 	 * 특정 세션에 메시지 전송
 	 */
 	private void sendToSession(WebSocketSession session, KanbanMessage message) {
+		if (session == null) {
+			System.err.println("세션이 null입니다. 메시지 전송 불가");
+			return;
+		}
+		
 		try {
 			if (session.isOpen()) {
 				String json = objectMapper.writeValueAsString(message);
 				session.sendMessage(new TextMessage(json));
+			} else {
+				System.out.println("세션이 닫혀있어 메시지 전송 건너뜀: " + session.getId());
 			}
+		} catch (java.io.EOFException e) {
+			System.out.println("클라이언트 연결 종료로 인한 전송 실패 (정상): " + session.getId());
 		} catch (IOException e) {
-			System.err.println("메시지 전송 실패: " + e.getMessage());
+			if (e.getMessage() != null && e.getMessage().contains("Connection reset")) {
+				System.out.println("연결 리셋으로 인한 전송 실패 (정상): " + session.getId());
+			} else {
+				System.err.println("메시지 전송 실패: " + e.getMessage());
+			}
+		} catch (Exception e) {
+			System.err.println("예상치 못한 메시지 전송 오류: " + e.getMessage());
 		}
 	}
 
@@ -526,11 +571,19 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 
 		sessions.values().forEach(session -> {
 			try {
-				if (session.isOpen()) {
+				if (session != null && session.isOpen()) {
 					session.sendMessage(new TextMessage(json));
 				}
+			} catch (java.io.EOFException e) {
+				System.out.println("클라이언트 연결 종료로 인한 브로드캐스트 실패 (정상): " + session.getId());
 			} catch (IOException e) {
-				System.err.println("브로드캐스트 전송 실패: " + e.getMessage());
+				if (e.getMessage() != null && e.getMessage().contains("Connection reset")) {
+					System.out.println("연결 리셋으로 인한 브로드캐스트 실패 (정상): " + session.getId());
+				} else {
+					System.err.println("브로드캐스트 전송 실패: " + e.getMessage());
+				}
+			} catch (Exception e) {
+				System.err.println("예상치 못한 브로드캐스트 오류: " + e.getMessage());
 			}
 		});
 
@@ -581,8 +634,16 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 				try {
 					session.sendMessage(new TextMessage(json));
 					successCount++;
+				} catch (java.io.EOFException e) {
+					System.out.println("클라이언트 연결 종료로 인한 프로젝트 브로드캐스트 실패 (정상): " + sessionId);
 				} catch (IOException e) {
-					System.err.println("❌ 프로젝트 브로드캐스트 전송 실패 (세션: " + sessionId + "): " + e.getMessage());
+					if (e.getMessage() != null && e.getMessage().contains("Connection reset")) {
+						System.out.println("연결 리셋으로 인한 프로젝트 브로드캐스트 실패 (정상): " + sessionId);
+					} else {
+						System.err.println("❌ 프로젝트 브로드캐스트 전송 실패 (세션: " + sessionId + "): " + e.getMessage());
+					}
+				} catch (Exception e) {
+					System.err.println("❌ 예상치 못한 프로젝트 브로드캐스트 오류 (세션: " + sessionId + "): " + e.getMessage());
 				}
 			} else {
 				System.out.println("⚠️ 비활성 세션 발견 (정리 필요): " + sessionId);

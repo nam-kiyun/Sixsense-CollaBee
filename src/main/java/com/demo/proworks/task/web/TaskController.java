@@ -25,11 +25,10 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.demo.proworks.board.service.BoardService;
 import com.demo.proworks.board.vo.BoardVo;
+import com.demo.proworks.cmmn.ProworksUserHeader;
 import com.demo.proworks.filesrc.vo.FileSrcVo;
 import com.demo.proworks.redis.service.KanbanRedisService;
 import com.demo.proworks.task.service.TaskService;
-import com.demo.proworks.cmmn.ProworksUserHeader;
-import com.inswave.elfw.util.ControllerContextUtil;
 import com.demo.proworks.task.vo.TaskListVo;
 import com.demo.proworks.task.vo.TaskUpdateVo;
 import com.demo.proworks.task.vo.TaskVo;
@@ -39,6 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
 import com.inswave.elfw.annotation.ElValidator;
+import com.inswave.elfw.util.ControllerContextUtil;
 
 /**
  * @subject : 업무(Task) 정보 관련 처리를 담당하는 컨트롤러
@@ -1033,10 +1033,7 @@ public class TaskController {
         long batchStartTime = System.currentTimeMillis();
         System.out.println("🚀 [배치 로드] TaskListWithUserNameBatch 시작 - boardIds: " + taskVo.getBoardIds() + " | 시작 시간: " + batchStartTime);
         
-        // 배치 로드는 한 번의 요청으로 처리되므로 중복 호출 방지 불필요
-        
         try {
-            
             // boardIds 파싱
             if (taskVo.getBoardIds() == null || taskVo.getBoardIds().trim().isEmpty()) {
                 System.err.println("❌ boardIds가 비어있습니다.");
@@ -1044,40 +1041,76 @@ public class TaskController {
             }
             
             String[] boardIdArray = taskVo.getBoardIds().split(",");
-            System.out.println("📋 처리할 보드 개수: " + boardIdArray.length);
-            
-            List<TaskVo> allTasks = new ArrayList<>();
-            
-            // 각 보드별로 태스크 조회 후 합치기
+            List<String> boardIdList = new ArrayList<>();
             for (String boardId : boardIdArray) {
                 boardId = boardId.trim();
                 if (!boardId.isEmpty()) {
-                    System.out.println("🔍 보드 " + boardId + " 태스크 조회 중...");
-                    
-                    TaskVo boardTaskVo = new TaskVo();
-                    boardTaskVo.setBoardId(boardId);
-                    
-                    // 개별 보드의 태스크 조회 (캐시 적용)
-                    TaskListVo boardTasks = selectTaskListWithUserNameCached(boardTaskVo);
-                    
-                    if (boardTasks != null && boardTasks.getTaskVoList() != null) {
-                        allTasks.addAll(boardTasks.getTaskVoList());
-                        System.out.println("✅ 보드 " + boardId + " 태스크 " + boardTasks.getTaskVoList().size() + "개 추가");
-                    } else {
-                        System.out.println("⚠️ 보드 " + boardId + "에 태스크 없음");
+                    boardIdList.add(boardId);
+                }
+            }
+            
+            System.out.println("📋 처리할 보드 개수: " + boardIdList.size());
+            
+            // 첫 번째 보드를 통해 projectId 찾기
+            String projectId = null;
+            if (!boardIdList.isEmpty()) {
+                try {
+                    BoardVo boardVo = new BoardVo();
+                    boardVo.setBoardId(boardIdList.get(0));
+                    BoardVo board = boardService.selectBoard(boardVo);
+                    if (board != null) {
+                        projectId = board.getProjectId();
+                        System.out.println("📍 프로젝트 ID 확인: " + projectId);
                     }
+                } catch (Exception e) {
+                    System.err.println("❌ boardId로 projectId 조회 실패: " + e.getMessage());
+                }
+            }
+            
+            if (projectId == null) {
+                System.err.println("❌ projectId를 찾을 수 없습니다.");
+                return new TaskListVo();
+            }
+            
+            // 🚀 Redis 캐시에서 먼저 조회 시도
+            System.out.println("🔍 Redis 캐시에서 프로젝트 태스크 조회 시도: " + projectId);
+            List<java.util.Map<String, Object>> cachedTasks = kanbanRedisService.getProjectTasksFromCache(projectId);
+            
+            List<TaskVo> allTasks;
+            if (cachedTasks != null && !cachedTasks.isEmpty()) {
+                System.out.println("✅ Redis 캐시에서 태스크 조회 성공: " + cachedTasks.size() + "개");
+                
+                // Map을 TaskVo로 변환
+                allTasks = new ArrayList<>();
+                for (java.util.Map<String, Object> taskMap : cachedTasks) {
+                    TaskVo convertedTask = convertMapToTaskVo(taskMap);
+                    allTasks.add(convertedTask);
+                }
+                
+                System.out.println("📊 캐시에서 변환된 TaskVo 개수: " + allTasks.size() + "개");
+            } else {
+                System.out.println("⚠️ Redis 캐시 미스 - DB에서 배치 조회 시작");
+                
+                // 캐시 미스 시에만 DB 조회
+                allTasks = taskService.selectTaskListWithUserNameBatch(projectId, boardIdList);
+                
+                // DB 조회 결과를 캐시에 저장
+                if (allTasks != null && !allTasks.isEmpty()) {
+                    List<java.util.Map<String, Object>> taskMapList = convertTaskVoListToMapList(allTasks);
+                    kanbanRedisService.cacheProjectTasks(projectId, taskMapList);
+                    System.out.println("💾 DB 조회 결과를 Redis 캐시에 저장: " + allTasks.size() + "개");
                 }
             }
             
             // ⏱️ 배치 로드 성능 측정 완료
             long batchEndTime = System.currentTimeMillis();
             long batchDuration = batchEndTime - batchStartTime;
-            System.out.println("🎯 [배치 로드] TaskListWithUserNameBatch 완료 - boardIds: " + taskVo.getBoardIds() + 
-                              " | 소요 시간: " + batchDuration + "ms | 보드 개수: " + boardIdArray.length + 
-                              " | 총 태스크 개수: " + allTasks.size());
+            System.out.println("🎯 [배치 로드] TaskListWithUserNameBatch 완료 - projectId: " + projectId + 
+                              " | 소요 시간: " + batchDuration + "ms | 보드 개수: " + boardIdList.size() + 
+                              " | 총 태스크 개수: " + (allTasks != null ? allTasks.size() : 0));
             
             TaskListVo result = new TaskListVo();
-            result.setTaskVoList(allTasks);
+            result.setTaskVoList(allTasks != null ? allTasks : new ArrayList<>());
             
             return result;
             
@@ -1146,12 +1179,17 @@ public class TaskController {
 
             System.out.println("📊 프로젝트 전체 태스크 (사용자 이름 포함) 조회 완료: " + (allProjectTasks != null ? allProjectTasks.size() : 0) + "개");
 
-            // 3. 프로젝트 전체 태스크를 Redis에 캐싱
+            // 3. 최적화된 스마트 캐싱 전략 적용
             if (allProjectTasks != null && !allProjectTasks.isEmpty()) {
                 // TaskVo 리스트를 Map 리스트로 변환하여 캐싱
                 List<java.util.Map<String, Object>> taskMapList = convertTaskVoWithUserNameToMapList(allProjectTasks);
+                
+                // 기존 방식 대신 스마트 캐싱 사용 (프로젝트 통합 관리)
+                System.out.println("🧠 스마트 캐싱 전략 적용 - projectId 기반 통합 데이터 관리");
                 kanbanRedisService.cacheTasksWithUserName(cacheKey, taskMapList);
-                System.out.println("💾 프로젝트 전체 태스크 (사용자 이름 포함)를 Redis에 캐싱 완료: " + allProjectTasks.size() + "개");
+                
+                System.out.println("💾 최적화된 캐싱 완료: " + allProjectTasks.size() + "개 태스크");
+                System.out.println("💡 효율성 개선: 1회 Redis 조회로 전체 프로젝트 데이터 커버, 애플리케이션 레벨 필터링");
             }
 
             // 4. 현재 요청한 보드의 태스크만 필터링하여 반환

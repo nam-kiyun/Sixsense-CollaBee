@@ -155,7 +155,30 @@ scwin.notice_button_sendPush = function (result) {
 
 };
 ]]></script>
-    	<style type="text/css"><![CDATA[/* 공통 스타일 */
+    	<style type="text/css"><![CDATA[/* 모바일 스크롤바 숨김 설정 */
+html, body {
+    overflow: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+
+/* 모든 스크롤 가능한 영역에 스크롤바 숨김 적용 */
+* {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+
+/* 공통 스타일 */
 .btn {
     outline: none;
     border: none;

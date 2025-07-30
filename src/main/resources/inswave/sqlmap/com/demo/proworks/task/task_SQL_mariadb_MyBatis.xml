@@ -33,7 +33,7 @@
 	</update>
 
 	<select id="selectTask" parameterType="com.demo.proworks.task.vo.TaskVo" resultType="com.demo.proworks.task.vo.TaskVo">
-		<!-- 업무(Task) 정보를 상세 조회하며 사용자 이름도 함께 조회 -->
+		<!-- 업무(Task) 정보를 상세 조회하며 담당자 이름도 함께 조회 -->
 		SELECT /* QueryID : com.demo.proworks.task.selectTask */
 		t.TASK_ID AS taskId,
 		t.BOARD_ID AS boardId,
@@ -44,11 +44,14 @@
 		t.START_DATE AS startDate,
 		t.END_DATE AS endDate,
 		t.TAGS AS tags,
-		u.USER_NAME AS userName
-		FROM task t
-		JOIN project_user p ON t.project_user_id = p.project_user_id
-		JOIN user u ON u.user_id =
-		p.user_id
+		COALESCE(u.USER_NAME, creator.USER_NAME) AS userName
+		FROM TASK t
+		-- 생성자 정보 (기본값으로 사용)
+		JOIN PROJECT_USER cpu ON t.PROJECT_USER_ID = cpu.PROJECT_USER_ID
+		JOIN USER creator ON cpu.USER_ID = creator.USER_ID
+		-- 담당자 정보 (있으면 우선 사용)
+		LEFT JOIN MANAGER m ON t.TASK_ID = m.TASK_ID
+		LEFT JOIN USER u ON m.USER_ID = u.USER_ID
 		WHERE t.TASK_ID = #{taskId}
 	</select>
 
@@ -63,7 +66,7 @@
 	</delete>
 
 	<select id="selectTodoTasksByProjectId" parameterType="String" resultType="com.demo.proworks.task.vo.TaskVo">
-		<!-- 프로젝트 ID에 해당하는 "할 일" 상태의 작업들을 조회한다. -->
+		<!-- 프로젝트 ID에 해당하는 "할 일" 상태의 작업들을 조회한다. (담당자 기준) -->
 		SELECT /* QueryID : com.demo.proworks.task.selectTodoTasksByProjectId */
 			t.TASK_ID as taskId,
 			t.BOARD_ID as boardId,
@@ -74,12 +77,16 @@
 			t.START_DATE as startDate,
 			t.END_DATE as endDate,
 			t.TAGS as tags,
-			u.USER_NAME as userName,
+			COALESCE(u.USER_NAME, creator.USER_NAME) as userName,
 			b.PROJECT_ID as projectId
 		FROM TASK t
 		JOIN BOARD b ON t.BOARD_ID = b.BOARD_ID
-		JOIN PROJECT_USER pu ON t.PROJECT_USER_ID = pu.PROJECT_USER_ID
-		JOIN USER u ON pu.USER_ID = u.USER_ID
+		-- 생성자 정보 (기본값으로 사용)
+		JOIN PROJECT_USER cpu ON t.PROJECT_USER_ID = cpu.PROJECT_USER_ID
+		JOIN USER creator ON cpu.USER_ID = creator.USER_ID
+		-- 담당자 정보 (있으면 우선 사용)
+		LEFT JOIN MANAGER m ON t.TASK_ID = m.TASK_ID
+		LEFT JOIN USER u ON m.USER_ID = u.USER_ID
 		WHERE b.PROJECT_ID = #{projectId}
 		AND b.BOARD_TITLE = '할 일'
 	</select>
@@ -246,9 +253,9 @@
         ORDER BY BOARD_ID
     </select>
     
-    <!-- 사용자 이름을 포함한 태스크 목록 조회 -->
+    <!-- 사용자 이름을 포함한 태스크 목록 조회 (담당자 기준) -->
     <select id="selectTaskListWithUserName" parameterType="com.demo.proworks.task.vo.TaskVo" resultType="com.demo.proworks.task.vo.TaskVo">
-        <!-- 업무(Task) 정보와 사용자 이름을 함께 조회한다. -->
+        <!-- 업무(Task) 정보와 담당자 이름을 함께 조회한다. -->
         SELECT   /* QueryID : com.demo.proworks.task.selectTaskListWithUserName */
             t.TASK_ID as taskId, 
             t.BOARD_ID as boardId, 
@@ -259,18 +266,25 @@
             t.START_DATE as startDate, 
             t.END_DATE as endDate, 
             t.TAGS as tags,
-            u.USER_NAME as userName
+            COALESCE(u.USER_NAME, creator.USER_NAME) as userName
         FROM TASK t
-        JOIN PROJECT_USER pu ON t.PROJECT_USER_ID = pu.PROJECT_USER_ID
-        JOIN USER u ON pu.USER_ID = u.USER_ID
+        -- 보드 정보 조인 (프로젝트 필터링을 위해)
+        JOIN BOARD b ON t.BOARD_ID = b.BOARD_ID
+        -- 생성자 정보 (기본값으로 사용)
+        JOIN PROJECT_USER cpu ON t.PROJECT_USER_ID = cpu.PROJECT_USER_ID
+        JOIN USER creator ON cpu.USER_ID = creator.USER_ID
+        -- 담당자 정보 (있으면 우선 사용)
+        LEFT JOIN MANAGER m ON t.TASK_ID = m.TASK_ID
+        LEFT JOIN USER u ON m.USER_ID = u.USER_ID
         WHERE 1=1
+        <if test="projectId != null and projectId != ''"> AND b.PROJECT_ID = #{projectId} </if>
         <if test="projectUserId != null and projectUserId != ''"> AND t.PROJECT_USER_ID = #{projectUserId} </if>
         <if test="boardId != null and boardId != ''"> AND t.BOARD_ID = #{boardId} </if>
         ORDER BY t.START_DATE DESC
     </select>
 
-    <select id="selectTaskListWithUserNameBatch" parameterType="list" resultType="com.demo.proworks.task.vo.TaskVo">
-        <!-- 여러 보드의 사용자 이름을 포함한 업무(Task) 정보를 한 번의 쿼리로 배치 조회 (진짜 배치) -->
+    <select id="selectTaskListWithUserNameBatch" parameterType="map" resultType="com.demo.proworks.task.vo.TaskVo">
+        <!-- 특정 프로젝트의 여러 보드에서 사용자 이름을 포함한 업무(Task) 정보를 한 번의 쿼리로 배치 조회 (담당자 기준) -->
         SELECT /* QueryID : com.demo.proworks.task.selectTaskListWithUserNameBatch */
             t.TASK_ID as taskId,
             t.BOARD_ID as boardId,
@@ -281,12 +295,19 @@
             t.START_DATE as startDate, 
             t.END_DATE as endDate, 
             t.TAGS as tags,
-            u.USER_NAME as userName
+            COALESCE(u.USER_NAME, creator.USER_NAME) as userName
         FROM TASK t
-        JOIN PROJECT_USER pu ON t.PROJECT_USER_ID = pu.PROJECT_USER_ID
-        JOIN USER u ON pu.USER_ID = u.USER_ID
-        WHERE t.BOARD_ID IN
-        <foreach collection="list" item="boardId" open="(" close=")" separator=",">
+        -- 보드 정보 조인 (프로젝트 필터링을 위해)
+        JOIN BOARD b ON t.BOARD_ID = b.BOARD_ID
+        -- 생성자 정보 (기본값으로 사용)
+        JOIN PROJECT_USER cpu ON t.PROJECT_USER_ID = cpu.PROJECT_USER_ID
+        JOIN USER creator ON cpu.USER_ID = creator.USER_ID
+        -- 담당자 정보 (있으면 우선 사용)
+        LEFT JOIN MANAGER m ON t.TASK_ID = m.TASK_ID
+        LEFT JOIN USER u ON m.USER_ID = u.USER_ID
+        WHERE b.PROJECT_ID = #{projectId}
+        AND t.BOARD_ID IN
+        <foreach collection="boardIds" item="boardId" open="(" close=")" separator=",">
             #{boardId}
         </foreach>
         ORDER BY t.BOARD_ID, t.START_DATE DESC
