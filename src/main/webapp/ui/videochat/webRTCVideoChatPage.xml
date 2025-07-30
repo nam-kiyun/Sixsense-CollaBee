@@ -8,42 +8,47 @@
         <w2:MSA/>
         <xf:model>
             <w2:dataCollection baseNode="map">
-                <w2:dataMap baseNode="map" id="dma_videoChat">
-                    <w2:keyInfo>
-                        <w2:key id="channelName" name="channelName" dataType="text"/>
-                        <w2:key id="userId" name="userId" dataType="text"/>
-                        <w2:key id="userName" name="userName" dataType="text"/>
-                        <w2:key id="isJoined" name="isJoined" dataType="text"/>
-                        <w2:key id="isMuted" name="isMuted" dataType="text"/>
-                        <w2:key id="isVideoOff" name="isVideoOff" dataType="text"/>
-                    </w2:keyInfo>
-                </w2:dataMap>
-                <w2:dataList baseNode="list" id="dlt_chatMessages" repeatNode="map">
-                    <w2:columnInfo>
-                        <w2:column id="messageId" name="messageId" dataType="text"/>
-                        <w2:column id="userId" name="userId" dataType="text"/>
-                        <w2:column id="userName" name="userName" dataType="text"/>
-                        <w2:column id="message" name="message" dataType="text"/>
-                        <w2:column id="timestamp" name="timestamp" dataType="text"/>
-                        <w2:column id="isOwn" name="isOwn" dataType="text"/>
-                    </w2:columnInfo>
-                </w2:dataList>
-                
-                <!-- 사용자 정보 데이터맵 (세션 정보) -->
-                <w2:dataMap baseNode="map" id="dm_userInfo">
-                    <w2:keyInfo>
-                        <w2:key id="userId" name="사용자ID" dataType="text"/>
-                        <w2:key id="userName" name="사용자명" dataType="text"/>
-                        <w2:key id="userImage" name="사용자이미지" dataType="text"/>
-                    </w2:keyInfo>
-                    <w2:data use="true">
-                        <userId></userId>
-                        <userName></userName>
-                        <userImage></userImage>
-                    </w2:data>
-                </w2:dataMap>
+            	<w2:dataMap baseNode="map" id="dma_videoChat">
+            		<w2:keyInfo>
+            			<w2:key id="channelName" name="channelName" dataType="text" />
+            			<w2:key id="userId" name="userId" dataType="text" />
+            			<w2:key id="userName" name="userName" dataType="text" />
+            			<w2:key id="isJoined" name="isJoined" dataType="text" />
+            			<w2:key id="isMuted" name="isMuted" dataType="text" />
+            			<w2:key id="isVideoOff" name="isVideoOff" dataType="text" />
+            		</w2:keyInfo>
+            	</w2:dataMap>
+            	<w2:dataList baseNode="list" id="dlt_chatMessages" repeatNode="map">
+            		<w2:columnInfo>
+            			<w2:column id="messageId" name="messageId" dataType="text" />
+            			<w2:column id="userId" name="userId" dataType="text" />
+            			<w2:column id="userName" name="userName" dataType="text" />
+            			<w2:column id="message" name="message" dataType="text" />
+            			<w2:column id="timestamp" name="timestamp" dataType="text" />
+            			<w2:column id="isOwn" name="isOwn" dataType="text" />
+            		</w2:columnInfo>
+            	</w2:dataList>
+
+            	<!-- 사용자 정보 데이터맵 (세션 정보) -->
+            	<w2:dataMap baseNode="map" id="dm_userInfo">
+            		<w2:keyInfo>
+            			<w2:key id="userId" name="사용자ID" dataType="text" />
+            			<w2:key id="userName" name="사용자명" dataType="text" />
+            			<w2:key id="userImage" name="사용자이미지" dataType="text" />
+            		</w2:keyInfo>
+            		<w2:data use="true">
+            			<userId></userId>
+            			<userName></userName>
+            			<userImage></userImage>
+            		</w2:data>
+            	</w2:dataMap>
+            	<w2:dataMap baseNode="map" id="dataMap1">
+            		<w2:keyInfo>
+            			<w2:key id="projectId" name="projectId" dataType="text"></w2:key>
+            		</w2:keyInfo>
+            	</w2:dataMap>
             </w2:dataCollection>
-            
+
             <!-- 세션 사용자 정보 가져오기 submission -->
             <xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" 
                            method="post" mediatype="application/json" 
@@ -529,6 +534,15 @@ try {
         }
     }
     
+    // 모바일에서 dataObject로 전달된 경우 처리
+    if (projectId === 'default' && $p && $p.getParameter && $p.getParameter("dataObject")) {
+        const dataObject = $p.getParameter("dataObject");
+        if (dataObject && dataObject.projectInfo && dataObject.projectInfo.projectId) {
+            projectId = dataObject.projectInfo.projectId;
+            console.log("모바일 dataObject에서 projectId 획득:", projectId);
+        }
+    }
+    
     // 대안: URL parameter도 확인 (fallback)
     if (projectId === 'default') {
         const urlParams = new URLSearchParams(window.location.search);
@@ -548,6 +562,8 @@ let currentUser = {
     channelName: "webrtc-room-" + projectId
 };
 
+console.log("생성된 채널명:", currentUser.channelName);
+console.log("프로젝트 ID:", projectId);
 //console.log("현재 사용자 정보:", currentUser);
 
 scwin.onpageload = function() {
