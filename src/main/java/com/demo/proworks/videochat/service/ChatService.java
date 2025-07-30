@@ -2,6 +2,7 @@ package com.demo.proworks.videochat.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,7 @@ public class ChatService {
             
             // Redis List에 JSON 문자열 추가 (오른쪽 끝에 추가)
             redisTemplate.opsForList().rightPush(channelKey, jsonMessage);
+            redisTemplate.expire(channelKey, 20, TimeUnit.MINUTES);
             
             // 채널 목록에 채널명 추가 (Set으로 중복 방지)
             redisTemplate.opsForSet().add(CHANNEL_LIST_KEY, message.getChannelName());
