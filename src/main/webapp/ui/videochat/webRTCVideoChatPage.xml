@@ -878,7 +878,7 @@ async function handleUserJoined(data) {
                 }
 
     //console.log('������ 새 사용자 참가:', userName, userId);
-    scwin.addChatMessage("시스템", `${userName}님이 화상통화에 참가했습니다.`, false);
+    //scwin.addChatMessage("시스템", `${userName}님이 화상통화에 참가했습니다.`, false);
     
     // P2P 연결 시작 (Offer 생성)
     await createPeerConnection(userId, userName, true);
@@ -1048,7 +1048,7 @@ function handleUserLeft(data) {
         peerConnections.delete(userId);
     }
     scwin.removeRemoteUser(userId);
-    scwin.addChatMessage("시스템", `${userName}님이 나갔습니다.`, false);
+    //scwin.addChatMessage("시스템", `${userName}님이 나갔습니다.`, false);
 }
 
 // 원격 비디오 표시 (userId 추가로 정확한 매칭)
@@ -1314,7 +1314,7 @@ scwin.initializeChatWebSocket = function() {
                     break;
                     
                 case 'user-joined':
-                    scwin.addChatMessage("시스템", `${data.userName}님이 참가했습니다.`, false);
+                    //scwin.addChatMessage("시스템", `${data.userName}님이 참가했습니다.`, false);
                     
                     // 새 사용자 정보 저장
                     if (data.userId && data.userName) {
@@ -1340,7 +1340,7 @@ scwin.initializeChatWebSocket = function() {
                     break;
                     
                 case 'user-left':
-                    scwin.addChatMessage("시스템", `${data.userName}님이 나갔습니다.`, false);
+                    //scwin.addChatMessage("시스템", `${data.userName}님이 나갔습니다.`, false);
                     
                     if (data.userId) {
                         remoteUserInfo.delete(data.userId);
