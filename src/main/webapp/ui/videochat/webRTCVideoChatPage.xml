@@ -474,17 +474,35 @@
         <script type="text/javascript" src="/InsWebApp/js/comm/serverInfo.js"></script>
         
         <script type="text/javascript"><![CDATA[
-// Simple WebRTC 다대다 화상통화 구현 (P2P Mesh 방식)
-// WebRTC 관련 변수들
-let peerConnections = new Map(); // userId -> RTCPeerConnection
-let pendingIceCandidates = new Map(); // userId -> [candidates] (대기 중인 ICE 후보)
+// ===== Simple WebRTC 다대다 화상통화 구현 (P2P Mesh 방식) =====
+// 모든 변수들은 화상통화 세션 동안 유지되며, 페이지 언로드 시 정리됨
+
+/** @type {Map<string, RTCPeerConnection>} 사용자 ID별 P2P 연결 객체 매핑 */
+let peerConnections = new Map();
+
+/** @type {Map<string, Array>} 연결 전 수신된 ICE 후보들을 사용자별로 대기 저장 */
+let pendingIceCandidates = new Map();
+
+/** @type {MediaStream|null} 로컬 사용자의 카메라/마이크 스트림 (getUserMedia로 획득) */
 let localStream = null;
-let chatSocket = null; // 채팅용 WebSocket (그대로 유지)
+
+/** @type {WebSocket|null} 시그널링 및 채팅용 WebSocket 연결 */
+let chatSocket = null;
+
+/** @type {boolean} 현재 화상통화 방 참가 상태 */
 let isJoined = false;
+
+/** @type {boolean} 로컬 오디오 음소거 상태 */
 let isMuted = false;
+
+/** @type {boolean} 로컬 비디오 비활성화 상태 */
 let isVideoOff = false;
-let remoteUserInfo = new Map(); // 원격 사용자 정보 저장
-let remoteStreams = new Map(); // userId -> MediaStream
+
+/** @type {Map<string, Object>} 원격 사용자들의 기본 정보 저장 (userId, userName, 기타) */
+let remoteUserInfo = new Map();
+
+/** @type {Map<string, MediaStream>} 사용자 ID별 원격 미디어 스트림 매핑 */
+let remoteStreams = new Map();
 
 // STUN/TURN 서버 설정
 const iceServers = [
@@ -499,21 +517,38 @@ const iceServers = [
     }
 ];
 
-// RTCPeerConnection 설정
+// ===== RTCPeerConnection 기본 설정 =====
+/**
+ * 모든 P2P 연결에 사용될 RTCPeerConnection 설정
+ * @type {RTCConfiguration}
+ */
 const pcConfig = {
     iceServers: iceServers,
     iceCandidatePoolSize: 10
 };
 
-// 사용자 정보 (고유 ID 생성)
+// ===== 사용자 식별 시스템 =====
+/**
+ * 고유 사용자 ID 생성 함수
+ * 현재 시간과 랜덤 값을 조합하여 고유한 데스크톱 사용자 ID를 생성
+ * @returns {string} 'user_timestamp_random' 형식의 고유 ID
+ */
 const generateUserId = () => {
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 1000);
     return `user_${timestamp}_${random}`;
 };
 
-// 초기 사용자 정보 (세션에서 가져올 때까지 임시값)
-// dataObject로 전달받은 projectId 사용
+// ===== 현재 사용자 정보 =====
+/**
+ * 현재 데스크톱 사용자 정보 객체
+ * 세션에서 실제 사용자 정보를 로드할 때까지의 임시 값
+ * dataObject 또는 URL 파라미터로 전달받은 projectId 사용
+ * @type {Object}
+ * @property {string} userId - 고유 사용자 ID
+ * @property {string} userName - 사용자 표시명
+ * @property {string} channelName - WebRTC 방 채널명
+ */
 let projectId = 'default';
 let isFromPip = false;
 try {
@@ -551,6 +586,11 @@ let currentUser = {
     channelName: "webrtc-room-" + projectId
 };
 
+/**
+ * 페이지 로드 시 초기화 함수
+ * 프로젝트 ID 추출, 세션 사용자 정보 로드, WebRTC 시스템 초기화 등 수행
+ * @returns {void}
+ */
 scwin.onpageload = function() {
     //카메라 촬영
     $h.camera.capturePhoto((r)=>{},{});
@@ -655,6 +695,12 @@ scwin.onpageunload = function() {
 };
 
 // Simple WebRTC 초기화
+/**
+ * Simple WebRTC 시스템 초기화
+ * HTTPS 환경 체크, WebRTC 지원 확인, 기본 설정 진행
+ * @returns {void}
+ * @throws {Error} HTTPS 환경 아니거나 WebRTC 미지원 시 에러
+ */
 scwin.initializeSimpleWebRTC = function() {
     try {
         
@@ -679,6 +725,13 @@ scwin.initializeSimpleWebRTC = function() {
 };
 
 // 자동 화상통화 참가 (페이지 진입 시)
+/**
+ * 자동 화상통화 참가 (페이지 진입 시)
+ * 로컬 미디어 스트림 획득, 비디오 표시, 방 참가 알림 전송
+ * @async
+ * @returns {Promise<void>} 자동 참가 완료 Promise
+ * @throws {Error} 카메라/마이크 접근 권한 거부 또는 WebSocket 연결 실큀 시
+ */
 scwin.autoJoinCall = async function() {
     try {
         
@@ -740,6 +793,13 @@ scwin.autoJoinCall = async function() {
 };
 
 // 화상통화 참가 (Simple WebRTC P2P 방식) - 수동 참가용
+/**
+ * 수동 화상통화 참가
+ * 사용자의 명시적 참가 요청 시 로컬 미디어 획득 및 방 입장 처리
+ * @async
+ * @returns {Promise<void>} 화상통화 참가 완료 Promise
+ * @throws {Error} 미디어 접근 권한 거부, WebSocket 연결 실큀, P2P 연결 실큀 시
+ */
 scwin.joinCall = async function() {
     try {
         scwin.showLoading("카메라와 마이크에 접근하는 중...");
@@ -841,19 +901,34 @@ async function handleUserJoined(data) {
 }
 
 // P2P 연결 생성
+/**
+ * P2P 연결 생성 및 관리
+ * 특정 사용자와의 WebRTC PeerConnection 생성, 이벤트 리스너 설정, offer/answer 처리
+ * @async
+ * @param {string} userId - 연결할 상대방 사용자 ID
+ * @param {string} userName - 연결할 상대방 사용자명
+ * @param {boolean} isOfferer - offer 생성 주체 여부 (true: offer 생성, false: answer 대기)
+ * @returns {Promise<RTCPeerConnection>} 생성된 PeerConnection 객체
+ * @throws {Error} PeerConnection 생성/설정 실큀 시 에러
+ */
 async function createPeerConnection(userId, userName, isOfferer) {
     try {
+        // ===== RTCPeerConnection 생성 및 기본 설정 =====
         const pc = new RTCPeerConnection(iceServers);
         peerConnections.set(userId, pc);
         
-        // 로컬 스트림 추가
+        // ===== 로컬 미디어 스트림 추가 =====
+        // 내 카메라/마이크 스트림을 PeerConnection에 추가
+        // 상대방이 ontrack 이벤트로 수신할 수 있도록 함
         if (localStream) {
             localStream.getTracks().forEach(track => {
                 pc.addTrack(track, localStream);
             });
         }
         
-        // 원격 스트림 처리
+        // ===== 원격 스트림 수신 처리 =====
+        // 상대방의 미디어 스트림을 수신하면 자동으로 호출
+        // event.streams[0]에 상대방의 비디오/오디오 트랙 포함
         pc.ontrack = (event) => {
             
             displayRemoteVideo(event.streams[0], userName, userId);
@@ -900,6 +975,17 @@ async function createPeerConnection(userId, userName, isOfferer) {
 }
 
 // Offer 처리
+/**
+ * WebRTC Offer 수신 및 처리
+ * 상대방으로부터 받은 SDP offer를 파싱하고 answer를 생성하여 응답
+ * @async
+ * @param {Object} data - offer 메시지 데이터
+ * @param {string} data.userId - offer 발신자 사용자 ID
+ * @param {string} data.userName - offer 발신자 사용자명
+ * @param {string} data.sdp - JSON 문자열 형태의 SDP offer 정보
+ * @returns {Promise<void>} offer 처리 완료 Promise
+ * @throws {Error} SDP 파싱, PeerConnection 생성, answer 생성 실큀 시 에러
+ */
 async function handleOffer(data) {
     const { userId, userName, sdp } = data;
     
@@ -932,6 +1018,16 @@ async function handleOffer(data) {
 }
 
 // Answer 처리
+/**
+ * WebRTC Answer 수신 및 처리
+ * 상대방으로부터 받은 SDP answer를 로컬 PeerConnection에 설정
+ * @async
+ * @param {Object} data - answer 메시지 데이터
+ * @param {string} data.userId - answer 발신자 사용자 ID
+ * @param {string} data.sdp - JSON 문자열 형태의 SDP answer 정보
+ * @returns {Promise<void>} answer 처리 완료 Promise
+ * @throws {Error} SDP 파싱 또는 설정 실큀 시 에러
+ */
 async function handleAnswer(data) {
     const { userId, sdp } = data;
     const answer = JSON.parse(sdp);
@@ -947,6 +1043,17 @@ async function handleAnswer(data) {
 }
 
 // ICE 후보 처리
+/**
+ * ICE Candidate 수신 및 처리
+ * 상대방으로부터 받은 ICE candidate를 로컬 PeerConnection에 추가
+ * 연결 전 수신된 candidate는 대기 큐에 저장 후 나중에 처리
+ * @async
+ * @param {Object} data - ICE candidate 메시지 데이터
+ * @param {string} data.userId - candidate 발신자 사용자 ID
+ * @param {string} data.iceCandidate - JSON 문자열 형태의 ICE candidate 정보
+ * @returns {Promise<void>} ICE candidate 처리 완료 Promise
+ * @throws {Error} candidate 파싱 또는 추가 실큀 시 에러
+ */
 async function handleIceCandidate(data) {
     try {
         const { userId, iceCandidate } = data;
@@ -1527,6 +1634,11 @@ scwin.hideLoading = function() {
 // ===== Simple WebRTC 관련 함수들 =====
 
 // 화상통화 나가기
+/**
+ * 화상통화 나가기 및 전체 정리
+ * 모든 P2P 연결 종료, 로컬 스트림 정지, WebSocket 연결 종료, UI 상태 초기화
+ * @returns {void}
+ */
 scwin.leaveCall = function() {
     try {
         // 모든 P2P 연결 종료
@@ -1648,6 +1760,11 @@ scwin.leaveCall = function() {
 };
 
 // 음소거 토글
+/**
+ * 음소거 상태 토글
+ * 로컬 오디오 트랙의 활성화/비활성화 상태를 전환하고 UI 업데이트
+ * @returns {void}
+ */
 scwin.toggleMute = function() {
     if (localStream) {
         const audioTrack = localStream.getAudioTracks()[0];
@@ -1678,6 +1795,11 @@ scwin.toggleMute = function() {
 };
 
 // 비디오 토글
+/**
+ * 비디오 상태 토글
+ * 로컬 비디오 트랙의 활성화/비활성화 상태를 전환하고 UI 업데이트
+ * @returns {void}
+ */
 scwin.toggleVideo = function() {
     if (localStream) {
         const videoTrack = localStream.getVideoTracks()[0];
@@ -3248,6 +3370,12 @@ scwin.updateControlButtons = function() {
 };
 
 // 내 비디오를 그리드에 추가 (다른 참가자들과 동일한 레이아웃)
+/**
+ * 내 비디오를 그리드에 추가
+ * 로컬 사용자의 비디오 스트림을 화상통화 그리드에 표시
+ * @param {MediaStream} stream - 로컬 사용자의 비디오/오디오 스트림
+ * @returns {void}
+ */
 scwin.addMyVideoToGrid = function(stream) {
     try {
         const remoteVideosGrid = document.getElementById('remoteVideosGrid');
