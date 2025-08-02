@@ -28,10 +28,7 @@ import com.inswave.elfw.annotation.ElValidator;
 
 @Controller
 public class SseController {
-
-	// 사용자별 emitter 관리
 	private static final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
-
 	private static final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
 
 	@ElService(key = "user/notice")
@@ -43,17 +40,14 @@ public class SseController {
 		emitters.put(emitterId, emitter);
 
 		emitter.onCompletion(() -> {
-			System.out.println("❌ emitter 완료됨: " + emitterId);
 			emitters.remove(emitterId);
 		});
 
 		emitter.onTimeout(() -> {
-			System.out.println("⌛ emitter 타임아웃됨: " + emitterId);
 			emitters.remove(emitterId);
 		});
 
 		emitter.onError((e) -> {
-			System.out.println("⚠️ emitter 에러 발생: " + emitterId + " / " + e.getMessage());
 			emitters.remove(emitterId);
 		});
 
@@ -75,14 +69,11 @@ public class SseController {
 
 	public void sendNotification(EmailVo message) {
 		String notice = message.getUserName() + "님 오늘의 할일 메일이 발송되었습니다";
-		System.out.println(notice);
 		emitters.forEach((id, em) -> {
 			try {
 				em.send(SseEmitter.event().name(message.getUserId()).data(notice));
-				System.out.println("알림 발송");
 			} catch (IOException e) {
 				em.completeWithError(e);
-				System.out.println("알림 XXXX" + e);
 			}
 		});
 	}
