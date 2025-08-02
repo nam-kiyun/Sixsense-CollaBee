@@ -145,23 +145,8 @@
 
 const MEDIASOUP_SERVER_URL = getMediasoupServerUrl();
 
-// mediasoup 관련 변수들
-let mediasoupSocket = null;
-let device = null;
-let sendTransport = null;
-let recvTransport = null;
-let videoProducer = null;
-let audioProducer = null;
-let consumers = new Map(); // consumerId -> {consumer, remoteVideo}
-let remoteVideos = new Map(); // peerId -> video element info
-
-// 기존 변수들 (채팅용은 그대로 유지) 
-let localStream = null;
-let chatSocket = null; // 채팅용 WebSocket (그대로 유지)
-let isJoined = false;
-let isMuted = false;
-let isVideoOff = false;
-let remoteUserInfo = new Map(); // 원격 사용자 정보 저장
+// 기존 변수들
+let chatSocket = null;
 
 // 사용자 정보 (고유 ID 생성)
 const generateUserId = () => {
@@ -180,19 +165,13 @@ let currentUser = {
 
 //페이지 로드 되었을 때 
 scwin.onpageload = function () {
-
-
-
     scwin.popup_closeAction();
-
     $p.executeSubmission("sbm_session");
 
     //사용자 정보
     let userInfo = $p.getParameter("userInfo");
     scwin.defaultImage = "https://raw.githubusercontent.com/dorazi0423/test/refs/heads/main/group1.png";
 
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////
     //문서 내용 불러오기
     scwin.taskInfo = "";
     scwin.taskId = userInfo.taskId;
@@ -204,9 +183,6 @@ scwin.onpageload = function () {
     scwin.initializeChatWebSocket();
 
 
-
-
-
     //버전관리
     scwin.snapShot = false; //버전에서 현재상태 저장여부
     scwin.originalData = {};
@@ -214,7 +190,7 @@ scwin.onpageload = function () {
     scwin.previousHTML = "";
 
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //버전관리 버튼 및 저장 버튼 추가
     const generateUniqueId = (prefix) => {
         return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     };
@@ -227,9 +203,6 @@ scwin.onpageload = function () {
     const deleteId = generateUniqueId("btn_delete");
 
 
-
-
-    // 버튼 그룹 생성
     const btnGroup = $p.dynamicCreate(btnGroupId, "group", {
         className: "header-btn-group",
     }, group);
@@ -239,8 +212,6 @@ scwin.onpageload = function () {
         group.insertBefore(btnGroup.render, close);
     }
 
-
-    // 버튼 생성 → btnGroup에 삽입
     const save = $p.dynamicCreate(saveId, "button", {
         className: "btn-save header-btn",
         label: "저장",
@@ -257,14 +228,12 @@ scwin.onpageload = function () {
 
 
     const btn_save = $p.getComponentById(saveId);
-    //task 저장버튼
+
     btn_save.bind("onclick", function () {
         if (!scwin.snapShot) {
-            scwin.saveTask(); // snapShot이 false일 때만 저장 수행
+            scwin.saveTask();
         }
     });
-
-    // scwin.updateSaveButtonState(btn_save);
 
     const btn_version = $p.getComponentById(versionId);
     btn_version.bind("onclick", function () {
@@ -281,11 +250,6 @@ scwin.onpageload = function () {
     })
 
 
-
-
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////
-    //ifram, contents 높이 조절
     setInterval(() => {
         const iframe = document.querySelector('.cke_wysiwyg_frame');
         const contents = document.querySelector(".cke_contents");
@@ -303,19 +267,10 @@ scwin.onpageload = function () {
     }, 300);
 
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-    // setTimeout(function () {
-    //     scwin.fileButtonInit();
-    // }, 100); // 에디터 부분에 파일추가
-
-    /////////////////////////////////////////////////////////////////////
-
     // 채팅 불러오기 및 초기 세팅
-    scwin.currentPage = 1; // 최초 로딩이 1페이지니까 다음은 2부터 시작
-    scwin.isLoading = false; // 중복 호출 방지용 플래그
-    scwin.hasMore = true; // 마지막 페이지에 도달하면 false로 바꾸기
+    scwin.currentPage = 1; 
+    scwin.isLoading = false; 
+    scwin.hasMore = true; 
     scwin.loadMoreData();
 
     //무한 스크롤
@@ -329,27 +284,22 @@ scwin.onpageload = function () {
             scwin.loadMoreData(); // 이전 댓글 불러오기
         }
     });
-    /////////////////////////////////////////////////////////////////////
-    //파일
-    scwin.filePageIndex = 1; //현재 파일 페이지
-    scwin.filePageNum = 0; //파일 순번
-    pageList.setCount(1);
 
+
+    //파일
+    scwin.filePageIndex = 1;
+    scwin.filePageNum = 0; 
+    pageList.setCount(1);
     scwin.chatDate = new Set();
 
     scwin.link();
 };
 
 
-
+//하이퍼링크
 scwin.link = function () {
     const ckInstance = CKEDITOR.instances["mf_wfr_mainContent_exa_popup_wframe_contents_editor_"];
 
-    // 에디터에서 HTML 추출하기
-    const contentHtml = ckInstance.getData();
-    console.log(contentHtml);
-
-    // 하이퍼링크가 있을 경우 클릭 시 새창 열기 (편집모드에서는 직접 구현 필요)
     ckInstance.on('contentDom', function () {
         ckInstance.document.on('click', function (event) {
             const element = event.data.getTarget();
@@ -357,13 +307,13 @@ scwin.link = function () {
             if (element.is('a') && element.getAttribute('href')) {
                 const href = element.getAttribute('href');
                 window.open(href, '_blank');
-                event.data.preventDefault(); // 기본 클릭 동작 막기
+                event.data.preventDefault(); 
             }
         });
     });
 }
 
-
+//에디터 변화 감지
 scwin.changeEditor = function () {
     const editorComponentId = "contents_editor";
     const editorComponent = $p.getComponentById(editorComponentId);
@@ -373,11 +323,7 @@ scwin.changeEditor = function () {
         return;
     }
 
-    // CKEditor 인스턴스 직접 접근
     const ckInstance = CKEDITOR.instances["mf_wfr_mainContent_exa_popup_wframe_contents_editor_"];
-    Object.keys(CKEDITOR.instances).forEach(key => {
-        console.log("인스턴스 ID:", key);
-    });
 
     if (!ckInstance) {
         console.warn("[WebSquare AI] CKEditor 인스턴스를 찾을 수 없습니다.");
@@ -391,16 +337,8 @@ scwin.changeEditor = function () {
             const currentHTML = ckInstance.getData();
 
             if (currentHTML !== scwin.previousHTML) {
-
-                // console.log("이전 내용:", scwin.previousHTML);
-                // console.log("현재 내용:", currentHTML);
-
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(currentHTML, "text/html");
-
-                // 이제 doc.body는 HTML을 DOM 구조로 표현한 객체!
-                console.log("변환된 DOM:", doc.body);
-
                 const prevNums = scwin.extractFileNums(scwin.previousHTML);
                 const currNums = scwin.extractFileNums(currentHTML);
 
@@ -408,15 +346,10 @@ scwin.changeEditor = function () {
                 const restoredNums = currNums.filter(num => !prevNums.includes(num));
 
                 if (removedNums.length > 0) {
-                    console.log("삭제된 파일:", removedNums);
                     scwin.removeFileGrid(removedNums);
                 }
                 if (restoredNums.length > 0) {
-                    console.log("복구된 파일:", restoredNums);
-
                     const restoredFiles = [];
-
-                    // DOM에서 .file-data 태그들을 다시 훑음
                     const tags = doc.body.querySelectorAll(".file-data");
 
                     for (let tag of tags) {
@@ -432,7 +365,6 @@ scwin.changeEditor = function () {
                         }
                     }
 
-                    // 그리드에 복구된 파일들 추가
                     scwin.addFileGrid(restoredFiles);
                 }
             }
@@ -443,6 +375,7 @@ scwin.changeEditor = function () {
     });
 };
 
+//몇번째 파일인지 추출
 scwin.extractFileNums = function (html) {
     const tempContainer = document.createElement("div");
     tempContainer.innerHTML = html;
@@ -476,14 +409,11 @@ scwin.loadOriginalVersion = function () {
     if (scwin.originalData) {
         contents_editor.setHTML(scwin.originalData.content);
         dls_allFile.setJSON(scwin.originalData.fileSrc);
-        //dls_allFile.setJSON(dls_backupFile.getAllJSON());
         dls_file.setJSON(scwin.originalData.fileSrc);
         scwin.snapShot = false;
 
         let btnSave = document.querySelector(".btn-save");
         btnSave.classList.remove("header-btn-disabled");
-        console.log("현재버전");
-        console.log(dls_allFile.getAllJSON());
     }
 };
 
@@ -496,7 +426,7 @@ scwin.currentWorkSnapshot = function () {
 };
 
 
-//버전관리 모달창 열리는 함수
+//버전관리 모달창
 scwin.versionPopup = function (e) {
     const versionPopupId = "task_version";
     const isOpen = $p.getComponentById(versionPopupId);
@@ -512,7 +442,6 @@ scwin.versionPopup = function (e) {
             },
         };
 
-        // 팝업 생성 옵션 지정
         let options = {
             headerVisible: false,
             id: versionPopupId,
@@ -539,7 +468,7 @@ scwin.versionPopup = function (e) {
 //팝업창 닫기
 scwin.popup_closeAction = function (argRuntimeID, argJsnInfo) {
     let popObj = $p.getPopupWindow(argRuntimeID);
-    return true; //팝업 닫기 (반환 값이 true인 경우만 팝업이 닫힘)
+    return true;
 };
 
 
@@ -554,21 +483,17 @@ scwin.fileButtonInit = function () {
     const fileBtnId = generateUniqueId("btn_fileUpload");
     const fileInputId = generateUniqueId("input_file");
 
-    // 버튼 그룹 생성
     const btnGroup = $p.dynamicCreate(btnGroupId, "group", {
         className: "header-btn-group",
         style: "width:100px; height: 18px; padding-bottom: 5px;"
     }, editorHeader);
 
-
-    // "파일 추가" 버튼 생성
     const fileBtn = $p.dynamicCreate(fileBtnId, "button", {
         className: "btn-upload header-btn",
         style: "cursor: pointer;",
         label: "파일 추가",
     }, btnGroup);
 
-    // 숨겨진 input[type=file] 생성
     const fileInput = document.createElement("input");
     fileInput.type = "file";
     fileInput.id = fileInputId;
@@ -576,26 +501,21 @@ scwin.fileButtonInit = function () {
     fileInput.style.display = "none";
     document.body.appendChild(fileInput);
 
-    // 버튼 클릭 시 숨겨진 input 트리거
     const btn_fileUpload = $p.getComponentById(fileBtnId);
     btn_fileUpload.bind("onclick", function () {
         document.getElementById(fileInputId).click();
     });
 
-    // input change 이벤트 처리
     document.getElementById(fileInputId).addEventListener("change", function () {
         const files = this.files;
     });
-
 }
 
 //task 정보 가져오기
 scwin.getTask = function (taskId, projectId) {
-    //  데이터 보내기
     const formData = new FormData();
     formData.append("projectId", projectId);
 
-    // 서버로 전송
     $.ajax({
         url: `/InsWebApp/task/${taskId}.pwkjson`,
         type: "POST",
@@ -610,17 +530,14 @@ scwin.getTask = function (taskId, projectId) {
             dma_task.set("taskId", data.taskId);
 
             header_title.setValue(data.taskTitle);
-            // projectUserVo 리스트를 세팅
 
-
-            //담당자(프로젝트 사용자 값 세팅)
+            //담당자
             let userData = [];
             data.projectUserVo.forEach(user => {
                 userData.push({ userId: user.userId, userName: user.userName });
             });
             dls_manager.setJSON(userData);
 
-            //담당자 존재하면 값 세팅
             if (data.managerVo && data.managerVo.length > 0) {
                 let selectedUserIds = [];
                 data.managerVo.forEach(manager => {
@@ -637,21 +554,16 @@ scwin.getTask = function (taskId, projectId) {
             data.userName ? name_input.setValue(data.userName) : "";
 
             contents_editor.setHTML(data.content);
-            //currentUser.channelName = data.taskId;
 
             const fileList = data.fileSrcVo;
-
-            // HTML 에디터의 기존 내용 가져오기
             let html = contents_editor.getHTML();
 
-            // DOM 파싱을 위한 임시 컨테이너 생성
+
             const container = document.createElement("div");
             container.innerHTML = html;
 
-            // file-data 클래스를 가진 태그들을 순서대로 가져오기
             const fileTags = container.querySelectorAll(".file-data");
 
-            // fileList 순서와 fileTags 순서가 일치한다고 가정하고 data-num 추가
             fileList.forEach((item, index) => {
                 item.num = ++scwin.filePageNum;
 
@@ -662,20 +574,10 @@ scwin.getTask = function (taskId, projectId) {
                 }
             });
 
-            //contents_editor.setHTML(container.innerHTML);
             scwin.previousHTML = contents_editor.getHTML();
 
             dls_allFile.setJSON(data.fileSrcVo);
             dls_file.setJSON(data.fileSrcVo);
-
-            // setTimeout(() => {
-            //     if (contents_editor.getHTML().trim() === "") {
-            //         console.log("⚠️ 내용 사라짐. 복구 시도!");
-            //         contents_editor.setHTML(scwin.lastEditorHtml);
-            //         scwin.previousHTML = scwin.lastEditorHtml;
-            //     }
-            // }, 1500);
-
         },
         error: async function (err) {
             await $c.win.alert("저장 실패! 다시 시도해주세요");
@@ -704,7 +606,6 @@ scwin.initializeChatWebSocket = function () {
     const host = window.location.hostname;
     const port = window.location.port || (protocol === 'wss:' ? '443' : '80');
 
-    // 여러 WebSocket URL 시도
     const wsUrls = [
         `${protocol}//${host}:${port}/InsWebApp/chat`,
         `ws://localhost:9093/InsWebApp/chat`,
@@ -712,15 +613,11 @@ scwin.initializeChatWebSocket = function () {
     ];
 
     let wsUrl = wsUrls[0];
-    console.log("WebSocket 연결 시도:", wsUrl);
 
     try {
         chatSocket = new WebSocket(wsUrl);
 
         chatSocket.onopen = function () {
-            console.log("✅ WebSocket 연결 성공");
-
-            // 채널 참가
             const joinMessage = {
                 type: 'join',
                 channelName: currentUser.channelName,
@@ -733,11 +630,9 @@ scwin.initializeChatWebSocket = function () {
         chatSocket.onmessage = function (event) {
             try {
                 const data = JSON.parse(event.data);
-                console.log("WebSocket 메시지 수신:", data.type, data);
-
+         
                 switch (data.type) {
                     case 'message':
-                        console.log(data);
                         if (data.userId !== currentUser.userId) {
                             const todayText = scwin.formatDate(new Date());
                             if (!scwin.chatDate.has(todayText)) {
@@ -745,9 +640,7 @@ scwin.initializeChatWebSocket = function () {
                                 scwin.chatDate.add(todayText);
                             }
                             scwin.addChatMessage(data.userName, data.message, data.createdAt, false, data.userImage, data.commentId);
-                        } else {
-                            console.log("내 메시지 서버 에코 무시:", data.message);
-                        }
+                        } 
                         break;
 
                     case 'delete-message':
@@ -776,18 +669,12 @@ scwin.initializeChatWebSocket = function () {
                 }
             } catch (error) {
                 console.error("❌ 메시지 처리 오류:", error);
-                //scwin.addChatMessage("시스템", "❌ 메시지 처리 중 오류 발생", false);
             }
         };
 
         chatSocket.onclose = function (event) {
-            console.log("❌ WebSocket 연결 종료:", event.code, event.reason);
-
             if (event.code !== 1000) {
-                //scwin.addChatMessage("시스템", "⚠️ 서버와의 연결이 끊어졌습니다. 재연결 시도 중...", false);
-
                 setTimeout(() => {
-                    console.log("WebSocket 재연결 시도...");
                     scwin.initializeChatWebSocket();
                 }, 5000);
             }
@@ -795,10 +682,9 @@ scwin.initializeChatWebSocket = function () {
 
         chatSocket.onerror = function (error) {
             console.error("❌ WebSocket 오류:", error);
-            //scwin.addChatMessage("시스템", "❌ 서버 연결 오류 발생", false);
         };
 
-
+        //소켓 연결 끊기
         setTimeout(function () {
             const closeBtn = $p.getComponentById("mf_wfr_mainContent_exa_popup_close");
 
@@ -811,9 +697,7 @@ scwin.initializeChatWebSocket = function () {
                         userImage: currentUser.userImage,
                         channelName: currentUser.channelName
                     };
-                    chatSocket.send(JSON.stringify(send)); // send 객체를 전송
-                    console.log("ddd");
-                    //$p.parent().scwin.popup_closeAction();
+                    chatSocket.send(JSON.stringify(send)); 
                 });
             } else {
                 console.warn("closeBtn이 존재하지 않거나 이벤트 리스너를 설정할 수 없습니다.");
@@ -822,7 +706,6 @@ scwin.initializeChatWebSocket = function () {
 
     } catch (error) {
         console.error("❌ WebSocket 초기화 실패:", error);
-        //scwin.addChatMessage("시스템", "❌ WebSocket 초기화 실패", false);
     }
 };
 
@@ -830,14 +713,11 @@ scwin.initializeChatWebSocket = function () {
 scwin.input_onkeyup = function (e) {
     if (e.keyCode === 13) {
         comment_send_button.addClass("active")
-
-        // 버튼 클릭
         comment_send_button.click();
 
-        // 짧은 시간 후 active 스타일 제거
         setTimeout(() => {
             comment_send_button.removeClass("active");
-        }, 150); // 150ms 정도면 충분
+        }, 150); 
     }
 };
 
@@ -927,7 +807,6 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
                 const param = { commentId };
                 const chat = $p.getComponentById(wrapperId);
 
-                //만약 이전에 컴포넌트가 날짜라면 함께 삭제하기
                 dma_comment.setJSON(param);
                 scwin.deleteChat(chat);
                 $c.sbm.execute(sbm_comment_delete);
@@ -941,7 +820,6 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
                     channelName: currentUser.channelName
                 };
                 chatSocket.send(JSON.stringify(payload));
-
             });
         }
     }
@@ -975,25 +853,19 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
 //삭제할 때 날짜와 함께 삭제
 scwin.deleteChat = function (chat) {
     const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
-
-    // 그룹 내부의 자식 컴포넌트 목록 가져오기
     const children = group.getChildren();
-
-    // 현재 삭제 대상의 인덱스 찾기
     const idx = children.indexOf(chat);
     let firstChild = group.render?.children[idx - 1] ?? null;
     let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
 
     if (idx === -1) {
-        console.warn("삭제 대상이 그룹 안에 존재하지 않습니다.");
         return;
     }
-    console.log(insertBeforeTarget);
+
     if (idx >= 0) {
         const prevComp = insertBeforeTarget;
         const isDateComp = prevComp?.options?.className === "comment-date";
         const labelText = prevComp?.render?.innerText;
-
 
         if (isDateComp) {
             prevComp.remove();
@@ -1023,44 +895,38 @@ scwin.addChatDate = function (dateText, insertBeforeComp) {
 
 
 
-//댓글 조회 성공(10개씩)
+//댓글 조회 성공(20개씩)
 scwin.sbm_comment_get_submitdone = function (e) {
     const responseData = e.responseJSON;
     const commentList = responseData.elData?.commentVoList ?? [];
-    const userInfo = responseData.userHeader
     const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
     let firstChild = group.render?.children[0] ?? null;
     let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
 
     if (commentList.length === 0) {
-        scwin.hasMore = false; // 더 이상 불러올 댓글 없음
+        scwin.hasMore = false;
         scwin.isLoading = false;
         return;
     }
 
-    //날짜 비교후에 이전날짜와 같다면 삭제
     if (insertBeforeTarget?.options) {
         const currentDate = insertBeforeTarget?.options.label
         const nextDate = scwin.formatDate(commentList[0].createdAt);
 
         if (currentDate === nextDate) {
-            insertBeforeTarget.remove(); // 기존 날짜 컴포넌트 삭제
+            insertBeforeTarget.remove();
             firstChild = group.render?.children[0] ?? null;
             insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
         }
     }
 
-
-    //반복문 돌면서 채팅 내용 삽입
     for (let i = 0; i < commentList.length; i++) {
         const comment = commentList[i];
         const nextComment = commentList[i + 1];
         const currentDate = scwin.formatDate(comment.createdAt);
         const nextDate = nextComment ? scwin.formatDate(nextComment.createdAt) : null;
         const isMine = (comment.userId === currentUser.userId);
-        console.log(comment);
 
-        // 댓글 삽입
         const commentComp = scwin.addChatMessage(
             comment.userName,
             comment.message,
@@ -1072,18 +938,13 @@ scwin.sbm_comment_get_submitdone = function (e) {
         );
         insertBeforeTarget = commentComp;
 
-        // 다음 댓글이 없거나 날짜가 다르면 → 지금 날짜를 현재 댓글 앞에 삽입
         if (currentDate !== nextDate || i === commentList.length - 1) {
             const dateComp = scwin.addChatDate(currentDate, insertBeforeTarget);
             insertBeforeTarget = dateComp;
             scwin.chatDate.add(currentDate);
-            console.log("추가되었어용");
         }
-        console.log("currentDate !== nextDate: " + (currentDate !== nextDate))
-        console.log("i === commentList.length - 1: " + (i === commentList.length - 1));
     }
 
-    //처음 페이지일 경우에는 스크롤 아래로
     if (scwin.currentPage === 1) {
         setTimeout(() => {
             const scrollArea = $p.getComponentById("comment_main_group");
@@ -1098,27 +959,10 @@ scwin.sbm_comment_get_submitdone = function (e) {
         }, 30);
     }
 
-    scwin.currentPage++; // 다음 호출 시 페이지 증가
+    scwin.currentPage++; 
     scwin.isLoading = false;
 };
 
-
-
-//댓글 조회 실패
-scwin.sbm_comment_get_submiterror = function (e) {
-    const responseData = e.responseJSON;
-    console.log(responseData);
-};
-
-//댓글 삭제 완료
-scwin.sbm_comment_delete_submitdone = function (e) {
-
-};
-
-//댓글 삭제 실패
-scwin.sbm_comment_delete_submiterror = function (e) {
-
-};
 
 //댓글 생성 완료
 scwin.sbm_comment_create_submitdone = function (e) {
@@ -1126,7 +970,6 @@ scwin.sbm_comment_create_submitdone = function (e) {
     const elData = responseData.elData;
     const todayText = scwin.formatDate(new Date());
 
-    // chatDate에 오늘 날짜가 없으면 추가
     if (!scwin.chatDate.has(todayText)) {
         const dateComp = scwin.addChatDate(todayText);
         scwin.chatDate.add(todayText);
@@ -1149,20 +992,14 @@ scwin.sbm_comment_create_submitdone = function (e) {
     chatSocket.send(JSON.stringify(payload));
 };
 
-//댓글 생성 실패
-scwin.sbm_comment_create_submiterror = function (e) {
 
-};
-
-
-
-// "2025-07-07 06:03:39.0" → "2025년 07월 07일"
+// 날짜 변환
 scwin.formatDate = function (datetimeStr) {
     const date = new Date(datetimeStr);
     return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(date.getDate()).padStart(2, "0")}일`;
 };
 
-// "2025-07-07 06:03:39.0" → "오전 6:03"
+// 시간 변환
 scwin.formatTime = function (datetimeStr) {
     const date = new Date(datetimeStr);
     let hour = date.getHours();
@@ -1173,9 +1010,8 @@ scwin.formatTime = function (datetimeStr) {
     return `${isAM ? '오전' : '오후'} ${hour}:${minute}`;
 };
 
-
+//task 저장
 scwin.saveTask = function () {
-    //  데이터 보내기
     const formData = new FormData();
 
     const taskPayload = {
@@ -1229,47 +1065,26 @@ scwin.saveTask = function () {
             await $c.win.alert("업무 정보가 저장되었습니다");
             scwin.getTask(scwin.taskId, scwin.projectId);
 
-
-            // 칸반보드 데이터 새로고침 및 WebSocket 메시지 전송
             try {
                 const boardId = scwin.taskInfo.boardId;
                 const parentScwin = $p.parent().scwin;
                 if (boardId && parentScwin && parentScwin.refreshBoardData) {
-                    // 부모 창의 칸반보드 데이터 새로고침
-                    console.log("태스크 저장 완료 - 칸반보드 데이터 새로고침 시작:", boardId);
-
-                    // 해당 보드의 태스크 데이터 다시 로드
                     parentScwin.refreshBoardData(boardId);
-
-                    // WebSocket으로 실시간 동기화 메시지 전송
-                    console.log("=== 태스크 저장 후 WebSocket 메시지 전송 시도 ===");
-                    console.log("parentScwin.sendWebSocketMessage 존재:", !!parentScwin.sendWebSocketMessage);
-
                     if (parentScwin.sendWebSocketMessage) {
                         const userId = parentScwin.getCurrentUserId();
-                        const projectId = scwin.projectId; // taskModal에서 이미 가지고 있는 프로젝트 ID 사용
-
-                        console.log("사용자 정보:");
-                        console.log("- userId:", userId);
-                        console.log("- projectId:", projectId);
-                        console.log("- boardId:", boardId);
-                        console.log("- taskId:", scwin.taskInfo.taskId);
+                        const projectId = scwin.projectId; 
 
                         const message = {
-                            type: "TASK_UPDATED", // 태스크 업데이트 메시지 타입으로 변경
+                            type: "TASK_UPDATED",
                             boardId: boardId,
                             taskId: scwin.taskInfo.taskId,
                             userId: userId,
                             projectId: projectId
                         };
 
-                        console.log("������ WebSocket 메시지 전송 시도 (태스크 업데이트):", message);
                         parentScwin.sendWebSocketMessage(message);
-                        console.log("✅ WebSocket 메시지 전송 완료");
                     } else {
                         console.error("❌ parentScwin.sendWebSocketMessage 함수를 찾을 수 없음");
-                        console.log("parentScwin 객체:", parentScwin);
-                        console.log("parentScwin의 속성들:", Object.keys(parentScwin || {}));
                     }
                 }
             } catch (refreshError) {
@@ -1282,30 +1097,23 @@ scwin.saveTask = function () {
     });
 }
 
+//bask64를 변환
 scwin.base64ToBlob = function (base64Data, contentType) {
-    const byteString = atob(base64Data.split(',')[1]); // 헤더 제거
+    const byteString = atob(base64Data.split(',')[1]);
     const byteArray = new Uint8Array([...byteString].map(char => char.charCodeAt(0)));
     return new Blob([byteArray], { type: contentType });
 }
 
 
-
-scwin.sbm_task_get_submitdone = function (e) {
-    const responseData = e.responseJSON;
-    const taskVo = responseData.taskVo;
-};
-
-scwin.sbm_task_get_submiterror = function (e) {
-    console.log(e.error);
-};
-
-
+//파일 추가
 scwin.file_add_onclick = function (e) {
     $p.$("#fileInput").click();
     $p.$("#fileInput").off("change");
     $p.$("#fileInput").on("change", scwin.fileInput_change);
 };
 
+
+//파일 삭제
 scwin.file_remove_onclick = function (e) {
     let chkIdxArr = grd.getCheckedIndex("CHK");
     const size = dls_allFile.getRowCount();
@@ -1331,20 +1139,19 @@ scwin.file_remove_onclick = function (e) {
 
 };
 
+//파일 리스트 삭제
 scwin.removeFileGrid = function (checkedItemNums, size) {
     let data = dls_allFile.getAllJSON();
     const filteredData = data.filter(row => !checkedItemNums.includes(row.num));
     dls_allFile.setJSON(filteredData);
 
-    const existingList = dls_file.getAllJSON(); // 기존 데이터 추출
+    const existingList = dls_file.getAllJSON(); 
     const paramList = [...existingList]; // 기존 데이터 복사
     pageList.setCount(paramList.length === 0 ? 1 : (paramList.length / 5) + 1);
 
-    // ✅ 총 페이지 수 계산
     const totalPages = Math.max(1, Math.ceil(dls_allFile.getRowCount() / 5));
     pageList.setCount(totalPages);
 
-    // ✅ 현재 페이지가 초과됐으면 마지막 페이지로 보정
     if (scwin.filePageIndex > totalPages) {
         scwin.filePageIndex = totalPages;
     } else if (totalPages === 1) {
@@ -1353,22 +1160,18 @@ scwin.removeFileGrid = function (checkedItemNums, size) {
 
     pageList.setSelectedIndex(scwin.filePageIndex);
 
-    // ✅ 페이지에 맞는 데이터 추출
     const startIndex = (scwin.filePageIndex - 1) * 5;
     const endIndex = startIndex + 5;
 
     const fullList = dls_allFile.getAllJSON();
     const currentPageItems = fullList.slice(startIndex, endIndex);
 
-    // ✅ 화면 표시용 데이터 갱신
     dls_file.setJSON(currentPageItems);
 
     scwin.removeFileHtml(checkedItemNums, size);
 }
 
-
-
-
+//파일 html에서 삭제
 scwin.removeFileHtml = function (numList, size) {
     if (!Array.isArray(numList) || numList.length === 0) return;
 
@@ -1378,7 +1181,6 @@ scwin.removeFileHtml = function (numList, size) {
 
     numList.forEach(num => {
         const target = container.querySelector(`.file-data[data-num="${num}"]`);
-        console.log(size - num);
 
         if (target) {
             const before = target.previousElementSibling;
@@ -1423,27 +1225,20 @@ scwin.fileInput_change = function (e) {
                 size: file.size
             };
 
-            //1. 에디터에 삽입 (업로드 시에만 실행됨)
             scwin.addFileHtml(param);
-
-            //2. 그리드용 파일 리스트에 넣어두기 (나중에 bulk 추가)
             tempGridList.push(param);
             filesReadCount++;
 
-            //3. 모든 파일 읽은 후 그리드 반영
             if (filesReadCount === filesArray.length) {
-                scwin.addFileGrid(tempGridList); // 그리드 추가는 여기서!
+                scwin.addFileGrid(tempGridList); 
 
                 setTimeout(() => {
-                    scwin.previousHTML = contents_editor.getHTML(); // 추적
-                    console.log(scwin.previousHTML);
+                    scwin.previousHTML = contents_editor.getHTML(); 
                 }, 30);
             }
         };
 
         reader.readAsDataURL(file);
-
-
     }
 };
 
@@ -1466,7 +1261,7 @@ scwin.addFileGrid = function (files, num) {
 
     dsAll.setJSON(newList);
 
-    // 페이징 및 화면 갱신
+
     const totalCount = newList.length;
     const pageSize = 5;
     const pageCount = Math.ceil(totalCount / pageSize);
@@ -1498,7 +1293,6 @@ scwin.addFileHtml = function (file) {
     let insertHTML = "";
 
     if (type.startsWith("image/")) {
-        // 이미지 직접 삽입
         insertHTML = `<img class="file-data" 
                             data-num="${num}"  
                             data-size="${size}"
@@ -1511,7 +1305,6 @@ scwin.addFileHtml = function (file) {
                             style="max-width:100%; 
                             margin: 10px 0;" />`;
     } else {
-        // 기타 파일은 버튼 또는 다운로드 링크로 처리
         const ext = name.split(".").pop().toLowerCase();
 
         switch (ext) {
@@ -1631,7 +1424,6 @@ scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
         let row = dls_file.getRowJSON(rowIndex);
         let targetUrl = row.filePath;
         let fileNanme = row.fileName;
-        console.log(row);
 
         fetch(targetUrl)
             .then(res => res.blob())
@@ -1652,30 +1444,15 @@ scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
 
 //작업 삭제가 완료되었을 때
 scwin.sbm_deleteTask_submitdone = function (e) {
-    // 칸반보드 데이터 새로고침 및 WebSocket 메시지 전송
     try {
         const boardId = scwin.taskInfo.boardId;
         const parentScwin = $p.parent().scwin;
         if (boardId && parentScwin && parentScwin.refreshBoardData) {
-            // 부모 창의 칸반보드 데이터 새로고침
-            console.log("태스크 삭제 완료 - 칸반보드 데이터 새로고침 시작:", boardId);
 
-            // 해당 보드의 태스크 데이터 다시 로드
             parentScwin.refreshBoardData(boardId);
-
-            // WebSocket으로 실시간 동기화 메시지 전송
-            console.log("=== 태스크 삭제 후 WebSocket 메시지 전송 시도 ===");
-            console.log("parentScwin.sendWebSocketMessage 존재:", !!parentScwin.sendWebSocketMessage);
-
             if (parentScwin.sendWebSocketMessage) {
                 const userId = parentScwin.getCurrentUserId();
                 const projectId = scwin.projectId; // taskModal에서 이미 가지고 있는 프로젝트 ID 사용
-
-                console.log("사용자 정보:");
-                console.log("- userId:", userId);
-                console.log("- projectId:", projectId);
-                console.log("- boardId:", boardId);
-                console.log("- taskId:", scwin.taskInfo.taskId);
 
                 const message = {
                     type: "TASK_DELETED",
@@ -1685,14 +1462,8 @@ scwin.sbm_deleteTask_submitdone = function (e) {
                     projectId: projectId
                 };
 
-                console.log("������️ WebSocket 메시지 전송 시도 (태스크 삭제):", message);
                 parentScwin.sendWebSocketMessage(message);
-                console.log("✅ WebSocket 메시지 전송 완료");
-            } else {
-                console.error("❌ parentScwin.sendWebSocketMessage 함수를 찾을 수 없음");
-                console.log("parentScwin 객체:", parentScwin);
-                console.log("parentScwin의 속성들:", Object.keys(parentScwin || {}));
-            }
+            } 
         }
     } catch (refreshError) {
         console.warn("칸반보드 새로고침 중 오류 (삭제는 완료됨):", refreshError);
@@ -1702,7 +1473,6 @@ scwin.sbm_deleteTask_submitdone = function (e) {
     close.click();
 };
 
-scwin.popup_closeAction
 //시작일
 scwin.start_date_onchange = function () {
     let value = start_date.getValue();
