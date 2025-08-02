@@ -22,7 +22,7 @@ import redis.clients.jedis.JedisPoolConfig;
 public class RedisConfig {
     
     public RedisConfig() {
-        //System.out.println("🔧 RedisConfig 클래스 생성됨!");
+        
     }
 
     /**
@@ -31,7 +31,7 @@ public class RedisConfig {
     @Bean
     @Primary
     public RedisConnectionFactory redisConnectionFactory() {
-        //System.out.println("🔧 Redis 연결 설정: localhost:6379");
+        
         
         JedisConnectionFactory factory = new JedisConnectionFactory();
         factory.setHostName("localhost");
@@ -50,7 +50,7 @@ public class RedisConfig {
         poolConfig.setTestOnReturn(true);  // 연결 반환 시 검증
         factory.setPoolConfig(poolConfig);
         
-        //System.out.println("🔧 Redis 연결 팩토리 설정 완료");
+        
         return factory;
     }
     
@@ -59,7 +59,7 @@ public class RedisConfig {
      */
     @Bean
     public RedisTemplate<String, String> redisTemplate(@Qualifier("redisConnectionFactory") RedisConnectionFactory connectionFactory) {
-        //System.out.println("🔧 RedisTemplate 설정 시작...");
+        
         
         RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -74,7 +74,7 @@ public class RedisConfig {
         
         template.afterPropertiesSet();
         
-        //System.out.println("🔧 RedisTemplate 설정 완료 (StringRedisSerializer 사용)");
+        
         
         // Redis 연결 테스트
         try {
@@ -83,12 +83,12 @@ public class RedisConfig {
             template.delete("test:connection");
             
             if ("OK".equals(result)) {
-                //System.out.println("🔍 Redis 연결 상태: 정상 ✅");
+                
             } else {
-                //System.err.println("🔍 Redis 연결 상태: 비정상 ❌");
+               
             }
         } catch (Exception e) {
-            //System.err.println("🔍 Redis 연결 상태: 오류 ❌ - " + e.getMessage());
+            
         }
         
         return template;
@@ -99,7 +99,7 @@ public class RedisConfig {
      */
     @Bean(name = "kanbanRedisConnectionFactory")
     public RedisConnectionFactory kanbanRedisConnectionFactory() {
-        System.out.println("🔧 칸반보드용 Redis 연결 설정: localhost:6379, DB:1");
+        
         
         JedisConnectionFactory factory = new JedisConnectionFactory();
         factory.setHostName("localhost");
@@ -120,7 +120,7 @@ public class RedisConfig {
         poolConfig.setMaxWaitMillis(3000); // 연결 대기 시간 (3초)
         factory.setPoolConfig(poolConfig);
         
-        System.out.println("🔧 칸반보드용 Redis 연결 팩토리 설정 완료");
+        
         return factory;
     }
     
@@ -129,7 +129,7 @@ public class RedisConfig {
      */
     @Bean(name = "kanbanRedisTemplate")
     public RedisTemplate<String, Object> kanbanRedisTemplate(@Qualifier("kanbanRedisConnectionFactory") RedisConnectionFactory kanbanConnectionFactory) {
-        System.out.println("🔧 칸반보드용 RedisTemplate 설정 시작...");
+        
         
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(kanbanConnectionFactory);
@@ -146,7 +146,7 @@ public class RedisConfig {
         
         template.afterPropertiesSet();
         
-        System.out.println("🔧 칸반보드용 RedisTemplate 설정 완료");
+        
         return template;
     }
 } 
