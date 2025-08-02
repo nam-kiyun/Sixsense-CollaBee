@@ -47,10 +47,8 @@
 		<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
     scwin.onresize();
 
-    //리캡챠 컴포넌트
     let recaptchaComponent = $p.getComponentById("recaptcha-container");
 
-    //리캡챠 존재하면 불러오기
     if (recaptchaComponent !== null && typeof grecaptcha !== "undefined") {
 
         let actualDomId = recaptchaComponent.id;
@@ -80,12 +78,10 @@
 };
 
 scwin.onresize = function (e) {
-    // resize 이벤트 정의
     window.onresize = function () {
         scwin.applyResponsiveWidth();
     };
 
-    // 페이지 로딩 시에도 한 번 실행
     scwin.applyResponsiveWidth();
 };
 
@@ -172,23 +168,22 @@ scwin.login_button_onclick = async function (e) {
     if (!isValid) return;
 
     // 2. reCAPTCHA 완료 여부
-    // const token = grecaptcha.getResponse();
-    // if (!token) {
-    //     await alert("reCAPTCHA를 먼저 완료해주세요!");
-    //     return;
-    // }
+    const token = grecaptcha.getResponse();
+    if (!token) {
+        await $c.win.alert("reCAPTCHA를 먼저 완료해주세요");
+        return;
+    }
 
     // 3. 리캡챠 서브미션 실행
-    // const param = {
-    //     secretKey: "",
-    //     token: token
-    // };
+    const param = {
+        secretKey: "",
+        token: token
+    };
 
-    // dma_recaptcha.setJSON(param);
-    // $c.sbm.execute(sbm_recaptcha);
+    dma_recaptcha.setJSON(param);
+    $c.sbm.execute(sbm_recaptcha);
 
-    // grecaptcha.reset();
-    $c.sbm.execute(sbm_login);
+    grecaptcha.reset();
 };
 
 

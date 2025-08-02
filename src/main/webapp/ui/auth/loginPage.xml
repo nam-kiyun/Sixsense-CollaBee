@@ -172,7 +172,7 @@ scwin.login_button_onclick = async function (e) {
     // 2. reCAPTCHA 완료 여부
     const token = grecaptcha.getResponse();
     if (!token) {
-        await alert("reCAPTCHA를 먼저 완료해주세요!");
+        await $c.win.alert("reCAPTCHA를 먼저 완료해주세요!");
         return;
     }
 
