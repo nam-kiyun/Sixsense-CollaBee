@@ -51,12 +51,10 @@
 };
 
 scwin.onresize = function (e) {
-    // resize 이벤트 정의
     window.onresize = function () {
         scwin.applyResponsiveWidth();
     };
 
-    // 페이지 로딩 시에도 한 번 실행
     scwin.applyResponsiveWidth();
 };
 
@@ -80,12 +78,10 @@ scwin.applyResponsiveWidth = function () {
 scwin.onInputChar = function (e) {
     const currentInput = e.target;
     const currentInputId = currentInput.id;
-    const currentWsComponent = $p.getComponentById(currentInputId); // WebSquare 컴포넌트 객체 가져오기
-    const currentNumber = parseInt(currentInputId.replace('mf_code_input', '')); // ID에서 숫자 부분 추출
+    const currentWsComponent = $p.getComponentById(currentInputId);
+    const currentNumber = parseInt(currentInputId.replace('mf_code_input', '')); 
     const length = currentWsComponent.getValue().length;
 
-
-    // 일반 문자 입력 시 다음 InputBox로 포커스 이동
     if (e.key !== "Backspace" && length === 1) {
         const nextNumber = currentNumber + 1;
         const nextInputId = 'mf_code_input' + nextNumber;
@@ -93,15 +89,14 @@ scwin.onInputChar = function (e) {
         if (nextNumber <= 5) {
             const nextWsComponent = $p.getComponentById(nextInputId);
             if (nextWsComponent) {
-                nextWsComponent.focus(); // 다음 InputBox로 포커스 이동
+                nextWsComponent.focus(); 
             }
         }
     }
-    // backspace 누른 경우
+
     else if (e.key === "Backspace" && length === 0) {
         const prevNumber = currentNumber - 1;
         const prevInputId = 'mf_code_input' + prevNumber;
-        console.log(currentWsComponent.getValue().length)
 
         if (prevNumber >= 1) {
             const prevWsComponent = $p.getComponentById(prevInputId);
@@ -150,10 +145,7 @@ scwin.signup_button_onclick = async function (e) {
 };
 
 //회원가입 완료
-scwin.sbm_signup_submitdone = async function (e) {
-    const responseData = e.responseJSON;
-    console.log(responseData);
-    
+scwin.sbm_signup_submitdone = async function (e) {    
     await $c.win.alert("회원가입이 완료되었습니다.", function () {
         $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/auth/loginPage.xml");
     });

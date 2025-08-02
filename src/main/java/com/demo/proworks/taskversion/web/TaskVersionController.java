@@ -37,9 +37,6 @@ public class TaskVersionController {
 	/** TaskVersionService */
 	@Resource(name = "taskVersionServiceImpl")
 	private TaskVersionService taskVersionService;
-	
-	@Value("${aws.bucketName}")
-    private String bucketName;
 
 	/**
 	 * 버전관리를 위한 Task(업무) 정보 목록을 조회합니다.

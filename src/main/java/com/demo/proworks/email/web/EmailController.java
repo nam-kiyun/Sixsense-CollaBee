@@ -39,7 +39,7 @@ import com.inswave.elfw.annotation.ElValidator;
 @Controller
 @RequestMapping(value = "/send")
 public class EmailController {
-
+	
     @Resource(name = "mailSender")
     protected JavaMailSender mailSender;
     
@@ -63,16 +63,10 @@ public class EmailController {
     @ElDescription(sub = "인증 메일을 발송", desc = "인증 메일을 발송합니다")
     public Map<String, Object> sendEmail(EmailVo emailVo) throws Exception {
         Map<String, Object> result = new HashMap<>();
-
         String email = emailVo.getEmail();
- 
-        //제목
         String subject = "[COLLABEE] 인증메일 발송";
-
-        // 무작위 6자리 숫자 생성
         String code = generateVerificationCode();
 
-        // 메일 내용
         String content = "<html lang='ko'>"
                 + "<head><meta charset='UTF-8'/><title>인증 메일</title>"
                 + "<style>"
@@ -142,7 +136,7 @@ public class EmailController {
         Random random = new Random();
         StringBuilder code = new StringBuilder();
         for (int i = 0; i < 5; i++) {
-            code.append(random.nextInt(10));  // 0-9까지의 숫자
+            code.append(random.nextInt(10)); 
         }
         return code.toString();
     }

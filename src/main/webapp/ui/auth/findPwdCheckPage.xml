@@ -48,12 +48,10 @@
 };
 
 scwin.onresize = function (e) {
-    // resize 이벤트 정의
     window.onresize = function () {
         scwin.applyResponsiveWidth();
     };
 
-    // 페이지 로딩 시에도 한 번 실행
     scwin.applyResponsiveWidth();
 };
 
@@ -115,7 +113,7 @@ scwin.findPwd_button_onclick = async function (e) {
         }
         dma_emailCheck.setJSON(param);
 
-        $c.sbm.execute(sbm_checkEmail); //이메일 존재 여부 확인
+        $c.sbm.execute(sbm_checkEmail); 
 
     } else {
         if (code_input.getValue() === scwin.code) {
@@ -139,11 +137,11 @@ scwin.sbm_checkEmail_submitdone = function (e) {
     const responseData = e.responseJSON;
 
     if (responseData.isDup) {
-        code_box.addClass("show"); //인증코드 input 나타나게
-        findPwd_button.setValue("확인"); //버튼 text를 메일전송 -> 확인
-        $c.sbm.execute(sbm_email); //인증코드 이메일 보내기
+        code_box.addClass("show"); 
+        findPwd_button.setValue("확인");
+        $c.sbm.execute(sbm_email); 
         scwin.time = new Date().getTime();
-        scwin.startCountdown(); //시간 측정
+        scwin.startCountdown(); 
         email_error_text.setValue("");
     } else {
         email_error_text.setValue("존재하지 않는 이메일 입니다");
@@ -160,7 +158,7 @@ scwin.sbm_email_submitdone = function (e) {
 scwin.startCountdown = function () {
     const timer = setInterval(function () {
         const now = new Date().getTime();
-        const remaining = 600000 - (now - scwin.time); // 10분 = 600,000ms
+        const remaining = 600000 - (now - scwin.time); 
 
         if (remaining <= 0) {
             timeCheck_text.setValue("인증 시간이 만료되었습니다.");

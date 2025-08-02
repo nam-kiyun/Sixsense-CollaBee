@@ -40,10 +40,9 @@
     scwin.taskId = taskInfo.taskId;
     scwin.getTaskVersion(scwin.taskId, 1);
 
-    //무한스크롤
-    scwin.currentPage = 1;         // 현재 페이지 번호
-    scwin.isLoading = false;       // 중복 로딩 방지
-    scwin.lastPageReached = false; // 더 이상 데이터 없음
+    scwin.currentPage = 1;       
+    scwin.isLoading = false;      
+    scwin.lastPageReached = false; 
 
     scwin.loadMoreVersions();
     scwin.bindInfiniteScroll();
@@ -115,19 +114,16 @@ scwin.sbm_taskVersionList_submitdone = function (e) {
         return;
     }
 
-    //데이터 없을 때
     if (!versionList || versionList.length === 0) {
         scwin.lastPageReached = true;
         scwin.isLoading = false;
         return;
     }
 
-    // 첫 로딩이라면 현재버전 버튼 추가
     if (scwin.currentPage === 2) {
         scwin.addCurrentVersionComponent();
     }
 
-    // 버전 버튼 생성
     versionList.forEach((value) => {
         scwin.addVersionComponent(value);
     });
@@ -135,15 +131,10 @@ scwin.sbm_taskVersionList_submitdone = function (e) {
     scwin.isLoading = false;
 };
 
-scwin.sbm_taskVersionList_submiterror = function (e) {
-
-};
-
 
 //버전 아이디로 해당 내용과 파일을 return
 scwin.getTaskByTaskVersinId = function (taskId, taskVersionId) {
 
-    // 서버로 전송
     $.ajax({
         url: `/InsWebApp/task/${taskId}/version/${taskVersionId}.pwkjson`,
         type: "GET",
@@ -191,7 +182,6 @@ scwin.loadMoreVersions = function () {
     dma_taskSearch.setJSON(param);
     sbm_taskVersionList.action = `/InsWebApp/task/${scwin.taskId}/version.pwkjson`;
 
-    // 콜백에서 현재 페이지 업데이트
     $c.sbm.execute(sbm_taskVersionList);
 };
 ]]></script>

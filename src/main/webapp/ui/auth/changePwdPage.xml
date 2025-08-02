@@ -38,12 +38,9 @@
 };
 
 scwin.onresize = function (e) {
-    // resize 이벤트 정의
     window.onresize = function () {
         scwin.applyResponsiveWidth();
     };
-
-    // 페이지 로딩 시에도 한 번 실행
     scwin.applyResponsiveWidth();
 };
 
@@ -94,7 +91,7 @@ scwin.signup_button_onclick = function (e) {
     var passwordCheck = passwordCheck_input.getValue();
 
     var isValid = true;
-    // 3. 비밀번호
+    //비밀번호 입력여부
     if (!password) {
         password_error_text.setValue("*비밀번호를 입력해주세요.");
         isValid = false;
@@ -102,7 +99,7 @@ scwin.signup_button_onclick = function (e) {
         password_error_text.setValue("");
     }
 
-    // 4. 비밀번호 확인
+    //비밀번호 확인 입력여부
     if (!passwordCheck) {
         passwordCheck_error_text.setValue("*비밀번호 확인을 입력해주세요.");
         isValid = false;

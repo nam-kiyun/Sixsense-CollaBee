@@ -73,30 +73,8 @@
 
 const MEDIASOUP_SERVER_URL = getMediasoupServerUrl();
 
-// mediasoup 관련 변수들
-let mediasoupSocket = null;
-let device = null;
-let sendTransport = null;
-let recvTransport = null;
-let videoProducer = null;
-let audioProducer = null;
-let consumers = new Map(); // consumerId -> {consumer, remoteVideo}
-let remoteVideos = new Map(); // peerId -> video element info
 
-// 기존 변수들 (채팅용은 그대로 유지) 
-let localStream = null;
-let chatSocket = null; // 채팅용 WebSocket (그대로 유지)
-let isJoined = false;
-let isMuted = false;
-let isVideoOff = false;
-let remoteUserInfo = new Map(); // 원격 사용자 정보 저장
-
-// 사용자 정보 (고유 ID 생성)
-const generateUserId = () => {
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 1000);
-    return `user_${timestamp}_${random}`;
-};
+let chatSocket = null; 
 
 //사용자 정보
 let currentUser = {
@@ -124,9 +102,9 @@ scwin.onpageload = function () {
 
 
     //채팅
-    scwin.currentPage = 1; // 최초 로딩이 1페이지니까 다음은 2부터 시작
-    scwin.isLoading = false; // 중복 호출 방지용 플래그
-    scwin.hasMore = true; // 마지막 페이지에 도달하면 false로 바꾸기
+    scwin.currentPage = 1;
+    scwin.isLoading = false; 
+    scwin.hasMore = true; 
     scwin.loadMoreData();
 
     scwin.chatDate = new Set();
@@ -138,19 +116,17 @@ scwin.onpageload = function () {
     scrollArea.bind("onscroll", function () {
         const scrollTop = scrollArea.render.scrollTop;
 
-        if (scrollTop <= 50) { // 화면 맨 위 근접했을 때
-            scwin.loadMoreData(); // 이전 댓글 불러오기
+        if (scrollTop <= 50) { 
+            scwin.loadMoreData(); 
         }
     });
 };
 
 //task 정보 가져오기
 scwin.getTask = function (taskId, projectId) {
-    //  데이터 보내기
     const formData = new FormData();
     formData.append("projectId", projectId);
 
-    // 서버로 전송
     $.ajax({
         url: `/InsWebApp/task/${taskId}.pwkjson`,
         type: "POST",
@@ -161,19 +137,12 @@ scwin.getTask = function (taskId, projectId) {
             const data = res.taskUpdateVo;
             scwin.taskInfo = data;
 
-            console.log(data);
-
-            // projectUserVo 리스트를 세팅
-
-
-            // //담당자(프로젝트 사용자 값 세팅)
             let userData = [];
             data.projectUserVo.forEach(user => {
                 userData.push({ userId: user.userId, userName: user.userName });
             });
             dls_manager.setJSON(userData);
 
-            // //담당자 존재하면 값 세팅
             if (data.managerVo && data.managerVo.length > 0) {
                 let selectedUserIds = [];
                 data.managerVo.forEach(manager => {
@@ -208,26 +177,20 @@ scwin.chat_touch = function () {
     document.addEventListener("touchend", function (e) {
         const touchEndX = e.changedTouches[0].clientX;
         const diffX = touchEndX - touchStartX;
-        
-        // sideMenu 제거로 인해 side는 항상 false
         let side = false;
 
-        // 오른쪽으로 스와이프 (예: 100px 이상이면 열기)
         if (diffX < -100 && !scwin.comment && !side) {
             scwin.comment = true;
             const sideFrame = $p.getComponentById("comment_group");
             sideFrame.addClass("active");
-
         }
 
-        // 왼쪽으로 스와이프 (메뉴 열려 있을 때 닫기)
         if (diffX > 100 && scwin.comment) {
             const sideFrame = $p.getComponentById("comment_group");
             sideFrame.removeClass("active");
             setTimeout(() => {
                 scwin.comment = false;
-            }, 10); // 아주 짧은 딜레이로 값 반영 기다리기
-
+            }, 10);
         }
     });
 }
@@ -253,7 +216,6 @@ scwin.initializeChatWebSocket = function () {
     const host = window.location.hostname;
     const port = window.location.port || (protocol === 'wss:' ? '443' : '80');
 
-    // 여러 WebSocket URL 시도
     const wsUrls = [
         `${protocol}//${host}:${port}/InsWebApp/chat`,
         `ws://localhost:9093/InsWebApp/chat`,
@@ -261,15 +223,11 @@ scwin.initializeChatWebSocket = function () {
     ];
 
     let wsUrl = wsUrls[0];
-    console.log("WebSocket 연결 시도:", wsUrl);
-
+ 
     try {
         chatSocket = new WebSocket(wsUrl);
-
         chatSocket.onopen = function () {
-            console.log("✅ WebSocket 연결 성공");
 
-            // 채널 참가
             const joinMessage = {
                 type: 'join',
                 channelName: currentUser.channelName,
@@ -282,11 +240,8 @@ scwin.initializeChatWebSocket = function () {
         chatSocket.onmessage = function (event) {
             try {
                 const data = JSON.parse(event.data);
-                console.log("WebSocket 메시지 수신:", data.type, data);
 
                 switch (data.type) {
-                    case 'join':
-                        consolel.log(data);
                     case 'message':
                         if (data.userId !== currentUser.userId) {
                             const todayText = scwin.formatDate(new Date());
@@ -305,7 +260,6 @@ scwin.initializeChatWebSocket = function () {
    
                         for (let i = 0; i < children.length; i++) {
                             const comp = children[i];
-                            const compId = comp?.id || "undefined";
                             const userData = comp?.userData || "없음";
                             const localMessageId = userData?.commentId;
                             const match = String(localMessageId) === String(data.commentId);
@@ -323,31 +277,19 @@ scwin.initializeChatWebSocket = function () {
                 }
             } catch (error) {
                 console.error("❌ 메시지 처리 오류:", error);
-                //scwin.addChatMessage("시스템", "❌ 메시지 처리 중 오류 발생", false);
             }
         };
 
         chatSocket.onclose = function (event) {
-            console.log("❌ WebSocket 연결 종료:", event.code, event.reason);
-
             if (event.code !== 1000) {
-                //scwin.addChatMessage("시스템", "⚠️ 서버와의 연결이 끊어졌습니다. 재연결 시도 중...", false);
-
                 setTimeout(() => {
-                    console.log("WebSocket 재연결 시도...");
                     scwin.initializeChatWebSocket();
                 }, 5000);
             }
         };
 
-        chatSocket.onerror = function (error) {
-            console.error("❌ WebSocket 오류:", error);
-            //scwin.addChatMessage("시스템", "❌ 서버 연결 오류 발생", false);
-        };
-
     } catch (error) {
         console.error("❌ WebSocket 초기화 실패:", error);
-        //scwin.addChatMessage("시스템", "❌ WebSocket 초기화 실패", false);
     }
 };
 
@@ -356,13 +298,11 @@ scwin.input_onkeyup = function (e) {
     if (e.keyCode === 13) {
         comment_send_button.addClass("active")
 
-        // 버튼 클릭
         comment_send_button.click();
 
-        // 짧은 시간 후 active 스타일 제거
         setTimeout(() => {
             comment_send_button.removeClass("active");
-        }, 150); // 150ms 정도면 충분
+        }, 150); 
     }
 };
 
@@ -428,7 +368,6 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
         className: "comment-left"
     }, headerRow);
 
-    // 안전한 이미지 URL 처리
     let profileImageUrl = scwin.defaultImage;
     if (image && image.trim() !== "" && image !== "undefined") {
         profileImageUrl = image;
@@ -458,7 +397,6 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
                 const param = { commentId };
                 const chat = $p.getComponentById(wrapperId);
 
-                //만약 이전에 컴포넌트가 날짜라면 함께 삭제하기
                 dma_comment.setJSON(param);
                 scwin.deleteChat(chat);
                 $c.sbm.execute(sbm_comment_delete);
@@ -472,7 +410,6 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
                     channelName: currentUser.channelName
                 };
                 chatSocket.send(JSON.stringify(payload));
-
             });
         }
     }
@@ -491,11 +428,10 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
         setTimeout(() => {
             const scrollArea = $p.getComponentById("comment_main_group");
             const el = scrollArea.render;
-
             const isAtBottom = el.scrollTop >= el.scrollHeight - el.clientHeight - 200;
 
             if (isAtBottom) {
-                el.scrollTop = el.scrollHeight; // 하단 고정
+                el.scrollTop = el.scrollHeight;
             }
         }, 50);
     }
@@ -506,11 +442,7 @@ scwin.addChatMessage = function (userName, message, time = "", isMine = false, i
 //삭제할 때 날짜와 함께 삭제
 scwin.deleteChat = function (chat) {
     const group = $p.getComponentById("comment_main_group");
-
-    // 그룹 내부의 자식 컴포넌트 목록 가져오기
     const children = group.getChildren();
-
-    // 현재 삭제 대상의 인덱스 찾기
     const idx = children.indexOf(chat);
     let firstChild = group.render?.children[idx - 1] ?? null;
     let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
@@ -524,7 +456,6 @@ scwin.deleteChat = function (chat) {
         const prevComp = insertBeforeTarget;
         const isDateComp = prevComp?.options?.className === "comment-date";
         const labelText = prevComp?.render?.innerText;
-
 
         if (isDateComp) {
             prevComp.remove();
@@ -552,14 +483,13 @@ scwin.addChatDate = function (dateText, insertBeforeComp) {
     return dateWrapper;
 };
 
-//댓글 조회 성공(10개씩)
+//댓글 조회 성공(20개씩)
 scwin.sbm_comment_get_submitdone = function (e) {
     const responseData = e.responseJSON;
     const commentList = responseData.elData?.commentVoList ?? [];
     const userInfo = responseData.userHeader
     const group = $p.getComponentById("comment_main_group");
     
-    // 안전한 렌더링 처리
     let firstChild = null;
     let insertBeforeTarget = null;
     
@@ -577,34 +507,29 @@ scwin.sbm_comment_get_submitdone = function (e) {
     }
 
     if (commentList.length === 0) {
-        scwin.hasMore = false; // 더 이상 불러올 댓글 없음
+        scwin.hasMore = false; 
         scwin.isLoading = false;
         return;
     }
 
-    //날짜 비교후에 이전날짜와 같다면 삭제
     if (insertBeforeTarget?.options) {
         const currentDate = insertBeforeTarget?.options.label
         const nextDate = scwin.formatDate(commentList[0].createdAt);
 
         if (currentDate === nextDate) {
-            insertBeforeTarget.remove(); // 기존 날짜 컴포넌트 삭제
+            insertBeforeTarget.remove(); 
             firstChild = group.render?.children[0] ?? null;
             insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
         }
     }
 
-
-    //반복문 돌면서 채팅 내용 삽입
     for (let i = 0; i < commentList.length; i++) {
         const comment = commentList[i];
         const nextComment = commentList[i + 1];
         const currentDate = scwin.formatDate(comment.createdAt);
         const nextDate = nextComment ? scwin.formatDate(nextComment.createdAt) : null;
         const isMine = (comment.userId === currentUser.userId);
-        console.log(comment);
 
-        // 댓글 삽입
         const commentComp = scwin.addChatMessage(
             comment.userName,
             comment.message,
@@ -616,18 +541,13 @@ scwin.sbm_comment_get_submitdone = function (e) {
         );
         insertBeforeTarget = commentComp;
 
-        // 다음 댓글이 없거나 날짜가 다르면 → 지금 날짜를 현재 댓글 앞에 삽입
         if (currentDate !== nextDate || i === commentList.length - 1) {
             const dateComp = scwin.addChatDate(currentDate, insertBeforeTarget);
             insertBeforeTarget = dateComp;
             scwin.chatDate.add(currentDate);
-            // console.log("추가되었어용");
         }
-        // console.log("currentDate !== nextDate: " + (currentDate !== nextDate))
-        // console.log("i === commentList.length - 1: " + (i === commentList.length - 1));
     }
 
-    //처음 페이지일 경우에는 스크롤 아래로
     if (scwin.currentPage === 1) {
         setTimeout(() => {
             const scrollArea = $p.getComponentById("comment_main_group");
@@ -648,30 +568,12 @@ scwin.sbm_comment_get_submitdone = function (e) {
 
 
 
-//댓글 조회 실패
-scwin.sbm_comment_get_submiterror = function (e) {
-    const responseData = e.responseJSON;
-    console.log(responseData);
-};
-
-//댓글 삭제 완료
-scwin.sbm_comment_delete_submitdone = function (e) {
-
-};
-
-//댓글 삭제 실패
-scwin.sbm_comment_delete_submiterror = function (e) {
-
-};
-
 //댓글 생성 완료
 scwin.sbm_comment_create_submitdone = function (e) {
     const responseData = e.responseJSON;
     const elData = responseData.elData;
     const todayText = scwin.formatDate(new Date());
-    console.log(elData);
 
-    // chatDate에 오늘 날짜가 없으면 추가
     if (!scwin.chatDate.has(todayText)) {
         const dateComp = scwin.addChatDate(todayText);
         scwin.chatDate.add(todayText);
@@ -694,20 +596,14 @@ scwin.sbm_comment_create_submitdone = function (e) {
     chatSocket.send(JSON.stringify(payload));
 };
 
-//댓글 생성 실패
-scwin.sbm_comment_create_submiterror = function (e) {
 
-};
-
-
-
-// "2025-07-07 06:03:39.0" → "2025년 07월 07일"
+//날짜변환
 scwin.formatDate = function (datetimeStr) {
     const date = new Date(datetimeStr);
     return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(date.getDate()).padStart(2, "0")}일`;
 };
 
-// "2025-07-07 06:03:39.0" → "오전 6:03"
+//시간변환
 scwin.formatTime = function (datetimeStr) {
     const date = new Date(datetimeStr);
     let hour = date.getHours();
@@ -727,21 +623,15 @@ scwin.sbm_session_submitdone = function (e) {
 
 // 뒤로 가기 버튼 클릭 이벤트
 scwin.btn_back_onclick = function() {
-    console.log("❌ btn_back_onclick 호출됨 - 팝업 닫기");
-    console.trace("함수 호출 스택");
-    
     try {
-        // 팝업 닫기
         $p.closePopup();
     } catch(e) {
         console.error("팝업 닫기 오류:", e);
-        // 대체 방법
         if (window.parent && window.parent.$p && window.parent.$p.closePopup) {
             window.parent.$p.closePopup();
         }
     }
-};
-]]></script>
+};]]></script>
     	<style type="text/css"><![CDATA[html,
 body {
     margin: 0;

@@ -98,16 +98,13 @@ scwin.save_button_onclick = function (e) {
     // 비밀번호 일치 검사
     if (password && passwordCheck && password !== passwordCheck) {
         $c.win.alert("비밀번호가 일치하지 않습니다");
-        //passwordCheck_error_text.setValue("*비밀번호가 일치하지 않습니다.");
         isValid = false;
     }
 
     if (!isValid) return;
 
-    //  데이터 보내기
     const formData = new FormData();
 
-    // 빈 값으로 필드 세팅
     formData.append("userId", email_input.getValue());
     formData.append("userName", userName_input.getValue());
     formData.append("password", password_input.getValue());
@@ -128,10 +125,9 @@ scwin.save_button_onclick = function (e) {
     });
 };
 
+//사용자 정보 가져오기
 scwin.sbm_getUserInfo_submitdone = function (e) {
     const responseData = e.responseJSON.userVo;
-    console.log(responseData);
-
     userName_input.setValue(responseData.userName);
     email_input.setValue(responseData.userId);
 
@@ -143,13 +139,8 @@ scwin.sbm_getUserInfo_submitdone = function (e) {
     
     side_frame.getWindow().dm_sideMenu.set("userName", responseData.userId);
     side_frame.getWindow().scwin.loadUserProjects();
-    //header.getWindow().output_userName.setValue(responseData.userName);
-    //header.getWindow().img_userIcon.setSrc(responseData.profileImageUrl);
 };
 
-scwin.sbm_getUserInfo_submiterror = function (e) {
-    console.log(e);
-};
 
 scwin.logout_button_onclick = function (e) {
     $p.executeSubmission("sbm_logout");

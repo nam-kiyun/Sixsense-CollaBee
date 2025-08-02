@@ -49,12 +49,10 @@
 };
 
 scwin.onresize = function (e) {
-    // resize 이벤트 정의
     window.onresize = function () {
         scwin.applyResponsiveWidth();
     };
 
-    // 페이지 로딩 시에도 한 번 실행
     scwin.applyResponsiveWidth();
 };
 
@@ -101,7 +99,7 @@ scwin.input_onfocus = function (e) {
 };
 
 
-// 회원가입 버튼 (이메일 전송)
+// 회원가입 버튼 
 scwin.signup_button_onclick = function (e) {
     let email = email_input.getValue();
     let password = password_input.getValue();
@@ -184,9 +182,9 @@ scwin.sbm_email_submitdone = function (e) {
             password: password_input.getValue(),
             passwordCheck: passwordCheck_input.getValue()
         }
-        sessionStorage.setItem("code", responseData.code); //인증코드
-        sessionStorage.setItem("info", JSON.stringify(info)); //내용
-        sessionStorage.setItem("sentTime", new Date().getTime()); //이메일 전송 시간
+        sessionStorage.setItem("code", responseData.code); 
+        sessionStorage.setItem("info", JSON.stringify(info)); 
+        sessionStorage.setItem("sentTime", new Date().getTime());
 
         let param = {
             "code": responseData.code,
@@ -236,10 +234,6 @@ scwin.sbm_checkEmail_submitdone = function (e) {
     }
 };
 
-//이메일 중복확인 실패
-scwin.sbm_checkEmail_submiterror = function (e) {
-    alert("이메일 중복 확인 실패");
-};
 
 //이메일 입력시 중복확인 무효화
 scwin.email_input_onkeyup = function (e) {
