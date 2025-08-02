@@ -1397,7 +1397,7 @@ scwin.getCurrentUserName = function () {
  * 사용자 역할 확인 후 프로젝트 설정 버튼 제어
  */
 scwin.checkUserPermissionForSettings = function() {
-    console.log("사용자 권한 확인 시작");
+    
     
     try {
         var userId = scwin.getCurrentUserId();
@@ -1409,18 +1409,18 @@ scwin.checkUserPermissionForSettings = function() {
                 var urlParams = new URLSearchParams(window.location.search);
                 projectId = urlParams.get('projectId');
             } catch (e) {
-                console.error("URL에서 projectId 가져오기 실패:", e);
+               
             }
         }
         
         if (!userId || !projectId) {
-            console.error("사용자 ID 또는 프로젝트 ID가 없습니다.", {userId: userId, projectId: projectId});
+            
             // 기본적으로 버튼을 숨김
             scwin.hideSettingsButton();
             return;
         }
         
-        console.log("역할 확인 요청:", {userId: userId, projectId: projectId});
+       
         
         // 백엔드 API 호출
         $.ajax({
@@ -1432,25 +1432,25 @@ scwin.checkUserPermissionForSettings = function() {
             },
             dataType: "json",
             success: function(data) {
-                console.log("역할 확인 응답:", data);
+               
                 
                 if (data.success && data.isAdmin) {
-                    console.log("관리자 권한 확인 - 설정 버튼 표시");
+                    
                     scwin.showSettingsButton();
                 } else {
-                    console.log("관리자 권한 없음 - 설정 버튼 숨김");
+                    
                     scwin.hideSettingsButton();
                 }
             },
             error: function(xhr, status, error) {
-                console.error("역할 확인 API 호출 실패:", error);
+                
                 // 오류 시 기본적으로 버튼을 숨김
                 scwin.hideSettingsButton();
             }
         });
         
     } catch (e) {
-        console.error("사용자 권한 확인 중 오류:", e);
+        
         scwin.hideSettingsButton();
     }
 };
@@ -1463,12 +1463,12 @@ scwin.showSettingsButton = function() {
         var settingsBtn = $p.getComponentById("btn_settings");
         if (settingsBtn) {
             settingsBtn.show();
-            console.log("프로젝트 설정 버튼 표시됨");
+            
         } else {
-            console.error("btn_settings 컴포넌트를 찾을 수 없습니다.");
+            
         }
     } catch (e) {
-        console.error("설정 버튼 표시 중 오류:", e);
+        
     }
 };
 
@@ -1480,12 +1480,12 @@ scwin.hideSettingsButton = function() {
         var settingsBtn = $p.getComponentById("btn_settings");
         if (settingsBtn) {
             settingsBtn.hide();
-            console.log("프로젝트 설정 버튼 숨김");
+            
         } else {
-            console.error("btn_settings 컴포넌트를 찾을 수 없습니다.");
+            
         }
     } catch (e) {
-        console.error("설정 버튼 숨김 중 오류:", e);
+        
     }
 };
 
@@ -7052,18 +7052,18 @@ scwin.btn_settings_onclick = function (e) {
 scwin.projectSetting_closeAction = function (argRuntimeID, argJsnInfo) {
     // taskModal과 동일한 방식으로 처리
     var popObj = $p.getPopupWindow(argRuntimeID);
-    console.log("프로젝트 설정 모달이 닫혔습니다.");
+    
 
     return true; // 팝업 닫기 허용
 };
 
 // 프로젝트 설정 모달 강제 닫기 함수 (자식창에서 호출용)
 scwin.closeProjectSettingModal = function () {
-    console.log("projectMainPage에서 모달 닫기 함수 호출됨");
+    
     try {
         // projectSettingPopup ID로 팝업 닫기
         var result = $p.closePopup("projectSettingPopup");
-        console.log("$p.closePopup 결과:", result);
+        
 
         if (!result) {
             // 다른 방법 시도
@@ -7074,14 +7074,14 @@ scwin.closeProjectSettingModal = function () {
             }
         }
     } catch (e) {
-        console.error("모달 닫기 실패:", e);
+        
     }
 };
 
 // 메시지 리스너 (자식창에서 postMessage로 모달 닫기 요청시)
 window.addEventListener('message', function (event) {
     if (event.data && event.data.action === 'closeProjectSettingPopup') {
-        console.log("메시지를 통한 모달 닫기 요청 받음");
+        
         scwin.closeProjectSettingModal();
     }
 });
@@ -7190,7 +7190,7 @@ scwin.generateVideoChatPopupId = function () {
 scwin.btn_videoCall_onclick = function (e) {
     // 1. 고유 팝업 ID 생성
     var uniquePopupId = scwin.generateVideoChatPopupId();
-    console.log("생성된 고유 팝업 ID:", uniquePopupId);
+    
 
     // 2. 현재 화상통화 팝업 ID를 전역 변수에 저장 (닫기 시 사용)
     scwin.currentVideoChatPopupId = uniquePopupId;
@@ -7208,7 +7208,7 @@ scwin.btn_videoCall_onclick = function (e) {
         try {
             projectId = dm_projectVo.get("projectId");
         } catch (e) {
-            console.log("dm_projectVo에서 projectId 가져오기 실패:", e);
+            
         }
     }
 
@@ -7220,12 +7220,11 @@ scwin.btn_videoCall_onclick = function (e) {
 
     if (!projectId) {
         $c.win.alert("프로젝트 ID를 찾을 수 없습니다.");
-        console.error("프로젝트 ID를 찾을 수 없습니다.");
+       
         return;
     }
 
-    console.log("화상통화 모달 시작 - 프로젝트 ID:", projectId);
-
+    
     // 프로젝트 설정과 동일한 방식으로 파라미터 구성
     var param = {
         "type": "json",
@@ -7259,26 +7258,26 @@ scwin.btn_videoCall_onclick = function (e) {
 
 // 화상통화 팝업 닫기 액션
 scwin.videoChat_closeAction = function () {
-    console.log("화상통화 팝업 닫기");
+    
     // 동적 생성된 팝업 ID로 닫기
     if (scwin.currentVideoChatPopupId) {
-        console.log("동적 팝업 ID로 닫기:", scwin.currentVideoChatPopupId);
+       
         $p.closePopup(scwin.currentVideoChatPopupId);
         scwin.currentVideoChatPopupId = null; // ID 초기화
     } else {
         // 기존 방식으로 fallback
-        console.log("기존 방식으로 팝업 닫기");
+        
         $p.closePopup("videoChatPopup");
     }
 };
 
 // 화상통화 모달 닫기 함수 (자식 페이지에서 호출용)
 scwin.closeVideoChatModal = function (isPipMode) {
-    console.log("자식 페이지에서 화상통화 모달 닫기 요청", isPipMode ? "(PIP 모드)" : "(일반 모드)");
+    
 
     // PIP 모드일 때는 모달만 닫고 화상통화는 유지
     if (isPipMode || scwin.isPipModeActive) {
-        console.log("PIP 모드 - 모달만 닫고 화상통화 유지");
+        
         scwin.isPipModeActive = true; // PIP 모드 활성화 표시
 
         // PIP 모드에서는 간단하게 모달만 닫기
@@ -7290,11 +7289,11 @@ scwin.closeVideoChatModal = function (isPipMode) {
         return; // 화상통화 종료 없이 여기서 끝
     }
 
-    console.log("일반 모드 - 화상통화 완전 종료");
+    
 
     // 방법 1: 동적 ID로 정상적인 closePopup 호출
     if (scwin.currentVideoChatPopupId) {
-        console.log("동적 팝업 ID로 모달 닫기:", scwin.currentVideoChatPopupId);
+        
         $p.closePopup(scwin.currentVideoChatPopupId);
         scwin.currentVideoChatPopupId = null;
     } else {
@@ -7305,7 +7304,7 @@ scwin.closeVideoChatModal = function (isPipMode) {
     // 방법 2: 강제 DOM 제거
     setTimeout(function () {
         try {
-            console.log("강제 DOM 제거 시도");
+            
             var selectors = [
                 '#videoChatPopup',
                 '[id*="videoChatPopup"]',
@@ -7318,7 +7317,7 @@ scwin.closeVideoChatModal = function (isPipMode) {
             selectors.forEach(function (selector) {
                 var elements = document.querySelectorAll(selector);
                 elements.forEach(function (element) {
-                    console.log("팝업 요소 발견 및 제거:", selector);
+                    
                     element.remove();
                 });
             });
@@ -7327,17 +7326,17 @@ scwin.closeVideoChatModal = function (isPipMode) {
             var backdrop = document.querySelector('.w2popup_backdrop');
             if (backdrop) {
                 backdrop.remove();
-                console.log("백드롭 제거 완료");
+                
             }
 
         } catch (e) {
-            console.error("강제 DOM 제거 실패:", e);
+            
         }
         
         // 화상통화 모달이 완전히 닫힌 후 다른 팝업들의 헤더 복원
         setTimeout(function() {
             try {
-                console.log("다른 팝업들의 헤더 복원 시작");
+                
                 
                 // 모든 WebSquare 팝업 헤더를 다시 표시
                 var allHeaders = document.querySelectorAll('.w2window_header');
@@ -7365,9 +7364,9 @@ scwin.closeVideoChatModal = function (isPipMode) {
                     }
                 }
                 
-                console.log("다른 팝업들의 헤더 복원 완료");
+                
             } catch (error) {
-                console.error("헤더 복원 중 오류:", error);
+                
             }
         }, 200);
         
@@ -7381,7 +7380,7 @@ scwin.originalModalInfo = null; // 원래 모달 크기/위치 저장
 
 // 모달을 PIP 크기로 축소하는 함수
 scwin.resizeModalToPip = function () {
-    console.log("모달 PIP 크기 축소 시작");
+    
     scwin.isPipModeActive = true;
 
     try {
@@ -7423,17 +7422,17 @@ scwin.resizeModalToPip = function () {
             modalElement.style.setProperty('left', 'auto', 'important');
             modalElement.style.setProperty('z-index', '999999', 'important');
 
-            console.log("✅ 모달 PIP 크기로 축소 완료:", modalElement.id);
+            
 
             // PIP 확대 버튼 추가
             scwin.addPipExpandButton(modalElement);
 
         } else {
-            console.error("활성화된 화상통화 모달을 찾을 수 없음");
+            
         }
 
     } catch (error) {
-        console.error("모달 PIP 축소 실패:", error);
+        
     }
 };
 
@@ -7471,12 +7470,12 @@ scwin.addPipExpandButton = function (modalElement) {
     });
 
     modalElement.appendChild(expandBtn);
-    console.log("✅ PIP 확대 버튼 추가 완료");
+    
 };
 
 // PIP에서 모달 확대 복원
 scwin.expandModalFromPip = function () {
-    console.log("PIP에서 모달 확대 시작");
+    
     scwin.isPipModeActive = false;
 
     try {
@@ -7513,7 +7512,7 @@ scwin.expandModalFromPip = function () {
             const expandBtn = modalElement.querySelector('.pip-expand-btn');
             if (expandBtn) expandBtn.remove();
 
-            console.log("✅ 모달 확대 복원 완료 (1920x940):", modalElement.id);
+           
 
             // 자식 창에 복원 알림
             const iframe = modalElement.querySelector('iframe');
@@ -7524,11 +7523,11 @@ scwin.expandModalFromPip = function () {
             }
 
         } else {
-            console.error("활성화된 화상통화 모달을 찾을 수 없음");
+            
         }
 
     } catch (error) {
-        console.error("모달 확대 복원 실패:", error);
+        
     }
 };
 
@@ -7537,59 +7536,55 @@ window.addEventListener('message', function (event) {
 
     // PIP 창 생성 요청 처리
     if (event.data && event.data.action === 'createPipWindow') {
-        // console.log("PIP 창 생성 요청 받음");
+        
         scwin.createPipWindow(event.data.videoState);
         return;
     }
 
     // 화상통화 상태 저장 요청 처리
     if (event.data && event.data.action === 'saveVideoChatState') {
-        // console.log("화상통화 상태 저장 요청 받음");
+        
         scwin.pipVideoState = event.data.state;
         return;
     }
 
     // 모달 PIP 크기 축소 요청 처리
     if (event.data && event.data.action === 'resizeModalToPip') {
-        // console.log("������ PostMessage 수신 - 모달 PIP 크기 축소 요청 받음");
-        // console.log('수신된 데이터:', event.data);
-        // console.log('event.origin:', event.origin);
-        // console.log('event.source:', event.source);
+        
 
         try {
             // 즉시 실행
             scwin.resizeModalToPip();
-            console.log('✅ 모달 PIP 축소 완료');
+            
 
             // 추가로 짧은 지연 후 한 번 더 실행 (안전장치)
             setTimeout(() => {
-                // console.log('������ PIP 축소 안전장치 실행');
+               
                 scwin.resizeModalToPip();
             }, 50);
 
         } catch (error) {
-            console.error('❌ 모달 PIP 축소 실패:', error);
+           
         }
         return;
     }
 
     // 모달 PIP에서 확대 복원 요청 처리
     if (event.data && event.data.action === 'expandModalFromPip') {
-        console.log("������ PostMessage 수신 - 모달 PIP에서 확대 복원 요청 받음");
-        console.log('수신된 데이터:', event.data);
+        
 
         try {
             scwin.expandModalFromPip();
-            console.log('✅ 모달 확대 복원 완료');
+            
         } catch (error) {
-            console.error('❌ 모달 확대 복원 실패:', error);
+            
         }
         return;
     }
 
     // 화상통화 모달 재열기 요청 처리
     if (event.data && event.data.action === 'reopenVideoChatPopup') {
-        console.log("화상통화 모달 재열기 요청 받음");
+        
         scwin.isPipModeActive = false; // PIP 모드 해제
         // 화상통화 버튼 클릭과 동일한 동작 수행
         scwin.btn_videoCall_onclick();
@@ -7599,12 +7594,12 @@ window.addEventListener('message', function (event) {
     if (event.data && event.data.action === 'closeVideoChatPopup') {
         // PIP 모드와 일반 모드 구분 처리
         if (event.data.isPipMode) {
-            console.log("PIP 모드 - 모달만 닫기 (화상통화 유지)");
+            
             scwin.isPipModeActive = true; // PIP 모드 활성화
 
             // PIP 모드에서는 모달만 숨기기 (DOM 제거하지 않음)
             try {
-                console.log("PIP - 모달 숨기기 시작 (DOM 유지)");
+               
 
                 // 방법 1: 모달 DOM을 숨기기만 함 (제거하지 않음)
                 const selectors = [
@@ -7623,28 +7618,28 @@ window.addEventListener('message', function (event) {
                         }
                     });
                 });
-                console.log("PIP - 총", hiddenCount, "개 모달 요소 숨김 완료");
+                
 
             } catch (e) {
-                console.error("PIP 모달 숨기기 실패:", e);
+                
             }
             return; // 화상통화 종료 없이 여기서 끝
         }
 
-        console.log("일반 모드 - 화상통화 팝업 닫기 메시지 받음 - 강제 닫기 실행");
+        
 
         // 간단하고 안전한 모달 닫기
         try {
-            console.log("화상통화 모달 닫기 시작");
+            ;
 
             // 1단계: WebSquare API로 정식 팝업 닫기
             if (typeof $p !== 'undefined' && $p.closePopup) {
-                console.log("WebSquare API로 videoChatPopup 닫기");
+                
                 $p.closePopup("videoChatPopup");
             }
 
             // 2단계: 화상통화 DOM 완전 정리 (ID 중복 오류 방지)
-            console.log("화상통화 DOM 완전 정리 시작");
+            
 
             // 1) videoChatPopup 관련 모든 요소 제거
             var videoSelectors = [
@@ -7658,7 +7653,7 @@ window.addEventListener('message', function (event) {
             videoSelectors.forEach(function (selector) {
                 var elements = document.querySelectorAll(selector);
                 elements.forEach(function (element) {
-                    console.log("화상통화 DOM 제거:", element.id);
+                    
                     element.remove();
                     totalRemoved++;
                 });
@@ -7668,33 +7663,33 @@ window.addEventListener('message', function (event) {
             try {
                 if (typeof $p !== 'undefined' && $p.destroyPopup) {
                     $p.destroyPopup("videoChatPopup");
-                    console.log("WebSquare 팝업 캐시 정리 완료");
+                    
                 } else if (typeof $p !== 'undefined' && $p.removePopup) {
                     $p.removePopup("videoChatPopup");
-                    console.log("WebSquare 팝업 제거 완료");
+                    
                 }
             } catch (e) {
-                console.log("WebSquare 캐시 정리:", e.message);
+                
             }
 
-            console.log("총 " + totalRemoved + "개 DOM 요소 제거됨");
+            
 
             // 3단계: 강제 페이지 활성화 (백드롭 대신)
             document.body.style.pointerEvents = 'auto !important';
             document.body.style.filter = 'none !important';
             document.body.style.opacity = '1 !important';
             document.documentElement.style.pointerEvents = 'auto !important';
-            console.log("페이지 강제 활성화 완료");
+            
 
 
             // 4단계: 기본 스타일 초기화
             document.body.style.pointerEvents = 'auto';
             document.body.style.overflow = 'auto';
 
-            console.log("화상통화 모달 닫기 완료");
+            
 
         } catch (e) {
-            console.error("PostMessage 처리 중 DOM 제거 실패:", e);
+            
         }
     }
 });
@@ -7704,14 +7699,14 @@ scwin.videoConnectionState = null;
 
 // PIP 창 생성 함수
 scwin.createPipWindow = function (videoState) {
-    console.log("PIP 창 생성 시작:", videoState);
+    
 
     try {
         // 기존 PIP 창이 있으면 제거
         const existingPip = document.getElementById('videoChatPipWindow');
         if (existingPip) {
             existingPip.remove();
-            console.log("기존 PIP 창 제거됨");
+            
         }
 
         // PIP 창 HTML 생성
@@ -7823,14 +7818,14 @@ scwin.createPipWindow = function (videoState) {
         // 확장 버튼 이벤트
         pipExpandBtn.addEventListener('click', function (e) {
             e.stopPropagation();
-            console.log("PIP 확장 버튼 클릭");
+            
             scwin.expandVideoChat();
         });
 
         // 닫기 버튼 이벤트
         pipCloseBtn.addEventListener('click', function (e) {
             e.stopPropagation();
-            console.log("PIP 닫기 버튼 클릭");
+           
             scwin.closePipWindow();
         });
 
@@ -7858,10 +7853,10 @@ scwin.createPipWindow = function (videoState) {
             `;
         }, 500);
 
-        console.log("PIP 창 생성 완료");
+       
 
     } catch (error) {
-        console.error("PIP 창 생성 실패:", error);
+        
     }
 };
 
@@ -7961,19 +7956,19 @@ scwin.closePipWindow = function () {
         const pipWindow = document.getElementById('videoChatPipWindow');
         if (pipWindow) {
             pipWindow.remove();
-            console.log("PIP 창 닫기 완료");
+            
 
             // PIP 상태 초기화
             scwin.pipVideoState = null;
         }
     } catch (error) {
-        console.error("PIP 창 닫기 실패:", error);
+       
     }
 };
 
 // PIP에서 전체 화상통화로 확장하는 함수
 scwin.expandVideoChat = function () {
-    console.log("PIP에서 전체 화상통화로 확장 시작");
+    
 
     try {
         // 현재 프로젝트 ID 가져오기
@@ -8004,7 +7999,7 @@ scwin.expandVideoChat = function () {
             return;
         }
 
-        console.log("화상통화 확장 - 프로젝트 ID:", projectId);
+        
 
         // PIP 창 제거
         const pipWindow = document.getElementById('videoChatPipWindow');
@@ -8038,24 +8033,24 @@ scwin.expandVideoChat = function () {
         // 화상통화 팝업 다시 열기
         $p.openPopup("/InsWebApp/ui/videochat/webRTCVideoChatPage.xml", options);
 
-        console.log("화상통화 확장 완료");
+        
 
     } catch (error) {
-        console.error("화상통화 확장 실패:", error);
+       
         $c.win.alert("화상통화를 확장할 수 없습니다: " + error.message);
     }
 };
 
 // 소형 비디오 채팅 컨테이너 표시 함수
 scwin.showMiniVideoChatContainer = function () {
-    console.log("소형 비디오 채팅 컨테이너 표시 시작");
+    
 
     try {
         // 기존 컨테이너가 있으면 제거
         const existingContainer = document.getElementById('miniVideoChatContainer');
         if (existingContainer) {
             existingContainer.remove();
-            console.log("기존 미니 컨테이너 제거됨");
+            
         }
 
         // 소형 컨테이너 HTML 생성
@@ -8089,11 +8084,11 @@ scwin.showMiniVideoChatContainer = function () {
                 scwin.restoreVideoState();
             }
 
-            console.log("✅ 소형 비디오 컨테이너 표시 완료");
+            
         }
 
     } catch (error) {
-        console.error("소형 비디오 컨테이너 표시 실패:", error);
+        
     }
 };
 
@@ -8145,13 +8140,13 @@ scwin.restoreVideoState = function () {
 
         const videoState = scwin.videoConnectionState;
         if (!videoState) {
-            console.warn("복원할 비디오 상태가 없습니다");
+            
             return;
         }
 
         const miniGrid = document.getElementById('miniVideoGrid');
         if (!miniGrid) {
-            console.error("미니 비디오 그리드를 찾을 수 없습니다");
+            
             return;
         }
 
@@ -8169,10 +8164,10 @@ scwin.restoreVideoState = function () {
             });
         }
 
-        console.log("✅ 비디오 상태 복원 완료");
+        
 
     } catch (error) {
-        console.error("비디오 상태 복원 실패:", error);
+        
     }
 };
 
@@ -8201,16 +8196,16 @@ scwin.addMiniVideo = function (videoId, stream, userName) {
         videoItem.appendChild(nameDiv);
         miniGrid.appendChild(videoItem);
 
-        console.log("미니 비디오 추가됨:", videoId, userName);
+        
 
     } catch (error) {
-        console.error("미니 비디오 추가 실패:", error);
+        
     }
 };
 
 // 소형 비디오 채팅 닫기
 scwin.closeMiniVideoChat = function () {
-    console.log("소형 비디오 채팅 닫기");
+    
 
     try {
         const container = document.getElementById('miniVideoChatContainer');
@@ -8225,7 +8220,7 @@ scwin.closeMiniVideoChat = function () {
             });
 
             container.remove();
-            console.log("✅ 소형 비디오 컨테이너 제거됨");
+            
         }
 
         // 비디오 상태 정리
@@ -8235,13 +8230,13 @@ scwin.closeMiniVideoChat = function () {
         localStorage.removeItem('tempVideoChatState');
 
     } catch (error) {
-        console.error("소형 비디오 채팅 닫기 실패:", error);
+        
     }
 };
 
 // 비디오 채팅 확대 (다시 모달로)
 scwin.expandVideoChat = function () {
-    console.log("비디오 채팅 확대 시작");
+    
 
     try {
         // 화상통화 모달을 다시 열기
@@ -8256,7 +8251,7 @@ scwin.expandVideoChat = function () {
         }, 500);
 
     } catch (error) {
-        console.error("비디오 채팅 확대 실패:", error);
+        
     }
 };
 

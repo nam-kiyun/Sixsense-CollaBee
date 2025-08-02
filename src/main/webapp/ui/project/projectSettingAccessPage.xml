@@ -388,9 +388,24 @@
         <w2:layoutInfo/>
         <w2:publicInfo method=""/>
         <script lazy="false" type="text/javascript"><![CDATA[
-// 초기화 플래그 (페이지 로드 시 팝업 방지용)
+/**
+ * 프로젝트 설정 액세스 페이지 전역 변수
+ * @namespace scwin
+ */
+
+/** @type {boolean} 초기화 플래그 (페이지 로드 시 팝업 방지용) */
 var isInitializing = false;
 
+/** @type {Array} 역할 변경 대기 목록 */
+var pendingChanges = [];
+
+/** @type {Array} 원본 사용자 데이터 */
+var originalData = [];
+
+/**
+ * 페이지 로드 시 초기화
+ * 프로젝트 ID 파라미터 획득 및 멤버 데이터 로드
+ */
 scwin.onpageload = function() {
     
     
@@ -424,12 +439,12 @@ scwin.onpageload = function() {
                 projectId = parentFrame.scwin.projectId;
             }
         } catch(e) {
-            console.log("부모 프레임에서 프로젝트 ID 가져오기 실패:", e);
+            
         }
     }
     
     
-    console.log("AccessPage - 최종 projectId:", projectId);
+    
     
     if (projectId) {
         dm_search.set("projectId", projectId);
@@ -474,6 +489,10 @@ scwin.onpageload = function() {
 };
 
 // 프로젝트 멤버 목록 조회 (간단한 AJAX 방식)
+/**
+ * 프로젝트 멤버 목록 로드
+ * @param {string} projectId - 프로젝트 ID
+ */
 scwin.loadProjectUsers = function(projectId) {
     
     
@@ -544,6 +563,11 @@ scwin.loadProjectUsers = function(projectId) {
 };
 
 // 입력 필드 변경 이벤트 (검색 결과 초기화)
+/**
+ * 검색 입력 필드 키업 이벤트
+ * 엔터 키 누를 시 검색 실행
+ * @param {Event} e - 키보드 이벤트
+ */
 scwin.input_search_onkeyup = function(e) {
     // 검색 결과 및 메시지 초기화
     scwin.hideSearchMessage();
@@ -557,6 +581,10 @@ scwin.input_search_onkeyup = function(e) {
 };
 
 // 검색 버튼 클릭
+/**
+ * 검색 버튼 클릭 이벤트
+ * @param {Event} e - 클릭 이벤트
+ */
 scwin.btn_search_onclick = function(e) {
     // 직접 input에서 값 가져오기
     var searchValue = input_search.getValue();
@@ -579,6 +607,11 @@ scwin.btn_search_onclick = function(e) {
 };
 
 // 사용자 검색 함수
+/**
+ * 사용자 검색 실행
+ * @param {string} userId - 검색할 사용자 ID
+ * @param {string} projectId - 현재 프로젝트 ID
+ */
 scwin.searchUser = function(userId, projectId) {
     
     try {
@@ -617,6 +650,11 @@ scwin.searchUser = function(userId, projectId) {
 
 
 // 검색 메시지 표시 함수
+/**
+ * 검색 결과 메시지 표시
+ * @param {string} message - 표시할 메시지
+ * @param {boolean} isError - 에러 메시지 여부
+ */
 scwin.showSearchMessage = function(message, isError) {
     try {
         output_searchMessage.setValue(message);
@@ -635,6 +673,9 @@ scwin.showSearchMessage = function(message, isError) {
 };
 
 // 검색 메시지 숨김 함수
+/**
+ * 검색 메시지 숨기기
+ */
 scwin.hideSearchMessage = function() {
     try {
         output_searchMessage.setStyle("display", "none");
@@ -644,6 +685,10 @@ scwin.hideSearchMessage = function() {
 };
 
 // 검색 결과 처리
+/**
+ * 검색 결과 처리
+ * @param {Object} result - 검색 결과 데이터
+ */
 scwin.handleSearchResult = function(result) {
     var found = result.found;
     var isProjectMember = result.isProjectMember;
@@ -689,6 +734,12 @@ scwin.handleSearchResult = function(result) {
 };
 
 // 실시간 멤버 여부 재확인 함수
+/**
+ * 사용자 멤버쉽 재확인
+ * @param {string} userId - 사용자 ID
+ * @param {string} projectId - 프로젝트 ID
+ * @param {Function} callback - 콜백 함수
+ */
 scwin.recheckUserMembership = function(userId, projectId, callback) {
     try {
         $.ajax({
@@ -716,6 +767,10 @@ scwin.recheckUserMembership = function(userId, projectId, callback) {
 };
 
 // 사용자 추가 버튼 클릭 (이메일 발송)
+/**
+ * 사용자 추가 버튼 클릭 이벤트
+ * @param {Event} e - 클릭 이벤트
+ */
 scwin.btn_addUser_onclick = function(e) {
     // 현재 검색된 사용자 정보 확인
     var searchValue = input_search.getValue();
@@ -764,7 +819,7 @@ scwin.btn_addUser_onclick = function(e) {
 
 // 역할 변경 확인 모달 열기
 scwin.openRoleChangeConfirmModal = function(changeList) {
-    console.log("역할 변경 모달 열기");
+    
     
     // 변경사항 리스트 설정
     output_roleChangeList.setValue(changeList);
@@ -802,7 +857,7 @@ scwin.btn_roleChangeModalCancel_onclick = function(e) {
 
 // 역할 변경 모달 확인 버튼 클릭
 scwin.btn_roleChangeModalConfirm_onclick = function(e) {
-    console.log("역할 변경 확인됨");
+   
     scwin.closeRoleChangeConfirmModal();
     
     // 순차적으로 저장
@@ -811,7 +866,7 @@ scwin.btn_roleChangeModalConfirm_onclick = function(e) {
 
 // 이메일 초대 확인 모달 열기
 scwin.openEmailInviteConfirmModal = function(userName, userEmail, projectId) {
-    console.log("이메일 초대 모달 열기:", userName, userEmail);
+   
     
     // 사용자 정보 설정
     output_emailInviteUserName.setValue("사용자: " + userName);
@@ -860,7 +915,7 @@ scwin.btn_emailInviteModalCancel_onclick = function(e) {
 
 // 이메일 초대 모달 확인 버튼 클릭
 scwin.btn_emailInviteModalConfirm_onclick = function(e) {
-    console.log("이메일 초대 확인됨");
+    
     
     if (scwin.pendingEmailInvite) {
         var userEmail = scwin.pendingEmailInvite.userEmail;
@@ -869,12 +924,17 @@ scwin.btn_emailInviteModalConfirm_onclick = function(e) {
         scwin.closeEmailInviteConfirmModal();
         scwin.sendProjectInviteEmail(userEmail, projectId);
     } else {
-        console.error("초대할 사용자 정보가 없습니다.");
+        
         scwin.closeEmailInviteConfirmModal();
     }
 };
 
 // 프로젝트 초대 이메일 발송 함수
+/**
+ * 프로젝트 초대 이메일 발송
+ * @param {string} userEmail - 수신자 이메일
+ * @param {string} projectId - 프로젝트 ID
+ */
 scwin.sendProjectInviteEmail = function(userEmail, projectId) {
     try {
         // JSON 데이터로 전송
@@ -917,6 +977,10 @@ scwin.sendProjectInviteEmail = function(userEmail, projectId) {
 };
 
 // 사용자 초대 함수 (기존 DB 추가용 - 현재는 사용하지 않음)
+/**
+ * 사용자 초대 실행
+ * @param {string} userId - 초대할 사용자 ID
+ */
 scwin.inviteUser = function(userId) {
     var projectId = dm_search.get("projectId");
     
@@ -992,6 +1056,10 @@ scwin.changeUserRole = function(userId, userName, newRole) {
 };
 
 // 동적 사용자 목록 렌더링
+/**
+ * 사용자 목록 UI 렌더링
+ * 그리드에 사용자 데이터 표시
+ */
 scwin.renderUserList = function() {
     
     
@@ -1278,6 +1346,10 @@ scwin.grd_projectUsers_oncellchange = function(e) {
 };
 
 // 현재 데이터와 원본 데이터를 비교하여 변경사항 감지
+/**
+ * 역할 변경 사항 감지
+ * @returns {Array} 변경된 역할 목록
+ */
 scwin.detectRoleChanges = function() {
     
     pendingChanges = []; // 기존 변경사항 초기화
@@ -1312,6 +1384,11 @@ scwin.detectRoleChanges = function() {
 };
 
 // 저장 버튼 클릭 이벤트
+/**
+ * 저장 버튼 클릭 이벤트
+ * 변경된 역할 저장 실행
+ * @param {Event} e - 클릭 이벤트
+ */
 scwin.btn_save_onclick = function(e) {
     
     
@@ -1363,6 +1440,10 @@ scwin.btn_save_onclick = function(e) {
 };
 
 // 역할 변경사항 순차 저장
+/**
+ * 역할 변경 사항 순차 저장
+ * @param {number} index - 저장할 변경 사항 인덱스
+ */
 scwin.saveRoleChanges = function(index) {
     if (index >= pendingChanges.length) {
         // 모든 변경사항 저장 완료
@@ -1515,6 +1596,10 @@ scwin.grd_projectUsers_onafterchange = function(e) {
 };
 
 // 프로필 이미지를 둥글게 만드는 함수
+/**
+ * 프로필 이미지를 원형으로 스타일링
+ * CSS 스타일 동적 적용
+ */
 scwin.makeProfileImagesRound = function() {
     try {
         // 그리드뷰 내의 모든 이미지 찾기
@@ -1537,7 +1622,7 @@ scwin.makeProfileImagesRound = function() {
             }
         }
     } catch (e) {
-        console.log('프로필 이미지 둥글게 만들기 실패:', e);
+       
     }
 };
 ]]></script>

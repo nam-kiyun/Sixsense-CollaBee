@@ -226,7 +226,7 @@ public class ProjectServiceImpl implements ProjectService {
 	 * @throws Exception
 	 */
 	private void addProjectCreatorToProjectUser(ProjectVo projectVo) throws Exception {
-		System.out.println("🔧 프로젝트 생성자 project_user 테이블 추가 시작");
+		
 
 		ProjectUserVo projectUserVo = new ProjectUserVo();
 		projectUserVo.setProjectId(projectVo.getProjectId());
@@ -236,10 +236,9 @@ public class ProjectServiceImpl implements ProjectService {
 		int result = projectUserDAO.insertProjectUser(projectUserVo);
 
 		if (result > 0) {
-			System.out.println("✅ 프로젝트 생성자 project_user 테이블 추가 성공 - userId: " + projectVo.getUserId() + ", projectId: "
-					+ projectVo.getProjectId());
+			
 		} else {
-			System.err.println("❌ 프로젝트 생성자 project_user 테이블 추가 실패 - result: " + result);
+			
 			throw new Exception("프로젝트 생성자 project_user 테이블 추가에 실패했습니다.");
 		}
 	}
@@ -376,12 +375,12 @@ public class ProjectServiceImpl implements ProjectService {
 						// -> projectImage/project_15_xxxxx.png
 						String s3Key = imageUrl.substring(imageUrl.indexOf(".com/") + 5);
 
-						System.out.println("프로젝트 이미지 S3 삭제: " + s3Key);
+						
 						amazonS3.deleteObject(bucketName, s3Key);
 					}
 				}
 			} catch (Exception e) {
-				System.err.println("프로젝트 이미지 S3 삭제 실패: " + e.getMessage());
+				
 			}
 
 			// 2. 작업 관련 파일들 조회 및 삭제
@@ -403,21 +402,21 @@ public class ProjectServiceImpl implements ProjectService {
 								String filePath = fileSrc.getFilePath();
 								String s3Key = filePath.substring(filePath.indexOf(".com/") + 5);
 
-								System.out.println("작업 파일 S3 삭제: " + s3Key);
+								
 								amazonS3.deleteObject(bucketName, s3Key);
 							} catch (Exception e) {
-								System.err.println("작업 파일 S3 삭제 실패: " + fileSrc.getFilePath() + " - " + e.getMessage());
+								
 							}
 						}
 					}
 				}
 			} catch (Exception e) {
-				System.err.println("작업 파일들 S3 삭제 실패: " + e.getMessage());
+				
 			}
 
 		} catch (Exception e) {
 			// S3 삭제 실패는 로그만 남기고 계속 진행
-			System.err.println("S3 파일 삭제 처리 실패: " + e.getMessage());
+			
 		}
 	}
 
@@ -444,7 +443,7 @@ public class ProjectServiceImpl implements ProjectService {
 //							}
 						}
 					} catch (Exception e) {
-						System.err.println("시간 파싱 오류: " + emailSendTime + ", 오류: " + e.getMessage());
+						
 					}
 				}
 			}
@@ -454,7 +453,7 @@ public class ProjectServiceImpl implements ProjectService {
 			}
 
 		} catch (Exception e) {
-			System.err.println("작업 알림 메일 발송 중 오류 발생: " + e.getMessage());
+			
 		}
 	}
 
@@ -483,7 +482,7 @@ public class ProjectServiceImpl implements ProjectService {
 				}
 			}
 		} catch (Exception e) {
-			System.err.println("할 일 작업 메일 발송 중 오류: " + e.getMessage());
+			
 		}
 	}
 
@@ -499,7 +498,7 @@ public class ProjectServiceImpl implements ProjectService {
 			String userName = firstTask.getUserName();
 
 			if (userEmail == null || userEmail.isEmpty()) {
-				System.err.println("사용자 이메일을 찾을 수 없습니다. ProjectUserId: " + firstTask.getProjectUserId());
+				
 				return;
 			}
 
@@ -519,10 +518,10 @@ public class ProjectServiceImpl implements ProjectService {
 
 			mailSender.send(message);
 
-			System.out.println("작업 알림 메일 발송 완료: " + userEmail + ", 작업 수: " + tasks.size());
+			
 
 		} catch (Exception e) {
-			System.err.println("작업 알림 메일 발송 실패: " + e.getMessage());
+			
 		}
 	}
 
