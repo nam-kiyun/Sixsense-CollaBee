@@ -136,18 +136,24 @@ div[id*="popup"] iframe,
         <w2:layoutInfo/>
         <w2:publicInfo method=""/>
         <script lazy="false" type="text/javascript"><![CDATA[
+
+/**
+ * 페이지 로드 시 초기화 함수
+ * 프로젝트 정보 파라미터 확인 및 기본 페이지 로드
+ */
 scwin.onpageload = function() {
     // taskModal과 동일한 방식으로 파라미터 받기
     let projectInfo = $p.getParameter("projectInfo");
     
     if (projectInfo && projectInfo.projectId) {
+        /** @type {string} 파라미터에서 전달받은 프로젝트 ID */
         scwin.projectId = projectInfo.projectId;
-        console.log("ProjectSettingMainPage - 받은 projectId:", scwin.projectId);
         
-        // 기본적으로 세부사항 페이지 표시
+        
+        // 프로젝트 ID 있을 때 기본 세부사항 페이지 로드
         scwin.loadSettingContent("projectSettingDetail");
     } else {
-        console.log("ProjectSettingMainPage - projectId가 없어서 입력 요청");
+        // 프로젝트 정보 파라미터가 없을 경우 수동 입력 요청
         scwin.requestProjectId();
     }
     
@@ -157,7 +163,10 @@ scwin.onpageload = function() {
     }, 0);
 };
 
-// 헤더 강제 제거 및 세로선 추가 함수
+/**
+ * 모달창 헤더 제거 및 UI 세로선 추가
+ * 팝업 헤더를 완전히 숨기고 사이드메뉴 구분선 생성
+ */
 scwin.forceRemoveHeaderAndAddLine = function() {
     try {
         // 모든 가능한 헤더 요소들 찾아서 제거
@@ -198,7 +207,7 @@ scwin.forceRemoveHeaderAndAddLine = function() {
                 // 모달 안에서만 보이도록 높이를 100%로 변경
                 line.style.cssText = 'position: absolute !important; top: 0 !important; left: 303px !important; width: 1px !important; height: 100% !important; background-color: #000000 !important; z-index: 999999 !important; pointer-events: none !important; display: block !important;';
                 container.appendChild(line);
-                console.log('세로선 추가됨 - 컨테이너 ' + index, container, line);
+                
             }
         });
         
@@ -207,16 +216,19 @@ scwin.forceRemoveHeaderAndAddLine = function() {
         if (sideMenu) {
             sideMenu.style.setProperty('border-right', '5px solid #00ff00', 'important');
             sideMenu.style.setProperty('box-sizing', 'border-box', 'important');
-            console.log('사이드메뉴 border 적용됨', sideMenu);
+            
         }
         
-        console.log('헤더 제거 및 세로선 추가 완료');
+        
     } catch(e) {
-        console.error('헤더 제거 실패:', e);
+       
     }
 };
 
-// 프로젝트 ID 입력 요청 함수
+/**
+ * 프로젝트 ID 수동 입력 요청
+ * 파라미터 누락 시 사용자에게 직접 입력받아 URL 재로딩
+ */
 scwin.requestProjectId = function() {
     
     
@@ -248,7 +260,11 @@ scwin.requestProjectId = function() {
     window.location.href = newUrl;
 };
 
-// 설정 콘텐츠 동적 로드 함수 (mainPage.xml 스타일과 동일)
+/**
+ * 설정 페이지 동적 로드
+ * @param {string} menuType - 로드할 설정 페이지 타입 (detail, access 등)
+ * @returns {boolean} 로드 성공 여부
+ */
 scwin.loadSettingContent = function (menuType) {
     try {
         let srcPath = "";
@@ -258,7 +274,7 @@ scwin.loadSettingContent = function (menuType) {
 
         // projectId가 없으면 로딩하지 않음
         if (!scwin.projectId) {
-            console.log("loadSettingContent - projectId가 없어서 로딩 중단");
+           
             return false;
         }
 
@@ -281,7 +297,7 @@ scwin.loadSettingContent = function (menuType) {
                 break;
         }
 
-        console.log("loadSettingContent - 로딩할 경로:", srcPath);
+       
 
        
 
@@ -294,11 +310,11 @@ scwin.loadSettingContent = function (menuType) {
 
             // 변경 후 확인
             setTimeout(function () {
-                console.log("loadSettingContent - 콘텐츠 로딩 완료:", selectedMenu);
+                
             }, 100);
 
         } else {
-            console.log("loadSettingContent - wfr_settingContent를 찾을 수 없음");
+            
             return false;
         }
 
@@ -308,12 +324,15 @@ scwin.loadSettingContent = function (menuType) {
         return true;
 
     } catch (e) {
-        console.error("loadSettingContent 오류:", e);
+        
         return false;
     }
 };
 
-// 사이드메뉴에서 호출할 메뉴 변경 함수
+/**
+ * 사이드메뉴 선택 시 페이지 변경
+ * @param {string} menuType - 변경할 메뉴 타입
+ */
 scwin.changeMenu = function (menuType) {
    
 
@@ -339,7 +358,10 @@ scwin.changeMenu = function (menuType) {
     }
 };
 
-// 사이드바에 프로젝트 정보 전달
+/**
+ * 사이드바에 프로젝트명 정보 전달
+ * 프로젝트명을 사이드메뉴 프레임에 업데이트
+ */
 scwin.updateSidebarProjectInfo = function() {
     try {
         if (wfr_sideMenu && wfr_sideMenu.getWindow) {
@@ -355,7 +377,10 @@ scwin.updateSidebarProjectInfo = function() {
     }
 };
 
-// wframe 로드 완료 이벤트들
+/**
+ * 사이드메뉴 프레임 로드 완료 이벤트
+ * 프로젝트 정보를 사이드바에 전달
+ */
 scwin.wfr_sideMenu_onready = function() {
    
     // 사이드바에 프로젝트 정보 전달
@@ -364,40 +389,55 @@ scwin.wfr_sideMenu_onready = function() {
     }, 100);
 };
 
+/**
+ * 설정 콘텐츠 프레임 로드 완료 이벤트
+ */
 scwin.wfr_settingContent_onready = function() {
     
 };
 
+/**
+ * 헤더 프레임 로드 완료 이벤트
+ */
 scwin.wfr_header_onready = function() {
     
 };
 
-// 모달 닫기 함수
+/**
+ * 프로젝트 설정 팝업 닫기
+ * 부모창에 모달 닫기 요청 전달
+ */
 scwin.closeProjectSettingPopup = function() {
-    console.log("프로젝트 설정 모달 닫기 시도 (projectSettingMainPage에서)");
+    
     try {
         // 부모창(projectMainPage)에게 모달 닫기 요청
         if (window.parent && window.parent.scwin && window.parent.scwin.closeProjectSettingModal) {
-            console.log("부모창의 closeProjectSettingModal 함수 호출");
+            
             window.parent.scwin.closeProjectSettingModal();
         } else if (window.parent && window.parent.$p && window.parent.$p.closePopup) {
-            console.log("부모창에서 projectSettingPopup ID로 닫기");
+            
             window.parent.$p.closePopup("projectSettingPopup");
         } else {
-            console.log("다른 방법으로 모달 닫기 시도");
+            
             // 현재 창에서 부모에게 메시지 전송
             if (window.parent) {
                 window.parent.postMessage({action: 'closeProjectSettingPopup'}, '*');
             }
         }
     } catch(e) {
-        console.error("모달 닫기 오류:", e);
+        
     }
 };
 ]]></script>
     </head>
     <body ev:onpageload="scwin.onpageload">
         <!-- 전체 페이지 컨테이너 (모달용 레이아웃) -->
+        <!-- 프로젝트 설정 모달 레이아웃 구조:
+             1. grp_mainContainer: 전체 컴테이너 (flexbox 레이아웃)
+             2. grp_headerArea: 헤더 영역 (모달에서 display:none)
+             3. grp_contentArea: 메인 콘텐츠 영역
+                3.1. grp_sideMenuArea: 사이드메뉴 (303px 고정 너비)
+                3.2. grp_settingContent: 설정 콘텐츠 (나머지 영역) -->
         <xf:group style="display:flex;flex-direction:column;margin:0;padding:0;height:100vh;" id="grp_mainContainer">
             
             <!-- 헤더 영역 (모달에서는 숨김) -->
