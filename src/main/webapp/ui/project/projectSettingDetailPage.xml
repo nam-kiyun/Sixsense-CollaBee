@@ -76,6 +76,15 @@
         <w2:layoutInfo/>
         <w2:publicInfo method=""/>
         <script lazy="false" type="text/javascript"><![CDATA[
+/**
+ * 프로젝트 설정 세부사항 페이지 전역 변수
+ * @namespace scwin
+ */
+
+/**
+ * 페이지 로드 시 초기화
+ * 프로젝트 ID 파라미터 획득 및 데이터 로드
+ */
 scwin.onpageload = function() {
     
     
@@ -116,7 +125,10 @@ scwin.onpageload = function() {
 };
 
 
-// 프로젝트 데이터 로드
+/**
+ * 프로젝트 데이터 서버에서 로드
+ * AJAX로 프로젝트 정보 요청 및 UI 업데이트
+ */
 scwin.loadProjectData = function() {
     
     
@@ -185,6 +197,10 @@ scwin.loadProjectData = function() {
 };
 
 // 프로젝트 데이터 설정 함수
+/**
+ * 프로젝트 데이터를 UI에 설정
+ * @param {Object} data - 프로젝트 데이터 객체
+ */
 scwin.setProjectData = function(data) {
    
     
@@ -317,6 +333,10 @@ scwin.setProjectData = function(data) {
 };
 
 // 기본 데이터 설정 (DB 조회 실패 시에만 사용)
+/**
+ * 기본 데이터 설정
+ * 데이터 로드 실패 시 기본값 사용
+ */
 scwin.setDefaultData = function() {
     
     
@@ -364,6 +384,10 @@ scwin.setDefaultData = function() {
 };
 
 // 프로젝트 이미지 변경
+/**
+ * 이미지 변경 버튼 클릭 이벤트
+ * @param {Event} e - 클릭 이벤트
+ */
 scwin.btn_changeImage_onclick = function(e) {
     
     
@@ -421,6 +445,10 @@ scwin.btn_changeImage_onclick = function(e) {
 };
 
 // 프로젝트 이미지 업로드 함수
+/**
+ * 프로젝트 이미지 업로드
+ * @param {File} file - 업로드할 이미지 파일
+ */
 scwin.uploadProjectImage = function(file) {
     
     
@@ -533,6 +561,11 @@ scwin.uploadProjectImage = function(file) {
 };
 
 // 저장 버튼 클릭
+/**
+ * 저장 버튼 클릭 이벤트
+ * 프로젝트 정보 유효성 검증 및 저장
+ * @param {Event} e - 클릭 이벤트
+ */
 scwin.btn_save_onclick = function(e) {
     
     
@@ -671,6 +704,10 @@ scwin.btn_save_onclick = function(e) {
 };
 
 // 프로젝트 삭제
+/**
+ * 프로젝트 삭제 버튼 클릭 이벤트
+ * @param {Event} e - 클릭 이벤트
+ */
 scwin.btn_deleteProject_onclick = function(e) {
     
     
@@ -679,6 +716,10 @@ scwin.btn_deleteProject_onclick = function(e) {
 };
 
 // 삭제 확인 모달 열기
+/**
+ * 삭제 확인 모달 열기
+ * 프로젝트 삭제 확인 팝업 표시
+ */
 scwin.openDeleteConfirmModal = function() {
     // 모달 배경 표시 (모달창도 함께 표시됨)
     grp_modalBackground.setStyle("display", "flex");
@@ -739,6 +780,9 @@ scwin.openDeleteConfirmModal = function() {
 };
 
 // 삭제 확인 모달 닫기
+/**
+ * 삭제 확인 모달 닫기
+ */
 scwin.closeDeleteConfirmModal = function() {
     grp_modalBackground.setStyle("display", "none");
     
@@ -766,7 +810,7 @@ scwin.updateConfirmButton = function() {
             btn_modalConfirm.setDisabled(true);
         }
     } catch (error) {
-        console.error("확인 버튼 업데이트 오류:", error);
+        
     }
 };
 
@@ -819,6 +863,10 @@ scwin.btn_modalConfirm_onclick = function(e) {
 };
 
 // 실제 프로젝트 삭제 실행
+/**
+ * 프로젝트 삭제 실행
+ * @param {string} projectName - 삭제할 프로젝트명
+ */
 scwin.executeProjectDelete = function(projectName) {
     
     
@@ -837,54 +885,53 @@ scwin.executeProjectDelete = function(projectName) {
         data: requestData,
         contentType: 'application/x-www-form-urlencoded',
         success: function(response) {
-            console.log("AJAX 성공 응답:", response);
+            
             
             // 응답 처리
             var isSuccess = false;
             var message = "";
             
             try {
-                console.log("응답 타입:", typeof response);
-                console.log("응답 내용:", JSON.stringify(response));
+                
                 
                 if (response && typeof response === 'object') {
                     if (response.success === true) {
                         isSuccess = true;
                         message = response.message || "프로젝트가 성공적으로 삭제되었습니다.";
-                        console.log("삭제 성공 확인됨");
+                        
                     } else {
                         isSuccess = false;
                         message = response.message || "프로젝트 삭제에 실패했습니다.";
-                        console.log("삭제 실패:", message);
+                        
                     }
                 } else {
                     // 응답이 없거나 예상과 다른 경우
                     isSuccess = false;
                     message = "서버 응답을 처리할 수 없습니다.";
-                    console.log("예상과 다른 응답:", response);
+                    
                 }
             } catch (e) {
                 isSuccess = false;
                 message = "응답 처리 중 오류가 발생했습니다.";
-                console.error("응답 처리 오류:", e);
+                
             }
             
             if (isSuccess) {
-                console.log("삭제 성공, alert 표시");
+                
                 
                 $c.win.alert("'" + projectName + "' 프로젝트가 삭제되었습니다.\n메인 페이지로 이동합니다.", function() {
-                    console.log("alert 확인 버튼 클릭됨");
+                    
                     
                     // WebSquare 방식으로 페이지 이동
                     try {
-                        console.log("$p.url로 페이지 이동 시도");
+                        
                         $p.url("/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/mainPage.xml");
                     } catch(e) {
-                        console.error("$p.url 이동 실패:", e);
+                        
                         try {
                             $p.url("/InsWebApp/ui/mainPage.xml");
                         } catch(e2) {
-                            console.error("대체 이동 실패:", e2);
+                            
                             window.location.href = "/InsWebApp/ui/mainPage.xml";
                         }
                     }
@@ -901,6 +948,10 @@ scwin.executeProjectDelete = function(projectName) {
 };
 
 // 뒤로가기 버튼 클릭
+/**
+ * 뒤로가기 버튼 클릭 이벤트
+ * @param {Event} e - 클릭 이벤트
+ */
 scwin.btn_back_onclick = function(e) {
     try {
         // 부모 팝업 창 닫기 (모달 닫기)
@@ -913,7 +964,7 @@ scwin.btn_back_onclick = function(e) {
             window.history.back();
         }
     } catch(e) {
-        console.error("뒤로가기 실행 오류:", e);
+        
         window.history.back();
     }
 };

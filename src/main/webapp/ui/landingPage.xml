@@ -120,7 +120,6 @@ scwin.onpageload = function() {
 	}, 100);
 };
 ]]></script>
-		<!--<link rel="stylesheet" href="../css/landingPage.css" />-->
 		<style>
 			@keyframes cardFloat { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
 

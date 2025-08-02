@@ -470,28 +470,39 @@
             #chatInput { flex: 1; padding: 10px 15px; border: 1px solid #ced4da; border-radius: 25px; font-size: 14px; outline: none; background: white; }
             .send-btn { padding: 10px 20px; background: #FFB823; color: white; border: none; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; min-width: 60px; }
         </style>
-        
-        <!-- Simple WebRTC 구현 (라이브러리 없음) -->
-        <script>
-            // Simple WebRTC 초기화 완료
-            //console.log('✅ Simple WebRTC 준비 완료 - 라이브러리 불필요');
-        </script>
-        
         <!-- 서버 정보 유틸리티 로드 -->
         <script type="text/javascript" src="/InsWebApp/js/comm/serverInfo.js"></script>
         
         <script type="text/javascript"><![CDATA[
-// Simple WebRTC 다대다 화상통화 구현 (P2P Mesh 방식)
-// WebRTC 관련 변수들
-let peerConnections = new Map(); // userId -> RTCPeerConnection
-let pendingIceCandidates = new Map(); // userId -> [candidates] (대기 중인 ICE 후보)
+// ===== Simple WebRTC 다대다 화상통화 구현 (P2P Mesh 방식) =====
+// 모든 변수들은 화상통화 세션 동안 유지되며, 페이지 언로드 시 정리됨
+
+/** @type {Map<string, RTCPeerConnection>} 사용자 ID별 P2P 연결 객체 매핑 */
+let peerConnections = new Map();
+
+/** @type {Map<string, Array>} 연결 전 수신된 ICE 후보들을 사용자별로 대기 저장 */
+let pendingIceCandidates = new Map();
+
+/** @type {MediaStream|null} 로컬 사용자의 카메라/마이크 스트림 (getUserMedia로 획득) */
 let localStream = null;
-let chatSocket = null; // 채팅용 WebSocket (그대로 유지)
+
+/** @type {WebSocket|null} 시그널링 및 채팅용 WebSocket 연결 */
+let chatSocket = null;
+
+/** @type {boolean} 현재 화상통화 방 참가 상태 */
 let isJoined = false;
+
+/** @type {boolean} 로컬 오디오 음소거 상태 */
 let isMuted = false;
+
+/** @type {boolean} 로컬 비디오 비활성화 상태 */
 let isVideoOff = false;
-let remoteUserInfo = new Map(); // 원격 사용자 정보 저장
-let remoteStreams = new Map(); // userId -> MediaStream
+
+/** @type {Map<string, Object>} 원격 사용자들의 기본 정보 저장 (userId, userName, 기타) */
+let remoteUserInfo = new Map();
+
+/** @type {Map<string, MediaStream>} 사용자 ID별 원격 미디어 스트림 매핑 */
+let remoteStreams = new Map();
 
 // STUN/TURN 서버 설정
 const iceServers = [
@@ -506,21 +517,38 @@ const iceServers = [
     }
 ];
 
-// RTCPeerConnection 설정
+// ===== RTCPeerConnection 기본 설정 =====
+/**
+ * 모든 P2P 연결에 사용될 RTCPeerConnection 설정
+ * @type {RTCConfiguration}
+ */
 const pcConfig = {
     iceServers: iceServers,
     iceCandidatePoolSize: 10
 };
 
-// 사용자 정보 (고유 ID 생성)
+// ===== 사용자 식별 시스템 =====
+/**
+ * 고유 사용자 ID 생성 함수
+ * 현재 시간과 랜덤 값을 조합하여 고유한 데스크톱 사용자 ID를 생성
+ * @returns {string} 'user_timestamp_random' 형식의 고유 ID
+ */
 const generateUserId = () => {
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 1000);
     return `user_${timestamp}_${random}`;
 };
 
-// 초기 사용자 정보 (세션에서 가져올 때까지 임시값)
-// dataObject로 전달받은 projectId 사용
+// ===== 현재 사용자 정보 =====
+/**
+ * 현재 데스크톱 사용자 정보 객체
+ * 세션에서 실제 사용자 정보를 로드할 때까지의 임시 값
+ * dataObject 또는 URL 파라미터로 전달받은 projectId 사용
+ * @type {Object}
+ * @property {string} userId - 고유 사용자 ID
+ * @property {string} userName - 사용자 표시명
+ * @property {string} channelName - WebRTC 방 채널명
+ */
 let projectId = 'default';
 let isFromPip = false;
 try {
@@ -530,7 +558,6 @@ try {
         if (projectInfo && projectInfo.projectId) {
             projectId = projectInfo.projectId;
             isFromPip = projectInfo.fromPip === true;
-            console.log("dataObject에서 projectId 획득:", projectId, "fromPip:", isFromPip);
         }
     }
     
@@ -539,7 +566,6 @@ try {
         const dataObject = $p.getParameter("dataObject");
         if (dataObject && dataObject.projectInfo && dataObject.projectInfo.projectId) {
             projectId = dataObject.projectInfo.projectId;
-            console.log("모바일 dataObject에서 projectId 획득:", projectId);
         }
     }
     
@@ -549,11 +575,9 @@ try {
         const urlProjectId = urlParams.get('project_id');
         if (urlProjectId) {
             projectId = urlProjectId;
-            console.log("URL parameter에서 projectId 획득:", projectId);
         }
     }
 } catch (e) {
-    console.log("projectId 추출 실패, 기본값 사용:", e);
 }
 
 let currentUser = {
@@ -562,12 +586,12 @@ let currentUser = {
     channelName: "webrtc-room-" + projectId
 };
 
-console.log("생성된 채널명:", currentUser.channelName);
-console.log("프로젝트 ID:", projectId);
-//console.log("현재 사용자 정보:", currentUser);
-
+/**
+ * 페이지 로드 시 초기화 함수
+ * 프로젝트 ID 추출, 세션 사용자 정보 로드, WebRTC 시스템 초기화 등 수행
+ * @returns {void}
+ */
 scwin.onpageload = function() {
-    //console.log("webRTC 다대다 화상통화 페이지 초기화");
     //카메라 촬영
     
     // HTTPS 체크
@@ -577,7 +601,6 @@ scwin.onpageload = function() {
     }
     
     // 먼저 세션에서 사용자 정보 로드
-    console.log("세션에서 사용자 정보를 가져오는 중...");
     $p.executeSubmission("sbm_getUserInfo");
     
     // 데이터 초기화 (사용자 정보는 submission 완료 후 업데이트)
@@ -604,17 +627,8 @@ scwin.onpageload = function() {
             });
             
             chatInput.focus();
-            //console.log("✅ 엔터키 이벤트 연결 완료");
-            //scwin.addChatMessage("시스템", "엔터키로 메시지 전송이 가능합니다.", false);
         } else {
-            //console.warn("⚠️ chatInput 요소를 찾을 수 없습니다");
         }
-        
-        // 전체 시스템 상태 로그
-        //console.log("시스템 상태 체크:");
-        //console.log("- 현재 사용자:", currentUser);
-        //console.log("- Simple WebRTC 모드 활성화");
-        //console.log("- 원격 사용자 정보:", Array.from(remoteUserInfo.entries()));
         
     }, 2000); // 충분한 로딩 시간 확보
     
@@ -630,14 +644,12 @@ scwin.onpageload = function() {
 
 // 페이지 언로드 시 정리 작업
 scwin.onpageunload = function() {
-    console.log("화상통화 페이지 언로드 - 정리 작업 시작");
     
     try {
         // 1. WebRTC 스트림 정리
         if (scwin.localStream) {
             scwin.localStream.getTracks().forEach(function(track) {
                 track.stop();
-                console.log("로컬 스트림 트랙 정지:", track.kind);
             });
             scwin.localStream = null;
         }
@@ -670,17 +682,22 @@ scwin.onpageunload = function() {
             }, '*');
         }
         
-        console.log("화상통화 페이지 정리 작업 완료");
+        
         
     } catch (error) {
-        console.error("페이지 언로드 중 오류:", error);
+        
     }
 };
 
 // Simple WebRTC 초기화
+/**
+ * Simple WebRTC 시스템 초기화
+ * HTTPS 환경 체크, WebRTC 지원 확인, 기본 설정 진행
+ * @returns {void}
+ * @throws {Error} HTTPS 환경 아니거나 WebRTC 미지원 시 에러
+ */
 scwin.initializeSimpleWebRTC = function() {
     try {
-        //console.log('✅ Simple WebRTC 초기화 시작');
         
         // WebRTC 지원 확인
         if (!window.RTCPeerConnection) {
@@ -692,31 +709,27 @@ scwin.initializeSimpleWebRTC = function() {
         const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
         
         if (!isHttps && !isLocalhost) {
-            //console.warn('⚠️ HTTPS가 아닌 환경에서는 카메라/마이크 접근이 제한될 수 있습니다.');
-            //scwin.addChatMessage("시스템", "⚠️ HTTPS 환경을 권장합니다.", false);
         } else if (isHttps) {
-            //console.log('✅ HTTPS 환경 확인됨');
         } else {
-            //console.log('✅ localhost 환경 (개발용)');
         }
         
-        //console.log('✅ WebRTC 지원 확인됨');
-        //console.log('✅ STUN/TURN 서버 설정:', iceServers ? iceServers.length : 0 + '개');
         
-        //scwin.addChatMessage("시스템", "✅ Simple WebRTC 다대다 화상통화방에 오신 것을 환영합니다!", false);
-        
-        //console.log('✅ Simple WebRTC 초기화 완료');
         
     } catch (error) {
-        //console.error('❌ Simple WebRTC 초기화 실패:', error);
-        //scwin.addChatMessage("시스템", "❌ Simple WebRTC 초기화 실패: " + error.message, false);
     }
 };
 
 // 자동 화상통화 참가 (페이지 진입 시)
+/**
+ * 자동 화상통화 참가 (페이지 진입 시)
+ * 로컬 미디어 스트림 획득, 비디오 표시, 방 참가 알림 전송
+ * @async
+ * @returns {Promise<void>} 자동 참가 완료 Promise
+ * @throws {Error} 카메라/마이크 접근 권한 거부 또는 WebSocket 연결 실큀 시
+ */
 scwin.autoJoinCall = async function() {
     try {
-        //scwin.addChatMessage("시스템", "카메라와 마이크에 자동으로 연결합니다...", false);
+        
         
         // 로컬 미디어 스트림 가져오기
         localStream = await navigator.mediaDevices.getUserMedia({
@@ -743,7 +756,7 @@ scwin.autoJoinCall = async function() {
                 timestamp: Date.now()
             };
             chatSocket.send(JSON.stringify(joinRoomMessage));
-            //console.log("화상통화 방 참가 알림:", joinRoomMessage);
+            
         }
         
         isJoined = true;
@@ -751,13 +764,12 @@ scwin.autoJoinCall = async function() {
         
         scwin.updateControlButtons();
         
-        //scwin.addChatMessage("시스템", "✅ 화상통화가 자동으로 시작되었습니다!", false);
-        //scwin.addChatMessage("시스템", "다른 사용자가 참가하면 자동으로 연결됩니다.", false);
         
-        //console.log("✅ Simple WebRTC 자동 화상통화 참가 완료");
+        
+        
         
     } catch (error) {
-        //console.error("❌ 자동 화상통화 참가 실패:", error);
+        
         
         let errorMessage = "카메라/마이크 접근 권한이 필요합니다";
         if (error.name === 'NotAllowedError') {
@@ -766,8 +778,7 @@ scwin.autoJoinCall = async function() {
             errorMessage = error.message;
         }
         
-        //scwin.addChatMessage("시스템", "❌ " + errorMessage, false);
-        //scwin.addChatMessage("시스템", "수동으로 '참가하기' 버튼을 눌러주세요.", false);
+
         
         // 오류 발생 시 기본 상태로 복원
         isJoined = false;
@@ -777,6 +788,13 @@ scwin.autoJoinCall = async function() {
 };
 
 // 화상통화 참가 (Simple WebRTC P2P 방식) - 수동 참가용
+/**
+ * 수동 화상통화 참가
+ * 사용자의 명시적 참가 요청 시 로컬 미디어 획득 및 방 입장 처리
+ * @async
+ * @returns {Promise<void>} 화상통화 참가 완료 Promise
+ * @throws {Error} 미디어 접근 권한 거부, WebSocket 연결 실큀, P2P 연결 실큀 시
+ */
 scwin.joinCall = async function() {
     try {
         scwin.showLoading("카메라와 마이크에 접근하는 중...");
@@ -806,7 +824,7 @@ scwin.joinCall = async function() {
                 timestamp: Date.now()
             };
             chatSocket.send(JSON.stringify(joinRoomMessage));
-            //console.log("화상통화 방 참가 알림:", joinRoomMessage);
+            
         }
         
         isJoined = true;
@@ -815,13 +833,12 @@ scwin.joinCall = async function() {
         scwin.updateControlButtons();
         scwin.hideLoading();
         
-        //scwin.addChatMessage("시스템", "✅ 화상통화에 참가했습니다!", false);
-        //scwin.addChatMessage("시스템", "다른 사용자가 참가하면 자동으로 연결됩니다.", false);
         
-        //console.log("✅ Simple WebRTC 화상통화 참가 완료");
+        
+        
         
     } catch (error) {
-        //console.error("❌ 화상통화 참가 실패:", error);
+        
         scwin.hideLoading();
         
         let errorMessage = "카메라/마이크 접근 권한이 필요합니다";
@@ -832,7 +849,7 @@ scwin.joinCall = async function() {
         }
         
         $c.win.alert(errorMessage);
-        //scwin.addChatMessage("시스템", "❌ " + errorMessage, false);
+        
     }
 };
 
@@ -840,7 +857,7 @@ scwin.joinCall = async function() {
 
 // WebRTC 시그널링 메시지 처리
 function handleWebRTCMessage(message) {
-    //console.log('������ WebRTC 메시지 수신:', message);
+    
     
     switch (message.type) {
         case 'user-joined':
@@ -868,33 +885,47 @@ async function handleUserJoined(data) {
     
     // 이미 연결된 사용자인지 확인
     if (peerConnections.has(userId)) {
-        //console.log('⚠️ 이미 연결된 사용자:', userName, userId);
+        
                     return;
                 }
 
-    //console.log('������ 새 사용자 참가:', userName, userId);
-    //scwin.addChatMessage("시스템", `${userName}님이 화상통화에 참가했습니다.`, false);
+    
     
     // P2P 연결 시작 (Offer 생성)
     await createPeerConnection(userId, userName, true);
 }
 
 // P2P 연결 생성
+/**
+ * P2P 연결 생성 및 관리
+ * 특정 사용자와의 WebRTC PeerConnection 생성, 이벤트 리스너 설정, offer/answer 처리
+ * @async
+ * @param {string} userId - 연결할 상대방 사용자 ID
+ * @param {string} userName - 연결할 상대방 사용자명
+ * @param {boolean} isOfferer - offer 생성 주체 여부 (true: offer 생성, false: answer 대기)
+ * @returns {Promise<RTCPeerConnection>} 생성된 PeerConnection 객체
+ * @throws {Error} PeerConnection 생성/설정 실큀 시 에러
+ */
 async function createPeerConnection(userId, userName, isOfferer) {
     try {
+        // ===== RTCPeerConnection 생성 및 기본 설정 =====
         const pc = new RTCPeerConnection(iceServers);
         peerConnections.set(userId, pc);
         
-        // 로컬 스트림 추가
+        // ===== 로컬 미디어 스트림 추가 =====
+        // 내 카메라/마이크 스트림을 PeerConnection에 추가
+        // 상대방이 ontrack 이벤트로 수신할 수 있도록 함
         if (localStream) {
             localStream.getTracks().forEach(track => {
                 pc.addTrack(track, localStream);
             });
         }
         
-        // 원격 스트림 처리
+        // ===== 원격 스트림 수신 처리 =====
+        // 상대방의 미디어 스트림을 수신하면 자동으로 호출
+        // event.streams[0]에 상대방의 비디오/오디오 트랙 포함
         pc.ontrack = (event) => {
-            //console.log('������ 원격 스트림 수신:', userName, userId);
+            
             displayRemoteVideo(event.streams[0], userName, userId);
         };
         
@@ -929,25 +960,36 @@ async function createPeerConnection(userId, userName, isOfferer) {
             }));
         }
         
-        //console.log('✅ P2P 연결 생성:', userName);
+        
         return pc; // PC 객체 반환
 
             } catch (error) {
-        //console.error('❌ P2P 연결 실패:', error);
+        
         return null;
     }
 }
 
 // Offer 처리
+/**
+ * WebRTC Offer 수신 및 처리
+ * 상대방으로부터 받은 SDP offer를 파싱하고 answer를 생성하여 응답
+ * @async
+ * @param {Object} data - offer 메시지 데이터
+ * @param {string} data.userId - offer 발신자 사용자 ID
+ * @param {string} data.userName - offer 발신자 사용자명
+ * @param {string} data.sdp - JSON 문자열 형태의 SDP offer 정보
+ * @returns {Promise<void>} offer 처리 완료 Promise
+ * @throws {Error} SDP 파싱, PeerConnection 생성, answer 생성 실큀 시 에러
+ */
 async function handleOffer(data) {
     const { userId, userName, sdp } = data;
-    //console.log('������ Offer 수신:', userName);
+    
     
     const offer = JSON.parse(sdp);
     const pc = await createPeerConnection(userId, userName, false);
     
     if (!pc) {
-        //console.error('❌ P2P 연결 생성 실패:', userName);
+        
         return;
     }
     
@@ -971,6 +1013,16 @@ async function handleOffer(data) {
 }
 
 // Answer 처리
+/**
+ * WebRTC Answer 수신 및 처리
+ * 상대방으로부터 받은 SDP answer를 로컬 PeerConnection에 설정
+ * @async
+ * @param {Object} data - answer 메시지 데이터
+ * @param {string} data.userId - answer 발신자 사용자 ID
+ * @param {string} data.sdp - JSON 문자열 형태의 SDP answer 정보
+ * @returns {Promise<void>} answer 처리 완료 Promise
+ * @throws {Error} SDP 파싱 또는 설정 실큀 시 에러
+ */
 async function handleAnswer(data) {
     const { userId, sdp } = data;
     const answer = JSON.parse(sdp);
@@ -981,11 +1033,22 @@ async function handleAnswer(data) {
         // 대기 중인 ICE 후보들 처리
         await processPendingIceCandidates(userId);
         
-        //console.log('✅ Answer 처리 완료:', userId);
+       
     }
 }
 
 // ICE 후보 처리
+/**
+ * ICE Candidate 수신 및 처리
+ * 상대방으로부터 받은 ICE candidate를 로컬 PeerConnection에 추가
+ * 연결 전 수신된 candidate는 대기 큐에 저장 후 나중에 처리
+ * @async
+ * @param {Object} data - ICE candidate 메시지 데이터
+ * @param {string} data.userId - candidate 발신자 사용자 ID
+ * @param {string} data.iceCandidate - JSON 문자열 형태의 ICE candidate 정보
+ * @returns {Promise<void>} ICE candidate 처리 완료 Promise
+ * @throws {Error} candidate 파싱 또는 추가 실큀 시 에러
+ */
 async function handleIceCandidate(data) {
     try {
         const { userId, iceCandidate } = data;
@@ -996,20 +1059,20 @@ async function handleIceCandidate(data) {
             // Remote description이 설정되었는지 확인
             if (pc.remoteDescription) {
                 await pc.addIceCandidate(candidate);
-                //console.log('✅ ICE 후보 추가 완료:', userId);
+                
             } else {
                 // Remote description이 없으면 대기 큐에 저장
                 if (!pendingIceCandidates.has(userId)) {
                     pendingIceCandidates.set(userId, []);
                 }
                 pendingIceCandidates.get(userId).push(candidate);
-                //console.log('⏳ ICE 후보 대기 큐에 저장:', userId);
+                
             }
         } else {
-            //console.warn('⚠️ PeerConnection을 찾을 수 없음:', userId);
+           
         }
     } catch (error) {
-        //console.error('❌ ICE 후보 처리 실패:', error);
+        
     }
 }
 
@@ -1019,18 +1082,18 @@ async function processPendingIceCandidates(userId) {
     const candidates = pendingIceCandidates.get(userId);
     
     if (pc && candidates && candidates.length > 0) {
-        //console.log(`⏳ 대기 중인 ICE 후보 ${candidates.length}개 처리 시작:`, userId);
+        
         
         for (const candidate of candidates) {
             try {
                 await pc.addIceCandidate(candidate);
     } catch (error) {
-                //console.error('❌ 대기 ICE 후보 처리 실패:', error);
+                
             }
         }
         
         pendingIceCandidates.delete(userId);
-        //console.log('✅ 대기 중인 ICE 후보 처리 완료:', userId);
+       
     }
 }
 
@@ -1043,7 +1106,7 @@ function handleUserLeft(data) {
         peerConnections.delete(userId);
     }
     scwin.removeRemoteUser(userId);
-    //scwin.addChatMessage("시스템", `${userName}님이 나갔습니다.`, false);
+    
 }
 
 // 원격 비디오 표시 (userId 추가로 정확한 매칭)
@@ -1051,7 +1114,7 @@ function displayRemoteVideo(stream, userName, userId) {
     try {
         const remoteVideosGrid = document.getElementById('remoteVideosGrid');
         if (!remoteVideosGrid) {
-            //console.error('❌ remoteVideosGrid를 찾을 수 없음');
+            
             return;
         }
         
@@ -1064,7 +1127,7 @@ function displayRemoteVideo(stream, userName, userId) {
         const existingVideo = remoteVideosGrid.querySelector(`[data-username="${userName}"], [data-userid="${userId}"]`);
         if (existingVideo) {
             existingVideo.remove();
-            //console.log('������ 기존 비디오 제거:', userName, userId);
+            
         }
         
         // 새 비디오 컨테이너 생성
@@ -1116,20 +1179,19 @@ function displayRemoteVideo(stream, userName, userId) {
         videoContainer.appendChild(label);
         remoteVideosGrid.appendChild(videoContainer);
         
-        //console.log('✅ 원격 비디오 표시 완료:', userName, userId);
-        //scwin.addChatMessage("시스템", `${userName}님의 영상이 연결되었습니다.`, false);
+        
         
         // 비디오 로드 이벤트 처리
         video.onloadedmetadata = () => {
-            //console.log('✅ 비디오 메타데이터 로드 완료:', userName);
+            
         };
         
         video.onerror = (error) => {
-            //console.error('❌ 비디오 재생 오류:', error);
+            
         };
         
     } catch (error) {
-        //console.error('❌ 원격 비디오 표시 실패:', error);
+        
     }
 }
 
@@ -1149,17 +1211,17 @@ scwin.initializeChatWebSocket = function() {
     ];
     
     let wsUrl = wsUrls[0];
-    //console.log("WebSocket 연결 시도:", wsUrl);
+    
     
     try {
         chatSocket = new WebSocket(wsUrl);
         
         chatSocket.onopen = function() {
-            //console.log("✅ WebSocket 연결 성공");
+            
             
             // 재연결 성공 시 시도 횟수 초기화
             if (window.wsReconnectAttempts && window.wsReconnectAttempts > 0) {
-                //scwin.addChatMessage("시스템", "✅ 서버와의 연결이 복원되었습니다!", false);
+                
                 window.wsReconnectAttempts = 0;
             }
             
@@ -1180,14 +1242,14 @@ scwin.initializeChatWebSocket = function() {
                     afterTimestamp: 0
                 };
                 chatSocket.send(JSON.stringify(historyMessage));
-                //console.log("채팅 히스토리 요청 전송");
+               
             }, 1000);
         };
         
         chatSocket.onmessage = function(event) {
             try {
                 const data = JSON.parse(event.data);
-                //console.log("WebSocket 메시지 수신:", data.type, data);
+                
                 
                 switch(data.type) {
                 // 채팅 메시지 처리
@@ -1231,10 +1293,10 @@ scwin.initializeChatWebSocket = function() {
                                         if (offMessage) offMessage.remove();
                                     }
                                 }
-                                //console.log(`${statusData.targetUserName}님이 카메라를 ${statusData.isVideoOff ? '껐습니다' : '켰습니다'}`);
+                                
                             }
                         } catch (e) {
-                            //console.warn('비디오 상태 메시지 파싱 오류:', e);
+                            
                         }
                     } else if (data.userName === 'SYSTEM_AUDIO_STATUS' && data.userId !== currentUser.userId) {
                         // 시스템 음소거 상태 메시지 처리
@@ -1254,23 +1316,23 @@ scwin.initializeChatWebSocket = function() {
                                         remoteUserName.textContent = userName;
                                     }
                                 }
-                                //console.log(`${statusData.targetUserName}님이 마이크를 ${statusData.isMuted ? '껐습니다' : '켰습니다'}`);
+                               
                             }
                         } catch (e) {
-                            //console.warn('음소거 상태 메시지 파싱 오류:', e);
+                            
                         }
                     } else if (data.userId !== currentUser.userId && data.userName !== 'SYSTEM_VIDEO_STATUS' && data.userName !== 'SYSTEM_AUDIO_STATUS') {
                         // 일반 채팅 메시지
                         scwin.addChatMessage(data.userName, data.message, false, data.messageId, data.timestamp);
-                        //console.log("다른 사용자 메시지:", data.userName, "->", data.message);
+                        
                     } else {
-                        //console.log("내 메시지 서버 에코 무시:", data.message);
+                       
                     }
                     break;
                     
                 case 'history':
                     if (data.messages && data.messages.length > 0) {
-                        //console.log("채팅 히스토리 로드:", data.messages.length, "개");
+                        
                         
                         // 웹스퀘어 데이터리스트 초기화
                         dlt_chatMessages.removeAll();
@@ -1290,26 +1352,26 @@ scwin.initializeChatWebSocket = function() {
                             scwin.addChatMessage(msg.userName, msg.message, isOwn, msgId, msg.timestamp);
                         });
                         
-                        //scwin.addChatMessage("시스템", `이전 채팅 ${data.messages.length}개를 불러왔습니다.`, false);
+                        
                     } else {
-                        //console.log("채팅 히스토리 없음");
+                        
                     }
                     break;
                     
                 case 'existing-users':
-                    //console.log("기존 사용자들:", data.users, "내 화상통화 상태:", isJoined);
+                    
                     
                     // 기존 사용자 정보 저장
                     if (data.userInfos) {
                         data.userInfos.forEach(user => {
                             remoteUserInfo.set(user.userId, user);
-                            //console.log("기존 사용자 정보 저장:", user.userName, user.userId);
+                            
                         });
                     }
                     break;
                     
                 case 'user-joined':
-                    //scwin.addChatMessage("시스템", `${data.userName}님이 참가했습니다.`, false);
+                   
                     
                     // 새 사용자 정보 저장
                     if (data.userId && data.userName) {
@@ -1317,7 +1379,7 @@ scwin.initializeChatWebSocket = function() {
                             userId: data.userId,
                             userName: data.userName
                         });
-                        //console.log("새 사용자 정보 저장:", data.userName, data.userId);
+                        
                     }
                     
                     // Simple WebRTC P2P 연결 시작
@@ -1329,17 +1391,17 @@ scwin.initializeChatWebSocket = function() {
                     if (isMiniPipActive) {
                         setTimeout(() => {
                             scwin.updateMiniPIP();
-                            console.log('새 사용자 참가로 인한 미니 PIP 업데이트:', data.userName);
+                            
                         }, 1000); // 비디오 연결 완료 후 업데이트
                     }
                     break;
                     
                 case 'user-left':
-                    //scwin.addChatMessage("시스템", `${data.userName}님이 나갔습니다.`, false);
+                    
                     
                     if (data.userId) {
                         remoteUserInfo.delete(data.userId);
-                        //console.log("사용자 정보 제거:", data.userName, data.userId);
+                        
                     }
                     
                     // Simple WebRTC P2P 연결 해제
@@ -1349,7 +1411,7 @@ scwin.initializeChatWebSocket = function() {
                     if (isMiniPipActive) {
                         setTimeout(() => {
                             scwin.updateMiniPIP();
-                            console.log('사용자 퇴장으로 인한 미니 PIP 업데이트:', data.userName);
+                            
                         }, 500); // 약간의 지연 후 업데이트
                     }
                     break;
@@ -1378,22 +1440,21 @@ scwin.initializeChatWebSocket = function() {
                     break;
                     
                 case 'error':
-                    //console.warn("서버 오류:", data.message);
+                    
                     scwin.addChatMessage("시스템", `⚠️ 서버 오류: ${data.message}`, false);
                     break;
                     
                 default:
-                    //console.warn("알 수 없는 메시지 타입:", data.type, data);
+                    
                     break;
                 }
     } catch (error) {
-                //console.error("❌ 메시지 처리 오류:", error);
-                //scwin.addChatMessage("시스템", "❌ 메시지 처리 중 오류 발생", false);
+                
             }
         };
         
         chatSocket.onclose = function(event) {
-            //console.log("❌ WebSocket 연결 종료:", event.code, event.reason);
+            
             
             if (event.code !== 1000 && event.code !== 1001) { // 정상 종료가 아닐 때만 재연결
                 const wasJoined = isJoined; // 화상통화 상태 백업
@@ -1405,10 +1466,10 @@ scwin.initializeChatWebSocket = function() {
                 if (window.wsReconnectAttempts < 5) { // 최대 5번 재연결 시도
                     window.wsReconnectAttempts++;
                     
-                    //scwin.addChatMessage("시스템", `⚠️ 연결이 끊어졌습니다. 재연결 시도 중... (${window.wsReconnectAttempts}/5)`, false);
+                    
                     
                     setTimeout(() => {
-                        //console.log("WebSocket 재연결 시도:", window.wsReconnectAttempts);
+                        
                         
                         // 재연결 시도
                         scwin.initializeChatWebSocket();
@@ -1425,26 +1486,25 @@ scwin.initializeChatWebSocket = function() {
                                         timestamp: Date.now()
                                     };
                                     chatSocket.send(JSON.stringify(joinRoomMessage));
-                                    //scwin.addChatMessage("시스템", "✅ 화상통화 상태가 복원되었습니다.", false);
+                                    
                                 }
                             }, 2000);
                         }
                         
                     }, 3000 * window.wsReconnectAttempts); // 점진적으로 대기 시간 증가
                 } else {
-                    //scwin.addChatMessage("시스템", "❌ 재연결에 실패했습니다. 페이지를 새로고침 해주세요.", false);
+                   
                 }
             }
         };
         
         chatSocket.onerror = function(error) {
-            //console.error("❌ WebSocket 오류:", error);
-            //scwin.addChatMessage("시스템", "❌ 서버 연결 오류 발생", false);
+            
+           
         };
         
     } catch (error) {
-        //console.error("❌ WebSocket 초기화 실패:", error);
-        //scwin.addChatMessage("시스템", "❌ WebSocket 초기화 실패", false);
+        
     }
 };
 
@@ -1516,10 +1576,10 @@ scwin.addChatMessage = function(userName, message, isOwn, messageId, messageTime
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }, 100);
     } else {
-        //console.error("❌ chatMessages 요소를 찾을 수 없음");
+       
     }
     
-    //console.log("채팅 메시지 추가:", userName, "->", message, "시간:", displayTime);
+    
 };
 
 // 채팅 메시지 전송
@@ -1550,2608 +1610,30 @@ scwin.sendChatMessage = function() {
         chatSocket.send(JSON.stringify(messageData));
         scwin.addChatMessage(currentUser.userName, message, true, messageId, messageData.timestamp);
         chatInput.value = "";
-        //console.log("메시지 전송:", message);
+        
     } catch (error) {
-        //console.error("메시지 전송 실패:", error);
+        
         $c.win.alert("메시지 전송에 실패했습니다.");
     }
 };
 
 // 로딩 표시/숨김
 scwin.showLoading = function(message) {
-    //console.log("로딩:", message);
+ 
 };
 
 scwin.hideLoading = function() {
-    //console.log("로딩 완료");
+    
 };
 
-/*
-===== 기존 MediaSoup 코드 주석 처리 =====
-모든 MediaSoup 관련 함수들은 향후 제거 예정
-
-// mediasoup 방 참가
-scwin.joinMediasoupRoom = async function() {
-    return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-            reject(new Error('방 참가 요청 시간 초과'));
-        }, 10000);
-
-        mediasoupSocket.emit('joinRoom', {
-            roomId: currentUser.channelName,
-            userData: {
-                userId: currentUser.userId,
-                name: currentUser.userName
-            }
-        }, (response) => {
-            clearTimeout(timeout);
-            
-            if (response.success) {
-                //console.log('✅ mediasoup 방 참가 성공');
-                
-                // Device 로드
-                device.load({
-                    routerRtpCapabilities: response.routerRtpCapabilities
-                }).then(() => {
-                    //console.log('✅ Device RTP Capabilities 로드 완료');
-                    resolve();
-                }).catch(error => {
-                    //console.error('❌ Device 로드 실패:', error);
-                    reject(error);
-                });
-                
-            } else {
-                //console.error('❌ 방 참가 실패:', response.error);
-                reject(new Error(response.error));
-            }
-        });
-    });
-};
-
-// Transport 생성
-scwin.createTransports = async function() {
-    // Send Transport 생성
-    await scwin.createSendTransport();
-    
-    // Receive Transport 생성
-    await scwin.createReceiveTransport();
-};
-
-// Send Transport 생성
-scwin.createSendTransport = async function() {
-    return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-            reject(new Error('Send Transport 생성 시간 초과'));
-        }, 15000); // 15초로 늘림
-
-        //console.log('������ Send Transport 생성 요청 시작');
-        
-        mediasoupSocket.emit('createTransport', {
-            type: 'send'
-        }, (response) => {
-            clearTimeout(timeout);
-            
-            try {
-                if (!response.success) {
-                    //console.error('❌ Send Transport 생성 실패:', response.error);
-                    reject(new Error(response.error));
-                    return;
-                }
-
-                //console.log('✅ Send Transport 서버 응답 수신:', {
-                    transportId: response.transportId,
-                    hasIceParameters: !!response.iceParameters,
-                    hasIceCandidates: !!response.iceCandidates,
-                    hasDtlsParameters: !!response.dtlsParameters
-                });
-
-                // 서버 응답 데이터 유효성 검사
-                if (!response.transportId || !response.iceParameters || !response.iceCandidates || !response.dtlsParameters) {
-                    //console.error('❌ Transport 생성 응답 데이터 불완전:', response);
-                    reject(new Error('Transport 생성 응답 데이터가 불완전합니다'));
-                    return;
-                }
-
-                // Device 상태 확인
-                if (!device || !device.loaded) {
-                    //console.error('❌ Device가 로드되지 않음:', {
-                        deviceExists: !!device,
-                        deviceLoaded: device?.loaded,
-                        deviceHandlerName: device?.handlerName
-                    });
-                    reject(new Error('Device가 로드되지 않았습니다'));
-                    return;
-                }
-
-                //console.log('������ Device 상태 확인:', {
-                    loaded: device.loaded,
-                    handlerName: device.handlerName,
-                    rtpCapabilities: !!device.rtpCapabilities,
-                    canProduce: device.canProduce('video')
-                });
-
-                // Send Transport 생성
-                //console.log('������ Send Transport 생성 중...');
-                sendTransport = device.createSendTransport({
-                    id: response.transportId,
-                    iceParameters: response.iceParameters,
-                    iceCandidates: response.iceCandidates,
-                    dtlsParameters: response.dtlsParameters
-                });
-
-                //console.log('✅ Send Transport 생성 완료:', {
-                    id: sendTransport.id,
-                    closed: sendTransport.closed,
-                    connectionState: sendTransport.connectionState,
-                    hasPeerConnection: !!sendTransport._pc,
-                    transportType: typeof sendTransport,
-                    transportKeys: Object.keys(sendTransport)
-                });
-
-                // PeerConnection 접근 방법 확인
-                let peerConnection = null;
-                
-                // 방법 1: _pc 속성 직접 접근
-                if (sendTransport._pc) {
-                    peerConnection = sendTransport._pc;
-                    //console.log('✅ PeerConnection 접근 방법 1 성공 (_pc)');
-                } 
-                // 방법 2: _handler.pc 접근
-                else if (sendTransport._handler && sendTransport._handler.pc) {
-                    peerConnection = sendTransport._handler.pc;
-                    //console.log('✅ PeerConnection 접근 방법 2 성공 (_handler.pc)');
-                } 
-                // 방법 3: handler.pc 접근
-                else if (sendTransport.handler && sendTransport.handler.pc) {
-                    peerConnection = sendTransport.handler.pc;
-                    //console.log('✅ PeerConnection 접근 방법 3 성공 (handler.pc)');
-                }
-                // 방법 4: 모든 속성 순회
-                else {
-                    //console.log('������ PeerConnection 찾기 위해 Transport 속성 순회');
-                    for (const key in sendTransport) {
-                        try {
-                            const value = sendTransport[key];
-                            if (value && typeof value === 'object' && value.constructor && value.constructor.name === 'RTCPeerConnection') {
-                                peerConnection = value;
-                                //console.log(`✅ PeerConnection 발견: ${key}`);
-                                break;
-                            }
-                        } catch (e) {
-                            // 접근 불가능한 속성은 무시
-                        }
-                    }
-                }
-
-                if (peerConnection) {
-                    //console.log('������ PeerConnection 상태:', {
-                        connectionState: peerConnection.connectionState,
-                        iceConnectionState: peerConnection.iceConnectionState,
-                        signalingState: peerConnection.signalingState,
-                        iceGatheringState: peerConnection.iceGatheringState
-                    });
-
-                    // PeerConnection을 Transport에 저장 (나중에 접근하기 위해)
-                    sendTransport._pc = peerConnection;
-                } else {
-                    //console.warn('⚠️ PeerConnection을 찾을 수 없음. Transport 내부 구조:', {
-                        transportKeys: Object.keys(sendTransport),
-                        handlerKeys: sendTransport._handler ? Object.keys(sendTransport._handler) : null
-                    });
-                }
-
-                // Transport 이벤트 리스너 설정
-                sendTransport.on('connect', async (params, callback, errback) => {
-                    try {
-                        //console.log('������ Send Transport connect 이벤트 발생');
-                        
-                        const connectResponse = await new Promise((resolve, reject) => {
-                            const connectTimeout = setTimeout(() => {
-                                reject(new Error('Transport 연결 시간 초과'));
-                            }, 10000);
-
-                            mediasoupSocket.emit('connectTransport', {
-                                transportId: sendTransport.id,
-                                dtlsParameters: params.dtlsParameters
-                            }, (response) => {
-                                clearTimeout(connectTimeout);
-                                if (response.success) {
-                                    resolve(response);
-                                } else {
-                                    reject(new Error(response.error));
-                                }
-                            });
-                        });
-
-                        //console.log('✅ Send Transport 연결 성공');
-                        callback();
-                    } catch (error) {
-                        //console.error('❌ Send Transport 연결 실패:', error);
-                        errback(error);
-                    }
-                });
-
-                sendTransport.on('produce', async (params, callback, errback) => {
-                    try {
-                        //console.log('������ Send Transport produce 이벤트 발생:', params.kind);
-                        
-                        const produceResponse = await new Promise((resolve, reject) => {
-                            const produceTimeout = setTimeout(() => {
-                                reject(new Error('Producer 생성 시간 초과'));
-                            }, 10000);
-
-                            mediasoupSocket.emit('produce', {
-                                transportId: sendTransport.id,
-                                kind: params.kind,
-                                rtpParameters: params.rtpParameters
-                            }, (response) => {
-                                clearTimeout(produceTimeout);
-                                if (response.success) {
-                                    resolve(response);
-                                } else {
-                                    reject(new Error(response.error));
-                                }
-                            });
-                        });
-
-                        //console.log('✅ Producer 생성 성공:', produceResponse.producerId);
-                        callback({ id: produceResponse.producerId });
-                    } catch (error) {
-                        //console.error('❌ Producer 생성 실패:', error);
-                        errback(error);
-                    }
-                });
-
-                // Transport 상태 변경 이벤트 리스너
-                sendTransport.on('connectionstatechange', (state) => {
-                    //console.log('������ Send Transport 연결 상태 변경:', state);
-                });
-
-                sendTransport.on('icestatechange', (state) => {
-                    //console.log('������ Send Transport ICE 상태 변경:', state);
-                });
-
-                //console.log('✅ Send Transport 이벤트 리스너 설정 완료');
-                resolve();
-                
-            } catch (error) {
-                //console.error('❌ Send Transport 생성 중 오류:', error);
-                reject(error);
-            }
-        });
-    });
-};
-
-// Receive Transport 생성
-scwin.createReceiveTransport = async function() {
-    return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-            reject(new Error('Receive Transport 생성 시간 초과'));
-        }, 15000); // 15초로 늘림
-
-        //console.log('������ Receive Transport 생성 요청 시작');
-        
-        mediasoupSocket.emit('createTransport', {
-            type: 'recv'
-        }, (response) => {
-            clearTimeout(timeout);
-            
-            try {
-                if (!response.success) {
-                    //console.error('❌ Receive Transport 생성 실패:', response.error);
-                    reject(new Error(response.error));
-                    return;
-                }
-
-                //console.log('✅ Receive Transport 서버 응답 수신:', {
-                    transportId: response.transportId,
-                    hasIceParameters: !!response.iceParameters,
-                    hasIceCandidates: !!response.iceCandidates,
-                    hasDtlsParameters: !!response.dtlsParameters
-                });
-
-                // 서버 응답 데이터 유효성 검사
-                if (!response.transportId || !response.iceParameters || !response.iceCandidates || !response.dtlsParameters) {
-                    //console.error('❌ Receive Transport 생성 응답 데이터 불완전:', response);
-                    reject(new Error('Receive Transport 생성 응답 데이터가 불완전합니다'));
-                    return;
-                }
-
-                // Device 상태 확인
-                if (!device || !device.loaded) {
-                    console.error('❌ Device가 로드되지 않음');
-                    reject(new Error('Device가 로드되지 않았습니다'));
-                    return;
-                }
-
-                // Receive Transport 생성
-                //console.log('������ Receive Transport 생성 중...');
-                recvTransport = device.createRecvTransport({
-                    id: response.transportId,
-                    iceParameters: response.iceParameters,
-                    iceCandidates: response.iceCandidates,
-                    dtlsParameters: response.dtlsParameters
-                });
-
-                //console.log('✅ Receive Transport 생성 완료:', {
-                    id: recvTransport.id,
-                    closed: recvTransport.closed,
-                    connectionState: recvTransport.connectionState,
-                    hasPeerConnection: !!recvTransport._pc,
-                    transportType: typeof recvTransport
-                });
-
-                // PeerConnection 접근 방법 확인
-                let peerConnection = null;
-                
-                if (recvTransport._pc) {
-                    peerConnection = recvTransport._pc;
-                    //console.log('✅ Receive PeerConnection 접근 방법 1 성공 (_pc)');
-                } else if (recvTransport._handler && recvTransport._handler.pc) {
-                    peerConnection = recvTransport._handler.pc;
-                    //console.log('✅ Receive PeerConnection 접근 방법 2 성공 (_handler.pc)');
-                } else if (recvTransport.handler && recvTransport.handler.pc) {
-                    peerConnection = recvTransport.handler.pc;
-                    //console.log('✅ Receive PeerConnection 접근 방법 3 성공 (handler.pc)');
-                }
-
-                if (peerConnection) {
-                    //console.log('������ Receive PeerConnection 상태:', {
-                        connectionState: peerConnection.connectionState,
-                        iceConnectionState: peerConnection.iceConnectionState,
-                        signalingState: peerConnection.signalingState
-                    });
-
-                    // PeerConnection을 Transport에 저장
-                    recvTransport._pc = peerConnection;
-
-                    // ontrack 이벤트 리스너 설정
-                    peerConnection.ontrack = (event) => {
-                        //console.log('������ Receive Transport ontrack 이벤트 발생!', {
-                            streams: event.streams.length,
-                            track: event.track.kind,
-                            trackId: event.track.id,
-                            trackReadyState: event.track.readyState
-                        });
-                        
-                        if (event.streams.length > 0) {
-                            const stream = event.streams[0];
-                            //console.log('✅ Transport에서 MediaStream 수신:', {
-                                streamId: stream.id,
-                                trackCount: stream.getTracks().length
-                            });
-                            
-                            // 임시 사용자 이름으로 표시
-                            const tempUserName = `사용자_${Date.now()}`;
-                            displayRemoteVideo(stream, tempUserName);
-                        }
-                    };
-                } else {
-                    //console.warn('⚠️ Receive PeerConnection을 찾을 수 없음');
-                }
-
-                // Transport 이벤트 리스너 설정
-                recvTransport.on('connect', async (params, callback, errback) => {
-                    try {
-                        //console.log('������ Receive Transport connect 이벤트 발생');
-                        
-                        const connectResponse = await new Promise((resolve, reject) => {
-                            const connectTimeout = setTimeout(() => {
-                                reject(new Error('Receive Transport 연결 시간 초과'));
-                            }, 10000);
-
-                            mediasoupSocket.emit('connectTransport', {
-                                transportId: recvTransport.id,
-                                dtlsParameters: params.dtlsParameters
-                            }, (response) => {
-                                clearTimeout(connectTimeout);
-                                if (response.success) {
-                                    resolve(response);
-                                } else {
-                                    reject(new Error(response.error));
-                                }
-                            });
-                        });
-
-                        //console.log('✅ Receive Transport 연결 성공');
-                        callback();
-                    } catch (error) {
-                        //console.error('❌ Receive Transport 연결 실패:', error);
-                        errback(error);
-                    }
-                });
-
-                // Transport 상태 변경 이벤트 리스너
-                recvTransport.on('connectionstatechange', (state) => {
-                    //console.log('������ Receive Transport 연결 상태 변경:', state);
-                });
-
-                recvTransport.on('icestatechange', (state) => {
-                    //console.log('������ Receive Transport ICE 상태 변경:', state);
-                });
-
-                //console.log('✅ Receive Transport 이벤트 리스너 설정 완료');
-                resolve();
-                
-            } catch (error) {
-                //console.error('❌ Receive Transport 생성 중 오류:', error);
-                reject(error);
-            }
-        });
-    });
-};
-
-// Producer 생성 (로컬 스트림 전송)
-scwin.startProducing = async function() {
-    if (!localStream) {
-        throw new Error('로컬 스트림이 없습니다');
-    }
-
-    // 비디오 Producer 생성
-    const videoTrack = localStream.getVideoTracks()[0];
-    if (videoTrack) {
-        videoProducer = await sendTransport.produce({
-            track: videoTrack
-        });
-        //console.log('✅ Video Producer 생성:', videoProducer.id);
-    }
-
-    // 오디오 Producer 생성
-    const audioTrack = localStream.getAudioTracks()[0];
-    if (audioTrack) {
-        audioProducer = await sendTransport.produce({
-            track: audioTrack
-        });
-        //console.log('✅ Audio Producer 생성:', audioProducer.id);
-    }
-};
-
-// 기존 Producer들 소비
-scwin.consumeExistingProducers = async function() {
-    return new Promise((resolve, reject) => {
-        mediasoupSocket.emit('getExistingProducers', (response) => {
-            if (response.success) {
-                //console.log('������ 기존 Producer들:', response.producers.length, '개');
-                //console.log('기존 Producer 목록:', response.producers);
-                
-                // 기존 Producer의 사용자 정보도 저장
-                response.producers.forEach(producer => {
-                    if (producer.userData && !remoteUserInfo.has(producer.peerId)) {
-                        const userInfo = {
-                            userId: producer.userData.userId || producer.peerId,
-                            name: producer.userData.name || producer.userData.userName || `사용자_${producer.peerId.slice(-4)}`,
-                            userName: producer.userData.userName || producer.userData.name || `사용자_${producer.peerId.slice(-4)}`
-                        };
-                        remoteUserInfo.set(producer.peerId, userInfo);
-                        //console.log('✅ 기존 Producer 사용자 정보 저장:', producer.peerId, '→', userInfo);
-                    }
-                });
-                
-                // 각 Producer에 대해 Consumer 생성
-                const consumePromises = response.producers.map(producer => 
-                    scwin.consumeStream(producer.peerId, producer.producerId)
-                );
-                
-                Promise.all(consumePromises).then(() => {
-                    //console.log('✅ 모든 기존 Producer 소비 완료');
-                    resolve();
-                }).catch(error => {
-                    //console.error('❌ 기존 Producer 소비 실패:', error);
-                    reject(error);
-                });
-            } else {
-                //console.error('❌ 기존 Producer 조회 실패:', response.error);
-                reject(new Error(response.error));
-            }
-        });
-    });
-};
-
-// 스트림 소비 (Consumer 생성)
-scwin.consumeStream = async function(peerId, producerId) {
-    try {
-        //console.log('������ 스트림 소비 시작:', peerId, producerId);
-        
-        // Transport 상태 확인
-        if (!recvTransport) {
-            throw new Error('Receive Transport가 없습니다');
-        }
-        
-        //console.log('������ Receive Transport 상태:', {
-            id: recvTransport.id,
-            closed: recvTransport.closed,
-            connectionState: recvTransport.connectionState
-        });
-        
-        const response = await new Promise((resolve, reject) => {
-            mediasoupSocket.emit('consume', {
-                peerId: peerId,
-                producerId: producerId,
-                rtpCapabilities: device.rtpCapabilities
-            }, (response) => {
-                if (response.success) {
-                    resolve(response);
-                } else {
-                    reject(new Error(response.error));
-                }
-            });
-        });
-
-        //console.log('������ Consumer 생성 요청:', {
-            id: response.consumerId,
-            producerId: producerId,
-            kind: response.kind,
-            rtpParameters: !!response.rtpParameters
-        });
-        
-        // Consumer 생성 전에 ontrack 이벤트 리스너 설정
-        if (recvTransport && recvTransport._pc) {
-            const pc = recvTransport._pc;
-            
-            // 기존 ontrack 이벤트 제거 (중복 방지)
-            pc.ontrack = null;
-            
-            // 새로운 ontrack 이벤트 리스너 설정
-            pc.ontrack = (event) => {
-                //console.log('������ ontrack 이벤트 발생!', {
-                    streams: event.streams.length,
-                    track: event.track.kind,
-                    trackId: event.track.id,
-                    trackReadyState: event.track.readyState
-                });
-                
-                if (event.streams.length > 0) {
-                    const stream = event.streams[0];
-                    //console.log('✅ ontrack에서 MediaStream 수신:', {
-                        streamId: stream.id,
-                        trackCount: stream.getTracks().length
-                    });
-                    
-                    // 즉시 표시
-                    scwin.displayRemoteVideoDirectly(peerId, stream, response.kind);
-                } else if (event.track) {
-                    // 스트림이 없으면 track으로 직접 MediaStream 생성
-                    const stream = new MediaStream([event.track]);
-                    //console.log('✅ ontrack에서 track으로 MediaStream 생성');
-                    scwin.displayRemoteVideoDirectly(peerId, stream, response.kind);
-                }
-            };
-            
-            //console.log('✅ ontrack 이벤트 리스너 설정 완료');
-        }
-        
-        const consumer = await recvTransport.consume({
-            id: response.consumerId,
-            producerId: producerId,
-            kind: response.kind,
-            rtpParameters: response.rtpParameters
-        });
-        
-        //console.log('������ Consumer 생성 직후 상태:', {
-            consumer: !!consumer,
-            consumerType: typeof consumer,
-            consumerKeys: Object.keys(consumer || {}),
-            consumerProto: Object.getPrototypeOf(consumer || {}).constructor.name
-        });
-
-        //console.log('✅ Consumer 생성 성공:', {
-            id: consumer.id,
-            kind: consumer.kind,
-            track: consumer.track,
-            trackType: typeof consumer.track,
-            trackId: consumer.track?.id,
-            trackKind: consumer.track?.kind,
-            trackReadyState: consumer.track?.readyState
-        });
-
-        // Consumer 이벤트 리스닝
-        consumer.on('trackended', () => {
-            //console.log('������ Consumer track ended:', consumer.id);
-        });
-        
-        consumer.on('transportclose', () => {
-            console.log('������ Consumer transport closed:', consumer.id);
-        });
-        
-        // track이 준비되었는지 확인하는 여러 방법
-        //console.log('������ Track 준비 상태 확인:', {
-            hasTrack: !!consumer.track,
-            trackReady: consumer.track?.readyState === 'live'
-        });
-        
-        // Consumer 저장
-        consumers.set(consumer.id, { consumer, peerId });
-
-        // Consumer 재생 시작
-        await new Promise((resolve, reject) => {
-            mediasoupSocket.emit('resumeConsumer', {
-                consumerId: consumer.id
-            }, (response) => {
-                if (response.success) {
-                    //console.log('✅ Consumer 재생 시작 성공:', consumer.id);
-                    resolve();
-                } else {
-                    reject(new Error(response.error));
-                }
-            });
-        });
-        
-        // Consumer resume 후 즉시 track 강제 생성 시도
-        //console.log('������ Consumer resume 후 track 강제 생성 시도');
-        try {
-            // 방법 1: Consumer의 내부 메서드 호출 시도
-            if (typeof consumer._getTrack === 'function') {
-                consumer.track = consumer._getTrack();
-                //console.log('✅ _getTrack으로 track 생성 성공');
-            }
-            // 방법 2: Consumer의 rtpReceiver에서 track 추출
-            else if (consumer.rtpReceiver && consumer.rtpReceiver.track) {
-                consumer.track = consumer.rtpReceiver.track;
-                //console.log('✅ rtpReceiver에서 track 추출 성공');
-            }
-            // 방법 3: Consumer 재초기화 시도
-            else if (typeof consumer._createTrack === 'function') {
-                consumer._createTrack();
-                //console.log('✅ _createTrack 호출 성공');
-            }
-        } catch (e) {
-            //console.log('⚠️ track 강제 생성 실패:', e.message);
-        }
-
-        // Consumer 생성 후 즉시 PeerConnection에서 MediaStream 추출 시도
-        //console.log('������ Consumer 생성 완료, 즉시 PeerConnection에서 MediaStream 추출 시도');
-        
-        // 즉시 PeerConnection에서 MediaStream 추출 (track null이어도)
-        try {
-            if (recvTransport && recvTransport._pc) {
-                const pc = recvTransport._pc;
-                //console.log('������ PeerConnection 상태 확인:', {
-                    connectionState: pc.connectionState,
-                    iceConnectionState: pc.iceConnectionState,
-                    signalingState: pc.signalingState
-                });
-                
-                // 방법 1: 모든 Receiver에서 live track 수집
-                const receivers = pc.getReceivers();
-                //console.log('������ 총 RTP Receivers:', receivers.length);
-                
-                const liveTracks = [];
-                receivers.forEach((receiver, index) => {
-                    //console.log(`������ Receiver ${index}:`, {
-                        track: !!receiver.track,
-                        trackKind: receiver.track?.kind,
-                        trackId: receiver.track?.id,
-                        trackReadyState: receiver.track?.readyState,
-                        trackEnabled: receiver.track?.enabled
-                    });
-                    
-                    if (receiver.track && receiver.track.readyState === 'live') {
-                        liveTracks.push(receiver.track);
-                        //console.log(`✅ Live track 발견: ${receiver.track.kind} (${receiver.track.id})`);
-                    }
-                });
-                
-                if (liveTracks.length > 0) {
-                    console.log(`������ 총 ${liveTracks.length}개의 live track 발견! MediaStream 생성`);
-                    const stream = new MediaStream(liveTracks);
-                    
-                    //console.log('✅ PeerConnection에서 MediaStream 생성 성공:', {
-                        streamId: stream.id,
-                        trackCount: stream.getTracks().length,
-                        videoTracks: stream.getVideoTracks().length,
-                        audioTracks: stream.getAudioTracks().length
-                    });
-                    
-                    // 즉시 표시
-                    scwin.displayRemoteVideoDirectly(peerId, stream, consumer.kind);
-                    //console.log('✅ 스트림 소비 완료 (PeerConnection 방식):', consumer.id);
-                    return; // 성공 시 더 이상 진행하지 않음
-                }
-            }
-        } catch (e) {
-            //console.error('❌ 즉시 PeerConnection 추출 실패:', e);
-        }
-        
-        // Consumer 생성 후 초기 대기 시간 (500ms)
-        //console.log('⏳ Consumer 생성 후 초기 대기 중...');
-        setTimeout(() => {
-            //console.log('������ Consumer 초기 대기 완료, track 상태 확인 시작');
-            
-            // track이 준비될 때까지 여러 번 시도 (최대 30초)
-            let attemptCount = 0;
-            const maxAttempts = 150; // 30초 (200ms * 150)
-            
-            const checkTrackReady = () => {
-                attemptCount++;
-                
-                // Consumer 상세 상태 확인
-                //console.log(`������ Consumer track 상태 확인 (시도 ${attemptCount}/${maxAttempts}):`, {
-                    // 기본 track 접근
-                    trackExists: !!consumer.track,
-                    trackType: typeof consumer.track,
-                    trackId: consumer.track?.id,
-                    trackKind: consumer.track?.kind,
-                    trackReadyState: consumer.track?.readyState,
-                    trackEnabled: consumer.track?.enabled,
-                    trackMuted: consumer.track?.muted,
-                    // rtpReceiver 통한 접근
-                    hasRtpReceiver: !!consumer.rtpReceiver,
-                    rtpReceiverTrack: consumer.rtpReceiver?.track,
-                    rtpReceiverTrackType: typeof consumer.rtpReceiver?.track,
-                    rtpReceiverTrackId: consumer.rtpReceiver?.track?.id,
-                    rtpReceiverTrackKind: consumer.rtpReceiver?.track?.kind,
-                    rtpReceiverTrackReadyState: consumer.rtpReceiver?.track?.readyState,
-                    // Consumer 전체 상태
-                    consumerClosed: consumer.closed,
-                    consumerPaused: consumer.paused,
-                    consumerProducerPaused: consumer.producerPaused
-                });
-                
-                // 1순위: consumer.track 직접 접근
-                if (consumer.track && consumer.track instanceof MediaStreamTrack) {
-                    //console.log('✅ Track 준비됨! (직접 접근) 원격 비디오 표시 시작');
-                    scwin.displayRemoteVideo(peerId, consumer);
-                    return;
-                }
-                
-                // 2순위: rtpReceiver.track 접근
-                if (consumer.rtpReceiver && consumer.rtpReceiver.track && consumer.rtpReceiver.track instanceof MediaStreamTrack) {
-                    //console.log('✅ Track 준비됨! (rtpReceiver 접근) 원격 비디오 표시 시작');
-                    // consumer.track에 rtpReceiver.track 할당
-                    consumer.track = consumer.rtpReceiver.track;
-                    scwin.displayRemoteVideo(peerId, consumer);
-                    return;
-                }
-                
-                // 3순위: rtpReceiver가 있으면 MediaStream 직접 생성 (track null이어도)
-                if (consumer.rtpReceiver && attemptCount >= 5) {
-                    //console.log('������ rtpReceiver 발견! MediaStream 직접 생성 시도');
-                    try {
-                        const stream = new MediaStream();
-                        
-                        // rtpReceiver를 MediaStream에 연결하는 다양한 방법 시도
-                        if (consumer.rtpReceiver.track) {
-                            stream.addTrack(consumer.rtpReceiver.track);
-                            //console.log('✅ rtpReceiver.track을 MediaStream에 추가 성공');
-                        } else {
-                            // track이 없어도 rtpReceiver 자체를 활용
-                            //console.log('������ rtpReceiver에서 track 강제 생성 시도');
-                            
-                            // 브라우저 내부 API 사용 시도
-                            if (consumer.rtpReceiver.getContributingSources) {
-                                const sources = consumer.rtpReceiver.getContributingSources();
-                                //console.log('������ RTP 소스 정보:', sources);
-                            }
-                            
-                            // PC의 트랜시버를 통한 접근 시도
-                            if (recvTransport && recvTransport._pc) {
-                                const transceivers = recvTransport._pc.getTransceivers();
-                                //console.log('������ Transceivers:', transceivers.length);
-                                
-                                for (const transceiver of transceivers) {
-                                    if (transceiver.receiver === consumer.rtpReceiver && transceiver.receiver.track) {
-                                        stream.addTrack(transceiver.receiver.track);
-                                        //console.log('✅ Transceiver에서 track 추출 성공!');
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        if (stream.getTracks().length > 0) {
-                            //console.log('✅ MediaStream 생성 성공, 직접 표시');
-                            scwin.displayRemoteVideoDirectly(peerId, stream, consumer.kind);
-                            return;
-                        }
-                    } catch (e) {
-                        //console.error('❌ MediaStream 직접 생성 실패:', e);
-                    }
-                }
-                
-                if (attemptCount < maxAttempts) {
-                    //console.log('⏳ Track 아직 준비 안됨, 재시도...');
-                    setTimeout(checkTrackReady, 200);
-                } else {
-                    //console.error('❌ Track 준비 시간 초과 (30초). WebRTC PeerConnection에서 직접 추출 시도');
-                    
-                    // 최후 수단: WebRTC PeerConnection에서 직접 MediaStream 추출
-                    try {
-                        if (recvTransport && recvTransport._pc) {
-                            const pc = recvTransport._pc;
-                            //console.log('������ PeerConnection에서 직접 MediaStream 추출 시도');
-                            
-                            // 방법 1: getRemoteStreams() 사용 (구버전 API)
-                            if (typeof pc.getRemoteStreams === 'function') {
-                                const remoteStreams = pc.getRemoteStreams();
-                                //console.log('������ Remote Streams:', remoteStreams.length);
-                                
-                                if (remoteStreams.length > 0) {
-                                    const stream = remoteStreams[remoteStreams.length - 1]; // 최신 스트림
-                                    //console.log('✅ getRemoteStreams()에서 MediaStream 추출 성공');
-                                    scwin.displayRemoteVideoDirectly(peerId, stream, consumer.kind);
-                                    return;
-                                }
-                            }
-                            
-                            // 방법 2: getReceivers()를 통한 track 수집
-                            const receivers = pc.getReceivers();
-                            //console.log('������ RTP Receivers:', receivers.length);
-                            
-                            const tracks = [];
-                            receivers.forEach(receiver => {
-                                if (receiver.track && receiver.track.readyState === 'live') {
-                                    tracks.push(receiver.track);
-                                    //console.log('✅ Receiver에서 live track 발견:', receiver.track.kind);
-                                }
-                            });
-                            
-                            if (tracks.length > 0) {
-                                const stream = new MediaStream(tracks);
-                                //console.log('✅ Receivers에서 MediaStream 생성 성공');
-                                scwin.displayRemoteVideoDirectly(peerId, stream, consumer.kind);
-                                return;
-                            }
-                            
-                            // 방법 3: ontrack 이벤트 강제 발생 시도
-                            //console.log('������ ontrack 이벤트 리스너 설정');
-                            pc.ontrack = (event) => {
-                                //console.log('✅ ontrack 이벤트 발생!', event.streams.length);
-                                if (event.streams.length > 0) {
-                                    scwin.displayRemoteVideoDirectly(peerId, event.streams[0], consumer.kind);
-                                }
-                            };
-                        }
-                    } catch (e) {
-                        //console.error('❌ PeerConnection에서 MediaStream 추출 실패:', e);
-                    }
-                    
-                    // 최종 실패 시 기본 방법 시도
-                    scwin.displayRemoteVideo(peerId, consumer);
-                }
-            };
-            
-            // track 상태 확인 시작
-            checkTrackReady();
-        }, 500);
-        
-        //console.log('✅ 스트림 소비 완료:', consumer.id);
-
-    } catch (error) {
-        //console.error('❌ 스트림 소비 실패:', error);
-    }
-};
-
-// 원격 비디오 표시 (mediasoup Consumer 방식) - 완전 개선된 버전
-scwin.displayRemoteVideo = function(peerId, consumer) {
-    //console.log('������ 원격 비디오 표시 시작:', peerId, consumer?.kind);
-    
-    // Consumer 유효성 검사
-    if (!consumer) {
-        //console.error('❌ Consumer가 null/undefined:', consumer);
-        return;
-    }
-    
-    //console.log('������ Consumer 상세 정보:', {
-        id: consumer.id,
-        kind: consumer.kind,
-        track: consumer.track,
-        trackType: typeof consumer.track,
-        consumerType: typeof consumer,
-        hasTrack: 'track' in consumer,
-        trackConstructor: consumer.track?.constructor?.name
-    });
-    
-    // track 접근 여러 방법 시도 (우선순위별로)
-    let track = null;
-    
-    // 방법 1: 직접 접근
-    if (consumer.track && consumer.track instanceof MediaStreamTrack) {
-        track = consumer.track;
-        //console.log('✅ 방법 1 성공: 직접 track 접근');
-    }
-    // 방법 2: rtpReceiver를 통한 접근
-    else if (consumer.rtpReceiver && consumer.rtpReceiver.track && consumer.rtpReceiver.track instanceof MediaStreamTrack) {
-        track = consumer.rtpReceiver.track;
-        //console.log('✅ 방법 2 성공: rtpReceiver track 접근');
-    }
-    // 방법 3: getter를 통한 접근 (mediasoup에서 track이 getter일 수 있음)
-    else if (typeof consumer.track === 'function') {
-        try {
-            track = consumer.track();
-            //console.log('✅ 방법 3 성공: track() 함수 호출');
-        } catch (e) {
-            //console.log('⚠️ 방법 3 실패:', e.message);
-        }
-    }
-    // 방법 4: 다른 속성명 시도
-    else if (consumer.mediaStreamTrack) {
-        track = consumer.mediaStreamTrack;
-        //console.log('✅ 방법 4 성공: mediaStreamTrack 속성');
-    }
-    // 방법 5: _track 내부 속성 (최후 수단)
-    else if (consumer._track) {
-        track = consumer._track;
-        //console.log('✅ 방법 5 성공: _track 내부 속성');
-    }
-    
-    if (!track) {
-        //console.error('❌ 모든 방법으로 track 접근 실패');
-        //console.error('Consumer 전체 객체:', consumer);
-        //console.error('Consumer keys:', Object.keys(consumer));
-        
-        // Consumer 객체 구조 완전 분석
-        //console.error('������ Consumer 객체 상세 분석:', {
-            // 기본 속성
-            id: consumer.id,
-            kind: consumer.kind,
-            closed: consumer.closed,
-            paused: consumer.paused,
-            producerPaused: consumer.producerPaused,
-            // track 관련
-            track: consumer.track,
-            trackType: typeof consumer.track,
-            trackConstructor: consumer.track?.constructor?.name,
-            // rtpReceiver 관련
-            rtpReceiver: consumer.rtpReceiver,
-            rtpReceiverType: typeof consumer.rtpReceiver,
-            rtpReceiverTrack: consumer.rtpReceiver?.track,
-            rtpReceiverTrackType: typeof consumer.rtpReceiver?.track,
-            // rtpParameters
-            rtpParameters: consumer.rtpParameters,
-            // 프로토타입 체인
-            protoKeys: Object.keys(Object.getPrototypeOf(consumer)),
-            protoProtoKeys: Object.keys(Object.getPrototypeOf(Object.getPrototypeOf(consumer))),
-            // 모든 속성 확인
-            allOwnProperties: Object.getOwnPropertyNames(consumer),
-            // 내부 속성 확인
-            hasInternalTrack: '_track' in consumer,
-            hasMediaStreamTrack: 'mediaStreamTrack' in consumer,
-            hasGetTrack: 'getTrack' in consumer,
-            // 기타 가능한 속성들
-            stream: consumer.stream,
-            streams: consumer.streams,
-            receiver: consumer.receiver,
-            transceiver: consumer.transceiver
-        });
-        
-        // 최후 수단: Consumer 객체의 모든 속성 순회
-        //console.error('������ Consumer 모든 속성 순회:');
-        for (const key in consumer) {
-            try {
-                const value = consumer[key];
-                //console.error(`  ${key}:`, value, typeof value);
-                if (value && typeof value === 'object' && value.constructor && value.constructor.name === 'MediaStreamTrack') {
-                    //console.error(`  ������ MediaStreamTrack 발견: ${key}`);
-                    track = value;
-                    break;
-                }
-            } catch (e) {
-               //console.error(`  ${key}: (접근 불가) ${e.message}`);
-            }
-        }
-        
-        if (!track) {
-           //console.error('❌ 완전한 분석 후에도 track 발견 불가');
-            //console.error('������ 대안 방법 시도: Consumer 없이 MediaStream 생성');
-            
-            // 대안 방법 1: Consumer의 rtpReceiver를 통한 MediaStream 생성
-            if (consumer.rtpReceiver) {
-                try {
-                    const stream = new MediaStream();
-                    // rtpReceiver가 있으면 이를 통해 track 생성 시도
-                    //console.log('������ rtpReceiver를 통한 MediaStream 생성 시도');
-                    
-                    // rtpReceiver에서 track 추출 시도
-                    const rtpTrack = consumer.rtpReceiver.track;
-                    if (rtpTrack) {
-                        stream.addTrack(rtpTrack);
-                        //console.log('✅ rtpReceiver에서 track 추출 성공');
-                        
-                        // 원격 비디오 표시 (stream 직접 사용)
-                        scwin.displayRemoteVideoDirectly(peerId, stream, consumer.kind);
-                        return;
-                    }
-                } catch (e) {
-                    //console.error('❌ rtpReceiver를 통한 MediaStream 생성 실패:', e);
-                }
-            }
-            
-            // 대안 방법 2: Consumer를 MediaStream으로 직접 변환 시도
-            if (consumer.stream) {
-                //console.log('������ Consumer.stream 직접 사용');
-                scwin.displayRemoteVideoDirectly(peerId, consumer.stream, consumer.kind);
-                return;
-            }
-            
-            //console.error('❌ 모든 대안 방법도 실패');
-            return;
-        } else {
-            //console.log('✅ 속성 순회로 track 발견!');
-        }
-    }
-    
-    // track이 MediaStreamTrack인지 확인
-    if (!(track instanceof MediaStreamTrack)) {
-        //console.error('❌ 추출된 track이 MediaStreamTrack이 아님:', typeof track, track);
-        return;
-    }
-    
-    //console.log('✅ Track 유효성 확인 완료:', {
-        kind: track.kind,
-        id: track.id,
-        readyState: track.readyState,
-        enabled: track.enabled,
-        muted: track.muted
-    });
-    
-    // 기존 정보 확인
-    let remoteVideoInfo = remoteVideos.get(peerId);
-    
-    if (!remoteVideoInfo) {
-        // 새로운 원격 비디오 컨테이너 생성
-        const container = document.createElement("div");
-        container.className = "remote-user-video";
-        container.id = `remote-${peerId}`;
-        
-        const videoWrapper = document.createElement("div");
-        videoWrapper.className = "remote-video-wrapper";
-        
-        const videoPlayer = document.createElement("div");
-        videoPlayer.className = "remote-video-player";
-        
-        const video = document.createElement("video");
-        video.autoplay = true;
-        video.playsInline = true;
-        video.muted = false;
-        video.controls = false;
-        
-        // 사용자 이름 표시 (개선된 버전)
-        const userName = document.createElement("div");
-        userName.className = "remote-user-name";
-        
-        // 사용자 정보 가져오기 (여러 방법 시도)
-        const userInfo = remoteUserInfo.get(peerId);
-        let displayName = `사용자_${peerId.slice(-4)}`;
-        
-        if (userInfo) {
-            if (userInfo.name) {
-                displayName = userInfo.name;
-            } else if (userInfo.userName) {
-                displayName = userInfo.userName;
-            }
-        }
-        
-        userName.textContent = displayName;
-        //console.log('������ 사용자 이름 설정:', peerId, '→', displayName);
-        
-        // DOM 구성
-        videoPlayer.appendChild(video);
-        videoWrapper.appendChild(videoPlayer);
-        container.appendChild(videoWrapper);
-        container.appendChild(userName);
-        
-        // 그리드에 추가
-        const remoteGrid = document.getElementById("remoteVideosGrid");
-        if (remoteGrid) {
-            remoteGrid.appendChild(container);
-        }
-        
-        // MediaStream 생성
-        const mediaStream = new MediaStream();
-        
-        // 정보 저장
-        remoteVideoInfo = {
-            container,
-            video,
-            stream: mediaStream,
-            tracks: new Map(),
-            userName: displayName
-        };
-        remoteVideos.set(peerId, remoteVideoInfo);
-        
-        // 비디오에 stream 연결
-        video.srcObject = mediaStream;
-        
-        //console.log('✅ 원격 비디오 컨테이너 생성 완료:', peerId);
-    }
-    
-    try {
-        // 트랙이 이미 추가되었는지 확인
-        const existingTrack = remoteVideoInfo.tracks.get(consumer.id);
-        if (existingTrack) {
-            //console.log('⚠️ 트랙이 이미 존재함:', consumer.id);
-            return;
-        }
-        
-        // MediaStream에 트랙 추가
-        remoteVideoInfo.stream.addTrack(track);
-        remoteVideoInfo.tracks.set(consumer.id, track);
-        
-        //console.log(`✅ ${consumer.kind} 트랙 추가 성공:`, peerId, track.id);
-        
-        // 비디오 재생 시도
-        const playPromise = remoteVideoInfo.video.play();
-        
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                //console.log('✅ 원격 비디오 재생 성공:', peerId);
-                //scwin.addChatMessage("시스템", `✅ ${remoteVideoInfo.userName}님과 영상통화가 연결되었습니다!`, false);
-            }).catch(error => {
-                //console.error('❌ 비디오 자동재생 실패 (사용자 상호작용 필요):', error);
-                // 자동재생 실패 시 사용자에게 알림
-                setTimeout(() => {
-                    remoteVideoInfo.video.play().catch(err => {
-                        //console.log('비디오 재생을 위해 사용자 클릭이 필요할 수 있습니다.');
-                    });
-                }, 1000);
-            });
-        }
-        
-    } catch (error) {
-        //console.error('❌ MediaStream addTrack 실패:', error);
-        //console.error('Consumer 정보:', consumer);
-        //console.error('Track 정보:', track);
-        //console.error('Track type:', typeof track);
-        //console.error('Track constructor:', track?.constructor?.name);
-    }
-};
-
-// 원격 비디오 표시 (MediaStream 직접 사용)
-scwin.displayRemoteVideoDirectly = function(peerId, stream, kind) {
-    try {
-        //console.log('������ 원격 비디오 직접 표시 시작:', peerId, kind);
-        
-        if (!stream || !(stream instanceof MediaStream)) {
-            //console.error('❌ 유효하지 않은 MediaStream:', stream);
-            return;
-        }
-        
-        //console.log('✅ MediaStream 유효성 확인:', {
-            streamId: stream.id,
-            trackCount: stream.getTracks().length,
-            videoTracks: stream.getVideoTracks().length,
-            audioTracks: stream.getAudioTracks().length
-        });
-        
-        // 기존 정보 확인
-        let remoteVideoInfo = remoteVideos.get(peerId);
-        if (!remoteVideoInfo) {
-            // 새로운 사용자 정보 생성
-            //console.log('������️ 새로운 원격 비디오 컨테이너 생성:', peerId);
-            
-            // 컨테이너 생성
-            const container = document.createElement("div");
-            container.className = "remote-video-container";
-            container.id = `remote-${peerId}`;
-            
-            const videoWrapper = document.createElement("div");
-            videoWrapper.className = "video-wrapper";
-            
-            const videoPlayer = document.createElement("div");
-            videoPlayer.className = "video-player";
-            
-            const video = document.createElement("video");
-            video.className = "remote-video";
-            video.autoplay = true;
-            video.playsInline = true;
-            video.muted = false;
-            video.controls = false;
-            
-            // 사용자 이름 표시
-            const userName = document.createElement("div");
-            userName.className = "remote-user-name";
-            
-            // 사용자 정보 가져오기
-            const userInfo = remoteUserInfo.get(peerId);
-            let displayName = `사용자_${peerId.slice(-4)}`;
-            
-            if (userInfo) {
-                if (userInfo.name) {
-                    displayName = userInfo.name;
-                } else if (userInfo.userName) {
-                    displayName = userInfo.userName;
-                }
-            }
-            
-            userName.textContent = displayName;
-           //console.log('������ 사용자 이름 설정:', peerId, '→', displayName);
-            
-            // DOM 구성
-            videoPlayer.appendChild(video);
-            videoWrapper.appendChild(videoPlayer);
-            container.appendChild(videoWrapper);
-            container.appendChild(userName);
-            
-            // 그리드에 추가
-            const remoteGrid = document.getElementById("remoteVideosGrid");
-            if (remoteGrid) {
-                remoteGrid.appendChild(container);
-            }
-            
-            // 정보 저장
-            remoteVideoInfo = {
-                container,
-                video,
-                stream: stream,
-                tracks: new Map(),
-                userName: displayName
-            };
-            remoteVideos.set(peerId, remoteVideoInfo);
-            
-            // 비디오에 stream 연결
-            video.srcObject = stream;
-            
-        } else {
-            // 기존 MediaStream에 새 트랙 추가
-            //console.log('������ 기존 컨테이너에 트랙 추가:', peerId);
-            stream.getTracks().forEach(track => {
-                if (!remoteVideoInfo.tracks.has(track.id)) {
-                    remoteVideoInfo.stream.addTrack(track);
-                    remoteVideoInfo.tracks.set(track.id, track);
-                }
-            });
-        }
-        
-        // 비디오 재생 시도
-        const playPromise = remoteVideoInfo.video.play();
-        
-        if (playPromise !== undefined) {
-            playPromise.then(() => {
-                //console.log('✅ 원격 비디오 재생 성공:', peerId);
-                //scwin.addChatMessage("시스템", `✅ ${remoteVideoInfo.userName}님과 영상통화가 연결되었습니다!`, false);
-            }).catch(error => {
-                //console.error('❌ 비디오 자동재생 실패 (사용자 상호작용 필요):', error);
-                // 자동재생 실패 시 사용자에게 알림
-                setTimeout(() => {
-                    remoteVideoInfo.video.play().catch(err => {
-                        //console.log('비디오 재생을 위해 사용자 클릭이 필요할 수 있습니다.');
-                    });
-                }, 1000);
-            });
-        }
-        
-        //console.log(`✅ ${kind} 직접 표시 완료:`, peerId, stream.id);
-        
-    } catch (error) {
-        //console.error('❌ 원격 비디오 직접 표시 실패:', error);
-        //console.error('Stream 정보:', stream);
-    }
-};
-
-// 원격 사용자 제거
-scwin.removeRemoteUser = function(peerId) {
-    //console.log('������️ 원격 사용자 제거:', peerId);
-    
-    // Consumer 정리
-    consumers.forEach((consumerInfo, consumerId) => {
-        if (consumerInfo.peerId === peerId) {
-            consumerInfo.consumer.close();
-            consumers.delete(consumerId);
-        }
-    });
-    
-    // 비디오 정리
-    const remoteVideoInfo = remoteVideos.get(peerId);
-    if (remoteVideoInfo) {
-        if (remoteVideoInfo.container && remoteVideoInfo.container.parentNode) {
-            remoteVideoInfo.container.parentNode.removeChild(remoteVideoInfo.container);
-        }
-        remoteVideos.delete(peerId);
-    }
-    
-    //console.log('✅ 원격 사용자 정리 완료:', peerId);
-};
-
-// 다른 팝업들의 헤더 복원 함수
-scwin.restoreOtherPopupHeaders = function() {
-    try {
-        console.log("다른 팝업들의 헤더 복원 시작");
-        
-        // 모든 WebSquare 팝업 헤더를 다시 표시
-        var allHeaders = document.querySelectorAll('.w2window_header');
-        for (var i = 0; i < allHeaders.length; i++) {
-            var header = allHeaders[i];
-            // 화상통화 팝업이 아닌 헤더들만 복원
-            if (!header.closest('[id*="videoChatPopup"]')) {
-                header.style.display = '';
-                header.style.height = '';
-                header.style.minHeight = '';
-                header.style.visibility = '';
-            }
-        }
-        
-        // 추가로 WebSquare 기본 헤더 스타일 복원
-        var popupHeaders = document.querySelectorAll('.w2popup_window .w2window_header');
-        for (var j = 0; j < popupHeaders.length; j++) {
-            var popupHeader = popupHeaders[j];
-            // 화상통화 팝업이 아닌 헤더들만 복원
-            if (!popupHeader.closest('[id*="videoChatPopup"]')) {
-                popupHeader.style.display = '';
-                popupHeader.style.height = '';
-                popupHeader.style.minHeight = '';
-                popupHeader.style.visibility = '';
-            }
-        }
-        
-        console.log("다른 팝업들의 헤더 복원 완료");
-    } catch (error) {
-        console.error("헤더 복원 중 오류:", error);
-    }
-};
+// ===== Simple WebRTC 관련 함수들 =====
 
 // 화상통화 나가기
-scwin.leaveCall = function() {
-    console.log("=== leaveCall 함수 시작 ===");
-    try {
-        console.log("화상통화 나가기 시작");
-        
-        // Producer 정리
-        if (videoProducer) {
-            videoProducer.close();
-            videoProducer = null;
-        }
-        if (audioProducer) {
-            audioProducer.close();
-            audioProducer = null;
-        }
-        
-        // Consumer 정리
-        consumers.forEach(consumerInfo => {
-            consumerInfo.consumer.close();
-        });
-        consumers.clear();
-        
-        // Transport 정리
-        if (sendTransport) {
-            sendTransport.close();
-            sendTransport = null;
-        }
-        if (recvTransport) {
-            recvTransport.close();
-            recvTransport = null;
-        }
-        
-        // Device 정리
-        if (device) {
-            device = null;
-        }
-        
-        // 로컬 스트림 정리
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-            localStream = null;
-        }
-        
-        const localVideo = document.getElementById("localVideo");
-        if (localVideo) {
-            localVideo.srcObject = null;
-        }
-        
-        // 원격 비디오 정리
-        remoteVideos.forEach((videoInfo, peerId) => {
-            if (videoInfo.container && videoInfo.container.parentNode) {
-                videoInfo.container.parentNode.removeChild(videoInfo.container);
-            }
-        });
-        remoteVideos.clear();
-        remoteUserInfo.clear();
-        
-        // mediasoup 소켓 정리
-        if (mediasoupSocket) {
-            mediasoupSocket.disconnect();
-            mediasoupSocket = null;
-        }
-        
-        // 채팅에 나가기 알림
-        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
-            const leaveRoomMessage = {
-                type: 'leave-room',
-                channelName: currentUser.channelName,
-                userId: currentUser.userId,
-                userName: currentUser.userName,
-                timestamp: Date.now()
-            };
-            chatSocket.send(JSON.stringify(leaveRoomMessage));
-        }
-        
-        isJoined = false;
-        dma_videoChat.set("isJoined", "false");
-        
-        scwin.updateControlButtons();
-        //scwin.addChatMessage("시스템", "화상통화를 나갔습니다.", false);
-        console.log("✅ 화상통화 나가기 완료");
-        
-        console.log("나가기 함수 실행 중 - 모달 닫기 시작");
-        
-        // 프로젝트 설정과 동일한 방식으로 모달 닫기 (projectSettingSideMenu.xml의 btn_back_onclick 로직)
-        try {
-            console.log("화상통화 모달 닫기 시작 - 프로젝트 설정 방식 적용");
-            
-            // 방법 1: 부모의 closeVideoChatModal 함수 직접 호출
-            if (window.parent && window.parent.scwin && window.parent.scwin.closeVideoChatModal) {
-                console.log("부모의 closeVideoChatModal 함수 호출");
-                window.parent.scwin.closeVideoChatModal();
-                return; // 성공하면 여기서 끝
-            }
-            
-            // 방법 2: 최상위 부모의 함수 호출  
-            if (window.parent && window.parent.parent && window.parent.parent.scwin && window.parent.parent.scwin.closeVideoChatModal) {
-                console.log("최상위 부모의 closeVideoChatModal 함수 호출");
-                window.parent.parent.scwin.closeVideoChatModal();
-                return; // 성공하면 여기서 끝
-            }
-            
-            // 방법 3: 직접 부모에게 메시지 전송
-            if (window.parent) {
-                console.log("부모창에 메시지 전송");
-                window.parent.postMessage({action: 'closeVideoChatPopup'}, '*');
-            }
-            
-            // 방법 4: 최상위 부모에게 메시지 전송
-            if (window.parent && window.parent.parent) {
-                console.log("최상위 부모창에 메시지 전송");
-                window.parent.parent.postMessage({action: 'closeVideoChatPopup'}, '*');
-            }
-            
-            // 방법 5: 강제 닫기 시도
-            console.log("강제 닫기 시도");
-            setTimeout(function() {
-                if (window.close) {
-                    window.close();
-                } else if (window.parent && window.parent.close) {
-                    window.parent.close();
-                } else {
-                    window.history.back();
-                }
-            }, 100);
-            
-        } catch(e) {
-            console.error("화상통화 모달 닫기 실행 오류:", e);
-            // 최후의 수단
-            try {
-                window.history.back();
-            } catch(e2) {
-                console.error("history.back도 실패:", e2);
-            }
-        }
-        
-    } catch (error) {
-        //console.error("❌ 화상통화 나가기 실패:", error);
-    }
-};
-
-// 마이크 토글 (mediasoup 방식)
-scwin.toggleMute = function() {
-    if (!localStream) return;
-    
-    const audioTracks = localStream.getAudioTracks();
-    if (audioTracks.length > 0) {
-        audioTracks[0].enabled = !audioTracks[0].enabled;
-        isMuted = !audioTracks[0].enabled;
-        dma_videoChat.set("isMuted", isMuted.toString());
-        
-        // Audio Producer도 활성화/비활성화
-        if (audioProducer) {
-            if (isMuted) {
-                audioProducer.pause();
-                //console.log("������ 오디오 Producer 일시정지");
-            } else {
-                audioProducer.resume();
-                //console.log("������ 오디오 Producer 재시작");
-            }
-        }
-        
-        scwin.updateControlButtons();
-        //scwin.addChatMessage("시스템", `${isMuted ? '������ 마이크 음소거' : '������ 마이크 켜짐'}`, false);
-    }
-};
-
-// 비디오 토글 (mediasoup 방식)
-scwin.toggleVideo = function() {
-    if (!localStream) return;
-    
-    const videoTracks = localStream.getVideoTracks();
-    if (videoTracks.length > 0) {
-        videoTracks[0].enabled = !videoTracks[0].enabled;
-        isVideoOff = !videoTracks[0].enabled;
-        dma_videoChat.set("isVideoOff", isVideoOff.toString());
-        
-        // Video Producer도 활성화/비활성화
-        if (videoProducer) {
-            if (isVideoOff) {
-                videoProducer.pause();
-                //console.log("������ 비디오 Producer 일시정지");
-            } else {
-                videoProducer.resume();
-                //console.log("������ 비디오 Producer 재시작");
-            }
-        }
-        
-        scwin.updateControlButtons();
-        //scwin.addChatMessage("시스템", `${isVideoOff ? '������ 비디오 끄기' : '������ 비디오 켜기'}`, false);
-    }
-};
-
-// 원격 사용자 제거 (mediasoup 방식)
-scwin.removeRemoteUser = function(userId) {
-    const element = document.getElementById(`remote-${userId}`);
-    if (element) {
-        element.remove();
-        //console.log("원격 사용자 UI 제거:", userId);
-    }
-    
-    // 해당 사용자의 Consumer들 정리
-    const userConsumers = [];
-    consumers.forEach((consumer, consumerId) => {
-        // Consumer에서 사용자 ID를 구분하는 방법이 필요할 수 있음
-        // 현재는 단순히 모든 Consumer를 정리
-    });
-    
-    remoteVideos.delete(userId);
-};
-
-// 버튼 상태 업데이트
-scwin.updateControlButtons = function() {
-    const joinBtn = document.getElementById("joinBtn");
-    const leaveBtn = document.getElementById("leaveBtn");
-    const muteBtn = document.getElementById("muteBtn");
-    const videoBtn = document.getElementById("videoBtn");
-    
-    if (isJoined) {
-        if (joinBtn) joinBtn.style.display = "none";
-        if (leaveBtn) leaveBtn.style.display = "inline-block";
-        if (muteBtn) {
-            muteBtn.disabled = false;
-            muteBtn.textContent = isMuted ? "MUTE" : "MIC";
-            muteBtn.className = isMuted ? "control-btn mute-btn muted" : "control-btn mute-btn";
-        }
-        if (videoBtn) {
-            videoBtn.disabled = false;
-            videoBtn.textContent = isVideoOff ? "CAM OFF" : "CAM ON";
-            videoBtn.className = isVideoOff ? "control-btn video-btn video-off" : "control-btn video-btn";
-        }
-    } else {
-        if (joinBtn) joinBtn.style.display = "inline-block";
-        if (leaveBtn) leaveBtn.style.display = "none";
-        if (muteBtn) muteBtn.disabled = true;
-        if (videoBtn) videoBtn.disabled = true;
-    }
-};
-
-// 중복된 initializeChatWebSocket 함수 제거됨 - 위쪽 함수 사용
-
-// 시스템 상태 체크 함수 (Simple WebRTC 버전)
-scwin.checkSystemStatus = function() {
-    //console.log("=== Simple WebRTC 시스템 상태 체크 ===");
-    //console.log("현재 사용자:", currentUser);
-    //console.log("화상통화 참가 상태:", isJoined);
-    //console.log("로컬 스트림:", localStream ? "있음" : "없음");
-    if (localStream) {
-        //console.log("- 비디오 트랙:", localStream.getVideoTracks().length);
-        //console.log("- 오디오 트랙:", localStream.getAudioTracks().length);
-    }
-    //console.log("채팅 소켓 상태:", chatSocket?.readyState);
-    //console.log("P2P 연결 수:", peerConnections.size);
-    //console.log("원격 사용자 정보:", Array.from(remoteUserInfo.entries()));
-    
-    return {
-        currentUser,
-        isJoined,
-        hasLocalStream: !!localStream,
-        chatSocketState: chatSocket?.readyState,
-        peerConnectionsCount: peerConnections.size,
-        remoteUsersCount: remoteUserInfo.size
-    };
-};
-
-// Simple WebRTC 재연결 함수
-scwin.forceReconnect = function() {
-    if (!isJoined) {
-        //console.log("❌ 화상통화에 참가하지 않은 상태");
-        //scwin.addChatMessage("시스템", "❌ 먼저 화상통화에 참가해주세요.", false);
-        return;
-    }
-    
-    //console.log("Simple WebRTC 강제 재연결 시작...");
-    //scwin.addChatMessage("시스템", "화상통화 연결을 재시작합니다...", false);
-    
-    // Simple WebRTC 연결 재시작
-    setTimeout(async () => {
-        try {
-            // 현재 연결 정리
-            scwin.leaveCall();
-            
-            // 3초 후 재연결
-            setTimeout(async () => {
-                try {
-                    await scwin.joinCall();
-                    //scwin.addChatMessage("시스템", "✅ 화상통화 재연결 완료", false);
-                } catch (error) {
-                    //console.error("❌ 재연결 실패:", error);
-                    //scwin.addChatMessage("시스템", "❌ 재연결 실패. 다시 시도해주세요.", false);
-                }
-            }, 3000);
-            
-        } catch (error) {
-            //console.error("❌ 연결 정리 실패:", error);
-        }
-    }, 1000);
-};
-
-// 5초마다 자동 상태 체크 (Simple WebRTC 버전)
-setInterval(() => {
-    if (isJoined) {
-        const status = scwin.checkSystemStatus();
-        // WebSocket 연결 상태 체크
-        if (status.chatSocketState !== 1) { // WebSocket.OPEN = 1
-            //console.warn("⚠️ 채팅 서버 연결이 끊어졌습니다!");
-        }
-        if (status.remoteUsersCount > 0 && status.peerConnectionsCount === 0) {
-            //console.warn("⚠️ 원격 사용자가 있지만 P2P 연결이 없습니다!");
-        }
-    }
-}, 5000);
-
-// 유틸리티 함수들
-scwin.showLoading = function(message) {
-    //console.log("로딩:", message);
-};
-
-scwin.hideLoading = function() {
-    //console.log("로딩 완료");
-};
-
-// 콘솔에서 사용할 수 있는 디버깅 함수들 (mediasoup 버전)
-window.webRTCUtils = {
-    // 현재 상태 체크
-    status: () => {
-        if (typeof scwin !== 'undefined' && scwin.checkSystemStatus) {
-            return scwin.checkSystemStatus();
-        }
-        return "scwin을 사용할 수 없습니다";
-    },
-    
-    // 강제 재연결
-    reconnect: () => {
-        if (typeof scwin !== 'undefined' && scwin.forceReconnect) {
-            scwin.forceReconnect();
-            return "재연결을 시작했습니다";
-        }
-        return "scwin을 사용할 수 없습니다";
-    },
-    
-    // 완전 재시작 (나가기 → 참가하기)
-    restart: () => {
-        //console.log("완전 재시작 시작...");
-        const joinBtn = document.getElementById("joinBtn");
-        const leaveBtn = document.getElementById("leaveBtn");
-        
-        // 현재 참가 중이면 나가기
-        if (leaveBtn && leaveBtn.style.display !== "none") {
-            leaveBtn.click();
-            //console.log("1️⃣ 나가기 완료");
-            
-            // 5초 후 재참가
-            setTimeout(() => {
-                const newJoinBtn = document.getElementById("joinBtn");
-                if (newJoinBtn && newJoinBtn.style.display !== "none") {
-                    newJoinBtn.click();
-                    //console.log("2️⃣ 재참가 완료");
-                }
-            }, 5000);
-            
-            return "5초 후 자동으로 재참가됩니다";
-        } else if (joinBtn && joinBtn.style.display !== "none") {
-            joinBtn.click();
-            return "참가하기를 시도했습니다";
-        }
-        
-        return "상태를 확인할 수 없습니다";
-    },
-    
-    // 도움말
-    help: () => {
-        //console.log(`
-=== mediasoup 화상통화 디버깅 명령어들 ===
-webRTCUtils.status()     - 현재 상태 확인
-webRTCUtils.reconnect()  - 강제 재연결 시도  
-webRTCUtils.restart()    - 완전 재시작 (나가기→참가하기)
-webRTCUtils.help()       - 이 도움말 표시
-
-=== 사용 예시 ===
-1. 상태 확인: webRTCUtils.status()
-2. 연결 안될 때: webRTCUtils.reconnect()  
-3. 완전 초기화: webRTCUtils.restart()
-        `);
-        return "도움말을 콘솔에 출력했습니다";
-    }
-};
-
-//console.log("✅ mediasoup 화상통화 유틸리티 함수들이 추가되었습니다!");
-//console.log("콘솔에서 webRTCUtils.help() 를 입력하면 사용법을 확인할 수 있습니다.");
-
-// 브라우저 닫기/페이지 나가기 처리 (강화된 버전)
-function handlePageExit() {
-    try {
-        //console.log("������ 페이지 나가기 감지 - 정리 시작");
-        
-        if (isJoined) {
-            // 즉시 나가기 메시지 전송 (동기 방식)
-            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
-                const leaveMessage = {
-                    type: 'leave-room',
-                    channelName: currentUser.channelName,
-                    userId: currentUser.userId,
-                    userName: currentUser.userName,
-                    timestamp: Date.now()
-                };
-                
-                // 동기 방식으로 즉시 전송
-                chatSocket.send(JSON.stringify(leaveMessage));
-                //console.log("✅ 나가기 메시지 즉시 전송");
-            }
-            
-            // 로컬 스트림 즉시 정지
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-            }
-            
-            // P2P 연결 즉시 종료
-            peerConnections.forEach(pc => pc.close());
-            peerConnections.clear();
-            
-            isJoined = false;
-        }
-        
-        // WebSocket 연결 종료
-        if (chatSocket) {
-            chatSocket.close();
-        }
-        
-        //console.log("✅ 페이지 나가기 정리 완료");
-        
-    } catch (error) {
-        //console.error("❌ 페이지 나가기 정리 실패:", error);
-    }
-}
-
-// 1. beforeunload 이벤트 (가장 중요)
-window.addEventListener('beforeunload', function(e) {
-    handlePageExit();
-    
-    // 브라우저가 확인 대화상자를 표시하지 않도록 함
-    // (화상통화 중일 때만 경고 메시지 표시)
-    if (isJoined) {
-        const message = '화상통화가 진행 중입니다. 정말 나가시겠습니까?';
-        e.returnValue = message; // Chrome
-        return message; // Firefox
-    }
-});
-
-// 2. pagehide 이벤트 (iOS Safari 등에서 중요)
-window.addEventListener('pagehide', function(e) {
-    //console.log("������ pagehide 이벤트 감지");
-    handlePageExit();
-});
-
-// 3. unload 이벤트 (추가 보험)
-window.addEventListener('unload', function(e) {
-    //console.log("������ unload 이벤트 감지");
-    handlePageExit();
-});
-
-// 4. 페이지 숨김/보임 처리 (탭 전환 등)
-document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-        //console.log("������ 페이지 숨김 감지");
-        // 페이지가 숨겨졌을 때는 나가기 처리하지 않음 (탭 전환일 수 있음)
-    } else {
-        //console.log("������ 페이지 다시 보임 감지");
-        // 페이지가 다시 보일 때 연결 상태 확인
-        setTimeout(() => {
-            if (chatSocket && chatSocket.readyState !== WebSocket.OPEN) {
-                //console.log("⚠️ WebSocket 연결이 끊어짐 - 재연결 시도");
-                scwin.initializeChatWebSocket();
-            }
-        }, 1000);
-    }
-});
-
-// 미니 PIP 드래그 및 리사이즈 변수들
-let isDragging = false;
-let isResizing = false;
-let dragOffset = { x: 0, y: 0 };
-let resizeStart = { x: 0, y: 0, width: 0, height: 0 };
-
-// 미니 PIP 드래그 기능 (강화버전)
-scwin.initializePipDrag = function() {
-    console.log('������ PIP 드래그 초기화 시작');
-    
-    setTimeout(() => {
-        const pipContainer = document.querySelector('.mini-pip-container');
-        const pipHeader = document.querySelector('.mini-pip-header');
-        
-        console.log('������ PIP 요소 찾기:', { 
-            container: !!pipContainer, 
-            header: !!pipHeader 
-        });
-        
-        if (!pipContainer || !pipHeader) {
-            console.warn('⚠️ PIP 요소를 찾을 수 없음');
-            return;
-        }
-        
-        // 기존 이벤트 리스너 제거
-        const clonedHeader = pipHeader.cloneNode(true);
-        pipHeader.parentNode.replaceChild(clonedHeader, pipHeader);
-        
-        clonedHeader.style.cursor = 'move';
-        clonedHeader.addEventListener('mousedown', function(e) {
-            console.log('������ 드래그 시작');
-            
-            // 닫기 버튼 클릭시 제외
-            if (e.target.closest('.mini-pip-close')) {
-                console.log('������ 닫기 버튼 클릭 - 드래그 중단');
-                return;
-            }
-            
-            isDragging = true;
-            pipContainer.classList.add('dragging');
-            
-            const rect = pipContainer.getBoundingClientRect();
-            dragOffset.x = e.clientX - rect.left;
-            dragOffset.y = e.clientY - rect.top;
-            
-            console.log('������ 드래그 오프셋:', dragOffset);
-            
-            document.addEventListener('mousemove', handlePipDrag, true);
-            document.addEventListener('mouseup', handlePipDragEnd, true);
-            e.preventDefault();
-            e.stopPropagation();
-        }, true);
-        
-        console.log('✅ 드래그 이벤트 리스너 등록 완료');
-    }, 500);
-};
-
-// 미니 PIP 리사이즈 기능
-scwin.initializePipResize = function() {
-    const pipContainer = document.querySelector('.mini-pip-container');
-    
-    if (!pipContainer) return;
-    
-    // 기존 리사이즈 핸들 제거
-    const existingHandles = pipContainer.querySelectorAll('.resize-handle');
-    existingHandles.forEach(handle => handle.remove());
-    
-    // 8방향 리사이즈 핸들 생성
-    const handles = [
-        { class: 'corner nw', cursor: 'nw-resize' },
-        { class: 'corner ne', cursor: 'ne-resize' },
-        { class: 'corner sw', cursor: 'sw-resize' },
-        { class: 'corner se', cursor: 'se-resize' },
-        { class: 'edge top', cursor: 'n-resize' },
-        { class: 'edge bottom', cursor: 's-resize' },
-        { class: 'edge left', cursor: 'w-resize' },
-        { class: 'edge right', cursor: 'e-resize' }
-    ];
-    
-    handles.forEach(handleInfo => {
-        const handle = document.createElement('div');
-        handle.className = `resize-handle ${handleInfo.class}`;
-        handle.style.cursor = handleInfo.cursor;
-        
-        handle.addEventListener('mousedown', function(e) {
-            isResizing = true;
-            pipContainer.classList.add('resizing');
-            
-            const rect = pipContainer.getBoundingClientRect();
-            resizeStart.x = e.clientX;
-            resizeStart.y = e.clientY;
-            resizeStart.width = rect.width;
-            resizeStart.height = rect.height;
-            resizeStart.left = rect.left;
-            resizeStart.top = rect.top;
-            resizeStart.direction = handleInfo.class;
-            
-            document.addEventListener('mousemove', handlePipResize);
-            document.addEventListener('mouseup', handlePipResizeEnd);
-            e.preventDefault();
-            e.stopPropagation();
-        });
-        
-        pipContainer.appendChild(handle);
-    });
-};
-
-// 드래그 처리 (강화버전)
-function handlePipDrag(e) {
-    if (!isDragging) return;
-    
-    const pipContainer = document.querySelector('.mini-pip-container');
-    if (!pipContainer) return;
-    
-    const newX = e.clientX - dragOffset.x;
-    const newY = e.clientY - dragOffset.y;
-    
-    // 화면 경계 체크
-    const maxX = window.innerWidth - pipContainer.offsetWidth;
-    const maxY = window.innerHeight - pipContainer.offsetHeight;
-    
-    const constrainedX = Math.max(0, Math.min(newX, maxX));
-    const constrainedY = Math.max(0, Math.min(newY, maxY));
-    
-    // 중요: !important로 스타일 강제 적용
-    pipContainer.style.setProperty('left', constrainedX + 'px', 'important');
-    pipContainer.style.setProperty('top', constrainedY + 'px', 'important');
-    pipContainer.style.setProperty('right', 'auto', 'important');
-    pipContainer.style.setProperty('bottom', 'auto', 'important');
-    
-    console.log('������ 드래그 위치 업데이트:', { x: constrainedX, y: constrainedY });
-}
-
-// 드래그 종료
-function handlePipDragEnd() {
-    console.log('������ 드래그 종료');
-    isDragging = false;
-    const pipContainer = document.querySelector('.mini-pip-container');
-    if (pipContainer) {
-        pipContainer.classList.remove('dragging');
-    }
-    document.removeEventListener('mousemove', handlePipDrag, true);
-    document.removeEventListener('mouseup', handlePipDragEnd, true);
-}
-
-// 리사이즈 처리
-function handlePipResize(e) {
-    if (!isResizing) return;
-    
-    const pipContainer = document.querySelector('.mini-pip-container');
-    if (!pipContainer) return;
-    
-    const deltaX = e.clientX - resizeStart.x;
-    const deltaY = e.clientY - resizeStart.y;
-    const direction = resizeStart.direction;
-    
-    let newWidth = resizeStart.width;
-    let newHeight = resizeStart.height;
-    let newLeft = resizeStart.left;
-    let newTop = resizeStart.top;
-    
-    // 방향에 따른 리사이즈 처리
-    if (direction.includes('right') || direction.includes('se') || direction.includes('ne')) {
-        newWidth = resizeStart.width + deltaX;
-    }
-    if (direction.includes('left') || direction.includes('sw') || direction.includes('nw')) {
-        newWidth = resizeStart.width - deltaX;
-        newLeft = resizeStart.left + deltaX;
-    }
-    if (direction.includes('bottom') || direction.includes('se') || direction.includes('sw')) {
-        newHeight = resizeStart.height + deltaY;
-    }
-    if (direction.includes('top') || direction.includes('ne') || direction.includes('nw')) {
-        newHeight = resizeStart.height - deltaY;
-        newTop = resizeStart.top + deltaY;
-    }
-    
-    // 최소/최대 크기 제한
-    const minWidth = 250;
-    const maxWidth = Math.min(600, window.innerWidth * 0.8);
-    const minHeight = 200;
-    const maxHeight = window.innerHeight * 0.8;
-    
-    if (newWidth < minWidth) {
-        if (direction.includes('left')) {
-            newLeft = resizeStart.left + (resizeStart.width - minWidth);
-        }
-        newWidth = minWidth;
-    }
-    if (newWidth > maxWidth) {
-        if (direction.includes('left')) {
-            newLeft = resizeStart.left + (resizeStart.width - maxWidth);
-        }
-        newWidth = maxWidth;
-    }
-    
-    if (newHeight < minHeight) {
-        if (direction.includes('top')) {
-            newTop = resizeStart.top + (resizeStart.height - minHeight);
-        }
-        newHeight = minHeight;
-    }
-    if (newHeight > maxHeight) {
-        if (direction.includes('top')) {
-            newTop = resizeStart.top + (resizeStart.height - maxHeight);
-        }
-        newHeight = maxHeight;
-    }
-    
-    // 화면 경계 체크
-    newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - newWidth));
-    newTop = Math.max(0, Math.min(newTop, window.innerHeight - newHeight));
-    
-    // 스타일 적용
-    pipContainer.style.width = newWidth + 'px';
-    pipContainer.style.height = newHeight + 'px';
-    pipContainer.style.left = newLeft + 'px';
-    pipContainer.style.top = newTop + 'px';
-    pipContainer.style.right = 'auto';
-    pipContainer.style.bottom = 'auto';
-}
-
-// 리사이즈 종료
-function handlePipResizeEnd() {
-    isResizing = false;
-    const pipContainer = document.querySelector('.mini-pip-container');
-    if (pipContainer) {
-        pipContainer.classList.remove('resizing');
-    }
-    document.removeEventListener('mousemove', handlePipResize);
-    document.removeEventListener('mouseup', handlePipResizeEnd);
-}
-
-// 미니 PIP 관련 이벤트 리스너 설정
-document.addEventListener('DOMContentLoaded', function() {
-    // X 버튼 클릭 이벤트
-    const miniPipCloseBtn = document.getElementById('miniPipCloseBtn');
-    if (miniPipCloseBtn) {
-        miniPipCloseBtn.addEventListener('click', function() {
-            scwin.closeMiniPIP();
-        });
-    }
-    
-    // 드래그 및 리사이즈 초기화
-    scwin.initializePipDrag();
-    scwin.initializePipResize();
-});
-
-// 페이지 로드 후에도 이벤트 리스너 설정 (WebSquare 환경 대응)
-setTimeout(function() {
-    // 미니 PIP 닫기 버튼 이벤트 리스너
-    const miniPipCloseBtn = document.getElementById('miniPipCloseBtn');
-    if (miniPipCloseBtn && !miniPipCloseBtn.hasAttribute('data-event-added')) {
-        miniPipCloseBtn.addEventListener('click', function() {
-            scwin.closeMiniPIP();
-        });
-        miniPipCloseBtn.setAttribute('data-event-added', 'true');
-        console.log('미니 PIP 닫기 버튼 이벤트 리스너 추가됨');
-    }
-    
-    // 미니 PIP 확장 버튼 이벤트 리스너
-    const miniPipExpandBtn = document.getElementById('miniPipExpandBtn');
-    if (miniPipExpandBtn && !miniPipExpandBtn.hasAttribute('data-event-added')) {
-        miniPipExpandBtn.addEventListener('click', function() {
-            console.log('PIP 확장 버튼 클릭됨');
-            scwin.expandVideoChat();
-        });
-        miniPipExpandBtn.setAttribute('data-event-added', 'true');
-        console.log('미니 PIP 확장 버튼 이벤트 리스너 추가됨');
-    }
-    
-    // PIP 확장 버튼 이벤트 리스너
-    const pipExpandBtn = document.getElementById('pipExpandBtn');
-    if (pipExpandBtn && !pipExpandBtn.hasAttribute('data-event-added')) {
-        pipExpandBtn.addEventListener('click', function() {
-            console.log('PIP 확장 버튼 클릭됨');
-            scwin.expandVideoChat();
-        });
-        pipExpandBtn.setAttribute('data-event-added', 'true');
-        console.log('PIP 확장 버튼 이벤트 리스너 추가됨');
-    }
-    
-    // PIP 닫기 버튼 이벤트 리스너
-    const pipCloseBtn = document.getElementById('pipCloseBtn');
-    if (pipCloseBtn && !pipCloseBtn.hasAttribute('data-event-added')) {
-        pipCloseBtn.addEventListener('click', function() {
-            console.log('PIP 닫기 버튼 클릭됨');
-            scwin.expandVideoChat(); // PIP 닫기는 확장과 동일
-        });
-        pipCloseBtn.setAttribute('data-event-added', 'true');
-        console.log('PIP 닫기 버튼 이벤트 리스너 추가됨');
-    }
-    
-    // 비디오 영역 더블클릭 이벤트 (PIP 모드에서)
-    const videoSection = document.querySelector('.video-section');
-    if (videoSection && !videoSection.hasAttribute('data-dblclick-added')) {
-        videoSection.addEventListener('dblclick', function(e) {
-            if (isMiniPipActive) {
-                console.log('PIP 비디오 영역 더블클릭됨');
-                scwin.expandVideoChat();
-            }
-        });
-        videoSection.setAttribute('data-dblclick-added', 'true');
-        console.log('PIP 더블클릭 이벤트 리스너 추가됨');
-    }
-    
-    // 드래그 및 리사이즈 초기화 (재시도)
-    scwin.initializePipDrag();
-    scwin.initializePipResize();
-}, 1000);
-
-// 채팅 메시지 전송 (중복 방지)
-let lastSentMessageTime = 0;
-scwin.sendChatMessage = function() {
-    const input = document.getElementById("chatInput");
-    const message = input.value.trim();
-    
-    if (!message || !chatSocket || chatSocket.readyState !== WebSocket.OPEN) return;
-    
-    const now = Date.now();
-    const messageData = {
-        type: 'message',
-        channelName: currentUser.channelName,
-        userId: currentUser.userId,
-        userName: currentUser.userName,
-        message: message,
-        timestamp: now,
-        messageId: `${currentUser.userId}_${now}` // 고유 ID 생성
-    };
-    
-    // 즉시 내 메시지를 화면에 표시
-    scwin.addChatMessage(currentUser.userName, message, true, messageData.messageId, messageData.timestamp);
-    lastSentMessageTime = now;
-    
-    chatSocket.send(JSON.stringify(messageData));
-    input.value = "";
-    input.focus();
-    
-    //console.log("메시지 전송:", messageData);
-};
-
-// 중복된 addChatMessage 함수 제거됨 - 상단의 통합 함수 사용
-
-// 채팅 UI 업데이트 (개선된 버전)
-scwin.updateChatMessages = function() {
-    const container = document.getElementById("chatMessages");
-    if (!container) return;
-    
-    const messages = dlt_chatMessages.getAllJSON();
-    container.innerHTML = "";
-    
-    messages.forEach(msg => {
-        const div = document.createElement("div");
-        div.className = `chat-message ${msg.isOwn === 'true' ? 'own' : 'other'}`;
-        
-        const header = document.createElement("div");
-        header.style.fontSize = "11px";
-        header.style.marginBottom = "2px";
-        header.style.opacity = "0.7";
-        header.style.fontWeight = "bold";
-        header.textContent = `${msg.userName} ${msg.timestamp}`;
-        
-        const content = document.createElement("div");
-        content.style.fontSize = "14px";
-        content.style.lineHeight = "1.4";
-        content.textContent = msg.message;
-        
-        div.appendChild(header);
-        div.appendChild(content);
-        container.appendChild(div);
-    });
-    
-    // 스크롤을 맨 아래로
-    setTimeout(() => {
-        container.scrollTop = container.scrollHeight;
-    }, 100);
-};
-
-// Enter 키 처리
-scwin.handleChatKeyPress = function(event) {
-    if (event.keyCode === 13) {
-        scwin.sendChatMessage();
-    }
-};
-
-// Producer 생성 함수
-async function createProducer() {
-    try {
-        //console.log('�� Producer 생성 시작');
-        
-        if (!sendTransport) {
-            //console.error('❌ Send Transport가 없습니다');
-            return;
-        }
-
-        // Transport 연결 상태 확인 (PeerConnection 접근 방법 개선)
-        let sendPeerConnection = sendTransport._pc || 
-                                sendTransport._handler?.pc || 
-                                sendTransport.handler?.pc;
-
-        //console.log('������ Send Transport 상태 확인:', {
-            hasPeerConnection: !!sendPeerConnection,
-            connectionState: sendPeerConnection?.connectionState,
-            iceConnectionState: sendPeerConnection?.iceConnectionState,
-            signalingState: sendPeerConnection?.signalingState,
-            transportClosed: sendTransport.closed,
-            transportConnectionState: sendTransport.connectionState
-        });
-
-        // Transport가 연결될 때까지 대기
-        if (sendPeerConnection && sendPeerConnection.connectionState !== 'connected') {
-            //console.log('⏳ Send Transport 연결 대기 중... 현재 상태:', sendPeerConnection.connectionState);
-            await waitForTransportConnection(sendTransport);
-        } else if (!sendPeerConnection) {
-            //console.log('⚠️ PeerConnection을 찾을 수 없음. Transport 강제 연결 시도');
-            // PeerConnection이 없어도 계속 진행 (Transport 이벤트로 연결될 수 있음)
-        }
-
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: true, 
-            audio: true 
-        });
-        
-        localVideo.srcObject = stream;
-        
-        // 비디오 track으로 Producer 생성
-        const videoTrack = stream.getVideoTracks()[0];
-        const audioTrack = stream.getAudioTracks()[0];
-        
-        //console.log('������ Track 정보:', {
-            video: {
-                id: videoTrack.id,
-                kind: videoTrack.kind,
-                enabled: videoTrack.enabled,
-                readyState: videoTrack.readyState
-            },
-            audio: {
-                id: audioTrack.id,
-                kind: audioTrack.kind,
-                enabled: audioTrack.enabled,
-                readyState: audioTrack.readyState
-            }
-        });
-
-        // Video Producer 생성
-        const videoProducer = await sendTransport.produce({
-            track: videoTrack,
-            encodings: [{
-                maxBitrate: 100000
-            }],
-            codecOptions: {
-                videoGoogleStartBitrate: 1000
-            }
-        });
-
-        // Audio Producer 생성
-        const audioProducer = await sendTransport.produce({
-            track: audioTrack
-        });
-
-        //console.log('✅ Producer 생성 완료:', {
-            video: {
-                id: videoProducer.id,
-                kind: videoProducer.kind,
-                paused: videoProducer.paused,
-                closed: videoProducer.closed
-            },
-            audio: {
-                id: audioProducer.id,
-                kind: audioProducer.kind,
-                paused: audioProducer.paused,
-                closed: audioProducer.closed
-            }
-        });
-
-        // Producer 상태 모니터링
-        videoProducer.on('transportclose', () => {
-            //console.log('������ Video Producer transport closed');
-        });
-
-        videoProducer.on('trackended', () => {
-            //console.log('������ Video Producer track ended');
-        });
-
-        audioProducer.on('transportclose', () => {
-            //console.log('������ Audio Producer transport closed');
-        });
-
-        audioProducer.on('trackended', () => {
-            //console.log('������ Audio Producer track ended');
-        });
-
-        // Producer 생성 후 잠시 대기
-        //console.log('⏳ Producer 안정화 대기 중...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // Transport 상태 재확인
-        //console.log('������ Producer 생성 후 Transport 상태:', {
-            connectionState: sendTransport._pc?.connectionState,
-            iceConnectionState: sendTransport._pc?.iceConnectionState,
-            senders: sendTransport._pc?.getSenders()?.length || 0
-        });
-
-        // 서버에 Producer 생성 알림
-        mediasoupSocket.emit('newProducer', {
-            socketId: mediasoupSocket.id,
-            userName: currentUser
-        });
-
-        //console.log('������ newProducer 이벤트 전송 완료');
-
-    } catch (error) {
-        //console.error('❌ Producer 생성 실패:', error);
-        $c.win.alert('카메라/마이크 접근에 실패했습니다: ' + error.message);
-    }
-}
-
-// Transport 연결 대기 함수
-async function waitForTransportConnection(transport) {
-    return new Promise((resolve, reject) => {
-        let attemptCount = 0;
-        const maxAttempts = 60; // 30초 대기 (500ms * 60)
-        
-        const checkConnection = () => {
-            attemptCount++;
-            
-            // PeerConnection 찾기 (여러 방법 시도)
-            const pc = transport._pc || 
-                      transport._handler?.pc || 
-                      transport.handler?.pc;
-            
-            if (pc && pc.connectionState === 'connected') {
-                //console.log('✅ Transport 연결 완료');
-                resolve();
-            } else if (pc && pc.connectionState === 'failed') {
-                //console.error('❌ Transport 연결 실패');
-                reject(new Error('Transport connection failed'));
-            } else if (attemptCount >= maxAttempts) {
-                //console.warn('⚠️ Transport 연결 대기 시간 초과. 현재 상태로 진행');
-                resolve(); // 시간 초과 시에도 진행
-            } else {
-                //console.log(`⏳ Transport 연결 상태 (${attemptCount}/${maxAttempts}):`, {
-                    hasPeerConnection: !!pc,
-                    connectionState: pc?.connectionState,
-                    transportConnectionState: transport.connectionState,
-                    transportClosed: transport.closed
-                });
-                setTimeout(checkConnection, 500);
-            }
-        };
-        checkConnection();
-    });
-}
-
-// ... existing code ...
-
-        // Consumer 생성 함수
-        async function createConsumer(producerId, userName) {
-            try {
-                //console.log('������ Consumer 생성 시작:', { producerId, userName });
-
-                if (!recvTransport) {
-                    //console.error('❌ Receive Transport가 없습니다');
-                    return;
-                }
-
-                // Receive Transport 연결 상태 확인 (PeerConnection 접근 방법 개선)
-                let recvPeerConnection = recvTransport._pc || 
-                                        recvTransport._handler?.pc || 
-                                        recvTransport.handler?.pc;
-
-                //console.log('������ Receive Transport 상태 확인:', {
-                    hasPeerConnection: !!recvPeerConnection,
-                    connectionState: recvPeerConnection?.connectionState,
-                    iceConnectionState: recvPeerConnection?.iceConnectionState,
-                    signalingState: recvPeerConnection?.signalingState,
-                    transportClosed: recvTransport.closed,
-                    transportConnectionState: recvTransport.connectionState,
-                    receivers: recvPeerConnection?.getReceivers()?.length || 0
-                });
-
-                // Transport가 연결될 때까지 대기
-                if (recvPeerConnection && recvPeerConnection.connectionState !== 'connected') {
-                    //console.log('⏳ Receive Transport 연결 대기 중... 현재 상태:', recvPeerConnection.connectionState);
-                    await waitForTransportConnection(recvTransport);
-                } else if (!recvPeerConnection) {
-                    //console.log('⚠️ Receive PeerConnection을 찾을 수 없음. Consumer 생성 계속 진행');
-                }
-
-                //console.log('������ 서버에 Consumer 생성 요청');
-                const response = await new Promise((resolve, reject) => {
-                    const timeout = setTimeout(() => {
-                        reject(new Error('Consumer 생성 요청 시간 초과'));
-                    }, 15000);
-
-                    mediasoupSocket.emit('consume', {
-                        rtpCapabilities: device.rtpCapabilities,
-                        producerId: producerId
-                    }, (response) => {
-                        clearTimeout(timeout);
-                        
-                        //console.log('������ 서버 응답 수신:', {
-                            success: response.success,
-                            hasError: !!response.error,
-                            error: response.error,
-                            hasConsumerId: !!response.consumerId,
-                            consumerId: response.consumerId,
-                            kind: response.kind,
-                            hasRtpParameters: !!response.rtpParameters
-                        });
-
-                        if (!response.success) {
-                            //console.error('❌ 서버에서 Consumer 생성 실패:', response.error);
-                            reject(new Error(response.error || 'Consumer 생성 실패'));
-                        } else if (!response.consumerId) {
-                            //console.error('❌ 서버 응답에 consumerId가 없음:', response);
-                            reject(new Error('Consumer ID가 없습니다'));
-                        } else {
-                            //console.log('✅ 서버에서 Consumer 생성 성공');
-                            resolve(response);
-                        }
-                    });
-                });
-
-                //console.log('������ Consumer 생성 응답:', response);
-
-                // Consumer 생성
-                const consumer = await recvTransport.consume({
-                    id: response.consumerId,
-                    producerId: producerId, // 원래 요청한 producerId 사용
-                    kind: response.kind,
-                    rtpParameters: response.rtpParameters
-                });
-
-                //console.log('✅ Consumer 생성 완료:', {
-                    id: consumer.id,
-                    kind: consumer.kind,
-                    producerId: consumer.producerId,
-                    paused: consumer.paused,
-                    closed: consumer.closed
-                });
-
-                // Consumer 생성 후 Transport 상태 재확인
-                //console.log('������ Consumer 생성 후 Transport 상태:', {
-                    connectionState: recvTransport._pc?.connectionState,
-                    iceConnectionState: recvTransport._pc?.iceConnectionState,
-                    receivers: recvTransport._pc?.getReceivers()?.length || 0
-                });
-
-                // Consumer resume
-                //console.log('▶️ Consumer resume 시작');
-                await new Promise((resolve, reject) => {
-                    const timeout = setTimeout(() => {
-                        //console.warn('⚠️ Consumer resume 시간 초과. 계속 진행합니다.');
-                        resolve();
-                    }, 10000);
-
-                    mediasoupSocket.emit('resumeConsumer', {
-                        consumerId: consumer.id
-                    }, (response) => {
-                        clearTimeout(timeout);
-                        if (response && response.success) {
-                            //console.log('✅ Consumer resume 성공');
-                            resolve();
-                        } else {
-                            //console.error('❌ Consumer resume 실패:', response?.error);
-                            reject(new Error(response?.error || 'Consumer resume 실패'));
-                        }
-                    });
-                });
-
-                // Consumer 이벤트 리스너 설정
-                consumer.on('transportclose', () => {
-                    //console.log('������ Consumer transport closed');
-                });
-
-                consumer.on('producerclose', () => {
-                    //console.log('������ Consumer producer closed');
-                });
-
-                consumer.on('trackended', () => {
-                    //console.log('������ Consumer track ended');
-                });
-
-                // Consumer 저장
-                consumers.set(consumer.id, {
-                    consumer: consumer,
-                    producerId: producerId,
-                    userName: userName,
-                    kind: response.kind
-                });
-
-                //console.log('✅ Consumer 저장 완료:', {
-                    consumerId: consumer.id,
-                    totalConsumers: consumers.size
-                });
-
-                // Consumer 안정화 대기
-                //console.log('⏳ Consumer 안정화 대기 중...');
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                // Transport에서 직접 MediaStream 추출 시도
-                await extractMediaStreamFromTransport(recvTransport, consumer, userName);
-
-            } catch (error) {
-                //console.error('❌ Consumer 생성 실패:', error);
-            }
-        }
-
-        // Transport에서 MediaStream 추출 함수
-        async function extractMediaStreamFromTransport(transport, consumer, userName) {
-            try {
-                //console.log('������ Transport에서 MediaStream 추출 시도');
-                
-                // PeerConnection 찾기 (여러 방법 시도)
-                const pc = transport._pc || 
-                          transport._handler?.pc || 
-                          transport.handler?.pc;
-                
-                if (!pc) {
-                    //console.error('❌ PeerConnection을 찾을 수 없습니다:', {
-                        transportKeys: Object.keys(transport),
-                        hasHandler: !!transport._handler,
-                        handlerKeys: transport._handler ? Object.keys(transport._handler) : null
-                    });
-                    return;
-                }
-
-                //console.log('������ PeerConnection 상태:', {
-                    connectionState: pc.connectionState,
-                    iceConnectionState: pc.iceConnectionState,
-                    signalingState: pc.signalingState,
-                    iceGatheringState: pc.iceGatheringState
-                });
-
-                // 모든 Receiver 확인
-                const receivers = pc.getReceivers();
-                //console.log('������ 총 RTP Receivers:', receivers.length);
-
-                if (receivers.length === 0) {
-                    //console.error('❌ RTP Receiver가 없습니다. Transport 연결 문제일 수 있습니다.');
-                    return;
-                }
-
-                // 각 Receiver 상세 정보
-                receivers.forEach((receiver, index) => {
-                    //console.log(`������ Receiver ${index}:`, {
-                        track: !!receiver.track,
-                        trackKind: receiver.track?.kind,
-                        trackId: receiver.track?.id,
-                        trackEnabled: receiver.track?.enabled,
-                        trackReadyState: receiver.track?.readyState,
-                        trackMuted: receiver.track?.muted
-                    });
-                });
-
-                // Live track 수집
-                const liveTracks = receivers
-                    .map(receiver => receiver.track)
-                    .filter(track => track && track.readyState === 'live');
-
-                //console.log(`������ Live track 개수: ${liveTracks.length}`);
-
-                if (liveTracks.length > 0) {
-                    const stream = new MediaStream(liveTracks);
-                    //console.log('✅ MediaStream 생성 완료:', {
-                        id: stream.id,
-                        tracks: stream.getTracks().length,
-                        videoTracks: stream.getVideoTracks().length,
-                        audioTracks: stream.getAudioTracks().length
-                    });
-
-                    // 비디오 표시
-                    displayRemoteVideo(stream, userName || 'Unknown');
-                } else {
-                    //console.log('⏳ Live track이 없습니다. 잠시 후 다시 시도합니다.');
-                    
-                    // 3초 후 재시도
-                    setTimeout(() => {
-                        extractMediaStreamFromTransport(transport, consumer, userName);
-                    }, 3000);
-                }
-
-            } catch (error) {
-                //console.error('❌ MediaStream 추출 실패:', error);
-            }
-        }
-
-// ===== MediaSoup 코드 주석 처리 끝 =====
-*/
-
-// ===== Simple WebRTC 관련 추가 함수들 =====
-
-// 화상통화 나가기
+/**
+ * 화상통화 나가기 및 전체 정리
+ * 모든 P2P 연결 종료, 로컬 스트림 정지, WebSocket 연결 종료, UI 상태 초기화
+ * @returns {void}
+ */
 scwin.leaveCall = function() {
     try {
         // 모든 P2P 연결 종료
@@ -4197,68 +1679,68 @@ scwin.leaveCall = function() {
         scwin.removeMyVideoFromGrid();
         
         scwin.updateControlButtons();
-        //scwin.addChatMessage("시스템", "화상통화를 나갔습니다. 카메라와 마이크가 꺼졌습니다.", false);
         
-        //console.log("✅ 화상통화 종료 완료");
+        
+        
         
         // 프로젝트 설정과 동일한 방식으로 모달 닫기 (projectSettingSideMenu.xml의 btn_back_onclick 방식)
         try {
-            console.log("화상통화 모달 닫기 시작 - 프로젝트 설정 방식 적용");
+            
             
             // 방법 1: 부모의 closeVideoChatModal 함수 직접 호출
             if (window.parent && window.parent.scwin && window.parent.scwin.closeVideoChatModal) {
-                console.log("방법 1: 부모의 closeVideoChatModal 함수 호출");
+                
                 window.parent.scwin.closeVideoChatModal();
                 return; // 성공하면 여기서 끝
             }
             
             // 방법 2: 최상위 부모의 함수 호출  
             if (window.parent && window.parent.parent && window.parent.parent.scwin && window.parent.parent.scwin.closeVideoChatModal) {
-                console.log("방법 2: 최상위 부모의 closeVideoChatModal 함수 호출");
+                
                 window.parent.parent.scwin.closeVideoChatModal();
                 return; // 성공하면 여기서 끝
             }
             
             // 방법 3: 직접 부모에게 메시지 전송
             if (window.parent) {
-                console.log("방법 3: 부모창에 메시지 전송");
+                
                 window.parent.postMessage({action: 'closeVideoChatPopup'}, '*');
             }
             
             // 방법 4: 최상위 부모에게 메시지 전송
             if (window.parent && window.parent.parent) {
-                console.log("방법 4: 최상위 부모창에 메시지 전송");
+               
                 window.parent.parent.postMessage({action: 'closeVideoChatPopup'}, '*');
             }
             
             // 방법 5: 강제 닫기 시도
-            console.log("방법 5: 강제 닫기 시도");
+            
             setTimeout(function() {
                 if (window.close) {
-                    console.log("window.close() 시도");
+                    
                     window.close();
                 } else if (window.parent && window.parent.close) {
-                    console.log("window.parent.close() 시도");
+                    
                     window.parent.close();
                 } else {
-                    console.log("history.back() 시도");
+                    
                     window.history.back();
                 }
             }, 100);
             
         } catch(closeError) {
-            console.error("화상통화 모달 닫기 실행 오류:", closeError);
+            
             // 최후의 수단
             try {
-                console.log("최후 수단: history.back()");
+                
                 window.history.back();
             } catch(e2) {
-                console.error("history.back도 실패:", e2);
+                
             }
         }
         
     } catch (error) {
-        //console.error("❌ 화상통화 종료 실패:", error);
+        
         // 오류 발생 시 모달 닫기 시도
         try {
             if (window.parent && window.parent.scwin && window.parent.scwin.closeVideoChatModal) {
@@ -4273,6 +1755,11 @@ scwin.leaveCall = function() {
 };
 
 // 음소거 토글
+/**
+ * 음소거 상태 토글
+ * 로컬 오디오 트랙의 활성화/비활성화 상태를 전환하고 UI 업데이트
+ * @returns {void}
+ */
 scwin.toggleMute = function() {
     if (localStream) {
         const audioTrack = localStream.getAudioTracks()[0];
@@ -4296,13 +1783,18 @@ scwin.toggleMute = function() {
                 }
             }
             
-            //console.log("������ 마이크:", audioTrack.enabled ? "켜짐" : "꺼짐");
-            //scwin.addChatMessage("시스템", audioTrack.enabled ? "마이크를 켰습니다." : "마이크를 껐습니다.", false);
+            
+            
         }
     }
 };
 
 // 비디오 토글
+/**
+ * 비디오 상태 토글
+ * 로컬 비디오 트랙의 활성화/비활성화 상태를 전환하고 UI 업데이트
+ * @returns {void}
+ */
 scwin.toggleVideo = function() {
     if (localStream) {
         const videoTrack = localStream.getVideoTracks()[0];
@@ -4349,8 +1841,7 @@ scwin.toggleVideo = function() {
                 }
             }
             
-            //console.log("������ 카메라:", videoTrack.enabled ? "켜짐" : "꺼짐");
-            //scwin.addChatMessage("시스템", videoTrack.enabled ? "카메라를 켰습니다." : "카메라를 껐습니다.", false);
+            
         }
     }
 };
@@ -4363,7 +1854,7 @@ let pipVideoState = null;
 
 // 현재 화상통화 상태를 저장하는 함수
 scwin.saveVideoStateToParent = function() {
-    console.log("화상통화 상태 저장 시작");
+    
     
     try {
         // 비디오 엘리먼트들 수집
@@ -4405,7 +1896,7 @@ scwin.saveVideoStateToParent = function() {
             consumers: consumers
         };
         
-        console.log("화상통화 상태 저장 완료:", pipVideoState);
+        
         
         // 부모 페이지에 상태 전달
         if (window.parent) {
@@ -4423,7 +1914,7 @@ scwin.saveVideoStateToParent = function() {
         }
         
     } catch (error) {
-        console.error("화상통화 상태 저장 실패:", error);
+        
     }
 };
 
@@ -4432,7 +1923,7 @@ let isPipMode = false;
 
 // Picture-in-Picture 토글 (Method 1 - 별도 컨테이너 사용)
 scwin.togglePiP = function() {
-    console.log('PIP 버튼 클릭됨 - miniPIP 모드 토글, 현재 상태:', isPipMode);
+    
     
     // 로컬 비디오와 원격 비디오 확인
     const localVideo = document.getElementById('localVideo');
@@ -4446,21 +1937,19 @@ scwin.togglePiP = function() {
     try {
         if (!isPipMode) {
             // PIP 모드로 전환
-            console.log('일반 모드 → PIP 모드 전환 시작');
+            
             
             // 1. 부모창에 모달 축소 요청
             if (window.parent && window.parent !== window) {
                 try {
-                    console.log('������ PostMessage 전송 시작 - resizeModalToPip');
-                    console.log('window.parent:', window.parent);
-                    console.log('window.parent.location:', window.parent.location.href);
+                   
                     
                     window.parent.postMessage({
                         action: 'resizeModalToPip',
                         source: 'videoChatPage',
                         timestamp: Date.now()
                     }, '*');
-                    console.log('✅ 부모창에 모달 축소 요청 전송 완료');
+                    
                     
                     // 추가 확인을 위한 다중 전송
                     setTimeout(() => {
@@ -4469,48 +1958,48 @@ scwin.togglePiP = function() {
                             source: 'videoChatPage_retry',
                             timestamp: Date.now()
                         }, '*');
-                        console.log('������ PostMessage 재시도 전송');
+                        
                     }, 100);
                     
                 } catch (e) {
-                    console.error('모달 축소 요청 실패:', e);
+                    
                 }
             } else {
-                console.warn('⚠️ 부모창을 찾을 수 없습니다 - 대체 방법 시도');
+                
                 
                 // 대체 방법 1: window.opener 사용
                 if (window.opener && window.opener !== window) {
                     try {
-                        console.log('������ 대체 방법: window.opener 사용');
+                        
                         window.opener.postMessage({
                             action: 'resizeModalToPip',
                             source: 'videoChatPage_opener',
                             timestamp: Date.now()
                         }, '*');
-                        console.log('✅ window.opener로 PostMessage 전송 완료');
+                        
                     } catch (openerError) {
-                        console.error('window.opener 사용 실패:', openerError);
+                        
                     }
                 }
                 
                 // 대체 방법 2: window.top 사용
                 else if (window.top && window.top !== window) {
                     try {
-                        console.log('������ 대체 방법: window.top 사용');
+                        
                         window.top.postMessage({
                             action: 'resizeModalToPip',
                             source: 'videoChatPage_top',
                             timestamp: Date.now()
                         }, '*');
-                        console.log('✅ window.top으로 PostMessage 전송 완료');
+                        
                     } catch (topError) {
-                        console.error('window.top 사용 실패:', topError);
+                        
                     }
                 }
                 
                 // 대체 방법 3: PostMessage 재시도 + 직접 DOM 조작 백업
                 setTimeout(() => {
-                    console.log('������ 대체 방법: PostMessage 재시도 + DOM 백업');
+                    
                     
                     // 모든 가능한 부모 창에 PostMessage 전송
                     const targets = [
@@ -4530,9 +2019,9 @@ scwin.togglePiP = function() {
                                     retry: true
                                 }, '*');
                                 messagesSent++;
-                                console.log(`✅ ${name} 재시도 PostMessage 전송 완료`);
+                                
                             } catch (error) {
-                                console.error(`${name} 재시도 실패:`, error);
+                                
                             }
                         }
                     });
@@ -4540,7 +2029,7 @@ scwin.togglePiP = function() {
                     // PostMessage가 모두 실패했을 경우 직접 DOM 조작
                     if (messagesSent === 0) {
                         setTimeout(() => {
-                            console.log('������ 최후 수단: 직접 DOM 조작 시도');
+                            
                             try {
                                 let modalElement = null;
                                 
@@ -4556,7 +2045,7 @@ scwin.togglePiP = function() {
                                     try {
                                         modalElement = method();
                                         if (modalElement && modalElement.offsetWidth > 0) {
-                                            console.log('������ 모달 요소 발견:', modalElement.id);
+                                            
                                             break;
                                         }
                                     } catch (e) {
@@ -4575,12 +2064,12 @@ scwin.togglePiP = function() {
                                     modalElement.style.setProperty('left', 'auto', 'important');
                                     modalElement.style.setProperty('z-index', '999999', 'important');
                                     
-                                    console.log('✅ 직접 DOM 조작으로 PIP 적용 완료!');
+                                    
                                 } else {
-                                    console.error('❌ 모든 방법으로 모달 요소를 찾을 수 없음');
+                                    
                                 }
                             } catch (domError) {
-                                console.error('직접 DOM 조작 실패:', domError);
+                                
                             }
                         }, 200);
                     }
@@ -4601,25 +2090,25 @@ scwin.togglePiP = function() {
             
         } else {
             // 일반 모드로 복원
-            console.log('PIP 모드 → 일반 모드 복원 시작');
+            
             
             // 1. 부모창에 모달 복원 요청
             if (window.parent && window.parent !== window) {
                 try {
-                    console.log('������ PostMessage 전송 시작 - expandModalFromPip');
+                    
                     
                     window.parent.postMessage({
                         action: 'expandModalFromPip',
                         source: 'videoChatPage',
                         timestamp: Date.now()
                     }, '*');
-                    console.log('✅ 부모창에 모달 복원 요청 전송 완료');
+                    
                     
                 } catch (e) {
-                    console.error('모달 복원 요청 실패:', e);
+                    
                 }
             } else {
-                console.warn('⚠️ 부모창을 찾을 수 없습니다');
+                
             }
             
             // 2. 내부 UI를 일반 모드로 복원
@@ -4636,14 +2125,13 @@ scwin.togglePiP = function() {
         }
         
     } catch (error) {
-        console.error('PIP 토글 실패:', error);
+        
         $c.win.alert('PIP 모드 전환에 실패했습니다: ' + error.message);
     }
 };
 
 // PIP 모드 UI 적용
 scwin.applyPipModeUI = function() {
-    console.log('PIP 모드 UI 적용 시작');
     
     setTimeout(() => {
         const mainContainer = document.querySelector('.video-chat-container');
@@ -4655,13 +2143,13 @@ scwin.applyPipModeUI = function() {
             // 메인 컨테이너를 PIP 레이아웃으로 변경
             mainContainer.style.setProperty('flex-direction', 'column', 'important');
             mainContainer.style.setProperty('height', '100%', 'important');
-            console.log('✅ 메인 컨테이너 PIP 레이아웃 적용');
+           
         }
         
         // 채팅 섹션 숨기기
         if (chatSection) {
             chatSection.style.setProperty('display', 'none', 'important');
-            console.log('✅ 채팅 섹션 숨김');
+            
         }
         
         // 컨트롤 패널 PIP용으로 축소
@@ -4676,7 +2164,7 @@ scwin.applyPipModeUI = function() {
                 btn.style.setProperty('height', '30px', 'important');
                 btn.style.setProperty('font-size', '10px', 'important');
             });
-            console.log('✅ 컨트롤 패널 PIP 크기로 축소');
+            
         }
         
         // 로컬 비디오를 더 작게 조정
@@ -4685,7 +2173,7 @@ scwin.applyPipModeUI = function() {
             localVideoContainer.style.setProperty('height', '60px', 'important');
             localVideoContainer.style.setProperty('top', '5px', 'important');
             localVideoContainer.style.setProperty('right', '5px', 'important');
-            console.log('✅ 로컬 비디오 PIP 크기로 축소');
+           
         }
         
         // 원격 비디오 그리드 조정
@@ -4694,7 +2182,7 @@ scwin.applyPipModeUI = function() {
             remoteVideosGrid.style.setProperty('padding', '5px', 'important');
             remoteVideosGrid.style.setProperty('grid-gap', '3px', 'important');
             remoteVideosGrid.style.setProperty('grid-template-columns', '1fr', 'important');
-            console.log('✅ 원격 비디오 그리드 PIP 레이아웃 적용');
+            
         }
         
         // PIP 모드에서 확대 버튼 추가
@@ -4705,13 +2193,13 @@ scwin.applyPipModeUI = function() {
 
 // PIP 모드에서 확대 버튼 추가
 scwin.addPipExpandButton = function() {
-    console.log('PIP 확대 버튼 추가 시작');
+    
     
     // 기존 버튼이 있으면 제거
     const existingBtn = document.querySelector('.pip-expand-btn');
     if (existingBtn) {
         existingBtn.remove();
-        console.log('기존 확대 버튼 제거');
+        
     }
     
     // 확대 버튼 생성
@@ -4724,7 +2212,7 @@ scwin.addPipExpandButton = function() {
     expandBtn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('������ PIP 확대 버튼 클릭됨');
+        
         
         // 확대 로직 실행
         scwin.expandFromPipMode();
@@ -4734,68 +2222,68 @@ scwin.addPipExpandButton = function() {
     const videoContainer = document.querySelector('.video-chat-container');
     if (videoContainer) {
         videoContainer.appendChild(expandBtn);
-        console.log('✅ PIP 확대 버튼 추가 완료');
+        
     } else {
-        console.error('❌ 비디오 컨테이너를 찾을 수 없음');
+        
     }
 };
 
 // PIP 모드에서 확대 로직
 scwin.expandFromPipMode = function() {
-    console.log('������ PIP 모드에서 확대 시작');
+    
     
     // 1. 부모창에 모달 복원 요청 (강화된 방식)
     try {
         // 방법 1: window.parent 사용
         if (window.parent && window.parent !== window) {
             try {
-                console.log('������ PostMessage 전송 시작 - expandModalFromPip (parent)');
+                
                 window.parent.postMessage({
                     action: 'expandModalFromPip',
                     source: 'videoChatPage_expandBtn_parent',
                     timestamp: Date.now()
                 }, '*');
-                console.log('✅ window.parent로 PostMessage 전송 완료');
+               
             } catch (parentError) {
-                console.error('window.parent 사용 실패:', parentError);
+                
             }
         } else {
-            console.log('⚠️ window.parent를 찾을 수 없습니다 - 대체 방법 시도');
+           
         }
         
         // 방법 2: window.opener 사용
         if (window.opener && window.opener !== window) {
             try {
-                console.log('������ 대체 방법: window.opener 사용');
+                
                 window.opener.postMessage({
                     action: 'expandModalFromPip',
                     source: 'videoChatPage_expandBtn_opener',
                     timestamp: Date.now()
                 }, '*');
-                console.log('✅ window.opener로 PostMessage 전송 완료');
+            
             } catch (openerError) {
-                console.error('window.opener 사용 실패:', openerError);
+                
             }
         }
         
         // 방법 3: window.top 사용
         if (window.top && window.top !== window) {
             try {
-                console.log('������ 대체 방법: window.top 사용');
+                
                 window.top.postMessage({
                     action: 'expandModalFromPip',
                     source: 'videoChatPage_expandBtn_top',
                     timestamp: Date.now()
                 }, '*');
-                console.log('✅ window.top으로 PostMessage 전송 완료');
+                
             } catch (topError) {
-                console.error('window.top 사용 실패:', topError);
+                
             }
         }
         
         // 방법 4: 직접 DOM 조작 백업 (PostMessage 실패 시)
         setTimeout(() => {
-            console.log('������ 최후 수단: 직접 DOM 조작으로 모달 확대 시도');
+            
             try {
                 let modalElement = null;
                 
@@ -4811,7 +2299,7 @@ scwin.expandFromPipMode = function() {
                     try {
                         modalElement = method();
                         if (modalElement && modalElement.offsetWidth > 0) {
-                            console.log('������ 모달 요소 발견:', modalElement.id);
+                           
                             break;
                         }
                     } catch (e) {
@@ -4834,17 +2322,17 @@ scwin.expandFromPipMode = function() {
                     const expandBtn = modalElement.querySelector('.pip-expand-btn');
                     if (expandBtn) expandBtn.remove();
                     
-                    console.log('✅ 직접 DOM 조작으로 모달 확대 완료!');
+                    
                 } else {
-                    console.error('❌ 모든 방법으로 모달 요소를 찾을 수 없음');
+                    
                 }
             } catch (domError) {
-                console.error('직접 DOM 조작 실패:', domError);
+                
             }
         }, 300);
         
     } catch (error) {
-        console.error('모달 확대 요청 전체 실패:', error);
+        
     }
     
     // 2. 내부 UI 복원
@@ -4859,13 +2347,13 @@ scwin.expandFromPipMode = function() {
         pipBtn.classList.remove('active');
     }
     
-    console.log('✅ PIP 모드에서 확대 완료');
+    
 };
 
 // PIP 에서 복원 메시지 처리
 window.addEventListener('message', function(event) {
     if (event.data && event.data.action === 'restoreFromPip') {
-        console.log('PIP에서 복원 요청 받음');
+        
         scwin.restoreUIFromPip();
         isPipMode = false;
         
@@ -4881,7 +2369,7 @@ window.addEventListener('message', function(event) {
 
 // PIP에서 UI 복원
 scwin.restoreUIFromPip = function() {
-    console.log('UI를 PIP에서 일반 모드로 복원 시작');
+    
     
     try {
         const mainContainer = document.querySelector('.video-chat-container');
@@ -4893,13 +2381,13 @@ scwin.restoreUIFromPip = function() {
         if (mainContainer) {
             mainContainer.style.removeProperty('flex-direction');
             mainContainer.style.removeProperty('height');
-            console.log('✅ 메인 컨테이너 복원');
+            
         }
         
         // 채팅 섹션 복원
         if (chatSection) {
             chatSection.style.removeProperty('display');
-            console.log('✅ 채팅 섹션 복원');
+            
         }
         
         // 컨트롤 패널 복원
@@ -4914,7 +2402,7 @@ scwin.restoreUIFromPip = function() {
                 btn.style.removeProperty('height');
                 btn.style.removeProperty('font-size');
             });
-            console.log('✅ 컨트롤 패널 복원');
+            
         }
         
         // 로컬 비디오 복원
@@ -4923,7 +2411,7 @@ scwin.restoreUIFromPip = function() {
             localVideoContainer.style.removeProperty('height');
             localVideoContainer.style.removeProperty('top');
             localVideoContainer.style.removeProperty('right');
-            console.log('✅ 로컬 비디오 복원');
+            
         }
         
         // 원격 비디오 그리드 복원
@@ -4932,27 +2420,27 @@ scwin.restoreUIFromPip = function() {
             remoteVideosGrid.style.removeProperty('padding');
             remoteVideosGrid.style.removeProperty('grid-gap');
             remoteVideosGrid.style.removeProperty('grid-template-columns');
-            console.log('✅ 원격 비디오 그리드 복원');
+            
         }
         
         // PIP 확대 버튼 제거
         const expandBtn = document.querySelector('.pip-expand-btn');
         if (expandBtn) {
             expandBtn.remove();
-            console.log('✅ PIP 확대 버튼 제거');
+            
         }
         
-        console.log('✅ UI 복원 완료');
+        
         
     } catch (error) {
-        console.error('UI 복원 실패:', error);
+        
     }
 };
 
 // 비디오 상태를 부모 페이지에 저장하는 함수
 scwin.saveVideoStateToParent = function() {
     try {
-        console.log('비디오 상태를 부모 페이지에 저장 시작');
+        
         
         // 현재 비디오 상태 수집
         const videoState = {
@@ -4970,7 +2458,7 @@ scwin.saveVideoStateToParent = function() {
         // 부모 페이지에 비디오 상태 저장
         if (window.parent && window.parent.scwin) {
             window.parent.scwin.videoConnectionState = videoState;
-            console.log('✅ 부모 페이지에 비디오 상태 저장 완료');
+           
         }
         
         // 로컬 스토리지에도 임시 저장 (백업용)
@@ -4986,17 +2474,17 @@ scwin.saveVideoStateToParent = function() {
             };
             localStorage.setItem('tempVideoChatState', JSON.stringify(simpleState));
         } catch (e) {
-            console.warn('로컬 스토리지 저장 실패:', e);
+            
         }
         
     } catch (error) {
-        console.error('비디오 상태 저장 실패:', error);
+        
     }
 };
 
 // PIP 새창 열기
 scwin.openPipWindow = function() {
-    console.log('PIP 새창 생성 시작');
+    
     
     // 새창 옵션 설정 (작고 오른쪽 하단에 위치)
     const screenWidth = window.screen.availWidth;
@@ -5026,8 +2514,7 @@ scwin.openPipWindow = function() {
     // PIP 모드 파라미터 추가
     const pipUrl = currentUrl + (currentUrl.includes('?') ? '&' : '?') + 'pipMode=true';
     
-    console.log('PIP 새창 URL:', pipUrl);
-    console.log('새창 옵션:', windowFeatures);
+    
     
     // 새창 열기
     const pipWindow = window.open(pipUrl, 'pipVideoChat', windowFeatures);
@@ -5039,7 +2526,7 @@ scwin.openPipWindow = function() {
     // 새창 포커스
     pipWindow.focus();
     
-    console.log('PIP 새창 생성 완료');
+    
     return pipWindow;
 };
 
@@ -5047,13 +2534,13 @@ scwin.openPipWindow = function() {
 scwin.setupPipEventListeners = function() {
     // PIP 종료 이벤트 감지
     document.addEventListener('leavepictureinpicture', function(event) {
-        console.log('PIP 모드가 종료되었습니다.');
+        
         // 필요시 화상통화 페이지로 돌아가는 로직 추가
     });
     
     // PIP 시작 이벤트 감지
     document.addEventListener('enterpictureinpicture', function(event) {
-        console.log('PIP 모드가 시작되었습니다.');
+        
         // PIP 버튼 상태 업데이트
         const pipBtn = document.getElementById('pipBtn');
         if (pipBtn) {
@@ -5061,24 +2548,24 @@ scwin.setupPipEventListeners = function() {
         }
     });
     
-    console.log('PIP 이벤트 리스너 등록 완료');
+    
 };
 
 // 미니 PIP 표시 (원래 방식: 별도 PIP 컨테이너)
 scwin.showMiniPIP = function() {
-    console.log('showMiniPIP 호출 - 별도 PIP 컨테이너 방식');
+    
     
     const miniPipContainer = document.getElementById('miniPipContainer');
     const mainContainer = document.querySelector('.video-chat-container');
     
     if (!miniPipContainer || !mainContainer) {
-        console.error('필요한 요소를 찾을 수 없음');
+        
         return;
     }
     
     // 1. 메인 화상통화 영역 숨기기
     mainContainer.style.display = 'none';
-    console.log('메인 컨테이너 숨김');
+    
     
     // 2. 미니 PIP 컨테이너 표시 (강제로 보이게 설정)
     miniPipContainer.style.setProperty('display', 'block', 'important');
@@ -5094,18 +2581,7 @@ scwin.showMiniPIP = function() {
     // 4. PIP 크기에 맞춰 비디오 그리드 레이아웃 적용
     scwin.updateVideoGridLayout(miniPipContainer);
     
-    console.log('미니 PIP 컨테이너 상태 확인:', {
-        display: miniPipContainer.style.display,
-        visibility: miniPipContainer.style.visibility,
-        opacity: miniPipContainer.style.opacity,
-        position: miniPipContainer.style.position,
-        bottom: miniPipContainer.style.bottom,
-        right: miniPipContainer.style.right,
-        zIndex: miniPipContainer.style.zIndex,
-        offsetWidth: miniPipContainer.offsetWidth,
-        offsetHeight: miniPipContainer.offsetHeight,
-        getBoundingClientRect: miniPipContainer.getBoundingClientRect()
-    });
+    
     
     // 5. 비디오들을 미니 PIP에 복사
     scwin.updateMiniPIP();
@@ -5114,19 +2590,18 @@ scwin.showMiniPIP = function() {
     isMiniPipActive = true;
     scwin.updatePiPButton(true);
     
-    console.log('미니 PIP 표시 완료');
+    
 };
 
 // PIP 모드용 비디오 조정 함수
 scwin.adjustVideosForPIP = function() {
-    console.log('PIP 모드용 비디오 조정 시작');
+    
     
     // 모든 비디오 요소 검색 (더 넓은 범위)
     const allVideos = document.querySelectorAll('video');
-    console.log('발견된 비디오 요소 개수:', allVideos.length);
+   
     
     allVideos.forEach(function(video, index) {
-        console.log('비디오 ' + index + ':', video.id, video.className);
         video.style.setProperty('width', '150px', 'important');
         video.style.setProperty('height', '100px', 'important');
         video.style.setProperty('object-fit', 'cover', 'important');
@@ -5144,9 +2619,9 @@ scwin.adjustVideosForPIP = function() {
         localVideo.style.setProperty('object-fit', 'cover', 'important');
         localVideo.style.setProperty('border-radius', '6px', 'important');
         localVideo.style.setProperty('background', 'blue', 'important'); // 디버깅용
-        console.log('로컬 비디오 PIP 스타일 적용');
+        
     } else {
-        console.log('localVideo 요소를 찾을 수 없음');
+       
     }
     
     if (localContainer) {
@@ -5154,9 +2629,9 @@ scwin.adjustVideosForPIP = function() {
         localContainer.style.setProperty('height', '140px', 'important');
         localContainer.style.setProperty('margin', '2px', 'important');
         localContainer.style.setProperty('background', 'yellow', 'important'); // 디버깅용
-        console.log('로컬 비디오 컨테이너 PIP 스타일 적용');
+        
     } else {
-        console.log('localContainer 요소를 찾을 수 없음');
+       
     }
     
     // 원격 비디오들 조정
@@ -5167,17 +2642,17 @@ scwin.adjustVideosForPIP = function() {
         remoteVideosGrid.style.setProperty('grid-gap', '4px', 'important');
         remoteVideosGrid.style.setProperty('padding', '2px', 'important');
         remoteVideosGrid.style.setProperty('background', 'green', 'important'); // 디버깅용
-        console.log('원격 비디오 그리드 PIP 스타일 적용');
+        
     } else {
-        console.log('remoteVideosGrid 요소를 찾을 수 없음');
+        
     }
     
     // 모든 원격 비디오 요소들 조정
     const remoteVideos = document.querySelectorAll('.remote-video');
-    console.log('발견된 원격 비디오 개수:', remoteVideos.length);
+    
     
     remoteVideos.forEach(function(video, index) {
-        console.log('원격 비디오 ' + index + ':', video);
+        
         video.style.setProperty('width', '100%', 'important');
         video.style.setProperty('height', '100%', 'important');
         video.style.setProperty('object-fit', 'cover', 'important');
@@ -5186,22 +2661,22 @@ scwin.adjustVideosForPIP = function() {
     });
     
     const remoteContainers = document.querySelectorAll('.remote-video-container');
-    console.log('발견된 원격 비디오 컨테이너 개수:', remoteContainers.length);
+    
     
     remoteContainers.forEach(function(container, index) {
-        console.log('원격 컨테이너 ' + index + ':', container);
+        
         container.style.setProperty('width', '100%', 'important');
         container.style.setProperty('height', '65px', 'important');
         container.style.setProperty('margin', '1px', 'important');
         container.style.setProperty('background', 'orange', 'important'); // 디버깅용
     });
     
-    console.log('PIP 모드용 비디오 조정 완료');
+    
 };
 
 // PIP 모드에서 일반 모드로 비디오 복원
 scwin.restoreVideosFromPIP = function() {
-    console.log('PIP에서 일반 모드로 비디오 복원 시작');
+    
     
     // 로컬 비디오 복원
     const localVideo = document.getElementById('localVideo');
@@ -5244,7 +2719,7 @@ scwin.restoreVideosFromPIP = function() {
         container.style.removeProperty('margin');
     });
     
-    console.log('비디오 복원 완료');
+    
     
     // === 아래는 기존 코드 (위에서 return으로 실행되지 않음) ===
     // 전체 화상통화 영역 숨기기 (비디오 + 채팅)
@@ -5264,18 +2739,7 @@ scwin.restoreVideosFromPIP = function() {
     // PIP 초기 표시 시 비디오 그리드 레이아웃 적용
     scwin.updateVideoGridLayout(miniPipContainer);
     
-    console.log('������ PIP 컨테이너 상태 확인:', {
-        display: miniPipContainer.style.display,
-        visibility: miniPipContainer.style.visibility,
-        opacity: miniPipContainer.style.opacity,
-        position: miniPipContainer.style.position,
-        bottom: miniPipContainer.style.bottom,
-        right: miniPipContainer.style.right,
-        zIndex: miniPipContainer.style.zIndex,
-        offsetWidth: miniPipContainer.offsetWidth,
-        offsetHeight: miniPipContainer.offsetHeight,
-        getBoundingClientRect: miniPipContainer.getBoundingClientRect()
-    });
+    
     
     // X 버튼 이벤트 리스너 강제 추가 (표시할 때마다)
     const closeBtn = document.getElementById('miniPipCloseBtn');
@@ -5290,7 +2754,7 @@ scwin.restoreVideosFromPIP = function() {
         
         // 새 버튼에 이벤트 추가
         newCloseBtn.addEventListener('click', function(e) {
-            console.log('✖️ X 버튼 클릭됨');
+            
             e.preventDefault();
             e.stopPropagation();
             
@@ -5300,29 +2764,25 @@ scwin.restoreVideosFromPIP = function() {
             
             if (miniPipContainer) {
                 miniPipContainer.style.setProperty('display', 'none', 'important');
-                console.log('������ PIP 창 숨김');
+                
                 
                 // 추가: PIP 컨테이너 완전 제거 확인
-                console.log('PIP 상태:', {
-                    display: miniPipContainer.style.display,
-                    offsetWidth: miniPipContainer.offsetWidth,
-                    offsetHeight: miniPipContainer.offsetHeight
-                });
+                
             }
             if (mainContainer) {
                 mainContainer.style.setProperty('display', 'flex', 'important');
-                console.log('������ 메인 화면 복원');
+                
             } else {
                 // 메인 컨테이너가 없으면 부모창에 모달 재열기 요청
-                console.log('������ 메인 컨테이너 없음 - 부모창에 모달 재열기 요청');
+                
                 if (window.parent && window.parent !== window) {
                     try {
                         window.parent.postMessage({
                             action: 'reopenVideoChatPopup'
                         }, '*');
-                        console.log('✅ 부모창에 모달 재열기 요청 전송');
+                        
                     } catch (e) {
-                        console.log('부모창 접근 불가:', e.message);
+                        
                     }
                 }
             }
@@ -5333,15 +2793,15 @@ scwin.restoreVideosFromPIP = function() {
             if (pipBtn) {
                 pipBtn.classList.remove("active");
                 pipBtn.textContent = "PIP";
-                console.log('������ PIP 버튼 상태 업데이트');
+                
             }
             
-            console.log('✅ 미니 PIP 닫기 완료');
+           
         }, true);
         
-        console.log('✅ X 버튼 이벤트 바인딩 완료');
+        
     } else {
-        console.error('❌ X 버튼을 찾을 수 없음');
+       
     }
     
     // 모든 비디오를 미니 PIP에 복제
@@ -5349,14 +2809,14 @@ scwin.restoreVideosFromPIP = function() {
     
     // 드래그 및 리사이즈 기능 즉시 초기화
     setTimeout(() => {
-        console.log('������ PIP 표시 후 드래그/리사이즈 초기화');
+        
         
         // 인라인 드래그 기능 구현
         const pipContainer = document.querySelector('.mini-pip-container');
         const pipHeader = document.querySelector('.mini-pip-header');
         
         if (!pipContainer || !pipHeader) {
-            console.error('❌ PIP 요소를 찾을 수 없음');
+            
             return;
         }
         
@@ -5372,7 +2832,7 @@ scwin.restoreVideosFromPIP = function() {
         newHeader.addEventListener('mousedown', function(e) {
             if (e.target.closest('.mini-pip-close')) return;
             
-            console.log('������️ 드래그 시작');
+            
             isDragging = true;
             
             const rect = pipContainer.getBoundingClientRect();
@@ -5398,7 +2858,7 @@ scwin.restoreVideosFromPIP = function() {
             }
             
             function dragEnd() {
-                console.log('������ 드래그 종료');
+                
                 isDragging = false;
                 document.removeEventListener('mousemove', dragMove);
                 document.removeEventListener('mouseup', dragEnd);
@@ -5440,7 +2900,7 @@ scwin.restoreVideosFromPIP = function() {
             let resizeStart = {};
             
             handle.addEventListener('mousedown', function(e) {
-                console.log('������ 리사이즈 시작:', handleInfo.class);
+                
                 isResizing = true;
                 
                 const rect = pipContainer.getBoundingClientRect();
@@ -5519,7 +2979,7 @@ scwin.restoreVideosFromPIP = function() {
                 }
                 
                 function handleResizeEnd() {
-                    console.log('������ 리사이즈 종료');
+                    
                     isResizing = false;
                     document.removeEventListener('mousemove', handleResize);
                     document.removeEventListener('mouseup', handleResizeEnd);
@@ -5551,7 +3011,7 @@ scwin.restoreVideosFromPIP = function() {
             
             // 새로운 이벤트 추가 (최종)
             finalCloseBtn.addEventListener('click', function(e) {
-                console.log('������ 최종 X 버튼 클릭됨!!!');
+                
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -5561,20 +3021,20 @@ scwin.restoreVideosFromPIP = function() {
                 
                 if (miniPip) {
                     miniPip.style.setProperty('display', 'none', 'important');
-                    console.log('������ PIP 창 완전 숨김');
+                    
                 }
                 
                 if (mainCont) {
                     mainCont.style.setProperty('display', 'flex', 'important');
                     mainCont.style.setProperty('visibility', 'visible', 'important');
-                    console.log('������ 메인 화면 강제 복원');
+                    
                 } else {
                     // 모든 video-chat-container 강제 표시
                     document.querySelectorAll('.video-chat-container').forEach(cont => {
                         cont.style.setProperty('display', 'flex', 'important');
                         cont.style.setProperty('visibility', 'visible', 'important');
                     });
-                    console.log('������ 모든 메인 컨테이너 강제 표시');
+                   
                 }
                 
                 // 상태 업데이트
@@ -5585,7 +3045,7 @@ scwin.restoreVideosFromPIP = function() {
                     pipButton.textContent = "PIP";
                 }
                 
-                console.log('✅ PIP 닫기 완료!!!');
+                
             }, { capture: true, once: false });
             
             // X 버튼 스타일 강화 (다른 요소에 가려지지 않도록)
@@ -5593,51 +3053,48 @@ scwin.restoreVideosFromPIP = function() {
             finalCloseBtn.style.setProperty('position', 'relative', 'important');
             finalCloseBtn.style.setProperty('pointer-events', 'auto', 'important');
             
-            console.log('������ 최종 X 버튼 이벤트 바인딩 완료!!!');
+            
         } else {
-            console.error('❌ 최종 X 버튼을 찾을 수 없음');
+            
         }
         
-        console.log('✅ PIP 드래그/리사이즈 기능 활성화 완료');
+        
     }, 100);
     
     // 상태 업데이트
     isMiniPipActive = true;
     scwin.updatePiPButton(true);
     
-    console.log('미니 PIP 모드 시작');
+    
 };
 
 // 미니 PIP 닫기
 scwin.closeMiniPIP = function() {
-    console.log('closeMiniPIP 함수 호출됨');
+    
     
     const miniPipContainer = document.getElementById('miniPipContainer');
     const mainContainer = document.querySelector('.video-chat-container');
     
-    console.log('요소 찾기:', {
-        miniPipContainer: !!miniPipContainer,
-        mainContainer: !!mainContainer
-    });
+    
     
     if (!miniPipContainer || !mainContainer) {
-        console.error('필요한 요소를 찾을 수 없음');
+        
         return;
     }
     
     // 미니 PIP 컨테이너 숨기기
     miniPipContainer.style.display = 'none';
-    console.log('미니 PIP 컨테이너 숨김');
+    
     
     // 전체 화상통화 영역 표시 (비디오 + 채팅)
     mainContainer.style.display = 'flex';
-    console.log('메인 컨테이너 표시');
+    
     
     // 미니 비디오 그리드 비우기
     const miniVideoGrid = document.getElementById('miniVideoGrid');
     if (miniVideoGrid) {
         miniVideoGrid.innerHTML = '';
-        console.log('미니 비디오 그리드 비움');
+        
     }
     
     // 상태 업데이트
@@ -5647,12 +3104,12 @@ scwin.closeMiniPIP = function() {
     // 다른 팝업들의 헤더 복원
     scwin.restoreOtherPopupHeaders();
     
-    console.log('미니 PIP 모드 종료 완료');
+    
 };
 
 // PIP 확장 기능 (PIP 모드에서 전체 화면으로 복원)
 scwin.expandVideoChat = function() {
-    console.log('expandVideoChat 함수 호출됨 - PIP를 전체 화면으로 확장');
+    
     
     const mainContainer = document.querySelector('.video-chat-container');
     const chatSection = document.querySelector('.chat-section');
@@ -5660,13 +3117,13 @@ scwin.expandVideoChat = function() {
     const videoSection = document.querySelector('.video-section');
     
     if (!mainContainer || !videoSection) {
-        console.error('확장에 필요한 요소를 찾을 수 없음');
+        
         return;
     }
     
     // PIP가 활성 상태인지 확인
     if (!isMiniPipActive) {
-        console.log('PIP가 활성 상태가 아님');
+        
         return;
     }
     
@@ -5681,31 +3138,31 @@ scwin.expandVideoChat = function() {
     mainContainer.style.removeProperty('border');
     mainContainer.style.removeProperty('box-shadow');
     mainContainer.style.removeProperty('background');
-    console.log('메인 컨테이너 스타일 복원');
+    
     
     // 2. 비디오 섹션 스타일 복원
     videoSection.style.removeProperty('width');
     videoSection.style.removeProperty('height');
     videoSection.style.removeProperty('padding');
-    console.log('비디오 섹션 스타일 복원');
+    
     
     // 3. 채팅 영역 다시 표시
     if (chatSection) {
         chatSection.style.display = '';
-        console.log('채팅 영역 표시');
+        
     }
     
     // 4. 컨트롤 패널 다시 표시
     if (controlPanel) {
         controlPanel.style.display = '';
-        console.log('컨트롤 패널 표시');
+        
     }
     
     // 5. PIP 컨트롤 버튼들 숨기기
     const pipControls = document.getElementById('pipControls');
     if (pipControls) {
         pipControls.style.display = 'none';
-        console.log('PIP 컨트롤 버튼 숨김');
+        
     }
     
     // 6. PIP 모드 CSS 클래스 제거
@@ -5721,12 +3178,12 @@ scwin.expandVideoChat = function() {
     // 9. 드래그 기능 비활성화
     scwin.disablePipDrag(mainContainer);
     
-    console.log('PIP 확장 완료 - 전체 화면 모드로 전환됨');
+    
 };
 
 // PIP 드래그 기능 활성화
 scwin.enablePipDrag = function(container) {
-    console.log('PIP 드래그 기능 활성화');
+    
     container.style.cursor = 'move';
     container.setAttribute('data-pip-draggable', 'true');
     
@@ -5738,7 +3195,7 @@ scwin.enablePipDrag = function(container) {
 
 // PIP 드래그 기능 비활성화
 scwin.disablePipDrag = function(container) {
-    console.log('PIP 드래그 기능 비활성화');
+    
     container.style.cursor = '';
     container.removeAttribute('data-pip-draggable');
 };
@@ -5757,53 +3214,48 @@ scwin.updatePiPButton = function(isInPiP) {
 
 // 미니 PIP 업데이트 (모든 비디오 복제)
 scwin.updateMiniPIP = function() {
-    console.log('updateMiniPIP 함수 호출');
+    
     
     const miniVideoGrid = document.getElementById('miniVideoGrid');
     if (!miniVideoGrid) {
-        console.error('miniVideoGrid를 찾을 수 없음');
+        
         return;
     }
     
     // 기존 미니 비디오들 제거
     miniVideoGrid.innerHTML = '';
-    console.log('기존 미니 비디오 정리 완료');
+   
     
     // 로컬 비디오 추가
     const localVideo = document.getElementById('localVideo');
     if (localVideo && localVideo.srcObject) {
-        console.log('로컬 비디오 발견:', localVideo);
+        
         const userName = (typeof currentUser !== 'undefined' && currentUser.userName) ? 
                         '나 (' + currentUser.userName + ')' : '나';
         scwin.addVideoToMiniPIP('local', localVideo.srcObject, userName);
     } else {
-        console.log('로컬 비디오를 찾을 수 없거나 스트림이 없음');
+        
     }
     
     // 원격 비디오들 추가
     const remoteVideosGrid = document.getElementById('remoteVideosGrid');
     if (remoteVideosGrid) {
         const remoteVideoItems = remoteVideosGrid.querySelectorAll('.remote-video-item');
-        console.log('발견된 원격 비디오 아이템 개수:', remoteVideoItems.length);
+        
         
         remoteVideoItems.forEach((item, index) => {
             const video = item.querySelector('video');
             const userName = item.getAttribute('data-username') || item.getAttribute('data-userid') || '참가자' + (index + 1);
             const userId = item.getAttribute('data-userid') || item.getAttribute('data-username') || 'unknown_' + index;
             
-            console.log('원격 비디오 아이템 ' + index + ':', {
-                video: video,
-                userName: userName,
-                userId: userId,
-                hasStream: video ? !!video.srcObject : false
-            });
+            
             
             if (video && video.srcObject) {
                 scwin.addVideoToMiniPIP(userId, video.srcObject, userName);
             }
         });
     } else {
-        console.log('remoteVideosGrid를 찾을 수 없음');
+        
     }
     
     // 불필요한 더미 비디오 생성 제거 (비디오 1,2,3,4,5 문제 해결)
@@ -5814,7 +3266,7 @@ scwin.updateMiniPIP = function() {
         scwin.updateVideoGridLayout(pipContainer);
     }
     
-    console.log('미니 PIP 업데이트 완료');
+    
 };
 
 // PIP 크기에 따른 비디오 그리드 레이아웃 동적 업데이트
@@ -5825,16 +3277,16 @@ scwin.updateVideoGridLayout = function(pipContainer) {
     const containerWidth = pipContainer.offsetWidth;
     const threshold = 280; // 280px 이하일 때 1열로 전환
     
-    console.log('PIP 컨테이너 너비:', containerWidth + 'px');
+    
     
     if (containerWidth < threshold) {
         // 1열 레이아웃으로 전환
         miniVideoGrid.style.gridTemplateColumns = '1fr';
-        console.log('비디오 그리드: 1열 레이아웃 적용');
+       
     } else {
         // 2열 레이아웃 유지
         miniVideoGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-        console.log('비디오 그리드: 2열 레이아웃 적용');
+        
     }
 };
 
@@ -5886,7 +3338,7 @@ scwin.addVideoToMiniPIP = function(userId, stream, userName) {
     // 그리드에 추가
     miniVideoGrid.appendChild(miniVideoItem);
     
-    console.log('미니 PIP에 비디오 추가:', userName, userId);
+    
 };
 
 // 버튼 상태 업데이트
@@ -5913,11 +3365,17 @@ scwin.updateControlButtons = function() {
 };
 
 // 내 비디오를 그리드에 추가 (다른 참가자들과 동일한 레이아웃)
+/**
+ * 내 비디오를 그리드에 추가
+ * 로컬 사용자의 비디오 스트림을 화상통화 그리드에 표시
+ * @param {MediaStream} stream - 로컬 사용자의 비디오/오디오 스트림
+ * @returns {void}
+ */
 scwin.addMyVideoToGrid = function(stream) {
     try {
         const remoteVideosGrid = document.getElementById('remoteVideosGrid');
         if (!remoteVideosGrid) {
-            console.warn('⚠️ remoteVideosGrid를 찾을 수 없음');
+            
             return;
         }
         
@@ -5961,17 +3419,17 @@ scwin.addMyVideoToGrid = function(stream) {
         // 그리드의 첫 번째 위치에 추가 (내가 맨 앞에 표시)
         remoteVideosGrid.insertBefore(videoItem, remoteVideosGrid.firstChild);
         
-        //console.log('✅ 내 비디오를 그리드에 추가 완료');
-        //scwin.addChatMessage("시스템", "내 비디오가 메인 화면에 표시됩니다.", false);
+        
+        
         
         // 미니 PIP가 활성화된 상태라면 업데이트
         if (isMiniPipActive) {
             scwin.updateMiniPIP();
-            console.log('내 비디오 추가로 인한 미니 PIP 업데이트');
+           
         }
         
     } catch (error) {
-        //console.error('❌ 내 비디오 그리드 추가 실패:', error);
+        
     }
 };
 
@@ -5984,27 +3442,27 @@ scwin.removeMyVideoFromGrid = function() {
         const myVideoItem = remoteVideosGrid.querySelector('[data-username="나"]');
         if (myVideoItem) {
             myVideoItem.remove();
-            console.log('✅ 내 비디오를 그리드에서 제거 완료');
+            
             
             // 미니 PIP가 활성화된 상태라면 업데이트
             if (isMiniPipActive) {
                 scwin.updateMiniPIP();
-                console.log('내 비디오 제거로 인한 미니 PIP 업데이트');
+                
             }
         }
     } catch (error) {
-        console.error('❌ 내 비디오 그리드 제거 실패:', error);
+        
     }
 };
 
 // 원격 사용자 제거 (개선된 버전)
 scwin.removeRemoteUser = function(userId) {
     try {
-        //console.log('������ 원격 사용자 제거 시작:', userId);
+        
         
         const remoteVideosGrid = document.getElementById('remoteVideosGrid');
         if (!remoteVideosGrid) {
-            //console.warn('⚠️ remoteVideosGrid를 찾을 수 없음');
+            
             return;
         }
         
@@ -6018,30 +3476,30 @@ scwin.removeRemoteUser = function(userId) {
         // 방법 1: data-userid로 찾기
         videoItem = remoteVideosGrid.querySelector(`[data-userid="${userId}"]`);
         if (videoItem) {
-            //console.log('✅ userId로 비디오 발견:', userId);
+            
         }
         
         // 방법 2: data-username으로 찾기
         if (!videoItem) {
             videoItem = remoteVideosGrid.querySelector(`[data-username="${userName}"]`);
             if (videoItem) {
-                //console.log('✅ userName으로 비디오 발견:', userName);
+                
             }
         }
         
         // 방법 3: 모든 원격 비디오에서 검색
         if (!videoItem) {
             const allVideoItems = remoteVideosGrid.querySelectorAll('.remote-video-item');
-            //console.log('������ 전체 비디오 아이템 수:', allVideoItems.length);
+            
             
             allVideoItems.forEach((item, index) => {
                 const itemUserId = item.getAttribute('data-userid');
                 const itemUserName = item.getAttribute('data-username');
-                //console.log(`  - ${index}: userid="${itemUserId}", username="${itemUserName}"`);
+                
                 
                 if (itemUserId === userId || itemUserName === userName) {
                     videoItem = item;
-                    //console.log('✅ 전체 검색으로 비디오 발견:', itemUserId, itemUserName);
+                    
                 }
             });
         }
@@ -6049,34 +3507,33 @@ scwin.removeRemoteUser = function(userId) {
         // 비디오 제거 실행
         if (videoItem) {
             videoItem.remove();
-            //console.log('✅ 원격 비디오 제거 완료:', userName, userId);
-            //scwin.addChatMessage("시스템", `${userName}님의 영상 연결이 종료되었습니다.`, false);
+            
+            
             
             // 미니 PIP가 활성화된 상태라면 업데이트
             if (isMiniPipActive) {
                 scwin.updateMiniPIP();
-                console.log('원격 사용자 제거로 인한 미니 PIP 업데이트:', userName);
+                
             }
         } else {
-            //console.warn('⚠️ 제거할 비디오를 찾을 수 없음:', userName, userId);
-            //console.warn('현재 그리드 내용:', remoteVideosGrid.innerHTML);
+            
         }
         
         // 관련 데이터 정리
         if (remoteStreams.has(userId)) {
             remoteStreams.delete(userId);
-            //console.log('✅ 원격 스트림 정리:', userId);
+            
         }
         
         if (pendingIceCandidates.has(userId)) {
             pendingIceCandidates.delete(userId);
-            //console.log('✅ 대기 ICE 후보 정리:', userId);
+            
         }
         
-        //console.log('✅ 원격 사용자 제거 완료:', userId);
+        
         
     } catch (error) {
-        //console.error('❌ 원격 사용자 제거 실패:', error);
+        
     }
 };
 
@@ -6196,10 +3653,10 @@ scwin.openPipInNewWindow = function() {
             }, 100);
         }
         
-        console.log('✅ PIP 창이 새 창으로 열렸습니다');
+        
         
     } catch (error) {
-        console.error('❌ PIP 새 창 열기 실패:', error);
+        
         $c.win.alert('PIP 모드 실행 중 오류가 발생했습니다.');
     }
 };
@@ -6247,25 +3704,21 @@ scwin.cloneVideosToPopup = function(pipWindow) {
         }
         
     } catch (error) {
-        console.error('❌ 비디오 복사 실패:', error);
+        
     }
 };
 
 // 세션 사용자 정보 로드 완료 이벤트
 scwin.sbm_getUserInfo_submitdone = function(e) {
     try {
-        console.log("세션 사용자 정보 로드 완료:", e);
+        
         
         // 세션에서 가져온 사용자 정보 확인
         var sessionUserId = dm_userInfo.get("userId");
         var sessionUserName = dm_userInfo.get("userName");
         var sessionUserImage = dm_userInfo.get("userImage");
         
-        console.log("세션 사용자 정보:", {
-            userId: sessionUserId,
-            userName: sessionUserName,
-            userImage: sessionUserImage
-        });
+       
         
         // 실제 로그인 사용자 정보로 업데이트
         if (sessionUserId && sessionUserName) {
@@ -6275,14 +3728,14 @@ scwin.sbm_getUserInfo_submitdone = function(e) {
             var timestamp = Date.now();
             currentUser.userId = sessionUserId + "_" + timestamp;
             
-            console.log("업데이트된 사용자 정보:", currentUser);
+            
             
             // 데이터맵 업데이트
             dma_videoChat.set("userId", currentUser.userId);
             dma_videoChat.set("userName", currentUser.userName);
             
         } else {
-            console.warn("세션에서 사용자 정보를 가져올 수 없습니다. 기본값 사용.");
+            
             // 기본값 설정
             currentUser.userName = "익명사용자";
             dma_videoChat.set("userName", currentUser.userName);
@@ -6292,7 +3745,7 @@ scwin.sbm_getUserInfo_submitdone = function(e) {
         scwin.initializeWebRTCAfterUserInfo();
         
     } catch (error) {
-        console.error("사용자 정보 로드 처리 중 오류:", error);
+       
         // 오류 시 기본값으로 진행
         currentUser.userName = "익명사용자";
         dma_videoChat.set("userName", currentUser.userName);
@@ -6302,7 +3755,7 @@ scwin.sbm_getUserInfo_submitdone = function(e) {
 
 // 세션 사용자 정보 로드 실패 이벤트
 scwin.sbm_getUserInfo_submiterror = function(e) {
-    console.error("세션 사용자 정보 로드 실패:", e);
+    
     
     // 실패 시 기본값 사용
     currentUser.userName = "익명사용자";
@@ -6315,27 +3768,27 @@ scwin.sbm_getUserInfo_submiterror = function(e) {
 // 사용자 정보 로드 후 WebRTC 초기화
 scwin.initializeWebRTCAfterUserInfo = function() {
     try {
-        console.log("사용자 정보 로드 완료. WebRTC 초기화 시작...");
+        
         
         // Simple WebRTC 초기화
         scwin.initializeSimpleWebRTC();
         
-        console.log("✅ WebRTC 다대다 화상통화 시스템 준비 완료");
+        
         
         // 페이지 진입 시 자동으로 화상통화 참가
         setTimeout(() => {
-            console.log("자동 화상통화 참가 시작...");
+            
             scwin.autoJoinCall();
         }, 1000);
         
     } catch (error) {
-        console.error("WebRTC 초기화 실패:", error);
+       
     }
 };
 
 // PIP 모드 설정 (UI 간소화)
 scwin.setupPipMode = function() {
-    console.log('PIP 모드 설정 시작');
+    
     
     try {
         // PIP 모드 플래그 설정
@@ -6395,10 +3848,7 @@ scwin.setupPipMode = function() {
         document.body.style.overflow = 'auto';
         document.documentElement.style.overflow = 'auto';
         
-        console.log('PIP 모드 설정 완료');
-        
     } catch (error) {
-        console.error('PIP 모드 설정 실패:', error);
     }
 };
 

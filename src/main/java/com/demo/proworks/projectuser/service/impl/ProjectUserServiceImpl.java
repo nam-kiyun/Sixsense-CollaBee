@@ -156,12 +156,9 @@ public class ProjectUserServiceImpl implements ProjectUserService {
 		// 1. user_id(이메일)로 사용자 정보 조회
 		ProjectUserVo userInfo = projectUserDAO.selectUserByUserId(userId);
 		
-		System.out.println("=== searchUserByUserId 디버깅 ===");
-		System.out.println("검색 userId: " + userId);
-		System.out.println("조회된 userInfo: " + userInfo);
+		
 		if (userInfo != null) {
-			System.out.println("userInfo.getUserId(): " + userInfo.getUserId());
-			System.out.println("userInfo.getUserName(): " + userInfo.getUserName());
+			
 		}
 		
 		if (userInfo == null) {

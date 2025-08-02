@@ -202,11 +202,11 @@ scwin.generateVideoChatPopupId = function () {
 
 // 화상통화 팝업 열기 함수
 scwin.openVideoChat = function() {
-    console.log("화상통화 팝업 열기");
+    
     
     // 이미 팝업이 열려있다면 새로 열지 않음
     if (scwin.videoPopupState.isOpen && scwin.videoPopupState.currentPopupId) {
-        console.log("화상통화 팝업이 이미 열려있습니다:", scwin.videoPopupState.currentPopupId);
+        
         return;
     }
     
@@ -216,15 +216,15 @@ scwin.openVideoChat = function() {
     // 1차 시도: dm_projectVo에서 가져오기
     try {
         currentProjectId = dm_projectVo.get("projectId");
-        console.log("dm_projectVo에서 프로젝트 ID 검색:", currentProjectId);
+        
     } catch (e) {
-        console.log("dm_projectVo 접근 실패:", e);
+       
     }
     
     // 2차 시도: 전역 변수에서 가져오기
     if (!currentProjectId && scwin.currentProjectData && scwin.currentProjectData.projectId) {
         currentProjectId = scwin.currentProjectData.projectId;
-        console.log("전역 변수에서 프로젝트 ID 검색:", currentProjectId);
+        
     }
     
     // 3차 시도: URL 파라미터에서 가져오기
@@ -232,20 +232,20 @@ scwin.openVideoChat = function() {
         try {
             var urlParams = new URLSearchParams(window.location.search);
             currentProjectId = urlParams.get('projectId');
-            console.log("URL 파라미터에서 프로젝트 ID 검색:", currentProjectId);
+            
         } catch (e) {
-            console.log("URL 파라미터 추출 실패:", e);
+            
         }
     }
     
     // 모든 방법이 실패한 경우
     if (!currentProjectId) {
-        console.error("모든 방법으로 프로젝트 ID를 찾을 수 없습니다.");
+        
         alert("프로젝트 정보를 찾을 수 없습니다. 페이지를 새로고침 해주세요.");
         return;
     }
     
-    console.log("화상통화에 사용할 프로젝트 ID:", currentProjectId);
+    
     
     // 고유한 팝업 ID 생성
     var uniquePopupId = scwin.generateVideoChatPopupId();
@@ -276,13 +276,13 @@ scwin.openVideoChat = function() {
     scwin.videoPopupState.isOpen = true;
     scwin.videoPopupState.currentPopupId = uniquePopupId;
     
-    console.log("화상통화 팝업 생성 - ID:", uniquePopupId);
+    
     $p.openPopup("/InsWebApp/ui/videochat/webRTCVideoChatPage.xml", options);
 };
 
 // 화상통화 팝업 닫기 액션
 scwin.videoChat_closeAction = function(argRuntimeID, argJsnInfo) {
-    console.log("화상통화 팝업 닫기 - ID:", argRuntimeID);
+    
     
     try {
         // 팝업 닫기
@@ -296,10 +296,10 @@ scwin.videoChat_closeAction = function(argRuntimeID, argJsnInfo) {
         scwin.videoPopupState.isOpen = false;
         scwin.videoPopupState.currentPopupId = null;
         
-        console.log("화상통화 팝업 상태 초기화 완료");
+     
         
     } catch (e) {
-        console.error("화상통화 팝업 닫기 오류:", e);
+        
         
         // 오류 발생 시에도 상태 초기화
         scwin.videoPopupState.isOpen = false;
