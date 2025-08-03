@@ -186,7 +186,7 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 				String repoOwner = repoFullName.split("/")[0];
 				installationToken = githubAppTokenService.generateInstallationToken(userAccessToken, repoOwner);
 			} catch (Exception e) {
-				System.out.println("⚠️ Installation Token 생성 실패, OAuth 토큰 사용: " + e.getMessage());
+				// Installation Token 생성 실패 시 OAuth 토큰 사용
 			}
 			
 			// GitHub API로 웹훅 생성
@@ -204,11 +204,9 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 			
 			githubWebhookDAO.insertGithubWebhook(webhookVo);
 			
-			System.out.println("✅ 웹훅 생성 완료: " + webhookVo.getHookId());
 			return webhookVo;
 			
 		} catch (Exception e) {
-			System.err.println("❌ 웹훅 생성 실패: " + e.getMessage());
 			throw new Exception("웹훅 생성 실패: " + e.getMessage());
 		}
 	}
@@ -219,7 +217,6 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 	@Override
 	public String processWebhookEvent(String eventType, String payload, String signature) throws Exception {
 		try {
-			System.out.println("🔔 웹훅 이벤트 수신: " + eventType);
 			
 			// 페이로드 파싱
 			Map<String, Object> payloadMap = objectMapper.readValue(payload, Map.class);
@@ -231,7 +228,6 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 			}
 			
 			String repoFullName = (String) repository.get("full_name");
-			System.out.println("📍 Repository: " + repoFullName);
 			
 			// 이벤트 타입별 처리
 			switch (eventType) {
@@ -246,15 +242,12 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 				case "repository":
 					return handleRepositoryEvent(payloadMap);
 				case "ping":
-					System.out.println("🏓 Ping 이벤트 수신 - 웹훅이 정상 작동 중입니다!");
 					return "Pong! 웹훅이 정상 작동 중입니다.";
 				default:
-					System.out.println("🤷 처리되지 않은 이벤트 타입: " + eventType);
 					return "처리되지 않은 이벤트 타입: " + eventType;
 			}
 			
 		} catch (Exception e) {
-			System.err.println("❌ 웹훅 이벤트 처리 실패: " + e.getMessage());
 			throw new Exception("웹훅 이벤트 처리 실패: " + e.getMessage());
 		}
 	}
@@ -307,7 +300,7 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 						authToken = installationToken;
 					}
 				} catch (Exception e) {
-					System.out.println("⚠️ Installation Token 생성 실패, OAuth 토큰 사용: " + e.getMessage());
+					// Installation Token 생성 실패 시 OAuth 토큰 사용
 				}
 				
 				org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
@@ -344,7 +337,6 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 			return status;
 			
 		} catch (Exception e) {
-			System.err.println("❌ 웹훅 상태 확인 실패: " + e.getMessage());
 			throw new Exception("웹훅 상태 확인 실패: " + e.getMessage());
 		}
 	}
@@ -361,10 +353,6 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 		String pusherName = pusher != null ? (String) pusher.get("name") : "unknown";
 		int commitCount = commits != null ? commits.size() : 0;
 		
-		System.out.println("📦 Push to " + repository.get("full_name"));
-		System.out.println("🌿 Branch: " + branchName);
-		System.out.println("👤 Pusher: " + pusherName);
-		System.out.println("💾 Commits: " + commitCount);
 		
 		return "Push 이벤트 처리 완료: " + branchName + " 브랜치에 " + commitCount + "개 커밋";
 	}
@@ -383,9 +371,6 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 			String baseRef = base != null ? (String) base.get("ref") : "unknown";
 			String userName = user != null ? (String) user.get("login") : "unknown";
 			
-			System.out.println("🔄 Pull Request " + action + ": " + title);
-			System.out.println("📍 " + headRef + " → " + baseRef);
-			System.out.println("👤 Author: " + userName);
 		}
 		
 		return "Pull Request 이벤트 처리 완료: " + action;
@@ -398,8 +383,6 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 		
 		String senderLogin = sender != null ? (String) sender.get("login") : "unknown";
 		
-		System.out.println("🆕 Created " + refType + ": " + ref);
-		System.out.println("👤 Creator: " + senderLogin);
 		
 		return "Create 이벤트 처리 완료: " + refType + " " + ref + " 생성";
 	}
@@ -413,18 +396,12 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 		String senderLogin = sender != null ? (String) sender.get("login") : "unknown";
 		String repoFullName = repository != null ? (String) repository.get("full_name") : "unknown";
 		
-		System.out.println("🗑️ Deleted " + refType + ": " + ref);
-		System.out.println("👤 Deleter: " + senderLogin);
-		System.out.println("📁 Repository: " + repoFullName);
 		
 		// 브랜치 삭제 이벤트인 경우 DB에서 삭제
 		if ("branch".equals(refType)) {
 			try {
 				deleteBranchFromDatabase(repoFullName, ref);
-				System.out.println("✅ DB에서 브랜치 삭제 완료: " + ref);
 			} catch (Exception e) {
-				System.out.println("❌ DB 브랜치 삭제 실패: " + e.getMessage());
-				e.printStackTrace();
 			}
 		}
 		
@@ -466,9 +443,7 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 		int deletedRows = repositoryBranchService.deleteRepositoryBranchByProjectRepoIdAndBranchName(branchVo);
 		
 		if (deletedRows > 0) {
-			System.out.println("✅ 브랜치 삭제 성공: " + branchName + " (project_repo_id: " + existingRepo.getProjectRepoId() + ")");
 		} else {
-			System.out.println("⚠️ 삭제할 브랜치를 찾을 수 없음: " + branchName);
 		}
 	}
 	
@@ -478,7 +453,6 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
 		
 		String repoFullName = repository != null ? (String) repository.get("full_name") : "unknown";
 		
-		System.out.println("🏠 Repository " + action + ": " + repoFullName);
 		
 		return "Repository 이벤트 처리 완료: " + action;
 	}
@@ -517,10 +491,6 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
      */
     @Override
     public boolean deleteWebhookViaAPI(String projectRepoId, String userAccessToken) throws Exception {
-        // TODO: 여기에 projectRepoId와 userAccessToken을 사용하여
-        // GitHub API를 호출하고 웹훅을 삭제하는 로직을 구현해야 합니다.
-        // 예를 들어, repoFullName과 hookId를 찾고 GitHubApiClient를 호출합니다.
-        System.out.println("deleteWebhookViaAPI 메소드 구현이 필요합니다.");
         return false; // 임시 반환값
     }
 
@@ -529,12 +499,6 @@ public class GithubWebhookServiceImpl implements GithubWebhookService {
      */
     @Override
     public GithubWebhookVo getWebhookByProjectRepoId(String projectRepoId) throws Exception {
-        // TODO: 여기에 projectRepoId를 사용하여
-        // DB에서 웹훅 정보를 조회하는 로직을 구현해야 합니다.
-        // GithubWebhookVo vo = new GithubWebhookVo();
-        // vo.setProjectRepoId(projectRepoId);
-        // return githubWebhookDAO.selectGithubWebhook(vo); 와 같은 형태가 될 수 있습니다.
-        System.out.println("getWebhookByProjectRepoId 메소드 구현이 필요합니다.");
         return null; // 임시 반환값
     }
 	
