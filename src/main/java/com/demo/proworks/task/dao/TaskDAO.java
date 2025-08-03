@@ -1,0 +1,162 @@
+package com.demo.proworks.task.dao;
+
+import java.util.List;
+
+import org.springframework.stereotype.Repository;
+
+import com.inswave.elfw.exception.ElException;
+import com.demo.proworks.task.vo.TaskVo;
+import com.demo.proworks.task.dao.TaskDAO;
+
+/**  
+ * @subject     : 업무(Task) 정보 관련 처리를 담당하는 DAO
+ * @description : 업무(Task) 정보 관련 처리를 담당하는 DAO
+ * @author      : 남기윤
+ * @since       : 2025/07/01
+ * @modification
+ * ===========================================================
+ * DATE				AUTHOR				DESC
+ * ===========================================================
+ * 2025/07/01			 남기윤	 		최초 생성
+ * 
+ */
+@Repository("taskDAO")
+public class TaskDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstractDAO {
+
+    /**
+     * 업무(Task) 정보 상세 조회한다.
+     *  
+     * @param  TaskVo 업무(Task) 정보
+     * @return TaskVo 업무(Task) 정보
+     * @throws ElException
+     */
+    public TaskVo selectTask(TaskVo vo) throws ElException {
+        return (TaskVo) selectByPk("com.demo.proworks.task.selectTask", vo);
+    }
+
+    /**
+     * 페이징을 처리하여 업무(Task) 정보 목록조회를 한다.
+     *  
+     * @param  TaskVo 업무(Task) 정보
+     * @return List<TaskVo> 업무(Task) 정보
+     * @throws ElException
+     */
+    public List<TaskVo> selectListTask(TaskVo vo) throws ElException {      	
+        return (List<TaskVo>)list("com.demo.proworks.task.selectListTask", vo);
+    }
+
+    /**
+     * 업무(Task) 정보 목록 조회의 전체 카운트를 조회한다.
+     *  
+     * @param  TaskVo 업무(Task) 정보
+     * @return 업무(Task) 정보 조회의 전체 카운트
+     * @throws ElException
+     */
+    public long selectListCountTask(TaskVo vo)  throws ElException{               
+        return (Long)selectByPk("com.demo.proworks.task.selectListCountTask", vo);
+    }
+        
+    /**
+     * 업무(Task) 정보를 등록한다.
+     *  
+     * @param  TaskVo 업무(Task) 정보
+     * @return 번호
+     * @throws ElException
+     */
+    public int insertTask(TaskVo vo) throws ElException {    	
+        return insert("com.demo.proworks.task.insertTask", vo);
+    }
+
+    /**
+     * 업무(Task) 정보를 갱신한다.
+     *  
+     * @param  TaskVo 업무(Task) 정보
+     * @return 번호
+     * @throws ElException
+     */
+    public int updateTask(TaskVo vo) throws ElException {
+        return update("com.demo.proworks.task.updateTask", vo);
+    }
+    
+    /**
+     * 업무(Task)의 보드 위치만 갱신한다. (칸반 카드 이동용)
+     *  
+     * @param  TaskVo 업무(Task) 정보 (taskId, boardId만 필요)
+     * @return 번호
+     * @throws ElException
+     */
+    public int updateTaskBoard(TaskVo vo) throws ElException {
+        return update("com.demo.proworks.task.updateTaskBoard", vo);
+    }
+
+    /**
+     * 업무(Task) 정보를 삭제한다.
+     *  
+     * @param  TaskVo 업무(Task) 정보
+     * @return 번호
+     * @throws ElException
+     */
+    public int deleteTask(TaskVo vo) throws ElException {
+        return delete("com.demo.proworks.task.deleteTask", vo);
+    }
+
+    /**
+     * 프로젝트 ID로 작업들을 삭제한다.
+     *  
+     * @param  TaskVo 업무(Task) 정보
+     * @return 번호
+     * @throws ElException
+     */
+    public int deleteTaskByProjectId(TaskVo vo) throws ElException {
+        return delete("com.demo.proworks.task.deleteTaskByProjectId", vo);
+    }
+
+    /**
+     * 프로젝트 ID에 해당하는 "할 일" 상태의 작업들을 조회한다.
+     *
+     * @param  projectId 프로젝트 ID
+     * @return List<TaskVo> 할 일 상태의 작업 목록
+     * @throws ElException
+     */
+    public List<TaskVo> selectTodoTasksByProjectId(String projectId) throws ElException {
+        return (List<TaskVo>) list("com.demo.proworks.task.selectTodoTasksByProjectId", projectId);
+    }
+
+    /**
+     * 프로젝트 사용자 ID로 사용자 이메일을 조회한다.
+     *
+     * @param  projectUserId 프로젝트 사용자 ID
+     * @return String 사용자 이메일
+     * @throws ElException
+     */
+    public String selectUserEmailByProjectUserId(String projectUserId) throws ElException {
+        return (String) selectByPk("com.demo.proworks.task.selectUserEmailByProjectUserId", projectUserId);
+    }
+
+    /**
+     * 사용자 이름을 포함한 업무(Task) 정보 목록을 조회한다.
+     *  
+     * @param  TaskVo 업무(Task) 정보
+     * @return List<TaskVo> 사용자 이름이 포함된 업무(Task) 정보
+     * @throws ElException
+     */
+    public List<TaskVo> selectTaskListWithUserName(TaskVo vo) throws ElException {      	
+        return (List<TaskVo>)list("com.demo.proworks.task.selectTaskListWithUserName", vo);
+    }
+
+    /**
+     * 특정 프로젝트의 여러 보드에서 사용자 이름을 포함한 업무(Task) 정보를 한 번의 쿼리로 배치 조회한다.
+     *  
+     * @param  projectId 프로젝트 ID
+     * @param  boardIds 보드 ID 리스트
+     * @return List<TaskVo> 사용자 이름이 포함된 업무(Task) 정보
+     * @throws ElException
+     */
+    public List<TaskVo> selectTaskListWithUserNameBatch(String projectId, List<String> boardIds) throws ElException {
+        java.util.Map<String, Object> paramMap = new java.util.HashMap<>();
+        paramMap.put("projectId", projectId);
+        paramMap.put("boardIds", boardIds);
+        return (List<TaskVo>)list("com.demo.proworks.task.selectTaskListWithUserNameBatch", paramMap);
+    }
+
+}

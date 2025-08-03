@@ -1562,3 +1562,20 @@ div.exup_wrap {width:100%;padding:19px;border:0;box-sizing:border-box}
 	.schbox .schbox_inner {display:block}
 	.schbox .btn_schbox {display:block;margin:0 4px 8px 0;text-align:right}
 }
+
+body{
+	overflow-y: hidden !important;
+}
+::-webkit-scrollbar {
+    width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: white; 
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #ffb823; 
+    border-radius: 10px;
+}

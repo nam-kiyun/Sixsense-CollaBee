@@ -1,0 +1,524 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="사이드 메뉴">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <style>
+            /* 선택된 메뉴 스타일 - 더 강력하게 적용 */
+            .selected-menu {
+                background-color: rgba(255,184,35,0.2) !important;
+            }
+            
+            /* 기본 메뉴 스타일 */
+            .menu-item {
+                background-color: transparent !important;
+                transition: background-color 0.3s ease;
+            }
+            
+            /* 선택되지 않은 메뉴는 투명하게 */
+            .menu-item:not(.selected-menu) {
+                background-color: transparent !important;
+            }
+            
+            /* 선택된 메뉴의 배경색을 강제로 적용 */
+            .menu-item.selected-menu {
+                background-color: rgba(255,184,35,0.2) !important;
+            }
+            
+            /* 동적 프로젝트 메뉴 스타일 */
+            .dynamic-project-menu {
+                padding: 12px 24px;
+                margin-bottom: 8px;
+                cursor: pointer;
+                background-color: transparent;
+                border-radius: 10px;
+                margin: 0 16px 8px 16px;
+                position: relative;
+                color: #000000;
+                font-size: 24px;
+                font-family: Inter, sans-serif;
+                font-weight: 400;
+            }
+            
+            .dynamic-project-menu:hover {
+                background-color: rgba(255,184,35,0.1);
+            }
+            
+            .dynamic-project-menu.selected {
+                background-color: rgba(255,184,35,0.2) !important;
+            }
+            
+            .project-active-bar {
+                position: absolute;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 3px;
+                height: 24px;
+                background-color: #ffb823;
+                display: none;
+            }
+            
+            .project-active-bar.show {
+                display: block;
+            }
+        </style>
+        <xf:model>
+            <w2:dataCollection baseNode="map">
+                <w2:dataMap baseNode="map" id="dm_sideMenu">
+                    <w2:keyInfo>
+                        <w2:key id="selectedMenu" name="선택된메뉴" dataType="text"/>
+                        <w2:key id="userName" name="사용자명" dataType="text"/>
+                    </w2:keyInfo>
+                    <w2:data use="true">
+                        <selectedMenu>dashboard</selectedMenu>
+                        <userName></userName>
+                    </w2:data>
+                </w2:dataMap>
+                
+                <!-- 프로젝트 목록 조회를 위한 데이터맵 -->
+                <w2:dataMap baseNode="map" id="dmp_projectVo" style="">
+					<w2:keyInfo>
+						<w2:key dataType="text" id="pageIndex" name="페이지번호" defaultValue="1"></w2:key>
+						<w2:key dataType="text" id="pageSize" name="페이지사이즈" defaultValue="100"></w2:key>
+						<w2:key dataType="text" id="userId" name="사용자ID"></w2:key>
+					</w2:keyInfo>
+					<w2:data use="false"></w2:data>
+				</w2:dataMap>
+				
+				<!-- 프로젝트 목록 데이터리스트 -->
+				<w2:dataList baseNode="list" id="dlt_projectVoList" repeatNode="map" saveRemovedData="true" style="">
+					<w2:columnInfo>
+						<w2:column dataType="text" id="projectId" name="project_id"></w2:column>
+                        <w2:column dataType="text" id="projectName" name="project_name"></w2:column>
+                        <w2:column dataType="text" id="description" name="description"></w2:column>
+                        <w2:column dataType="text" id="projectImageUrl" name="project_image_url"></w2:column>
+                        <w2:column dataType="text" id="createdAt" name="created_at"></w2:column>
+                        <w2:column dataType="text" id="emailSendTime" name="email_send_time"></w2:column>
+                        <w2:column dataType="text" id="userId" name="user_id"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+            </w2:dataCollection>
+            <w2:workflowCollection>
+                
+            </w2:workflowCollection>
+            <!-- 프로젝트 목록 조회 submission -->
+                <xf:submission id="sbm_selectProjectList" ref='data:json,{"id":"dmp_projectVo","key":"projectVo"}'
+                    target='data:json,{"id":"dlt_projectVoList","key":"elData.projectVoList"}' action="/InsWebApp/ProjectList.pwkjson" method="post"
+                    mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+                    processMsg="" ev:submit="" ev:submitdone="scwin.sbm_selectProjectList_submitdone" ev:submiterror="" abortTrigger="">
+                </xf:submission>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+// 전역 프로젝트 데이터 저장
+scwin.projectList = [];
+scwin.dynamicEventHandlers = {};
+scwin.dynamicComponents = []; // 동적으로 생성된 컴포넌트들을 관리
+
+scwin.onpageload = function() {
+    // 기본적으로 대시보드 선택 상태로 설정
+    scwin.changeSelectedMenu("dashboard");
+    
+    // 사용자 정보가 있으면 프로젝트 목록 조회
+    scwin.loadUserProjects();
+};
+
+// 사용자 정보 설정 및 프로젝트 목록 로드
+scwin.setUserInfo = function(userId) {
+    dm_sideMenu.set("userName", userId);
+    dmp_projectVo.set("userId", userId);
+    scwin.loadUserProjects();
+};
+
+// 사용자의 프로젝트 목록 조회
+scwin.loadUserProjects = function() {
+    const userId = dm_sideMenu.get("userName");
+    
+    if (!userId) {
+        return;
+    }
+    dmp_projectVo.set("userId", userId);
+    dmp_projectVo.set("pageIndex", "1");
+    dmp_projectVo.set("pageSize", "100");
+    
+    // 서버통신 - 프로젝트 목록 조회
+    $c.sbm.execute($p, sbm_selectProjectList);
+};
+
+// 프로젝트 목록 조회 완료 후 처리 (개선된 버전)
+scwin.sbm_selectProjectList_submitdone = function(e) {
+    // error 수신시
+    const elData = e.responseJSON.elData;
+    const elHeader = e.responseJSON.elHeader;
+
+    if (elHeader == null || elHeader == "" || elHeader == "undefined" || elHeader.resSuc == false) {
+        // 에러가 발생해도 기본 프로젝트 메뉴는 표시
+        scwin.renderDefaultProjects();
+        return;
+    }
+    
+    // 프로젝트 목록을 전역 변수에 저장
+    scwin.projectList = elData.projectVoList || [];
+    
+    // 프로젝트 목록을 사이드메뉴에 동적으로 렌더링
+    scwin.renderProjectMenus(scwin.projectList);
+    
+    // 메인 콘텐츠에도 프로젝트 데이터 전달
+    scwin.notifyMainContentWithProjectData();
+};
+
+// 메인 콘텐츠에 프로젝트 데이터 전달
+scwin.notifyMainContentWithProjectData = function() {
+    try {
+        if (parent && parent.wfr_mainContent && parent.wfr_mainContent.getWindow) {
+            const mainContentWindow = parent.wfr_mainContent.getWindow();
+            if (mainContentWindow && mainContentWindow.scwin && mainContentWindow.scwin.updateProjectDataFromSideMenu) {
+                mainContentWindow.scwin.updateProjectDataFromSideMenu(scwin.projectList);
+            }
+        }
+    } catch(e) {
+    }
+};
+
+// 기본 프로젝트 메뉴 렌더링 (데이터가 없을 때) - $p.dynamicCreate 사용
+scwin.renderDefaultProjects = function() {
+    // 기존 프로젝트 메뉴들 제거
+    scwin.clearProjectMenus();
+    
+    try {
+        // $p.dynamicCreate로 기본 메시지 표시
+        const noProjectsMessage = $p.dynamicCreate(
+            "grp_noProjects",
+            "group",
+            {
+                style: "padding:12px 24px;margin:0 16px 8px 16px;"
+            },
+            grp_projectList
+        );
+        
+        const messageText = $p.dynamicCreate(
+            "txt_noProjects",
+            "output",
+            {
+                style: "color:#666;font-style:italic;font-size:14px;"
+            },
+            noProjectsMessage
+        );
+        
+        messageText.setValue("참여 중인 프로젝트가 없습니다.");
+        
+        // 생성된 컴포넌트 저장
+        if (!scwin.dynamicComponents) {
+            scwin.dynamicComponents = [];
+        }
+        scwin.dynamicComponents.push({
+            menuGroup: noProjectsMessage,
+            projectText: messageText,
+            projectId: "no_projects"
+        });
+    } catch(e) {
+    }
+};
+
+// 프로젝트 메뉴들을 동적으로 렌더링 ($p.dynamicCreate 사용)
+scwin.renderProjectMenus = function(projectList) {
+    // 기존 프로젝트 메뉴들 제거
+    scwin.clearProjectMenus();
+    
+    if (!projectList || projectList.length === 0) {
+        scwin.renderDefaultProjects();
+        return;
+    }
+    
+    try {
+        for (let i = 0; i < projectList.length; i++) {
+            const project = projectList[i];
+            scwin.createProjectMenuItem(project, i);
+        }
+    } catch(e) {
+    }
+};
+
+// 개별 프로젝트 메뉴 아이템 생성
+scwin.createProjectMenuItem = function(project, index) {
+    const projectId = project.projectId;
+    const menuId = "grp_dynamic_project_" + projectId;
+    const textId = "txt_project_" + projectId;
+    const activeBarId = "grp_active_bar_" + projectId;
+    
+    try {
+        // 1. 메뉴 아이템 컨테이너 그룹 생성
+        const menuGroup = $p.dynamicCreate(
+            menuId,
+            "group",
+            {
+                style: "padding:12px 24px;margin-bottom:8px;cursor:pointer;background-color:transparent;border-radius:10px;margin:0 16px 8px 16px;position:relative;",
+                className: "dynamic-project-menu"
+            },
+            grp_projectList
+        );
+        
+        // 2. 선택 표시 바 생성
+        const activeBar = $p.dynamicCreate(
+            activeBarId,
+            "group",
+            {
+                style: "position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:24px;background-color:#ffb823;display:none;",
+                className: "project-active-bar"
+            },
+            menuGroup
+        );
+        
+        // 3. 프로젝트 이름 텍스트 생성
+        const projectText = $p.dynamicCreate(
+            textId,
+            "output",
+            {
+                style: "color:#000000;font-size:24px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;"
+            },
+            menuGroup
+        );
+        
+        // 프로젝트 이름 설정
+        projectText.setValue(project.projectName || "프로젝트 " + (index + 1));
+        
+        // 4. 클릭 이벤트 바인딩
+        menuGroup.bind("onclick", function() {
+            scwin.onProjectMenuClick(project);
+        });
+        
+        // 생성된 컴포넌트들을 전역 객체에 저장 (나중에 제거하기 위해)
+        if (!scwin.dynamicComponents) {
+            scwin.dynamicComponents = [];
+        }
+        scwin.dynamicComponents.push({
+            menuGroup: menuGroup,
+            activeBar: activeBar,
+            projectText: projectText,
+            projectId: projectId
+        });
+    } catch(e) {
+    }
+};
+
+
+// 기존 프로젝트 메뉴들 제거
+scwin.clearProjectMenus = function() {
+    try {
+        if (scwin.dynamicComponents && scwin.dynamicComponents.length > 0) {
+            // 동적으로 생성된 컴포넌트들 제거
+            for (let i = 0; i < scwin.dynamicComponents.length; i++) {
+                const component = scwin.dynamicComponents[i];
+                if (component.menuGroup && component.menuGroup.remove) {
+                    component.menuGroup.remove();
+                }
+            }
+            scwin.dynamicComponents = [];
+        }
+    } catch(e) {
+    }
+};
+
+// 프로젝트 메뉴 클릭 이벤트 처리
+scwin.onProjectMenuClick = function(project) {
+    const menuKey = "project_" + project.projectId;
+    scwin.changeSelectedMenu(menuKey);
+    
+    // 부모 창의 메뉴 변경 함수 호출
+    try {
+        const parentFrame = $p.parent();
+        
+        if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
+            parentFrame.scwin.changeMenu(menuKey, project);
+        } else if (parent && parent.scwin && parent.scwin.changeMenu) {
+            parent.scwin.changeMenu(menuKey, project);
+        }
+    } catch(e) {
+    }
+};
+
+// 메뉴 클릭 이벤트
+scwin.menu_dashboard_onclick = function(e) {
+    scwin.changeSelectedMenu("dashboard");
+    // 부모 창의 메뉴 변경 함수 호출
+    try {
+        const parentFrame = $p.parent();
+        
+        if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
+            parentFrame.scwin.changeMenu("dashboard");
+        } else if (parent && parent.scwin && parent.scwin.changeMenu) {
+            parent.scwin.changeMenu("dashboard");
+        } else {
+            const winParent = window.parent;
+            if (winParent && winParent.scwin && winParent.scwin.changeMenu) {
+                winParent.scwin.changeMenu("dashboard");
+            } else {
+            }
+        }
+    } catch(e) {
+    }
+};
+
+// 선택된 메뉴 스타일 변경 
+scwin.changeSelectedMenu = function(selectedMenu) {
+    try {
+        // 기존 선택 해제
+        grp_dashboard.removeClass("selected-menu");
+        grp_dashboard.setStyle("background-color", "transparent");
+        grp_activeBar_dashboard.hide();
+        
+        // 모든 동적 프로젝트 메뉴의 선택 해제
+        if (scwin.dynamicComponents && scwin.dynamicComponents.length > 0) {
+            for (let i = 0; i < scwin.dynamicComponents.length; i++) {
+                const component = scwin.dynamicComponents[i];
+                if (component.menuGroup && component.activeBar) {
+                    component.menuGroup.setStyle("background-color", "transparent");
+                    component.activeBar.hide();
+                }
+            }
+        }
+        
+        // 선택된 메뉴에만 스타일 적용
+        if (selectedMenu === "dashboard") {
+            grp_dashboard.addClass("selected-menu");
+            grp_dashboard.setStyle("background-color", "rgba(255,184,35,0.2)");
+            grp_activeBar_dashboard.show();
+        } else if (selectedMenu.indexOf("project_") === 0) {
+            // 동적 프로젝트 메뉴 선택
+            const projectId = selectedMenu.replace("project_", "");
+            
+            // 해당 프로젝트의 컴포넌트 찾기
+            if (scwin.dynamicComponents) {
+                for (let i = 0; i < scwin.dynamicComponents.length; i++) {
+                    const component = scwin.dynamicComponents[i];
+                    if (component.projectId === projectId) {
+                        component.menuGroup.setStyle("background-color", "rgba(255,184,35,0.2)");
+                        component.activeBar.show();
+                        break;
+                    }
+                }
+            }
+        }
+        // 데이터맵에도 선택된 메뉴 저장
+        dm_sideMenu.set("selectedMenu", selectedMenu);
+    } catch(e) {
+    }
+};
+
+// 부모에서 호출할 수 있는 메뉴 업데이트 함수
+scwin.updateSelectedMenu = function(menuType) {
+    scwin.changeSelectedMenu(menuType);
+};
+
+// 외부에서 프로젝트 메뉴를 선택할 수 있는 함수 (메인 콘텐츠의 프로젝트 카드 클릭용)
+scwin.selectProjectMenuFromExternal = function(projectId, projectData) {
+    const menuKey = "project_" + projectId;
+    
+    // 메뉴 선택 상태 변경
+    scwin.changeSelectedMenu(menuKey);
+    
+    // 프로젝트 메뉴 클릭 이벤트 처리
+    if (projectData) {
+        scwin.onProjectMenuClick(projectData);
+    }
+};
+
+// 프로젝트 추가 후 목록 새로고침
+scwin.refreshProjectList = function() {
+    scwin.loadUserProjects();
+    
+    // 메인 콘텐츠에도 즉시 갱신 요청
+    setTimeout(() => {
+        scwin.notifyMainContentWithProjectData();
+    }, 500);
+};
+
+scwin.btn_addProject_onclick = function(e) {
+    try {
+        // 부모 창의 모달 열기 함수 호출
+        const parentFrame = $p.parent();
+        
+        if (parentFrame && parentFrame.scwin && parentFrame.scwin.openProjectAddModal) {
+            parentFrame.scwin.openProjectAddModal();
+        } else if (parent && parent.scwin && parent.scwin.openProjectAddModal) {
+            parent.scwin.openProjectAddModal();
+        }
+    } catch(e) {
+    }
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+        <!-- 사이드메뉴 전체 컨테이너 -->
+        <xf:group 
+            style="width:303px;height:924px;background-color:#ffffff;border-right:1px solid #000000;position:relative;padding:20px 0;"
+            id="grp_sideMenu">
+            
+            <!-- 메인 섹션 -->
+            <xf:group style="margin-bottom:20px;" id="grp_mainSection">
+                
+                <!-- 메인 섹션 제목 -->
+                <xf:group style="margin-bottom:16px;padding:0 24px;" id="grp_mainTitle">
+                    <xf:output style="color:#000000;font-size:16px;font-family:Inter,sans-serif;font-weight:400;" id="output_mainTitle">
+                        <xf:label><![CDATA[메인]]></xf:label>
+                    </xf:output>
+                </xf:group>
+                
+                <!-- 대시보드 메뉴 -->
+                <xf:group 
+                    style="padding:12px 24px;margin-bottom:8px;cursor:pointer;background-color:transparent;border-radius:10px;margin:0 16px 8px 16px;position:relative;"
+                    id="grp_dashboard"
+                    class="menu-item"
+                    ev:onclick="scwin.menu_dashboard_onclick">
+                    
+                    <!-- 선택 표시 바 -->
+                    <xf:group 
+                        style="position:absolute;left:0;top:50%;transform:translateY(-50%) !important;width:3px;height:24px;background-color:#ffb823;"
+                        id="grp_activeBar_dashboard"/>
+                    
+                    <xf:output style="color:#000000;font-size:24px;font-family:Inter,sans-serif;font-weight:400;margin-left:8px;" id="output_dashboard">
+                        <xf:label><![CDATA[대시보드]]></xf:label>
+                    </xf:output>
+                </xf:group>
+                
+            </xf:group>
+            
+            <!-- 프로젝트 섹션 -->
+            <xf:group style="margin-bottom:20px;" id="grp_projectSection">
+                
+                <!-- 프로젝트 섹션 제목 -->
+                <xf:group style="margin-bottom:16px;padding:0 24px;" id="grp_projectTitle">
+                    <xf:output style="color:#000000;font-size:16px;font-family:Inter,sans-serif;font-weight:400;" id="output_projectTitle">
+                        <xf:label><![CDATA[프로젝트]]></xf:label>
+                    </xf:output>
+                </xf:group>
+                
+                <!-- 동적 프로젝트 리스트 컨테이너 -->
+                <xf:group id="grp_projectList">
+                    <!-- 여기에 동적으로 프로젝트 메뉴들이 생성됩니다 -->
+                </xf:group>
+                
+                <!-- 프로젝트 추가 버튼 -->
+                <xf:group 
+                    style="padding:12px 24px;margin-top:16px;cursor:pointer;display:flex;align-items:center;gap:8px;margin:16px 16px 8px 16px;"
+                    id="grp_addProject"
+                    ev:onclick="scwin.btn_addProject_onclick">
+                    
+                    <!-- Plus 아이콘 -->
+                    <xf:image src="/InsWebApp/assets/images/add_2.svg" style="width:20px;height:20px;margin-left:8px;" id="img_plusIcon"/>
+                    
+                    <xf:output style="color:#000000;font-size:18px;font-family:Inter,sans-serif;font-weight:400;" id="output_addProject">
+                        <xf:label><![CDATA[프로젝트 추가]]></xf:label>
+                    </xf:output>
+                </xf:group>
+                
+            </xf:group>
+            
+        </xf:group>
+    </body>
+</html>

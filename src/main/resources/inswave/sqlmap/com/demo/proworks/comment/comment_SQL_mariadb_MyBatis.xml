@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper      
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"      
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+	@subject : 댓글정보 관련 처리를 담당하는 Sql Mapper
+	@description : 댓글정보 관련 처리를 담당하는 Sql Mapper
+	@author : 국다인
+	@since : 2025/07/01
+	@modification
+	===========================================================
+	DATE AUTHOR DESC
+	===========================================================
+	2025/07/01 국다인 최초 생성
+-->
+<mapper namespace="com.demo.proworks.comment">
+	<insert id="insertComment" parameterType="com.demo.proworks.comment.vo.CommentVo" 
+	useGeneratedKeys="true" keyProperty="commentId">
+		<!-- 댓글정보를 등록한다. -->
+
+		INSERT INTO COMMENT /* QueryID : com.demo.proworks.comment.insertComment */
+		(
+		<if test="taskId   != null and taskId !=''"> TASK_ID    </if>
+		<if test="userId   != null and userId !=''"> , USER_ID    </if>
+		<if test="message   != null and message !=''"> , MESSAGE    </if>
+		) VALUES ( 
+		<if test="taskId   != null and taskId !=''">  #{taskId}    </if>
+		<if test="userId   != null and userId !=''"> , #{userId}    </if>
+		<if test="message   != null and message !=''"> , #{message}    </if>
+		)
+	</insert>
+
+	<update id="updateComment" parameterType="com.demo.proworks.comment.vo.CommentVo">
+		<!-- 댓글정보를 갱신한다. -->
+
+		UPDATE COMMENT /* QueryID : com.demo.proworks.comment.updateComment */
+		SET
+		COMMENT_ID = #{commentId}
+		<if test="taskId   != null"> , TASK_ID = #{taskId}    </if>
+		<if test="userId   != null"> , USER_ID = #{userId}    </if>
+		<if test="message   != null"> , MESSAGE = #{message}    </if>
+		<if test="createdAt!= null"> , CREATED_AT = #{createdAt} </if>
+		WHERE COMMENT_ID = #{commentId}
+	</update>
+
+	<delete id="deleteComment" parameterType="com.demo.proworks.comment.vo.CommentVo">
+		<!-- 댓글정보를 삭제한다. -->
+
+		DELETE FROM COMMENT /* QueryID : com.demo.proworks.comment.deleteComment */
+		WHERE
+		COMMENT_ID = #{commentId}
+	</delete>
+	<select id="selectListCommentByTaskId" parameterType="com.demo.proworks.comment.vo.CommentListSearchVo"
+		resultType="com.demo.proworks.comment.vo.CommentVo">
+		<!--
+			@subject: 특정 Task ID에 해당하는 댓글 목록을 사용자 정보 포함하여 페이징으로 조회
+		-->
+		SELECT /* QueryID : com.demo.proworks.comment.selectListCommentByTaskId */
+			c.comment_id AS commentId,
+			c.task_id AS taskId,
+			c.user_id AS
+			userId,
+			c.message AS message,
+			c.created_at AS createdAt,
+			u.user_name AS userName,
+			u.profile_image_url AS userImage
+		FROM comment c JOIN user u 
+		ON c.user_id = u.user_id
+		WHERE c.task_id = #{taskId}
+		ORDER BY c.created_at DESC, c.comment_id DESC
+		LIMIT #{pageSize}
+		OFFSET #{startOffset}
+	</select>
+
+
+
+	<select id="selectListCountByTaskId" parameterType="com.demo.proworks.comment.vo.CommentVo" resultType="long">
+		<!-- 댓글정보 목록의 카운트를 조회한다. -->
+		SELECT COUNT(*) AS totcnt /* QueryID : com.demo.proworks.comment.selectListCountComment */
+		FROM comment
+		WHERE task_id = #{taskId}
+	</select>
+	
+
+	<select id="selectComment" parameterType="com.demo.proworks.comment.vo.CommentVo"
+		resultType="com.demo.proworks.comment.vo.CommentVo">
+		<!-- 댓글정보를 상세 조회한다. -->
+		SELECT /* QueryID : com.demo.proworks.comment.selectComment */
+		COMMENT_ID as commentId, TASK_ID as taskId, USER_ID as userId, MESSAGE as
+		message, CREATED_AT as createdAt
+		FROM COMMENT
+		WHERE
+		COMMENT_ID = #{commentId}
+	</select>
+
+	<select id="selectListComment" parameterType="com.demo.proworks.comment.vo.CommentVo"
+		resultType="com.demo.proworks.comment.vo.CommentVo">
+		<!-- 댓글정보 목록을 조회한다. -->
+		SELECT /* QueryID : com.demo.proworks.comment.selectListComment */
+		COMMENT_ID as commentId, TASK_ID as taskId, USER_ID as userId, MESSAGE
+		as message, CREATED_AT as createdAt
+		FROM (
+		SELECT S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
+		FROM (
+		SELECT
+		*
+		FROM COMMENT
+		WHERE 1=1
+
+		) S, (SELECT @ROWNUM := 0) TMP
+		) A
+		WHERE PAGE = #{pageIndex}
+	</select>
+
+	<select id="selectListCountComment" parameterType="com.demo.proworks.comment.vo.CommentVo" resultType="long">
+		<!-- 댓글정보 목록의 카운트를 조회한다. -->
+
+		SELECT /* QueryID : com.demo.proworks.comment.selectListCountComment */
+		COUNT(*) totcnt
+		FROM COMMENT
+		WHERE 1=1
+
+	</select>
+
+	<delete id="deleteCommentByProjectId" parameterType="com.demo.proworks.comment.vo.CommentVo">
+		<!-- 프로젝트 ID로 댓글들을 삭제한다. -->
+		DELETE FROM COMMENT /* QueryID : com.demo.proworks.comment.deleteCommentByProjectId */
+		WHERE TASK_ID IN (
+			SELECT t.TASK_ID
+			FROM TASK t
+			INNER JOIN BOARD b ON t.BOARD_ID = b.BOARD_ID
+			WHERE b.PROJECT_ID = #{projectId}
+		)
+	</delete>
+	
+	
+	<delete id="deleteCommentByTaskId" parameterType="com.demo.proworks.comment.vo.CommentVo">
+		<!-- 댓글정보를 삭제한다. -->
+
+		DELETE FROM COMMENT /* QueryID : com.demo.proworks.comment.deleteComment */
+		WHERE
+		TASK_ID = #{taskId}
+	</delete>
+
+</mapper>

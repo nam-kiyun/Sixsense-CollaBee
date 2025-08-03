@@ -1,0 +1,541 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="메인 콘텐츠">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map">
+            	<w2:dataMap baseNode="map" id="dm_userInfo">
+            		<w2:keyInfo>
+            			<w2:key id="userName" name="사용자명" dataType="text" />
+            			<w2:key id="userId" name="사용자ID" dataType="text" />
+            		</w2:keyInfo>
+            		<w2:data use="true">
+            			<userName></userName>
+            			<userId></userId>
+            		</w2:data>
+            	</w2:dataMap>
+
+            	<!-- 프로젝트 목록 데이터리스트 -->
+            	<w2:dataList baseNode="list" id="dlt_projectList" repeatNode="map" saveRemovedData="true">
+            		<w2:columnInfo>
+            			<w2:column dataType="text" id="projectId" name="project_id" />
+            			<w2:column dataType="text" id="projectName" name="project_name" />
+            			<w2:column dataType="text" id="description" name="description" />
+            			<w2:column dataType="text" id="projectImageUrl" name="project_image_url" />
+            			<w2:column dataType="text" id="createdAt" name="created_at" />
+            			<w2:column dataType="text" id="emailSendTime" name="email_send_time" />
+            			<w2:column dataType="text" id="userId" name="user_id" />
+            		</w2:columnInfo>
+            	</w2:dataList>
+            	<w2:dataMap baseNode="map" id="dmp_projectVo">
+            		<w2:keyInfo>
+            			<w2:key id="userId" name="userId" dataType="text"></w2:key>
+            		</w2:keyInfo>
+            		<w2:data></w2:data>
+            	</w2:dataMap>
+            </w2:dataCollection>
+            <w2:workflowCollection/>
+            <xf:submission id="sbm_selectProjectList" ref='data:json,{"id":"dmp_projectVo","key":"projectVo"}'
+                    target='data:json,{"id":"dlt_projectList","key":"elData.projectVoList"}' action="/InsWebApp/ProjectList.pwkjson" method="post"
+                    mediatype="application/json" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous"
+                    processMsg="" ev:submit="" ev:submitdone="scwin.sbm_selectProjectList_submitdone" ev:submiterror="" abortTrigger="">
+                </xf:submission>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+// 전역 변수
+scwin.dynamicProjectCards = []; // 동적으로 생성된 프로젝트 카드들을 관리
+scwin.cardCounter = 0; // 카드 생성 카운터
+
+scwin.onpageload = function() {
+    // 초기에는 UI를 숨김
+    if (grp_mainContent) {
+        grp_mainContent.hide();
+    }
+    
+    // 사용자 정보를 먼저 로드한 후 UI 표시
+    scwin.loadUserInfoAndShowUI();
+    };
+
+// 사용자 정보 로드 후 UI 표시
+scwin.loadUserInfoAndShowUI = function() {
+    scwin.loadUserInfo();
+    
+    // 사용자 정보 로드 후 프로젝트 목록도 함께 조회
+    setTimeout(function() {
+        scwin.loadProjectList();
+        
+        // UI 표시
+        if (grp_mainContent) {
+            grp_mainContent.show();
+        }
+    }, 100);
+};
+
+// 사용자 정보 로드
+scwin.loadUserInfo = function() {
+    let parent = $p.parent();
+    try {
+        // 부모 창에서 사용자 정보 가져오기
+        if (parent && parent.dm_userInfo) {
+            const userName = parent.dm_userInfo.get("userName") || "";
+            const userId = parent.dm_userInfo.get("userId") || "";
+            
+            if (userName && userId) {
+                dm_userInfo.set("userName", userName);
+                dm_userInfo.set("userId", userId);
+                dmp_projectVo.set("userId", userId);
+                scwin.updateWelcomeMessage();
+            }
+        }
+    } catch(e) {
+    }
+};
+
+// 환영 메시지 업데이트
+scwin.updateWelcomeMessage = function() {
+    try {
+        const userName = dm_userInfo.get("userName");
+        if (userName) {
+            const welcomeText = userName + "님 안녕하세요";
+            if (output_welcomeText) {
+                output_welcomeText.setValue(welcomeText);
+            }
+        }
+    } catch(e) {
+    }
+};
+
+// 프로젝트 목록 조회 함수 (외부에서 호출용)
+scwin.loadProjectList = function() {
+    const userId = $p.parent().dm_userInfo.get("userId");
+    if (userId) {
+        $c.sbm.execute(sbm_selectProjectList);
+    } else {
+    }
+};
+
+// 프로젝트 목록 조회 서브미션 완료 콜백
+scwin.sbm_selectProjectList_submitdone = function(e) {
+    const elData = e.responseJSON.elData;
+    if (elData && elData.projectVoList) {
+        scwin.renderProjectCards(elData.projectVoList);
+    } else {
+        scwin.renderNoProjectsMessage();
+    }
+};
+
+// 프로젝트 카드들을 동적으로 렌더링
+scwin.renderProjectCards = function(projectList) {
+    // 기존 프로젝트 카드들 제거
+    scwin.clearProjectCards();
+    
+    if (!projectList || projectList.length === 0) {
+        scwin.renderNoProjectsMessage();
+        return;
+    }
+    
+    try {
+        for (let i = 0; i < projectList.length; i++) {
+            const project = projectList[i];
+            scwin.createProjectCard(project, i);
+        }    
+    } catch(e) {
+    }
+};
+
+// 개별 프로젝트 카드 생성
+scwin.createProjectCard = function(project, index) {
+    const projectId = project.projectId;
+    const cardId = "grp_projectCard_" + projectId + "_" + (++scwin.cardCounter);
+    
+    try {
+        // 1. 메인 카드 컨테이너 생성 ($p.dynamicCreate 사용)
+        const cardGroup = $p.dynamicCreate(
+            cardId,
+            "group",
+            {
+                style: "width:400px;height:200px;background-color:#ffffff;border:1px solid #000000;border-radius:16px;padding:30px;cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;",
+                className: "dynamic-project-card"
+            },
+            grp_projectCards // 부모 컨테이너
+        );
+        
+        if (!cardGroup) {
+            return;
+        }
+        
+        // 2. 상단 영역 생성 (프로젝트명)
+        const topGroup = $p.dynamicCreate("grp_top_" + projectId + "_" + scwin.cardCounter, "group", { style: "display:flex;flex-direction:column;flex:1;" }, cardGroup);
+        
+        if (!topGroup) {
+            return;
+        }
+        
+        // 3. 프로젝트명 텍스트 생성
+        const projectNameOutput = $p.dynamicCreate("output_projectName_" + projectId + "_" + scwin.cardCounter, "output", { style: "font-size:28px;font-weight:600;color:#000000;font-family:Inter,sans-serif;margin-bottom:20px;" }, topGroup);
+        
+        if (projectNameOutput) {
+            projectNameOutput.setValue(project.projectName || "프로젝트 " + (index + 1));
+        }
+        
+        // 4. 하단 영역 생성
+        const bottomGroup = $p.dynamicCreate("grp_bottom_" + projectId + "_" + scwin.cardCounter, "group", { style: "display:flex;flex-direction:column;gap:15px;" }, cardGroup);
+        
+        if (bottomGroup) {
+            // 5. 팀 정보 섹션 생성
+            scwin.createTeamSection(bottomGroup, projectId, project, scwin.cardCounter);
+            
+            // 6. 구분선 생성
+            $p.dynamicCreate("grp_divider_" + projectId + "_" + scwin.cardCounter, "group", { style: "width:100%;height:1px;background-color:rgba(0,0,0,0.2);" }, bottomGroup);
+            
+            // 7. 업데이트 정보 생성
+            scwin.createUpdateSection(bottomGroup, projectId, project, scwin.cardCounter);
+        }
+        
+        // 8. 클릭 이벤트 바인딩
+        cardGroup.bind("onclick", function() {
+            scwin.onProjectCardClick(project);
+        });
+        
+        // 생성된 컴포넌트들을 전역 객체에 저장
+        scwin.dynamicProjectCards.push({
+            cardGroup: cardGroup,
+            projectId: projectId,
+            project: project,
+            cardId: cardId
+        });
+        
+    } catch(e) {
+    }
+};
+
+// 팀 정보 섹션 생성
+scwin.createTeamSection = function(parentGroup, projectId, project, counter) {
+    try {
+        const teamInfoGroup = $p.dynamicCreate("grp_teamInfo_" + projectId + "_" + counter, "group", { style: "display:flex;flex-direction:column;" }, parentGroup);
+        if (!teamInfoGroup) return;
+        
+        const teamLabel = $p.dynamicCreate("output_teamLabel_" + projectId + "_" + counter, "output", { style: "font-size:11px;color:rgba(0,0,0,0.5);font-family:Inter,sans-serif;margin-bottom:6px;font-weight:500;" }, teamInfoGroup);
+        if(teamLabel) teamLabel.setValue("TEAM");
+
+        const avatarsGroup = $p.dynamicCreate("grp_teamAvatars_" + projectId + "_" + counter, "group", { style: "display:flex;gap:3px;align-items:center;" }, teamInfoGroup);
+        if (avatarsGroup) {
+            // 실제 프로젝트 참여자 정보 사용
+            if (project.projectUsers && project.projectUsers.length > 0) {
+                
+                // 최대 6명까지만 표시하고, 나머지는 +N으로 표시
+                const maxDisplayUsers = 6;
+                const displayUsers = project.projectUsers.slice(0, maxDisplayUsers);
+                const remainingCount = project.projectUsers.length - maxDisplayUsers;
+                
+                // 실제 사용자들의 아바타 생성
+                displayUsers.forEach((user, i) => {
+                    scwin.createUserAvatar(avatarsGroup, projectId, i, user, counter);
+                });
+                
+                // 나머지 사용자 수가 있으면 +N 아바타 추가
+                if (remainingCount > 0) {
+                    const plusAvatar = {
+                        color: "#6B7280",
+                        text: "+" + remainingCount,
+                        isPlus: true
+                    };
+                    scwin.createAvatar(avatarsGroup, projectId, displayUsers.length, plusAvatar.color, plusAvatar.text, counter);
+                }
+            } else {
+                // 기본 아바타 사용 (기존 로직)
+                const defaultAvatars = [
+                    { color: "#3B82F6", text: "EM" }, { color: "#10B981", text: "JC" }, { color: "#8B5CF6", text: "AK" },
+                    { color: "#EC4899", text: "LW" }, { color: "#F59E0B", text: "RB" }, { color: "#6B7280", text: "+7" }
+                ];
+                defaultAvatars.forEach((avatar, i) => scwin.createAvatar(avatarsGroup, projectId, i, avatar.color, avatar.text, counter));
+            }
+        }
+    } catch(e) {
+    }
+};
+
+// 실제 사용자 아바타 생성
+scwin.createUserAvatar = function(parentGroup, projectId, index, user, counter) {
+    try {    
+        const avatarId = "grp_userAvatar_" + projectId + "_" + index + "_" + counter;
+        
+        // 프로필 이미지가 있으면 이미지 사용, 없으면 이니셜 사용
+        if (user.profileImageUrl && user.profileImageUrl.trim() !== '') {
+            // 프로필 이미지가 있는 경우
+            const avatarGroup = $p.dynamicCreate(avatarId, "group", { 
+                style: "width:26px;height:26px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid #e0e0e0;" 
+            }, parentGroup);
+            
+            if (avatarGroup) {
+                const avatarImage = $p.dynamicCreate("img_userAvatar_" + projectId + "_" + index + "_" + counter, "image", { 
+                    style: "width:100%;height:100%;object-fit:cover;",
+                    src: user.profileImageUrl,
+                    alt: user.userName || user.userId || "User"
+                }, avatarGroup);
+                
+                // 이미지 로드 실패 시 이니셜로 대체
+                if (avatarImage && avatarImage.bind) {
+                    avatarImage.bind("onerror", function() {
+                        console.log("이미지 로드 실패, 이니셜로 대체:", user.userName);
+                        scwin.createInitialAvatar(parentGroup, projectId, index, user, counter, avatarId);
+                    });
+                }
+            }
+        } else {
+            // 프로필 이미지가 없는 경우 이니셜 사용
+            scwin.createInitialAvatar(parentGroup, projectId, index, user, counter, avatarId);
+        }
+    } catch(e) {
+        // 오류 발생 시 기본 아바타 생성
+        scwin.createAvatar(parentGroup, projectId, index, "#6B7280", "U", counter);
+    }
+};
+
+// 이니셜 아바타 생성
+scwin.createInitialAvatar = function(parentGroup, projectId, index, user, counter, replaceId) {
+    try {
+        // 기존 아바타가 있으면 제거
+        if (replaceId) {
+            const existingAvatar = $p.getComponentById(replaceId);
+            if (existingAvatar && existingAvatar.remove) {
+                existingAvatar.remove();
+            }
+        }
+        
+        // 사용자 이름에서 이니셜 추출
+        const userName = user.userName || user.userId || "User";
+        const initials = scwin.getInitials(userName);
+        
+        // 사용자별 고유 색상 생성
+        const avatarColor = scwin.getUserAvatarColor(user.userId || user.userName);
+        
+        const avatarId = replaceId || "grp_userAvatar_" + projectId + "_" + index + "_" + counter;
+        const avatarGroup = $p.dynamicCreate(avatarId, "group", { 
+            style: "width:26px;height:26px;background-color:" + avatarColor + ";border-radius:50%;display:flex;align-items:center;justify-content:center;" 
+        }, parentGroup);
+        
+        if (avatarGroup) {
+            const avatarText = $p.dynamicCreate("output_userAvatar_" + projectId + "_" + index + "_" + counter, "output", { 
+                style: "color:white;font-size:10px;font-weight:600;" 
+            }, avatarGroup);
+            if(avatarText) avatarText.setValue(initials);
+        }
+    } catch(e) {
+    }
+};
+
+// 사용자 이름에서 이니셜 추출
+scwin.getInitials = function(name) {
+    if (!name) return "U";
+    
+    // 한글 이름의 경우 첫 글자만 사용
+    if (/[가-힣]/.test(name)) {
+        return name.charAt(0);
+    }
+    
+    // 영문 이름의 경우 단어별 첫 글자 사용 (최대 2글자)
+    const words = name.trim().split(/\s+/);
+    if (words.length >= 2) {
+        return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+    } else {
+        return words[0].charAt(0).toUpperCase();
+    }
+};
+
+// 사용자별 고유 색상 생성
+scwin.getUserAvatarColor = function(userId) {
+    const colors = [
+        "#3B82F6", "#10B981", "#8B5CF6", "#EC4899", "#F59E0B", 
+        "#EF4444", "#06B6D4", "#84CC16", "#F97316", "#6366F1"
+    ];
+    
+    if (!userId) return colors[0];
+    
+    // userId를 기반으로 해시값 생성하여 일관된 색상 선택
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+        hash = userId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    return colors[Math.abs(hash) % colors.length];
+};
+
+// 개별 아바타 생성 (기본 아바타용)
+scwin.createAvatar = function(parentGroup, projectId, index, color, text, counter) {
+    try {
+        const avatarGroup = $p.dynamicCreate("grp_avatar_" + projectId + "_" + index + "_" + counter, "group", { style: "width:26px;height:26px;background-color:" + color + ";border-radius:50%;display:flex;align-items:center;justify-content:center;" }, parentGroup);
+        if (avatarGroup) {
+            const avatarText = $p.dynamicCreate("output_avatar_" + projectId + "_" + index + "_" + counter, "output", { style: "color:white;font-size:10px;font-weight:600;" }, avatarGroup);
+            if(avatarText) avatarText.setValue(text);
+        }
+    } catch(e) {
+    }
+};
+
+// 업데이트 정보 섹션 생성
+scwin.createUpdateSection = function(parentGroup, projectId, project, counter) {
+    try {
+        const updateGroup = $p.dynamicCreate("grp_updateInfo_" + projectId + "_" + counter, "group", { style: "display:flex;align-items:center;gap:8px;" }, parentGroup);
+        if (updateGroup) {
+            const updateText = $p.dynamicCreate("output_lastUpdate_" + projectId + "_" + counter, "output", { style: "font-size:14px;color:rgba(0,0,0,0.6);font-family:Inter,sans-serif;" }, updateGroup);
+            if (updateText) {
+                const lastUpdate = project.emailSendTime || "09:00";
+                updateText.setValue("메일 발송시각 " + lastUpdate);
+            }
+        }
+    } catch(e) {
+    }
+};
+
+// 프로젝트가 없을 때 메시지 표시
+scwin.renderNoProjectsMessage = function() {
+    try {
+        scwin.clearProjectCards();
+        const noProjectsId = "grp_noProjects_" + (++scwin.cardCounter);
+        const noProjectsMessage = $p.dynamicCreate(noProjectsId, "group", { style: "width:400px;height:200px;background-color:#f8f9fa;border:2px dashed #dee2e6;border-radius:16px;padding:30px;display:flex;align-items:center;justify-content:center;" }, grp_projectCards);
+        
+        if (noProjectsMessage) {
+            const messageText = $p.dynamicCreate("output_noProjectsMessage_" + scwin.cardCounter, "output", { style: "font-size:18px;color:#6c757d;font-family:Inter,sans-serif;text-align:center;" }, noProjectsMessage);
+            if(messageText) messageText.setValue("참여 중인 프로젝트가 없습니다.");
+            
+            scwin.dynamicProjectCards.push({ cardGroup: noProjectsMessage, projectId: "no_projects", cardId: noProjectsId });
+        }
+    } catch(e) {
+    }
+};
+
+// 기존 프로젝트 카드들 제거
+scwin.clearProjectCards = function() {
+    try {
+        (scwin.dynamicProjectCards || []).forEach(cardInfo => {
+            try {
+                if (cardInfo.cardGroup && cardInfo.cardGroup.remove) {
+                    cardInfo.cardGroup.remove();
+                }
+            } catch(e) { /* ignore */ }
+        });
+        scwin.dynamicProjectCards = [];
+        scwin.cardCounter = 0;
+    } catch(e) {
+    }
+};
+
+// 프로젝트 카드 클릭 이벤트 처리
+scwin.onProjectCardClick = function(project) {
+    try {
+        const parent = $p.parent();
+        parent.dm_projectVo.set("projectId",project.projectId);
+        // 1. 부모 창의 사이드 메뉴에서 해당 프로젝트 메뉴 선택
+        if (parent && parent.wfr_sideMenu && parent.wfr_sideMenu.getWindow) {
+            const sideMenuWindow = parent.wfr_sideMenu.getWindow();
+            if (sideMenuWindow && sideMenuWindow.scwin) {
+                parent.dm_projectVo.set("projectId",project.projectId);
+                // 사이드 메뉴의 외부 선택 함수 호출
+                if (sideMenuWindow.scwin.selectProjectMenuFromExternal) {
+                    sideMenuWindow.scwin.selectProjectMenuFromExternal(project.projectId, project);
+                } else {
+                    // 대체 방법: 개별 함수 호출
+                    const menuKey = "project_" + project.projectId;
+                    if (sideMenuWindow.scwin.changeSelectedMenu) {
+                        sideMenuWindow.scwin.changeSelectedMenu(menuKey);
+                    }
+                    if (sideMenuWindow.scwin.onProjectMenuClick) {
+                        sideMenuWindow.scwin.onProjectMenuClick(project);
+                    }
+                }
+            }
+        }
+        
+        // 2. 부모 창의 메뉴 변경 함수 호출 (페이지 이동)
+        if (parent && parent.scwin && parent.scwin.changeMenu) {
+            parent.scwin.changeMenu("project_" + project.projectId, project);
+        }
+        
+    } catch(e) {
+    }
+};
+
+// 프로젝트 추가 아이콘 클릭 이벤트
+scwin.img_addProject_onclick = function(e) {
+    try {
+        // 부모 창의 모달 열기 함수 호출 (sideMenu와 동일한 방식)
+        const parentFrame = $p.parent();
+        
+        if (parentFrame && parentFrame.scwin && parentFrame.scwin.openProjectAddModal) {
+            parentFrame.scwin.openProjectAddModal();
+        } else if (parent && parent.scwin && parent.scwin.openProjectAddModal) {
+            parent.scwin.openProjectAddModal();
+        }
+    } catch(e) {
+    }
+};
+
+// 사이드 메뉴와 연동하여 프로젝트 데이터 업데이트
+scwin.updateProjectDataFromSideMenu = function(projectList) {
+    // 기존 프로젝트 목록을 새로운 데이터로 교체
+    if (dlt_projectList) {
+        dlt_projectList.removeAll();
+        
+        if (projectList && projectList.length > 0) {
+            for (let i = 0; i < projectList.length; i++) {
+                dlt_projectList.insertRow("last");
+                const index = dlt_projectList.getRowCount() - 1;
+                dlt_projectList.setCellData(index, "projectId", projectList[i].projectId);
+                dlt_projectList.setCellData(index, "projectName", projectList[i].projectName);
+                dlt_projectList.setCellData(index, "description", projectList[i].description);
+                dlt_projectList.setCellData(index, "projectImageUrl", projectList[i].projectImageUrl);
+                dlt_projectList.setCellData(index, "createdAt", projectList[i].createdAt);
+                dlt_projectList.setCellData(index, "emailSendTime", projectList[i].emailSendTime);
+                dlt_projectList.setCellData(index, "userId", projectList[i].userId);
+            }
+        }
+    }
+    
+    // 프로젝트 카드 다시 렌더링
+    scwin.renderProjectCards(projectList);
+};
+
+/**
+ * 프로젝트 상세 페이지 로드
+ * @param {string} projectId - 로드할 프로젝트의 ID
+ */
+scwin.loadProjectDetail = function(projectId) {
+    // mainContent.xml 내의 특정 영역에 projectMainPage.xml을 로드
+    $p.getComponentById("contentControl").setSrc("/InsWebApp/ui/project/projectMainPage.xml?projectId=" + projectId);
+};]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+        <!-- 메인 콘텐츠 -->
+        <xf:group style="width:100%;height:100%;overflow-y:auto;overflow-x:hidden;background-color:#fff4d6;padding:40px 40px 20px 40px;box-sizing:border-box;" id="grp_mainContent">
+            
+            <!-- 환영 메시지 -->
+            <xf:group style="text-align:center;margin-bottom:40px;" id="grp_welcomeMessage">
+                <xf:output style="font-size:60px;font-weight:bold;color:#000000;font-family:'Andada Pro',serif;" id="output_welcomeText">
+                    <xf:label><![CDATA[]]></xf:label>
+                </xf:output>
+            </xf:group>
+            
+            <!-- 진행중인 프로젝트 섹션 -->
+            <xf:group style="display:flex;align-items:center;margin-bottom:20px;" id="grp_projectsTitle">
+                <xf:output style="font-size:24px;font-weight:400;color:#000000;font-family:Inter,sans-serif;" id="output_projectsTitle">
+                    <xf:label><![CDATA[진행중인 프로젝트]]></xf:label>
+                </xf:output>
+                <!-- 프로젝트 추가 아이콘 -->
+                <xf:image src="/InsWebApp/assets/images/add_circle.svg" style="width:32px;height:32px;margin-left:12px;cursor:pointer;" id="img_addProject" ev:onclick="scwin.img_addProject_onclick"/>
+            </xf:group>
+            
+            <!-- 프로젝트 카드들 컨테이너 (동적으로 생성됨) -->
+            <xf:group style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:40px;max-width:100%;" id="grp_projectCards">
+                <!-- 여기에 동적으로 프로젝트 카드들이 생성됩니다 -->
+            </xf:group>
+            
+        </xf:group>
+    </body>
+</html>

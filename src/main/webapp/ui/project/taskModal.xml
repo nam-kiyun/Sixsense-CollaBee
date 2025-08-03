@@ -1,0 +1,1697 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="/InsWebApp/css/task/taskModal.css" type="text/css"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare"
+	xmlns:xf="http://www.w3.org/2002/xforms">
+	<head>
+		<w2:type>COMPONENT</w2:type>
+		<w2:buildDate />
+		<w2:MSA />
+		<xf:model>
+			<w2:dataCollection baseNode="map">
+				<w2:dataMap baseNode="map" id="dma_comment">
+					<w2:keyInfo>
+						<w2:key dataType="number" name="댓글 아이디" id="commentId"></w2:key>
+						<w2:key dataType="number" name="task 아이디" id="taskId"></w2:key>
+						<w2:key dataType="text" name="사용자 아이디" id="userId"></w2:key>
+						<w2:key dataType="text" name="메세지" id="message"></w2:key>
+						<w2:key dataType="text" name="생성일" id="createdAt"></w2:key>
+						<w2:key dataType="text" name="사용자 이름" id="userName"></w2:key>
+						<w2:key dataType="text" name="이미지" id="userImage"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dma_getComment">
+					<w2:keyInfo>
+						<w2:key dataType="number" name="작업 아이디" id="taskId"></w2:key>
+						<w2:key dataType="number" name="페이지" id="page"></w2:key>
+						<w2:key dataType="number" name="페이지 사이즈" id="pageSize"></w2:key>
+						<w2:key dataType="number" name="시작번호" id="startOffset"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dma_task">
+					<w2:keyInfo>
+						<w2:key dataType="text" name="작업 아이디" id="taskId"></w2:key>
+						<w2:key dataType="text" name="보드 아이디" id="boardId" defaultValue="String"></w2:key>
+						<w2:key dataType="text" name="프로젝트 사용자 아이디" id="projectUserId" defaultValue="String"></w2:key>
+						<w2:key dataType="text" name="프로젝트 저장소 아이디" id="projectRepoId" defaultValue="String"></w2:key>
+						<w2:key dataType="text" name="제목" id="taskTitle" defaultValue="String"></w2:key>
+						<w2:key dataType="text" name="중요도" id="priority" defaultValue="String"></w2:key>
+						<w2:key dataType="text" name="시작일" id="startDate" defaultValue="String"></w2:key>
+						<w2:key dataType="text" name="종료일" id="endDate" defaultValue="String"></w2:key>
+						<w2:key nullYN="" defaultValue="String" dataType="text" name="태그" length="" id="tags" encYN=""></w2:key>
+						<w2:key nullYN="" defaultValue="String" dataType="text" name="버전아이디" length="" id="taskVersionId" encYN=""></w2:key>
+						<w2:key nullYN="" defaultValue="String" dataType="text" name="내용" length="" id="content" encYN=""></w2:key>
+						<w2:key defaultValue="String" dataType="text" name="created_at" id="createdAt"></w2:key>
+						<w2:key dataType="text" name="userName" id="userName"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataList baseNode="list" repeatNode="map" id="dls_manager" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column dataType="text" name="사용자 아이디" id="userId"></w2:column>
+						<w2:column dataType="text" name="사용자 이름" id="userName"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataList baseNode="list" repeatNode="map" id="dls_file" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column dataType="text" name="이름" id="fileName"></w2:column>
+						<w2:column dataType="text" name="크기" id="size"></w2:column>
+						<w2:column dataType="text" name="종류" id="type"></w2:column>
+						<w2:column dataType="" name="내용" id="data"></w2:column>
+						<w2:column dataType="text" name="선택" id="CHK"></w2:column>
+						<w2:column dataType="text" name="name6" id="num"></w2:column>
+						<w2:column dataType="text" name="name7" id="filePath"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataList baseNode="list" repeatNode="map" id="dls_allFile" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column dataType="text" name="name8" id="fileId"></w2:column>
+						<w2:column dataType="text" name="name9" id="taskVersionId"></w2:column>
+						<w2:column dataType="text" name="이름" id="fileName"></w2:column>
+						<w2:column dataType="text" name="name7" id="filePath"></w2:column>
+						<w2:column dataType="text" name="크기" id="size"></w2:column>
+						<w2:column dataType="text" name="종류" id="type"></w2:column>
+						<w2:column dataType="text" name="내용" id="data"></w2:column>
+						<w2:column dataType="text" name="선택" id="CHK"></w2:column>
+						<w2:column dataType="text" name="name6" id="num"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataMap baseNode="map" id="dma_userInfo">
+					<w2:keyInfo>
+						<w2:key dataType="text" name="사용자명" id="userName"></w2:key>
+						<w2:key dataType="text" name="사용자ID" id="userId"></w2:key>
+						<w2:key dataType="text" name="사용자 이미지" id="profileImageUrl"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataList baseNode="list" repeatNode="map" id="dls_backupFile" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column dataType="text" name="name8" id="fileId"></w2:column>
+						<w2:column dataType="text" name="name9" id="taskVersionId"></w2:column>
+						<w2:column dataType="text" name="이름" id="fileName"></w2:column>
+						<w2:column dataType="text" name="name7" id="filePath"></w2:column>
+						<w2:column dataType="text" name="크기" id="size"></w2:column>
+						<w2:column dataType="text" name="종류" id="type"></w2:column>
+						<w2:column dataType="text" name="내용" id="data"></w2:column>
+						<w2:column dataType="text" name="선택" id="CHK"></w2:column>
+						<w2:column dataType="text" name="name6" id="num"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+			</w2:dataCollection>
+			<w2:workflowCollection />
+			<xf:submission id="sbm_comment_create" action="/InsWebApp/comment/create.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dma_comment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_create_submitdone"
+				ev:submiterror="scwin.sbm_comment_create_submiterror" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_comment_get" action="/InsWebApp/comment/{taskId}.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dma_getComment","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler=""
+				customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_get_submitdone"
+				ev:submiterror="scwin.sbm_comment_get_submiterror" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_comment_delete" action="/InsWebApp/comment/delete.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dma_comment","key":"elData"}' target='' encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_comment_delete_submitdone"
+				ev:submiterror="scwin.sbm_comment_delete_submiterror" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_task_get" action="/InsWebApp/task/{taskId}.pwkjson" method="post" mediatype="application/json" ref=""
+				target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
+				ev:submitdone="scwin.sbm_task_get_submitdone" ev:submiterror="scwin.sbm_task_get_submiterror" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json"
+				ref="" target='data:json,{"id":"dma_userInfo","key":"userInfo"}' encoding="UTF-8" instance="" replace="" errorHandler=""
+				customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="" ev:submiterror="" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_deleteTask" action="/InsWebApp/task/delete.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dma_task","key":"elData"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_deleteTask_submitdone" ev:submiterror="" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="sbm_session" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json" ref=""
+				target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit=""
+				ev:submitdone="scwin.sbm_session_submitdone" ev:submiterror="" abortTrigger="">
+			</xf:submission>
+		</xf:model>
+		<w2:layoutInfo />
+		<w2:publicInfo method="" />
+		<script lazy="false" type="text/javascript"><![CDATA[const getMediasoupServerUrl = () => {
+    const hostname = window.location.hostname;
+    const port = '3002';
+
+    // localhost인 경우 그대로 유지
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return `https://localhost:${port}`;
+    }
+
+    // 다른 IP인 경우 해당 IP 사용 
+    return `https://${hostname}:${port}`;
+};
+
+const MEDIASOUP_SERVER_URL = getMediasoupServerUrl();
+
+// 기존 변수들
+let chatSocket = null;
+
+// 사용자 정보 (고유 ID 생성)
+const generateUserId = () => {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    return `user_${timestamp}_${random}`;
+};
+
+//사용자 정보
+let currentUser = {
+    userId: "",
+    userName: "",
+    userImage: "",
+    channelName: "test"
+};
+
+//페이지 로드 되었을 때 
+scwin.onpageload = function () {
+    scwin.popup_closeAction();
+    $p.executeSubmission("sbm_session");
+
+    //사용자 정보
+    let userInfo = $p.getParameter("userInfo");
+    scwin.defaultImage = "https://raw.githubusercontent.com/dorazi0423/test/refs/heads/main/group1.png";
+
+    //문서 내용 불러오기
+    scwin.taskInfo = "";
+    scwin.taskId = userInfo.taskId;
+    scwin.projectId = userInfo.projectId;
+    currentUser.channelName = "task" + scwin.taskId;
+    scwin.getTask(scwin.taskId, scwin.projectId);
+
+    //소켓 초기화 
+    scwin.initializeChatWebSocket();
+
+
+    //버전관리
+    scwin.snapShot = false; //버전에서 현재상태 저장여부
+    scwin.originalData = {};
+    scwin.changeEditor();
+    scwin.previousHTML = "";
+
+
+    //버전관리 버튼 및 저장 버튼 추가
+    const generateUniqueId = (prefix) => {
+        return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    };
+    const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_header"); // 헤더의 버튼 영역
+    const close = $p.getComponentById("mf_wfr_mainContent_exa_popup_header_control");
+
+    const btnGroupId = generateUniqueId("btn_group");
+    const saveId = generateUniqueId("btn_save");
+    const versionId = generateUniqueId("btn_version");
+    const deleteId = generateUniqueId("btn_delete");
+
+
+    const btnGroup = $p.dynamicCreate(btnGroupId, "group", {
+        className: "header-btn-group",
+    }, group);
+
+
+    if (btnGroup?.render) {
+        group.insertBefore(btnGroup.render, close);
+    }
+
+    const save = $p.dynamicCreate(saveId, "button", {
+        className: "btn-save header-btn",
+        label: "저장",
+    }, btnGroup);
+
+
+    const version = $p.dynamicCreate(versionId, "button", {
+        className: "btn-icon btn-version",
+    }, btnGroup);
+
+    const deleteBtn = $p.dynamicCreate(deleteId, "button", {
+        className: "btn-icon btn-delete",
+    }, btnGroup);
+
+
+    const btn_save = $p.getComponentById(saveId);
+
+    btn_save.bind("onclick", function () {
+        if (!scwin.snapShot) {
+            scwin.saveTask();
+        }
+    });
+
+    const btn_version = $p.getComponentById(versionId);
+    btn_version.bind("onclick", function () {
+        scwin.versionPopup();
+    })
+
+    const btn_delete = $p.getComponentById(deleteId);
+    btn_delete.bind("onclick", function () {
+        $c.win.confirm("해당 작업을 삭제하시겠습니까", function (rtn) {
+            if (rtn.clickValue) {
+                $c.sbm.execute(sbm_deleteTask);
+            }
+        });
+    })
+
+
+    setInterval(() => {
+        const iframe = document.querySelector('.cke_wysiwyg_frame');
+        const contents = document.querySelector(".cke_contents");
+
+        const innerDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+        const body = innerDoc?.body;
+
+        if (iframe && body) {
+            const scrollHeight = body.scrollHeight + 100;
+            body.style.overflow = 'hidden';
+
+            iframe.style.setProperty('height', scrollHeight + 'px', 'important');
+            contents.style.setProperty('height', scrollHeight + 'px', 'important');
+        }
+    }, 300);
+
+
+    // 채팅 불러오기 및 초기 세팅
+    scwin.currentPage = 1; 
+    scwin.isLoading = false; 
+    scwin.hasMore = true; 
+    scwin.loadMoreData();
+
+    //무한 스크롤
+    const scrollArea = $p.getComponentById("comment_main_group");
+
+
+    scrollArea.bind("onscroll", function () {
+        const scrollTop = scrollArea.render.scrollTop;
+
+        if (scrollTop <= 50) { // 화면 맨 위 근접했을 때
+            scwin.loadMoreData(); // 이전 댓글 불러오기
+        }
+    });
+
+
+    //파일
+    scwin.filePageIndex = 1;
+    scwin.filePageNum = 0; 
+    pageList.setCount(1);
+    scwin.chatDate = new Set();
+
+    scwin.link();
+};
+
+
+//하이퍼링크
+scwin.link = function () {
+    const ckInstance = CKEDITOR.instances["mf_wfr_mainContent_exa_popup_wframe_contents_editor_"];
+
+    ckInstance.on('contentDom', function () {
+        ckInstance.document.on('click', function (event) {
+            const element = event.data.getTarget();
+
+            if (element.is('a') && element.getAttribute('href')) {
+                const href = element.getAttribute('href');
+                window.open(href, '_blank');
+                event.data.preventDefault(); 
+            }
+        });
+    });
+}
+
+//에디터 변화 감지
+scwin.changeEditor = function () {
+    const editorComponentId = "contents_editor";
+    const editorComponent = $p.getComponentById(editorComponentId);
+
+    if (!editorComponent) {
+        console.warn(`[WebSquare AI] 에디터 컴포넌트 '${editorComponentId}'를 찾을 수 없습니다.`);
+        return;
+    }
+
+    const ckInstance = CKEDITOR.instances["mf_wfr_mainContent_exa_popup_wframe_contents_editor_"];
+
+    if (!ckInstance) {
+        console.warn("[WebSquare AI] CKEditor 인스턴스를 찾을 수 없습니다.");
+        return;
+    }
+
+    ckInstance.on("instanceReady", function () {
+        scwin.previousHTML = contents_editor.getHTML(); // 초기값 설정
+
+        ckInstance.on("change", function () {
+            const currentHTML = ckInstance.getData();
+
+            if (currentHTML !== scwin.previousHTML) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(currentHTML, "text/html");
+                const prevNums = scwin.extractFileNums(scwin.previousHTML);
+                const currNums = scwin.extractFileNums(currentHTML);
+
+                const removedNums = prevNums.filter(num => !currNums.includes(num));
+                const restoredNums = currNums.filter(num => !prevNums.includes(num));
+
+                if (removedNums.length > 0) {
+                    scwin.removeFileGrid(removedNums);
+                }
+                if (restoredNums.length > 0) {
+                    const restoredFiles = [];
+                    const tags = doc.body.querySelectorAll(".file-data");
+
+                    for (let tag of tags) {
+                        const num = Number(tag.getAttribute("data-num"));
+                        if (restoredNums.includes(num)) {
+                            restoredFiles.push({
+                                name: tag.getAttribute("data-name") || "파일",
+                                size: Number(tag.getAttribute("data-size")) || 0,
+                                type: tag.getAttribute("data-type") || "application/octet-stream",
+                                data: tag.getAttribute("href") || tag.getAttribute("src") || "",
+                                num
+                            });
+                        }
+                    }
+
+                    scwin.addFileGrid(restoredFiles);
+                }
+            }
+
+            scwin.previousHTML = currentHTML;
+        });
+
+    });
+};
+
+//몇번째 파일인지 추출
+scwin.extractFileNums = function (html) {
+    const tempContainer = document.createElement("div");
+    tempContainer.innerHTML = html;
+
+    const fileTags = tempContainer.querySelectorAll(".file-data");
+    return Array.from(fileTags)
+        .map(el => parseInt(el.getAttribute("data-num")))
+        .filter(num => !isNaN(num));
+}
+
+
+//버전기록 불러와서 바인딩
+scwin.versionLoad = function (data) {
+    if (!scwin.snapShot) {
+        scwin.snapShot = true;
+        scwin.originalData = scwin.currentWorkSnapshot();
+
+        let btnSave = document.querySelector(".btn-save");
+        btnSave.classList.add("header-btn-disabled");
+    }
+
+    contents_editor.setHTML(data.taskVersionVo.content);
+    dls_backupFile.setJSON(dls_allFile.getAllJSON());
+    dls_allFile.setJSON(data.taskVersionVo.fileSrcVo);
+    dls_file.setJSON(data.taskVersionVo.fileSrcVo);
+}
+
+
+//현재 버전상태 가져오기
+scwin.loadOriginalVersion = function () {
+    if (scwin.originalData) {
+        contents_editor.setHTML(scwin.originalData.content);
+        dls_allFile.setJSON(scwin.originalData.fileSrc);
+        dls_file.setJSON(scwin.originalData.fileSrc);
+        scwin.snapShot = false;
+
+        let btnSave = document.querySelector(".btn-save");
+        btnSave.classList.remove("header-btn-disabled");
+    }
+};
+
+//현재 버전상태 저장하기
+scwin.currentWorkSnapshot = function () {
+    return {
+        content: contents_editor.getHTML(),
+        fileSrc: dls_allFile.getAllJSON()
+    };
+};
+
+
+//버전관리 모달창
+scwin.versionPopup = function (e) {
+    const versionPopupId = "task_version";
+    const isOpen = $p.getComponentById(versionPopupId);
+
+    if (isOpen) {
+        $p.closePopup(versionPopupId);
+    } else {
+        let param = {
+            "type": "json",
+            "name": "taskInfo",
+            "data": {
+                "taskId": scwin.taskId,
+            },
+        };
+
+        let options = {
+            headerVisible: false,
+            id: versionPopupId,
+            type: "wframePopup",
+            width: "330",
+            height: "500",
+            top: "170",
+            left: "1260",
+            popupName: "버전기록",
+            modal: false,
+            closeAction: "scwin.popup_closeAction",
+            customTitleBar: false,
+            dataObject: param,
+            title: false
+        };
+
+        // 팝업 생성
+        $p.openPopup("/InsWebApp/ui/project/versionModal.xml", options);
+    }
+
+};
+
+
+//팝업창 닫기
+scwin.popup_closeAction = function (argRuntimeID, argJsnInfo) {
+    let popObj = $p.getPopupWindow(argRuntimeID);
+    return true;
+};
+
+
+//파일 버튼 생성
+scwin.fileButtonInit = function () {
+    const generateUniqueId = (prefix) => {
+        return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    };
+
+    const editorHeader = document.querySelector(".cke_top");
+    const btnGroupId = generateUniqueId("btn_group");
+    const fileBtnId = generateUniqueId("btn_fileUpload");
+    const fileInputId = generateUniqueId("input_file");
+
+    const btnGroup = $p.dynamicCreate(btnGroupId, "group", {
+        className: "header-btn-group",
+        style: "width:100px; height: 18px; padding-bottom: 5px;"
+    }, editorHeader);
+
+    const fileBtn = $p.dynamicCreate(fileBtnId, "button", {
+        className: "btn-upload header-btn",
+        style: "cursor: pointer;",
+        label: "파일 추가",
+    }, btnGroup);
+
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.id = fileInputId;
+    fileInput.multiple = true;
+    fileInput.style.display = "none";
+    document.body.appendChild(fileInput);
+
+    const btn_fileUpload = $p.getComponentById(fileBtnId);
+    btn_fileUpload.bind("onclick", function () {
+        document.getElementById(fileInputId).click();
+    });
+
+    document.getElementById(fileInputId).addEventListener("change", function () {
+        const files = this.files;
+    });
+}
+
+//task 정보 가져오기
+scwin.getTask = function (taskId, projectId) {
+    const formData = new FormData();
+    formData.append("projectId", projectId);
+
+    $.ajax({
+        url: `/InsWebApp/task/${taskId}.pwkjson`,
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: async function (res) {
+            const data = res.taskUpdateVo;
+            scwin.taskInfo = data;
+
+            dma_task.set("boardId", data.boardId);
+            dma_task.set("taskId", data.taskId);
+
+            header_title.setValue(data.taskTitle);
+
+            //담당자
+            let userData = [];
+            data.projectUserVo.forEach(user => {
+                userData.push({ userId: user.userId, userName: user.userName });
+            });
+            dls_manager.setJSON(userData);
+
+            if (data.managerVo && data.managerVo.length > 0) {
+                let selectedUserIds = [];
+                data.managerVo.forEach(manager => {
+                    selectedUserIds.push(manager.userId);
+                });
+
+                manager_input.setValue(selectedUserIds);
+            }
+
+            data.priority ? priority_select.setValue(data.priority) : "";
+            data.tags ? tags_input.setValue(data.tags) : "";
+            data.startDate ? start_date.setValue(data.startDate) : "";
+            data.endDate ? end_date.setValue(data.endDate) : "";
+            data.userName ? name_input.setValue(data.userName) : "";
+
+            contents_editor.setHTML(data.content);
+
+            const fileList = data.fileSrcVo;
+            let html = contents_editor.getHTML();
+
+
+            const container = document.createElement("div");
+            container.innerHTML = html;
+
+            const fileTags = container.querySelectorAll(".file-data");
+
+            fileList.forEach((item, index) => {
+                item.num = ++scwin.filePageNum;
+
+                const el = fileTags[fileTags.length - 1 - index];
+
+                if (el) {
+                    el.setAttribute("data-num", item.num);
+                }
+            });
+
+            scwin.previousHTML = contents_editor.getHTML();
+
+            dls_allFile.setJSON(data.fileSrcVo);
+            dls_file.setJSON(data.fileSrcVo);
+        },
+        error: async function (err) {
+            await $c.win.alert("저장 실패! 다시 시도해주세요");
+        }
+    });
+}
+
+
+//해당 작업에 대한 채팅 불러오기(20개씩)
+scwin.loadMoreData = function () {
+    if (scwin.isLoading || !scwin.hasMore) return;
+
+    scwin.isLoading = true;
+
+    const param = {
+        page: scwin.currentPage
+    };
+    dma_getComment.setJSON(param);
+    sbm_comment_get.action = `/InsWebApp/comment/${scwin.taskId}.pwkjson`;
+    $c.sbm.execute(sbm_comment_get);
+};
+
+//소켓 초기화
+scwin.initializeChatWebSocket = function () {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.hostname;
+    const port = window.location.port || (protocol === 'wss:' ? '443' : '80');
+
+    const wsUrls = [
+        `${protocol}//${host}:${port}/InsWebApp/chat`,
+        `ws://localhost:9093/InsWebApp/chat`,
+        `wss://localhost:19443/InsWebApp/chat`
+    ];
+
+    let wsUrl = wsUrls[0];
+
+    try {
+        chatSocket = new WebSocket(wsUrl);
+
+        chatSocket.onopen = function () {
+            const joinMessage = {
+                type: 'join',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName
+            };
+            chatSocket.send(JSON.stringify(joinMessage));
+        };
+
+        chatSocket.onmessage = function (event) {
+            try {
+                const data = JSON.parse(event.data);
+         
+                switch (data.type) {
+                    case 'message':
+                        if (data.userId !== currentUser.userId) {
+                            const todayText = scwin.formatDate(new Date());
+                            if (!scwin.chatDate.has(todayText)) {
+                                const dateComp = scwin.addChatDate(todayText);
+                                scwin.chatDate.add(todayText);
+                            }
+                            scwin.addChatMessage(data.userName, data.message, data.createdAt, false, data.userImage, data.commentId);
+                        } 
+                        break;
+
+                    case 'delete-message':
+                        const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
+                        const children = group.getChildren ? group.getChildren() : [];
+
+                        for (let i = 0; i < children.length; i++) {
+                            const comp = children[i];
+                            const compId = comp?.id || "undefined";
+                            const userData = comp?.userData || "없음";
+                            const localMessageId = userData?.commentId;
+                            const match = String(localMessageId) === String(data.commentId);
+
+                            if (match) {
+                                scwin.deleteChat(comp);
+                                break;
+                            }
+                        }
+                        break;
+                    case "leave":
+                        break;
+
+                    default:
+                        console.warn("알 수 없는 메시지 타입:", data.type, data);
+                        break;
+                }
+            } catch (error) {
+                console.error("❌ 메시지 처리 오류:", error);
+            }
+        };
+
+        chatSocket.onclose = function (event) {
+            if (event.code !== 1000) {
+                setTimeout(() => {
+                    scwin.initializeChatWebSocket();
+                }, 5000);
+            }
+        };
+
+        chatSocket.onerror = function (error) {
+            console.error("❌ WebSocket 오류:", error);
+        };
+
+        //소켓 연결 끊기
+        setTimeout(function () {
+            const closeBtn = $p.getComponentById("mf_wfr_mainContent_exa_popup_close");
+
+            if (closeBtn && closeBtn.addEventListener) {
+                closeBtn.addEventListener("click", function () {
+                    const send = {
+                        type: "leave",
+                        userId: currentUser.userId,
+                        userName: currentUser.userName,
+                        userImage: currentUser.userImage,
+                        channelName: currentUser.channelName
+                    };
+                    chatSocket.send(JSON.stringify(send)); 
+                });
+            } else {
+                console.warn("closeBtn이 존재하지 않거나 이벤트 리스너를 설정할 수 없습니다.");
+            }
+        }, 2000);
+
+    } catch (error) {
+        console.error("❌ WebSocket 초기화 실패:", error);
+    }
+};
+
+//엔터 누르면 채팅 전송
+scwin.input_onkeyup = function (e) {
+    if (e.keyCode === 13) {
+        comment_send_button.addClass("active")
+        comment_send_button.click();
+
+        setTimeout(() => {
+            comment_send_button.removeClass("active");
+        }, 150); 
+    }
+};
+
+
+//채팅 전송 버튼 눌렀을 때
+scwin.comment_send_button_onclick = function () {
+    const message = comment_input.getValue().trim();
+    if (!message || !chatSocket || chatSocket.readyState !== 1) return;
+
+    const param = {
+        taskId: scwin.taskId,
+        userId: currentUser.userId,
+        message: message
+    }
+    dma_comment.setJSON(param);
+
+    $c.sbm.execute(sbm_comment_create);
+    comment_input.setValue("");
+
+    setTimeout(() => {
+        comment_input.focus();
+    }, 30);
+};
+
+
+//화면에 댓글 추가
+scwin.addChatMessage = function (userName, message, time = "", isMine = false, image, commentId = 0, insertBeforeComp) {
+    const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
+    const generateUniqueId = (prefix) => {
+        return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    };
+    const wrapperId = generateUniqueId("chat_wrapper");
+    const profileId = generateUniqueId("chat_profile");
+    const nameId = generateUniqueId("chat_name");
+    const textId = generateUniqueId("chat_text");
+    const timeId = generateUniqueId("chat_time");
+
+    const messageStyle = `
+        font-size: 15px;
+        word-break: break-word;
+        padding:3px;
+        box-sizing: border-box;
+    `;
+
+
+    const wrapperClass = `comment-wrapper ${isMine ? "mine" : "other"}`;
+
+    const wrapper = $p.dynamicCreate(wrapperId, "span", {
+        className: wrapperClass,
+    }, group);
+
+    wrapper.userData = { commentId: commentId };
+    if (insertBeforeComp?.render && wrapper?.render) {
+        group.render.insertBefore(wrapper.render, insertBeforeComp.render);
+    }
+
+    const headerRow = $p.dynamicCreate(wrapperId + "_header", "span", {
+        className: "comment-header"
+    }, wrapper);
+
+    const leftGroupId = wrapperId + "_left";
+    const leftGroup = $p.dynamicCreate(leftGroupId, "span", {
+        className: "comment-left"
+    }, headerRow);
+
+    $p.dynamicCreate(profileId, "image", {
+        src: image && image.trim() !== "" ? `${image}` : `${scwin.defaultImage}`,
+        className: "comment-profile"
+    }, leftGroup);
+
+    $p.dynamicCreate(nameId, "span", {
+        label: userName,
+        className: "comment-name"
+    }, leftGroup);
+
+    if (isMine) {
+        const deleteIconId = wrapperId + "_delete";
+        $p.dynamicCreate(deleteIconId, "image", {
+            src: "/InsWebApp/images/trash-solid.svg",
+            className: "comment-delete-button",
+        }, headerRow);
+
+        const deleteIcon = $p.getComponentById(deleteIconId);
+
+        if (deleteIcon) {
+            deleteIcon.bind("onclick", function (e) {
+                const param = { commentId };
+                const chat = $p.getComponentById(wrapperId);
+
+                dma_comment.setJSON(param);
+                scwin.deleteChat(chat);
+                $c.sbm.execute(sbm_comment_delete);
+
+                const payload = {
+                    type: "delete-message",
+                    commentId: commentId,
+                    userId: currentUser.userId,
+                    userName: currentUser.userName,
+                    userImage: currentUser.userImage,
+                    channelName: currentUser.channelName
+                };
+                chatSocket.send(JSON.stringify(payload));
+            });
+        }
+    }
+
+    $p.dynamicCreate(textId, "span", {
+        label: message,
+        style: messageStyle
+    }, wrapper);
+
+    $p.dynamicCreate(timeId, "span", {
+        label: time,
+        className: "comment-time"
+    }, wrapper);
+
+    if (!insertBeforeComp) {
+        setTimeout(() => {
+            const scrollArea = $p.getComponentById("comment_main_group");
+            const el = scrollArea.render;
+
+            const isAtBottom = el.scrollTop >= el.scrollHeight - el.clientHeight - 200;
+
+            if (isAtBottom) {
+                el.scrollTop = el.scrollHeight; // 하단 고정
+            }
+        }, 50);
+    }
+
+    return wrapper;
+};
+
+//삭제할 때 날짜와 함께 삭제
+scwin.deleteChat = function (chat) {
+    const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
+    const children = group.getChildren();
+    const idx = children.indexOf(chat);
+    let firstChild = group.render?.children[idx - 1] ?? null;
+    let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
+
+    if (idx === -1) {
+        return;
+    }
+
+    if (idx >= 0) {
+        const prevComp = insertBeforeTarget;
+        const isDateComp = prevComp?.options?.className === "comment-date";
+        const labelText = prevComp?.render?.innerText;
+
+        if (isDateComp) {
+            prevComp.remove();
+            scwin.chatDate.delete(labelText);
+        }
+    }
+    chat.remove();
+};
+
+
+
+//화면에 날짜 표시
+scwin.addChatDate = function (dateText, insertBeforeComp) {
+    const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
+    const wrapperId = "chat_date_" + Date.now();
+
+    const dateWrapper = $p.dynamicCreate(wrapperId, "span", {
+        label: dateText,
+        className: "comment-date"
+    }, group);
+
+    if (insertBeforeComp?.render && dateWrapper?.render) {
+        group.render.insertBefore(dateWrapper.render, insertBeforeComp.render);
+    }
+    return dateWrapper;
+};
+
+
+
+//댓글 조회 성공(20개씩)
+scwin.sbm_comment_get_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    const commentList = responseData.elData?.commentVoList ?? [];
+    const group = $p.getComponentById("mf_wfr_mainContent_exa_popup_wframe_comment_main_group");
+    let firstChild = group.render?.children[0] ?? null;
+    let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
+
+    if (commentList.length === 0) {
+        scwin.hasMore = false;
+        scwin.isLoading = false;
+        return;
+    }
+
+    if (insertBeforeTarget?.options) {
+        const currentDate = insertBeforeTarget?.options.label
+        const nextDate = scwin.formatDate(commentList[0].createdAt);
+
+        if (currentDate === nextDate) {
+            insertBeforeTarget.remove();
+            firstChild = group.render?.children[0] ?? null;
+            insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
+        }
+    }
+
+    for (let i = 0; i < commentList.length; i++) {
+        const comment = commentList[i];
+        const nextComment = commentList[i + 1];
+        const currentDate = scwin.formatDate(comment.createdAt);
+        const nextDate = nextComment ? scwin.formatDate(nextComment.createdAt) : null;
+        const isMine = (comment.userId === currentUser.userId);
+
+        const commentComp = scwin.addChatMessage(
+            comment.userName,
+            comment.message,
+            scwin.formatTime(comment.createdAt),
+            isMine,
+            comment.userImage,
+            comment.commentId,
+            insertBeforeTarget
+        );
+        insertBeforeTarget = commentComp;
+
+        if (currentDate !== nextDate || i === commentList.length - 1) {
+            const dateComp = scwin.addChatDate(currentDate, insertBeforeTarget);
+            insertBeforeTarget = dateComp;
+            scwin.chatDate.add(currentDate);
+        }
+    }
+
+    if (scwin.currentPage === 1) {
+        setTimeout(() => {
+            const scrollArea = $p.getComponentById("comment_main_group");
+            const el = scrollArea.render;
+            el.scrollTop = el.scrollHeight;
+        }, 30);
+    } else {
+        setTimeout(() => {
+            const scrollArea = $p.getComponentById("comment_main_group");
+            const el = scrollArea.render;
+            el.scrollTop = 300;
+        }, 30);
+    }
+
+    scwin.currentPage++; 
+    scwin.isLoading = false;
+};
+
+
+//댓글 생성 완료
+scwin.sbm_comment_create_submitdone = function (e) {
+    const responseData = e.responseJSON;
+    const elData = responseData.elData;
+    const todayText = scwin.formatDate(new Date());
+
+    if (!scwin.chatDate.has(todayText)) {
+        const dateComp = scwin.addChatDate(todayText);
+        scwin.chatDate.add(todayText);
+    }
+    scwin.addChatMessage(currentUser.userName, elData.message, scwin.formatTime(elData.createdAt), true, currentUser.userImage, elData.commentId);
+
+
+    const payload = {
+        type: "message",
+        userId: currentUser.userId,
+        userName: currentUser.userName,
+        userImage: currentUser.userImage,
+        channelName: currentUser.channelName,
+        createdAt: scwin.formatTime(elData.createdAt),
+        message: elData.message,
+        commentId: elData.commentId
+    };
+
+
+    chatSocket.send(JSON.stringify(payload));
+};
+
+
+// 날짜 변환
+scwin.formatDate = function (datetimeStr) {
+    const date = new Date(datetimeStr);
+    return `${date.getFullYear()}년 ${String(date.getMonth() + 1).padStart(2, "0")}월 ${String(date.getDate()).padStart(2, "0")}일`;
+};
+
+// 시간 변환
+scwin.formatTime = function (datetimeStr) {
+    const date = new Date(datetimeStr);
+    let hour = date.getHours();
+    const minute = String(date.getMinutes()).padStart(2, "0");
+    const isAM = hour < 12;
+    if (hour > 12) hour -= 12;
+    if (hour === 0) hour = 12;
+    return `${isAM ? '오전' : '오후'} ${hour}:${minute}`;
+};
+
+//task 저장
+scwin.saveTask = function () {
+    const formData = new FormData();
+
+    const taskPayload = {
+        taskId: scwin.taskInfo.taskId,
+        boardId: scwin.taskInfo.boardId,
+        projectUserId: scwin.taskInfo.projectUserId,
+        projectRepoId: scwin.taskInfo.projectRepoId,
+        taskTitle: header_title.getValue(),
+        priority: priority_select.getValue(),
+        startDate: start_date.getValue(),
+        endDate: end_date.getValue(),
+        tags: tags_input.getValue(),
+        managerVo: manager_input.getValue().split(" ").filter(userId => userId.trim() !== "").map(userId => ({
+            managerId: "",
+            userId,
+            taskId: scwin.taskInfo.taskId
+        })),
+        content: contents_editor.getHTML()
+    };
+
+    formData.append("taskJson", JSON.stringify(taskPayload));
+
+    const allFiles = dls_allFile.getAllJSON();
+    const filteredFiles = allFiles.map(file => ({
+        fileName: file.fileName,
+        filePath: file.filePath,
+        fileId: file.fileId,
+        taskVersionId: file.taskVersionId
+    }));
+
+    formData.append("fileUpload", JSON.stringify(filteredFiles));
+
+    allFiles.forEach((file) => {
+        if (file.filePath === undefined || file.filePath === null || file.filePath === "") {
+            const blob = scwin.base64ToBlob(file.data, file.type);
+            formData.append("files", blob, file.fileName);
+        } else {
+            const emptyBlob = new Blob([""], { type: file.type || "application/octet-stream" });
+            formData.append("files", emptyBlob, file.fileName);
+        }
+    });
+
+    // 서버로 전송
+    $.ajax({
+        url: "/InsWebApp/task/update.pwkjson",
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: async function (res) {
+            await $c.win.alert("업무 정보가 저장되었습니다");
+            scwin.getTask(scwin.taskId, scwin.projectId);
+
+            try {
+                const boardId = scwin.taskInfo.boardId;
+                const parentScwin = $p.parent().scwin;
+                if (boardId && parentScwin && parentScwin.refreshBoardData) {
+                    parentScwin.refreshBoardData(boardId);
+                    if (parentScwin.sendWebSocketMessage) {
+                        const userId = parentScwin.getCurrentUserId();
+                        const projectId = scwin.projectId; 
+
+                        const message = {
+                            type: "TASK_UPDATED",
+                            boardId: boardId,
+                            taskId: scwin.taskInfo.taskId,
+                            userId: userId,
+                            projectId: projectId
+                        };
+
+                        parentScwin.sendWebSocketMessage(message);
+                    } else {
+                        console.error("❌ parentScwin.sendWebSocketMessage 함수를 찾을 수 없음");
+                    }
+                }
+            } catch (refreshError) {
+                console.warn("칸반보드 새로고침 중 오류 (저장은 완료됨):", refreshError);
+            }
+        },
+        error: async function (err) {
+            await $c.win.alert("저장 실패! 다시 시도해주세요");
+        }
+    });
+}
+
+//bask64를 변환
+scwin.base64ToBlob = function (base64Data, contentType) {
+    const byteString = atob(base64Data.split(',')[1]);
+    const byteArray = new Uint8Array([...byteString].map(char => char.charCodeAt(0)));
+    return new Blob([byteArray], { type: contentType });
+}
+
+
+//파일 추가
+scwin.file_add_onclick = function (e) {
+    $p.$("#fileInput").click();
+    $p.$("#fileInput").off("change");
+    $p.$("#fileInput").on("change", scwin.fileInput_change);
+};
+
+
+//파일 삭제
+scwin.file_remove_onclick = function (e) {
+    let chkIdxArr = grd.getCheckedIndex("CHK");
+    const size = dls_allFile.getRowCount();
+
+    if (chkIdxArr.length === 0)
+        return;
+
+    let checkedItemNums = [];
+
+    for (let i = 0; i < chkIdxArr.length; i++) {
+        let rowData = dls_file.getRowJSON(chkIdxArr[i]);
+        if (rowData && rowData.num) {
+            checkedItemNums.push(rowData.num);
+        }
+    }
+
+    if (checkedItemNums.length === 0) {
+        $c.win.alert("선택된 항목에서 유효한 고유 식별자(num)를 찾을 수 없습니다.");
+        return;
+    }
+
+    scwin.removeFileGrid(checkedItemNums, size);
+
+};
+
+//파일 리스트 삭제
+scwin.removeFileGrid = function (checkedItemNums, size) {
+    let data = dls_allFile.getAllJSON();
+    const filteredData = data.filter(row => !checkedItemNums.includes(row.num));
+    dls_allFile.setJSON(filteredData);
+
+    const existingList = dls_file.getAllJSON(); 
+    const paramList = [...existingList]; // 기존 데이터 복사
+    pageList.setCount(paramList.length === 0 ? 1 : (paramList.length / 5) + 1);
+
+    const totalPages = Math.max(1, Math.ceil(dls_allFile.getRowCount() / 5));
+    pageList.setCount(totalPages);
+
+    if (scwin.filePageIndex > totalPages) {
+        scwin.filePageIndex = totalPages;
+    } else if (totalPages === 1) {
+        scwin.filePageIndex = 1;
+    }
+
+    pageList.setSelectedIndex(scwin.filePageIndex);
+
+    const startIndex = (scwin.filePageIndex - 1) * 5;
+    const endIndex = startIndex + 5;
+
+    const fullList = dls_allFile.getAllJSON();
+    const currentPageItems = fullList.slice(startIndex, endIndex);
+
+    dls_file.setJSON(currentPageItems);
+
+    scwin.removeFileHtml(checkedItemNums, size);
+}
+
+//파일 html에서 삭제
+scwin.removeFileHtml = function (numList, size) {
+    if (!Array.isArray(numList) || numList.length === 0) return;
+
+    let html = contents_editor.getHTML();
+    const container = document.createElement("div");
+    container.innerHTML = html;
+
+    numList.forEach(num => {
+        const target = container.querySelector(`.file-data[data-num="${num}"]`);
+
+        if (target) {
+            const before = target.previousElementSibling;
+            const after = target.nextElementSibling;
+
+            if (before && before.tagName === "P" && before.innerHTML.trim() === "<br>") {
+                before.remove();
+            }
+            if (after && after.tagName === "P" && after.innerHTML.trim() === "<br>") {
+                after.remove();
+            }
+
+            target.remove();
+        }
+    });
+
+    contents_editor.setHTML(container.innerHTML);
+};
+
+scwin.fileInput_change = function (e) {
+    const fileInput = $p.$("#fileInput").get(0);
+    const files = fileInput.files;
+    if (!files || files.length === 0) return;
+
+    const filesArray = Array.from(files);
+    let filesReadCount = 0;
+    const tempGridList = [];
+
+    for (let i = 0; i < filesArray.length; i++) {
+        const file = filesArray[i];
+        const reader = new FileReader();
+
+        reader.onload = function (event) {
+            const fileDataUrl = event.target.result;
+
+            const param = {
+                name: file.name,
+                url: fileDataUrl,
+                type: file.type,
+                num: ++scwin.filePageNum,
+                data: fileDataUrl,
+                size: file.size
+            };
+
+            scwin.addFileHtml(param);
+            tempGridList.push(param);
+            filesReadCount++;
+
+            if (filesReadCount === filesArray.length) {
+                scwin.addFileGrid(tempGridList); 
+
+                setTimeout(() => {
+                    scwin.previousHTML = contents_editor.getHTML(); 
+                }, 30);
+            }
+        };
+
+        reader.readAsDataURL(file);
+    }
+};
+
+
+//파일 그리드에 파일 추가
+scwin.addFileGrid = function (files, num) {
+    const dsAll = $p.getComponentById("dls_allFile");
+    const allList = dsAll.getAllJSON();
+    const newList = [...allList];
+
+    for (let file of files) {
+        newList.unshift({
+            num: file.num,
+            fileName: file.name,
+            size: file.size,
+            type: file.type,
+            data: file.data
+        });
+    }
+
+    dsAll.setJSON(newList);
+
+
+    const totalCount = newList.length;
+    const pageSize = 5;
+    const pageCount = Math.ceil(totalCount / pageSize);
+
+    const pageList = $p.getComponentById("pageList");
+    if (pageList) pageList.setCount(pageCount);
+
+    const dsView = $p.getComponentById("dls_file");
+    const currentPage = pageList.getCurrentPage ? pageList.getCurrentPage() : 1;
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    const viewList = newList.slice(start, end);
+
+    dsView.setJSON(viewList);
+};
+
+
+
+scwin.addFileHtml = function (file) {
+    const html = contents_editor.getHTML();
+    const {
+        num,
+        name,
+        size,
+        type,
+        data,
+        url
+    } = file;
+    let insertHTML = "";
+
+    if (type.startsWith("image/")) {
+        insertHTML = `<img class="file-data" 
+                            data-num="${num}"  
+                            data-size="${size}"
+                            data = "${data}"
+                            data-name = "${name}"
+                            data-path = "${url}"  
+                            data-type="${type}"
+                            src="${url}" 
+                            alt="${name}"
+                            style="max-width:100%; 
+                            margin: 10px 0;" />`;
+    } else {
+        const ext = name.split(".").pop().toLowerCase();
+
+        switch (ext) {
+            case "pdf":
+                icon = "/InsWebApp/images/fileIcon/pdf.svg";
+                break;
+            case "hwp":
+            case "hwpx":
+                icon = "/InsWebApp/images/fileIcon/hwp.svg";
+                break;
+            case "xls":
+            case "xlsx":
+            case "csv":
+                icon = "/InsWebApp/images/fileIcon/xls.svg";
+                break;
+            case "doc":
+            case "docx":
+                icon = "/InsWebApp/images/fileIcon/doc.svg";
+                break;
+            case "zip":
+            case "rar":
+            case "7z":
+                icon = "/InsWebApp/images/fileIcon/zip.svg";
+                break;
+            case "txt":
+            case "md":
+            case "log":
+                icon = "/InsWebApp/images/fileIcon/txt.svg";
+                break;
+            case "html":
+            case "htm":
+                icon = "/InsWebApp/images/fileIcon/html.svg";
+                break;
+            case "css":
+                icon = "/InsWebApp/images/fileIcon/css.svg";
+                break;
+            case "js":
+                icon = "/InsWebApp/images/fileIcon/js.svg";
+                break;
+            case "svg":
+                icon = "/InsWebApp/images/fileIcon/svg.svg";
+                break;
+            case "ppt":
+            case "pptx":
+                icon = "/InsWebApp/images/fileIcon/ppt.svg";
+                break;
+            case "json":
+                icon = "/InsWebApp/images/fileIcon/json.svg";
+                break;
+            case "yml":
+            case "yaml":
+                icon = "/InsWebApp/images/fileIcon/yml.svg";
+                break;
+            case "sql":
+                icon = "/InsWebApp/images/fileIcon/sql.svg";
+                break;
+            case "ttf":
+            case "otf":
+            case "woff":
+            case "woff2":
+                icon = "/InsWebApp/images/fileIcon/ttf.svg";
+                break;
+            default:
+                icon = "/InsWebApp/images/fileIcon/etc.svg";
+                break;
+        }
+
+
+
+        insertHTML = `
+            <p><br></p>
+            <a class="file-data" 
+                data-num="${num}"  
+                data-size="${size}"
+                data = "${data}"
+                data-name = "${name}"
+                data-path = "${url}"  
+                data-type="${type}"
+                href="${url}" 
+                target="_blank" 
+                contenteditable="false"
+                style="display: flex; align-items: center; gap: 10px;
+                        max-width: 200px; min-width: 100px; padding: 10px;
+                        background-color:#fff1d3; border-radius: 6px;
+                        border: 1px solid #D9D9D9;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+                        text-decoration: none;">
+                <img src="${icon}" alt="${type}" style="width: 50px; height: 50px; border:none; margin:0; padding:0; outline:none;" />
+                <span style="font-size: 15px; color: black;">${name}</span>
+            </a>
+            <p><br></p>
+        `;
+
+    }
+
+    contents_editor.setHTML(html + insertHTML);
+};
+
+//파일 페이지 번호 클릭
+scwin.pageList_onclick = function (index) {
+    const dsAll = $p.getComponentById("dls_allFile");
+    const dsView = $p.getComponentById("dls_file");
+
+    const allList = dsAll.getAllJSON();
+    const pageSize = 5; // 페이지당 보여줄 파일 수
+    const start = (index - 1) * pageSize;
+    const end = start + pageSize;
+
+    const pageData = allList.slice(start, end);
+    dsView.setJSON(pageData);
+    scwin.filePageIndex = index;
+};
+
+//파일 그리드 셀 클릭
+scwin.grd_oncellclick = function (rowIndex, columnIndex, columnId) {
+    if (columnId === 'download') {
+        let row = dls_file.getRowJSON(rowIndex);
+        let targetUrl = row.filePath;
+        let fileNanme = row.fileName;
+
+        fetch(targetUrl)
+            .then(res => res.blob())
+            .then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = fileNanme;
+                a.click();
+                URL.revokeObjectURL(url);
+            })
+            .catch(err => console.error("❌ 다운로드 실패:", err));
+
+    } else {
+
+    }
+};
+
+//작업 삭제가 완료되었을 때
+scwin.sbm_deleteTask_submitdone = function (e) {
+    try {
+        const boardId = scwin.taskInfo.boardId;
+        const parentScwin = $p.parent().scwin;
+        if (boardId && parentScwin && parentScwin.refreshBoardData) {
+
+            parentScwin.refreshBoardData(boardId);
+            if (parentScwin.sendWebSocketMessage) {
+                const userId = parentScwin.getCurrentUserId();
+                const projectId = scwin.projectId; // taskModal에서 이미 가지고 있는 프로젝트 ID 사용
+
+                const message = {
+                    type: "TASK_DELETED",
+                    boardId: boardId,
+                    taskId: scwin.taskInfo.taskId,
+                    userId: userId,
+                    projectId: projectId
+                };
+
+                parentScwin.sendWebSocketMessage(message);
+            } 
+        }
+    } catch (refreshError) {
+        console.warn("칸반보드 새로고침 중 오류 (삭제는 완료됨):", refreshError);
+    }
+
+    const close = $p.getComponentById("mf_wfr_mainContent_exa_popup_close");
+    close.click();
+};
+
+//시작일
+scwin.start_date_onchange = function () {
+    let value = start_date.getValue();
+    if (start_date.getValue() !== "") {
+        end_date.setDisableBeforeDate(value);
+    }
+};
+
+//종료일 
+scwin.end_date_onchange = function () {
+    let value = end_date.getValue();
+    if (end_date.getValue() !== "") {
+        start_date.setDisableAfterDate(value);
+    }
+};
+
+
+scwin.sbm_session_submitdone = function (e) {
+    const userInfo = e.responseJSON.userVo;
+    currentUser.userId = userInfo.userId;
+    currentUser.userName = userInfo.userName;
+    currentUser.userImage = userInfo.profileImageUrl;
+};
+]]></script>
+		<style type="text/css"><![CDATA[.task-modal-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    border: none;
+    height: 90%;
+}]]>
+		</style>
+	</head>
+	<body ev:onpageload="scwin.onpageload">
+
+		<xf:group class="sub_contents task-modal-container" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true"
+			meta_snippetName="0_01 페이지시작" style="">
+			<xf:group style="" id="" class="contents-group">
+				<xf:group style="" id="" class="contents-header-group">
+					<xf:group style="" id="" class="header-title">
+						<xf:input id="header_title" style="" class="header-title-text  text-left"></xf:input>
+					</xf:group>
+					<xf:group style="" id="" class="header-input">
+						<xf:group style="" id="" class="header-input-box">
+							<w2:textbox id="" label="작성자" style="" class="header-input-text input-text text-bold"></w2:textbox>
+							<w2:textbox id="name_input" label="" style="width:148px; height:21px;" class="text-left input-text"></w2:textbox>
+						</xf:group>
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox id="" label="담당자" style="" class="header-input-text input-text text-bold"></w2:textbox>
+							<xf:checkcombobox id="manager_input" chooseOption="" displayMode="label" style="width:148px; height:21px; "
+								submenuSize="auto" allOption="" disabled="false" direction="auto" ref="">
+								<xf:choices>
+									<xf:itemset nodeset="data:dls_manager">
+										<xf:label ref="userName"></xf:label>
+										<xf:value ref="userId"></xf:value>
+									</xf:itemset>
+								</xf:choices>
+							</xf:checkcombobox>
+
+						</xf:group>
+
+					</xf:group>
+					<xf:group class="header-input" id="" style="">
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox class="header-input-text input-text text-bold" id="" label="태그" style=""></w2:textbox>
+
+							<xf:select1 id="tags_input" chooseOption="true" style="width: 148px;height: 21px;" submenuSize="auto" allOption=""
+								disabled="false" direction="auto" appearance="minimal" disabledClass="w2selectbox_disabled" ref="" chooseOptionLabel=""
+								class="input-text">
+								<xf:choices>
+									<xf:item>
+										<xf:label><![CDATA[기획]]></xf:label>
+										<xf:value><![CDATA[plan]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[개발]]></xf:label>
+										<xf:value><![CDATA[dev]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[테스트]]></xf:label>
+										<xf:value><![CDATA[test]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[문서화]]></xf:label>
+										<xf:value><![CDATA[doc]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[분석]]></xf:label>
+										<xf:value><![CDATA[analytics]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[협업]]></xf:label>
+										<xf:value><![CDATA[collabo]]></xf:value>
+									</xf:item>
+								</xf:choices>
+							</xf:select1>
+
+						</xf:group>
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox class="header-input-text input-text text-bold" id="" label="중요도" style=""></w2:textbox>
+							<xf:select1 allOption="" appearance="minimal" chooseOption="" chooseOptionLabel="" class="input-text"
+								direction="auto" disabled="false" disabledClass="w2selectbox_disabled" id="priority_select" ref=""
+								style="width: 148px;height: 21px;font-size:26em;" submenuSize="auto">
+								<xf:choices>
+									<xf:item>
+										<xf:label><![CDATA[높음]]></xf:label>
+										<xf:value><![CDATA[high]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[보통]]></xf:label>
+										<xf:value><![CDATA[medium]]></xf:value>
+									</xf:item>
+									<xf:item>
+										<xf:label><![CDATA[낮음]]></xf:label>
+										<xf:value><![CDATA[low]]></xf:value>
+									</xf:item>
+								</xf:choices>
+							</xf:select1>
+						</xf:group>
+					</xf:group>
+					<xf:group class="header-input" id="" style="">
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox class="header-input-text input-text text-bold" id="" label="시작일" style=""></w2:textbox>
+							<w2:inputCalendar id="start_date" style="width:148px; height:21px;" calendarValueType="yearMonthDate" ev:onchange="scwin.start_date_onchange"></w2:inputCalendar>
+						</xf:group>
+						<xf:group class="header-input-box" id="" style="">
+							<w2:textbox class="header-input-text input-text text-bold" id="" label="종료일" style=""></w2:textbox>
+							<w2:inputCalendar calendarValueType="yearMonthDate" id="end_date" style="width:148px; height:21px;" ev:onchange="scwin.end_date_onchange"></w2:inputCalendar>
+						</xf:group>
+					</xf:group>
+				</xf:group>
+				<xf:group style="" id="" class="contents-main-group">
+					<xf:group style="" id="" class="contents-text-group">
+
+						<w2:editor style="" id="contents_editor"></w2:editor>
+					</xf:group>
+					<xf:group style="" id="" class="contents-file-group">
+						<xf:group meta_snippetCategory="02_타이틀" meta_snippetName="2_02 서브타이틀(h3)" meta_snippetKeyComponent="true" style=""
+							id="" class="titbox" tagname="a">
+							<w2:textbox id="" label="파일" style="width: 150px;height: 23px;" tagname="h3"></w2:textbox>
+							<xf:group style="" id="" class="rt">
+								<xf:trigger style="" id="file_add" type="button" class="btn_cm  row_add"
+									ev:onclick="scwin.file_add_onclick">
+									<xf:label><![CDATA[파일추가]]></xf:label>
+								</xf:trigger>
+								<input style="display:none;" id="fileInput" type="file" class="" onchange="scwin.fileInput_change"
+									multiple="">
+								</input>
+
+								<xf:trigger style="" id="file_remove" type="button" class="btn_cm  row_del"
+									ev:onclick="scwin.file_remove_onclick">
+									<xf:label><![CDATA[파일삭제]]></xf:label>
+								</xf:trigger>
+							</xf:group>
+						</xf:group>
+						<xf:group adaptiveThreshold="" class="gvwbox" id="" meta_snippetCategory="06_그리드" meta_snippetKeyComponent="true"
+							meta_snippetName="6_01 그리드" style="height:237px;overflow:hidden;">
+							<w2:gridView autoFit="allColumn" checkReadOnlyOnPasteEnable="" class="gvw" dataList="data:dls_file"
+								focusMode="row" id="grd" scrollByColumn="false" scrollByColumnAdaptive="false" style="height:253px;overflow:hidden;"
+								rowNumHeaderValue="순번" rowNumVisible="false" disabledScrollHidden="false" fastScroll="true" visibleRowNum="5" ev:oncellclick="scwin.grd_oncellclick">
+								<w2:caption id="caption1" style="" value="this is a grid caption."></w2:caption>
+								<w2:header id="header2" style="">
+									<w2:row id="row3" style="">
+										<w2:column blockSelect="false" displayMode="label" id="column11" inputType="text"
+											removeBorderStyle="false" value="이름" width="70">
+										</w2:column>
+										<w2:column width="70" inputType="text" style="" id="download" value="다운로드" displayMode="label"></w2:column>
+										<w2:column width="70" inputType="checkbox" style="" id="column21" value="내용" displayMode="label">
+										</w2:column>
+									</w2:row>
+								</w2:header>
+								<w2:gBody id="gBody2" style="">
+									<w2:row id="row4" style="">
+										<w2:column blockSelect="false" displayMode="label" id="fileName" inputType="text"
+											removeBorderStyle="false" width="70" value="">
+										</w2:column>
+										<w2:column width="70" inputType="button" style="" id="download" value="" displayMode="label" class="download-button"></w2:column>
+										<w2:column width="70" inputType="checkbox" style="" id="CHK" value="" displayMode="label"></w2:column>
+									</w2:row>
+								</w2:gBody>
+							</w2:gridView>
+						</xf:group>
+						<w2:pageList pageSize="10" displayButtonType="display" id="pageList" displayFormat="#" style="height: 21px;" ev:onclick="scwin.pageList_onclick"></w2:pageList>
+					</xf:group>
+				</xf:group>
+			</xf:group>
+			<xf:group style="" id="" class="comment-group">
+				<w2:textbox id="" label="댓글" style="" class="comment-text"></w2:textbox>
+				<xf:group style="" id="comment_main_group" class="comment-main-group">
+					<!-- <xf:group style="height:120px;background-color: green;display: flex;align-items: center;padding: 0 30px;" id="">
+						<xf:group style="min-width: 40%;max-width: 60%;height: 90px;background: pink;border-radius: 15px;" id="">
+						<xf:group style="width:100%;height:25%;background: blue" id="">
+						<xf:trigger
+						style="width: 30px;height: 30px;border-radius: 50%;background-size: cover;background-position: center;background-image: url('https://github.com/dorazi0423/test/blob/main/group1.png?raw=true');"
+						id="" type="button">
+						<xf:label></xf:label>
+						</xf:trigger>
+						</xf:group>
+						<xf:group id="" style="width:100%;height:50%;">
+						<w2:textbox id="" label="집가고 싶다니깐 정말로 하늘로 날아가고 싶은 집가고 싶다니깐 정말로 하늘로 날아가고 싶은 집가고 싶다니깐 정말로 하늘로 날아가고 싶은 집가고 싶다니깐 정말로 하늘로 날아가고 싶은 집가고 싶다니깐 정말로 
+						하늘로 날아가고 싶은 집가고 싶다니깐 정말로 하늘로 날아가고 싶은" style="width: 100%;height: 100%;"></w2:textbox>
+						</xf:group>
+						<xf:group id="" style="width:100%;height:25%;background-color: yellow"></xf:group>
+						</xf:group>
+						</xf:group> -->
+				</xf:group>
+				<xf:group style="" id="" class="comment-input-group">
+					<xf:group style="" id="" class="comment-box">
+						<xf:input style="" id="comment_input" class="comment-input" ev:onkeyup="scwin.input_onkeyup"></xf:input>
+						<xf:trigger style="" id="comment_send_button" type="button" class="comment-input-button"
+							ev:onclick="scwin.comment_send_button_onclick">
+							<xf:label><![CDATA[]]>
+							</xf:label>
+						</xf:trigger>
+					</xf:group>
+				</xf:group>
+			</xf:group>
+		</xf:group>
+	</body>
+</html>

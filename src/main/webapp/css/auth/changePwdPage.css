@@ -1,8 +1,17 @@
 @charset "UTF-8";
 
 .auth-group {
-    gap: 20px;
+    gap: 30px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+	margin-bottom: 20px;
+}
+
+.error-text{
+	height:23px;
+	font-size: 11px;
+	text-align: left;
+	color: red;
+	margin-top: 5px;
 }

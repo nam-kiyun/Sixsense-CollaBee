@@ -1,0 +1,883 @@
+package com.demo.proworks.task.service.impl;
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import org.springframework.transaction.annotation.Transactional;
+
+import org.springframework.context.MessageSource;
+import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import com.demo.proworks.task.service.TaskService;
+import com.demo.proworks.task.vo.TaskUpdateVo;
+import com.demo.proworks.task.vo.TaskVo;
+import com.demo.proworks.taskversion.dao.TaskVersionDAO;
+import com.demo.proworks.taskversion.vo.TaskVersionVo;
+import com.demo.proworks.filesrc.dao.FileSrcDAO;
+import com.demo.proworks.filesrc.vo.FileSrcListVo;
+import com.demo.proworks.filesrc.vo.FileSrcVo;
+import com.demo.proworks.manager.dao.ManagerDAO;
+import com.demo.proworks.manager.vo.ManagerListVo;
+import com.demo.proworks.manager.vo.ManagerVo;
+import com.demo.proworks.projectuser.dao.ProjectUserDAO;
+import com.demo.proworks.projectuser.vo.ProjectUserVo;
+import com.demo.proworks.task.dao.TaskDAO;
+import com.demo.proworks.project.dao.ProjectDAO;
+import com.demo.proworks.project.vo.ProjectVo;
+import com.demo.proworks.projectrepo.dao.ProjectRepositoryDAO;
+import com.demo.proworks.projectrepo.vo.ProjectRepositoryVo;
+import com.demo.proworks.board.dao.BoardDAO;
+import com.demo.proworks.board.service.BoardService;
+import com.demo.proworks.board.vo.BoardVo;
+import com.demo.proworks.comment.dao.CommentDAO;
+import com.demo.proworks.comment.vo.CommentVo;
+import com.demo.proworks.projectuser.dao.ProjectUserDAO;
+import com.demo.proworks.projectuser.vo.ProjectUserVo;
+import com.demo.proworks.redis.service.KanbanRedisService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+
+/**
+ * @subject : 업무(Task) 정보 관련 처리를 담당하는 ServiceImpl
+ * @description : 업무(Task) 정보 관련 처리를 담당하는 ServiceImpl
+ * @author : 남기윤
+ * @since : 2025/07/01
+ * @modification ===========================================================
+ *               DATE AUTHOR DESC
+ *               ===========================================================
+ *               2025/07/01 남기윤 최초 생성
+ * 
+ */
+@Service("taskServiceImpl")
+public class TaskServiceImpl implements TaskService {
+
+    @Resource(name="taskDAO")
+    private TaskDAO taskDAO;
+    
+    @Resource(name="projectDAO")
+    private ProjectDAO projectDAO;
+    
+    @Resource(name="projectRepositoryDAO")
+    private ProjectRepositoryDAO projectRepositoryDAO;
+    
+    @Resource(name="boardDAO")
+    private BoardDAO boardDAO;
+    
+    @Resource(name="projectUserDAO")
+    private ProjectUserDAO projectUserDAO;
+    
+    @Resource(name="kanbanRedisService")
+    private KanbanRedisService kanbanRedisService;
+
+	@Resource(name = "taskVersionDAO")
+	private TaskVersionDAO taskVersionDAO;
+
+	@Resource(name = "fileSrcDAO")
+	private FileSrcDAO fileSrcDAO;
+
+	@Resource(name = "managerDAO")
+	private ManagerDAO managerDAO;
+	
+	@Resource(name = "commentDAO")
+	private CommentDAO commentDAO;
+
+	@Resource(name = "messageSource")
+	private MessageSource messageSource;
+	
+	private final ObjectMapper objectMapper;
+	
+	// 생성자에서 ObjectMapper 설정
+	public TaskServiceImpl() {
+		this.objectMapper = new ObjectMapper();
+		// @JsonFilter 어노테이션 무시 설정
+		this.objectMapper.configure(MapperFeature.USE_ANNOTATIONS, false);
+		this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+	}
+
+    /**
+     * 업무(Task) 정보 목록을 조회합니다.
+     *
+     * @process
+     * 1. 업무(Task) 정보 페이징 처리하여 목록을 조회한다.
+     * 2. 결과 List<TaskVo>을(를) 리턴한다.
+     * 
+     * @param  taskVo 업무(Task) 정보 TaskVo
+     * @return 업무(Task) 정보 목록 List<TaskVo>
+     * @throws Exception
+     */
+	@SuppressWarnings("unchecked")
+	public List<TaskVo> selectListTask(TaskVo taskVo) throws Exception {
+		// 1. boardId를 통해 프로젝트 ID 조회 후 Redis 캐시 활용
+		String projectId = null;
+		if (taskVo.getBoardId() != null && kanbanRedisService.isRedisConnected()) {
+			try {
+				projectId = this.getProjectIdByBoardId(taskVo.getBoardId());
+				if (projectId != null) {
+					// Redis에서 프로젝트 태스크 목록 조회
+					List<java.util.Map<String, Object>> cachedTasks = kanbanRedisService.getProjectTasksFromCache(projectId);
+					
+					if (cachedTasks != null && !cachedTasks.isEmpty()) {
+						// 캐시된 데이터를 TaskVo 리스트로 변환
+						List<TaskVo> taskList = new java.util.ArrayList<>();
+						for (java.util.Map<String, Object> taskMap : cachedTasks) {
+							TaskVo task = convertMapToTaskVo(taskMap);
+							taskList.add(task);
+						}
+						
+						return taskList;
+					}
+				}
+			} catch (Exception e) {
+			}
+		}
+		
+		// 2. 캐시에 없거나 Redis 연결 실패 시 DB에서 조회
+		List<TaskVo> list = taskDAO.selectListTask(taskVo);
+		
+		// 태그 필터링은 프론트엔드에서 처리
+		
+		// 3. 프로젝트 ID가 있고 Redis 연결 가능한 경우 캐시에 저장
+		if (projectId != null && kanbanRedisService.isRedisConnected() && list != null && !list.isEmpty()) {
+			try {
+				// TaskVo 리스트를 Map 리스트로 변환하여 캐시에 저장
+				List<java.util.Map<String, Object>> taskMapList = new java.util.ArrayList<>();
+				for (TaskVo task : list) {
+					java.util.Map<String, Object> taskMap = convertTaskVoToMap(task);
+					taskMapList.add(taskMap);
+				}
+				
+				kanbanRedisService.cacheProjectTasks(projectId, taskMapList);
+			} catch (Exception e) {
+			}
+		}
+		return list;
+	}
+
+	/**
+	 * 업무(Task) 정보를 갱신 처리 한다.
+	 *
+	 * @process 1. 업무(Task) 정보를 갱신 처리 한다.
+	 * 
+	 * @param taskVo 업무(Task) 정보 TaskVo
+	 * @return 번호
+	 * @throws Exception
+	 */
+	@Transactional(rollbackFor = Exception.class)
+	public int saveTask(TaskUpdateVo updateVo) throws Exception {
+
+		TaskVo taskVo = new TaskVo();
+
+		taskVo.setTaskId(updateVo.getTaskId());
+		taskVo.setBoardId(updateVo.getBoardId());
+		taskVo.setProjectUserId(updateVo.getProjectUserId());
+		taskVo.setProjectRepoId(isEmpty(updateVo.getProjectRepoId()) ? "0" : updateVo.getProjectRepoId());
+		taskVo.setTaskTitle(updateVo.getTaskTitle());
+		taskVo.setPriority(isEmpty(updateVo.getPriority()) ? null : updateVo.getPriority());
+		taskVo.setStartDate(isEmpty(updateVo.getStartDate()) ? null : updateVo.getStartDate());
+		taskVo.setEndDate(isEmpty(updateVo.getEndDate()) ? null : updateVo.getEndDate());
+		taskVo.setTags(isEmpty(updateVo.getTags()) ? null : updateVo.getTags());
+
+		taskDAO.updateTask(taskVo);
+
+		handleManagerUpdate(updateVo.getTaskId(), updateVo.getManagerVo());
+
+		// Task 내용 저장
+		TaskVersionVo versionVo = new TaskVersionVo();
+
+		versionVo.setTaskId(updateVo.getTaskId());
+		versionVo.setContent(updateVo.getContent());
+
+		String taskVersionId = taskVersionDAO.insertTaskVersion(versionVo);
+
+		// fileSrc 저장
+		List<FileSrcVo> fileSrcVos = updateVo.getFileSrcVo();
+		if (fileSrcVos != null && !fileSrcVos.isEmpty()) {
+			for (FileSrcVo vo : fileSrcVos) {
+				vo.setTaskVersionId(taskVersionId);
+			}
+
+			fileSrcDAO.insertFileSrcList(fileSrcVos);
+		}
+
+		try {
+			String projectId = this.getProjectIdByBoardId(updateVo.getBoardId());
+			if (projectId != null && kanbanRedisService.isRedisConnected()) {
+				java.util.Map<String, Object> cacheProperties = new java.util.HashMap<>();
+				cacheProperties.put("taskTitle", updateVo.getTaskTitle());
+				cacheProperties.put("priority", updateVo.getPriority());
+				cacheProperties.put("startDate", updateVo.getStartDate());
+				cacheProperties.put("endDate", updateVo.getEndDate());
+				cacheProperties.put("tags", updateVo.getTags());
+				cacheProperties.put("boardId", updateVo.getBoardId());
+				cacheProperties.put("projectUserId", updateVo.getProjectUserId());
+				cacheProperties.put("projectRepoId", updateVo.getProjectRepoId());
+				
+				cacheProperties.entrySet().removeIf(entry -> entry.getValue() == null);
+				
+				kanbanRedisService.updateTaskPropertiesInCache(projectId, updateVo.getTaskId(), cacheProperties);
+			}
+		} catch (Exception cacheException) {
+			try {
+				String projectId = this.getProjectIdByBoardId(updateVo.getBoardId());
+				if (projectId != null && kanbanRedisService.isRedisConnected()) {
+					kanbanRedisService.invalidateProjectCache(projectId);
+				}
+			} catch (Exception fallbackException) {
+			}
+		}
+
+		return 1;
+	}
+
+	private boolean isEmpty(Object value) {
+		if (value == null)
+			return true;
+		if (value instanceof String)
+			return ((String) value).trim().isEmpty();
+		if (value instanceof Number) {
+			return ((Number) value).intValue() == 0;
+		}
+		if (value instanceof Collection) {
+			return ((Collection<?>) value).isEmpty();
+		}
+
+		if (value instanceof Map) {
+			return ((Map<?, ?>) value).isEmpty();
+		}
+
+		if (value.getClass().isArray()) {
+			return Array.getLength(value) == 0;
+		}
+		return false;
+	}
+
+	private void handleManagerUpdate(String taskId, List<ManagerVo> currentManagerVo) throws Exception {
+		if (taskId == "0" || taskId == null || taskId == "undefined")
+			return;
+
+		ManagerVo baseVo = new ManagerVo();
+		baseVo.setTaskId(taskId);
+
+		currentManagerVo = currentManagerVo.stream()
+				.filter(vo -> vo.getUserId() != null && !vo.getUserId().trim().isEmpty() && vo.getUserId() != "") 
+				.collect(Collectors.toList());
+
+		List<ManagerVo> prevManagerVo = managerDAO.selectManagerByTaskId(baseVo);
+
+		if (prevManagerVo == null || prevManagerVo.size() == 0)
+			prevManagerVo = new ArrayList<>();
+		if (currentManagerVo == null || currentManagerVo.size() == 0)
+			currentManagerVo = new ArrayList<>();
+
+		boolean isCurrentEmpty = currentManagerVo.isEmpty();
+		boolean isPrevEmpty = prevManagerVo.isEmpty();
+
+		// 현재, 과거 둘 다 비어있으면 아무 작업 하지 않고 리턴
+		if (isCurrentEmpty && isPrevEmpty)
+			return;
+
+		// 현재만 비어있으면 해당 taskId 기준으로 전체 삭제 후 리턴
+		if (isCurrentEmpty) {
+			managerDAO.deleteManagerByTaskId(baseVo);
+			return;
+		}
+
+		// 변경사항 반영
+		Map<String, ManagerVo> prevMap = prevManagerVo.stream()
+				.collect(Collectors.toMap(ManagerVo::getUserId, vo -> vo));
+
+		Set<String> prevUserIds = prevMap.keySet();
+		Set<String> currentUserIds = currentManagerVo.stream().map(ManagerVo::getUserId).collect(Collectors.toSet());
+
+		Set<String> toDelete = new HashSet<>(prevUserIds);
+		toDelete.removeAll(currentUserIds);
+
+		for (String userId : toDelete) {
+			ManagerVo target = prevMap.get(userId);
+			if (target != null && target.getManagerId() != "0") {
+				managerDAO.deleteManager(target);
+			}
+		}
+
+		Set<String> toInsert = new HashSet<>(currentUserIds);
+		toInsert.removeAll(prevUserIds);
+
+		for (ManagerVo newVo : currentManagerVo) {
+			if (toInsert.contains(newVo.getUserId())) {
+				newVo.setTaskId(taskId);
+				managerDAO.insertManager(newVo);
+			}
+		}
+	}
+
+	/**
+	 * 조회한 업무(Task) 정보 전체 카운트
+	 *
+	 * @process 1. 업무(Task) 정보 조회하여 전체 카운트를 리턴한다.
+	 * 
+	 * @param taskVo 업무(Task) 정보 TaskVo
+	 * @return 업무(Task) 정보 목록 전체 카운트
+	 * @throws Exception
+	 */
+	public long selectListCountTask(TaskVo taskVo) throws Exception {
+		return taskDAO.selectListCountTask(taskVo);
+	}
+
+	/**
+	 * 업무(Task) 정보를 상세 조회한다.
+	 *
+	 * @process 1. 업무(Task) 정보를 상세 조회한다. 2. 결과 TaskVo을(를) 리턴한다.
+	 * 
+	 * @param taskVo 업무(Task) 정보 TaskVo
+	 * @return 단건 조회 결과
+	 * @throws Exception
+	 */
+
+	public TaskUpdateVo selectTask(TaskUpdateVo updateVo) throws Exception {
+		TaskUpdateVo resultVO = new TaskUpdateVo();
+
+		// Task 세부적인 내용
+		TaskVo taskVo = new TaskVo();
+		taskVo.setTaskId(updateVo.getTaskId());
+		taskVo = taskDAO.selectTask(taskVo);
+
+		resultVO.setTaskId(taskVo.getTaskId());
+		resultVO.setBoardId(taskVo.getBoardId());
+		resultVO.setProjectUserId(taskVo.getProjectUserId());
+		resultVO.setProjectRepoId(taskVo.getProjectRepoId());
+		resultVO.setTaskTitle(taskVo.getTaskTitle());
+		resultVO.setPriority(taskVo.getPriority());
+		resultVO.setStartDate(taskVo.getStartDate());
+		resultVO.setEndDate(taskVo.getEndDate());
+		resultVO.setTags(taskVo.getTags());
+		resultVO.setUserName(taskVo.getUserName());
+
+		// 담당자
+		ManagerVo managerVo = new ManagerVo();
+		managerVo.setTaskId(updateVo.getTaskId());
+		List<ManagerVo> managerListVo = managerDAO.selectManagerByTaskId(managerVo);
+
+		resultVO.setManagerVo(managerListVo);
+
+		// TaskVersion
+		TaskVersionVo versionVo = new TaskVersionVo();
+		versionVo.setTaskId(updateVo.getTaskId());
+
+		versionVo = taskVersionDAO.selectTaskVersion(versionVo);
+
+		if (versionVo != null) {
+			resultVO.setTaskVersionId(versionVo.getTaskVersionId());
+			resultVO.setContent(versionVo.getContent());
+		}
+
+		// 파일
+		FileSrcVo fileSrcVo = new FileSrcVo();
+		fileSrcVo.setTaskVersionId(resultVO.getTaskVersionId());
+
+		List<FileSrcVo> fileSrcListVo = fileSrcDAO.selectFileSrcByTaskVersionId(fileSrcVo);
+		resultVO.setFileSrcVo(fileSrcListVo);
+
+		// 프로젝트 구성원
+		ProjectUserVo projectUserVo = new ProjectUserVo();
+		projectUserVo.setProjectId(updateVo.getProjectId());
+		List<ProjectUserVo> ProjectUserListVo = projectUserDAO.selectProjectUserByProjectId(projectUserVo);
+
+		resultVO.setProjectUserVo(ProjectUserListVo);
+
+		return resultVO;
+	}
+
+    /**
+     * 업무(Task) 정보를 등록 처리 한다.
+     *
+     * @process
+     * 1. 업무(Task) 정보를 등록 처리 한다.
+     * 2. 필수 외래키 값들을 실제 DB에서 조회하여 설정한다.
+     * 
+     * @param  taskVo 업무(Task) 정보 TaskVo
+     * @return 번호
+     * @throws Exception
+     */
+	public int insertTask(TaskVo taskVo) throws Exception {
+		
+		// 필수 값 유효성 검사
+		if (taskVo.getTaskTitle() == null || taskVo.getTaskTitle().trim().isEmpty()) {
+			throw new IllegalArgumentException("태스크 제목은 필수입니다.");
+		}
+		
+		if (taskVo.getBoardId() == null || taskVo.getBoardId().trim().isEmpty()) {
+			throw new IllegalArgumentException("보드 ID는 필수입니다.");
+		}
+		
+		// 기본값 설정
+		if (taskVo.getPriority() == null) {
+			taskVo.setPriority("MEDIUM"); // 기본 우선순위
+		}
+		
+		// 1. boardId로 해당 보드의 프로젝트 정보 조회
+		String projectId = this.getProjectIdByBoardId(taskVo.getBoardId());
+		if (projectId == null) {
+			throw new IllegalArgumentException("보드에 연결된 프로젝트를 찾을 수 없습니다.");
+		}
+
+		// 2. PROJECT_USER_ID 조회 (세션의 userId와 projectId로 조회)
+		String currentUserId = this.getCurrentUserIdFromSession();
+		if (currentUserId == null) {
+			throw new IllegalArgumentException("로그인 정보를 찾을 수 없습니다. 다시 로그인해주세요.");
+		}
+
+		
+		String projectUserId = this.getProjectUserIdByUserIdAndProjectId(currentUserId, projectId);
+		if (projectUserId == null) {
+			throw new IllegalArgumentException("해당 프로젝트에 참여하지 않은 사용자입니다.");
+		}
+		taskVo.setProjectUserId(projectUserId);
+		
+		// 3. PROJECT_REPO_ID 조회 (projectId로 조회, 없으면 null)
+		String projectRepoId = this.getProjectRepoIdByProjectId(projectId);
+		taskVo.setProjectRepoId(projectRepoId); // null일 수 있음
+
+		
+		int result = taskDAO.insertTask(taskVo);
+
+		
+		// 태스크 생성 시 담당자를 생성자로 자동 지정
+		if (result > 0 && taskVo.getTaskId() != null) {
+			try {
+				ManagerVo managerVo = new ManagerVo();
+				managerVo.setTaskId(taskVo.getTaskId());
+				managerVo.setUserId(currentUserId); // 생성자를 담당자로 지정
+				
+				int managerResult = managerDAO.insertManager(managerVo);
+			} catch (Exception e) {
+				// 담당자 등록 실패해도 태스크 생성은 유지 (담당자는 나중에 지정 가능)
+			}
+		}
+		
+		// 태스크 생성 시 캐시 업데이트는 TaskController에서 처리하므로 여기서는 생략
+		// (중복 처리 방지 및 성능 최적화)
+		
+		return result;
+	}
+	
+	/**
+	 * boardId로 해당 보드의 프로젝트 ID를 조회한다.
+	 */
+	private String getProjectIdByBoardId(String boardId) throws Exception {
+		try {
+			BoardVo searchVo = new BoardVo();
+			searchVo.setBoardId(boardId);
+			
+			BoardVo boardInfo = boardDAO.selectBoard(searchVo);
+			
+			if (boardInfo != null && boardInfo.getProjectId() != null) {
+				return boardInfo.getProjectId();
+			}
+			
+			return null;
+		} catch (Exception e) {
+			throw new Exception("보드 정보 조회 중 오류가 발생했습니다.", e);
+		}
+	}
+	
+	/**
+	 * userId와 projectId로 PROJECT_USER 테이블에서 PROJECT_USER_ID를 조회한다.
+	 */
+	private String getProjectUserIdByUserIdAndProjectId(String userId, String projectId) throws Exception {
+		try {
+			ProjectUserVo searchVo = new ProjectUserVo();
+			searchVo.setUserId(userId);
+			searchVo.setProjectId(projectId);
+			
+			
+			// PROJECT_USER 테이블에서 해당 사용자와 프로젝트에 대한 레코드 조회
+			ProjectUserVo projectUser = projectUserDAO.selectProjectUser(searchVo);
+			
+			if (projectUser != null && projectUser.getProjectUserId() != null) {
+				return projectUser.getProjectUserId();
+			} else {
+				return null;
+			}
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	/**
+	 * projectId로 PROJECT_REPOSITORY 테이블에서 PROJECT_REPO_ID를 조회한다.
+	 */
+	private String getProjectRepoIdByProjectId(String projectId) throws Exception {
+		try {
+			ProjectRepositoryVo searchVo = new ProjectRepositoryVo();
+			searchVo.setProjectId(projectId);
+			
+			List<ProjectRepositoryVo> repoList = projectRepositoryDAO.selectListProjectRepository(searchVo);
+			
+			if (repoList != null && !repoList.isEmpty()) {
+				// 첫 번째 리포지토리 ID 반환
+				return repoList.get(0).getProjectRepoId();
+			}
+			
+			return null; // 연결된 리포지토리가 없음
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	/**
+	 * 세션에서 현재 로그인한 사용자 ID를 가져온다.
+	 */
+	private String getCurrentUserIdFromSession() {
+		try {
+			ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+			if (attributes != null) {
+				HttpServletRequest request = attributes.getRequest();
+				
+				// 1. 세션에서 사용자 정보 조회 (다양한 키 시도)
+				Object userIdObj = request.getSession().getAttribute("userId");
+				if (userIdObj != null) {
+					return userIdObj.toString();
+				}
+				
+				userIdObj = request.getSession().getAttribute("userEmail");
+				if (userIdObj != null) {
+					return userIdObj.toString();
+				}
+				
+				userIdObj = request.getSession().getAttribute("user_id");
+				if (userIdObj != null) {
+					return userIdObj.toString();
+				}
+				
+				userIdObj = request.getSession().getAttribute("loginUserId");
+				if (userIdObj != null) {
+					return userIdObj.toString();
+				}
+				
+				// 2. 요청 파라미터에서 사용자 정보 조회 (백업)
+				String userIdParam = request.getParameter("userId");
+				if (userIdParam != null && !userIdParam.trim().isEmpty()) {
+					return userIdParam;
+				}
+				
+			}
+			
+			// 4. 세션 정보를 찾을 수 없는 경우 임시값 반환 (개발/테스트용)
+			return "user01"; // 개발/테스트용 임시값
+			
+		} catch (Exception e) {
+			// 오류 발생 시에도 임시값 반환 (개발/테스트용)
+			return "user01";
+		}
+	}
+	
+    /**
+     * 업무(Task) 정보를 갱신 처리 한다.
+     *
+     * @process
+     * 1. 업무(Task) 정보를 갱신 처리 한다.
+     * 
+     * @param  taskVo 업무(Task) 정보 TaskVo
+     * @return 번호
+     * @throws Exception
+     */
+	public int updateTask(TaskVo taskVo) throws Exception {
+		// 1. 프로젝트 ID 조회 (캐시 무효화를 위해)
+		String projectId = null;
+		try {
+			if (taskVo.getBoardId() != null) {
+				projectId = this.getProjectIdByBoardId(taskVo.getBoardId());
+			}
+		} catch (Exception e) {
+		}
+		
+		// 2. 데이터베이스 업데이트 실행
+		int result = taskDAO.updateTask(taskVo);
+		
+		// 태스크 업데이트 시 캐시 업데이트는 TaskController에서 처리하므로 여기서는 생략
+		// (중복 처리 방지 및 성능 최적화)
+		
+		return result;	   		
+	}
+	
+    /**
+     * 업무(Task)의 보드 위치만 갱신 처리 한다. (칸반 카드 이동용)
+     *
+     * @process
+     * 1. 업무(Task)의 보드 위치만 갱신 처리 한다.
+     * 
+     * @param  taskVo 업무(Task) 정보 TaskVo (taskId, boardId만 필요)
+     * @return 번호
+     * @throws Exception
+     */
+	public int updateTaskBoard(TaskVo taskVo) throws Exception {
+		// 1. 먼저 프로젝트 ID를 조회 (캐시 업데이트를 위해)
+		String projectId = null;
+		try {
+			if (taskVo.getBoardId() != null) {
+				projectId = this.getProjectIdByBoardId(taskVo.getBoardId());
+			}
+		} catch (Exception e) {
+		}
+		
+		// 2. 데이터베이스 업데이트 실행
+		int result = taskDAO.updateTaskBoard(taskVo);
+		
+		// 3. DB 업데이트 성공 시 Redis 캐시 업데이트
+		if (result > 0 && projectId != null && kanbanRedisService.isRedisConnected()) {
+			try {
+				// Redis 캐시에서 해당 태스크의 보드 위치 업데이트
+				kanbanRedisService.updateTaskInCache(projectId, taskVo.getTaskId(), taskVo.getBoardId());
+			} catch (Exception e) {
+				
+				// 캐시가 비어있거나 데이터가 없는 경우, 실제 데이터로 캐시 재구축 시도
+				if (e.getMessage().contains("캐시에서 태스크를 찾을 수 없음") || e.getMessage().contains("캐시 내 태스크 수=0")) {
+					try {
+						// 프로젝트의 모든 태스크를 DB에서 조회하여 캐시 재구축
+						rebuildProjectTaskCache(projectId);
+						
+						// 재구축 후 다시 업데이트 시도
+						kanbanRedisService.updateTaskInCache(projectId, taskVo.getTaskId(), taskVo.getBoardId());
+					} catch (Exception rebuildException) {
+						// 최종적으로 캐시 무효화
+						kanbanRedisService.invalidateProjectCache(projectId);
+					}
+				} else {
+					// 다른 오류인 경우 캐시 무효화
+					kanbanRedisService.invalidateProjectCache(projectId);
+				}
+			}
+		}
+		
+		return result;	   		
+	}
+
+	/**
+	 * 프로젝트의 태스크 캐시를 실제 DB 데이터로 재구축
+	 * @param projectId 프로젝트 ID
+	 * @throws Exception
+	 */
+	 
+	private void rebuildProjectTaskCache(String projectId) throws Exception {
+		try {
+				
+			// 1. 프로젝트의 모든 보드 조회
+			List<BoardVo> boards = boardDAO.selectBoardsByProject(projectId);
+			if (boards == null || boards.isEmpty()) {
+				return;
+			}
+			
+			// 2. 보드 ID 목록 생성
+			List<String> boardIds = new ArrayList<>();
+			for (BoardVo board : boards) {
+				boardIds.add(board.getBoardId());
+			}
+			
+			// 3. TaskListWithUserNameBatch 사용하여 모든 태스크 조회 (사용자 이름 포함)
+			List<TaskVo> tasks = this.selectTaskListWithUserNameBatch(projectId, boardIds);
+			
+			if (tasks != null && !tasks.isEmpty()) {
+				// 4. TaskVo 리스트를 Map 리스트로 변환
+				List<Map<String, Object>> taskMaps = new ArrayList<>();
+				for (TaskVo task : tasks) {
+					Map<String, Object> taskMap = new HashMap<>();
+					taskMap.put("taskId", task.getTaskId());
+					taskMap.put("boardId", task.getBoardId());
+					taskMap.put("projectUserId", task.getProjectUserId());
+					taskMap.put("taskTitle", task.getTaskTitle());
+					taskMap.put("priority", task.getPriority());
+					taskMap.put("startDate", task.getStartDate());
+					taskMap.put("endDate", task.getEndDate());
+					taskMap.put("tags", task.getTags());
+					taskMap.put("userName", task.getUserName());
+					taskMap.put("projectId", projectId);
+					taskMaps.add(taskMap);
+				}
+				
+				// 5. Redis 캐시에 저장
+				kanbanRedisService.cacheProjectTasks(projectId, taskMaps);
+			} else {
+				// 빈 리스트라도 캐시에 저장하여 일관성 유지
+				kanbanRedisService.cacheProjectTasks(projectId, new ArrayList<>());
+			}
+			
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+
+	/**
+	 * 업무(Task) 정보를 갱신 처리 한다.
+	 *
+	 * @process 1. 업무(Task) 정보를 갱신 처리 한다.
+	 * 
+	 * @param taskVo 업무(Task) 정보 TaskVo
+	 * @return 번호
+	 * @throws Exception
+	 
+	public int updateTask(TaskVo taskVo) throws Exception {
+		return taskDAO.updateTask(taskVo);
+	}
+	*/
+
+	/**
+	 * 업무(Task) 정보를 삭제 처리 한다.
+	 *
+	 * @process 1. 업무(Task) 정보를 삭제 처리 한다.
+	 * 
+	 * @param taskVo 업무(Task) 정보 TaskVo
+	 * @return 번호
+	 * @throws Exception
+	 */
+	public int deleteTask(TaskVo taskVo) throws Exception {
+		// 1. 프로젝트 ID 조회 (캐시 무효화를 위해)
+		String projectId = null;
+		try {
+			if (taskVo.getBoardId() != null) {
+				projectId = this.getProjectIdByBoardId(taskVo.getBoardId());
+			}
+		} catch (Exception e) {
+		}
+		
+		// 2. 데이터베이스 삭제 실행
+		CommentVo commentVo = new CommentVo();
+		commentVo.setTaskId(taskVo.getTaskId());
+		commentDAO.deleteCommentByTaskId(commentVo);
+		
+		TaskVersionVo taskVersionVo = new TaskVersionVo();
+		taskVersionVo.setTaskId(taskVo.getTaskId());
+		taskVersionDAO.deleteTaskVersionByTaskId(taskVersionVo);
+		
+		int result = taskDAO.deleteTask(taskVo);
+		
+		// 태스크 삭제 시 캐시 업데이트는 TaskController에서 처리하므로 여기서는 생략
+		// (중복 처리 방지 및 성능 최적화)
+		
+		return result;
+	}
+
+	/**
+	 * TaskVo를 Map으로 변환 (Redis 캐시 저장용)
+	 */
+	private java.util.Map<String, Object> convertTaskVoToMap(TaskVo taskVo) {
+		java.util.Map<String, Object> taskMap = new java.util.HashMap<>();
+		
+		taskMap.put("taskId", taskVo.getTaskId());
+		taskMap.put("taskTitle", taskVo.getTaskTitle());
+		taskMap.put("boardId", taskVo.getBoardId());
+		taskMap.put("projectUserId", taskVo.getProjectUserId());
+		taskMap.put("projectRepoId", taskVo.getProjectRepoId());
+		taskMap.put("priority", taskVo.getPriority());
+		taskMap.put("startDate", taskVo.getStartDate());
+		taskMap.put("endDate", taskVo.getEndDate());
+		taskMap.put("tags", taskVo.getTags());
+		
+		return taskMap;
+	}
+	
+	/**
+	 * Map을 TaskVo로 변환 (Redis 캐시 조회용)
+	 */
+	private TaskVo convertMapToTaskVo(java.util.Map<String, Object> taskMap) {
+		TaskVo taskVo = new TaskVo();
+		
+		// 기본 필드 변환
+		taskVo.setTaskId((String) taskMap.get("taskId"));
+		taskVo.setTaskTitle((String) taskMap.get("taskTitle"));
+		taskVo.setBoardId((String) taskMap.get("boardId"));
+		taskVo.setProjectUserId((String) taskMap.get("projectUserId"));
+		taskVo.setProjectRepoId((String) taskMap.get("projectRepoId"));
+		taskVo.setPriority((String) taskMap.get("priority"));
+		taskVo.setStartDate((String) taskMap.get("startDate"));
+		taskVo.setEndDate((String) taskMap.get("endDate"));
+		taskVo.setTags((String) taskMap.get("tags"));
+		
+		// 누락된 필드들 추가
+		if (taskMap.get("sortField") != null)
+			taskVo.setSortField((String) taskMap.get("sortField"));
+		if (taskMap.get("sortOrder") != null)
+			taskVo.setSortOrder((String) taskMap.get("sortOrder"));
+		if (taskMap.get("userName") != null)
+			taskVo.setUserName((String) taskMap.get("userName"));
+		if (taskMap.get("projectId") != null)
+			taskVo.setProjectId((String) taskMap.get("projectId"));
+		if (taskMap.get("boardIds") != null)
+			taskVo.setBoardIds((String) taskMap.get("boardIds"));
+		
+		return taskVo;
+	}
+	
+	/**
+	 * 프로젝트 ID로 모든 태스크를 조회한다. (칸반 보드용)
+	 */
+	public List<TaskVo> selectTasksByProject(String projectId) throws Exception {
+
+		TaskVo searchVo = new TaskVo();
+		// 페이징 없이 모든 데이터 조회를 위해 큰 값 설정
+		searchVo.setPageIndex(1);
+		searchVo.setPageSize(1000); // 충분히 큰 값으로 설정
+		List<TaskVo> allTasks = taskDAO.selectListTask(searchVo);
+		
+		// 프로젝트 ID로 필터링 (boardId를 통해 projectId 확인)
+		List<TaskVo> projectTasks = new java.util.ArrayList<>();
+		for (TaskVo task : allTasks) {
+			try {
+				String taskProjectId = this.getProjectIdByBoardId(task.getBoardId());
+				if (projectId.equals(taskProjectId)) {
+					projectTasks.add(task);
+				}
+			} catch (Exception e) {
+			}
+		}
+		
+		return projectTasks;
+	}
+	
+	/**
+	 * 사용자 이름을 포함한 태스크 목록 조회
+	 * 
+	 * @param taskVo 검색 조건을 담은 TaskVo
+	 * @return 사용자 이름이 포함된 TaskVo 리스트
+	 * @throws Exception
+	 */
+	public List<TaskVo> selectTaskListWithUserName(TaskVo taskVo) throws Exception {
+		return taskDAO.selectTaskListWithUserName(taskVo);
+	}
+	
+	/**
+	 * 특정 프로젝트의 여러 보드에서 사용자 이름 포함 태스크를 한 번의 쿼리로 배치 조회
+	 * 
+	 * @param projectId 프로젝트 ID
+	 * @param boardIds 보드 ID 리스트 (예: ["1", "2", "3", "4", "5", "6"])
+	 * @return 사용자 이름이 포함된 TaskVo 리스트
+	 * @throws Exception
+	 */
+	public List<TaskVo> selectTaskListWithUserNameBatch(String projectId, List<String> boardIds) throws Exception {
+		
+		if (projectId == null || projectId.isEmpty() || boardIds == null || boardIds.isEmpty()) {
+			return new java.util.ArrayList<>();
+		}
+		
+		// DAO에서 프로젝트 필터링과 IN 절을 사용한 배치 조회
+		List<TaskVo> batchResult = taskDAO.selectTaskListWithUserNameBatch(projectId, boardIds);
+		
+		return batchResult;
+	}
+	
+}
+

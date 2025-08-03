@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="프로젝트 설정 메인 페이지">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <style type="text/css">
+        <![CDATA[body{
+    overflow: hidden;
+}
+
+/* 모달창 둥근 모서리 제거 */
+.w2wframe,
+iframe[src*="projectSettingMainPage"],
+div[id*="wframe"][style*="position: absolute"],
+div[id*="popup"] iframe,
+[id*="wframe_popup"],
+[class*="wframe_popup"] {
+    border-radius: 0 !important;
+    -webkit-border-radius: 0 !important;
+    -moz-border-radius: 0 !important;
+}
+
+#mf_wfr_mainContent_projectSettingPopup {
+    border-radius: 0 !important;
+}
+
+/* 모달 헤더 완전히 숨김 */
+#mf_wfr_mainContent_projectSettingPopup_header,
+[id*="projectSettingPopup_header"],
+[id*="popup_header"],
+.popup_header,
+.wframe_popup_header {
+    display: none !important;
+    height: 0 !important;
+    visibility: hidden !important;
+}
+
+#mf_wfr_mainContent_projectSettingPopup_body {
+    top : 0px;
+}
+
+/* WebSquare 기본 스타일보다 우선순위 높게 헤더 제거 */
+.w2popup_window .w2window_header,
+.w2window_header,
+#mf_wfr_mainContent_projectSettingPopup_header,
+[id*="projectSettingPopup"] .w2window_header,
+[id*="projectSettingPopup_header"] {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    z-index: -1 !important;
+}
+
+/* 모달 전체 컨테이너 설정 */
+#grp_mainContainer {
+    height: 100vh !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+/* 강력한 세로선 - 여러 방법 동시 적용 */
+#grp_mainContainer::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 303px !important;
+    width: 2px !important;
+    height: 100vh !important;
+    background-color: #000000 !important;
+    z-index: 9999 !important;
+    display: block !important;
+}
+
+/* 콘텐츠 영역에도 추가 보험 */
+#grp_contentArea::after {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 1px !important;
+    height: 100% !important;
+    background-color: #000000 !important;
+    z-index: 9999 !important;
+}
+
+/* 사이드메뉴 자체에도 강제 적용 */
+#grp_sideMenuArea {
+    border-right: 2px solid #000000 !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+}
+
+/* iframe 강제 높이 설정 - 저장 버튼까지 보이도록 */
+#wfr_settingContent {
+    min-height: 1400px !important;
+    height: 1400px !important;
+    max-height: none !important;
+}
+
+/* iframe 컨테이너 스크롤 설정 */
+#grp_settingContent {
+    overflow-y: auto !important;
+    max-height: calc(100vh - 40px) !important;
+}
+
+/* body 전체에는 적용하지 않음 - 제거됨 */
+]]></style>
+        <xf:model>
+            <w2:dataCollection baseNode="map">
+                <w2:dataMap baseNode="map" id="dm_main">
+                    <w2:keyInfo>
+                        <w2:key id="currentPage" name="현재페이지" dataType="text"/>
+                        <w2:key id="projectName" name="프로젝트명" dataType="text"/>
+                    </w2:keyInfo>
+                    <w2:data use="true">
+                        <currentPage>detail</currentPage>
+                        <projectName>2차 프로젝트</projectName>
+                    </w2:data>
+                </w2:dataMap>
+            </w2:dataCollection>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        <script lazy="false" type="text/javascript"><![CDATA[
+
+/**
+ * 페이지 로드 시 초기화 함수
+ * 프로젝트 정보 파라미터 확인 및 기본 페이지 로드
+ */
+scwin.onpageload = function() {
+    // taskModal과 동일한 방식으로 파라미터 받기
+    let projectInfo = $p.getParameter("projectInfo");
+    
+    if (projectInfo && projectInfo.projectId) {
+        /** @type {string} 파라미터에서 전달받은 프로젝트 ID */
+        scwin.projectId = projectInfo.projectId;
+        
+        
+        // 프로젝트 ID 있을 때 기본 세부사항 페이지 로드
+        scwin.loadSettingContent("projectSettingDetail");
+    } else {
+        // 프로젝트 정보 파라미터가 없을 경우 수동 입력 요청
+        scwin.requestProjectId();
+    }
+    
+    // JavaScript로 헤더 강제 제거 및 세로선 추가
+    setTimeout(function() {
+        scwin.forceRemoveHeaderAndAddLine();
+    }, 0);
+};
+
+/**
+ * 모달창 헤더 제거 및 UI 세로선 추가
+ * 팝업 헤더를 완전히 숨기고 사이드메뉴 구분선 생성
+ */
+scwin.forceRemoveHeaderAndAddLine = function() {
+    try {
+        // 모든 가능한 헤더 요소들 찾아서 제거
+        let headerSelectors = [
+            '#mf_wfr_mainContent_projectSettingPopup_header',
+            '[id*="projectSettingPopup_header"]',
+            '.w2window_header',
+            '.w2popup_window .w2window_header'
+        ];
+        
+        headerSelectors.forEach(function(selector) {
+            let elements = document.querySelectorAll(selector);
+            elements.forEach(function(el) {
+                if (el) {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.style.setProperty('height', '0px', 'important');
+                    el.style.setProperty('min-height', '0px', 'important');
+                    el.style.setProperty('position', 'absolute', 'important');
+                    el.style.setProperty('top', '-9999px', 'important');
+                    el.style.setProperty('opacity', '0', 'important');
+                    el.remove(); // 아예 제거
+                }
+            });
+        });
+        
+        // 모달창 안에만 세로선 추가 - body 제외
+        let containers = [
+            document.getElementById('grp_mainContainer'),
+            document.getElementById('grp_contentArea'),
+            document.querySelector('[id*="projectSettingPopup_body"]'),
+            document.querySelector('[id*="projectSettingPopup"]')
+        ];
+        
+        containers.forEach(function(container, index) {
+            if (container) {
+                let line = document.createElement('div');
+                line.id = 'customVerticalLine' + index;
+                // 모달 안에서만 보이도록 높이를 100%로 변경
+                line.style.cssText = 'position: absolute !important; top: 0 !important; left: 303px !important; width: 1px !important; height: 100% !important; background-color: #000000 !important; z-index: 999999 !important; pointer-events: none !important; display: block !important;';
+                container.appendChild(line);
+                
+            }
+        });
+        
+        // 추가로 사이드메뉴에 직접 border 적용
+        let sideMenu = document.getElementById('grp_sideMenuArea');
+        if (sideMenu) {
+            sideMenu.style.setProperty('border-right', '5px solid #00ff00', 'important');
+            sideMenu.style.setProperty('box-sizing', 'border-box', 'important');
+            
+        }
+        
+        
+    } catch(e) {
+       
+    }
+};
+
+/**
+ * 프로젝트 ID 수동 입력 요청
+ * 파라미터 누락 시 사용자에게 직접 입력받아 URL 재로딩
+ */
+scwin.requestProjectId = function() {
+    
+    
+    let projectId = prompt("프로젝트 ID를 입력하세요:");
+    
+    if (projectId === null) {
+        // 사용자가 취소를 눌렀을 때
+        $c.win.alert("프로젝트 ID가 필요합니다");
+        
+    } else if (projectId.trim() === "") {
+        // 빈 값을 입력했을 때
+        $c.win.alert("프로젝트 ID를 입력해야 합니다");
+        
+    } else if (!/^\d+$/.test(projectId.trim())) {
+        // 숫자가 아닌 값을 입력했을 때
+        $c.win.alert("프로젝트 ID는 숫자여야 합니다.");
+        
+    }
+    
+    projectId = projectId.trim();
+    
+    
+    // URL에 project_id 파라미터 추가하여 페이지 재로딩
+    let currentUrl = window.location.href;
+    let newUrl = currentUrl + "&project_id=" + projectId;
+    
+    
+    
+    window.location.href = newUrl;
+};
+
+/**
+ * 설정 페이지 동적 로드
+ * @param {string} menuType - 로드할 설정 페이지 타입 (detail, access 등)
+ * @returns {boolean} 로드 성공 여부
+ */
+scwin.loadSettingContent = function (menuType) {
+    try {
+        let srcPath = "";
+        let selectedMenu = "";
+
+       
+
+        // projectId가 없으면 로딩하지 않음
+        if (!scwin.projectId) {
+           
+            return false;
+        }
+
+        switch (menuType) {
+            case "projectSettingDetail":
+                srcPath = "/InsWebApp/ui/project/projectSettingDetailPage.xml?projectId=" + scwin.projectId;
+                selectedMenu = "detail";
+                break;
+            case "projectSettingAccess":
+                srcPath = "/InsWebApp/ui/project/projectSettingAccessPage.xml?projectId=" + scwin.projectId;
+                selectedMenu = "access";
+                break;
+            /* case "projectSettingGithub":
+                srcPath = "/InsWebApp/ui/project/projectSettingGithubPage.xml?projectId=" + scwin.projectId;
+                selectedMenu = "github";
+                break; */
+            default:
+                srcPath = "/InsWebApp/ui/project/projectSettingDetailPage.xml?projectId=" + scwin.projectId;
+                selectedMenu = "detail";
+                break;
+        }
+
+       
+
+       
+
+        // wframe 존재 확인
+        if (wfr_settingContent) {
+           
+
+            // 프레임 소스 변경
+            wfr_settingContent.setSrc(srcPath);
+
+            // 변경 후 확인
+            setTimeout(function () {
+                
+            }, 100);
+
+        } else {
+            
+            return false;
+        }
+
+        // 현재 페이지 상태 업데이트
+        dm_main.set("currentPage", selectedMenu);
+
+        return true;
+
+    } catch (e) {
+        
+        return false;
+    }
+};
+
+/**
+ * 사이드메뉴 선택 시 페이지 변경
+ * @param {string} menuType - 변경할 메뉴 타입
+ */
+scwin.changeMenu = function (menuType) {
+   
+
+    // 설정 콘텐츠 로드
+    scwin.loadSettingContent(menuType);
+
+    // 사이드메뉴에 선택된 메뉴 알림
+    try {
+        if (wfr_sideMenu && wfr_sideMenu.getWindow) {
+            const sideMenuWindow = wfr_sideMenu.getWindow();
+            if (sideMenuWindow && sideMenuWindow.scwin && sideMenuWindow.scwin.updateSelectedMenu) {
+                const selectedMenu = dm_main.get("currentPage");
+                sideMenuWindow.scwin.updateSelectedMenu(selectedMenu);
+              
+            } else {
+                
+            }
+        } else {
+         
+        }
+    } catch (e) {
+        
+    }
+};
+
+/**
+ * 사이드바에 프로젝트명 정보 전달
+ * 프로젝트명을 사이드메뉴 프레임에 업데이트
+ */
+scwin.updateSidebarProjectInfo = function() {
+    try {
+        if (wfr_sideMenu && wfr_sideMenu.getWindow) {
+            const sideMenuWindow = wfr_sideMenu.getWindow();
+            if (sideMenuWindow && sideMenuWindow.scwin && sideMenuWindow.scwin.updateProjectName) {
+                const projectName = dm_main.get("projectName");
+                sideMenuWindow.scwin.updateProjectName(projectName);
+                
+            }
+        }
+    } catch(e) {
+        
+    }
+};
+
+/**
+ * 사이드메뉴 프레임 로드 완료 이벤트
+ * 프로젝트 정보를 사이드바에 전달
+ */
+scwin.wfr_sideMenu_onready = function() {
+   
+    // 사이드바에 프로젝트 정보 전달
+    setTimeout(function() {
+        scwin.updateSidebarProjectInfo();
+    }, 100);
+};
+
+/**
+ * 설정 콘텐츠 프레임 로드 완료 이벤트
+ */
+scwin.wfr_settingContent_onready = function() {
+    
+};
+
+/**
+ * 헤더 프레임 로드 완료 이벤트
+ */
+scwin.wfr_header_onready = function() {
+    
+};
+
+/**
+ * 프로젝트 설정 팝업 닫기
+ * 부모창에 모달 닫기 요청 전달
+ */
+scwin.closeProjectSettingPopup = function() {
+    
+    try {
+        // 부모창(projectMainPage)에게 모달 닫기 요청
+        if (window.parent && window.parent.scwin && window.parent.scwin.closeProjectSettingModal) {
+            
+            window.parent.scwin.closeProjectSettingModal();
+        } else if (window.parent && window.parent.$p && window.parent.$p.closePopup) {
+            
+            window.parent.$p.closePopup("projectSettingPopup");
+        } else {
+            
+            // 현재 창에서 부모에게 메시지 전송
+            if (window.parent) {
+                window.parent.postMessage({action: 'closeProjectSettingPopup'}, '*');
+            }
+        }
+    } catch(e) {
+        
+    }
+};
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+        <!-- 전체 페이지 컨테이너 (모달용 레이아웃) -->
+        <!-- 프로젝트 설정 모달 레이아웃 구조:
+             1. grp_mainContainer: 전체 컴테이너 (flexbox 레이아웃)
+             2. grp_headerArea: 헤더 영역 (모달에서 display:none)
+             3. grp_contentArea: 메인 콘텐츠 영역
+                3.1. grp_sideMenuArea: 사이드메뉴 (303px 고정 너비)
+                3.2. grp_settingContent: 설정 콘텐츠 (나머지 영역) -->
+        <xf:group style="display:flex;flex-direction:column;margin:0;padding:0;height:100vh;" id="grp_mainContainer">
+            
+            <!-- 헤더 영역 (모달에서는 숨김) -->
+            <xf:group style="width:100%;position:fixed;top:0;left:0;z-index:1000;display:none;" id="grp_headerArea">
+                <w2:wframe id="wfr_header" style="width:100%;" src="/InsWebApp/ui/cmmn/header.xml" ev:onready="scwin.wfr_header_onready"/>
+            </xf:group>
+            
+            <!-- 메인 콘텐츠 영역 (헤더 없이 전체 높이 사용) -->
+            <xf:group style="width:100%;height:100vh;display:flex;" id="grp_contentArea">
+                
+                <!-- 사이드메뉴 영역 -->
+                <xf:group style="width:303px;height:100vh;position:absolute;top:0;z-index:999;overflow:hidden;" id="grp_sideMenuArea">
+                    <w2:wframe id="wfr_sideMenu" style="width:100%;height:100%;" src="/InsWebApp/ui/cmmn/projectSettingSideMenu.xml" ev:onready="scwin.wfr_sideMenu_onready"/>
+                </xf:group>
+                
+                <!-- 설정 콘텐츠 -->
+                <xf:group style="width:calc(100% - 303px);background-color:#f5f5f5;border-left:1px solid #000000;height:100vh;overflow-y:auto;position:absolute;left:303px;top:0;" id="grp_settingContent">
+                    <w2:wframe id="wfr_settingContent" style="width:100%;height:1400px;min-height:1400px;" src="/InsWebApp/ui/project/projectSettingDetailPage.xml" ev:onready="scwin.wfr_settingContent_onready"/>
+                </xf:group>
+                
+            </xf:group>
+            
+        </xf:group>
+    </body>
+</html>

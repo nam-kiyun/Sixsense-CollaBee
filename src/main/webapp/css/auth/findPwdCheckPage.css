@@ -1,10 +1,54 @@
 @charset "UTF-8";
 
-
-
 .signup-group {
     gap: 20px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+}
+
+.button-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.button-group .login-button {
+    border: none;
+    outline: none;
+    color: #D9D9D9;
+}
+
+.button-group .login-button:hover {
+    border: none;
+    outline: none;
+    color: #a6a4a4;
+}
+
+.timeCheck-text{
+	color: #D9D9D9;
+	margin-top: 10px;
+}
+
+
+.code-box {
+    max-height: 0; 
+    opacity: 0;    
+    overflow: hidden;
+    transition: max-height 0.7s ease-in-out, opacity 0.7s ease-in-out; 
+}
+
+.code-box.show {
+    max-height: 500px; 
+    opacity: 1; 
+}
+
+.error-text{
+	height:23px;
+	font-size: 11px;
+	text-align: left;
+	color: red;
+	margin-top: 5px;
 }

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper      
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"      
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+	@subject     : 깃허브 개인 처리를 위한 PAT토큰 관련 처리를 담당하는 Sql Mapper
+	@description : 깃허브 개인 처리를 위한 PAT토큰 관련 처리를 담당하는 Sql Mapper
+	@author      : 남기윤
+	@since       : 2025/07/01
+	@modification
+	===========================================================
+	DATE              AUTHOR             DESC
+	===========================================================
+	2025/07/01              남기윤             최초 생성
+ -->
+<mapper namespace="com.demo.proworks.userpersonaltoken">
+    <insert id="insertUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
+    	<!-- 깃허브 개인 처리를 위한 PAT토큰를 등록한다. AUTO_INCREMENT PK이므로 USER_PERSONAL_TOKEN_ID는 자동 생성 -->	
+    		
+        INSERT INTO USER_PERSONAL_TOKENS   /* QueryID : com.demo.proworks.userpersonaltoken.insertUserPersonalToken */
+        ( 
+            USER_ID, ACCESS_TOKEN, SCOPE, CREATED_AT
+        )
+        VALUES  
+        ( 
+            #{userId}, #{accessToken}, #{scope}, NOW()
+        )          
+    </insert>	
+	
+    <update id="updateUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
+    	<!-- 깃허브 개인 처리를 위한 PAT토큰를 갱신한다. -->
+    	
+        UPDATE USER_PERSONAL_TOKENS    /* QueryID : com.demo.proworks.userpersonaltoken.updateUserPersonalToken */      
+      	  SET  
+                ACCESS_TOKEN = #{accessToken}
+            <if test="scope                 != null"> , SCOPE                  = #{scope}                  </if>
+            <if test="expiredAt            != null"> , EXPIRED_AT             = #{expiredAt}             </if>                 
+        WHERE   
+                USER_PERSONAL_TOKEN_ID = #{userPersonalTokenId}
+    </update>
+	
+    <delete id="deleteUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
+    	<!-- 깃허브 개인 처리를 위한 PAT토큰를 삭제한다. -->
+    	
+        DELETE FROM USER_PERSONAL_TOKENS   /* QueryID : com.demo.proworks.userpersonaltoken.deleteUserPersonalToken */ 
+        WHERE   
+                USER_PERSONAL_TOKEN_ID = #{userPersonalTokenId}        
+    </delete>
+	
+    <select id="selectUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo" resultType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
+    	<!-- 깃허브 개인 처리를 위한 PAT토큰를 상세 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.userpersonaltoken.selectUserPersonalToken */
+            USER_PERSONAL_TOKEN_ID as userPersonalTokenId, USER_ID as userId, ACCESS_TOKEN as accessToken, SCOPE as scope, CREATED_AT as createdAt, EXPIRED_AT as expiredAt
+        FROM USER_PERSONAL_TOKENS 
+        WHERE 
+                USER_PERSONAL_TOKEN_ID = #{userPersonalTokenId}			
+    </select>
+	
+    <select id="selectUserPersonalTokenByUserId" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo" resultType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
+    	<!-- 사용자 ID로 깃허브 개인 처리를 위한 PAT토큰을 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.userpersonaltoken.selectUserPersonalTokenByUserId */
+            USER_PERSONAL_TOKEN_ID as userPersonalTokenId, USER_ID as userId, ACCESS_TOKEN as accessToken, SCOPE as scope, CREATED_AT as createdAt, EXPIRED_AT as expiredAt
+        FROM USER_PERSONAL_TOKENS 
+        WHERE 
+                USER_ID = #{userId}
+        ORDER BY CREATED_AT DESC
+        LIMIT 1
+    </select>
+	
+    <select id="selectListUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo" resultType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo">
+    	<!-- 깃허브 개인 처리를 위한 PAT토큰 목록을 조회한다. -->
+           SELECT    /* QueryID : com.demo.proworks.userpersonaltoken.selectListUserPersonalToken */
+               USER_PERSONAL_TOKEN_ID as userPersonalTokenId, USER_ID as userId, ACCESS_TOKEN as accessToken, SCOPE as scope, CREATED_AT as createdAt, EXPIRED_AT as expiredAt		       
+           FROM (
+               SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
+               FROM (				
+                   SELECT 
+                       *  		                  
+                   FROM USER_PERSONAL_TOKENS
+                   WHERE  1=1    		
+	     																														
+               ) S, (SELECT @ROWNUM := 0) TMP
+           ) A
+            WHERE PAGE = #{pageIndex}
+    </select>
+	
+    <select id="selectListCountUserPersonalToken" parameterType="com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo" resultType="long">
+    <!-- 깃허브 개인 처리를 위한 PAT토큰 목록의 카운트를 조회한다. -->
+    
+         SELECT    /* QueryID : com.demo.proworks.userpersonaltoken.selectListCountUserPersonalToken */
+             COUNT(*) totcnt  		                  
+         FROM USER_PERSONAL_TOKENS
+         WHERE  1=1    		
+
+    </select>
+
+</mapper>

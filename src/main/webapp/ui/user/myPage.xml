@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head>
+    	<w2:type>COMPONENT</w2:type>
+    	<w2:buildDate />
+    	<w2:MSA />
+    	<xf:model>
+    		<w2:dataCollection baseNode="map">
+    			<w2:dataMap baseNode="map" id="dma_Param">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="아이디" id="userId"></w2:key>
+    					<w2:key dataType="text" name="이름" id="userName"></w2:key>
+    					<w2:key dataType="text" name="비밀번호" id="password"></w2:key>
+    					<w2:key dataType="text" name="이미지 URL" id="profileImageUrl"></w2:key>
+    					<w2:key dataType="text" name="상태" id="isActive"></w2:key>
+    					<w2:key dataType="text" name="가입일" id="createdAt"></w2:key>
+    					<w2:key dataType="text" name="로그인 실패 횟수" id="loginFailCount"></w2:key>
+    					<w2:key dataType="text" name="로그인 실패 시간" id="lastFailTime"></w2:key>
+    					<w2:key dataType="text" name="계정 잠금 여부" id="accountLocked"></w2:key>
+    					<w2:key dataType="text" name="파일" id="fileData"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
+    			<w2:dataMap baseNode="map" id="dma_userInfo">
+    				<w2:keyInfo>
+    					<w2:key dataType="text" name="사용자명" id="userName"></w2:key>
+    					<w2:key dataType="text" name="사용자ID" id="userId"></w2:key>
+    					<w2:key dataType="text" name="사용자 이미지" id="profileImageUrl"></w2:key>
+    				</w2:keyInfo>
+    			</w2:dataMap>
+    		</w2:dataCollection>
+    		<w2:workflowCollection />
+    		<xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" method="post" mediatype="application/json" ref="" target='data:json,{"id":"dma_userInfo","key":"userInfo"}' encoding="UTF-8"
+    			instance="" replace="" errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.sbm_getUserInfo_submitdone"
+    			ev:submiterror="scwin.sbm_getUserInfo_submiterror" abortTrigger="">
+    		</xf:submission>
+    	</xf:model>
+    	<w2:layoutInfo />
+    	<w2:publicInfo method="" />
+    	<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
+    scwin.onresize();
+    $p.executeSubmission("sbm_getUserInfo");
+    //전역변수
+    scwin.file = "";
+}
+
+scwin.onresize = function (e) {
+    // resize 이벤트 정의
+    window.onresize = function () {
+        scwin.applyResponsiveWidth();
+    };
+
+    // 페이지 로딩 시에도 한 번 실행
+    scwin.applyResponsiveWidth();
+};
+
+
+//반응형 width 값 조절
+scwin.applyResponsiveWidth = function () {
+    let width = window.innerWidth;
+
+    if (width <= 700) {
+        form_group.setStyle("width", "100%");
+    } else if (width <= 1000) {
+        form_group.setStyle("width", "60%");
+    } else {
+        form_group.setStyle("width", "40%");
+    }
+};
+
+
+scwin.profile_button_onclick = function (e) {
+    $p.$("#fileInput_hidden").click();
+    $p.$("#fileInput_hidden").on("change", scwin.fileInput_change);
+};
+
+scwin.profileIcon_button_onclick = function (e) {
+    $p.$("#fileInput_hidden").click();
+    $p.$("#fileInput_hidden").on("change", scwin.fileInput_change);
+};
+
+//파일 탐색기에서 이미지 선택했을 때 
+scwin.fileInput_change = function (e) {
+    const fileInput = $p.$("#fileInput_hidden").get(0);
+    const file = fileInput.files[0];
+
+    if (!file) return;
+    scwin.file = file;
+
+    const imageUrl = URL.createObjectURL(file);
+    profile_button.setStyle("background-image", `url('${imageUrl}')`);
+}
+
+//회원정보 수정된거 저장하는 버튼
+scwin.update_button_onclick = function (e) {
+    let password = password_input.getValue();
+    let passwordCheck = passwordCheck_input.getValue();
+
+    let isValid = true;
+    let pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+={}\[\]:;"'<>,.?/-]).{8,}$/;
+
+    if (password && !pwRegex.test(password)) {
+        password_error_text.setValue("*비밀번호는 8자 이상이며 영문자·숫자·특수문자를 포함해야 합니다.");
+        isValid = false;
+    }
+
+    // 비밀번호 일치 검사
+    if (password && passwordCheck && password !== passwordCheck) {
+        passwordCheck_error_text.setValue("*비밀번호가 일치하지 않습니다.");
+        isValid = false;
+    }
+
+    if (!isValid) return;
+
+    //  데이터 보내기
+    const formData = new FormData();
+
+    // 빈 값으로 필드 세팅
+    formData.append("userId", email_input.getValue());
+    formData.append("userName", name_input.getValue());
+    formData.append("password", password_input.getValue());
+    formData.append("fileData", scwin.file);
+
+    $.ajax({
+        url: "/InsWebApp/user/update.pwkjson",
+        type: "POST",
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: async function (res) {
+            await $c.win.alert("회원정보가 수정되었습니다");
+        },
+        error: async function (err) {
+            await $c.win.alert("회원정보 수정을 실패했습니다");
+        }
+    });
+
+};
+
+scwin.sbm_getUserInfo_submitdone = function (e) {
+    const responseData = e.responseJSON.userVo;
+    console.log(responseData);
+
+    name_input.setValue(responseData.userName);
+    email_input.setValue(responseData.userId);
+
+    if (responseData?.profileImageUrl) {
+        profile_button.setStyle("background-image", `url('${responseData.profileImageUrl}')`);
+    }
+
+    header.getWindow().output_userName.setValue(responseData.userName);
+    header.getWindow().img_userIcon.setSrc(responseData.profileImageUrl);
+};]]></script>
+    	<style type="text/css"><![CDATA[body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.container-group {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+/* 헤더 */
+.header-group {
+    height: 5%;
+}
+
+/* 메인 */
+.main-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 95%;
+    overflow: hidden;
+}
+
+/* 입력 form 그룹 스타일 */
+.form-group {
+    width: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 60px;
+}
+
+/* input group 별 스타일 */
+.input-group-header {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    gap: 20%;
+}
+
+.input-group {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    gap: 25px;
+    border: none;
+    outline: none;
+}
+
+.form-input-group {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    border: none;
+    outline: none;
+    gap: 10px;
+}
+
+.form-input-box {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    border: none;
+    outline: none;
+    gap:25px;
+}
+
+/* 프로필 이미지 그룹 */
+.image-group {
+    position: relative;
+    width: 150px;
+    height: 150px;
+}
+
+.profile-button {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background-image: url('https://github.com/dorazi0423/test/blob/main/group1.png?raw=true');
+    background-size: cover;
+    background-position: center;
+}
+
+.profileIcon-button {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-image: url(' /InsWebApp/images/camera.svg');
+    background-size: 30px 30px;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: none;
+    outline: none;
+    background-color: #FFB823;
+}
+
+/* 파일 인풋 */
+.file-input {
+    display: none;
+}
+
+.name-input {
+    width: 35%;
+    height: 45px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* 중간 부분 인풋 스타일 */
+.input-content-group {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.input-content-group .content-input {
+    width: 50%;
+    height: 45px;
+}
+
+.input-content-group .content-text {
+    width: 25%;
+    padding-top: 5px;
+    box-sizing: border-box;
+}
+
+/* 이메일 input */
+.email-input {
+    border: none;
+    outline: none;
+    pointer-events: none;
+    user-select: none;
+}
+
+
+.error-text {
+    width: 75%;
+    height: 23px;
+    font-size: 11px;
+    text-align: right;
+    color: red;
+    margin: 0;
+}
+
+.emal-error{
+    height:10px;
+}
+
+
+/*  ------------------------------------------------------------------------ */
+/* 버튼 */
+.user-button {
+    width: 80%;
+    height: 35px;
+    border-radius: 6px;
+    background-color: #FFB823;
+    outline: none;
+    border: none;
+}
+
+.user-button:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}]]></style>
+    </head>
+    <body ev:onpageload="scwin.onpageload">
+    	<xf:group meta_snippetCategory="00_화면시작" meta_snippetName="0_01 페이지시작" meta_snippetKeyComponent="true" style="" id=""
+    		class="sub_contents container-group ">
+    		<xf:group style="" id="" class="header-group">
+    			<w2:pageFrame src="/InsWebApp/ui/cmmn/header.xml" style="" id="header" class=""></w2:pageFrame>
+    		</xf:group>
+    		<xf:group style="" id="" class="main-group">
+    			<xf:group style="" id="form_group" class="form-group">
+    				<xf:group style="" id="" class="input-group-header">
+
+
+    					<xf:group style="" id="" class="image-group">
+    						<xf:trigger ev:onclick="scwin.profile_button_onclick" style="" id="profile_button" type="button"
+    							class="profile-button">
+    							<xf:label></xf:label>
+    						</xf:trigger>
+    						<xf:trigger ev:onclick="scwin.profileIcon_button_onclick" style="" id="profileIcon_button" type="button"
+    							class="profileIcon-button">
+    							<xf:label></xf:label>
+    						</xf:trigger>
+    						<input style="display:none;" id="fileInput_hidden" type="file" class="" onchange="scwin.fileInput_change"></input>
+    					</xf:group>
+    					<xf:input style="" id="name_input" class="name-input"></xf:input>
+    				</xf:group>
+    				<xf:group style="" id="" class="input-content-group">
+    					<xf:group style="" id="" class="form-input-group">
+    						<xf:group style="" id="" class="form-input-box">
+    							<w2:textbox style="" id="" label="이메일" class="content-text"></w2:textbox>
+    							<xf:input style="" id="email_input" class="content-input email-input"></xf:input>
+    						</xf:group>
+    						<w2:textbox class="error-text emal-error" id="" label="" style=""></w2:textbox>
+    					</xf:group>
+    					<xf:group style="" id="" class="form-input-group">
+    						<xf:group style="" id="" class="form-input-box">
+    							<w2:textbox style="" id="" label="비밀번호" class="content-text"></w2:textbox>
+    							<xf:secret style="" id="password_input" class="content-input"></xf:secret>
+    						</xf:group>
+    						<w2:textbox style="" id="password_error_text" label="" class="error-text"></w2:textbox>
+    					</xf:group>
+    					<xf:group style="" id="" class="form-input-group">
+    						<xf:group style="" id="" class="form-input-box">
+    							<w2:textbox style="" id="" label="비밀번호 확인" class="content-text"></w2:textbox>
+    							<xf:secret style="" id="passwordCheck_input" class="content-input"></xf:secret>
+    						</xf:group>
+    						<w2:textbox class="error-text" id="passwordCheck_error_text" label="" style=""></w2:textbox>
+    					</xf:group>
+    				</xf:group>
+    				<xf:trigger type="button" style="" id="update_button" class="user-button " ev:onclick="scwin.update_button_onclick">
+    					<xf:label><![CDATA[수정]]></xf:label>
+    				</xf:trigger>
+    			</xf:group>
+    		</xf:group>
+    	</xf:group>
+    </body>
+</html>

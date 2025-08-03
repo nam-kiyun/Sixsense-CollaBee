@@ -1,0 +1,3979 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="webRTC 다대다 화상통화">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map">
+            	<w2:dataMap baseNode="map" id="dma_videoChat">
+            		<w2:keyInfo>
+            			<w2:key id="channelName" name="channelName" dataType="text" />
+            			<w2:key id="userId" name="userId" dataType="text" />
+            			<w2:key id="userName" name="userName" dataType="text" />
+            			<w2:key id="isJoined" name="isJoined" dataType="text" />
+            			<w2:key id="isMuted" name="isMuted" dataType="text" />
+            			<w2:key id="isVideoOff" name="isVideoOff" dataType="text" />
+            		</w2:keyInfo>
+            	</w2:dataMap>
+            	<w2:dataList baseNode="list" id="dlt_chatMessages" repeatNode="map">
+            		<w2:columnInfo>
+            			<w2:column id="messageId" name="messageId" dataType="text" />
+            			<w2:column id="userId" name="userId" dataType="text" />
+            			<w2:column id="userName" name="userName" dataType="text" />
+            			<w2:column id="message" name="message" dataType="text" />
+            			<w2:column id="timestamp" name="timestamp" dataType="text" />
+            			<w2:column id="isOwn" name="isOwn" dataType="text" />
+            		</w2:columnInfo>
+            	</w2:dataList>
+
+            	<!-- 사용자 정보 데이터맵 (세션 정보) -->
+            	<w2:dataMap baseNode="map" id="dm_userInfo">
+            		<w2:keyInfo>
+            			<w2:key id="userId" name="사용자ID" dataType="text" />
+            			<w2:key id="userName" name="사용자명" dataType="text" />
+            			<w2:key id="userImage" name="사용자이미지" dataType="text" />
+            		</w2:keyInfo>
+            		<w2:data use="true">
+            			<userId></userId>
+            			<userName></userName>
+            			<userImage></userImage>
+            		</w2:data>
+            	</w2:dataMap>
+            	<w2:dataMap baseNode="map" id="dataMap1">
+            		<w2:keyInfo>
+            			<w2:key id="projectId" name="projectId" dataType="text"></w2:key>
+            		</w2:keyInfo>
+            	</w2:dataMap>
+            </w2:dataCollection>
+
+            <!-- 세션 사용자 정보 가져오기 submission -->
+            <xf:submission id="sbm_getUserInfo" action="/InsWebApp/user/sessionInfo.pwkjson" 
+                           method="post" mediatype="application/json" 
+                           ref="" target='data:json,{"id":"dm_userInfo","key":"userVo"}' 
+                           encoding="UTF-8" instance="" replace="none" 
+                           errorHandler="" customHandler="" mode="asynchronous" processMsg="" 
+                           ev:submit="" ev:submitdone="scwin.sbm_getUserInfo_submitdone" 
+                           ev:submiterror="scwin.sbm_getUserInfo_submiterror" abortTrigger="">
+            </xf:submission>
+        </xf:model>
+        
+        <style>
+            /* 화상통화 모달 헤더 완전히 제거 */
+            [id*="videoChatPopup_header"] {
+                display: none !important;
+                height: 0 !important;
+                visibility: hidden !important;
+            }
+            
+            /* 화상통화 모달 body를 최상단으로 이동 (방법 2: 추천) */
+            [id*="mf_wfr_mainContent_videoChatPopup"][id*="_body"] {
+                top: 0px !important;
+            }
+            
+            /* 화상통화 팝업 헤더만 제거 (다른 팝업에 영향 없음) */
+            [id*="videoChatPopup"] .w2popup_window .w2window_header,
+            [id*="videoChatPopup"] .w2window_header,
+            [id*="videoChatPopup_"] .w2window_header {
+                display: none !important;
+                height: 0 !important;
+                min-height: 0 !important;
+                visibility: hidden !important;
+            }
+            
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            html { height: 100vh; margin: 0; padding: 0; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; overflow: hidden; margin: 0; padding: 0; height: 100vh; }
+            .video-chat-container { display: flex; height: 100%; width: 100%; background: #000; margin: 0; padding: 0; }
+            .video-section { flex: 3; position: relative; background: #1a1a1a; display: flex; flex-direction: column; }
+            .local-video-container { display: none; /* 오른쪽 상단 고정 비디오 숨김 - 그리드로 이동 */ }
+            .local-video { width: 100%; height: 100%; background: #2a2a2a; border-radius: 8px; object-fit: cover; }
+            .remote-videos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); grid-gap: 15px; padding: 20px; height: 100%; overflow-y: auto; }
+            .remote-user-video { background: #2a2a2a; border-radius: 12px; overflow: hidden; position: relative; aspect-ratio: 16/9; border: 2px solid #444; }
+            .remote-video-wrapper { width: 100%; height: 100%; position: relative; }
+            .remote-video-player { width: 100%; height: 100%; position: relative; }
+            .remote-video-player video { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+            .remote-user-name { position: absolute; bottom: 10px; left: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+            .control-panel { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 10; }
+            .control-btn { width: 60px; height: 60px; border: none; border-radius: 50%; font-size: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); font-weight: bold; color: white; }
+            .join-btn { background: #28a745; width: 120px; border-radius: 30px; }
+            .leave-btn { background: #dc3545; }
+            .mute-btn { background: #17a2b8; }
+            .video-btn { background: #ffc107; color: #000; }
+            .pip-btn { background: #6f42c1; color: white; }
+            .pip-btn.active { background: #5a2a91; }
+            
+            /* PIP 모드 확대 버튼 스타일 */
+            .pip-expand-btn {
+                position: absolute !important;
+                top: 5px !important;
+                right: 5px !important;
+                width: 30px !important;
+                height: 30px !important;
+                background: rgba(255, 184, 35, 0.9) !important;
+                border: none !important;
+                border-radius: 4px !important;
+                color: white !important;
+                font-size: 16px !important;
+                cursor: pointer !important;
+                z-index: 10001 !important;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                transition: all 0.2s ease !important;
+                font-weight: bold !important;
+            }
+            
+            .pip-expand-btn:hover {
+                background: rgba(255, 184, 35, 1) !important;
+                transform: scale(1.1) !important;
+                box-shadow: 0 3px 12px rgba(0,0,0,0.5) !important;
+            }
+            
+            .pip-expand-btn:active {
+                transform: scale(0.95) !important;
+            }
+            
+            /* 미니 PIP 컨테이너 스타일 */
+            .mini-pip-container {
+                position: fixed !important;
+                bottom: 20px !important;
+                right: 20px !important;
+                width: 320px !important;
+                min-width: 250px !important;
+                max-width: 600px !important;
+                height: 400px !important;
+                min-height: 200px !important;
+                max-height: 80vh !important;
+                background: rgba(0, 0, 0, 0.9) !important;
+                border-radius: 12px !important;
+                border: 2px solid #FFB823 !important;
+                z-index: 9999 !important;
+                display: none;
+                overflow: visible !important;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5) !important;
+                user-select: none !important;
+                transform: translate3d(0, 0, 0) !important;
+            }
+            
+            .mini-pip-header {
+                background: #FFB823 !important;
+                color: white !important;
+                padding: 8px 12px !important;
+                font-size: 14px !important;
+                font-weight: bold !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                cursor: move !important;
+                user-select: none !important;
+                position: relative !important;
+                z-index: 10001 !important;
+            }
+            
+            .mini-pip-header:active {
+                cursor: grabbing !important;
+            }
+            
+            .mini-pip-header:hover {
+                background: #e6a820 !important;
+            }
+            
+            /* 리사이즈 핸들들 */
+            .resize-handle {
+                position: absolute !important;
+                background: #FFB823 !important;
+                opacity: 0.5 !important;
+                transition: opacity 0.2s !important;
+                z-index: 10002 !important;
+                pointer-events: auto !important;
+            }
+            
+            .resize-handle:hover {
+                opacity: 1 !important;
+                background: #e6a820 !important;
+            }
+            
+            /* 모서리 핸들들 */
+            .resize-handle.corner {
+                width: 15px;
+                height: 15px;
+            }
+            
+            .resize-handle.corner.nw {
+                top: 0;
+                left: 0;
+                cursor: nw-resize;
+                border-radius: 12px 0 0 0;
+            }
+            
+            .resize-handle.corner.ne {
+                top: 0;
+                right: 0;
+                cursor: ne-resize;
+                border-radius: 0 12px 0 0;
+            }
+            
+            .resize-handle.corner.sw {
+                bottom: 0;
+                left: 0;
+                cursor: sw-resize;
+                border-radius: 0 0 0 12px;
+            }
+            
+            .resize-handle.corner.se {
+                bottom: 0;
+                right: 0;
+                cursor: se-resize;
+                border-radius: 0 0 12px 0;
+            }
+            
+            /* 가장자리 핸들들 */
+            .resize-handle.edge {
+                background: rgba(255, 184, 35, 0.2);
+            }
+            
+            .resize-handle.edge.top {
+                top: 0;
+                left: 15px;
+                right: 15px;
+                height: 5px;
+                cursor: n-resize;
+            }
+            
+            .resize-handle.edge.bottom {
+                bottom: 0;
+                left: 15px;
+                right: 15px;
+                height: 5px;
+                cursor: s-resize;
+            }
+            
+            .resize-handle.edge.left {
+                left: 0;
+                top: 15px;
+                bottom: 15px;
+                width: 5px;
+                cursor: w-resize;
+            }
+            
+            .resize-handle.edge.right {
+                right: 0;
+                top: 15px;
+                bottom: 15px;
+                width: 5px;
+                cursor: e-resize;
+            }
+            
+            .mini-pip-container.dragging {
+                transition: none;
+            }
+            
+            .mini-pip-container.resizing {
+                transition: none;
+            }
+            
+            .mini-pip-close {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 18px;
+                cursor: pointer;
+                padding: 0;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .mini-pip-close:hover {
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 50%;
+            }
+            
+            .header-buttons {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .mini-pip-expand {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 16px;
+                cursor: pointer;
+                padding: 0;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+            }
+            
+            .mini-pip-expand:hover {
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 50%;
+                transform: scale(1.1);
+            }
+            
+            .pip-controls {
+                position: absolute !important;
+                top: 8px !important;
+                right: 8px !important;
+                display: none !important;
+                flex-direction: row !important;
+                gap: 4px !important;
+                z-index: 10001 !important;
+                width: auto !important;
+                height: auto !important;
+                flex: none !important;
+            }
+            
+            .pip-control-btn {
+                background: rgba(0, 0, 0, 0.7);
+                border: none;
+                color: white;
+                font-size: 14px;
+                cursor: pointer;
+                padding: 4px;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: all 0.2s ease;
+            }
+            
+            .pip-control-btn:hover {
+                background: rgba(255, 184, 35, 0.8);
+                transform: scale(1.1);
+            }
+            
+            /* PIP 모드 전용 스타일 */
+            .pip-mode .local-video-container {
+                width: 100% !important;
+                height: 50% !important;
+                max-width: none !important;
+                max-height: none !important;
+            }
+            
+            .pip-mode #localVideo {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
+                border-radius: 6px !important;
+            }
+            
+            .pip-mode .remote-videos-grid {
+                width: 100% !important;
+                height: 50% !important;
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                grid-gap: 4px !important;
+                padding: 2px !important;
+            }
+            
+            .pip-mode .remote-video-container {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: none !important;
+                max-height: none !important;
+            }
+            
+            .pip-mode .remote-video {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: cover !important;
+                border-radius: 4px !important;
+            }
+            
+            .pip-mode .video-section {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 4px !important;
+            }
+            
+            .mini-video-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                grid-gap: 8px;
+                padding: 12px;
+                height: calc(100% - 40px);
+                overflow-y: auto;
+            }
+            
+            .mini-video-item {
+                position: relative;
+                aspect-ratio: 16/9;
+                background: #2a2a2a;
+                border-radius: 8px;
+                overflow: hidden;
+                border: 1px solid #444;
+            }
+            
+            .mini-video {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                border-radius: 6px;
+            }
+            
+            .mini-video-name {
+                position: absolute;
+                bottom: 4px;
+                left: 4px;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 10px;
+                font-weight: bold;
+            }
+            
+            .mini-video-item.muted .mini-video-name {
+                background: #dc3545;
+            }
+            
+            .mini-video-item.video-off .mini-video {
+                display: none;
+            }
+            
+            .mini-video-off-message {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: white;
+                font-size: 12px;
+                font-weight: bold;
+                text-align: center;
+            }
+            .muted { background: #dc3545 !important; }
+            .video-off { background: #6c757d !important; }
+            .chat-section { flex: 1; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; min-width: 270px; max-width: 330px; padding: 0 !important; margin: 0 !important; gap: 0 !important; height: 100vh; }
+            .chat-header { height: 40px; flex-shrink: 0; padding: 8px 10px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
+            .chat-title { font-size: 16px; font-weight: bold; color: #333; }
+            .chat-subtitle { font-size: 12px; color: #666; }
+            .chat-message-container { flex: 1; overflow: hidden; height: calc(100vh - 130px); padding: 0 !important; margin: 0 !important; }
+            #chatMessages { height: 100%; overflow-y: scroll; overflow-x: hidden; border: 2px solid #FFB823; padding: 8px; background: white; scrollbar-width: thin; scrollbar-color: #FFB823 #f1f1f1; }
+            .chat-message { margin-bottom: 8px; padding: 6px 10px; border-radius: 8px; max-width: 80%; word-wrap: break-word; display: block; }
+            .chat-message.own { background: #FFB823; color: white; margin-left: auto; text-align: right; }
+            .chat-message.other { background: #f1f1f1; color: black; margin-right: auto; text-align: left; }
+            .chat-input-container { height: 60px; flex-shrink: 0; display: flex; padding: 10px; background: #f8f9fa; border-top: 1px solid #dee2e6; align-items: center; gap: 10px; margin: 0 !important; }
+            #chatInput { flex: 1; padding: 10px 15px; border: 1px solid #ced4da; border-radius: 25px; font-size: 14px; outline: none; background: white; }
+            .send-btn { padding: 10px 20px; background: #FFB823; color: white; border: none; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer; min-width: 60px; }
+        </style>
+        <!-- 서버 정보 유틸리티 로드 -->
+        <script type="text/javascript" src="/InsWebApp/js/comm/serverInfo.js"></script>
+        
+        <script type="text/javascript"><![CDATA[
+// ===== Simple WebRTC 다대다 화상통화 구현 (P2P Mesh 방식) =====
+// 모든 변수들은 화상통화 세션 동안 유지되며, 페이지 언로드 시 정리됨
+
+/** @type {Map<string, RTCPeerConnection>} 사용자 ID별 P2P 연결 객체 매핑 */
+let peerConnections = new Map();
+
+/** @type {Map<string, Array>} 연결 전 수신된 ICE 후보들을 사용자별로 대기 저장 */
+let pendingIceCandidates = new Map();
+
+/** @type {MediaStream|null} 로컬 사용자의 카메라/마이크 스트림 (getUserMedia로 획득) */
+let localStream = null;
+
+/** @type {WebSocket|null} 시그널링 및 채팅용 WebSocket 연결 */
+let chatSocket = null;
+
+/** @type {boolean} 현재 화상통화 방 참가 상태 */
+let isJoined = false;
+
+/** @type {boolean} 로컬 오디오 음소거 상태 */
+let isMuted = false;
+
+/** @type {boolean} 로컬 비디오 비활성화 상태 */
+let isVideoOff = false;
+
+/** @type {Map<string, Object>} 원격 사용자들의 기본 정보 저장 (userId, userName, 기타) */
+let remoteUserInfo = new Map();
+
+/** @type {Map<string, MediaStream>} 사용자 ID별 원격 미디어 스트림 매핑 */
+let remoteStreams = new Map();
+
+// STUN/TURN 서버 설정
+const iceServers = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    // 무료 TURN 서버 추가
+    {
+        urls: 'turn:openrelay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+    }
+];
+
+// ===== RTCPeerConnection 기본 설정 =====
+/**
+ * 모든 P2P 연결에 사용될 RTCPeerConnection 설정
+ * @type {RTCConfiguration}
+ */
+const pcConfig = {
+    iceServers: iceServers,
+    iceCandidatePoolSize: 10
+};
+
+// ===== 사용자 식별 시스템 =====
+/**
+ * 고유 사용자 ID 생성 함수
+ * 현재 시간과 랜덤 값을 조합하여 고유한 데스크톱 사용자 ID를 생성
+ * @returns {string} 'user_timestamp_random' 형식의 고유 ID
+ */
+const generateUserId = () => {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    return `user_${timestamp}_${random}`;
+};
+
+// ===== 현재 사용자 정보 =====
+/**
+ * 현재 데스크톱 사용자 정보 객체
+ * 세션에서 실제 사용자 정보를 로드할 때까지의 임시 값
+ * dataObject 또는 URL 파라미터로 전달받은 projectId 사용
+ * @type {Object}
+ * @property {string} userId - 고유 사용자 ID
+ * @property {string} userName - 사용자 표시명
+ * @property {string} channelName - WebRTC 방 채널명
+ */
+let projectId = 'default';
+let isFromPip = false;
+try {
+    // WebSquare popup의 dataObject에서 projectId 추출
+    if ($p && $p.getParameter && $p.getParameter("projectInfo")) {
+        const projectInfo = $p.getParameter("projectInfo");
+        if (projectInfo && projectInfo.projectId) {
+            projectId = projectInfo.projectId;
+            isFromPip = projectInfo.fromPip === true;
+        }
+    }
+    
+    // 모바일에서 dataObject로 전달된 경우 처리
+    if (projectId === 'default' && $p && $p.getParameter && $p.getParameter("dataObject")) {
+        const dataObject = $p.getParameter("dataObject");
+        if (dataObject && dataObject.projectInfo && dataObject.projectInfo.projectId) {
+            projectId = dataObject.projectInfo.projectId;
+        }
+    }
+    
+    // 대안: URL parameter도 확인 (fallback)
+    if (projectId === 'default') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlProjectId = urlParams.get('project_id');
+        if (urlProjectId) {
+            projectId = urlProjectId;
+        }
+    }
+} catch (e) {
+}
+
+let currentUser = {
+    userId: generateUserId(),
+    userName: "로딩중...",
+    channelName: "webrtc-room-" + projectId
+};
+
+/**
+ * 페이지 로드 시 초기화 함수
+ * 프로젝트 ID 추출, 세션 사용자 정보 로드, WebRTC 시스템 초기화 등 수행
+ * @returns {void}
+ */
+scwin.onpageload = function() {
+    //카메라 촬영
+    
+    // HTTPS 체크
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        $c.win.alert("webRTC는 HTTPS 환경에서만 작동합니다.");
+        return;
+    }
+    
+    // 먼저 세션에서 사용자 정보 로드
+    $p.executeSubmission("sbm_getUserInfo");
+    
+    // 데이터 초기화 (사용자 정보는 submission 완료 후 업데이트)
+    dma_videoChat.set("channelName", currentUser.channelName);
+    dma_videoChat.set("userId", currentUser.userId);
+    dma_videoChat.set("userName", currentUser.userName);
+    dma_videoChat.set("isJoined", "false");
+    
+    // WebSocket 초기화 (채팅용 - 그대로 유지)
+    scwin.initializeChatWebSocket();
+    
+    // WebRTC 초기화는 사용자 정보 로드 완료 후 실행 (scwin.initializeWebRTCAfterUserInfo에서 처리)
+    
+    // 엔터키 이벤트 리스너 추가
+    setTimeout(() => {
+        const chatInput = document.getElementById("chatInput");
+        if (chatInput) {
+            chatInput.addEventListener('keydown', function(event) {
+                if (event.keyCode === 13 || event.key === 'Enter') {
+                    event.preventDefault();
+                    scwin.sendChatMessage();
+                    return false;
+                }
+            });
+            
+            chatInput.focus();
+        } else {
+        }
+        
+    }, 2000); // 충분한 로딩 시간 확보
+    
+    // PIP 이벤트 리스너 설정
+    scwin.setupPipEventListeners();
+    
+    // PIP 모드 체크
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('pipMode') === 'true') {
+        scwin.setupPipMode();
+    }
+};
+
+// 페이지 언로드 시 정리 작업
+scwin.onpageunload = function() {
+    
+    try {
+        // 1. WebRTC 스트림 정리
+        if (scwin.localStream) {
+            scwin.localStream.getTracks().forEach(function(track) {
+                track.stop();
+            });
+            scwin.localStream = null;
+        }
+        
+        // 2. 피어 연결 정리
+        if (scwin.localConnection) {
+            scwin.localConnection.close();
+            scwin.localConnection = null;
+        }
+        
+        // 3. 이벤트 리스너 정리
+        if (typeof scwin.handleBeforeUnload === 'function') {
+            window.removeEventListener('beforeunload', scwin.handleBeforeUnload);
+        }
+        if (typeof scwin.handleMessage === 'function') {
+            window.removeEventListener('message', scwin.handleMessage);
+        }
+        
+        // 4. 타이머 정리
+        if (scwin.callTimer) {
+            clearInterval(scwin.callTimer);
+            scwin.callTimer = null;
+        }
+        
+        // 5. 부모 창에 정리 완료 알림
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                action: 'videoChatPageUnloaded',
+                timestamp: Date.now()
+            }, '*');
+        }
+        
+        
+        
+    } catch (error) {
+        
+    }
+};
+
+// Simple WebRTC 초기화
+/**
+ * Simple WebRTC 시스템 초기화
+ * HTTPS 환경 체크, WebRTC 지원 확인, 기본 설정 진행
+ * @returns {void}
+ * @throws {Error} HTTPS 환경 아니거나 WebRTC 미지원 시 에러
+ */
+scwin.initializeSimpleWebRTC = function() {
+    try {
+        
+        // WebRTC 지원 확인
+        if (!window.RTCPeerConnection) {
+            throw new Error('RTCPeerConnection을 지원하지 않는 브라우저입니다');
+        }
+        
+        // HTTPS 환경 체크
+        const isHttps = window.location.protocol === 'https:';
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        if (!isHttps && !isLocalhost) {
+        } else if (isHttps) {
+        } else {
+        }
+        
+        
+        
+    } catch (error) {
+    }
+};
+
+// 자동 화상통화 참가 (페이지 진입 시)
+/**
+ * 자동 화상통화 참가 (페이지 진입 시)
+ * 로컬 미디어 스트림 획득, 비디오 표시, 방 참가 알림 전송
+ * @async
+ * @returns {Promise<void>} 자동 참가 완료 Promise
+ * @throws {Error} 카메라/마이크 접근 권한 거부 또는 WebSocket 연결 실큀 시
+ */
+scwin.autoJoinCall = async function() {
+    try {
+        
+        
+        // 로컬 미디어 스트림 가져오기
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 1280, height: 720 },
+            audio: true
+        });
+        
+        // 로컬 비디오 표시 (기존 방식은 숨김)
+        const localVideo = document.getElementById("localVideo");
+        if (localVideo) {
+            localVideo.srcObject = localStream;
+        }
+        
+        // 내 비디오를 그리드에 추가
+        scwin.addMyVideoToGrid(localStream);
+        
+        // 화상통화 방 참가 알림
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            const joinRoomMessage = {
+                type: 'join-room',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName,
+                timestamp: Date.now()
+            };
+            chatSocket.send(JSON.stringify(joinRoomMessage));
+            
+        }
+        
+        isJoined = true;
+        dma_videoChat.set("isJoined", "true");
+        
+        scwin.updateControlButtons();
+        
+        
+        
+        
+        
+    } catch (error) {
+        
+        
+        let errorMessage = "카메라/마이크 접근 권한이 필요합니다";
+        if (error.name === 'NotAllowedError') {
+            errorMessage = "카메라/마이크 권한을 허용해주세요.";
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+
+        
+        // 오류 발생 시 기본 상태로 복원
+        isJoined = false;
+        dma_videoChat.set("isJoined", "false");
+        scwin.updateControlButtons();
+    }
+};
+
+// 화상통화 참가 (Simple WebRTC P2P 방식) - 수동 참가용
+/**
+ * 수동 화상통화 참가
+ * 사용자의 명시적 참가 요청 시 로컬 미디어 획득 및 방 입장 처리
+ * @async
+ * @returns {Promise<void>} 화상통화 참가 완료 Promise
+ * @throws {Error} 미디어 접근 권한 거부, WebSocket 연결 실큀, P2P 연결 실큀 시
+ */
+scwin.joinCall = async function() {
+    try {
+        scwin.showLoading("카메라와 마이크에 접근하는 중...");
+        
+        // 로컬 미디어 스트림 가져오기
+        localStream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 1280, height: 720 },
+            audio: true
+        });
+        
+        // 로컬 비디오 표시 (기존 방식은 숨김)
+        const localVideo = document.getElementById("localVideo");
+        if (localVideo) {
+            localVideo.srcObject = localStream;
+        }
+        
+        // 내 비디오를 그리드에 추가
+        scwin.addMyVideoToGrid(localStream);
+        
+        // 화상통화 방 참가 알림
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            const joinRoomMessage = {
+                type: 'join-room',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName,
+                timestamp: Date.now()
+            };
+            chatSocket.send(JSON.stringify(joinRoomMessage));
+            
+        }
+        
+        isJoined = true;
+        dma_videoChat.set("isJoined", "true");
+        
+        scwin.updateControlButtons();
+        scwin.hideLoading();
+        
+        
+        
+        
+        
+    } catch (error) {
+        
+        scwin.hideLoading();
+        
+        let errorMessage = "카메라/마이크 접근 권한이 필요합니다";
+        if (error.name === 'NotAllowedError') {
+            errorMessage = "카메라/마이크 권한을 허용해주세요.";
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        $c.win.alert(errorMessage);
+        
+    }
+};
+
+// ===== Simple WebRTC 필수 함수들 =====
+
+// WebRTC 시그널링 메시지 처리
+function handleWebRTCMessage(message) {
+    
+    
+    switch (message.type) {
+        case 'user-joined':
+            handleUserJoined(message.data);
+            break;
+        case 'offer':
+            handleOffer(message.data);
+            break;
+        case 'answer':
+            handleAnswer(message.data);
+            break;
+        case 'ice-candidate':
+            handleIceCandidate(message.data);
+            break;
+        case 'user-left':
+            handleUserLeft(message.data);
+            break;
+    }
+}
+
+// 새 사용자 참가 처리
+async function handleUserJoined(data) {
+    const { userId, userName } = data;
+    if (userId === currentUser.userId) return;
+    
+    // 이미 연결된 사용자인지 확인
+    if (peerConnections.has(userId)) {
+        
+                    return;
+                }
+
+    
+    
+    // P2P 연결 시작 (Offer 생성)
+    await createPeerConnection(userId, userName, true);
+}
+
+// P2P 연결 생성
+/**
+ * P2P 연결 생성 및 관리
+ * 특정 사용자와의 WebRTC PeerConnection 생성, 이벤트 리스너 설정, offer/answer 처리
+ * @async
+ * @param {string} userId - 연결할 상대방 사용자 ID
+ * @param {string} userName - 연결할 상대방 사용자명
+ * @param {boolean} isOfferer - offer 생성 주체 여부 (true: offer 생성, false: answer 대기)
+ * @returns {Promise<RTCPeerConnection>} 생성된 PeerConnection 객체
+ * @throws {Error} PeerConnection 생성/설정 실큀 시 에러
+ */
+async function createPeerConnection(userId, userName, isOfferer) {
+    try {
+        // ===== RTCPeerConnection 생성 및 기본 설정 =====
+        const pc = new RTCPeerConnection(iceServers);
+        peerConnections.set(userId, pc);
+        
+        // ===== 로컬 미디어 스트림 추가 =====
+        // 내 카메라/마이크 스트림을 PeerConnection에 추가
+        // 상대방이 ontrack 이벤트로 수신할 수 있도록 함
+        if (localStream) {
+            localStream.getTracks().forEach(track => {
+                pc.addTrack(track, localStream);
+            });
+        }
+        
+        // ===== 원격 스트림 수신 처리 =====
+        // 상대방의 미디어 스트림을 수신하면 자동으로 호출
+        // event.streams[0]에 상대방의 비디오/오디오 트랙 포함
+        pc.ontrack = (event) => {
+            
+            displayRemoteVideo(event.streams[0], userName, userId);
+        };
+        
+        // ICE 후보 처리
+        pc.onicecandidate = (event) => {
+            if (event.candidate && chatSocket) {
+                chatSocket.send(JSON.stringify({
+                    type: 'ice-candidate',
+                    channelName: currentUser.channelName,
+                    targetUserId: userId,
+                    iceCandidate: JSON.stringify(event.candidate),
+                    userId: currentUser.userId,
+                    userName: currentUser.userName,
+                    timestamp: Date.now()
+                }));
+            }
+        };
+        
+        // Offer 생성 및 전송
+        if (isOfferer) {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            
+            chatSocket.send(JSON.stringify({
+                type: 'offer',
+                channelName: currentUser.channelName,
+                targetUserId: userId,
+                sdp: JSON.stringify(offer),
+                userId: currentUser.userId,
+                userName: currentUser.userName,
+                timestamp: Date.now()
+            }));
+        }
+        
+        
+        return pc; // PC 객체 반환
+
+            } catch (error) {
+        
+        return null;
+    }
+}
+
+// Offer 처리
+/**
+ * WebRTC Offer 수신 및 처리
+ * 상대방으로부터 받은 SDP offer를 파싱하고 answer를 생성하여 응답
+ * @async
+ * @param {Object} data - offer 메시지 데이터
+ * @param {string} data.userId - offer 발신자 사용자 ID
+ * @param {string} data.userName - offer 발신자 사용자명
+ * @param {string} data.sdp - JSON 문자열 형태의 SDP offer 정보
+ * @returns {Promise<void>} offer 처리 완료 Promise
+ * @throws {Error} SDP 파싱, PeerConnection 생성, answer 생성 실큀 시 에러
+ */
+async function handleOffer(data) {
+    const { userId, userName, sdp } = data;
+    
+    
+    const offer = JSON.parse(sdp);
+    const pc = await createPeerConnection(userId, userName, false);
+    
+    if (!pc) {
+        
+        return;
+    }
+    
+    await pc.setRemoteDescription(offer);
+    
+    // 대기 중인 ICE 후보들 처리
+    await processPendingIceCandidates(userId);
+    
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    
+    chatSocket.send(JSON.stringify({
+        type: 'answer',
+        channelName: currentUser.channelName,
+        targetUserId: userId,
+        sdp: JSON.stringify(answer),
+        userId: currentUser.userId,
+        userName: currentUser.userName,
+        timestamp: Date.now()
+    }));
+}
+
+// Answer 처리
+/**
+ * WebRTC Answer 수신 및 처리
+ * 상대방으로부터 받은 SDP answer를 로컬 PeerConnection에 설정
+ * @async
+ * @param {Object} data - answer 메시지 데이터
+ * @param {string} data.userId - answer 발신자 사용자 ID
+ * @param {string} data.sdp - JSON 문자열 형태의 SDP answer 정보
+ * @returns {Promise<void>} answer 처리 완료 Promise
+ * @throws {Error} SDP 파싱 또는 설정 실큀 시 에러
+ */
+async function handleAnswer(data) {
+    const { userId, sdp } = data;
+    const answer = JSON.parse(sdp);
+    const pc = peerConnections.get(userId);
+    if (pc) {
+        await pc.setRemoteDescription(answer);
+        
+        // 대기 중인 ICE 후보들 처리
+        await processPendingIceCandidates(userId);
+        
+       
+    }
+}
+
+// ICE 후보 처리
+/**
+ * ICE Candidate 수신 및 처리
+ * 상대방으로부터 받은 ICE candidate를 로컬 PeerConnection에 추가
+ * 연결 전 수신된 candidate는 대기 큐에 저장 후 나중에 처리
+ * @async
+ * @param {Object} data - ICE candidate 메시지 데이터
+ * @param {string} data.userId - candidate 발신자 사용자 ID
+ * @param {string} data.iceCandidate - JSON 문자열 형태의 ICE candidate 정보
+ * @returns {Promise<void>} ICE candidate 처리 완료 Promise
+ * @throws {Error} candidate 파싱 또는 추가 실큀 시 에러
+ */
+async function handleIceCandidate(data) {
+    try {
+        const { userId, iceCandidate } = data;
+        const candidate = JSON.parse(iceCandidate);
+        const pc = peerConnections.get(userId);
+        
+        if (pc) {
+            // Remote description이 설정되었는지 확인
+            if (pc.remoteDescription) {
+                await pc.addIceCandidate(candidate);
+                
+            } else {
+                // Remote description이 없으면 대기 큐에 저장
+                if (!pendingIceCandidates.has(userId)) {
+                    pendingIceCandidates.set(userId, []);
+                }
+                pendingIceCandidates.get(userId).push(candidate);
+                
+            }
+        } else {
+           
+        }
+    } catch (error) {
+        
+    }
+}
+
+// 대기 중인 ICE 후보들 처리
+async function processPendingIceCandidates(userId) {
+    const pc = peerConnections.get(userId);
+    const candidates = pendingIceCandidates.get(userId);
+    
+    if (pc && candidates && candidates.length > 0) {
+        
+        
+        for (const candidate of candidates) {
+            try {
+                await pc.addIceCandidate(candidate);
+    } catch (error) {
+                
+            }
+        }
+        
+        pendingIceCandidates.delete(userId);
+       
+    }
+}
+
+// 사용자 나가기 처리
+function handleUserLeft(data) {
+    const { userId, userName } = data;
+    const pc = peerConnections.get(userId);
+    if (pc) {
+        pc.close();
+        peerConnections.delete(userId);
+    }
+    scwin.removeRemoteUser(userId);
+    
+}
+
+// 원격 비디오 표시 (userId 추가로 정확한 매칭)
+function displayRemoteVideo(stream, userName, userId) {
+    try {
+        const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+        if (!remoteVideosGrid) {
+            
+            return;
+        }
+        
+        // userId를 키로 스트림 저장
+        if (userId) {
+            remoteStreams.set(userId, stream);
+        }
+        
+        // 기존 비디오 제거 (userName과 userId 둘 다 확인)
+        const existingVideo = remoteVideosGrid.querySelector(`[data-username="${userName}"], [data-userid="${userId}"]`);
+        if (existingVideo) {
+            existingVideo.remove();
+            
+        }
+        
+        // 새 비디오 컨테이너 생성
+        const videoContainer = document.createElement('div');
+        videoContainer.className = 'remote-video-item';
+        videoContainer.setAttribute('data-username', userName);
+        if (userId) {
+            videoContainer.setAttribute('data-userid', userId);
+        }
+        videoContainer.style.cssText = `
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 5px;
+            min-width: 200px;
+            min-height: 150px;
+        `;
+        
+        // 비디오 엘리먼트 생성
+        const video = document.createElement('video');
+        video.autoplay = true;
+        video.playsinline = true;
+        video.muted = false;
+        video.srcObject = stream;
+        video.style.cssText = `
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        `;
+        
+        // 사용자 이름 라벨 생성
+        const label = document.createElement('div');
+        label.className = 'remote-video-label';
+        label.textContent = userName;
+        label.style.cssText = `
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1;
+        `;
+        
+        videoContainer.appendChild(video);
+        videoContainer.appendChild(label);
+        remoteVideosGrid.appendChild(videoContainer);
+        
+        
+        
+        // 비디오 로드 이벤트 처리
+        video.onloadedmetadata = () => {
+            
+        };
+        
+        video.onerror = (error) => {
+            
+        };
+        
+    } catch (error) {
+        
+    }
+}
+
+// ===== 필수 함수들 (주석 밖에서 실행) =====
+
+// WebSocket 채팅 시스템 초기화
+scwin.initializeChatWebSocket = function() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.hostname;
+    const port = window.location.port || (protocol === 'wss:' ? '443' : '80');
+    
+    // 여러 WebSocket URL 시도
+    const wsUrls = [
+        `${protocol}//${host}:${port}/InsWebApp/chat`,
+        `ws://localhost:9093/InsWebApp/chat`,
+        `wss://localhost:19443/InsWebApp/chat`
+    ];
+    
+    let wsUrl = wsUrls[0];
+    
+    
+    try {
+        chatSocket = new WebSocket(wsUrl);
+        
+        chatSocket.onopen = function() {
+            
+            
+            // 재연결 성공 시 시도 횟수 초기화
+            if (window.wsReconnectAttempts && window.wsReconnectAttempts > 0) {
+                
+                window.wsReconnectAttempts = 0;
+            }
+            
+            // 채널 참가
+            const joinMessage = {
+                type: 'join',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName
+            };
+            chatSocket.send(JSON.stringify(joinMessage));
+            
+            // 채팅 히스토리 요청
+            setTimeout(() => {
+                const historyMessage = {
+                    type: 'history',
+                    channelName: currentUser.channelName,
+                    afterTimestamp: 0
+                };
+                chatSocket.send(JSON.stringify(historyMessage));
+               
+            }, 1000);
+        };
+        
+        chatSocket.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                
+                
+                switch(data.type) {
+                // 채팅 메시지 처리
+                case 'message':
+                    // 시스템 비디오 상태 메시지 처리
+                    if (data.userName === 'SYSTEM_VIDEO_STATUS' && data.userId !== currentUser.userId) {
+                        try {
+                            const statusData = JSON.parse(data.message);
+                            if (statusData.action === 'video-toggle') {
+                                const remoteVideoContainer = document.querySelector(`[data-userid="${statusData.targetUserId}"] .remote-video-player`);
+                                if (remoteVideoContainer) {
+                                    const remoteVideo = remoteVideoContainer.querySelector('video');
+                                    if (statusData.isVideoOff) {
+                                        // 비디오 숨기고 꺼짐 메시지 표시
+                                        if (remoteVideo) remoteVideo.style.display = 'none';
+                                        let offMessage = remoteVideoContainer.querySelector('.camera-off-message');
+                                        if (!offMessage) {
+                                            offMessage = document.createElement('div');
+                                            offMessage.className = 'camera-off-message';
+                                            offMessage.style.cssText = `
+                                                position: absolute;
+                                                top: 50%;
+                                                left: 50%;
+                                                transform: translate(-50%, -50%);
+                                                color: white;
+                                                font-size: 18px;
+                                                font-weight: bold;
+                                                text-align: center;
+                                                background: rgba(0,0,0,0.7);
+                                                padding: 10px;
+                                                border-radius: 8px;
+                                                z-index: 10;
+                                            `;
+                                            offMessage.textContent = '카메라 꺼짐';
+                                            remoteVideoContainer.appendChild(offMessage);
+                                        }
+                                    } else {
+                                        // 비디오 표시하고 꺼짐 메시지 제거
+                                        if (remoteVideo) remoteVideo.style.display = 'block';
+                                        const offMessage = remoteVideoContainer.querySelector('.camera-off-message');
+                                        if (offMessage) offMessage.remove();
+                                    }
+                                }
+                                
+                            }
+                        } catch (e) {
+                            
+                        }
+                    } else if (data.userName === 'SYSTEM_AUDIO_STATUS' && data.userId !== currentUser.userId) {
+                        // 시스템 음소거 상태 메시지 처리
+                        try {
+                            const statusData = JSON.parse(data.message);
+                            if (statusData.action === 'audio-toggle') {
+                                const remoteUserName = document.querySelector(`[data-userid="${statusData.targetUserId}"] .remote-user-name`);
+                                if (remoteUserName) {
+                                    const userInfo = remoteUserInfo.get(statusData.targetUserId);
+                                    const userName = userInfo ? userInfo.userName : statusData.targetUserName;
+                                    
+                                    if (statusData.isMuted) {
+                                        remoteUserName.style.background = '#dc3545';
+                                        remoteUserName.textContent = `${userName} - 음소거`;
+                                    } else {
+                                        remoteUserName.style.background = '#444';
+                                        remoteUserName.textContent = userName;
+                                    }
+                                }
+                               
+                            }
+                        } catch (e) {
+                            
+                        }
+                    } else if (data.userId !== currentUser.userId && data.userName !== 'SYSTEM_VIDEO_STATUS' && data.userName !== 'SYSTEM_AUDIO_STATUS') {
+                        // 일반 채팅 메시지
+                        scwin.addChatMessage(data.userName, data.message, false, data.messageId, data.timestamp);
+                        
+                    } else {
+                       
+                    }
+                    break;
+                    
+                case 'history':
+                    if (data.messages && data.messages.length > 0) {
+                        
+                        
+                        // 웹스퀘어 데이터리스트 초기화
+                        dlt_chatMessages.removeAll();
+                        if (window.addedMessageIds) {
+                            window.addedMessageIds.clear();
+                        }
+                        
+                        // 화면 채팅 메시지 초기화
+                        const chatMessages = document.getElementById("chatMessages");
+                        if (chatMessages) {
+                            chatMessages.innerHTML = "";
+                        }
+                        
+                        data.messages.forEach(msg => {
+                            const isOwn = msg.userId === currentUser.userId;
+                            const msgId = msg.messageId || `history_${msg.userId}_${msg.timestamp}`;
+                            scwin.addChatMessage(msg.userName, msg.message, isOwn, msgId, msg.timestamp);
+                        });
+                        
+                        
+                    } else {
+                        
+                    }
+                    break;
+                    
+                case 'existing-users':
+                    
+                    
+                    // 기존 사용자 정보 저장
+                    if (data.userInfos) {
+                        data.userInfos.forEach(user => {
+                            remoteUserInfo.set(user.userId, user);
+                            
+                        });
+                    }
+                    break;
+                    
+                case 'user-joined':
+                   
+                    
+                    // 새 사용자 정보 저장
+                    if (data.userId && data.userName) {
+                        remoteUserInfo.set(data.userId, {
+                            userId: data.userId,
+                            userName: data.userName
+                        });
+                        
+                    }
+                    
+                    // Simple WebRTC P2P 연결 시작
+                    if (isJoined) {
+                        handleUserJoined(data);
+                    }
+                    
+                    // 미니 PIP가 활성화된 상태라면 업데이트 (지연 처리)
+                    if (isMiniPipActive) {
+                        setTimeout(() => {
+                            scwin.updateMiniPIP();
+                            
+                        }, 1000); // 비디오 연결 완료 후 업데이트
+                    }
+                    break;
+                    
+                case 'user-left':
+                    
+                    
+                    if (data.userId) {
+                        remoteUserInfo.delete(data.userId);
+                        
+                    }
+                    
+                    // Simple WebRTC P2P 연결 해제
+                    handleUserLeft(data);
+                    
+                    // 미니 PIP가 활성화된 상태라면 업데이트
+                    if (isMiniPipActive) {
+                        setTimeout(() => {
+                            scwin.updateMiniPIP();
+                            
+                        }, 500); // 약간의 지연 후 업데이트
+                    }
+                    break;
+                    
+                // Simple WebRTC 시그널링 메시지 처리
+                case 'offer':
+                    if (isJoined) {
+                        handleOffer(data);
+                    }
+                    break;
+                    
+                case 'answer':
+                    if (isJoined) {
+                        handleAnswer(data);
+                    }
+                    break;
+                    
+                case 'ice-candidate':
+                    if (isJoined) {
+                        handleIceCandidate(data);
+                    }
+                    break;
+                    
+                case 'notification':
+                    scwin.addChatMessage("시스템", data.message, false);
+                    break;
+                    
+                case 'error':
+                    
+                    scwin.addChatMessage("시스템", `⚠️ 서버 오류: ${data.message}`, false);
+                    break;
+                    
+                default:
+                    
+                    break;
+                }
+    } catch (error) {
+                
+            }
+        };
+        
+        chatSocket.onclose = function(event) {
+            
+            
+            if (event.code !== 1000 && event.code !== 1001) { // 정상 종료가 아닐 때만 재연결
+                const wasJoined = isJoined; // 화상통화 상태 백업
+                
+                if (!window.wsReconnectAttempts) {
+                    window.wsReconnectAttempts = 0;
+                }
+                
+                if (window.wsReconnectAttempts < 5) { // 최대 5번 재연결 시도
+                    window.wsReconnectAttempts++;
+                    
+                    
+                    
+                    setTimeout(() => {
+                        
+                        
+                        // 재연결 시도
+                        scwin.initializeChatWebSocket();
+                        
+                        // 화상통화 중이었다면 상태 복원 준비
+                        if (wasJoined) {
+                            setTimeout(() => {
+                                if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                                    const joinRoomMessage = {
+                                        type: 'join-room',
+                                        channelName: currentUser.channelName,
+                                        userId: currentUser.userId,
+                                        userName: currentUser.userName,
+                                        timestamp: Date.now()
+                                    };
+                                    chatSocket.send(JSON.stringify(joinRoomMessage));
+                                    
+                                }
+                            }, 2000);
+                        }
+                        
+                    }, 3000 * window.wsReconnectAttempts); // 점진적으로 대기 시간 증가
+                } else {
+                   
+                }
+            }
+        };
+        
+        chatSocket.onerror = function(error) {
+            
+           
+        };
+        
+    } catch (error) {
+        
+    }
+};
+
+// 채팅 메시지 추가 (timestamp 매개변수 추가)
+scwin.addChatMessage = function(userName, message, isOwn, messageId, messageTimestamp) {
+    if (!userName || !message) return;
+    
+    const msgId = messageId || `msg_${Date.now()}_${Math.random()}`;
+    
+    // 중복 메시지 방지
+    if (window.addedMessageIds && window.addedMessageIds.has(msgId)) {
+        return;
+    }
+    
+    if (!window.addedMessageIds) {
+        window.addedMessageIds = new Set();
+    }
+    window.addedMessageIds.add(msgId);
+    
+    // 실제 메시지 전송 시간 사용 (서버에서 받은 timestamp 또는 현재 시간)
+    let displayTime;
+    if (messageTimestamp) {
+        // 서버에서 받은 timestamp 사용 (밀리초 단위)
+        displayTime = new Date(messageTimestamp).toLocaleTimeString();
+    } else {
+        // 현재 시간 사용 (새 메시지인 경우)
+        displayTime = new Date().toLocaleTimeString();
+    }
+    
+    // 웹스퀘어 데이터리스트에 메시지 추가
+    const rowIndex = dlt_chatMessages.insertRow();
+    dlt_chatMessages.setCellData(rowIndex, "messageId", msgId);
+    dlt_chatMessages.setCellData(rowIndex, "userId", isOwn ? currentUser.userId : (userName === "시스템" ? "system" : "other"));
+    dlt_chatMessages.setCellData(rowIndex, "userName", userName);
+    dlt_chatMessages.setCellData(rowIndex, "message", message);
+    dlt_chatMessages.setCellData(rowIndex, "timestamp", displayTime);
+    dlt_chatMessages.setCellData(rowIndex, "isOwn", isOwn ? "true" : "false");
+    
+    // 실제 화면에 메시지 표시
+    const chatMessages = document.getElementById("chatMessages");
+    if (chatMessages) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = `chat-message ${isOwn ? 'own' : 'other'}`;
+        messageDiv.style.cssText = `
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+            ${isOwn ? 
+                'background: #FFB823; color: white; margin-left: auto; text-align: right;' : 
+                'background: #f1f3f5; color: #333; margin-right: auto; text-align: left;'
+            }
+        `;
+        
+        messageDiv.innerHTML = `
+            <div style="font-weight: bold; font-size: 11px; margin-bottom: 4px; opacity: 0.8;">
+                ${userName} ${displayTime}
+            </div>
+            <div style="font-size: 14px; line-height: 1.4;">
+                ${message}
+            </div>
+        `;
+        
+        chatMessages.appendChild(messageDiv);
+        
+        // 채팅 화면을 최신 메시지로 스크롤
+        setTimeout(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 100);
+    } else {
+       
+    }
+    
+    
+};
+
+// 채팅 메시지 전송
+scwin.sendChatMessage = function() {
+    const chatInput = document.getElementById("chatInput");
+    if (!chatInput) return;
+    
+    const message = chatInput.value.trim();
+    if (!message) return;
+    
+    if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) {
+        $c.win.alert("서버에 연결되지 않았습니다.");
+        return;
+    }
+    
+    const messageId = `msg_${Date.now()}_${Math.random()}`;
+    const messageData = {
+        type: 'message',
+        channelName: currentUser.channelName,
+        userId: currentUser.userId,
+        userName: currentUser.userName,
+        message: message,
+        messageId: messageId,
+        timestamp: Date.now()
+    };
+    
+    try {
+        chatSocket.send(JSON.stringify(messageData));
+        scwin.addChatMessage(currentUser.userName, message, true, messageId, messageData.timestamp);
+        chatInput.value = "";
+        
+    } catch (error) {
+        
+        $c.win.alert("메시지 전송에 실패했습니다.");
+    }
+};
+
+// 로딩 표시/숨김
+scwin.showLoading = function(message) {
+ 
+};
+
+scwin.hideLoading = function() {
+    
+};
+
+// ===== Simple WebRTC 관련 함수들 =====
+
+// 화상통화 나가기
+/**
+ * 화상통화 나가기 및 전체 정리
+ * 모든 P2P 연결 종료, 로컬 스트림 정지, WebSocket 연결 종료, UI 상태 초기화
+ * @returns {void}
+ */
+scwin.leaveCall = function() {
+    try {
+        // 모든 P2P 연결 종료
+        peerConnections.forEach((pc, userId) => {
+            pc.close();
+        });
+        peerConnections.clear();
+        
+        // 로컬 스트림 정지
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+        
+        // 비디오 요소 초기화
+        const localVideo = document.getElementById("localVideo");
+        if (localVideo) {
+            localVideo.srcObject = null;
+        }
+        
+        // 원격 비디오 제거
+        const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+        if (remoteVideosGrid) {
+            remoteVideosGrid.innerHTML = '';
+        }
+        
+        // 나가기 알림
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            const leaveMessage = {
+                type: 'leave-room',
+                channelName: currentUser.channelName,
+                userId: currentUser.userId,
+                userName: currentUser.userName,
+                timestamp: Date.now()
+            };
+            chatSocket.send(JSON.stringify(leaveMessage));
+        }
+        
+        isJoined = false;
+        dma_videoChat.set("isJoined", "false");
+        
+        // 내 비디오를 그리드에서 제거
+        scwin.removeMyVideoFromGrid();
+        
+        scwin.updateControlButtons();
+        
+        
+        
+        
+        // 프로젝트 설정과 동일한 방식으로 모달 닫기 (projectSettingSideMenu.xml의 btn_back_onclick 방식)
+        try {
+            
+            
+            // 방법 1: 부모의 closeVideoChatModal 함수 직접 호출
+            if (window.parent && window.parent.scwin && window.parent.scwin.closeVideoChatModal) {
+                
+                window.parent.scwin.closeVideoChatModal();
+                return; // 성공하면 여기서 끝
+            }
+            
+            // 방법 2: 최상위 부모의 함수 호출  
+            if (window.parent && window.parent.parent && window.parent.parent.scwin && window.parent.parent.scwin.closeVideoChatModal) {
+                
+                window.parent.parent.scwin.closeVideoChatModal();
+                return; // 성공하면 여기서 끝
+            }
+            
+            // 방법 3: 직접 부모에게 메시지 전송
+            if (window.parent) {
+                
+                window.parent.postMessage({action: 'closeVideoChatPopup'}, '*');
+            }
+            
+            // 방법 4: 최상위 부모에게 메시지 전송
+            if (window.parent && window.parent.parent) {
+               
+                window.parent.parent.postMessage({action: 'closeVideoChatPopup'}, '*');
+            }
+            
+            // 방법 5: 강제 닫기 시도
+            
+            setTimeout(function() {
+                if (window.close) {
+                    
+                    window.close();
+                } else if (window.parent && window.parent.close) {
+                    
+                    window.parent.close();
+                } else {
+                    
+                    window.history.back();
+                }
+            }, 100);
+            
+        } catch(closeError) {
+            
+            // 최후의 수단
+            try {
+                
+                window.history.back();
+            } catch(e2) {
+                
+            }
+        }
+        
+    } catch (error) {
+        
+        // 오류 발생 시 모달 닫기 시도
+        try {
+            if (window.parent && window.parent.scwin && window.parent.scwin.closeVideoChatModal) {
+                window.parent.scwin.closeVideoChatModal();
+            } else {
+                window.history.back();
+            }
+        } catch (backError) {
+            window.location.href = '/InsWebApp/websquare/websquare.html?w2xPath=/InsWebApp/ui/mainPage.xml';
+        }
+    }
+};
+
+// 음소거 토글
+/**
+ * 음소거 상태 토글
+ * 로컬 오디오 트랙의 활성화/비활성화 상태를 전환하고 UI 업데이트
+ * @returns {void}
+ */
+scwin.toggleMute = function() {
+    if (localStream) {
+        const audioTrack = localStream.getAudioTracks()[0];
+        if (audioTrack) {
+            audioTrack.enabled = !audioTrack.enabled;
+            const muteBtn = document.getElementById("muteBtn");
+            if (muteBtn) {
+                muteBtn.textContent = audioTrack.enabled ? "MIC" : "음소거";
+                muteBtn.classList.toggle("muted", !audioTrack.enabled);
+            }
+            
+            // 그리드에 있는 내 비디오의 사용자 이름에 음소거 표시
+            const myUserNameInGrid = document.querySelector('[data-username="나"] .remote-user-name');
+            if (myUserNameInGrid) {
+                if (audioTrack.enabled) {
+                    myUserNameInGrid.style.background = '#FFB823';
+                    myUserNameInGrid.textContent = `나 (${currentUser.userName})`;
+                } else {
+                    myUserNameInGrid.style.background = '#dc3545';
+                    myUserNameInGrid.textContent = `나 (${currentUser.userName}) - 음소거`;
+                }
+            }
+            
+            
+            
+        }
+    }
+};
+
+// 비디오 토글
+/**
+ * 비디오 상태 토글
+ * 로컬 비디오 트랙의 활성화/비활성화 상태를 전환하고 UI 업데이트
+ * @returns {void}
+ */
+scwin.toggleVideo = function() {
+    if (localStream) {
+        const videoTrack = localStream.getVideoTracks()[0];
+        if (videoTrack) {
+            videoTrack.enabled = !videoTrack.enabled;
+            const videoBtn = document.getElementById("videoBtn");
+            if (videoBtn) {
+                videoBtn.textContent = videoTrack.enabled ? "CAM" : "CAM OFF";
+                videoBtn.classList.toggle("off", !videoTrack.enabled);
+            }
+            
+            // 그리드에 있는 내 비디오에도 반영
+            const myVideoContainer = document.querySelector('[data-username="나"] .remote-video-player');
+            if (myVideoContainer) {
+                const myVideoInGrid = myVideoContainer.querySelector('video');
+                if (videoTrack.enabled) {
+                    if (myVideoInGrid) myVideoInGrid.style.display = 'block';
+                    // 카메라 꺼짐 메시지 제거
+                    const offMessage = myVideoContainer.querySelector('.camera-off-message');
+                    if (offMessage) offMessage.remove();
+                } else {
+                    if (myVideoInGrid) myVideoInGrid.style.display = 'none';
+                    // 카메라 꺼짐 메시지 표시
+                    let offMessage = myVideoContainer.querySelector('.camera-off-message');
+                    if (!offMessage) {
+                        offMessage = document.createElement('div');
+                        offMessage.className = 'camera-off-message';
+                        offMessage.style.cssText = `
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            color: white;
+                            font-size: 18px;
+                            font-weight: bold;
+                            text-align: center;
+                            background: rgba(0,0,0,0.7);
+                            padding: 10px;
+                            border-radius: 8px;
+                        `;
+                        offMessage.textContent = '카메라 꺼짐';
+                        myVideoContainer.appendChild(offMessage);
+                    }
+                }
+            }
+            
+            
+        }
+    }
+};
+
+// 미니 PIP 모드 상태
+let isMiniPipActive = false;
+
+// PIP 상태 저장을 위한 전역 변수
+let pipVideoState = null;
+
+// 현재 화상통화 상태를 저장하는 함수
+scwin.saveVideoStateToParent = function() {
+    
+    
+    try {
+        // 비디오 엘리먼트들 수집
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideos = document.querySelectorAll('#remoteVideosGrid video');
+        
+        // 상태 정보 저장
+        pipVideoState = {
+            projectId: projectId,
+            channelName: currentUser.channelName,
+            userId: currentUser.userId,
+            userName: currentUser.userName,
+            isJoined: !!localVideo || remoteVideos.length > 0,
+            localStream: localVideo ? localVideo.srcObject : null,
+            remoteStreams: [],
+            participants: []
+        };
+        
+        // 원격 비디오 정보 저장
+        remoteVideos.forEach((video, index) => {
+            if (video.srcObject) {
+                const container = video.closest('.remote-user-video');
+                const nameElement = container ? container.querySelector('.remote-user-name') : null;
+                pipVideoState.remoteStreams.push({
+                    stream: video.srcObject,
+                    userName: nameElement ? nameElement.textContent : `참가자 ${index + 1}`
+                });
+            }
+        });
+        
+        // WebRTC 연결 상태 저장
+        pipVideoState.webrtcState = {
+            mediasoupSocket: mediasoupSocket,
+            sendTransport: sendTransport,
+            recvTransport: recvTransport,
+            device: device,
+            videoProducer: videoProducer,
+            audioProducer: audioProducer,
+            consumers: consumers
+        };
+        
+        
+        
+        // 부모 페이지에 상태 전달
+        if (window.parent) {
+            window.parent.postMessage({
+                action: 'saveVideoChatState',
+                state: {
+                    projectId: pipVideoState.projectId,
+                    channelName: pipVideoState.channelName,
+                    userId: pipVideoState.userId,
+                    userName: pipVideoState.userName,
+                    isJoined: pipVideoState.isJoined,
+                    remoteStreamsCount: pipVideoState.remoteStreams.length
+                }
+            }, '*');
+        }
+        
+    } catch (error) {
+        
+    }
+};
+
+// Picture-in-Picture 토글 상태 변수
+let isPipMode = false;
+
+// Picture-in-Picture 토글 (Method 1 - 별도 컨테이너 사용)
+scwin.togglePiP = function() {
+    
+    
+    // 로컬 비디오와 원격 비디오 확인
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideos = document.querySelectorAll('#remoteVideosGrid video');
+    
+    if (!localVideo && remoteVideos.length === 0) {
+        $c.win.alert('비디오를 찾을 수 없습니다. 먼저 화상통화에 참여해주세요.');
+        return;
+    }
+    
+    try {
+        if (!isPipMode) {
+            // PIP 모드로 전환
+            
+            
+            // 1. 부모창에 모달 축소 요청
+            if (window.parent && window.parent !== window) {
+                try {
+                   
+                    
+                    window.parent.postMessage({
+                        action: 'resizeModalToPip',
+                        source: 'videoChatPage',
+                        timestamp: Date.now()
+                    }, '*');
+                    
+                    
+                    // 추가 확인을 위한 다중 전송
+                    setTimeout(() => {
+                        window.parent.postMessage({
+                            action: 'resizeModalToPip',
+                            source: 'videoChatPage_retry',
+                            timestamp: Date.now()
+                        }, '*');
+                        
+                    }, 100);
+                    
+                } catch (e) {
+                    
+                }
+            } else {
+                
+                
+                // 대체 방법 1: window.opener 사용
+                if (window.opener && window.opener !== window) {
+                    try {
+                        
+                        window.opener.postMessage({
+                            action: 'resizeModalToPip',
+                            source: 'videoChatPage_opener',
+                            timestamp: Date.now()
+                        }, '*');
+                        
+                    } catch (openerError) {
+                        
+                    }
+                }
+                
+                // 대체 방법 2: window.top 사용
+                else if (window.top && window.top !== window) {
+                    try {
+                        
+                        window.top.postMessage({
+                            action: 'resizeModalToPip',
+                            source: 'videoChatPage_top',
+                            timestamp: Date.now()
+                        }, '*');
+                        
+                    } catch (topError) {
+                        
+                    }
+                }
+                
+                // 대체 방법 3: PostMessage 재시도 + 직접 DOM 조작 백업
+                setTimeout(() => {
+                    
+                    
+                    // 모든 가능한 부모 창에 PostMessage 전송
+                    const targets = [
+                        { win: window.parent, name: 'window.parent' },
+                        { win: window.opener, name: 'window.opener' },
+                        { win: window.top, name: 'window.top' }
+                    ];
+                    
+                    let messagesSent = 0;
+                    targets.forEach(({ win, name }) => {
+                        if (win && win !== window) {
+                            try {
+                                win.postMessage({
+                                    action: 'resizeModalToPip',
+                                    source: `videoChatPage_${name}_retry`,
+                                    timestamp: Date.now(),
+                                    retry: true
+                                }, '*');
+                                messagesSent++;
+                                
+                            } catch (error) {
+                                
+                            }
+                        }
+                    });
+                    
+                    // PostMessage가 모두 실패했을 경우 직접 DOM 조작
+                    if (messagesSent === 0) {
+                        setTimeout(() => {
+                            
+                            try {
+                                let modalElement = null;
+                                
+                                // 다양한 방법으로 모달 요소 찾기
+                                const searchMethods = [
+                                    () => document.querySelector('[id*="videoChatPopup"]'),
+                                    () => window.parent?.document?.querySelector('[id*="videoChatPopup"]'),
+                                    () => window.top?.document?.querySelector('[id*="videoChatPopup"]'),
+                                    () => window.parent?.document?.querySelector('[id*="mf_wfr_mainContent_videoChatPopup"]'),
+                                ];
+                                
+                                for (const method of searchMethods) {
+                                    try {
+                                        modalElement = method();
+                                        if (modalElement && modalElement.offsetWidth > 0) {
+                                            
+                                            break;
+                                        }
+                                    } catch (e) {
+                                        // 접근 권한 오류 무시하고 다음 방법 시도
+                                    }
+                                }
+                                
+                                if (modalElement) {
+                                    // 직접 PIP 크기로 변경
+                                    modalElement.style.setProperty('width', '320px', 'important');
+                                    modalElement.style.setProperty('height', '240px', 'important');
+                                    modalElement.style.setProperty('position', 'fixed', 'important');
+                                    modalElement.style.setProperty('bottom', '20px', 'important');
+                                    modalElement.style.setProperty('right', '20px', 'important');
+                                    modalElement.style.setProperty('top', 'auto', 'important');
+                                    modalElement.style.setProperty('left', 'auto', 'important');
+                                    modalElement.style.setProperty('z-index', '999999', 'important');
+                                    
+                                    
+                                } else {
+                                    
+                                }
+                            } catch (domError) {
+                                
+                            }
+                        }, 200);
+                    }
+                }, 100);
+            }
+            
+            // 2. 내부 UI를 PIP 모드로 변경
+            scwin.applyPipModeUI();
+            isPipMode = true;
+            
+            // PIP 버튼 텍스트 변경
+            const pipBtn = document.getElementById('pipBtn');
+            if (pipBtn) {
+                const pipLabel = pipBtn.querySelector('xf\\:label, label');
+                if (pipLabel) pipLabel.textContent = '확대';
+                pipBtn.classList.add('active');
+            }
+            
+        } else {
+            // 일반 모드로 복원
+            
+            
+            // 1. 부모창에 모달 복원 요청
+            if (window.parent && window.parent !== window) {
+                try {
+                    
+                    
+                    window.parent.postMessage({
+                        action: 'expandModalFromPip',
+                        source: 'videoChatPage',
+                        timestamp: Date.now()
+                    }, '*');
+                    
+                    
+                } catch (e) {
+                    
+                }
+            } else {
+                
+            }
+            
+            // 2. 내부 UI를 일반 모드로 복원
+            scwin.restoreUIFromPip();
+            isPipMode = false;
+            
+            // PIP 버튼 텍스트 변경
+            const pipBtn = document.getElementById('pipBtn');
+            if (pipBtn) {
+                const pipLabel = pipBtn.querySelector('xf\\:label, label');
+                if (pipLabel) pipLabel.textContent = 'PIP';
+                pipBtn.classList.remove('active');
+            }
+        }
+        
+    } catch (error) {
+        
+        $c.win.alert('PIP 모드 전환에 실패했습니다: ' + error.message);
+    }
+};
+
+// PIP 모드 UI 적용
+scwin.applyPipModeUI = function() {
+    
+    setTimeout(() => {
+        const mainContainer = document.querySelector('.video-chat-container');
+        const chatSection = document.querySelector('.chat-section');
+        const controlPanel = document.querySelector('.control-panel');
+        const localVideoContainer = document.querySelector('.local-video-container');
+        
+        if (mainContainer) {
+            // 메인 컨테이너를 PIP 레이아웃으로 변경
+            mainContainer.style.setProperty('flex-direction', 'column', 'important');
+            mainContainer.style.setProperty('height', '100%', 'important');
+           
+        }
+        
+        // 채팅 섹션 숨기기
+        if (chatSection) {
+            chatSection.style.setProperty('display', 'none', 'important');
+            
+        }
+        
+        // 컨트롤 패널 PIP용으로 축소
+        if (controlPanel) {
+            controlPanel.style.setProperty('bottom', '5px', 'important');
+            controlPanel.style.setProperty('gap', '5px', 'important');
+            
+            // 컨트롤 버튼들 축소
+            const controlBtns = controlPanel.querySelectorAll('.control-btn');
+            controlBtns.forEach(btn => {
+                btn.style.setProperty('width', '30px', 'important');
+                btn.style.setProperty('height', '30px', 'important');
+                btn.style.setProperty('font-size', '10px', 'important');
+            });
+            
+        }
+        
+        // 로컬 비디오를 더 작게 조정
+        if (localVideoContainer) {
+            localVideoContainer.style.setProperty('width', '80px', 'important');
+            localVideoContainer.style.setProperty('height', '60px', 'important');
+            localVideoContainer.style.setProperty('top', '5px', 'important');
+            localVideoContainer.style.setProperty('right', '5px', 'important');
+           
+        }
+        
+        // 원격 비디오 그리드 조정
+        const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+        if (remoteVideosGrid) {
+            remoteVideosGrid.style.setProperty('padding', '5px', 'important');
+            remoteVideosGrid.style.setProperty('grid-gap', '3px', 'important');
+            remoteVideosGrid.style.setProperty('grid-template-columns', '1fr', 'important');
+            
+        }
+        
+        // PIP 모드에서 확대 버튼 추가
+        scwin.addPipExpandButton();
+        
+    }, 100);
+};
+
+// PIP 모드에서 확대 버튼 추가
+scwin.addPipExpandButton = function() {
+    
+    
+    // 기존 버튼이 있으면 제거
+    const existingBtn = document.querySelector('.pip-expand-btn');
+    if (existingBtn) {
+        existingBtn.remove();
+        
+    }
+    
+    // 확대 버튼 생성
+    const expandBtn = document.createElement('button');
+    expandBtn.className = 'pip-expand-btn';
+    expandBtn.innerHTML = '⛶'; // 확대 아이콘
+    expandBtn.title = '전체화면으로 확대';
+    
+    // 클릭 이벤트 추가
+    expandBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        
+        // 확대 로직 실행
+        scwin.expandFromPipMode();
+    });
+    
+    // 비디오 컨테이너에 추가
+    const videoContainer = document.querySelector('.video-chat-container');
+    if (videoContainer) {
+        videoContainer.appendChild(expandBtn);
+        
+    } else {
+        
+    }
+};
+
+// PIP 모드에서 확대 로직
+scwin.expandFromPipMode = function() {
+    
+    
+    // 1. 부모창에 모달 복원 요청 (강화된 방식)
+    try {
+        // 방법 1: window.parent 사용
+        if (window.parent && window.parent !== window) {
+            try {
+                
+                window.parent.postMessage({
+                    action: 'expandModalFromPip',
+                    source: 'videoChatPage_expandBtn_parent',
+                    timestamp: Date.now()
+                }, '*');
+               
+            } catch (parentError) {
+                
+            }
+        } else {
+           
+        }
+        
+        // 방법 2: window.opener 사용
+        if (window.opener && window.opener !== window) {
+            try {
+                
+                window.opener.postMessage({
+                    action: 'expandModalFromPip',
+                    source: 'videoChatPage_expandBtn_opener',
+                    timestamp: Date.now()
+                }, '*');
+            
+            } catch (openerError) {
+                
+            }
+        }
+        
+        // 방법 3: window.top 사용
+        if (window.top && window.top !== window) {
+            try {
+                
+                window.top.postMessage({
+                    action: 'expandModalFromPip',
+                    source: 'videoChatPage_expandBtn_top',
+                    timestamp: Date.now()
+                }, '*');
+                
+            } catch (topError) {
+                
+            }
+        }
+        
+        // 방법 4: 직접 DOM 조작 백업 (PostMessage 실패 시)
+        setTimeout(() => {
+            
+            try {
+                let modalElement = null;
+                
+                // 다양한 방법으로 모달 요소 찾기
+                const searchMethods = [
+                    () => document.querySelector('[id*="videoChatPopup"]'),
+                    () => window.parent?.document?.querySelector('[id*="videoChatPopup"]'),
+                    () => window.top?.document?.querySelector('[id*="videoChatPopup"]'),
+                    () => window.parent?.document?.querySelector('[id*="mf_wfr_mainContent_videoChatPopup"]'),
+                ];
+                
+                for (const method of searchMethods) {
+                    try {
+                        modalElement = method();
+                        if (modalElement && modalElement.offsetWidth > 0) {
+                           
+                            break;
+                        }
+                    } catch (e) {
+                        // 접근 권한 오류 무시하고 다음 방법 시도
+                    }
+                }
+                
+                if (modalElement) {
+                    // 직접 모달을 1920x940으로 확대
+                    modalElement.style.setProperty('width', '1920px', 'important');
+                    modalElement.style.setProperty('height', '940px', 'important');
+                    modalElement.style.setProperty('position', 'absolute', 'important');
+                    modalElement.style.setProperty('left', '0px', 'important');
+                    modalElement.style.setProperty('top', '0px', 'important');
+                    modalElement.style.setProperty('bottom', 'auto', 'important');
+                    modalElement.style.setProperty('right', 'auto', 'important');
+                    modalElement.style.setProperty('z-index', '999999', 'important');
+                    
+                    // 확대 버튼 제거
+                    const expandBtn = modalElement.querySelector('.pip-expand-btn');
+                    if (expandBtn) expandBtn.remove();
+                    
+                    
+                } else {
+                    
+                }
+            } catch (domError) {
+                
+            }
+        }, 300);
+        
+    } catch (error) {
+        
+    }
+    
+    // 2. 내부 UI 복원
+    scwin.restoreUIFromPip();
+    isPipMode = false;
+    
+    // 3. PIP 버튼 텍스트 변경
+    const pipBtn = document.getElementById('pipBtn');
+    if (pipBtn) {
+        const pipLabel = pipBtn.querySelector('xf\\:label, label');
+        if (pipLabel) pipLabel.textContent = 'PIP';
+        pipBtn.classList.remove('active');
+    }
+    
+    
+};
+
+// PIP 에서 복원 메시지 처리
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.action === 'restoreFromPip') {
+        
+        scwin.restoreUIFromPip();
+        isPipMode = false;
+        
+        // PIP 버튼 텍스트 변경
+        const pipBtn = document.getElementById('pipBtn');
+        if (pipBtn) {
+            const pipLabel = pipBtn.querySelector('xf\\:label, label');
+            if (pipLabel) pipLabel.textContent = 'PIP';
+            pipBtn.classList.remove('active');
+        }
+    }
+});
+
+// PIP에서 UI 복원
+scwin.restoreUIFromPip = function() {
+    
+    
+    try {
+        const mainContainer = document.querySelector('.video-chat-container');
+        const chatSection = document.querySelector('.chat-section');
+        const controlPanel = document.querySelector('.control-panel');
+        const localVideoContainer = document.querySelector('.local-video-container');
+        
+        // 메인 컨테이너 복원
+        if (mainContainer) {
+            mainContainer.style.removeProperty('flex-direction');
+            mainContainer.style.removeProperty('height');
+            
+        }
+        
+        // 채팅 섹션 복원
+        if (chatSection) {
+            chatSection.style.removeProperty('display');
+            
+        }
+        
+        // 컨트롤 패널 복원
+        if (controlPanel) {
+            controlPanel.style.removeProperty('bottom');
+            controlPanel.style.removeProperty('gap');
+            
+            // 컨트롤 버튼들 복원
+            const controlBtns = controlPanel.querySelectorAll('.control-btn');
+            controlBtns.forEach(btn => {
+                btn.style.removeProperty('width');
+                btn.style.removeProperty('height');
+                btn.style.removeProperty('font-size');
+            });
+            
+        }
+        
+        // 로컬 비디오 복원
+        if (localVideoContainer) {
+            localVideoContainer.style.removeProperty('width');
+            localVideoContainer.style.removeProperty('height');
+            localVideoContainer.style.removeProperty('top');
+            localVideoContainer.style.removeProperty('right');
+            
+        }
+        
+        // 원격 비디오 그리드 복원
+        const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+        if (remoteVideosGrid) {
+            remoteVideosGrid.style.removeProperty('padding');
+            remoteVideosGrid.style.removeProperty('grid-gap');
+            remoteVideosGrid.style.removeProperty('grid-template-columns');
+            
+        }
+        
+        // PIP 확대 버튼 제거
+        const expandBtn = document.querySelector('.pip-expand-btn');
+        if (expandBtn) {
+            expandBtn.remove();
+            
+        }
+        
+        
+        
+    } catch (error) {
+        
+    }
+};
+
+// 비디오 상태를 부모 페이지에 저장하는 함수
+scwin.saveVideoStateToParent = function() {
+    try {
+        
+        
+        // 현재 비디오 상태 수집
+        const videoState = {
+            localStream: localStream,
+            peerConnections: peerConnections,
+            currentUser: currentUser,
+            isJoined: isJoined,
+            isMuted: isMuted,
+            isVideoOff: isVideoOff,
+            remoteStreams: remoteStreams,
+            remoteUserInfo: remoteUserInfo,
+            chatSocket: chatSocket
+        };
+        
+        // 부모 페이지에 비디오 상태 저장
+        if (window.parent && window.parent.scwin) {
+            window.parent.scwin.videoConnectionState = videoState;
+           
+        }
+        
+        // 로컬 스토리지에도 임시 저장 (백업용)
+        try {
+            const simpleState = {
+                userId: currentUser.userId,
+                userName: currentUser.userName,
+                channelName: currentUser.channelName,
+                isJoined: isJoined,
+                isMuted: isMuted,
+                isVideoOff: isVideoOff,
+                participantCount: peerConnections.size
+            };
+            localStorage.setItem('tempVideoChatState', JSON.stringify(simpleState));
+        } catch (e) {
+            
+        }
+        
+    } catch (error) {
+        
+    }
+};
+
+// PIP 새창 열기
+scwin.openPipWindow = function() {
+    
+    
+    // 새창 옵션 설정 (작고 오른쪽 하단에 위치)
+    const screenWidth = window.screen.availWidth;
+    const screenHeight = window.screen.availHeight;
+    const pipWidth = 400;
+    const pipHeight = 300;
+    const pipLeft = screenWidth - pipWidth - 20; // 오른쪽에서 20px 떨어짐
+    const pipTop = screenHeight - pipHeight - 60; // 아래에서 60px 떨어짐 (작업표시줄 고려)
+    
+    const windowFeatures = [
+        `width=${pipWidth}`,
+        `height=${pipHeight}`,
+        `left=${pipLeft}`,
+        `top=${pipTop}`,
+        'resizable=yes',
+        'scrollbars=yes',
+        'toolbar=no',
+        'menubar=no',
+        'location=no',
+        'directories=no',
+        'status=no'
+    ].join(',');
+    
+    // 현재 화상통화 페이지 URL 가져오기
+    const currentUrl = window.location.href;
+    
+    // PIP 모드 파라미터 추가
+    const pipUrl = currentUrl + (currentUrl.includes('?') ? '&' : '?') + 'pipMode=true';
+    
+    
+    
+    // 새창 열기
+    const pipWindow = window.open(pipUrl, 'pipVideoChat', windowFeatures);
+    
+    if (!pipWindow) {
+        throw new Error('팝업이 차단되었습니다. 브라우저 팝업 차단을 해제해주세요.');
+    }
+    
+    // 새창 포커스
+    pipWindow.focus();
+    
+    
+    return pipWindow;
+};
+
+// PIP 종료 이벤트 리스너 등록
+scwin.setupPipEventListeners = function() {
+    // PIP 종료 이벤트 감지
+    document.addEventListener('leavepictureinpicture', function(event) {
+        
+        // 필요시 화상통화 페이지로 돌아가는 로직 추가
+    });
+    
+    // PIP 시작 이벤트 감지
+    document.addEventListener('enterpictureinpicture', function(event) {
+        
+        // PIP 버튼 상태 업데이트
+        const pipBtn = document.getElementById('pipBtn');
+        if (pipBtn) {
+            pipBtn.classList.add('active');
+        }
+    });
+    
+    
+};
+
+// 미니 PIP 표시 (원래 방식: 별도 PIP 컨테이너)
+scwin.showMiniPIP = function() {
+    
+    
+    const miniPipContainer = document.getElementById('miniPipContainer');
+    const mainContainer = document.querySelector('.video-chat-container');
+    
+    if (!miniPipContainer || !mainContainer) {
+        
+        return;
+    }
+    
+    // 1. 메인 화상통화 영역 숨기기
+    mainContainer.style.display = 'none';
+    
+    
+    // 2. 미니 PIP 컨테이너 표시 (강제로 보이게 설정)
+    miniPipContainer.style.setProperty('display', 'block', 'important');
+    miniPipContainer.style.setProperty('visibility', 'visible', 'important');
+    miniPipContainer.style.setProperty('opacity', '1', 'important');
+    
+    // 3. 위치 강제 설정
+    miniPipContainer.style.setProperty('position', 'fixed', 'important');
+    miniPipContainer.style.setProperty('bottom', '20px', 'important');
+    miniPipContainer.style.setProperty('right', '20px', 'important');
+    miniPipContainer.style.setProperty('z-index', '9999', 'important');
+    
+    // 4. PIP 크기에 맞춰 비디오 그리드 레이아웃 적용
+    scwin.updateVideoGridLayout(miniPipContainer);
+    
+    
+    
+    // 5. 비디오들을 미니 PIP에 복사
+    scwin.updateMiniPIP();
+    
+    // 6. PIP 상태 설정
+    isMiniPipActive = true;
+    scwin.updatePiPButton(true);
+    
+    
+};
+
+// PIP 모드용 비디오 조정 함수
+scwin.adjustVideosForPIP = function() {
+    
+    
+    // 모든 비디오 요소 검색 (더 넓은 범위)
+    const allVideos = document.querySelectorAll('video');
+   
+    
+    allVideos.forEach(function(video, index) {
+        video.style.setProperty('width', '150px', 'important');
+        video.style.setProperty('height', '100px', 'important');
+        video.style.setProperty('object-fit', 'cover', 'important');
+        video.style.setProperty('border-radius', '6px', 'important');
+        video.style.setProperty('background', 'red', 'important'); // 디버깅용
+    });
+    
+    // 로컬 비디오 조정
+    const localVideo = document.getElementById('localVideo');
+    const localContainer = document.querySelector('.local-video-container');
+    
+    if (localVideo) {
+        localVideo.style.setProperty('width', '180px', 'important');
+        localVideo.style.setProperty('height', '120px', 'important');
+        localVideo.style.setProperty('object-fit', 'cover', 'important');
+        localVideo.style.setProperty('border-radius', '6px', 'important');
+        localVideo.style.setProperty('background', 'blue', 'important'); // 디버깅용
+        
+    } else {
+       
+    }
+    
+    if (localContainer) {
+        localContainer.style.setProperty('width', '100%', 'important');
+        localContainer.style.setProperty('height', '140px', 'important');
+        localContainer.style.setProperty('margin', '2px', 'important');
+        localContainer.style.setProperty('background', 'yellow', 'important'); // 디버깅용
+        
+    } else {
+       
+    }
+    
+    // 원격 비디오들 조정
+    const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+    if (remoteVideosGrid) {
+        remoteVideosGrid.style.setProperty('height', '140px', 'important');
+        remoteVideosGrid.style.setProperty('grid-template-columns', '1fr 1fr', 'important');
+        remoteVideosGrid.style.setProperty('grid-gap', '4px', 'important');
+        remoteVideosGrid.style.setProperty('padding', '2px', 'important');
+        remoteVideosGrid.style.setProperty('background', 'green', 'important'); // 디버깅용
+        
+    } else {
+        
+    }
+    
+    // 모든 원격 비디오 요소들 조정
+    const remoteVideos = document.querySelectorAll('.remote-video');
+    
+    
+    remoteVideos.forEach(function(video, index) {
+        
+        video.style.setProperty('width', '100%', 'important');
+        video.style.setProperty('height', '100%', 'important');
+        video.style.setProperty('object-fit', 'cover', 'important');
+        video.style.setProperty('border-radius', '4px', 'important');
+        video.style.setProperty('background', 'purple', 'important'); // 디버깅용
+    });
+    
+    const remoteContainers = document.querySelectorAll('.remote-video-container');
+    
+    
+    remoteContainers.forEach(function(container, index) {
+        
+        container.style.setProperty('width', '100%', 'important');
+        container.style.setProperty('height', '65px', 'important');
+        container.style.setProperty('margin', '1px', 'important');
+        container.style.setProperty('background', 'orange', 'important'); // 디버깅용
+    });
+    
+    
+};
+
+// PIP 모드에서 일반 모드로 비디오 복원
+scwin.restoreVideosFromPIP = function() {
+    
+    
+    // 로컬 비디오 복원
+    const localVideo = document.getElementById('localVideo');
+    const localContainer = document.querySelector('.local-video-container');
+    
+    if (localVideo) {
+        localVideo.style.removeProperty('width');
+        localVideo.style.removeProperty('height');
+        localVideo.style.removeProperty('object-fit');
+        localVideo.style.removeProperty('border-radius');
+    }
+    
+    if (localContainer) {
+        localContainer.style.removeProperty('width');
+        localContainer.style.removeProperty('height');
+        localContainer.style.removeProperty('margin');
+    }
+    
+    // 원격 비디오들 복원
+    const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+    if (remoteVideosGrid) {
+        remoteVideosGrid.style.removeProperty('height');
+        remoteVideosGrid.style.removeProperty('grid-template-columns');
+        remoteVideosGrid.style.removeProperty('grid-gap');
+        remoteVideosGrid.style.removeProperty('padding');
+    }
+    
+    const remoteVideos = document.querySelectorAll('.remote-video');
+    remoteVideos.forEach(function(video) {
+        video.style.removeProperty('width');
+        video.style.removeProperty('height');
+        video.style.removeProperty('object-fit');
+        video.style.removeProperty('border-radius');
+    });
+    
+    const remoteContainers = document.querySelectorAll('.remote-video-container');
+    remoteContainers.forEach(function(container) {
+        container.style.removeProperty('width');
+        container.style.removeProperty('height');
+        container.style.removeProperty('margin');
+    });
+    
+    
+    
+    // === 아래는 기존 코드 (위에서 return으로 실행되지 않음) ===
+    // 전체 화상통화 영역 숨기기 (비디오 + 채팅)
+    mainContainer.style.display = 'none';
+    
+    // 미니 PIP 컨테이너 표시 (강제로 보이게 설정)
+    miniPipContainer.style.setProperty('display', 'block', 'important');
+    miniPipContainer.style.setProperty('visibility', 'visible', 'important');
+    miniPipContainer.style.setProperty('opacity', '1', 'important');
+    
+    // 위치도 강제로 설정
+    miniPipContainer.style.setProperty('position', 'fixed', 'important');
+    miniPipContainer.style.setProperty('bottom', '20px', 'important');
+    miniPipContainer.style.setProperty('right', '20px', 'important');
+    miniPipContainer.style.setProperty('z-index', '9999', 'important');
+    
+    // PIP 초기 표시 시 비디오 그리드 레이아웃 적용
+    scwin.updateVideoGridLayout(miniPipContainer);
+    
+    
+    
+    // X 버튼 이벤트 리스너 강제 추가 (표시할 때마다)
+    const closeBtn = document.getElementById('miniPipCloseBtn');
+    if (closeBtn) {
+        // 기존 모든 이벤트 제거
+        closeBtn.onclick = null;
+        closeBtn.removeAttribute('onclick');
+        
+        // 새로운 X 버튼으로 교체 (완전히 새로운 요소 생성)
+        const newCloseBtn = closeBtn.cloneNode(true);
+        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+        
+        // 새 버튼에 이벤트 추가
+        newCloseBtn.addEventListener('click', function(e) {
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // PIP 닫기 기능
+            const miniPipContainer = document.getElementById('miniPipContainer');
+            const mainContainer = document.querySelector('.video-chat-container');
+            
+            if (miniPipContainer) {
+                miniPipContainer.style.setProperty('display', 'none', 'important');
+                
+                
+                // 추가: PIP 컨테이너 완전 제거 확인
+                
+            }
+            if (mainContainer) {
+                mainContainer.style.setProperty('display', 'flex', 'important');
+                
+            } else {
+                // 메인 컨테이너가 없으면 부모창에 모달 재열기 요청
+                
+                if (window.parent && window.parent !== window) {
+                    try {
+                        window.parent.postMessage({
+                            action: 'reopenVideoChatPopup'
+                        }, '*');
+                        
+                    } catch (e) {
+                        
+                    }
+                }
+            }
+            
+            // 상태 업데이트
+            isMiniPipActive = false;
+            const pipBtn = document.getElementById("pipBtn");
+            if (pipBtn) {
+                pipBtn.classList.remove("active");
+                pipBtn.textContent = "PIP";
+                
+            }
+            
+           
+        }, true);
+        
+        
+    } else {
+       
+    }
+    
+    // 모든 비디오를 미니 PIP에 복제
+    scwin.updateMiniPIP();
+    
+    // 드래그 및 리사이즈 기능 즉시 초기화
+    setTimeout(() => {
+        
+        
+        // 인라인 드래그 기능 구현
+        const pipContainer = document.querySelector('.mini-pip-container');
+        const pipHeader = document.querySelector('.mini-pip-header');
+        
+        if (!pipContainer || !pipHeader) {
+            
+            return;
+        }
+        
+        // 드래그 변수들
+        let isDragging = false;
+        let dragOffset = { x: 0, y: 0 };
+        
+        // 기존 이벤트 제거 후 새로 추가
+        const newHeader = pipHeader.cloneNode(true);
+        pipHeader.parentNode.replaceChild(newHeader, pipHeader);
+        
+        newHeader.style.cursor = 'move';
+        newHeader.addEventListener('mousedown', function(e) {
+            if (e.target.closest('.mini-pip-close')) return;
+            
+            
+            isDragging = true;
+            
+            const rect = pipContainer.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+            
+            function dragMove(e) {
+                if (!isDragging) return;
+                
+                const newX = e.clientX - dragOffset.x;
+                const newY = e.clientY - dragOffset.y;
+                
+                const maxX = window.innerWidth - pipContainer.offsetWidth;
+                const maxY = window.innerHeight - pipContainer.offsetHeight;
+                
+                const x = Math.max(0, Math.min(newX, maxX));
+                const y = Math.max(0, Math.min(newY, maxY));
+                
+                pipContainer.style.setProperty('left', x + 'px', 'important');
+                pipContainer.style.setProperty('top', y + 'px', 'important');
+                pipContainer.style.setProperty('right', 'auto', 'important');
+                pipContainer.style.setProperty('bottom', 'auto', 'important');
+            }
+            
+            function dragEnd() {
+                
+                isDragging = false;
+                document.removeEventListener('mousemove', dragMove);
+                document.removeEventListener('mouseup', dragEnd);
+            }
+            
+            document.addEventListener('mousemove', dragMove);
+            document.addEventListener('mouseup', dragEnd);
+            e.preventDefault();
+        });
+        
+        // 리사이즈 핸들 생성 및 기능 추가
+        const handles = [
+            { class: 'corner se', cursor: 'se-resize', style: 'bottom: 0; right: 0; width: 15px; height: 15px; border-radius: 0 0 12px 0;' },
+            { class: 'corner sw', cursor: 'sw-resize', style: 'bottom: 0; left: 0; width: 15px; height: 15px; border-radius: 0 0 0 12px;' },
+            { class: 'corner ne', cursor: 'ne-resize', style: 'top: 0; right: 0; width: 15px; height: 15px; border-radius: 0 12px 0 0;' },
+            { class: 'corner nw', cursor: 'nw-resize', style: 'top: 0; left: 0; width: 15px; height: 15px; border-radius: 12px 0 0 0;' },
+            { class: 'edge right', cursor: 'e-resize', style: 'right: 0; top: 15px; bottom: 15px; width: 5px;' },
+            { class: 'edge left', cursor: 'w-resize', style: 'left: 0; top: 15px; bottom: 15px; width: 5px;' },
+            { class: 'edge top', cursor: 'n-resize', style: 'top: 0; left: 15px; right: 15px; height: 5px;' },
+            { class: 'edge bottom', cursor: 's-resize', style: 'bottom: 0; left: 15px; right: 15px; height: 5px;' }
+        ];
+        
+        // 기존 핸들 제거
+        pipContainer.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
+        
+        handles.forEach(handleInfo => {
+            const handle = document.createElement('div');
+            handle.className = `resize-handle ${handleInfo.class}`;
+            handle.style.cssText = `
+                position: absolute;
+                background: #FFB823;
+                opacity: 0.5;
+                z-index: 10002;
+                cursor: ${handleInfo.cursor};
+                ${handleInfo.style}
+            `;
+            
+            let isResizing = false;
+            let resizeStart = {};
+            
+            handle.addEventListener('mousedown', function(e) {
+                
+                isResizing = true;
+                
+                const rect = pipContainer.getBoundingClientRect();
+                resizeStart = {
+                    x: e.clientX,
+                    y: e.clientY,
+                    width: rect.width,
+                    height: rect.height,
+                    left: rect.left,
+                    top: rect.top,
+                    direction: handleInfo.class
+                };
+                
+                function handleResize(e) {
+                    if (!isResizing) return;
+                    
+                    const deltaX = e.clientX - resizeStart.x;
+                    const deltaY = e.clientY - resizeStart.y;
+                    const direction = resizeStart.direction;
+                    
+                    let newWidth = resizeStart.width;
+                    let newHeight = resizeStart.height;
+                    let newLeft = resizeStart.left;
+                    let newTop = resizeStart.top;
+                    
+                    // 방향에 따른 리사이즈 처리
+                    if (direction.includes('right') || direction.includes('se') || direction.includes('ne')) {
+                        newWidth = resizeStart.width + deltaX;
+                    }
+                    if (direction.includes('left') || direction.includes('sw') || direction.includes('nw')) {
+                        newWidth = resizeStart.width - deltaX;
+                        newLeft = resizeStart.left + deltaX;
+                    }
+                    if (direction.includes('bottom') || direction.includes('se') || direction.includes('sw')) {
+                        newHeight = resizeStart.height + deltaY;
+                    }
+                    if (direction.includes('top') || direction.includes('ne') || direction.includes('nw')) {
+                        newHeight = resizeStart.height - deltaY;
+                        newTop = resizeStart.top + deltaY;
+                    }
+                    
+                    // 크기 제한
+                    const minWidth = 250, maxWidth = Math.min(600, window.innerWidth * 0.8);
+                    const minHeight = 200, maxHeight = window.innerHeight * 0.8;
+                    
+                    if (newWidth < minWidth) {
+                        if (direction.includes('left')) newLeft = resizeStart.left + (resizeStart.width - minWidth);
+                        newWidth = minWidth;
+                    }
+                    if (newWidth > maxWidth) {
+                        if (direction.includes('left')) newLeft = resizeStart.left + (resizeStart.width - maxWidth);
+                        newWidth = maxWidth;
+                    }
+                    if (newHeight < minHeight) {
+                        if (direction.includes('top')) newTop = resizeStart.top + (resizeStart.height - minHeight);
+                        newHeight = minHeight;
+                    }
+                    if (newHeight > maxHeight) {
+                        if (direction.includes('top')) newTop = resizeStart.top + (resizeStart.height - maxHeight);
+                        newHeight = maxHeight;
+                    }
+                    
+                    // 화면 경계 체크
+                    newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - newWidth));
+                    newTop = Math.max(0, Math.min(newTop, window.innerHeight - newHeight));
+                    
+                    pipContainer.style.setProperty('width', newWidth + 'px', 'important');
+                    pipContainer.style.setProperty('height', newHeight + 'px', 'important');
+                    pipContainer.style.setProperty('left', newLeft + 'px', 'important');
+                    pipContainer.style.setProperty('top', newTop + 'px', 'important');
+                    pipContainer.style.setProperty('right', 'auto', 'important');
+                    pipContainer.style.setProperty('bottom', 'auto', 'important');
+                    
+                    // PIP 크기 변화에 따른 비디오 그리드 레이아웃 업데이트
+                    scwin.updateVideoGridLayout(pipContainer);
+                }
+                
+                function handleResizeEnd() {
+                    
+                    isResizing = false;
+                    document.removeEventListener('mousemove', handleResize);
+                    document.removeEventListener('mouseup', handleResizeEnd);
+                }
+                
+                document.addEventListener('mousemove', handleResize);
+                document.addEventListener('mouseup', handleResizeEnd);
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            
+            handle.addEventListener('mouseenter', function() {
+                handle.style.opacity = '1';
+            });
+            
+            handle.addEventListener('mouseleave', function() {
+                handle.style.opacity = '0.5';
+            });
+            
+            pipContainer.appendChild(handle);
+        });
+        
+        // X 버튼 이벤트 재바인딩 (리사이즈 핸들 추가 후)
+        const finalCloseBtn = document.getElementById('miniPipCloseBtn');
+        if (finalCloseBtn) {
+            // 기존 이벤트 완전 제거
+            finalCloseBtn.onclick = null;
+            finalCloseBtn.removeAttribute('onclick');
+            
+            // 새로운 이벤트 추가 (최종)
+            finalCloseBtn.addEventListener('click', function(e) {
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // PIP 닫기
+                const miniPip = document.getElementById('miniPipContainer');
+                const mainCont = document.querySelector('.video-chat-container');
+                
+                if (miniPip) {
+                    miniPip.style.setProperty('display', 'none', 'important');
+                    
+                }
+                
+                if (mainCont) {
+                    mainCont.style.setProperty('display', 'flex', 'important');
+                    mainCont.style.setProperty('visibility', 'visible', 'important');
+                    
+                } else {
+                    // 모든 video-chat-container 강제 표시
+                    document.querySelectorAll('.video-chat-container').forEach(cont => {
+                        cont.style.setProperty('display', 'flex', 'important');
+                        cont.style.setProperty('visibility', 'visible', 'important');
+                    });
+                   
+                }
+                
+                // 상태 업데이트
+                isMiniPipActive = false;
+                const pipButton = document.getElementById("pipBtn");
+                if (pipButton) {
+                    pipButton.classList.remove("active");
+                    pipButton.textContent = "PIP";
+                }
+                
+                
+            }, { capture: true, once: false });
+            
+            // X 버튼 스타일 강화 (다른 요소에 가려지지 않도록)
+            finalCloseBtn.style.setProperty('z-index', '10005', 'important');
+            finalCloseBtn.style.setProperty('position', 'relative', 'important');
+            finalCloseBtn.style.setProperty('pointer-events', 'auto', 'important');
+            
+            
+        } else {
+            
+        }
+        
+        
+    }, 100);
+    
+    // 상태 업데이트
+    isMiniPipActive = true;
+    scwin.updatePiPButton(true);
+    
+    
+};
+
+// 미니 PIP 닫기
+scwin.closeMiniPIP = function() {
+    
+    
+    const miniPipContainer = document.getElementById('miniPipContainer');
+    const mainContainer = document.querySelector('.video-chat-container');
+    
+    
+    
+    if (!miniPipContainer || !mainContainer) {
+        
+        return;
+    }
+    
+    // 미니 PIP 컨테이너 숨기기
+    miniPipContainer.style.display = 'none';
+    
+    
+    // 전체 화상통화 영역 표시 (비디오 + 채팅)
+    mainContainer.style.display = 'flex';
+    
+    
+    // 미니 비디오 그리드 비우기
+    const miniVideoGrid = document.getElementById('miniVideoGrid');
+    if (miniVideoGrid) {
+        miniVideoGrid.innerHTML = '';
+        
+    }
+    
+    // 상태 업데이트
+    isMiniPipActive = false;
+    scwin.updatePiPButton(false);
+    
+    // 다른 팝업들의 헤더 복원
+    scwin.restoreOtherPopupHeaders();
+    
+    
+};
+
+// PIP 확장 기능 (PIP 모드에서 전체 화면으로 복원)
+scwin.expandVideoChat = function() {
+    
+    
+    const mainContainer = document.querySelector('.video-chat-container');
+    const chatSection = document.querySelector('.chat-section');
+    const controlPanel = document.querySelector('.control-panel');
+    const videoSection = document.querySelector('.video-section');
+    
+    if (!mainContainer || !videoSection) {
+        
+        return;
+    }
+    
+    // PIP가 활성 상태인지 확인
+    if (!isMiniPipActive) {
+        
+        return;
+    }
+    
+    // 1. 메인 컨테이너 스타일 복원 (모든 PIP 스타일 제거)
+    mainContainer.style.removeProperty('position');
+    mainContainer.style.removeProperty('bottom');
+    mainContainer.style.removeProperty('right');
+    mainContainer.style.removeProperty('width');
+    mainContainer.style.removeProperty('height');
+    mainContainer.style.removeProperty('z-index');
+    mainContainer.style.removeProperty('border-radius');
+    mainContainer.style.removeProperty('border');
+    mainContainer.style.removeProperty('box-shadow');
+    mainContainer.style.removeProperty('background');
+    
+    
+    // 2. 비디오 섹션 스타일 복원
+    videoSection.style.removeProperty('width');
+    videoSection.style.removeProperty('height');
+    videoSection.style.removeProperty('padding');
+    
+    
+    // 3. 채팅 영역 다시 표시
+    if (chatSection) {
+        chatSection.style.display = '';
+        
+    }
+    
+    // 4. 컨트롤 패널 다시 표시
+    if (controlPanel) {
+        controlPanel.style.display = '';
+        
+    }
+    
+    // 5. PIP 컨트롤 버튼들 숨기기
+    const pipControls = document.getElementById('pipControls');
+    if (pipControls) {
+        pipControls.style.display = 'none';
+        
+    }
+    
+    // 6. PIP 모드 CSS 클래스 제거
+    mainContainer.classList.remove('pip-mode');
+    
+    // 7. 비디오 요소들 복원
+    scwin.restoreVideosFromPIP();
+    
+    // 8. 상태 업데이트
+    isMiniPipActive = false;
+    scwin.updatePiPButton(false);
+    
+    // 9. 드래그 기능 비활성화
+    scwin.disablePipDrag(mainContainer);
+    
+    
+};
+
+// PIP 드래그 기능 활성화
+scwin.enablePipDrag = function(container) {
+    
+    container.style.cursor = 'move';
+    container.setAttribute('data-pip-draggable', 'true');
+    
+    // 기존 드래그 이벤트가 있다면 재사용
+    if (typeof scwin.initializePipDrag === 'function') {
+        scwin.initializePipDrag();
+    }
+};
+
+// PIP 드래그 기능 비활성화
+scwin.disablePipDrag = function(container) {
+    
+    container.style.cursor = '';
+    container.removeAttribute('data-pip-draggable');
+};
+
+// PIP 버튼 상태 업데이트
+scwin.updatePiPButton = function(isInPiP) {
+    const pipBtn = document.getElementById('pipBtn');
+    if (pipBtn) {
+        const label = pipBtn.querySelector('xf\\:label');
+        if (label) {
+            label.textContent = isInPiP ? 'EXIT PIP' : 'PIP';
+        }
+        pipBtn.className = isInPiP ? 'control-btn pip-btn active' : 'control-btn pip-btn';
+    }
+};
+
+// 미니 PIP 업데이트 (모든 비디오 복제)
+scwin.updateMiniPIP = function() {
+    
+    
+    const miniVideoGrid = document.getElementById('miniVideoGrid');
+    if (!miniVideoGrid) {
+        
+        return;
+    }
+    
+    // 기존 미니 비디오들 제거
+    miniVideoGrid.innerHTML = '';
+   
+    
+    // 로컬 비디오 추가
+    const localVideo = document.getElementById('localVideo');
+    if (localVideo && localVideo.srcObject) {
+        
+        const userName = (typeof currentUser !== 'undefined' && currentUser.userName) ? 
+                        '나 (' + currentUser.userName + ')' : '나';
+        scwin.addVideoToMiniPIP('local', localVideo.srcObject, userName);
+    } else {
+        
+    }
+    
+    // 원격 비디오들 추가
+    const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+    if (remoteVideosGrid) {
+        const remoteVideoItems = remoteVideosGrid.querySelectorAll('.remote-video-item');
+        
+        
+        remoteVideoItems.forEach((item, index) => {
+            const video = item.querySelector('video');
+            const userName = item.getAttribute('data-username') || item.getAttribute('data-userid') || '참가자' + (index + 1);
+            const userId = item.getAttribute('data-userid') || item.getAttribute('data-username') || 'unknown_' + index;
+            
+            
+            
+            if (video && video.srcObject) {
+                scwin.addVideoToMiniPIP(userId, video.srcObject, userName);
+            }
+        });
+    } else {
+        
+    }
+    
+    // 불필요한 더미 비디오 생성 제거 (비디오 1,2,3,4,5 문제 해결)
+    
+    // PIP 크기에 맞춰 비디오 그리드 레이아웃 적용
+    const pipContainer = document.getElementById('miniPipContainer');
+    if (pipContainer) {
+        scwin.updateVideoGridLayout(pipContainer);
+    }
+    
+    
+};
+
+// PIP 크기에 따른 비디오 그리드 레이아웃 동적 업데이트
+scwin.updateVideoGridLayout = function(pipContainer) {
+    const miniVideoGrid = document.getElementById('miniVideoGrid');
+    if (!miniVideoGrid || !pipContainer) return;
+    
+    const containerWidth = pipContainer.offsetWidth;
+    const threshold = 280; // 280px 이하일 때 1열로 전환
+    
+    
+    
+    if (containerWidth < threshold) {
+        // 1열 레이아웃으로 전환
+        miniVideoGrid.style.gridTemplateColumns = '1fr';
+       
+    } else {
+        // 2열 레이아웃 유지
+        miniVideoGrid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+        
+    }
+};
+
+// 개별 비디오를 미니 PIP에 추가
+scwin.addVideoToMiniPIP = function(userId, stream, userName) {
+    const miniVideoGrid = document.getElementById('miniVideoGrid');
+    if (!miniVideoGrid || !stream) return;
+    
+    // 미니 비디오 아이템 생성
+    const miniVideoItem = document.createElement('div');
+    miniVideoItem.className = 'mini-video-item';
+    miniVideoItem.setAttribute('data-userid', userId);
+    
+    // 비디오 요소 생성
+    const miniVideo = document.createElement('video');
+    miniVideo.className = 'mini-video';
+    miniVideo.srcObject = stream;
+    miniVideo.autoplay = true;
+    miniVideo.playsInline = true;
+    miniVideo.muted = (userId === 'local'); // 로컬 비디오만 음소거
+    
+    // 사용자 이름 라벨 생성
+    const miniVideoName = document.createElement('div');
+    miniVideoName.className = 'mini-video-name';
+    miniVideoName.textContent = userName;
+    
+    // 비디오 꺼짐 메시지 (필요시 표시)
+    const videoTracks = stream.getVideoTracks();
+    if (videoTracks.length === 0 || !videoTracks[0].enabled) {
+        miniVideo.style.display = 'none';
+        const offMessage = document.createElement('div');
+        offMessage.className = 'mini-video-off-message';
+        offMessage.textContent = '카메라 꺼짐';
+        miniVideoItem.appendChild(offMessage);
+        miniVideoItem.classList.add('video-off');
+    }
+    
+    // 음소거 상태 확인
+    const audioTracks = stream.getAudioTracks();
+    if (audioTracks.length === 0 || !audioTracks[0].enabled) {
+        miniVideoItem.classList.add('muted');
+        miniVideoName.style.background = '#dc3545';
+    }
+    
+    // 요소들 조립
+    miniVideoItem.appendChild(miniVideo);
+    miniVideoItem.appendChild(miniVideoName);
+    
+    // 그리드에 추가
+    miniVideoGrid.appendChild(miniVideoItem);
+    
+    
+};
+
+// 버튼 상태 업데이트
+scwin.updateControlButtons = function() {
+    const joinBtn = document.getElementById("joinBtn");
+    const leaveBtn = document.getElementById("leaveBtn");
+    const muteBtn = document.getElementById("muteBtn");
+    const videoBtn = document.getElementById("videoBtn");
+    const pipBtn = document.getElementById("pipBtn");
+    
+    if (isJoined) {
+        if (joinBtn) joinBtn.style.display = "none";
+        if (leaveBtn) leaveBtn.style.display = "inline-block";
+        if (muteBtn) muteBtn.disabled = false;
+        if (videoBtn) videoBtn.disabled = false;
+        if (pipBtn) pipBtn.disabled = false;
+    } else {
+        if (joinBtn) joinBtn.style.display = "inline-block";
+        if (leaveBtn) leaveBtn.style.display = "none";
+        if (muteBtn) muteBtn.disabled = true;
+        if (videoBtn) videoBtn.disabled = true;
+        if (pipBtn) pipBtn.disabled = true;
+    }
+};
+
+// 내 비디오를 그리드에 추가 (다른 참가자들과 동일한 레이아웃)
+/**
+ * 내 비디오를 그리드에 추가
+ * 로컬 사용자의 비디오 스트림을 화상통화 그리드에 표시
+ * @param {MediaStream} stream - 로컬 사용자의 비디오/오디오 스트림
+ * @returns {void}
+ */
+scwin.addMyVideoToGrid = function(stream) {
+    try {
+        const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+        if (!remoteVideosGrid) {
+            
+            return;
+        }
+        
+        // 기존에 내 비디오가 있는지 확인
+        const existingMyVideo = remoteVideosGrid.querySelector('[data-username="나"]');
+        if (existingMyVideo) {
+            existingMyVideo.remove();
+        }
+        
+        // 내 비디오 아이템 생성
+        const videoItem = document.createElement('div');
+        videoItem.className = 'remote-user-video';
+        videoItem.setAttribute('data-username', '나');
+        videoItem.setAttribute('data-userid', currentUser.userId);
+        
+        videoItem.innerHTML = `
+            <div class="remote-video-wrapper">
+                <div class="remote-video-player">
+                    <video autoplay muted playsinline style="
+                        width: 100%; 
+                        height: 100%; 
+                        object-fit: cover; 
+                        border-radius: 8px;
+                        border: 3px solid #FFB823;
+                    "></video>
+                </div>
+                <div class="remote-user-name" style="
+                    background: #FFB823;
+                    color: white;
+                    font-weight: bold;
+                ">나 (${currentUser.userName})</div>
+            </div>
+        `;
+        
+        // 비디오 스트림 연결
+        const video = videoItem.querySelector('video');
+        if (video && stream) {
+            video.srcObject = stream;
+        }
+        
+        // 그리드의 첫 번째 위치에 추가 (내가 맨 앞에 표시)
+        remoteVideosGrid.insertBefore(videoItem, remoteVideosGrid.firstChild);
+        
+        
+        
+        
+        // 미니 PIP가 활성화된 상태라면 업데이트
+        if (isMiniPipActive) {
+            scwin.updateMiniPIP();
+           
+        }
+        
+    } catch (error) {
+        
+    }
+};
+
+// 내 비디오를 그리드에서 제거
+scwin.removeMyVideoFromGrid = function() {
+    try {
+        const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+        if (!remoteVideosGrid) return;
+        
+        const myVideoItem = remoteVideosGrid.querySelector('[data-username="나"]');
+        if (myVideoItem) {
+            myVideoItem.remove();
+            
+            
+            // 미니 PIP가 활성화된 상태라면 업데이트
+            if (isMiniPipActive) {
+                scwin.updateMiniPIP();
+                
+            }
+        }
+    } catch (error) {
+        
+    }
+};
+
+// 원격 사용자 제거 (개선된 버전)
+scwin.removeRemoteUser = function(userId) {
+    try {
+        
+        
+        const remoteVideosGrid = document.getElementById('remoteVideosGrid');
+        if (!remoteVideosGrid) {
+            
+            return;
+        }
+        
+        // userId로 사용자 이름 찾기
+        const userInfo = remoteUserInfo.get(userId);
+        const userName = userInfo ? userInfo.userName : userId;
+        
+        // 여러 방법으로 비디오 아이템 찾기 시도
+        let videoItem = null;
+        
+        // 방법 1: data-userid로 찾기
+        videoItem = remoteVideosGrid.querySelector(`[data-userid="${userId}"]`);
+        if (videoItem) {
+            
+        }
+        
+        // 방법 2: data-username으로 찾기
+        if (!videoItem) {
+            videoItem = remoteVideosGrid.querySelector(`[data-username="${userName}"]`);
+            if (videoItem) {
+                
+            }
+        }
+        
+        // 방법 3: 모든 원격 비디오에서 검색
+        if (!videoItem) {
+            const allVideoItems = remoteVideosGrid.querySelectorAll('.remote-video-item');
+            
+            
+            allVideoItems.forEach((item, index) => {
+                const itemUserId = item.getAttribute('data-userid');
+                const itemUserName = item.getAttribute('data-username');
+                
+                
+                if (itemUserId === userId || itemUserName === userName) {
+                    videoItem = item;
+                    
+                }
+            });
+        }
+        
+        // 비디오 제거 실행
+        if (videoItem) {
+            videoItem.remove();
+            
+            
+            
+            // 미니 PIP가 활성화된 상태라면 업데이트
+            if (isMiniPipActive) {
+                scwin.updateMiniPIP();
+                
+            }
+        } else {
+            
+        }
+        
+        // 관련 데이터 정리
+        if (remoteStreams.has(userId)) {
+            remoteStreams.delete(userId);
+            
+        }
+        
+        if (pendingIceCandidates.has(userId)) {
+            pendingIceCandidates.delete(userId);
+            
+        }
+        
+        
+        
+    } catch (error) {
+        
+    }
+};
+
+// 새 창에서 PIP 모드 열기
+scwin.openPipInNewWindow = function() {
+    try {
+        // 현재 비디오 참가자들의 정보 수집
+        const videoElements = document.querySelectorAll('.remote-user-video video');
+        const participantCount = videoElements.length;
+        
+        // 새 창으로 미니 화상통화 창 열기
+        const pipWindow = window.open('', 'videoChatPip', 
+            'width=320,height=400,resizable=yes,scrollbars=no,status=no,toolbar=no,menubar=no,location=no'
+        );
+        
+        if (!pipWindow) {
+            $c.win.alert('팝업이 차단되었습니다. 팝업을 허용해주세요.');
+            return;
+        }
+        
+        // PIP 창의 HTML 구성
+        const pipHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>화상통화 - PIP</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { 
+                        background: rgba(0, 0, 0, 0.9); 
+                        font-family: Arial, sans-serif;
+                        overflow: hidden;
+                    }
+                    .pip-header {
+                        background: #FFB823;
+                        color: white;
+                        padding: 8px 12px;
+                        font-size: 14px;
+                        font-weight: bold;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    .pip-close {
+                        background: none;
+                        border: none;
+                        color: white;
+                        font-size: 18px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        padding: 0;
+                        width: 20px;
+                        height: 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .pip-close:hover { background: rgba(255, 255, 255, 0.2); }
+                    .video-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                        grid-gap: 5px;
+                        padding: 10px;
+                        height: calc(100vh - 40px);
+                        overflow-y: auto;
+                    }
+                    .video-item {
+                        background: #2a2a2a;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        position: relative;
+                        aspect-ratio: 16/9;
+                    }
+                    .video-item video {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+                    .user-name {
+                        position: absolute;
+                        bottom: 5px;
+                        left: 5px;
+                        background: rgba(0, 0, 0, 0.7);
+                        color: white;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-size: 10px;
+                    }
+                    .no-video {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #ccc;
+                        font-size: 12px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="pip-header">
+                    <span>화상통화 (${participantCount}명)</span>
+                    <button class="pip-close" onclick="window.close()">×</button>
+                </div>
+                <div class="video-grid" id="pipVideoGrid">
+                    ${participantCount === 0 ? '<div class="no-video">참가자가 없습니다</div>' : ''}
+                </div>
+            </body>
+            </html>
+        `;
+        
+        pipWindow.document.write(pipHtml);
+        pipWindow.document.close();
+        
+        // 비디오 스트림을 PIP 창으로 복사
+        if (participantCount > 0) {
+            setTimeout(function() {
+                scwin.cloneVideosToPopup(pipWindow);
+            }, 100);
+        }
+        
+        
+        
+    } catch (error) {
+        
+        $c.win.alert('PIP 모드 실행 중 오류가 발생했습니다.');
+    }
+};
+
+// 비디오 스트림을 팝업창으로 복사
+scwin.cloneVideosToPopup = function(pipWindow) {
+    try {
+        const pipVideoGrid = pipWindow.document.getElementById('pipVideoGrid');
+        if (!pipVideoGrid) return;
+        
+        // 기존 내용 지우기
+        pipVideoGrid.innerHTML = '';
+        
+        // 현재 창의 모든 비디오 요소 찾기
+        const videoContainers = document.querySelectorAll('.remote-user-video');
+        
+        videoContainers.forEach(function(container, index) {
+            const video = container.querySelector('video');
+            const userName = container.querySelector('.remote-user-name')?.textContent || `참가자 ${index + 1}`;
+            
+            if (video && video.srcObject) {
+                // PIP 창에 비디오 아이템 생성
+                const videoItem = pipWindow.document.createElement('div');
+                videoItem.className = 'video-item';
+                
+                const clonedVideo = pipWindow.document.createElement('video');
+                clonedVideo.srcObject = video.srcObject;
+                clonedVideo.autoplay = true;
+                clonedVideo.muted = true;
+                clonedVideo.playsInline = true;
+                
+                const userNameDiv = pipWindow.document.createElement('div');
+                userNameDiv.className = 'user-name';
+                userNameDiv.textContent = userName;
+                
+                videoItem.appendChild(clonedVideo);
+                videoItem.appendChild(userNameDiv);
+                pipVideoGrid.appendChild(videoItem);
+            }
+        });
+        
+        // 비디오가 없으면 메시지 표시
+        if (pipVideoGrid.children.length === 0) {
+            pipVideoGrid.innerHTML = '<div class="no-video">참가자가 없습니다</div>';
+        }
+        
+    } catch (error) {
+        
+    }
+};
+
+// 세션 사용자 정보 로드 완료 이벤트
+scwin.sbm_getUserInfo_submitdone = function(e) {
+    try {
+        
+        
+        // 세션에서 가져온 사용자 정보 확인
+        let sessionUserId = dm_userInfo.get("userId");
+        let sessionUserName = dm_userInfo.get("userName");
+        let sessionUserImage = dm_userInfo.get("userImage");
+        
+       
+        
+        // 실제 로그인 사용자 정보로 업데이트
+        if (sessionUserId && sessionUserName) {
+            currentUser.userName = sessionUserName;
+            
+            // WebRTC 사용자 ID는 고유성을 위해 세션ID + 타임스탬프 조합 사용
+            let timestamp = Date.now();
+            currentUser.userId = sessionUserId + "_" + timestamp;
+            
+            
+            
+            // 데이터맵 업데이트
+            dma_videoChat.set("userId", currentUser.userId);
+            dma_videoChat.set("userName", currentUser.userName);
+            
+        } else {
+            
+            // 기본값 설정
+            currentUser.userName = "익명사용자";
+            dma_videoChat.set("userName", currentUser.userName);
+        }
+        
+        // WebRTC 초기화 진행
+        scwin.initializeWebRTCAfterUserInfo();
+        
+    } catch (error) {
+       
+        // 오류 시 기본값으로 진행
+        currentUser.userName = "익명사용자";
+        dma_videoChat.set("userName", currentUser.userName);
+        scwin.initializeWebRTCAfterUserInfo();
+    }
+};
+
+// 세션 사용자 정보 로드 실패 이벤트
+scwin.sbm_getUserInfo_submiterror = function(e) {
+    
+    
+    // 실패 시 기본값 사용
+    currentUser.userName = "익명사용자";
+    dma_videoChat.set("userName", currentUser.userName);
+    
+    // WebRTC 초기화 진행
+    scwin.initializeWebRTCAfterUserInfo();
+};
+
+// 사용자 정보 로드 후 WebRTC 초기화
+scwin.initializeWebRTCAfterUserInfo = function() {
+    try {
+        
+        
+        // Simple WebRTC 초기화
+        scwin.initializeSimpleWebRTC();
+        
+        
+        
+        // 페이지 진입 시 자동으로 화상통화 참가
+        setTimeout(() => {
+            
+            scwin.autoJoinCall();
+        }, 1000);
+        
+    } catch (error) {
+       
+    }
+};
+
+// PIP 모드 설정 (UI 간소화)
+scwin.setupPipMode = function() {
+    
+    
+    try {
+        // PIP 모드 플래그 설정
+        window.isPipMode = true;
+        
+        // 불필요한 UI 요소들 숨기기
+        const elementsToHide = [
+            '.control-panel', // 컨트롤 패널
+            '.chat-section', // 채팅 영역
+            '.participant-list', // 참가자 목록
+            '.toolbar', // 툴바
+            '.header', // 헤더
+            '#pipBtn' // PIP 버튼 자체
+        ];
+        
+        elementsToHide.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(el => {
+                if (el) {
+                    el.style.display = 'none';
+                }
+            });
+        });
+        
+        // 비디오 영역만 전체 화면으로 확장 (스크롤 가능)
+        const videoSection = document.querySelector('.video-section');
+        if (videoSection) {
+            videoSection.style.cssText = `
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                z-index: 9999 !important;
+                background: #000 !important;
+                overflow: auto !important;
+                padding: 10px !important;
+                box-sizing: border-box !important;
+            `;
+        }
+        
+        // 로컬 비디오 크기 조정
+        const localVideo = document.getElementById('localVideo');
+        if (localVideo) {
+            localVideo.style.cssText = `
+                position: absolute !important;
+                bottom: 10px !important;
+                right: 10px !important;
+                width: 80px !important;
+                height: 60px !important;
+                z-index: 10000 !important;
+                border-radius: 5px !important;
+            `;
+        }
+        
+        // body 스크롤 허용
+        document.body.style.overflow = 'auto';
+        document.documentElement.style.overflow = 'auto';
+        
+    } catch (error) {
+    }
+};
+
+]]></script>
+    </head>
+    <body ev:onpageload="scwin.onpageload" ev:onpageunload="scwin.onpageunload">
+        <!-- 메인 컨테이너 -->
+        <xf:group class="video-chat-container">
+            <!-- 화상통화 영역 -->
+            <xf:group class="video-section">
+                <!-- 로컬 비디오 -->
+                <xf:group class="local-video-container">
+                    <video id="localVideo" class="local-video" autoplay="true" muted="true" playsinline="true"></video>
+                    <xf:output class="local-video-label">나</xf:output>
+                </xf:group>
+                
+                <!-- 원격 비디오 영역 -->
+                <xf:group class="remote-video-container">
+                    <div id="remoteVideosGrid" class="remote-videos-grid">
+                        <!-- 원격 사용자 비디오들이 동적으로 추가됩니다 -->
+                    </div>
+                </xf:group>
+                
+                <!-- 컨트롤 패널 -->
+                <xf:group class="control-panel">
+                    <xf:trigger id="joinBtn" class="control-btn join-btn" ev:onclick="scwin.joinCall" style="display: none;">
+                        <xf:label>참가하기</xf:label>
+                    </xf:trigger>
+                    
+                    <xf:trigger id="leaveBtn" class="control-btn leave-btn" ev:onclick="scwin.leaveCall">
+                        <xf:label>나가기</xf:label>
+                    </xf:trigger>
+                    
+                    <xf:trigger id="muteBtn" class="control-btn mute-btn" ev:onclick="scwin.toggleMute">
+                        <xf:label>MIC</xf:label>
+                    </xf:trigger>
+                    
+                    <xf:trigger id="videoBtn" class="control-btn video-btn" ev:onclick="scwin.toggleVideo">
+                        <xf:label>CAM</xf:label>
+                    </xf:trigger>
+                    
+                    <xf:trigger id="pipBtn" class="control-btn pip-btn" ev:onclick="scwin.togglePiP">
+                        <xf:label>PIP</xf:label>
+                    </xf:trigger>
+                </xf:group>
+            </xf:group>
+            
+            <!-- 채팅 영역 -->
+            <xf:group class="chat-section">
+                <xf:group class="chat-header">
+                    <xf:output class="chat-title">팀 채팅</xf:output>
+                    <xf:output class="chat-subtitle">webRTC 화상통화</xf:output>
+                </xf:group>
+                
+                <div style="display: flex; flex-direction: column; height: calc(100vh - 40px); margin: 0; padding: 0;">
+                    <div id="chatMessages" class="chat-messages" style="
+                        height: calc(100vh - 120px);
+                        min-height: 300px;
+                        overflow-y: auto; 
+                        border: 1px solid #ddd; 
+                        padding: 10px; 
+                        background: white; 
+                        border-radius: 8px 8px 0 0;
+                        display: flex;
+                        flex-direction: column;
+                        margin: 0;
+                        margin-bottom: 10px;
+                        flex-shrink: 0;
+                        box-sizing: border-box;
+                    "></div>
+                    <div class="chat-input-container" style="
+                        margin: 0;
+                        padding: 10px;
+                        border: 1px solid #ddd;
+                        border-top: none;
+                        border-radius: 0 0 8px 8px;
+                        background: white;
+                        display: flex;
+                        gap: 8px;
+                        height: 60px;
+                        align-items: center;
+                        flex-shrink: 0;
+                    ">
+                    <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode==13) scwin.sendChatMessage()" style="
+                        flex: 1;
+                        padding: 8px 12px;
+                        border: 1px solid #ddd;
+                        border-radius: 4px;
+                        outline: none;
+                    " />
+                        <xf:trigger id="sendBtn" class="send-btn" ev:onclick="scwin.sendChatMessage" style="
+                            padding: 8px 16px;
+                            background: #FFB823;
+                            color: white;
+                            border: none;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            font-size: 14px;
+                            font-weight: bold;
+                            min-width: 60px;
+                        ">
+                            <xf:label>전송</xf:label>
+                        </xf:trigger>
+                    </div>
+                </div>
+            </xf:group>
+        </xf:group>
+        
+        <!-- 미니 PIP 컨테이너 (원래 방식) -->
+        <div id="miniPipContainer" class="mini-pip-container" style="display: none;">
+            <div class="mini-pip-header">
+                <span>화상통화</span>
+                <div class="header-buttons">
+                    <button id="miniPipExpandBtn" class="mini-pip-expand" title="전체 화면으로 확장">⛶</button>
+                    <button id="miniPipCloseBtn" class="mini-pip-close" title="PIP 닫기">×</button>
+                </div>
+            </div>
+            <div id="miniVideoGrid" class="mini-video-grid">
+                <!-- 미니 비디오들이 동적으로 추가됩니다 -->
+            </div>
+            <!-- 리사이즈 핸들 -->
+            <div class="resize-handle corner nw"></div>
+            <div class="resize-handle corner ne"></div>
+            <div class="resize-handle corner sw"></div>
+            <div class="resize-handle corner se"></div>
+        </div>
+    </body>
+</html> 

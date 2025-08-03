@@ -4,17 +4,26 @@
 	   xmlns:p="http://www.springframework.org/schema/p" 
 	   xmlns:context="http://www.springframework.org/schema/context"
 	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:websocket="http://www.springframework.org/schema/websocket"
 	   xsi:schemaLocation="http://www.springframework.org/schema/beans 
 	                       http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
 				           http://www.springframework.org/schema/context 
 				           http://www.springframework.org/schema/context/spring-context-4.0.xsd 
 				           http://www.springframework.org/schema/aop
-				           http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+				           http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+				           http://www.springframework.org/schema/websocket
+				           http://www.springframework.org/schema/websocket/spring-websocket-4.0.xsd">
 
     <context:component-scan base-package="com.demo" use-default-filters="false">
         <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+        <context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.RestController"/>
+        <!-- <context:include-filter type="annotation" expression="org.springframework.stereotype.Service"/> -->
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Component"/>
+        <context:include-filter type="annotation" expression="org.springframework.context.annotation.Configuration"/>
+        <!-- Configuration 제거 - XML로 대체 -->
         <!-- context:exclude-filter type="annotation" expression="org.springframework.stereotype.Service"/>
         <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository"/ -->
+        <context:exclude-filter type="assignable" expression="com.demo.proworks.project.service.impl.ProjectServiceImpl"/>
     </context:component-scan>
    
     <!-- EL Controller Interceptor -->
@@ -27,6 +36,28 @@
 
 	<!-- EL Common Controller -->
 	<bean id="elCommController" class="com.inswave.elfw.web.ElCommController"/>
+	
+	<!-- Chat Controller -->
+	<bean id="chatController" class="com.demo.proworks.videochat.web.ChatController"/>
+	
+	<!-- GitHub Controller -->
+	<bean id="gitHubController" class="com.demo.proworks.github.web.GitHubController">
+	</bean>
+	
+	<!-- Redis Configuration -->
+	<bean id="redisConfig" class="com.demo.proworks.videochat.config.RedisConfig"/>
+	
+	<!-- WebSocket Configuration - @Configuration 방식으로 변경됨 -->
+	<bean id="webSocketConfig" class="com.demo.proworks.videochat.config.WebSocketConfig"/>
+	
+	<!-- Chat Service -->
+	<bean id="chatService" class="com.demo.proworks.videochat.service.ChatService"/>
+ 
+	<!-- Chat WebSocket Handler -->
+	<bean id="chatWebSocketHandler" class="com.demo.proworks.videochat.websocket.ChatWebSocketHandler"/>
+ 
+	<!-- WebSocket을 위한 올바른 HandlerAdapter 추가 -->
+	<bean class="org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter"/>
  
     <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">   
     	<property name="useRegisteredSuffixPatternMatch" value="true"/>
@@ -36,6 +67,21 @@
 			<list>
 				<bean class="com.inswave.elfw.resolver.ElModelAttributeMethodProcessor">		
 				</bean>	
+			</list>
+		</property>
+		<property name="messageConverters">
+			<list>
+				<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+					<property name="objectMapper" ref="jsonMapper"/>
+				</bean>
+				<bean class="org.springframework.http.converter.StringHttpMessageConverter">
+					<property name="supportedMediaTypes">
+						<list>
+							<value>text/plain;charset=UTF-8</value>
+							<value>text/html;charset=UTF-8</value>
+						</list>
+					</property>
+				</bean>
 			</list>
 		</property>        
     </bean>
@@ -99,12 +145,20 @@
 
     </bean>
     
+<!--      암호화 설정
+    EL MyBatis Select Interceptor 
+	<bean id="elMybatisSelInterceptor" class="com.inswave.elfw.intercept.ElMybatisSelInterceptor"/>
+	
+	EL MyBatis Update/Insert/Delete Interceptor 
+	<bean id="elMybatisUpdInterceptor" class="com.inswave.elfw.intercept.ElMybatisUpdInterceptor"/> -->
+	    
+	    
     <!-- JavaMailSender 빈 정의 추가 -->
     <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
         <property name="host" value="smtp.gmail.com" /> <!-- 메일 서버 호스트 (예: smtp.gmail.com) -->
         <property name="port" value="587" /> <!-- 메일 서버 포트 (일반적으로 587 또는 465) -->
         <property name="username" value="dorazi0423@gmail.com" /> <!-- 메일 발송 계정 (보통 spring.mail.username) -->
-        <property name="password" value="pfmb joxv suzv oxhq" /> <!-- 메일 발송 계정 비밀번호 (보통 spring.mail.password) -->
+        <property name="password" value="pfmb joxv suzv oxhq" /> <!-- 메일 발송 계정 비밀번호 (보통 spring.mail.password) -->
         <property name="javaMailProperties">
             <props>
                 <prop key="mail.smtp.auth">true</prop> <!-- SMTP 인증 사용 여부 -->

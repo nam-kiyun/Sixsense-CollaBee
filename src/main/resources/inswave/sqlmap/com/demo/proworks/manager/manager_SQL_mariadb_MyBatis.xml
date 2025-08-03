@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper      
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"      
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+	@subject     : 업무 담당자 정보 관련 처리를 담당하는 Sql Mapper
+	@description : 업무 담당자 정보 관련 처리를 담당하는 Sql Mapper
+	@author      : 국다인
+	@since       : 2025/07/01
+	@modification
+	===========================================================
+	DATE              AUTHOR             DESC
+	===========================================================
+	2025/07/01              국다인             최초 생성
+ -->
+<mapper namespace="com.demo.proworks.manager">
+    <insert id="insertManager" parameterType="com.demo.proworks.manager.vo.ManagerVo">
+    	<!-- 업무 담당자 정보를 등록한다. -->	
+    		
+        INSERT INTO MANAGER   /* QueryID : com.demo.proworks.manager.insertManager */
+        ( 
+            <if test="taskId!= null">TASK_ID </if>
+            <if test="userId        != null"> , USER_ID         </if>
+        )
+        VALUES  
+        ( 
+            <if test="taskId!= null"> #{taskId} </if>
+            <if test="userId        != null"> , #{userId}         </if> 
+        )          
+    </insert>	
+	
+    <update id="updateManager" parameterType="com.demo.proworks.manager.vo.ManagerVo">
+    	<!-- 업무 담당자 정보를 갱신한다. -->
+    	
+        UPDATE MANAGER    /* QueryID : com.demo.proworks.manager.updateManager */      
+      	  SET  
+                MANAGER_ID      = #{managerId}             	                       
+            <if test="taskId!= null"> , TASK_ID = #{taskId} </if>
+            <if test="userId        != null"> , USER_ID         = #{userId}         </if>                 
+        WHERE   
+                MANAGER_ID      = #{managerId}     
+    </update>
+	
+    <delete id="deleteManager" parameterType="com.demo.proworks.manager.vo.ManagerVo">
+    	<!-- 업무 담당자 정보를 삭제한다. -->
+    	
+        DELETE FROM MANAGER   /* QueryID : com.demo.proworks.manager.deleteManager */ 
+        WHERE   
+                MANAGER_ID      = #{managerId}             
+    </delete>
+    
+    <delete id="deleteManagerByTaskId" parameterType="com.demo.proworks.manager.vo.ManagerVo">
+    	<!-- 업무 담당자 정보를 삭제한다. -->
+    	
+        DELETE FROM MANAGER   /* QueryID : com.demo.proworks.manager.deleteManager */ 
+        WHERE   
+                TASK_ID      = #{taskId}     
+        
+    </delete>
+    
+    <select id="selectManagerByTaskId" parameterType="com.demo.proworks.manager.vo.ManagerVo" resultType="com.demo.proworks.manager.vo.ManagerVo">
+    	<!-- 업무 담당자 정보를 상세 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.manager.selectManager */
+            MANAGER_ID as managerId, TASK_ID as taskId, USER_ID as userId
+        FROM MANAGER 
+        WHERE 
+                TASK_ID      = #{taskId}     
+			
+    </select>
+	
+    <select id="selectManager" parameterType="com.demo.proworks.manager.vo.ManagerVo" resultType="com.demo.proworks.manager.vo.ManagerVo">
+    	<!-- 업무 담당자 정보를 상세 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.manager.selectManager */
+            MANAGER_ID as managerId, TASK_ID as taskId, USER_ID as userId
+        FROM MANAGER 
+        WHERE 
+                MANAGER_ID      = #{managerId}     			
+    </select>
+	
+    <select id="selectListManager" parameterType="com.demo.proworks.manager.vo.ManagerVo" resultType="com.demo.proworks.manager.vo.ManagerVo">
+    	<!-- 업무 담당자 정보 목록을 조회한다. -->
+           SELECT    /* QueryID : com.demo.proworks.manager.selectListManager */
+               MANAGER_ID as managerId, TASK_ID as taskId, USER_ID as userId		       
+           FROM (
+               SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
+               FROM (				
+                   SELECT 
+                       *  		                  
+                   FROM MANAGER
+                   WHERE  1=1    		
+	     																														
+               ) S, (SELECT @ROWNUM := 0) TMP
+           ) A
+            WHERE PAGE = #{pageIndex}
+    </select>
+	
+    <select id="selectListCountManager" parameterType="com.demo.proworks.manager.vo.ManagerVo" resultType="long">
+    <!-- 업무 담당자 정보 목록의 카운트를 조회한다. -->
+    
+         SELECT    /* QueryID : com.demo.proworks.manager.selectListCountManager */
+             COUNT(*) totcnt  		                  
+         FROM MANAGER
+         WHERE  1=1    		
+
+    </select>
+
+</mapper>

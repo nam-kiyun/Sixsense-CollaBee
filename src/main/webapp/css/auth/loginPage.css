@@ -1,5 +1,7 @@
 @charset "UTF-8";
-
+body{
+	overflow: hidden;
+}
 .button-group{
     display: flex;
     flex-direction: row;
@@ -21,8 +23,26 @@
 }
 
 .signup-group {
-    gap: 20px;
+    gap: 35px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+}
+.recaptcha-group{
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+.recaptcha-span{
+	width:100%;	
+	background-color:"black";
+}
+
+.error-text{
+	height:23px;
+	font-size: 11px;
+	text-align: left;
+	color: red;
+	margin-top: 5px;
 }

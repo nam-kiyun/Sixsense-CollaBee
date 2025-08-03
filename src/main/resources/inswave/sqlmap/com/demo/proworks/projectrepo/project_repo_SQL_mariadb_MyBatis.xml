@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper      
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"      
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+	@subject     : 프로젝트와 연결된 레포지토리 정보 관련 처리를 담당하는 Sql Mapper
+	@description : 프로젝트와 연결된 레포지토리 정보 관련 처리를 담당하는 Sql Mapper
+	@author      : 남기윤
+	@since       : 2025/07/01
+	@modification
+	===========================================================
+	DATE              AUTHOR             DESC
+	===========================================================
+	2025/07/01              남기윤             최초 생성
+ -->
+<mapper namespace="com.demo.proworks.projectrepo">
+    <insert id="insertProjectRepository" parameterType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo">
+    	<!-- 프로젝트와 연결된 레포지토리 정보를 등록한다. -->	
+    		
+        INSERT INTO PROJECT_REPO   /* QueryID : com.demo.proworks.projectrepo.insertProjectRepository */
+        ( 
+            PROJECT_REPO_ID
+            <if test="projectId                != null"> , PROJECT_ID                 </if>
+            <if test="githubRepositoryId      != null"> , GITHUB_REPOSITORY_ID       </if>
+            <if test="repoOwner                != null"> , REPO_OWNER                 </if>
+            <if test="repoName                 != null"> , REPO_NAME                  </if>
+            <if test="defaultBranch            != null"> , DEFAULT_BRANCH             </if>
+            <if test="githubAppInstallationId!= null"> , GITHUB_APP_INSTALLATION_ID </if>
+            <if test="connectedBy              != null"> , CONNECTED_BY               </if>
+        )
+        VALUES  
+        ( 
+            #{projectRepoId}
+            <if test="projectId                != null"> , #{projectId}                 </if>
+            <if test="githubRepositoryId      != null"> , #{githubRepositoryId}       </if>
+            <if test="repoOwner                != null"> , #{repoOwner}                 </if>
+            <if test="repoName                 != null"> , #{repoName}                  </if>
+            <if test="defaultBranch            != null"> , #{defaultBranch}             </if>
+            <if test="githubAppInstallationId!= null"> , #{githubAppInstallationId} </if>
+            <if test="connectedBy              != null"> , #{connectedBy}               </if> 
+        )          
+    </insert>	
+	
+    <update id="updateProjectRepository" parameterType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo">
+    	<!-- 프로젝트와 연결된 레포지토리 정보를 갱신한다. -->
+    	
+        UPDATE PROJECT_REPO    /* QueryID : com.demo.proworks.projectrepo.updateProjectRepository */      
+      	  SET  
+                PROJECT_REPO_ID            = #{projectRepoId}                   	                       
+            <if test="projectId                != null"> , PROJECT_ID                 = #{projectId}                 </if>
+            <if test="githubRepositoryId      != null"> , GITHUB_REPOSITORY_ID       = #{githubRepositoryId}       </if>
+            <if test="repoOwner                != null"> , REPO_OWNER                 = #{repoOwner}                 </if>
+            <if test="repoName                 != null"> , REPO_NAME                  = #{repoName}                  </if>
+            <if test="defaultBranch            != null"> , DEFAULT_BRANCH             = #{defaultBranch}             </if>
+            <if test="githubAppInstallationId!= null"> , GITHUB_APP_INSTALLATION_ID = #{githubAppInstallationId} </if>
+            <if test="connectedBy              != null"> , CONNECTED_BY               = #{connectedBy}               </if>                 
+        WHERE   
+                PROJECT_REPO_ID            = #{projectRepoId}           
+    </update>
+	
+    <delete id="deleteProjectRepository" parameterType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo">
+    	<!-- 프로젝트와 연결된 레포지토리 정보를 삭제한다. -->
+    	
+        DELETE FROM PROJECT_REPO   /* QueryID : com.demo.proworks.projectrepo.deleteProjectRepository */ 
+        WHERE   
+                PROJECT_REPO_ID            = #{projectRepoId}                   
+    </delete>
+	
+    <select id="selectProjectRepository" parameterType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo" resultType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo">
+    	<!-- 프로젝트와 연결된 레포지토리 정보를 상세 조회한다. -->	
+        SELECT     /* QueryID : com.demo.proworks.projectrepo.selectProjectRepository */
+            PROJECT_REPO_ID as projectRepoId, PROJECT_ID as projectId, GITHUB_REPOSITORY_ID as githubRepositoryId, REPO_OWNER as repoOwner, REPO_NAME as repoName, DEFAULT_BRANCH as defaultBranch, GITHUB_APP_INSTALLATION_ID as githubAppInstallationId, CONNECTED_BY as connectedBy
+        FROM PROJECT_REPO 
+        WHERE 
+                PROJECT_REPO_ID            = #{projectRepoId}           			
+    </select>
+	
+    <select id="selectListProjectRepository" parameterType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo" resultType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo">
+    	<!-- 프로젝트와 연결된 레포지토리 정보 목록을 조회한다. -->
+           SELECT    /* QueryID : com.demo.proworks.projectrepo.selectListProjectRepository */
+               PROJECT_REPO_ID as projectRepoId, PROJECT_ID as projectId, GITHUB_REPOSITORY_ID as githubRepositoryId, REPO_OWNER as repoOwner, REPO_NAME as repoName, DEFAULT_BRANCH as defaultBranch, GITHUB_APP_INSTALLATION_ID as githubAppInstallationId, CONNECTED_BY as connectedBy		       
+           FROM (
+               SELECT  S.*, CEIL( (@ROWNUM:=@ROWNUM+1) / #{pageSize} ) AS PAGE
+               FROM (				
+                   SELECT 
+                       *  		                  
+                   FROM PROJECT_REPO
+                   WHERE  1=1    		
+	     																														
+               ) S, (SELECT @ROWNUM := 0) TMP
+           ) A
+            WHERE PAGE = #{pageIndex}
+    </select>
+	
+    <select id="selectListCountProjectRepository" parameterType="com.demo.proworks.projectrepo.vo.ProjectRepositoryVo" resultType="long">
+    <!-- 프로젝트와 연결된 레포지토리 정보 목록의 카운트를 조회한다. -->
+    
+         SELECT    /* QueryID : com.demo.proworks.projectrepo.selectListCountProjectRepository */
+             COUNT(*) totcnt  		                  
+         FROM PROJECT_REPO
+         WHERE  1=1    		
+
+    </select>
+
+</mapper>

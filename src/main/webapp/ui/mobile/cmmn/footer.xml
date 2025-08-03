@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare"
+	xmlns:xf="http://www.w3.org/2002/xforms">
+	<head>
+		<w2:type>COMPONENT</w2:type>
+		<w2:buildDate />
+		<w2:MSA />
+		<xf:model>
+			<w2:dataCollection baseNode="map" />
+			<w2:workflowCollection />
+		</xf:model>
+		<w2:layoutInfo />
+		<w2:publicInfo method="" />
+		<script lazy="false" type="text/javascript"><![CDATA[scwin.onpageload = function () {
+    scwin.init();
+    let name = localStorage.getItem("selectedMenu") ?? "home";
+    scwin.buttonFocus(name);
+};
+
+
+scwin.footer_button_onclick = function (e) {
+    const id = e.target.id;
+    const match = id.split("_");
+
+    if (match && match[4]) {
+        const name = match[4];
+        scwin.selectedMenu = name;
+
+        scwin.urlMove(name);
+        localStorage.setItem("selectedMenu", name);
+    }
+};
+
+scwin.buttonFocus = function (name) {
+    const img = $p.getComponentById(name + "_img");
+    const txt = $p.getComponentById(name + "_text");
+
+
+    if (img) {
+        img.setSrc(`/InsWebApp/images/mobile/${name}-orange.svg`);
+    }
+
+    if (txt) {
+        txt.setStyle("color", "#FEB826");
+    }
+}
+
+scwin.init = function () {
+    let name = ["home", "project", "profile"];
+
+    name.forEach((value) => {
+        const img = $p.getComponentById(value + "_img");
+        const txt = $p.getComponentById(value + "_text");
+        img.setSrc(`/InsWebApp/images/mobile/${value}-gray.svg`);
+        txt.setStyle("color", "#D9D9D9");
+    })
+}
+
+scwin.urlMove = function (name) {
+    switch (name) {
+        case "project": $p.url("/InsWebApp/ui/mobile/taskPage.xml");
+            break;
+        case "profile": $p.url("/InsWebApp/ui/mobile/myPage.xml");
+            break;
+        case "home": $p.url("/InsWebApp/ui/mobile/mainPage.xml");
+            break;
+        default: $p.url("/InsWebApp/ui/mobile/mainPage.xml");
+    }
+}]]></script>
+		<style type="text/css"><![CDATA[/* 모바일 스크롤바 숨김 설정 */
+html, body {
+    overflow: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    -webkit-overflow-scrolling: touch; /* iOS smooth scrolling */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+
+/* 모든 스크롤 가능한 영역에 스크롤바 숨김 적용 */
+* {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+
+body{
+    width: 100%;
+    height: 100%;
+}
+.footer-group{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+    background-color: white;
+}
+.footer-button{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 33.33%;
+    height: 100%;
+    gap: 3px;
+    background-color: white;
+    border: none;
+    outline: none;
+}
+.button-img{
+    width: 25px;
+    height: 25px;
+}
+.button-text{
+    font-size: xx-small;
+    color: #D9D9D9;
+}]]></style>
+	</head>
+	<body ev:onpageload="scwin.onpageload">
+		<xf:group style="height: 50px;" id="" class="footer-group">
+			<w2:button style="" id="home_button" class="footer-button home-button" ev:onclick="scwin.footer_button_onclick">
+
+				<xf:image src="/InsWebApp/images/mobile/home-gray.svg" style="" id="home_img" class="button-img"></xf:image>
+
+				<w2:span label="Main" style="" id="home_text" class="button-text"></w2:span>
+			</w2:button>
+			<w2:button class="footer-button home-button" id="project_button" style="" ev:onclick="scwin.footer_button_onclick">
+				<xf:image class="button-img" id="project_img" src="/InsWebApp/images/mobile/project-gray.svg" style=""></xf:image>
+				<w2:span id="project_text" label="Project" style="" class="button-text"></w2:span>
+			</w2:button>
+			<w2:button class="footer-button home-button" id="profile_button" style="" ev:onclick="scwin.footer_button_onclick">
+				<xf:image class="button-img" id="profile_img" src="/InsWebApp/images/mobile/profile-gray.svg" style=""></xf:image>
+				<w2:span id="profile_text" label="Profile" style="" class="button-text"></w2:span>
+			</w2:button>
+		</xf:group>
+	</body>
+</html>

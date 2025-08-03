@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ev="http://www.w3.org/2001/xml-events"
+    xmlns:w2="http://www.inswave.com/websquare" xmlns:xf="http://www.w3.org/2002/xforms">
+    <head meta_screenName="GitHub 인증 콜백 처리">
+        <w2:type>COMPONENT</w2:type>
+        <w2:buildDate/>
+        <w2:MSA/>
+        <xf:model>
+            <w2:dataCollection baseNode="map">
+            </w2:dataCollection>
+            <w2:workflowCollection/>
+        </xf:model>
+        <w2:layoutInfo/>
+        <w2:publicInfo method=""/>
+        
+        <script lazy="false" type="text/javascript"><![CDATA[
+scwin.onpageload = function () {
+    try {
+
+        // URL 쿼리 파라미터에서 인증 결과 확인
+        const params = new URLSearchParams(window.location.search);
+        const status = params.get('status');
+        const username = params.get('username');
+        const hasSelectedRepo = params.get('hasSelectedRepo');
+        const message = params.get('message');
+
+
+        // 콜백 결과 처리
+        const result = {
+            status: status || 'success',
+            data: {
+                message: message || 'GitHub 인증이 완료되었습니다.',
+                username: username,
+                hasSelectedRepo: hasSelectedRepo === 'true',
+                user: username ? { login: username } : null
+            }
+        };
+
+        // 부모 창(팝업 opener)으로 결과 전달
+        scwin.sendResultToParent(result);
+
+    } catch (e) {
+
+        const errorResult = {
+            status: 'error',
+            data: {
+                message: '콜백 처리 중 오류가 발생했습니다: ' + e.message
+            }
+        };
+
+        scwin.sendResultToParent(errorResult);
+    }
+};
+
+// 부모 창으로 결과 전달 
+scwin.sendResultToParent = function (result) {
+    try {
+
+        // 1. WebSquare browserPopup 콜백 처리
+        if (window.opener && window.opener.$c && window.opener.$c.util && window.opener.$c.util.getCallBackFunction) {
+
+            // WebSquare의 콜백 함수 찾기
+            const callbackFn = window.opener.$c.util.getCallBackFunction("github_oauth_popup");
+            if (typeof callbackFn === 'function') {
+                callbackFn(result);
+            } else {
+                // 직접 콜백 함수 호출 시도
+                if (window.opener.githubAuthCallback) {
+                    window.opener.githubAuthCallback(result);
+                }
+            }
+
+            // 팝업 닫기
+            setTimeout(function () {
+                window.close();
+            }, 1000);
+            return;
+        }
+
+        // 2. window.opener를 통한 일반 콜백
+        if (window.opener && !window.opener.closed) {
+
+            // 콜백 함수가 있는지 확인
+            if (typeof window.opener.githubAuthCallback === 'function') {
+                window.opener.githubAuthCallback(result);
+            } else {
+                // postMessage로 전달
+                window.opener.postMessage({
+                    type: 'githubAuthResult',
+                    result: result
+                }, window.location.origin);
+            }
+
+            // 팝업 닫기
+            setTimeout(function () {
+                window.close();
+            }, 1000);
+            return;
+        }
+
+        // 3. 부모 프레임으로 전달
+        if (window.parent && window.parent !== window) {
+
+            if (typeof window.parent.githubAuthCallback === 'function') {
+                window.parent.githubAuthCallback(result);
+            } else {
+                window.parent.postMessage({
+                    type: 'githubAuthResult',
+                    result: result
+                }, window.location.origin);
+            }
+            return;
+        }
+
+
+    } catch (e) {
+
+        // 실패 시에도 팝업 닫기 시도
+        setTimeout(function () {
+            try {
+                window.close();
+            } catch (e) {
+            }
+        }, 2000);
+    }
+};
+]]></script>
+    </head>
+    
+    <body ev:onpageload="scwin.onpageload">
+        <xf:group class="sub_contents" id="">
+            <xf:group class="pgtbox" id="">
+                <w2:textbox class="pgt_tit" id="" label="GitHub 인증" style="" tagname="h1"></w2:textbox>
+            </xf:group>
+            <xf:group class="schbox" id="" style="padding: 50px; text-align: center;">
+                 <w2:textbox id="" label="GitHub 인증을 처리하고 있습니다. 잠시만 기다려주세요..." style=""></w2:textbox>
+                 <br/><br/>
+                 <w2:textbox id="" label="이 창은 인증 완료 후 자동으로 닫힙니다." style="color: #6c757d; font-size: 14px;"></w2:textbox>
+            </xf:group>
+        </xf:group>
+    </body>
+</html>

@@ -1,0 +1,526 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare"
+	xmlns:xf="http://www.w3.org/2002/xforms">
+	<head meta_screenName="프로젝트 추가 모달">
+		<w2:type>COMPONENT</w2:type>
+		<w2:buildDate />
+		<w2:MSA />
+		<style>
+			/* WebSquare 팝업 기본 스타일 재설정 */
+			body, html {
+				margin: 0;
+				padding: 0;
+				border: none;
+				outline: none;
+				box-sizing: border-box;
+			}
+
+			/* 모달 컨테이너 */
+			.modal-container {
+				background-color: white;
+				border-radius: 16px;
+				width: 400px;
+				padding: 30px;
+				box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+				position: relative;
+				margin: 20px auto;
+				border: none !important;
+				outline: none !important;
+			}
+
+			/* 프로젝트 이미지 */
+			.project-image {
+				position: relative;
+				width: 100%;
+				height: 200px;
+				border-radius: 12px;
+				margin-bottom: 20px;
+			}
+
+			.project-image-button {
+				width: 100%;
+				height: 200px;
+				border-radius: 12px;
+				background: #fff4d6;
+				background-size: contain;
+				background-position: center;
+				background-repeat: no-repeat;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: #333;
+				font-size: 18px;
+				font-weight: 600;
+				cursor: pointer;
+				border: 2px dashed #ccc;
+				outline: none;
+				transition: all 0.2s;
+			}
+
+			.project-image-button:hover {
+				border-color: #999;
+				background-color: #fff0c4;
+			}
+
+			.upload-icon-button {
+				position: absolute;
+				bottom: 0;
+				right: 0;
+				width: 40px;
+				height: 40px;
+				border-radius: 50%;
+				background-image: url('/InsWebApp/images/camera.svg');
+				background-size: 30px 30px;
+				background-position: center;
+				background-repeat: no-repeat;
+				border: none;
+				outline: none;
+				background-color: #FFB823;
+				cursor: pointer;
+			}
+
+			.upload-icon-button:hover {
+				background-color: #E6A420;
+			}
+
+			.input-group-modal {
+			margin-bottom: 20px;
+			}
+
+			.input-label {
+			display: block;
+			font-size: 14px;
+			font-weight: 500;
+			color: #333;
+			margin-bottom: 8px;
+			}
+
+			.input-field {
+				width: 100%;
+				padding: 12px 16px;
+				border: 2px solid #ccc !important;
+				border-radius: 8px;
+				font-size: 16px;
+				box-sizing: border-box;
+				outline: none !important;
+				background-color: #fff4d6;
+			}
+
+			.input-field:focus {
+				outline: none !important;
+				border-color: #999 !important;
+				box-shadow: 0 0 0 2px rgba(153, 153, 153, 0.25) !important;
+				background-color: #fff0c4;
+			}
+
+			/* 읽기전용 필드 스타일 */
+			.input-field-readonly {
+				width: 100%;
+				padding: 12px 16px;
+				border: 1px solid #ccc !important;
+				border-radius: 8px;
+				font-size: 16px;
+				box-sizing: border-box;
+				background-color: #f5f5f5;
+				color: #666;
+				cursor: not-allowed;
+				outline: none !important;
+			}
+
+			.input-field-readonly:focus {
+				outline: none !important;
+				border-color: #ccc !important;
+				box-shadow: none !important;
+			}
+
+			/* 시간 입력 그룹 */
+			.time-input-group {
+			display: flex;
+			gap: 8px;
+			align-items: center;
+			}
+
+			.time-input {
+				width: 60px;
+				padding: 8px 12px;
+				border: 1px solid #ddd !important;
+				border-radius: 6px;
+				text-align: center;
+				font-size: 16px;
+				outline: none !important;
+			}
+
+			.time-input:focus {
+				outline: none !important;
+				border-color: #007bff !important;
+				box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.25) !important;
+			}
+
+			.time-separator
+			{
+			font-size: 18px;
+			font-weight: bold;
+			color: #666;
+			}
+
+			/* 프로젝트 시각 텍스트 */
+			.project-time-text {
+			font-size: 12px;
+			color: #ff4444;
+			text-align: center;
+			margin: 8px 0;
+			}
+
+			/* 저장 버튼 */
+			.save-btn {
+				width: 100%;
+				padding: 12px 16px;
+				background-color: #ffc107;
+				border: none !important;
+				border-radius: 8px;
+				font-size: 16px;
+				font-weight: 600;
+				color: #333;
+				cursor: pointer;
+				margin-top: 10px;
+				outline: none !important;
+			}
+
+			.save-btn:hover {
+				background-color: #ffb700;
+				outline: none !important;
+				border: none !important;
+			}
+		</style>
+		<xf:model>
+			<w2:dataCollection baseNode="map">
+				<w2:dataMap baseNode="map" id="dm_projectForm">
+					<w2:keyInfo>
+						<w2:key id="projectId" name="프로젝트ID" dataType="text" />
+						<w2:key id="projectName" name="프로젝트명" dataType="text" />
+						<w2:key id="description" name="설명" dataType="text" />
+						<w2:key id="projectImageUrl" name="프로젝트이미지URL" dataType="text" />
+						<w2:key id="createdAt" name="생성일시" dataType="text" />
+						<w2:key id="emailSendTime" name="이메일전송시간" dataType="text" />
+						<w2:key id="userId" name="사용자ID" dataType="text" />
+					</w2:keyInfo>
+					<w2:data use="true">
+						<projectId></projectId>
+						<projectName>2차 프로젝트</projectName>
+						<description></description>
+						<projectImageUrl></projectImageUrl>
+						<createdAt></createdAt>
+						<emailSendTime>09:00</emailSendTime>
+						<userId></userId>
+					</w2:data>
+				</w2:dataMap>
+			</w2:dataCollection>
+			<w2:workflowCollection />
+		</xf:model>
+		<w2:layoutInfo />
+		<w2:publicInfo method="" />
+		<script lazy="false" type="text/javascript"><![CDATA[
+// 전역 변수 - 업로드된 이미지 파일
+scwin.projectImageFile = null;
+
+scwin.onpageload = function() {
+    // 모달 초기화
+    scwin.initModal();
+};
+
+scwin.modalClose = function(argRuntimeID) {
+    try {
+        // 팝업 객체 접근
+        let popObj = $p.getPopupWindow(argRuntimeID);
+        
+        // 모달 상태 초기화
+        scwin.modalManager.isModalOpen = false;
+        scwin.modalManager.modalInstance = null;
+        
+        return true; // 팝업 닫기 허용
+        
+    } catch (e) {
+        
+        // 오류가 있어도 레이아웃과 모달 상태는 초기화
+        scwin.modalManager.isModalOpen = false;
+        scwin.modalManager.modalInstance = null;
+        
+        return true; // 팝업 닫기 허용
+    }
+}
+
+// 모달 초기화
+scwin.initModal = function() {
+    try {
+        // 팝업 파라미터에서 userName 가져오기 - dataObject 방식
+        let popupParam = $p.getParameter("project_param");
+        let userName = "식스센스"; // 기본값
+        if (popupParam && popupParam.userName) {
+            userName = popupParam.userName;
+        }
+        
+        // 팀장 인풋을 읽기전용으로 설정
+        if (input_userName) {
+            input_userName.setValue(userName);
+            input_userName.setReadOnly(true);
+        }
+        
+        // 메일 전송 시각을 09:00으로 설정
+        if (input_emailTime) {
+            input_emailTime.setValue("09:00");
+            input_emailTime.setReadOnly(true);
+        }
+        
+    } catch(e) {
+    }
+};
+
+// 저장 버튼 클릭
+scwin.btn_save_onclick = function(e) {
+    try {
+        let projectName = dm_projectForm.get("projectName");
+        // let userName = dm_projectForm.get("userName");
+        let popupParam = $p.getParameter("project_param");
+        // let modalId = $p.parent().scwin.modalManager.modalId;
+        if (!projectName || projectName.trim() === "") {
+            $c.win.alert("프로젝트명을 입력해주세요.");
+            return;
+        }
+        
+        // 메일 전송 시각을 09:00으로 고정 설정
+        const emailSendTime = "09:00";
+        dm_projectForm.set("emailSendTime", emailSendTime);
+        dm_projectForm.set("userId",popupParam.userId);
+        dm_projectForm.set("description",input_description.getValue());
+        
+        const formData = new FormData();
+        
+        // 프로젝트 기본 정보 추가
+        formData.append("projectName", projectName);
+        formData.append("description", input_description.getValue());
+        formData.append("emailSendTime", emailSendTime);
+        formData.append("userId", popupParam.userId);
+        
+        // 이미지 파일이 있으면 추가
+        if (scwin.projectImageFile) {
+            formData.append("file", scwin.projectImageFile);
+        }
+        // Ajax 요청으로 전송
+        $.ajax({
+            url: "/InsWebApp/project/create.pwkjson",
+            type: "POST",
+            data: formData,
+            processData: false, // 파일 업로드를 위해 필수
+            contentType: false, // 파일 업로드를 위해 필수
+            success: function(response) {
+                scwin.handleSaveSuccess(response);
+            },
+            error: function(xhr, status, error) {
+                scwin.handleSaveError(xhr, status, error);
+            }
+        });
+    } catch(e) {
+        $c.win.alert("프로젝트 저장 중 오류가 발생했습니다.");
+        scwin.modalClose(scwin.modalId,modalArgJsnInfo);
+    }
+};
+
+// Ajax 성공 시 처리
+scwin.handleSaveSuccess = function(response) {
+    try {
+        // 서버 응답 검증
+        const elHeader = response && response.elHeader;
+        if (elHeader && elHeader.resSuc === false) {
+            $c.win.alert("에러코드: " + elHeader.resCode + "\n에러메시지: " + elHeader.resMsg);
+            return;
+        }
+        
+        $c.win.alert("프로젝트가 성공적으로 저장되었습니다!");
+        
+        // 부모 창의 refreshSideMenu 함수 호출 (사이드메뉴 새로고침)
+        const parentFrame = $p.parent();
+        if (parentFrame && parentFrame.scwin && parentFrame.scwin.refreshSideMenu) {
+            parentFrame.scwin.refreshSideMenu();
+        }
+        
+        // 메인 콘텐츠의 프로젝트 카드도 갱신
+        if (parentFrame && parentFrame.scwin && parentFrame.scwin.refreshMainContent) {
+            parentFrame.scwin.refreshMainContent();
+        }
+        
+        
+        try {
+            if (typeof $p.closePopup === 'function') {
+                $p.closePopup();
+            } 
+        } catch (closeError) {
+        }
+        
+    } catch (error) {
+        $c.win.alert("프로젝트가 저장되었지만 화면 처리 중 오류가 발생했습니다.");
+        
+        // 오류가 발생해도 팝업은 닫기 시도
+        try {
+            if (typeof $p.closePopup === 'function') {
+                $p.closePopup();
+            } else if (window.close) {
+                window.close();
+            }
+        } catch (closeError) {
+        }
+    }
+};
+
+// Ajax 실패 시 처리
+scwin.handleSaveError = function(xhr, status, error) {
+    
+    let errorMessage = "프로젝트 저장 중 오류가 발생했습니다.";
+    
+    if (xhr.responseJSON && xhr.responseJSON.elHeader) {
+        const elHeader = xhr.responseJSON.elHeader;
+        errorMessage += "\n에러코드: " + elHeader.resCode + "\n에러메시지: " + elHeader.resMsg;
+    } else if (xhr.responseText) {
+        errorMessage += "\n상세: " + xhr.responseText;
+    }
+    
+    $c.win.alert(errorMessage);
+};
+
+// 이름 입력 키보드 이벤트
+scwin.input_name_onkeyup = function(e) {
+    dm_projectForm.set("projectName", e.target.value);
+};
+
+// 프로젝트 이미지 버튼 클릭 (메인 이미지 영역 클릭)
+scwin.btn_projectImage_onclick = function(e) {
+    $p.$("#fileInput_projectImage").click();
+    $p.$("#fileInput_projectImage").on("change", scwin.fileInput_change);
+};
+
+// 업로드 아이콘 버튼 클릭 (우상단 카메라 아이콘 클릭)
+scwin.btn_uploadIcon_onclick = function(e) {
+    $p.$("#fileInput_projectImage").click();
+    $p.$("#fileInput_projectImage").on("change", scwin.fileInput_change);
+};
+
+// 파일 선택 시 처리
+scwin.fileInput_change = function(e) {
+    try {
+        
+        const fileInput = $p.$("#fileInput_projectImage").get(0);
+        const file = fileInput.files[0];
+
+        if (!file) {
+            return;
+        }
+        
+        
+        // 파일 타입 검증
+        if (!file.type.startsWith('image/')) {
+            $c.win.alert('이미지 파일만 업로드할 수 있습니다.');
+            return;
+        }
+        
+        // 파일 크기 검증 (10MB 제한)
+        if (file.size > 10 * 1024 * 1024) {
+            $c.win.alert('파일 크기가 10MB를 초과합니다.');
+            return;
+        }
+        
+        // 전역 변수에 파일 저장
+        scwin.projectImageFile = file;
+        
+        // 이미지 미리보기 생성
+        const imageUrl = URL.createObjectURL(file);
+        
+        // 배경 이미지로 설정하고 스타일 변경
+        btn_projectImage.setStyle("background-image", `url('${imageUrl}')`);
+        
+        // 파일 업로드 시 점선에서 실선으로 변경
+        btn_projectImage.setStyle("border", "2px solid #999");
+        
+        // WebSquare에서 버튼 라벨 텍스트 제거하는 올바른 방법
+        try {
+            // 방법 1: 버튼의 라벨 숨기기
+            btn_projectImage.setStyle("color", "transparent");
+            
+            // 방법 2: 또는 라벨 내용을 빈 문자열로 설정
+            if (btn_projectImage.setLabel) {
+                btn_projectImage.setLabel("");
+            }
+        } catch(labelError) {
+        }
+        
+    } catch(error) {
+        $c.win.alert("파일 처리 중 오류가 발생했습니다.");
+    }
+};
+
+// 시간 입력 검증 (사용하지 않지만 호환성을 위해 유지)
+scwin.validateTimeInput = function(inputValue, maxValue) {
+    const num = parseInt(inputValue);
+    if (isNaN(num) || num < 0) {
+        return "00";
+    } else if (num > maxValue) {
+        return String(maxValue).padStart(2, '0');
+    } else {
+        return String(num).padStart(2, '0');
+    }
+};
+]]></script>
+	</head>
+	<body ev:onpageload="scwin.onpageload">
+		<!-- 모달 컨테이너 -->
+		<xf:group class="modal-container" id="grp_modalContainer">
+
+			<!-- 프로젝트 이미지 -->
+			<xf:group class="project-image" id="grp_projectImage">
+				<xf:trigger class="project-image-button" id="btn_projectImage" ev:onclick="scwin.btn_projectImage_onclick">
+					<xf:label id="label_projectImage"><![CDATA[프로젝트 이미지 업로드]]></xf:label>
+				</xf:trigger>
+				<xf:trigger class="upload-icon-button" id="btn_uploadIcon" ev:onclick="scwin.btn_uploadIcon_onclick">
+					<xf:label><![CDATA[]]></xf:label>
+				</xf:trigger>
+				<input style="display:none;" id="fileInput_projectImage" type="file" accept="image/*" onchange="scwin.fileInput_change"></input>
+			</xf:group>
+
+			<!-- 이름 입력 -->
+			<xf:group class="input-group-modal" id="grp_nameInput">
+				<xf:output class="input-label" id="label_name">
+					<xf:label><![CDATA[프로젝트 이름]]></xf:label>
+				</xf:output>
+				<xf:input class="input-field" id="input_projectName" ref="dm_projectForm.projectName" ev:onkeyup="scwin.input_name_onkeyup" />
+			</xf:group>
+
+			<!-- 설명 입력 -->
+			<xf:group class="input-group-modal" id="grp_descInput">
+				<xf:output class="input-label" id="label_description">
+					<xf:label><![CDATA[설명]]></xf:label>
+				</xf:output>
+				<xf:input class="input-field" id="input_description" ref="dm_projectForm.description" />
+			</xf:group>
+
+			<!-- 팀장 입력 -->
+			<xf:group class="input-group-modal" id="grp_teamInput">
+				<xf:output class="input-label" id="label_team">
+					<xf:label><![CDATA[팀장]]></xf:label>
+				</xf:output>
+				<xf:input class="input-field-readonly" id="input_userName" ref="dm_projectForm.teamName" readOnly="true" />
+			</xf:group>
+
+			<!-- 메일 전송 시각 (고정값 표시) -->
+			<xf:group class="input-group-modal" id="grp_timeInput">
+				<xf:output class="input-label" id="label_time">
+					<xf:label><![CDATA[메일 전송 시각]]></xf:label>
+				</xf:output>
+				<xf:input class="input-field-readonly" id="input_emailTime" ref="dm_projectForm.emailSendTime" readOnly="true" />
+			</xf:group>
+
+			<!-- 저장 버튼 -->
+			<xf:trigger class="save-btn" id="btn_save" ev:onclick="scwin.btn_save_onclick">
+				<xf:label><![CDATA[추가]]></xf:label>
+			</xf:trigger>
+
+		</xf:group>
+	</body>
+</html>

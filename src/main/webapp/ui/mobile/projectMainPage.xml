@@ -1,0 +1,1091 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:w2="http://www.inswave.com/websquare"
+	xmlns:xf="http://www.w3.org/2002/xforms">
+	<head>
+		<w2:type>COMPONENT</w2:type>
+		<w2:buildDate />
+		<w2:MSA />
+		<w2:autoJSLoad>false</w2:autoJSLoad>
+		<xf:model>
+			<w2:dataCollection baseNode="map">
+				<w2:dataMap baseNode="map" id="dm_search_task">
+					<w2:keyInfo>
+						<w2:key id="boardId" name="보드 ID" dataType="text"></w2:key>
+						<w2:key id="tags" name="태그 필터" dataType="text"></w2:key>
+						<w2:key id="sortField" name="정렬 필드" dataType="text"></w2:key>
+						<w2:key id="sortOrder" name="정렬 순서" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataList baseNode="list" repeatNode="map" id="dlt_taskList" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column id="taskId" name="taskId" dataType="text"></w2:column>
+						<w2:column id="boardId" name="boardId" dataType="text"></w2:column>
+						<w2:column id="projectUserId" name="projectUserId" dataType="text"></w2:column>
+						<w2:column id="projectRepoId" name="projectRepoId" dataType="text"></w2:column>
+						<w2:column id="taskTitle" name="taskTitle" dataType="text"></w2:column>
+						<w2:column id="priority" name="priority" dataType="text"></w2:column>
+						<w2:column id="startDate" name="startDate" dataType="text"></w2:column>
+						<w2:column id="endDate" name="endDate" dataType="text"></w2:column>
+						<w2:column id="tags" name="tags" dataType="text"></w2:column>
+						<w2:column id="userName" name="userName" dataType="text"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataMap baseNode="map" id="dm_taskVo">
+					<w2:keyInfo>
+						<w2:key id="taskTitle" name="업무 제목" dataType="text"></w2:key>
+						<w2:key id="boardId" name="보드 ID" dataType="text"></w2:key>
+						<w2:key id="taskId" name="업무 ID" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dm_boardVo">
+					<w2:keyInfo>
+						<w2:key id="boardId" name="boardId" dataType="text"></w2:key>
+						<w2:key id="boardTitle" name="boardTitle" dataType="text"></w2:key>
+						<w2:key id="projectId" name="projectId" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataList baseNode="list" repeatNode="map" id="dlt_boardListVo" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column dataType="text" name="boardId" id="boardId"></w2:column>
+						<w2:column dataType="text" name="boardTitle" id="boardTitle"></w2:column>
+						<w2:column dataType="text" name="projectId" id="projectId"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataMap baseNode="map" id="dm_projectVo">
+					<w2:keyInfo>
+						<w2:key id="projectId" name="projectId" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataMap baseNode="map" id="dm_userInfo">
+					<w2:keyInfo>
+						<w2:key id="userId" name="userId" dataType="text"></w2:key>
+						<w2:key id="userName" name="userName" dataType="text"></w2:key>
+						<w2:key id="userImage" name="userImage" dataType="text"></w2:key>
+					</w2:keyInfo>
+				</w2:dataMap>
+				<w2:dataList baseNode="list" repeatNode="map" id="dlt_calendar_schedule" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column id="id" name="id" dataType="text"></w2:column>
+						<w2:column id="title" name="title" dataType="text"></w2:column>
+						<w2:column id="start" name="start" dataType="text"></w2:column>
+						<w2:column id="end" name="end" dataType="text"></w2:column>
+						<w2:column id="boardId" name="boardId" dataType="text"></w2:column>
+						<w2:column id="boardTitle" name="boardTitle" dataType="text"></w2:column>
+						<w2:column id="priority" name="priority" dataType="text"></w2:column>
+						<w2:column id="tags" name="tags" dataType="text"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+				<w2:dataList baseNode="list" repeatNode="map" id="dlt_gantt_schedule" saveRemovedData="true">
+					<w2:columnInfo>
+						<w2:column id="taskId" name="taskId" dataType="text"></w2:column>
+						<w2:column id="taskTitle" name="taskTitle" dataType="text"></w2:column>
+						<w2:column id="startDate" name="startDate" dataType="text"></w2:column>
+						<w2:column id="endDate" name="endDate" dataType="text"></w2:column>
+						<w2:column id="boardId" name="boardId" dataType="text"></w2:column>
+						<w2:column id="boardTitle" name="boardTitle" dataType="text"></w2:column>
+						<w2:column id="priority" name="priority" dataType="text"></w2:column>
+						<w2:column id="tags" name="tags" dataType="text"></w2:column>
+					</w2:columnInfo>
+				</w2:dataList>
+			</w2:dataCollection>
+			<w2:workflowCollection />
+			<xf:submission id="add_task" action="/InsWebApp/task/create.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dm_taskVo","key":"taskVo"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.add_task_submitdone" ev:submiterror="" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="load_Board" action="/InsWebApp/board/list.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dm_projectVo","key":"projectVo"}' target='data:json,{"id":"dlt_boardListVo","key":"boardListVo"}' encoding="UTF-8" instance="" replace=""
+				errorHandler="" customHandler="" mode="asynchronous" processMsg="보드 데이터를 로딩 중입니다..."
+				ev:submit="scwin.load_Board_submit" ev:submitdone="scwin.load_Board_submitdone" ev:submiterror="scwin.load_Board_submiterror"
+				abortTrigger="">
+			</xf:submission>
+			<xf:submission id="load_Tasks" action="/InsWebApp/TaskList.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dm_search_task","key":"taskVo"}' target='data:json,{"id":"dlt_taskList","key":"taskVoList"}' encoding="UTF-8" instance="" replace="none"
+				errorHandler="" customHandler="" mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.load_Tasks_submitdone"
+				ev:submiterror="" abortTrigger="">
+			</xf:submission>
+			<xf:submission id="load_Tasks_With_UserName" action="/InsWebApp/TaskListWithUserName.pwkjson" method="post"
+				mediatype="application/json" ref='data:json,{"id":"dm_search_task","key":"taskVo"}'
+				target='data:json,{"id":"dlt_taskList","key":"taskVoList"}' encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.load_Tasks_With_UserName_submitdone" ev:submiterror="scwin.load_Tasks_With_UserName_submiterror"
+				abortTrigger="">
+			</xf:submission>
+			<xf:submission id="update_task_board" action="/InsWebApp/task/updateBoard.pwkjson" method="post" mediatype="application/json"
+				ref='data:json,{"id":"dm_taskVo","key":"taskVo"}' target="" encoding="UTF-8" instance="" replace="" errorHandler="" customHandler=""
+				mode="asynchronous" processMsg="" ev:submit="" ev:submitdone="scwin.update_task_board_submitdone" ev:submiterror="scwin.update_task_board_submiterror" abortTrigger="">
+			</xf:submission>
+		</xf:model>
+		<w2:layoutInfo />
+		<w2:publicInfo method="" />
+		<script lazy="false" type="text/javascript"><![CDATA[
+// 전역 프로젝트 데이터 저장소
+scwin.currentProjectData = null;
+scwin.currentTaskList = [];
+scwin.selectedBoardId = null;
+scwin.dynamicComponents = []; // 동적으로 생성된 컴포넌트들을 관리
+
+scwin.onpageload = function () {
+    scwin.view = false;
+    scwin.task = "todo";
+    
+    // 초기에는 UI를 숨김 (데이터 로드 후 표시)
+    if (grp_main) {
+        grp_main.hide();
+    }
+};
+
+// 프로젝트 데이터 설정 함수 (부모에서 호출)
+scwin.setProjectData = function(projectData) {
+    // 전역 변수에 저장
+    scwin.currentProjectData = projectData;
+    
+    // dm_projectVo에 설정
+    if (projectData && projectData.projectId) {
+        dm_projectVo.set("projectId", projectData.projectId);
+        
+        // 프로젝트명 업데이트
+        scwin.updateProjectName(projectData.projectName);
+        
+        // 보드 목록 로드
+        scwin.loadBoardList();
+        
+        // 데이터 설정 완료 후 UI 표시
+        setTimeout(function() {
+            if (grp_main) {
+                grp_main.show();
+            }
+        }, 100);
+    }
+};
+
+// 프로젝트명 업데이트
+scwin.updateProjectName = function(projectName) {
+    try {
+        if (output_projectName) {
+            output_projectName.setValue(projectName);
+        }
+    } catch(e) {
+        // 프로젝트명 업데이트 오류
+    }
+};
+
+scwin.view_button_onclick = function (e) {
+    if (scwin.view) {
+        board_button.addClass("active");
+        calender_button.removeClass("active");
+        scwin.view = false;
+    } else {
+        board_button.removeClass("active");
+        calender_button.addClass("active");
+        scwin.view = true;
+    }
+};
+
+// 비디오 팝업 상태 관리
+scwin.videoPopupState = {
+    isOpen: false,
+    currentPopupId: null
+};
+
+// 화상통화 팝업 고유 ID 생성 함수
+scwin.generateVideoChatPopupId = function () {
+    let timestamp = Date.now();
+    let random = Math.floor(Math.random() * 1000);
+    return "videoChatPopup_" + timestamp + "_" + random;
+};
+
+// 화상통화 팝업 열기 함수
+scwin.openVideoChat = function() {
+    
+    // 이미 팝업이 열려있다면 새로 열지 않음
+    if (scwin.videoPopupState.isOpen && scwin.videoPopupState.currentPopupId) {
+        return;
+    }
+    
+    // 현재 프로젝트 ID 가져오기 (fallback 로직 사용)
+    let currentProjectId = null;
+    
+    // 1차 시도: dm_projectVo에서 가져오기
+    try {
+        currentProjectId = dm_projectVo.get("projectId");
+    } catch (e) {
+       
+    }
+    
+    // 2차 시도: 전역 변수에서 가져오기
+    if (!currentProjectId && scwin.currentProjectData && scwin.currentProjectData.projectId) {
+        currentProjectId = scwin.currentProjectData.projectId;
+        
+    }
+    
+    // 3차 시도: URL 파라미터에서 가져오기
+    if (!currentProjectId) {
+        try {
+            let urlParams = new URLSearchParams(window.location.search);
+            currentProjectId = urlParams.get('projectId');
+            
+        } catch (e) {
+            
+        }
+    }
+    
+    // 모든 방법이 실패한 경우
+    if (!currentProjectId) {
+        return;
+    }
+    
+    // 고유한 팝업 ID 생성
+    let uniquePopupId = scwin.generateVideoChatPopupId();
+    
+    let param = {
+        "type": "json",
+        "name": "projectInfo",
+        "data": {
+            "projectId": currentProjectId
+        }
+    }
+    
+    let options = {
+        id: uniquePopupId,
+        type: "wframePopup",
+        width: "390",       // 모바일 적정 크기
+        height: "600",      // 모바일 적정 높이
+        modal: false,       // 데스크톱과 동일하게 설정
+        header: false,
+        customTitleBar: false,
+        scrollbars: false,  // 스크롤바 제거
+        overflow: "hidden", // 오버플로우 숨김
+        closeAction: "scwin.videoChat_closeAction",
+        dataObject: param
+    };
+    
+    // 팝업 상태 업데이트
+    scwin.videoPopupState.isOpen = true;
+    scwin.videoPopupState.currentPopupId = uniquePopupId;
+    
+    $p.openPopup("/InsWebApp/ui/videochat/webRTCVideoChatPage.xml", options);
+};
+
+// 화상통화 팝업 닫기 액션
+scwin.videoChat_closeAction = function(argRuntimeID, argJsnInfo) {
+    
+    try {
+        // 팝업 닫기
+        if (argRuntimeID) {
+            $p.closePopup(argRuntimeID);
+        } else if (scwin.videoPopupState.currentPopupId) {
+            $p.closePopup(scwin.videoPopupState.currentPopupId);
+        }
+        
+        // 팝업 상태 초기화
+        scwin.videoPopupState.isOpen = false;
+        scwin.videoPopupState.currentPopupId = null;    
+    } catch (e) {
+        // 오류 발생 시에도 상태 초기화
+        scwin.videoPopupState.isOpen = false;
+        scwin.videoPopupState.currentPopupId = null;
+    }
+    return true;
+};
+
+// 보드 목록 로드
+scwin.loadBoardList = function() {
+    if (dm_projectVo.get("projectId")) {
+        $c.sbm.execute(load_Board);
+    } else {
+
+    }
+};
+
+// 보드 목록 로드 완료 콜백
+scwin.load_Board_submitdone = function(e) {
+    const boardListVo = e.responseJSON.boardVoList;
+    if (boardListVo && boardListVo.length > 0) {
+        scwin.currentBoardList = boardListVo;
+        scwin.renderBoardButtons(boardListVo);
+        
+        // 첫 번째 보드를 기본 선택
+        if (boardListVo[0]) {
+            scwin.selectedBoardId = boardListVo[0].boardId;
+            scwin.loadTaskList(boardListVo[0].boardId);
+        }
+    } else {
+        scwin.renderNoBoardsMessage();
+    }
+};
+
+// 보드 버튼들 동적 생성
+scwin.renderBoardButtons = function(boardList) {
+    
+    try {
+        // 기존 버튼들 제거
+        scwin.clearBoardButtons();
+        
+        const buttonContainer = grp_boardButtons;
+        if (!buttonContainer) {
+            return;
+        }
+        
+        // 각 보드별로 버튼 생성
+        for (let i = 0; i < boardList.length; i++) {
+            const board = boardList[i];
+            const buttonId = "btn_board_" + board.boardId;
+            
+            const boardButton = $p.dynamicCreate(
+                buttonId,
+                "trigger",
+                {
+                    className: i === 0 ? "bottom-btn active" : "bottom-btn"
+                },
+                buttonContainer
+            );
+            
+            if (boardButton) {
+                boardButton.setValue(board.boardTitle || "보드" + (i + 1));
+                
+                // 클릭 이벤트 바인딩
+                boardButton.bind("onclick", function() {
+                    scwin.onBoardButtonClick(board.boardId, board.boardTitle, buttonId);
+                });
+                
+                // 동적 컴포넌트 목록에 추가
+                scwin.dynamicComponents.push({
+                    component: boardButton,
+                    id: buttonId,
+                    type: "board_button"
+                });
+            }
+        }
+        
+    } catch(e) {
+        
+    }
+};
+
+// 보드 버튼 클릭 이벤트
+scwin.onBoardButtonClick = function(boardId, boardTitle, buttonId) {
+    
+    try {
+        // 모든 보드 버튼에서 active 클래스 제거
+        scwin.dynamicComponents.forEach(comp => {
+            if (comp.type === "board_button" && comp.component) {
+                comp.component.removeClass("active");
+            }
+        });
+        
+        // 클릭된 버튼에 active 클래스 추가
+        const clickedButton = $p.getComponentById(buttonId);
+        if (clickedButton) {
+            clickedButton.addClass("active");
+        } else {
+
+        }
+        
+        // 선택된 보드 ID 저장
+        scwin.selectedBoardId = boardId;
+        
+        // 해당 보드의 태스크 목록 로드
+        scwin.loadTaskList(boardId);
+        
+    } catch(e) {
+        // 보드 버튼 클릭 처리 오류
+    }
+};
+
+// 태스크 목록 로드
+scwin.loadTaskList = function(boardId) {
+    try {
+        // 검색 조건 설정
+        dm_search_task.set("boardId", boardId);
+        dm_search_task.set("sortField", "taskId");
+        dm_search_task.set("sortOrder", "ASC");
+        
+        // 사용자 이름을 포함한 태스크 목록 조회
+        $c.sbm.execute(load_Tasks_With_UserName);
+        
+    } catch(e) {
+        // 태스크 목록 로드 오류
+    }
+};
+
+// 태스크 목록 로드 완료 콜백
+scwin.load_Tasks_submitdone = function(e) {
+    const taskVoList = e.responseJSON.elData.taskVoList;
+    if (taskVoList) {
+        scwin.currentTaskList = taskVoList;
+        scwin.renderTaskCards(taskVoList);
+    } else {
+        scwin.renderNoTasksMessage();
+    }
+};
+
+// 사용자 이름을 포함한 태스크 목록 로드 완료 콜백
+scwin.load_Tasks_With_UserName_submitdone = function(e) {
+    try {
+        const taskVoList = e.responseJSON.elData.taskVoList;
+        if (taskVoList && taskVoList.length > 0) {
+            scwin.currentTaskList = taskVoList;
+            scwin.renderTaskCards(taskVoList);
+        } else {
+            scwin.renderNoTasksMessage();
+        }
+    } catch (error) {
+        scwin.renderNoTasksMessage();
+    }
+};
+
+// 사용자 이름을 포함한 태스크 목록 로드 오류 콜백
+scwin.load_Tasks_With_UserName_submiterror = function(e) {
+    scwin.renderNoTasksMessage();
+};
+
+// 태스크 카드들 동적 생성
+scwin.renderTaskCards = function(taskList) {
+    try {
+        // 기존 태스크 카드들 제거
+        scwin.clearTaskCards();
+        
+        const mainGroup = grp_mainGroup;
+        if (!mainGroup) {
+            return;
+        }
+        
+        if (!taskList || taskList.length === 0) {
+            scwin.renderNoTasksMessage();
+            return;
+        }
+        
+        // 각 태스크별로 카드 생성
+        for (let i = 0; i < taskList.length; i++) {
+            const task = taskList[i];
+            scwin.createTaskCard(task, i);
+        }
+        
+    } catch(e) {
+        // 태스크 카드 렌더링 오류
+    }
+};
+
+// 개별 태스크 카드 생성
+scwin.createTaskCard = function(task, index) {
+    try {
+        const cardId = "grp_taskCard_" + task.taskId + "_" + index;
+        
+        // 태스크 카드 컨테이너 생성 (단일 컬럼) - 흰색 배경
+        const taskCard = $p.dynamicCreate(
+            cardId,
+            "group",
+            {
+                style: "width:calc(100% - 20px);margin:8px 10px;background-color:white;border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.1);box-sizing:border-box;cursor:pointer;display:block;position:relative;"
+            },
+            grp_mainGroup
+        );
+        
+        if (!taskCard) {
+            return;
+        }
+        
+        // 우선순위 태그 (오른쪽 상단 절대 위치)
+        if (task.priority) {
+            const priorityTag = $p.dynamicCreate(
+                "output_priority_" + task.taskId + "_" + index,
+                "output",
+                {
+                    style: "position:absolute;top:16px;right:16px;display:inline-block;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;color:white;" + scwin.getPriorityBackgroundStyle(task.priority)
+                },
+                taskCard
+            );
+            
+            if (priorityTag) {
+                priorityTag.setValue(scwin.getPriorityLabel(task.priority));
+            }
+        }
+        
+        // 태스크 제목 (맨 위에 크게)
+        const titleOutput = $p.dynamicCreate(
+            "output_taskTitle_" + task.taskId + "_" + index,
+            "output",
+            {
+                style: "font-size:24px;font-weight:700;color:#333333;font-family:Inter,sans-serif;margin-bottom:12px;display:block;line-height:1.2;padding-right:80px;"
+            },
+            taskCard
+        );
+        
+        if (titleOutput) {
+            titleOutput.setValue(task.taskTitle || "제목 없음");
+        }
+        
+        // 담당자 정보 (제목 아래)
+        const assigneeInfo = $p.dynamicCreate(
+            "output_assignee_" + task.taskId + "_" + index,
+            "output",
+            {
+                style: "font-size:16px;color:#888888;font-family:Inter,sans-serif;display:block;"
+            },
+            taskCard
+        );
+        
+        if (assigneeInfo) {
+            // 웹 버전과 동일한 사용자 이름 조회 로직 사용
+            const assigneeName = scwin.getUserNameByUserId(task.projectUserId, task);
+            assigneeInfo.setValue("담당자: " + assigneeName);
+        }
+        
+        // 클릭 이벤트 바인딩
+        taskCard.bind("onclick", function() {
+            scwin.onTaskCardClick(task);
+        });
+        
+        // 동적 컴포넌트 목록에 추가
+        scwin.dynamicComponents.push({
+            component: taskCard,
+            id: cardId,
+            type: "task_card",
+            taskId: task.taskId
+        });
+        
+    } catch(e) {
+        
+    }
+};
+
+// 우선순위 스타일 반환
+scwin.getPriorityStyle = function(priority) {
+    switch(priority) {
+        case "high":
+            return "background-color:#FFE5E5;color:#D32F2F;";
+        case "medium":
+            return "background-color:#FFF3E0;color:#F57C00;";
+        case "low":
+            return "background-color:#E8F5E8;color:#388E3C;";
+        default:
+            return "background-color:#F5F5F5;color:#666666;";
+    }
+};
+
+// 우선순위 배경 스타일 반환 (태그용)
+scwin.getPriorityBackgroundStyle = function(priority) {
+    switch(priority) {
+        case "high":
+            return "background-color:#DC3545;"; // Bootstrap danger 색상 (빨간색)
+        case "medium":
+            return "background-color:#FFC107;"; // Bootstrap warning 색상 (노란색)
+        case "low":
+            return "background-color:#28A745;"; // Bootstrap success 색상 (초록색)
+        default:
+            return "background-color:#6C757D;"; // Bootstrap secondary 색상 (회색)
+    }
+};
+
+
+// 우선순위 라벨 반환
+scwin.getPriorityLabel = function(priority) {
+    switch(priority) {
+        case "high": return "높음";
+        case "medium": return "보통";
+        case "low": return "낮음";
+        default: return priority || "일반";
+    }
+};
+
+// 태스크 카드 클릭 이벤트
+scwin.onTaskCardClick = function(task) {
+    try {
+        // 고유한 팝업 ID 생성 (타임스탬프 사용으로 중복 방지)
+        const uniquePopupId = "taskPagePopup_" + task.taskId + "_" + Date.now();
+        
+        // taskPage 팝업 열기 (modal false로 시도)
+        const taskPageOptions = {
+            id: uniquePopupId,
+            type: "wframePopup",
+            width: "100%",
+            height: "100%",
+            modal: false,
+            paramObject: {
+                taskId: task.taskId,
+                taskTitle: task.taskTitle,
+                boardId: task.boardId,
+                projectUserId: task.projectUserId,
+                priority: task.priority,
+                startDate: task.startDate,
+                endDate: task.endDate,
+                tags: task.tags,
+                userName: task.userName,
+                fromMobile: true,
+                projectId: scwin.currentProjectData ? scwin.currentProjectData.projectId : dm_projectVo.get("projectId")
+            }
+        };
+        
+        $p.openPopup("/InsWebApp/ui/mobile/taskPage.xml", taskPageOptions);
+        
+    } catch(e) {
+        alert("태스크 상세 페이지를 열 수 없습니다.");
+    }
+};
+
+// taskPage 팝업 닫기 액션
+scwin.taskPage_closeAction = function(argRuntimeID, argJsnInfo) {
+    
+    
+    try {
+        // 태스크 데이터가 변경되었을 수 있으므로 태스크 목록 새로고침
+        if (scwin.selectedBoardId) {
+            
+            scwin.loadTaskList(scwin.selectedBoardId);
+        }
+        
+        
+        
+    } catch (e) {
+        
+    }
+    
+    // closeAction 함수에서는 true를 반환해야 팝업이 정상적으로 닫힘
+    return true;
+};
+
+// 태스크가 없을 때 메시지 표시
+scwin.renderNoTasksMessage = function() {
+    try {
+        scwin.clearTaskCards();
+        
+        const noTasksMessage = $p.dynamicCreate(
+            "grp_noTasks",
+            "group",
+            {
+                style: "width:calc(100% - 20px);margin:50px 10px;text-align:center;padding:30px;background-color:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);display:block;"
+            },
+            grp_mainGroup
+        );
+        
+        if (noTasksMessage) {
+            const messageText = $p.dynamicCreate(
+                "output_noTasksMessage",
+                "output",
+                {
+                    style: "font-size:16px;color:#666666;font-family:Inter,sans-serif;"
+                },
+                noTasksMessage
+            );
+            
+            if (messageText) {
+                messageText.setValue("이 보드에는 태스크가 없습니다.");
+            }
+            
+            scwin.dynamicComponents.push({
+                component: noTasksMessage,
+                id: "grp_noTasks",
+                type: "no_tasks_message"
+            });
+        }
+    } catch(e) {
+        
+    }
+};
+
+// 보드가 없을 때 메시지 표시
+scwin.renderNoBoardsMessage = function() {
+    try {
+        scwin.clearBoardButtons();
+        
+        const noBoardsMessage = $p.dynamicCreate(
+            "grp_noBoards",
+            "group",
+            {
+                style: "width:90%;margin:20px auto;text-align:center;padding:20px;background-color:#FFF3E0;border-radius:8px;"
+            },
+            grp_boardButtons
+        );
+        
+        if (noBoardsMessage) {
+            const messageText = $p.dynamicCreate(
+                "output_noBoardsMessage",
+                "output",
+                {
+                    style: "font-size:14px;color:#F57C00;font-family:Inter,sans-serif;"
+                },
+                noBoardsMessage
+            );
+            
+            if (messageText) {
+                messageText.setValue("이 프로젝트에는 보드가 없습니다.");
+            }
+            
+            scwin.dynamicComponents.push({
+                component: noBoardsMessage,
+                id: "grp_noBoards",
+                type: "no_boards_message"
+            });
+        }
+    } catch(e) {
+        
+    }
+};
+
+// 태스크 카드만 제거
+scwin.clearTaskCards = function() {
+    try {
+        const taskComponents = scwin.dynamicComponents.filter(comp => 
+            comp.type === "task_card" || comp.type === "no_tasks_message"
+        );
+        
+        taskComponents.forEach(comp => {
+            try {
+                if (comp.component && comp.component.remove) {
+                    comp.component.remove();
+                }
+            } catch(e) { /* ignore */ }
+        });
+        
+        // 태스크 관련 컴포넌트만 배열에서 제거
+        scwin.dynamicComponents = scwin.dynamicComponents.filter(comp => 
+            comp.type !== "task_card" && comp.type !== "no_tasks_message"
+        );
+        
+    } catch(e) {
+        
+    }
+};
+
+// 보드 버튼만 제거
+scwin.clearBoardButtons = function() {
+    try {
+        const boardComponents = scwin.dynamicComponents.filter(comp => 
+            comp.type === "board_button" || comp.type === "no_boards_message"
+        );
+        
+        boardComponents.forEach(comp => {
+            try {
+                if (comp.component && comp.component.remove) {
+                    comp.component.remove();
+                }
+            } catch(e) { /* ignore */ }
+        });
+        
+        // 보드 관련 컴포넌트만 배열에서 제거
+        scwin.dynamicComponents = scwin.dynamicComponents.filter(comp => 
+            comp.type !== "board_button" && comp.type !== "no_boards_message"
+        );
+        
+    } catch(e) {
+        
+    }
+};
+
+// 모든 동적 컴포넌트 제거
+scwin.clearDynamicComponents = function() {
+    try {
+        scwin.dynamicComponents.forEach(comp => {
+            try {
+                if (comp.component && comp.component.remove) {
+                    comp.component.remove();
+                }
+            } catch(e) { /* ignore */ }
+        });
+        scwin.dynamicComponents = [];
+    } catch(e) {
+        
+    }
+};
+
+/**
+ * 사용자 ID로 사용자 이름 가져오기 (웹 버전과 동일한 로직)
+ */
+scwin.getUserNameByUserId = function (userId, taskData) {
+    if (!userId) {
+        return "담당자 없음";
+    }
+
+    try {
+        // taskData에 userName이 있으면 우선 사용
+        if (taskData && taskData.userName) {
+            return taskData.userName;
+        }
+
+        // 태스크 리스트에서 해당 userId의 userName 찾기
+        if (dlt_taskList) {
+            let rowCount = dlt_taskList.getRowCount();
+            for (let i = 0; i < rowCount; i++) {
+                let projectUserId = dlt_taskList.getCellData(i, "projectUserId");
+                let userName = dlt_taskList.getCellData(i, "userName");
+                if (projectUserId === userId && userName) {
+                    return userName;
+                }
+            }
+        }
+
+        // 현재 로그인한 사용자의 정보인지 확인
+        if (dm_userInfo) {
+            let currentUserId = dm_userInfo.get("userId");
+            if (userId === currentUserId) {
+                let userName = dm_userInfo.get("userName");
+                if (userName) {
+                    return userName;
+                }
+            }
+        }
+
+        // 모든 방법이 실패하면 userId 반환
+        return userId || "담당자 없음";
+    } catch (e) {
+        
+        return userId || "담당자 없음";
+    }
+};
+]]></script>
+		<style type="text/css"><![CDATA[/* 공통 */
+.btn {
+    outline: none;
+    border: none;
+    width: 30px;
+    height: 30px;
+    background-size: 20px 20px;
+    background-position: center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+
+/* 컨테이너 */
+.project-container {
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+/* 위에 nav */
+.nav-group {
+    width: 100%;
+    height: 30%;
+    display: flex;
+    padding-top: 20px;
+    box-sizing: border-box;
+    flex-direction: column;
+    background-color: white;
+}
+
+.nav {
+    width: 100%;
+    height: 33.33%;
+}
+
+.nav-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 15px;
+    box-sizing: border-box;
+    /* background-color: aquamarine; */
+}
+
+.project-select {
+    width: 50%;
+    height: 100%;
+    outline: none;
+    border: none;
+}
+
+.nav-top .w2selectbox_native_select {
+    font-size: 25px;
+    padding: 0;
+    border-color: #ffffff !important;
+}
+
+.setting-button {
+    background-image: url('/InsWebApp/images/mobile/setting.svg');
+}
+
+
+
+.nav-middle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* background-color: rgb(130, 194, 173); */
+    overflow: hidden;
+    padding: 0 15px;
+    box-sizing: border-box;
+}
+
+.middle-btn-group-left {
+    width: 60%;
+    height: 60%;
+    /* background-color: cornsilk; */
+    border-radius: 6px;
+    border: 1px solid #D9D9D9;
+    overflow: hidden;
+}
+
+.middle-left-btn {
+    width: 50%;
+    height: 100%;
+    font-size: 17px;
+    outline: none;
+    border: none;
+}
+
+.middle-left-btn.active {
+    background-color: #FEB823;
+}
+
+.middle-btn-group-right {
+    width: 40%;
+    height: 100%;
+    display: flex;
+    justify-content: right;
+    align-items: center;
+    gap: 10px;
+    box-sizing: border-box;
+}
+
+.middle-right-btn {
+    border: 1px solid #D9D9D9;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+.filter-button {
+    background-image: url('/InsWebApp/images/mobile/sort.svg');
+}
+
+.array-button {
+    background-image: url('/InsWebApp/images/mobile/array.svg');
+}
+
+.nav-bottom {
+    margin-top: auto;
+    /* background-color: rgb(149, 152, 151); */
+}
+
+.bottom-btn-group {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.bottom-btn-group::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+
+.bottom-btn {
+    min-width: 100px;
+    max-width: 150px;
+    flex-shrink: 0;
+    height: 100%;
+    font-size: 17px;
+    outline: none;
+    border: none;
+    transition: all 0.3s ease;
+    background-color: transparent;
+    color: #666666;
+    white-space: nowrap;
+    padding: 0 15px;
+}
+
+.bottom-btn.active {
+    border-bottom: 3px solid #FEB823;
+    box-sizing: border-box;
+}
+
+
+/* 메인 main task */
+.main-group {
+    width: 100%;
+    height: 70%;
+    background-color: #FFF4D6;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px 0;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+}
+
+.main-group::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+
+/* 플로팅 화상통화 버튼 */
+.floating-video-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: #FFB823;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(255, 184, 35, 0.4);
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.floating-video-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 184, 35, 0.6);
+}
+
+.floating-video-btn:active {
+    transform: translateY(0px);
+}]]></style>
+	</head>
+	<body ev:onpageload="scwin.onpageload">
+		<xf:group class="sub_contents project-container" id="" meta_snippetCategory="00_화면시작" meta_snippetKeyComponent="true" meta_snippetName="0_01 페이지시작"
+			style="">
+			<xf:group style="" id="" class="nav-group">
+				<xf:group style="" id="" class="nav nav-top">
+					<xf:output style="font-size:25px;font-weight:600;color:#000000;font-family:Inter,sans-serif;" id="output_projectName">
+						<xf:label><![CDATA[]]></xf:label>
+					</xf:output>
+					<xf:trigger type="button" style="" id="" class="btn setting-button">
+						<xf:label><![CDATA[]]></xf:label>
+					</xf:trigger>
+				</xf:group>
+				<xf:group id="" style="" class="nav nav-middle">
+					<xf:group style="" id="" class="middle-btn-group-left">
+						<xf:trigger type="button" style="" id="board_button" class="middle-left-btn active" ev:onclick="scwin.view_button_onclick">
+							<xf:label><![CDATA[보드]]></xf:label>
+						</xf:trigger>
+						<xf:trigger id="calender_button" style="" type="button" class="middle-left-btn" ev:onclick="scwin.view_button_onclick">
+							<xf:label><![CDATA[캘린더]]></xf:label>
+						</xf:trigger>
+					</xf:group>
+					<xf:group id="" style="" class="middle-btn-group-right">
+						<xf:trigger class="btn middle-right-btn filter-button" id="" style="" type="button">
+							<xf:label><![CDATA[]]></xf:label>
+						</xf:trigger>
+						<xf:trigger class="btn  middle-right-btn array-button" id="" style="" type="button">
+							<xf:label><![CDATA[]]></xf:label>
+						</xf:trigger>
+					</xf:group>
+				</xf:group>
+				<xf:group id="" style="" class="nav nav-bottom">
+					<xf:group class="bottom-btn-group" id="grp_boardButtons" style="">
+						<!-- 보드 버튼들이 동적으로 생성됩니다 -->
+					</xf:group>
+				</xf:group>
+			</xf:group>
+			<xf:group style="display: block !important;" id="grp_mainGroup" class="main-group">
+				<!-- task 카드들이 동적으로 생성됩니다 -->
+			</xf:group>
+		</xf:group>
+		
+		<!-- 플로팅 화상통화 버튼 -->
+		<xf:trigger class="floating-video-btn" id="btn_floating_video" type="button" ev:onclick="scwin.openVideoChat">
+			<xf:label>📹</xf:label>
+		</xf:trigger>
+	</body>
+</html>

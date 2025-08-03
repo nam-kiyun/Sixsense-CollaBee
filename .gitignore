@@ -12,3 +12,11 @@ target/
 
 #license
 .elLicense
+
+#properties
+*.properties
+
+# .gitignore 파일의 내용
+
+# WebSquare 임시 또는 빌드 폴더 무시
+/src/main/webapp/websquare/_websquare_/
