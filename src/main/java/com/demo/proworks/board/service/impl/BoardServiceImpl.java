@@ -110,8 +110,6 @@ public class BoardServiceImpl implements BoardService {
 	public int insertBoard(BoardVo boardVo) throws Exception {
 		int result = boardDAO.insertBoard(boardVo);
 		
-		// 보드 생성 시 캐시 업데이트는 BoardController에서 처리하므로 여기서는 생략
-		// (중복 처리 방지 및 성능 최적화)
 		
 		return result;	
 	}
@@ -133,9 +131,8 @@ public class BoardServiceImpl implements BoardService {
 		if (result > 0 && boardVo.getProjectId() != null && kanbanRedisService.isRedisConnected()) {
 			try {
 				kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
-				System.out.println("🗑️ 보드 정보 갱신으로 인한 프로젝트 캐시 무효화: " + boardVo.getProjectId());
 			} catch (Exception e) {
-				System.err.println("❌ 캐시 무효화 실패: " + e.getMessage());
+				e.printStackTrace();
 			}
 		}
 		
@@ -155,8 +152,6 @@ public class BoardServiceImpl implements BoardService {
 	public int deleteBoard(BoardVo boardVo) throws Exception {
 		int result = boardDAO.deleteBoard(boardVo);
 		
-		// 보드 삭제 시 캐시 업데이트는 BoardController에서 처리하므로 여기서는 생략
-		// (중복 처리 방지 및 성능 최적화)
 		
 		return result;
 	}
@@ -176,9 +171,8 @@ public class BoardServiceImpl implements BoardService {
      */
 	@SuppressWarnings("unchecked")
 	public List<BoardVo> selectBoardsByProject(String projectId) throws Exception {
-		System.out.println("BoardServiceImpl.selectBoardsByProject - projectId: " + projectId);
 		
-		// 1. Redis 캐시에서 프로젝트 보드 목록 조회
+		// Redis 캐시에서 프로젝트 보드 목록 조회
 		if (projectId != null && kanbanRedisService.isRedisConnected()) {
 			try {
 				List<java.util.Map<String, Object>> cachedBoards = kanbanRedisService.getProjectBoardsFromCache(projectId);
@@ -191,19 +185,17 @@ public class BoardServiceImpl implements BoardService {
 						boardList.add(board);
 					}
 					
-					System.out.println("✅ Redis 캐시에서 보드 목록 조회 성공: " + projectId + " (" + boardList.size() + "개)");
 					return boardList;
 				}
 			} catch (Exception e) {
-				System.err.println("❌ Redis 캐시 조회 실패, DB 조회로 대체: " + e.getMessage());
+				e.printStackTrace();
 			}
 		}
 		
-		// 2. 캐시에 없거나 Redis 연결 실패 시 DB에서 조회
+		// 캐시에 없거나 Redis 연결 실패 시 DB에서 조회
 		List<BoardVo> list = boardDAO.selectBoardsByProject(projectId);
-		System.out.println("BoardServiceImpl - 조회된 보드 개수: " + (list != null ? list.size() : 0));
 		
-		// 3. DB 조회 결과를 Redis 캐시에 저장
+		// DB 조회 결과를 Redis 캐시에 저장
 		if (projectId != null && kanbanRedisService.isRedisConnected() && list != null && !list.isEmpty()) {
 			try {
 				// BoardVo 리스트를 Map 리스트로 변환하여 캐시에 저장
@@ -214,9 +206,8 @@ public class BoardServiceImpl implements BoardService {
 				}
 				
 				kanbanRedisService.cacheProjectBoards(projectId, boardMapList);
-				System.out.println("🔧 DB 조회 결과를 Redis 캐시에 저장: " + projectId + " (" + list.size() + "개)");
 			} catch (Exception e) {
-				System.err.println("❌ Redis 캐시 저장 실패: " + e.getMessage());
+				e.printStackTrace();
 			}
 		}
 		

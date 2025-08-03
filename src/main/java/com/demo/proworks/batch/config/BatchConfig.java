@@ -12,8 +12,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
  * 배치 처리 설정 클래스
  * 스케줄러 및 비동기 실행 환경 설정
  * 
- * @author Claude AI
- * @since 2025-01-15
  */
 @Configuration
 @EnableScheduling
@@ -53,11 +51,6 @@ public class BatchConfig {
         
         executor.initialize();
         
-        System.out.println("배치 처리용 Thread Pool 설정 완료");
-        System.out.println("- Core Pool Size: " + executor.getCorePoolSize());
-        System.out.println("- Max Pool Size: " + executor.getMaxPoolSize());
-        System.out.println("- Queue Capacity: " + executor.getQueueCapacity());
-        
         return executor;
     }
 
@@ -78,8 +71,6 @@ public class BatchConfig {
         executor.setAwaitTerminationSeconds(30);
         
         executor.initialize();
-        
-        System.out.println("스케줄러용 Thread Pool 설정 완료");
         
         return executor;
     }
