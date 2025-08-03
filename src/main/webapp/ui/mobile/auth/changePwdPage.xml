@@ -87,10 +87,10 @@ scwin.input_onfocus = function (e) {
 };
 
 scwin.signup_button_onclick = function (e) {
-    var password = password_input.getValue();
-    var passwordCheck = passwordCheck_input.getValue();
+    let password = password_input.getValue();
+    let passwordCheck = passwordCheck_input.getValue();
 
-    var isValid = true;
+    let isValid = true;
     // 1. 비밀번호
     if (!password) {
         password_error_text.setValue("*비밀번호를 입력해주세요.");

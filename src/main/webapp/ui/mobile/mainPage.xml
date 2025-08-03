@@ -304,9 +304,9 @@ scwin.waitForSideMenuLoad = function () {
 // 사용자 정보 서버 요청 성공
 scwin.sbm_getUserInfo_submitdone = function (e) {
     try {
-        var responseData = e.responseJSON;
+        let responseData = e.responseJSON;
         if (responseData && responseData.userVo) {
-            var userData = responseData.userVo;
+            let userData = responseData.userVo;
             
             if (userData.userName && userData.userId) {
                 dm_userInfo.set("userName", userData.userName);
@@ -365,7 +365,7 @@ scwin.cleanupModal = function () {
         scwin.modalManager.modalInstance = null;
 
         // DOM에서 혹시 남아있을 수 있는 모달 엘리먼트들 제거
-        var existingModals = document.querySelectorAll('[id*="' + scwin.modalManager.modalId + '"]');
+        let existingModals = document.querySelectorAll('[id*="' + scwin.modalManager.modalId + '"]');
         existingModals.forEach(function (modal) {
             if (modal && modal.parentNode) {
                 modal.parentNode.removeChild(modal);

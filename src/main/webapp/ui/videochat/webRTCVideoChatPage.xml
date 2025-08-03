@@ -3714,9 +3714,9 @@ scwin.sbm_getUserInfo_submitdone = function(e) {
         
         
         // 세션에서 가져온 사용자 정보 확인
-        var sessionUserId = dm_userInfo.get("userId");
-        var sessionUserName = dm_userInfo.get("userName");
-        var sessionUserImage = dm_userInfo.get("userImage");
+        let sessionUserId = dm_userInfo.get("userId");
+        let sessionUserName = dm_userInfo.get("userName");
+        let sessionUserImage = dm_userInfo.get("userImage");
         
        
         
@@ -3725,7 +3725,7 @@ scwin.sbm_getUserInfo_submitdone = function(e) {
             currentUser.userName = sessionUserName;
             
             // WebRTC 사용자 ID는 고유성을 위해 세션ID + 타임스탬프 조합 사용
-            var timestamp = Date.now();
+            let timestamp = Date.now();
             currentUser.userId = sessionUserId + "_" + timestamp;
             
             

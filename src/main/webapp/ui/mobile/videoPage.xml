@@ -119,7 +119,7 @@ scwin.onpageload = function() {
     // 팝업 파라미터에서 프로젝트 ID 받기 (여러 방법 시도)
     try {
         // 1차 시도: paramObject에서 직접 받기
-        var paramObj = $p.getParameter("paramObject");
+        let paramObj = $p.getParameter("paramObject");
         if (paramObj && paramObj.projectId) {
             projectId = paramObj.projectId;
             
@@ -135,7 +135,7 @@ scwin.onpageload = function() {
             
             // 4차 시도: 부모 창에서 프로젝트 ID 가져오기
             try {
-                var parentWindow = $p.parent();
+                let parentWindow = $p.parent();
                 if (parentWindow && parentWindow.scwin && parentWindow.scwin.currentProjectData) {
                     projectId = parentWindow.scwin.currentProjectData.projectId;
                     
@@ -189,8 +189,8 @@ scwin.sbm_getUserInfo_submitdone = function(e) {
     try {
        
         
-        var sessionUserId = dm_userInfo.get("userId");
-        var sessionUserName = dm_userInfo.get("userName");
+        let sessionUserId = dm_userInfo.get("userId");
+        let sessionUserName = dm_userInfo.get("userName");
         
         // 실제 로그인 사용자 정보로 업데이트
         if (sessionUserId && sessionUserName) {
@@ -567,7 +567,7 @@ scwin.launchInAppBrowserVideoCall = function() {
         
         
         // 웹 화상통화 URL 구성 (기존 웹 버전 사용)
-        var webVideoUrl = "/InsWebApp/ui/videochat/webRTCVideoChatPage.xml";
+        let webVideoUrl = "/InsWebApp/ui/videochat/webRTCVideoChatPage.xml";
         webVideoUrl += "?projectId=" + encodeURIComponent(projectId);
         webVideoUrl += "&userId=" + encodeURIComponent(currentUser.userId);
         webVideoUrl += "&userName=" + encodeURIComponent(currentUser.userName);
@@ -577,7 +577,7 @@ scwin.launchInAppBrowserVideoCall = function() {
         
         
         // Matrix Mobile InAppBrowser 실행 옵션
-        var inAppBrowserOptions = "location=no,toolbar=no,zoom=no,hardwareback=yes";
+        let inAppBrowserOptions = "location=no,toolbar=no,zoom=no,hardwareback=yes";
         
         // InAppBrowser로 웹 화상통화 페이지 열기
         if (typeof $h !== 'undefined' && $h.inappbrowser) {
@@ -945,7 +945,7 @@ scwin.proposeAlternativeMethod = function() {
     
     
     // 사용자 선택 시뮬레이션
-    var choice = confirm("주기적 사진 전송 방식을 테스트해보시겠습니까?");
+    let choice = confirm("주기적 사진 전송 방식을 테스트해보시겠습니까?");
     
     if (choice) {
         
@@ -955,7 +955,7 @@ scwin.proposeAlternativeMethod = function() {
         
         // InAppBrowser 대안 제안 - 주석처리됨
         /*
-        var browserChoice = confirm("InAppBrowser로 웹 화상통화를 시도해보시겠습니까?");
+        let browserChoice = confirm("InAppBrowser로 웹 화상통화를 시도해보시겠습니까?");
         if (browserChoice) {
             scwin.fallbackToInAppBrowser();
         }
@@ -967,10 +967,10 @@ scwin.proposeAlternativeMethod = function() {
 scwin.startPhotoStreamingMode = function() {
     
     
-    var photoCount = 0;
-    var maxPhotos = 3; // 테스트용으로 3장만
+    let photoCount = 0;
+    let maxPhotos = 3; // 테스트용으로 3장만
     
-    var photoInterval = setInterval(function() {
+    let photoInterval = setInterval(function() {
         photoCount++;
        
         
@@ -1204,8 +1204,8 @@ scwin.addLocalVideo = function() {
  */
 scwin.handleUserJoined = async function(data) {
     // 데이터 구조 확인 및 보정
-    var userId = data.userId || data;
-    var userName = data.userName || (typeof data === 'string' ? data.split('@')[0] : 'Unknown');
+    let userId = data.userId || data;
+    let userName = data.userName || (typeof data === 'string' ? data.split('@')[0] : 'Unknown');
     
     
     
@@ -1510,8 +1510,8 @@ scwin.handleExistingUsers = function(data) {
                 
                 
                 // 사용자 객체 생성 (userName은 userId에서 추출)
-                var userName = userId.split('@')[0]; // 이메일에서 이름 부분 추출
-                var userObj = {
+                let userName = userId.split('@')[0]; // 이메일에서 이름 부분 추출
+                let userObj = {
                     userId: userId,
                     userName: userName
                 };

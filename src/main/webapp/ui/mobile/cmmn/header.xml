@@ -59,9 +59,9 @@ scwin.notice = function () {
 
         fetchAndConvertToBase64("/InsWebApp/images/mobile/notice.svg")
             .then(base64 => {
-                var callback = function (result) { console.log(result); };
+                let callback = function (result) { console.log(result); };
                 let cleaned = msg.replace(/"/g, "");  
-                var opt = { "title": "오늘의 할일 메일", "message": cleaned, "icon": base64};
+                let opt = { "title": "오늘의 할일 메일", "message": cleaned, "icon": base64};
                 $h.view.notification(callback, opt);
             })
             .catch(err => {

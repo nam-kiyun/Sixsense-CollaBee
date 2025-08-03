@@ -237,12 +237,9 @@ scwin.modalClose = function(argRuntimeID) {
         scwin.modalManager.isModalOpen = false;
         scwin.modalManager.modalInstance = null;
         
-        console.log("팝업 닫기 액션 완료");
-        
         return true; // 팝업 닫기 허용
         
     } catch (e) {
-        console.error("팝업 닫기 액션 오류:", e);
         
         // 오류가 있어도 레이아웃과 모달 상태는 초기화
         scwin.modalManager.isModalOpen = false;
@@ -260,9 +257,6 @@ scwin.initModal = function() {
         let userName = "식스센스"; // 기본값
         if (popupParam && popupParam.userName) {
             userName = popupParam.userName;
-            console.log("팝업 파라미터에서 팀장명 가져옴:", userName);
-        } else {
-            console.log("팝업 파라미터가 없어 기본값 사용:", userName);
         }
         
         // 팀장 인풋을 읽기전용으로 설정
@@ -277,27 +271,7 @@ scwin.initModal = function() {
             input_emailTime.setReadOnly(true);
         }
         
-        console.log("프로젝트 추가 모달 초기화 완료 - 팀장:", userName);
     } catch(e) {
-        console.error("모달 초기화 오류:", e);
-        // 오류 발생 시 기본값 설정 - ProjectVo에 맞추어 모든 필드 초기화
-        dm_projectForm.set("projectId", "");
-        dm_projectForm.set("projectName", "2차 프로젝트");
-        dm_projectForm.set("description", "");
-        dm_projectForm.set("projectImageUrl", "");
-        dm_projectForm.set("createdAt", "");
-        dm_projectForm.set("emailSendTime", "09:00");
-        dm_projectForm.set("userId", "");
-        dm_projectForm.set("userName", "식스센스");
-        
-        if (input_userName) {
-            input_userName.setReadOnly(true);
-        }
-        
-        if (input_emailTime) {
-            input_emailTime.setValue("09:00");
-            input_emailTime.setReadOnly(true);
-        }
     }
 };
 
@@ -316,12 +290,9 @@ scwin.btn_save_onclick = function(e) {
         // 메일 전송 시각을 09:00으로 고정 설정
         const emailSendTime = "09:00";
         dm_projectForm.set("emailSendTime", emailSendTime);
-        console.log(emailSendTime);
         dm_projectForm.set("userId",popupParam.userId);
-        console.log(popupParam.userId);
         dm_projectForm.set("description",input_description.getValue());
         
-        // Ajax FormData를 사용한 파일 업로드 방식으로 변경
         const formData = new FormData();
         
         // 프로젝트 기본 정보 추가
@@ -333,11 +304,7 @@ scwin.btn_save_onclick = function(e) {
         // 이미지 파일이 있으면 추가
         if (scwin.projectImageFile) {
             formData.append("file", scwin.projectImageFile);
-            console.log("이미지 파일 추가됨:", scwin.projectImageFile.name);
-        } else {
-            console.log("업로드할 이미지 파일 없음");
         }
-        
         // Ajax 요청으로 전송
         $.ajax({
             url: "/InsWebApp/project/create.pwkjson",
@@ -346,16 +313,13 @@ scwin.btn_save_onclick = function(e) {
             processData: false, // 파일 업로드를 위해 필수
             contentType: false, // 파일 업로드를 위해 필수
             success: function(response) {
-                console.log("프로젝트 생성 성공:", response);
                 scwin.handleSaveSuccess(response);
             },
             error: function(xhr, status, error) {
-                console.error("프로젝트 생성 실패:", error);
                 scwin.handleSaveError(xhr, status, error);
             }
         });
     } catch(e) {
-        console.error("프로젝트 저장 오류:", e);
         $c.win.alert("프로젝트 저장 중 오류가 발생했습니다.");
         scwin.modalClose(scwin.modalId,modalArgJsnInfo);
     }
@@ -384,20 +348,15 @@ scwin.handleSaveSuccess = function(response) {
             parentFrame.scwin.refreshMainContent();
         }
         
-        // WebSquare 팝업 닫기
-        console.log("팝업 닫기 시도 시작");
         
         try {
             if (typeof $p.closePopup === 'function') {
-                console.log("$p.closePopup() 사용하여 팝업 닫기");
                 $p.closePopup();
             } 
         } catch (closeError) {
-            console.error("팝업 닫기 오류:", closeError);
         }
         
     } catch (error) {
-        console.error("저장 성공 처리 중 오류:", error);
         $c.win.alert("프로젝트가 저장되었지만 화면 처리 중 오류가 발생했습니다.");
         
         // 오류가 발생해도 팝업은 닫기 시도
@@ -408,14 +367,12 @@ scwin.handleSaveSuccess = function(response) {
                 window.close();
             }
         } catch (closeError) {
-            console.warn("팝업 닫기 실패:", closeError);
         }
     }
 };
 
 // Ajax 실패 시 처리
 scwin.handleSaveError = function(xhr, status, error) {
-    console.error("프로젝트 저장 실패:", {xhr: xhr, status: status, error: error});
     
     let errorMessage = "프로젝트 저장 중 오류가 발생했습니다.";
     
@@ -436,14 +393,12 @@ scwin.input_name_onkeyup = function(e) {
 
 // 프로젝트 이미지 버튼 클릭 (메인 이미지 영역 클릭)
 scwin.btn_projectImage_onclick = function(e) {
-    console.log("프로젝트 이미지 영역 클릭");
     $p.$("#fileInput_projectImage").click();
     $p.$("#fileInput_projectImage").on("change", scwin.fileInput_change);
 };
 
 // 업로드 아이콘 버튼 클릭 (우상단 카메라 아이콘 클릭)
 scwin.btn_uploadIcon_onclick = function(e) {
-    console.log("업로드 아이콘 클릭");
     $p.$("#fileInput_projectImage").click();
     $p.$("#fileInput_projectImage").on("change", scwin.fileInput_change);
 };
@@ -451,17 +406,14 @@ scwin.btn_uploadIcon_onclick = function(e) {
 // 파일 선택 시 처리
 scwin.fileInput_change = function(e) {
     try {
-        console.log("파일 입력 변경 감지");
         
         const fileInput = $p.$("#fileInput_projectImage").get(0);
         const file = fileInput.files[0];
 
         if (!file) {
-            console.log("선택된 파일이 없음");
             return;
         }
         
-        console.log("선택된 파일:", file.name, file.type, file.size);
         
         // 파일 타입 검증
         if (!file.type.startsWith('image/')) {
@@ -480,7 +432,6 @@ scwin.fileInput_change = function(e) {
         
         // 이미지 미리보기 생성
         const imageUrl = URL.createObjectURL(file);
-        console.log("미리보기 URL 생성:", imageUrl);
         
         // 배경 이미지로 설정하고 스타일 변경
         btn_projectImage.setStyle("background-image", `url('${imageUrl}')`);
@@ -498,13 +449,9 @@ scwin.fileInput_change = function(e) {
                 btn_projectImage.setLabel("");
             }
         } catch(labelError) {
-            console.log("라벨 텍스트 제거 오류 (무시 가능):", labelError);
         }
         
-        console.log("이미지 미리보기 설정 완료");
-        
     } catch(error) {
-        console.error("파일 처리 오류:", error);
         $c.win.alert("파일 처리 중 오류가 발생했습니다.");
     }
 };

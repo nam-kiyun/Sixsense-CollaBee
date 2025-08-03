@@ -161,7 +161,7 @@
 		<script lazy="false" type="text/javascript"><![CDATA[
 scwin.onpageload = function () {
     // 사용자 인증 정보 확인 (메인페이지에서 전달받은 정보 사용)
-    var userId = scwin.getCurrentUserId();
+    let userId = scwin.getCurrentUserId();
     scwin.projectId = $p.parent().dm_projectVo.get("projectId");
 };
 
@@ -194,11 +194,11 @@ scwin.initWebSocket = function () {
     scwin.debounceDelay = 2000;
 
     // 간단한 WebSocket URL
-    var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    var host = window.location.host;
+    let protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    let host = window.location.host;
 
     // 단일 칸반 웹소켓 경로 (중복 세션 방지)
-    var websocketUrl = protocol + '//' + host + '/InsWebApp/kanban';
+    let websocketUrl = protocol + '//' + host + '/InsWebApp/kanban';
 
     try {
         scwin.websocket = new WebSocket(websocketUrl);
@@ -221,7 +221,7 @@ scwin.setupWebSocketHandlers = function (websocketUrl) {
 
     scwin.websocket.onmessage = function (event) {
         try {
-            var message = JSON.parse(event.data);
+            let message = JSON.parse(event.data);
             scwin.handleWebSocketMessage(message);
         } catch (error) {
         }
@@ -256,7 +256,7 @@ scwin.onWebSocketOpen = function (event) {
  */
 scwin.onWebSocketMessage = function (event) {
     try {
-        var message = JSON.parse(event.data);
+        let message = JSON.parse(event.data);
         scwin.handleWebSocketMessage(message);
     } catch (error) {
     }
@@ -277,10 +277,10 @@ scwin.onWebSocketClose = function (event) {
  * 사용자 참여 메시지 전송
  */
 scwin.sendUserJoinMessage = function () {
-    var currentUserId = $p.parent().dm_userInfo.get("userId");
-    var projectId = scwin.currentProjectData.projectId;
+    let currentUserId = $p.parent().dm_userInfo.get("userId");
+    let projectId = scwin.currentProjectData.projectId;
     
-    var message = {
+    let message = {
         type: "USER_JOIN",
         userId: currentUserId,
         projectId: projectId, // 프로젝트 ID 추가 (기본값: 1)
@@ -294,7 +294,7 @@ scwin.sendUserJoinMessage = function () {
  */
 scwin.sendWebSocketMessage = function (message) {
     if (scwin.websocket && scwin.websocket.readyState === WebSocket.OPEN) {
-        var jsonMessage = JSON.stringify(message);
+        let jsonMessage = JSON.stringify(message);
         scwin.websocket.send(jsonMessage);
     } else {
     }
@@ -340,7 +340,7 @@ scwin.handleWebSocketMessage = function (message) {
 scwin.handleCardMovedMessage = function (message) {
 
     // 중복 방지 로직 개선
-    var currentUserId = scwin.getCurrentUserId();
+    let currentUserId = scwin.getCurrentUserId();
 
     // CARD_MOVE (본인이 보낸 메시지)는 무시, CARD_MOVED (서버 브로드캐스트)는 처리
     if (message.type === "CARD_MOVE" && message.userId === currentUserId) {
@@ -365,7 +365,7 @@ scwin.handleTaskUpdatedMessage = function (message) {
     }
     
     // 현재 프로젝트가 아니면 무시
-    var currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
+    let currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
     
     if (message.projectId !== currentProjectId) {
         return;
@@ -373,8 +373,8 @@ scwin.handleTaskUpdatedMessage = function (message) {
     
     try {
         // 현재 사용자의 변경사항인지 확인
-        var currentUserId = scwin.getCurrentUserId();
-        var isMyChange = (message.userId && message.userId === currentUserId);
+        let currentUserId = scwin.getCurrentUserId();
+        let isMyChange = (message.userId && message.userId === currentUserId);
         
         if (!isMyChange) {
             
@@ -406,8 +406,8 @@ scwin.handleTaskUpdatedMessage = function (message) {
  */
 scwin.updateLocalTaskCache = function (message) {
     if (scwin.allTasksData && scwin.allTasksData.length > 0) {
-        for (var i = 0; i < scwin.allTasksData.length; i++) {
-            var task = scwin.allTasksData[i];
+        for (let i = 0; i < scwin.allTasksData.length; i++) {
+            let task = scwin.allTasksData[i];
             if (task.taskId === message.taskId) {
                 // 업데이트된 속성들을 로컬 캐시에 반영
                 if (message.taskTitle !== undefined) task.taskTitle = message.taskTitle;
@@ -429,11 +429,11 @@ scwin.updateLocalTaskCache = function (message) {
 scwin.updateKanbanCardFromMessage = function (message) {
     try {
         // 칸반 보드에서 해당 태스크 카드 찾기
-        var cardElement = document.querySelector('[data-task-id="' + message.taskId + '"]');
+        let cardElement = document.querySelector('[data-task-id="' + message.taskId + '"]');
         if (cardElement) {
             // 카드 제목 업데이트
             if (message.taskTitle !== undefined) {
-                var titleElement = cardElement.querySelector('.card-title');
+                let titleElement = cardElement.querySelector('.card-title');
                 if (titleElement) {
                     titleElement.textContent = message.taskTitle;
                 }
@@ -441,7 +441,7 @@ scwin.updateKanbanCardFromMessage = function (message) {
             
             // 우선순위 배지 업데이트
             if (message.priority !== undefined) {
-                var priorityElement = cardElement.querySelector('.priority-badge');
+                let priorityElement = cardElement.querySelector('.priority-badge');
                 if (priorityElement) {
                     priorityElement.className = 'priority-badge priority-' + (message.priority || 'none');
                     priorityElement.textContent = message.priority || '';
@@ -450,9 +450,9 @@ scwin.updateKanbanCardFromMessage = function (message) {
             
             // 날짜 정보 업데이트
             if (message.startDate !== undefined || message.endDate !== undefined) {
-                var dateElement = cardElement.querySelector('.task-dates');
+                let dateElement = cardElement.querySelector('.task-dates');
                 if (dateElement && (message.startDate || message.endDate)) {
-                    var dateText = '';
+                    let dateText = '';
                     if (message.startDate && message.endDate) {
                         dateText = message.startDate + ' ~ ' + message.endDate;
                     } else if (message.startDate) {
@@ -482,11 +482,11 @@ scwin.updateKanbanCardFromMessage = function (message) {
 scwin.checkAndNotifyOpenTaskModal = function (message) {
     try {
         // 현재 열려있는 팝업이 해당 태스크의 모달인지 확인
-        var openPopups = $p.getPopupList();
-        for (var i = 0; i < openPopups.length; i++) {
-            var popup = openPopups[i];
+        let openPopups = $p.getPopupList();
+        for (let i = 0; i < openPopups.length; i++) {
+            let popup = openPopups[i];
             if (popup.id === "exa_popup" && popup.dataObject && popup.dataObject.data) {
-                var popupTaskId = popup.dataObject.data.taskId;
+                let popupTaskId = popup.dataObject.data.taskId;
                 if (popupTaskId === message.taskId) {
                     break;
                 }
@@ -506,7 +506,7 @@ scwin.handleTaskDeletedMessage = function (message) {
     }
     
     // 현재 프로젝트가 아니면 무시
-    var currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
+    let currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
     if (message.projectId !== currentProjectId) {
         return;
     }
@@ -535,7 +535,7 @@ scwin.handleBoardCreatedMessage = function (message) {
     }
     
     // 중복 메시지 처리 방지
-    var messageId = message.type + "_" + message.boardId + "_" + message.projectId + "_" + message.timestamp;
+    let messageId = message.type + "_" + message.boardId + "_" + message.projectId + "_" + message.timestamp;
     if (scwin.processedMessages.has(messageId)) {
         return;
     }
@@ -547,13 +547,13 @@ scwin.handleBoardCreatedMessage = function (message) {
     }
     
     // 현재 프로젝트가 아니면 무시
-    var currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
+    let currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
     if (message.projectId !== currentProjectId) {
         return;
     }
 
     // 현재 사용자 확인 (자신이 생성한 보드는 이미 화면에 있을 수 있음)
-    var currentUserId = scwin.getCurrentUserId();
+    let currentUserId = scwin.getCurrentUserId();
     
     try {
         // 새로운 보드를 동적으로 추가
@@ -570,20 +570,20 @@ scwin.handleBoardCreatedMessage = function (message) {
 scwin.addNewBoardColumn = function (message) {
     try {    
         // 1. 데이터 모델에 새 보드 추가
-        var boardListComponent = $p.getComponentById("dlt_boardListVo");
+        let boardListComponent = $p.getComponentById("dlt_boardListVo");
         // 새 보드 데이터 생성 (message.message에 보드 제목이 들어있음)
-        var actualBoardId = message.boardId;
+        let actualBoardId = message.boardId;
         
-        var newBoardData = {
+        let newBoardData = {
             boardId: actualBoardId,
             boardTitle: message.message || message.boardTitle || "새 보드",
             projectId: message.projectId
         };
         
         // 중복 체크: 같은 boardId가 이미 존재하는지 확인
-        var existingBoard = false;
-        for (var i = 0; i < boardListComponent.getRowCount(); i++) {
-            var existingBoardId = boardListComponent.getCellData(i, "boardId");
+        let existingBoard = false;
+        for (let i = 0; i < boardListComponent.getRowCount(); i++) {
+            let existingBoardId = boardListComponent.getCellData(i, "boardId");
             if (existingBoardId === actualBoardId) {
                 existingBoard = true;
                 break;
@@ -595,23 +595,23 @@ scwin.addNewBoardColumn = function (message) {
         }
         
         // UI에서도 중복 체크
-        var columnId = "grp_dynamic_" + actualBoardId;
-        var existingColumn = $p.getComponentById(columnId);
+        let columnId = "grp_dynamic_" + actualBoardId;
+        let existingColumn = $p.getComponentById(columnId);
         if (existingColumn) {
             return;
         }
         
         // 데이터 리스트에 추가
-        var rowIndex = boardListComponent.insertRow();
+        let rowIndex = boardListComponent.insertRow();
         boardListComponent.setCellData(rowIndex, "boardId", newBoardData.boardId);
         boardListComponent.setCellData(rowIndex, "boardTitle", newBoardData.boardTitle);
         boardListComponent.setCellData(rowIndex, "projectId", newBoardData.projectId);
         
         // 2. 칸반 컨테이너 찾기
-        var kanbanContainer = $p.getComponentById("grp_kanban_board");
+        let kanbanContainer = $p.getComponentById("grp_kanban_board");
     
         // 3. 새 보드 컬럼 동적 생성
-        var boardIndex = boardListComponent.getRowCount() - 1; // 마지막에 추가된 인덱스
+        let boardIndex = boardListComponent.getRowCount() - 1; // 마지막에 추가된 인덱스
         scwin.createSingleKanbanColumn(newBoardData, boardIndex, kanbanContainer);
         
         // 4. 드롭 존 및 이벤트 바인딩 갱신
@@ -660,7 +660,7 @@ scwin.deleteBoardConfirmCallback = function(result) {
 scwin.confirmAndDeleteBoard = function (boardId, boardTitle) {
     try {
         // 확인 메시지
-        var confirmMessage = "'" + boardTitle + "' 보드를 삭제하시겠습니까?\n\n" +
+        let confirmMessage = "'" + boardTitle + "' 보드를 삭제하시겠습니까?\n\n" +
                            "이 작업은 되돌릴 수 없으며, 보드 내의 모든 카드가 함께 삭제됩니다.";
         
         scwin.pendingDeleteBoardId = boardId;
@@ -676,7 +676,7 @@ scwin.confirmAndDeleteBoard = function (boardId, boardTitle) {
 scwin.deleteBoard = function (boardId, boardTitle) {
     try {
         // 현재 프로젝트 ID 가져오기
-        var projectId = $p.parent().dm_projectVo.get("projectId");
+        let projectId = $p.parent().dm_projectVo.get("projectId");
         
         // 삭제 요청 데이터 설정
         dm_boardVo.set("boardId", boardId);
@@ -700,14 +700,14 @@ scwin.handleTaskCreatedMessage = function (message) {
     }
     
     // 중복 메시지 처리 방지
-    var messageId = message.type + "_" + message.taskId + "_" + message.projectId + "_" + message.timestamp;
+    let messageId = message.type + "_" + message.taskId + "_" + message.projectId + "_" + message.timestamp;
     if (scwin.processedMessages.has(messageId)) {
         return;
     }
     scwin.processedMessages.add(messageId);
     
     // 현재 프로젝트가 아니면 무시
-    var currentProjectId = $p.parent().dm_projectVo.get("projectId");
+    let currentProjectId = $p.parent().dm_projectVo.get("projectId");
     if (message.projectId !== currentProjectId) {
         return;
     }
@@ -731,15 +731,15 @@ scwin.handleTaskCreatedMessage = function (message) {
 scwin.addNewTaskCardToBoardDynamically = function (message) {
     try {
         // 2. 해당 보드의 카드 컨테이너 찾기
-        var boardId = message.boardId;
-        var cardsContainer = document.querySelector(`[data-board-id="${boardId}"].kanban-cards-container`);
+        let boardId = message.boardId;
+        let cardsContainer = document.querySelector(`[data-board-id="${boardId}"].kanban-cards-container`);
         
         if (!cardsContainer) {
             throw new Error(`보드 ${boardId}의 카드 컨테이너를 찾을 수 없음`);
         }
         
         // 3. 태스크 데이터 구성 (기존 createKanbanCardInBoard와 호환되도록)
-        var taskData = {
+        let taskData = {
             taskId: message.taskId,
             taskTitle: message.taskTitle || message.message, // taskTitle 우선, 없으면 message 사용
             boardId: message.boardId,
@@ -769,7 +769,7 @@ scwin.handleBoardDeletedMessage = function (message) {
     }
     
     // 현재 프로젝트가 아니면 무시
-    var currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
+    let currentProjectId = $p.getComponentById("dm_projectVo").get("projectId");
     if (message.projectId !== currentProjectId) {
         return;
     }
@@ -790,15 +790,15 @@ scwin.removeBoardColumn = function (message) {
     try {
         
         // 1. 데이터 모델에서 보드 제거
-        var boardListComponent = $p.getComponentById("dlt_boardListVo");
+        let boardListComponent = $p.getComponentById("dlt_boardListVo");
         if (!boardListComponent) {
             throw new Error("보드 데이터 리스트를 찾을 수 없음");
         }
         
         // 삭제할 보드의 인덱스 찾기
-        var boardIndex = -1;
-        for (var i = 0; i < boardListComponent.getRowCount(); i++) {
-            var boardId = boardListComponent.getCellData(i, "boardId");
+        let boardIndex = -1;
+        for (let i = 0; i < boardListComponent.getRowCount(); i++) {
+            let boardId = boardListComponent.getCellData(i, "boardId");
             if (boardId === message.boardId) {
                 boardIndex = i;
                 break;
@@ -812,13 +812,13 @@ scwin.removeBoardColumn = function (message) {
         }
         
         // 2. UI에서 보드 컬럼 제거
-        var columnId = "grp_dynamic_" + message.boardId;
-        var boardColumn = $p.getComponentById(columnId);
+        let columnId = "grp_dynamic_" + message.boardId;
+        let boardColumn = $p.getComponentById(columnId);
         
         if (boardColumn) {
             // 삭제 애니메이션 효과
             try {
-                var columnElement = boardColumn.getElement();
+                let columnElement = boardColumn.getElement();
                 if (columnElement) {
                     columnElement.style.transition = 'all 0.3s ease-out';
                     columnElement.style.transform = 'scale(0)';
@@ -851,7 +851,7 @@ scwin.removeBoardColumn = function (message) {
  */
 scwin.removeTaskFromLocalCache = function (taskId) {
     if (scwin.allTasksData && scwin.allTasksData.length > 0) {
-        for (var i = scwin.allTasksData.length - 1; i >= 0; i--) {
+        for (let i = scwin.allTasksData.length - 1; i >= 0; i--) {
             if (scwin.allTasksData[i].taskId === taskId) {
                 scwin.allTasksData.splice(i, 1);
                 break;
@@ -866,7 +866,7 @@ scwin.removeTaskFromLocalCache = function (taskId) {
 scwin.removeKanbanCardFromUI = function (taskId) {
     try {
         // 칸반 보드에서 해당 태스크 카드 찾기
-        var cardElement = document.querySelector('[data-task-id="' + taskId + '"]');
+        let cardElement = document.querySelector('[data-task-id="' + taskId + '"]');
         if (cardElement) {
             // 삭제 애니메이션 효과
             cardElement.style.transition = 'all 0.3s ease-out';
@@ -891,11 +891,11 @@ scwin.removeKanbanCardFromUI = function (taskId) {
 scwin.closeOpenTaskModalIfMatches = function (taskId) {
     try {
         // 현재 열려있는 팝업 확인
-        var openPopups = $p.getPopupList();
-        for (var i = 0; i < openPopups.length; i++) {
-            var popup = openPopups[i];
+        let openPopups = $p.getPopupList();
+        for (let i = 0; i < openPopups.length; i++) {
+            let popup = openPopups[i];
             if (popup.id === "exa_popup" && popup.dataObject && popup.dataObject.data) {
-                var popupTaskId = popup.dataObject.data.taskId;
+                let popupTaskId = popup.dataObject.data.taskId;
                 if (popupTaskId === taskId) {
                     // 삭제된 태스크의 모달이면 닫기
                     $p.closePopup(popup.id);
@@ -912,18 +912,18 @@ scwin.closeOpenTaskModalIfMatches = function (taskId) {
  */
 scwin.sendCardMoveMessage = function (taskId, fromBoardId, toBoardId) {
     // 현재 프로젝트 ID 가져오기
-    var projectId = null;
+    let projectId = null;
     if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
         projectId = scwin.currentProjectData.projectId;
     } else {
         // 프로젝트 데이터가 없으면 URL에서 추출 시도
-        var urlParams = new URLSearchParams(window.location.search);
+        let urlParams = new URLSearchParams(window.location.search);
         projectId = urlParams.get('projectId');
     }
 
-    var currentUserId = scwin.getCurrentUserId();
+    let currentUserId = scwin.getCurrentUserId();
 
-    var message = {
+    let message = {
         type: "CARD_MOVE",
         taskId: taskId,
         fromBoardId: fromBoardId,
@@ -940,11 +940,11 @@ scwin.sendCardMoveMessage = function (taskId, fromBoardId, toBoardId) {
  * 현재 사용자 ID 가져오기 (dm_userInfo에서만 조회)
  */
 scwin.getCurrentUserId = function () {
-    var currentUserId = null;
+    let currentUserId = null;
 
     try {
         // dm_userInfo에서 가져오기 (메인페이지에서 전달받은 데이터)
-        var userInfo = $p.parent().dm_userInfo.get("userId");
+        let userInfo = $p.parent().dm_userInfo.get("userId");
         if (userInfo) {
             currentUserId = userInfo.trim();
         } else {
@@ -962,9 +962,9 @@ scwin.getCurrentUserId = function () {
  */
 scwin.getCurrentUserName = function () {
     try {
-        var userInfo = $p.parent().dm_userInfo.get("userId");
+        let userInfo = $p.parent().dm_userInfo.get("userId");
         if (userInfo) {
-            var userName = userInfo.trim;
+            let userName = userInfo.trim;
             if (userName) {
                 return userName.trim();
             }
@@ -981,13 +981,13 @@ scwin.getCurrentUserName = function () {
 scwin.checkUserPermissionForSettings = function() {
     
     try {
-        var userId = scwin.getCurrentUserId();
-        var projectId = scwin.currentProjectData ? scwin.currentProjectData.projectId : null;
+        let userId = scwin.getCurrentUserId();
+        let projectId = scwin.currentProjectData ? scwin.currentProjectData.projectId : null;
         
         // 프로젝트 ID가 없으면 URL에서 가져오기 시도
         if (!projectId) {
             try {
-                var urlParams = new URLSearchParams(window.location.search);
+                let urlParams = new URLSearchParams(window.location.search);
                 projectId = urlParams.get('projectId');
             } catch (e) {
                
@@ -1033,7 +1033,7 @@ scwin.checkUserPermissionForSettings = function() {
  */
 scwin.showSettingsButton = function() {
     try {
-        var settingsBtn = $p.getComponentById("btn_settings");
+        let settingsBtn = $p.getComponentById("btn_settings");
         if (settingsBtn) {
             settingsBtn.show();
             
@@ -1050,7 +1050,7 @@ scwin.showSettingsButton = function() {
  */
 scwin.hideSettingsButton = function() {
     try {
-        var settingsBtn = $p.getComponentById("btn_settings");
+        let settingsBtn = $p.getComponentById("btn_settings");
         if (settingsBtn) {
             settingsBtn.hide();
             
@@ -1080,10 +1080,10 @@ scwin.getUserNameByUserId = function (userId, taskData) {
         // 태스크 리스트에서 해당 userId의 userName 찾기
         scwin.taskList = $p.getComponentById("dlt_scwin.taskList");
         if (scwin.taskList) {
-            var rowCount = scwin.taskList.getRowCount();
-            for (var i = 0; i < rowCount; i++) {
-                var projectUserId = scwin.taskList.getCellData(i, "projectUserId");
-                var userName = scwin.taskList.getCellData(i, "userName");
+            let rowCount = scwin.taskList.getRowCount();
+            for (let i = 0; i < rowCount; i++) {
+                let projectUserId = scwin.taskList.getCellData(i, "projectUserId");
+                let userName = scwin.taskList.getCellData(i, "userName");
                 if (projectUserId === userId && userName) {
                     return userName;
                 }
@@ -1091,11 +1091,11 @@ scwin.getUserNameByUserId = function (userId, taskData) {
         }
 
         // 현재 로그인한 사용자의 정보인지 확인
-        var currentUserId = scwin.getCurrentUserId();
+        let currentUserId = scwin.getCurrentUserId();
         if (userId === currentUserId) {
-            var userInfo = $p.getComponentById("dm_userInfo");
+            let userInfo = $p.getComponentById("dm_userInfo");
             if (userInfo) {
-                var userName = userInfo.get("userName");
+                let userName = userInfo.get("userName");
                 if (userName) {
                     return userName;
                 }
@@ -1114,15 +1114,15 @@ scwin.getUserNameByUserId = function (userId, taskData) {
  */
 scwin.updateCardPositionFromMessage = function (message) {
 
-    var taskId = message.taskId;
-    var fromBoardId = message.fromBoardId;
-    var toBoardId = message.toBoardId;
+    let taskId = message.taskId;
+    let fromBoardId = message.fromBoardId;
+    let toBoardId = message.toBoardId;
 
 
     // 1. 이동할 카드 찾기
-    var cardElement = scwin.findCardByTaskId(taskId);
+    let cardElement = scwin.findCardByTaskId(taskId);
     if (!cardElement) {
-        var allCards = document.querySelectorAll("[data-task-id]");
+        let allCards = document.querySelectorAll("[data-task-id]");
         allCards.forEach((card, index) => {
         });
         return;
@@ -1130,9 +1130,9 @@ scwin.updateCardPositionFromMessage = function (message) {
 
 
     // 2. 타겟 보드 컨테이너 찾기
-    var targetContainerId = "card_container_" + toBoardId;
+    let targetContainerId = "card_container_" + toBoardId;
 
-    var targetContainer = null;
+    let targetContainer = null;
 
     try {
         targetContainer = eval(targetContainerId);
@@ -1148,7 +1148,7 @@ scwin.updateCardPositionFromMessage = function (message) {
     }
 
     if (!targetContainer) {
-        var allContainers = document.querySelectorAll("[id*='card_container_']");
+        let allContainers = document.querySelectorAll("[id*='card_container_']");
         allContainers.forEach((container, index) => {
         });
         return;
@@ -1169,18 +1169,18 @@ scwin.updateCardPositionFromMessage = function (message) {
 scwin.findCardByTaskId = function (taskId) {
 
     // 방법 1: data-task-id 속성으로 찾기
-    var cardElement = document.querySelector(`[data-task-id="${taskId}"]`);
+    let cardElement = document.querySelector(`[data-task-id="${taskId}"]`);
     if (cardElement) {
         return cardElement;
     } else {
         // 디버깅: 현재 존재하는 모든 data-task-id 출력
-        var allCards = document.querySelectorAll("[data-task-id]");
+        let allCards = document.querySelectorAll("[data-task-id]");
     }
 
     // 방법 2: 카드 ID로 찾기 (card_taskId 형식)
-    var cardId = "card_" + taskId;
+    let cardId = "card_" + taskId;
 
-    var cardComponent = null;
+    let cardComponent = null;
     try {
         cardComponent = eval(cardId);
         if (cardComponent && cardComponent.element) {
@@ -1206,11 +1206,11 @@ scwin.findCardByTaskId = function (taskId) {
     }
 
     // 방법 5: 모든 project-card 클래스 요소에서 검색
-    var allProjectCards = document.querySelectorAll(".project-card, .draggable-card");
+    let allProjectCards = document.querySelectorAll(".project-card, .draggable-card");
 
-    for (var i = 0; i < allProjectCards.length; i++) {
-        var card = allProjectCards[i];
-        var cardTaskId = card.getAttribute("data-task-id");
+    for (let i = 0; i < allProjectCards.length; i++) {
+        let card = allProjectCards[i];
+        let cardTaskId = card.getAttribute("data-task-id");
 
         // 문자열과 숫자 비교 모두 확인
         if (cardTaskId == taskId || cardTaskId === taskId.toString() || cardTaskId === parseInt(taskId)) {
@@ -1234,7 +1234,7 @@ scwin.animateCardMove = function (cardElement, targetContainer, fromBoardId, toB
         cardElement.classList.add("moving-remotely");
 
         // 실제 DOM 이동
-        var targetElement = targetContainer.element || targetContainer;
+        let targetElement = targetContainer.element || targetContainer;
 
         // DOM 이동 실행
         targetElement.appendChild(cardElement);
@@ -1269,9 +1269,9 @@ scwin.animateCardMove = function (cardElement, targetContainer, fromBoardId, toB
 scwin.getBoardTitle = function (boardId) {
     try {
         // dlt_boardListVo에서 보드 제목 찾기
-        var boardList = dlt_boardListVo.getAllJSON();
+        let boardList = dlt_boardListVo.getAllJSON();
         if (boardList && boardList.length > 0) {
-            for (var i = 0; i < boardList.length; i++) {
+            for (let i = 0; i < boardList.length; i++) {
                 if (boardList[i].boardId === boardId) {
                     return boardList[i].boardTitle;
                 }
@@ -1329,19 +1329,19 @@ scwin.setProjectData = function (projectData) {
  * @param {String} parentId 카드를 추가할 부모 Group(칸반 컬럼)의 ID
  */
 scwin.addCard_onclick = function (parentId) {
-    var parentGroup = $p.getComponentById(parentId);
-    var cardId = "dyn_card_" + new Date().getTime();
-    var cardOptions = {
+    let parentGroup = $p.getComponentById(parentId);
+    let cardId = "dyn_card_" + new Date().getTime();
+    let cardOptions = {
         className: "project-card",
         style: "border-color: #2da44e; background-color: #f6ffed;"
     };
-    var newCard = $p.dynamicCreate(cardId, "group", cardOptions, parentGroup);
+    let newCard = $p.dynamicCreate(cardId, "group", cardOptions, parentGroup);
 
     // 생성된 카드에 onclick 이벤트 핸들러를 연결합니다.
     newCard.bind("onclick", scwin.new_task_onclick);
 
     // 생성된 input 컴포넌트 객체를 변수에 할당합니다.
-    var newInput = $p.dynamicCreate("dyn_input_" + new Date().getTime(), "input", {
+    let newInput = $p.dynamicCreate("dyn_input_" + new Date().getTime(), "input", {
         placeholder: "새 작업명을 입력하세요.",
         style: "width: 100%; height: 24px;"
     }, newCard);
@@ -1360,10 +1360,10 @@ scwin.addCard_onclick = function (parentId) {
  */
 scwin.dynamicInput_onkeydown = function (e) {
     // 이벤트가 발생한 컴포넌트(input) 객체
-    var inputComponent = this;
+    let inputComponent = this;
 
     // 눌린 키의 코드 확인 (Enter: 13, ESC: 27)
-    var keyCode = e.keyCode;
+    let keyCode = e.keyCode;
 
     if (keyCode === 13) { // Enter 키를 눌렀을 때
         let input = this.getValue();
@@ -1372,7 +1372,7 @@ scwin.dynamicInput_onkeydown = function (e) {
 
     } else if (keyCode === 27) { // ESC 키를 눌렀을 때
         // 삭제할 대상은 input을 감싸고 있는 부모 컴포넌트(카드 그룹)입니다.
-        var cardComponent = inputComponent.getParent();
+        let cardComponent = inputComponent.getParent();
 
         if (cardComponent) {
             // $p.remove API로 카드 컴포넌트를 화면에서 삭제합니다.
@@ -1384,10 +1384,10 @@ scwin.dynamicInput_onkeydown = function (e) {
 
 // 프로젝트 카드 클릭 이벤트
 scwin.projectCard_onclick = function (e) {
-    var selectedRow = parseInt(e.target.getAttribute('data-row'));
+    let selectedRow = parseInt(e.target.getAttribute('data-row'));
     if (!isNaN(selectedRow)) {
         dlt_projectList.setFocusedRow(selectedRow);
-        var projectName = dlt_projectList.getCellData(selectedRow, "projectName");
+        let projectName = dlt_projectList.getCellData(selectedRow, "projectName");
     }
 };
 
@@ -1411,7 +1411,7 @@ scwin.filter_onclick = function (e) {
  * 태그 필터링 패널 표시/숨기기
  */
 scwin.toggleTagFilterPanel = function () {
-    var filterPanel = $p.getComponentById("grp_tag_filter");
+    let filterPanel = $p.getComponentById("grp_tag_filter");
     if (filterPanel) {
         if (scwin.isTagFilterVisible) {
             scwin.hideTagFilter();
@@ -1426,7 +1426,7 @@ scwin.toggleTagFilterPanel = function () {
  */
 scwin.showTagFilter = function () {
     try {
-        var filterPanel = $p.getComponentById("grp_tag_filter");
+        let filterPanel = $p.getComponentById("grp_tag_filter");
         if (filterPanel) {
             filterPanel.show();
             scwin.isTagFilterVisible = true;
@@ -1446,7 +1446,7 @@ scwin.showTagFilter = function () {
 scwin.hideTagFilter = function () {
     try {
         // 1. 필터 패널 숨기기
-        var filterPanel = $p.getComponentById("grp_tag_filter");
+        let filterPanel = $p.getComponentById("grp_tag_filter");
         if (filterPanel) {
             filterPanel.hide();
             scwin.isTagFilterVisible = false;
@@ -1473,7 +1473,7 @@ scwin.hideTagFilter = function () {
 scwin.toggleTagFilter = function (tagValue) {
 
     if (tagValue) {
-        var tagIndex = scwin.selectedTags.indexOf(tagValue);
+        let tagIndex = scwin.selectedTags.indexOf(tagValue);
 
         if (tagIndex > -1) {
             // 태그 제거
@@ -1528,7 +1528,7 @@ scwin.toggleTag_untagged = function (e) {
  */
 scwin.selectAllTags = function () {
     // 현재 모든 태그가 선택되어 있는지 확인
-    var isAllSelected = scwin.availableTags.every(function (tag) {
+    let isAllSelected = scwin.availableTags.every(function (tag) {
         return scwin.selectedTags.indexOf(tag) > -1;
     });
 
@@ -1559,17 +1559,17 @@ scwin.clearTagFilter = function () {
  */
 scwin.updateTagFilterUI = function () {
 
-    var tagButtons = ["btn_tag_dev", "btn_tag_test", "btn_tag_doc", "btn_tag_plan", "btn_tag_analytics", "btn_tag_collabo"];
-    var tagValues = ["dev", "test", "doc", "plan", "analytics", "collabo"];
+    let tagButtons = ["btn_tag_dev", "btn_tag_test", "btn_tag_doc", "btn_tag_plan", "btn_tag_analytics", "btn_tag_collabo"];
+    let tagValues = ["dev", "test", "doc", "plan", "analytics", "collabo"];
 
-    for (var i = 0; i < tagButtons.length; i++) {
+    for (let i = 0; i < tagButtons.length; i++) {
 
         try {
             // 선택 상태 확인
-            var isSelected = scwin.selectedTags.indexOf(tagValues[i]) > -1;
+            let isSelected = scwin.selectedTags.indexOf(tagValues[i]) > -1;
 
             // WebSquare 컴포넌트 조회
-            var buttonComponent = eval(tagButtons[i]);
+            let buttonComponent = eval(tagButtons[i]);
 
             if (buttonComponent) {
                 // WebSquare 컴포넌트의 모든 속성 탐색
@@ -1577,20 +1577,20 @@ scwin.updateTagFilterUI = function () {
                 // 컴포넌트 기본 메서드들 확인
 
                 // getStyle로 가져올 수 있는 모든 속성 시도
-                var styleProps = ["class", "className", "classList", "cssClass", "style", "css", "attr", "attribute"];
-                for (var j = 0; j < styleProps.length; j++) {
+                let styleProps = ["class", "className", "classList", "cssClass", "style", "css", "attr", "attribute"];
+                for (let j = 0; j < styleProps.length; j++) {
                     try {
-                        var propValue = buttonComponent.getStyle(styleProps[j]);
+                        let propValue = buttonComponent.getStyle(styleProps[j]);
                     } catch (e) {
                     }
                 }
 
                 // getAttribute 메서드 확인
                 if (buttonComponent.getAttribute) {
-                    var attrProps = ["class", "className", "classList"];
-                    for (var k = 0; k < attrProps.length; k++) {
+                    let attrProps = ["class", "className", "classList"];
+                    for (let k = 0; k < attrProps.length; k++) {
                         try {
-                            var attrValue = buttonComponent.getAttribute(attrProps[k]);
+                            let attrValue = buttonComponent.getAttribute(attrProps[k]);
                         } catch (e) {
                         }
                     }
@@ -1602,10 +1602,10 @@ scwin.updateTagFilterUI = function () {
                 if (buttonComponent.render) {
 
                     // DOM 클래스 기반으로 상태 업데이트
-                    var currentClass = buttonComponent.render.className || "btn-tag";
+                    let currentClass = buttonComponent.render.className || "btn-tag";
 
                     // 클래스 업데이트 로직
-                    var newClass = currentClass;
+                    let newClass = currentClass;
                     if (isSelected) {
                         if (currentClass.indexOf("active") === -1) {
                             newClass = currentClass + " active";
@@ -1646,7 +1646,7 @@ scwin.updateTagFilterUI = function () {
 scwin.applyTagFilter = function () {
 
     // 기존 데이터가 있으면 태그 필터링만 적용 (정렬은 그대로 유지)
-    var hasExistingData = Object.keys(scwin.allTasksData).length > 0;
+    let hasExistingData = Object.keys(scwin.allTasksData).length > 0;
     
     if (hasExistingData) {
         scwin.applyTagFilterToExistingData();
@@ -1675,7 +1675,7 @@ scwin.filterBoardTasksLocally = function (boardId) {
  * 태스크가 선택된 태그들과 매칭되는지 확인
  */
 scwin.isTaskMatchesTags = function (task, selectedTags) {
-    var taskTags = task.tags;
+    let taskTags = task.tags;
 
     // 태그 필터가 없으면 모든 태스크 표시 (전체 선택 상태)
     if (!selectedTags || selectedTags.length === 0) {
@@ -1685,19 +1685,19 @@ scwin.isTaskMatchesTags = function (task, selectedTags) {
     // 태스크에 태그가 없는 경우 처리
     if (!taskTags || taskTags.trim() === "") {
         // "untagged" 옵션이 선택되었거나, 모든 태그가 선택된 상태이면 표시
-        var isAllTagsSelected = scwin.availableTags.every(function (tag) {
+        let isAllTagsSelected = scwin.availableTags.every(function (tag) {
             return selectedTags.indexOf(tag) > -1;
         });
         return selectedTags.indexOf("untagged") > -1 || isAllTagsSelected;
     }
 
     // 태스크의 태그들을 배열로 변환
-    var taskTagArray = taskTags.split(",");
+    let taskTagArray = taskTags.split(",");
 
     // 선택된 태그 중 하나라도 매칭되면 true (OR 조건)
-    for (var i = 0; i < selectedTags.length; i++) {
-        var selectedTag = selectedTags[i].trim();
-        for (var j = 0; j < taskTagArray.length; j++) {
+    for (let i = 0; i < selectedTags.length; i++) {
+        let selectedTag = selectedTags[i].trim();
+        for (let j = 0; j < taskTagArray.length; j++) {
             if (taskTagArray[j].trim() === selectedTag) {
                 return true;
             }
@@ -1718,8 +1718,8 @@ scwin.displayFilteredTasks = function (boardId, filteredTasks) {
     // 필터링된 태스크들로 카드 생성 (순서 확인)
     
     // 순차적으로 카드 생성 (비동기 처리 방지)
-    for (var i = 0; i < filteredTasks.length; i++) {
-        var task = filteredTasks[i];
+    for (let i = 0; i < filteredTasks.length; i++) {
+        let task = filteredTasks[i];
         
         try {
             scwin.createKanbanCardInBoard(task);
@@ -1737,13 +1737,13 @@ scwin.displayFilteredTasks = function (boardId, filteredTasks) {
  * 보드의 기존 카드들 제거
  */
 scwin.clearBoardCards = function (boardId) {
-    var cardContainerId = "card_container_" + boardId;
+    let cardContainerId = "card_container_" + boardId;
     try {
-        var cardContainer = eval(cardContainerId);
+        let cardContainer = eval(cardContainerId);
         if (cardContainer) {
             // 컨테이너의 모든 자식 카드들 제거
-            var children = cardContainer.getChildren();
-            for (var i = children.length - 1; i >= 0; i--) {
+            let children = cardContainer.getChildren();
+            for (let i = children.length - 1; i >= 0; i--) {
                 children[i].remove();
             }
         } else {
@@ -1757,20 +1757,20 @@ scwin.clearBoardCards = function (boardId) {
  */
 scwin.verifyCardOrder = function (boardId, expectedTasks) {
     try {
-        var cardContainerId = "card_container_" + boardId;
-        var cardContainer = eval(cardContainerId);
+        let cardContainerId = "card_container_" + boardId;
+        let cardContainer = eval(cardContainerId);
         
         if (!cardContainer) {
             return;
         }
         
-        var children = cardContainer.getChildren();
+        let children = cardContainer.getChildren();
         
         // 순서가 올바른지 확인
-        var isCorrectOrder = true;
-        for (var i = 0; i < Math.min(expectedTasks.length, children.length); i++) {
-            var expectedCardId = "mf_wfr_mainContent_card_" + expectedTasks[i].taskId;
-            var actualCardId = children[i].id;
+        let isCorrectOrder = true;
+        for (let i = 0; i < Math.min(expectedTasks.length, children.length); i++) {
+            let expectedCardId = "mf_wfr_mainContent_card_" + expectedTasks[i].taskId;
+            let actualCardId = children[i].id;
             
             if (expectedCardId !== actualCardId) {
                 isCorrectOrder = false;
@@ -1798,9 +1798,9 @@ scwin.storeAllTasksData = function (boardId, tasksArray) {
  */
 scwin.onSortFieldChange = function (e) {
     try {
-        var sortFieldComponent = $p.getComponentById("sel_sort_field");
+        let sortFieldComponent = $p.getComponentById("sel_sort_field");
         if (sortFieldComponent) {
-            var oldValue = scwin.currentSortField;
+            let oldValue = scwin.currentSortField;
             scwin.currentSortField = sortFieldComponent.getValue();
             
             // 실제로 값이 변경된 경우에만 적용
@@ -1819,9 +1819,9 @@ scwin.onSortFieldChange = function (e) {
  */
 scwin.onSortOrderChange = function (e) {
     try {
-        var sortOrderComponent = $p.getComponentById("sel_sort_order");
+        let sortOrderComponent = $p.getComponentById("sel_sort_order");
         if (sortOrderComponent) {
-            var oldValue = scwin.currentSortOrder;
+            let oldValue = scwin.currentSortOrder;
             scwin.currentSortOrder = sortOrderComponent.getValue();
             
             // 실제로 값이 변경된 경우에만 적용
@@ -1849,11 +1849,11 @@ scwin.sortTasksOnClient = function(tasks, sortField, sortOrder) {
     if (!sortOrder) sortOrder = "asc";
     
     // 태스크 배열 복사 (원본 변경 방지)
-    var sortedTasks = tasks.slice();
+    let sortedTasks = tasks.slice();
     
     sortedTasks.sort(function(a, b) {
-        var valueA = a[sortField];
-        var valueB = b[sortField];
+        let valueA = a[sortField];
+        let valueB = b[sortField];
         
         // null 또는 undefined 처리 - 빈값은 뒤로 정렬
         if (!valueA && !valueB) return 0;
@@ -1863,22 +1863,22 @@ scwin.sortTasksOnClient = function(tasks, sortField, sortOrder) {
         try {
             // 날짜 필드인 경우 날짜로 파싱하여 비교
             if (sortField === "startDate" || sortField === "endDate") {
-                var dateA = scwin.parseTaskDate(valueA);
-                var dateB = scwin.parseTaskDate(valueB);
+                let dateA = scwin.parseTaskDate(valueA);
+                let dateB = scwin.parseTaskDate(valueB);
                 
-                var comparison = dateA.getTime() - dateB.getTime();
+                let comparison = dateA.getTime() - dateB.getTime();
                 return sortOrder === "desc" ? -comparison : comparison;
             } else {
                 // 문자열 비교
-                var strA = valueA.toString().toLowerCase();
-                var strB = valueB.toString().toLowerCase();
+                let strA = valueA.toString().toLowerCase();
+                let strB = valueB.toString().toLowerCase();
                 
-                var comparison = strA.localeCompare(strB);
+                let comparison = strA.localeCompare(strB);
                 return sortOrder === "desc" ? -comparison : comparison;
             }
         } catch (error) {
             // 오류 발생 시 문자열 비교로 폴백
-            var comparison = valueA.toString().localeCompare(valueB.toString());
+            let comparison = valueA.toString().localeCompare(valueB.toString());
             return sortOrder === "desc" ? -comparison : comparison;
         }
     });
@@ -1895,7 +1895,7 @@ scwin.parseTaskDate = function(dateStr) {
     try {
         // 다양한 날짜 형식 지원
         // "2024-01-15", "2024/01/15", "20240115" 등
-        var cleanDateStr = dateStr.toString().trim();
+        let cleanDateStr = dateStr.toString().trim();
         
         // YYYYMMDD 형식인 경우 YYYY-MM-DD로 변환
         if (/^\d{8}$/.test(cleanDateStr)) {
@@ -1904,7 +1904,7 @@ scwin.parseTaskDate = function(dateStr) {
                           cleanDateStr.substring(6, 8);
         }
         
-        var date = new Date(cleanDateStr);
+        let date = new Date(cleanDateStr);
         
         // 유효한 날짜인지 확인
         if (isNaN(date.getTime())) {
@@ -1923,7 +1923,7 @@ scwin.parseTaskDate = function(dateStr) {
 scwin.applySortAndFilter = function () {
 
     // 모든 보드에 대해 서버에서 정렬된 데이터 요청
-    var boardList = $p.getComponentById("dlt_boardListVo");
+    let boardList = $p.getComponentById("dlt_boardListVo");
     if (boardList && boardList.getRowCount() > 0) {
 
         // 모든 태스크 데이터 초기화 (새로운 정렬로 재로드)
@@ -1933,9 +1933,9 @@ scwin.applySortAndFilter = function () {
         scwin.sortRequestCount = 0;
         scwin.expectedSortRequests = boardList.getRowCount();
 
-        for (var i = 0; i < boardList.getRowCount(); i++) {
-            var boardId = boardList.getCellData(i, "boardId");
-            var boardTitle = boardList.getCellData(i, "boardTitle");
+        for (let i = 0; i < boardList.getRowCount(); i++) {
+            let boardId = boardList.getCellData(i, "boardId");
+            let boardTitle = boardList.getCellData(i, "boardTitle");
 
             if (boardId) {
                 // 서버에 정렬 파라미터와 함께 요청
@@ -1954,10 +1954,10 @@ scwin.applySortAndFilter = function () {
  */
 scwin.applyTagFilterToExistingData = function () {
     
-    var boardList = $p.getComponentById("dlt_boardListVo");
+    let boardList = $p.getComponentById("dlt_boardListVo");
     if (boardList && boardList.getRowCount() > 0) {
-        for (var i = 0; i < boardList.getRowCount(); i++) {
-            var boardId = boardList.getCellData(i, "boardId");
+        for (let i = 0; i < boardList.getRowCount(); i++) {
+            let boardId = boardList.getCellData(i, "boardId");
             if (boardId && scwin.allTasksData[boardId]) {
                 scwin.sortAndFilterBoardTasks(boardId);
             }
@@ -1983,7 +1983,7 @@ scwin.loadTasksWithSort = function (boardId) {
             dm_search_task.set("sortOrder", scwin.currentSortOrder);
         } else {
             // 대안: $p.getComponentById 사용
-            var searchCondition = $p.getComponentById("dm_search_task");
+            let searchCondition = $p.getComponentById("dm_search_task");
             if (searchCondition) {
                 searchCondition.set("boardId", boardId);
                 searchCondition.set("sortField", scwin.currentSortField);
@@ -2010,7 +2010,7 @@ scwin.loadTasksWithSort = function (boardId) {
 scwin.sortAndFilterBoardTasks = function (boardId) {
 
     // 해당 보드의 전체 태스크 데이터 가져오기 (이미 서버에서 정렬된 상태)
-    var allTasks = scwin.allTasksData[boardId] || [];
+    let allTasks = scwin.allTasksData[boardId] || [];
 
     // 원본 태스크 데이터가 없는 경우 경고
     if (allTasks.length === 0) {
@@ -2020,21 +2020,21 @@ scwin.sortAndFilterBoardTasks = function (boardId) {
     }
 
     // 디버깅: 태스크 상세 정보 출력 (서버에서 이미 정렬된 상태)
-    for (var idx = 0; idx < Math.min(allTasks.length, 3); idx++) {
-        var task = allTasks[idx];
+    for (let idx = 0; idx < Math.min(allTasks.length, 3); idx++) {
+        let task = allTasks[idx];
     }
     if (allTasks.length > 3) {
     }
 
     // 태그 필터링만 적용 (정렬은 이미 서버에서 처리됨)
-    var filteredTasks = [];
+    let filteredTasks = [];
     if (scwin.selectedTags.length === 0) {
         // 선택된 태그가 없으면 모든 태스크 표시 (서버 정렬 순서 유지)
         filteredTasks = allTasks;
     } else {
         // 선택된 태그가 있으면 필터링 (서버 정렬 순서 유지)
-        for (var i = 0; i < allTasks.length; i++) {
-            var task = allTasks[i];
+        for (let i = 0; i < allTasks.length; i++) {
+            let task = allTasks[i];
             if (scwin.isTaskMatchesTags(task, scwin.selectedTags)) {
                 filteredTasks.push(task);
             }
@@ -2050,26 +2050,26 @@ scwin.sortAndFilterBoardTasks = function (boardId) {
 scwin.board_onclick = function (e) {
 
     // 캘린더 영역 숨기기
-    var calendarView = $p.getComponentById("grp_calendar_view");
+    let calendarView = $p.getComponentById("grp_calendar_view");
     if (calendarView) {
         calendarView.hide();
     }
 
     // 간트차트 영역 숨기기
-    var ganttView = $p.getComponentById("grp_gantt_view");
+    let ganttView = $p.getComponentById("grp_gantt_view");
     if (ganttView) {
         ganttView.hide();
     }
 
     // 칸반 보드 표시
-    var kanbanBoard = $p.getComponentById("grp_kanban_board");
+    let kanbanBoard = $p.getComponentById("grp_kanban_board");
     if (kanbanBoard) {
         kanbanBoard.setStyle("display", "flex");
         kanbanBoard.show("");
     }
     
     // 메인 콘텐츠 overflow 설정 (칸반보드: auto)
-    var mainContent = $p.getComponentById("mf_grp_mainContent");
+    let mainContent = $p.getComponentById("mf_grp_mainContent");
     if (mainContent) {
         mainContent.setStyle("overflow", "auto");
     }
@@ -2079,19 +2079,19 @@ scwin.board_onclick = function (e) {
 scwin.list_onclick = async function (e) {
 
     // 게시판 숨기기
-    var kanbanBoard = $p.getComponentById("grp_kanban_board");
+    let kanbanBoard = $p.getComponentById("grp_kanban_board");
     if (kanbanBoard) {
         kanbanBoard.hide();
     }
 
     // 캘린더 숨기기
-    var calendarView = $p.getComponentById("grp_calendar_view");
+    let calendarView = $p.getComponentById("grp_calendar_view");
     if (calendarView) {
         calendarView.hide();
     }
 
     // 간트차트 보이기 전 기존 객체 정리
-    var ganttView = $p.getComponentById("grp_gantt_view");
+    let ganttView = $p.getComponentById("grp_gantt_view");
     if (ganttView) {
         // 기존 FusionCharts 객체 확인
         try {
@@ -2104,7 +2104,7 @@ scwin.list_onclick = async function (e) {
     }
     
     // 메인 콘텐츠 overflow 설정 (간트차트: hidden)
-    var mainContent = $p.getComponentById("mf_grp_mainContent");
+    let mainContent = $p.getComponentById("mf_grp_mainContent");
     if (mainContent) {
         mainContent.setStyle("overflow", "hidden");
     }
@@ -2113,13 +2113,13 @@ scwin.list_onclick = async function (e) {
     scwin.initGanttNavigation();
 
     // 프로젝트 데이터 확인 후 간트차트 데이터 로딩
-    var projectId = dm_projectVo.get("projectId");
+    let projectId = dm_projectVo.get("projectId");
     if (!projectId && (!scwin.currentProjectData || !scwin.currentProjectData.projectId)) {
         // 1초 후 재시도
         setTimeout(function () {
             // 간트 뷰가 여전히 보이는 경우에만 데이터 로드
             try {
-                var isVisible = false;
+                let isVisible = false;
                 if (grp_gantt_view) {
                     if (typeof grp_gantt_view.isVisible === 'function') {
                         isVisible = grp_gantt_view.isVisible();
@@ -2145,9 +2145,9 @@ scwin.list_onclick = async function (e) {
             
             // 먼저 DataList에서 확인해보기
             try {
-                var taskListComponent = $p.getComponentById("dlt_scwin.taskList");
+                let taskListComponent = $p.getComponentById("dlt_scwin.taskList");
                 if (taskListComponent) {
-                    var existingData = taskListComponent.getAllJSON();
+                    let existingData = taskListComponent.getAllJSON();
                     if (existingData && existingData.length > 0) {
                         scwin.taskList = existingData;
                         scwin.loadGanttData();
@@ -2164,7 +2164,7 @@ scwin.list_onclick = async function (e) {
 
                     // 간트 뷰 가시성을 안전하게 확인
                     try {
-                        var isVisible = false;
+                        let isVisible = false;
                         if (grp_gantt_view) {
                             if (typeof grp_gantt_view.isVisible === 'function') {
                                 isVisible = grp_gantt_view.isVisible();
@@ -2188,7 +2188,7 @@ scwin.list_onclick = async function (e) {
                         setTimeout(function () {
                             // 간트 뷰 가시성을 안전하게 확인
                             try {
-                                var isVisible = false;
+                                let isVisible = false;
                                 if (grp_gantt_view) {
                                     if (typeof grp_gantt_view.isVisible === 'function') {
                                         isVisible = grp_gantt_view.isVisible();
@@ -2221,9 +2221,9 @@ scwin.list_onclick = async function (e) {
 scwin.calendar_onclick = function (e) {
 
     // 데이터 존재 여부 미리 확인 (성능 최적화)
-    var hasData = false;
+    let hasData = false;
     if (scwin.allTasksData) {
-        for (var boardId in scwin.allTasksData) {
+        for (let boardId in scwin.allTasksData) {
             if (scwin.allTasksData[boardId] && scwin.allTasksData[boardId].length > 0) {
                 hasData = true;
                 break;
@@ -2233,25 +2233,25 @@ scwin.calendar_onclick = function (e) {
 
 
     // 칸반 보드 숨기기
-    var kanbanBoard = $p.getComponentById("grp_kanban_board");
+    let kanbanBoard = $p.getComponentById("grp_kanban_board");
     if (kanbanBoard) {
         kanbanBoard.hide();
     }
 
     // 간트차트 영역 숨기기
-    var ganttView = $p.getComponentById("grp_gantt_view");
+    let ganttView = $p.getComponentById("grp_gantt_view");
     if (ganttView) {
         ganttView.hide();
     }
 
     // 캘린더 영역 표시
-    var calendarView = $p.getComponentById("grp_calendar_view");
+    let calendarView = $p.getComponentById("grp_calendar_view");
     if (calendarView) {
         calendarView.show();
     }
     
     // 메인 콘텐츠 overflow 설정 (캘린더: hidden)
-    var mainContent = $p.getComponentById("mf_grp_mainContent");
+    let mainContent = $p.getComponentById("mf_grp_mainContent");
     if (mainContent) {
         mainContent.setStyle("overflow", "hidden");
     }
@@ -2261,7 +2261,7 @@ scwin.calendar_onclick = function (e) {
         scwin.loadTasksToCalendar();
     } else {
         // 빈 데이터로 캘린더 초기화
-        var calendarDataList = $p.getComponentById("dlt_calendar_schedule");
+        let calendarDataList = $p.getComponentById("dlt_calendar_schedule");
         if (calendarDataList) {
             calendarDataList.removeAll();
         }
@@ -2274,17 +2274,17 @@ scwin.calendar_onclick = function (e) {
 scwin.loadTasksToCalendar = function () {
 
     // 캘린더 데이터 리스트 가져오기
-    var calendarDataList = $p.getComponentById("dlt_calendar_schedule");
+    let calendarDataList = $p.getComponentById("dlt_calendar_schedule");
     if (!calendarDataList) {
         return;
     }
 
     // allTasksData에서 데이터 수집
-    var allTasks = [];
+    let allTasks = [];
     if (scwin.allTasksData) {
-        for (var boardId in scwin.allTasksData) {
+        for (let boardId in scwin.allTasksData) {
             if (scwin.allTasksData.hasOwnProperty(boardId)) {
-                var boardTasks = scwin.allTasksData[boardId];
+                let boardTasks = scwin.allTasksData[boardId];
                 if (boardTasks && boardTasks.length > 0) {
                     allTasks = allTasks.concat(boardTasks);
                 }
@@ -2294,25 +2294,25 @@ scwin.loadTasksToCalendar = function () {
 
 
     // 색상 배열
-    var colors = [
+    let colors = [
         "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7", "#DDA0DD", 
         "#98D8C8", "#F7DC6F", "#FF8A65", "#81C784", "#64B5F6", "#FFB74D", 
         "#BA68C8", "#4DB6AC", "#A1C181", "#F48FB1"
     ];
 
     // 캘린더 데이터 JSON 배열 생성 (고성능)
-    var calendarJsonData = [];
-    for (var i = 0; i < allTasks.length; i++) {
-        var task = allTasks[i];
+    let calendarJsonData = [];
+    for (let i = 0; i < allTasks.length; i++) {
+        let task = allTasks[i];
 
         // 시작일이 있는 태스크만 포함
         if (task.startDate) {
-            var startDate = scwin.formatDateForCalendar(task.startDate);
-            var endDate = task.endDate ? scwin.formatDateForCalendar(task.endDate) : startDate;
-            var backgroundColor = colors[i % colors.length];
+            let startDate = scwin.formatDateForCalendar(task.startDate);
+            let endDate = task.endDate ? scwin.formatDateForCalendar(task.endDate) : startDate;
+            let backgroundColor = colors[i % colors.length];
             
             // themeColumn JSON 생성
-            var themeJson = JSON.stringify({
+            let themeJson = JSON.stringify({
                 "backgroundColor": backgroundColor,
                 "borderColor": backgroundColor,
                 "textColor": "#FFFFFF"
@@ -2339,7 +2339,7 @@ scwin.loadTasksToCalendar = function () {
 
 
     // 캘린더 컴포넌트 새로고침
-    var calendarComponent = $p.getComponentById("calendar_schedule");
+    let calendarComponent = $p.getComponentById("calendar_schedule");
     if (calendarComponent && calendarComponent.refresh) {
         calendarComponent.refresh();
     }
@@ -2360,7 +2360,7 @@ scwin.formatDateForCalendar = function (dateString) {
 
     // 다른 형식의 날짜를 YYYYMMDD로 변환
     try {
-        var date;
+        let date;
 
         // YYYY-MM-DD 형식인 경우
         if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
@@ -2373,9 +2373,9 @@ scwin.formatDateForCalendar = function (dateString) {
             return dateString;
         }
 
-        var year = date.getFullYear();
-        var month = String(date.getMonth() + 1).padStart(2, '0');
-        var day = String(date.getDate()).padStart(2, '0');
+        let year = date.getFullYear();
+        let month = String(date.getMonth() + 1).padStart(2, '0');
+        let day = String(date.getDate()).padStart(2, '0');
 
         return year + month + day; // YYYYMMDD 형식
     } catch (error) {
@@ -2394,7 +2394,7 @@ scwin.loadTasksToGantt = function (allTasks, displayYear, displayMonth) {
 
     // 기존 FusionCharts 객체 확인 (중복 방지)
     try {
-        var existingChart = gantt_chart_unique.fc();
+        let existingChart = gantt_chart_unique.fc();
         if (existingChart) {
             // 기존 객체 정리하지 않고 재사용
         }
@@ -2409,7 +2409,7 @@ scwin.loadTasksToGantt = function (allTasks, displayYear, displayMonth) {
     }
 
     // 전달받은 전체 태스크 또는 dlt_gantt_schedule에서 가져오기
-    var ganttTasks = allTasks || dlt_gantt_schedule.getAllJSON();
+    let ganttTasks = allTasks || dlt_gantt_schedule.getAllJSON();
 
     if (!ganttTasks || ganttTasks.length === 0) {
 
@@ -2430,15 +2430,15 @@ scwin.loadTasksToGantt = function (allTasks, displayYear, displayMonth) {
     
     // 전체 태스크를 해당 월 우선으로 정렬 (해당 월 태스크 위쪽, 나머지 아래쪽)
     if (ganttTasks && ganttTasks.length > 0) {
-        var currentYear = displayYear || scwin.currentGanttYear || (new Date()).getFullYear();
-        var currentMonth = displayMonth || scwin.currentGanttMonth || ((new Date()).getMonth() + 1);
+        let currentYear = displayYear || scwin.currentGanttYear || (new Date()).getFullYear();
+        let currentMonth = displayMonth || scwin.currentGanttMonth || ((new Date()).getMonth() + 1);
         
         // 해당 월의 시작일과 종료일 계산
-        var monthStart = new Date(currentYear, currentMonth - 1, 1);
-        var monthEnd = new Date(currentYear, currentMonth, 0);
+        let monthStart = new Date(currentYear, currentMonth - 1, 1);
+        let monthEnd = new Date(currentYear, currentMonth, 0);
         
         // 1단계: 유효한 날짜를 가진 태스크만 필터링
-        var validTasks = ganttTasks.filter(function(task) {
+        let validTasks = ganttTasks.filter(function(task) {
             // 시작날짜와 종료날짜가 모두 존재하고 비어있지 않은 경우만
             if (!task.startDate || !task.endDate || 
                 task.startDate.trim() === "" || task.endDate.trim() === "") {
@@ -2446,8 +2446,8 @@ scwin.loadTasksToGantt = function (allTasks, displayYear, displayMonth) {
             }
             
             // 날짜 파싱이 가능한 경우만
-            var startDate = scwin.parseValidDate(task.startDate);
-            var endDate = scwin.parseValidDate(task.endDate);
+            let startDate = scwin.parseValidDate(task.startDate);
+            let endDate = scwin.parseValidDate(task.endDate);
             if (!startDate || !endDate) {
                 return false;
             }
@@ -2457,15 +2457,15 @@ scwin.loadTasksToGantt = function (allTasks, displayYear, displayMonth) {
         
         
         // 2단계: 해당 월 태스크와 다른 월 태스크로 분리
-        var currentMonthTasks = [];
-        var otherMonthTasks = [];
+        let currentMonthTasks = [];
+        let otherMonthTasks = [];
         
         validTasks.forEach(function(task) {
-            var startDate = scwin.parseValidDate(task.startDate);
-            var endDate = scwin.parseValidDate(task.endDate);
+            let startDate = scwin.parseValidDate(task.startDate);
+            let endDate = scwin.parseValidDate(task.endDate);
             
             // 해당 월과 겹치는지 확인 (시작일이 월 종료일 이전이고, 종료일이 월 시작일 이후)
-            var isOverlapping = startDate <= monthEnd && endDate >= monthStart;
+            let isOverlapping = startDate <= monthEnd && endDate >= monthStart;
             
             if (isOverlapping) {
                 currentMonthTasks.push(task);
@@ -2476,14 +2476,14 @@ scwin.loadTasksToGantt = function (allTasks, displayYear, displayMonth) {
         
         // 3단계: 각 그룹을 시작날짜 순으로 정렬
         currentMonthTasks.sort(function(a, b) {
-            var dateA = scwin.parseValidDate(a.startDate);
-            var dateB = scwin.parseValidDate(b.startDate);
+            let dateA = scwin.parseValidDate(a.startDate);
+            let dateB = scwin.parseValidDate(b.startDate);
             return dateA.getTime() - dateB.getTime();
         });
         
         otherMonthTasks.sort(function(a, b) {
-            var dateA = scwin.parseValidDate(a.startDate);
-            var dateB = scwin.parseValidDate(b.startDate);
+            let dateA = scwin.parseValidDate(a.startDate);
+            let dateB = scwin.parseValidDate(b.startDate);
             return dateA.getTime() - dateB.getTime();
         });
         
@@ -2493,12 +2493,12 @@ scwin.loadTasksToGantt = function (allTasks, displayYear, displayMonth) {
     }
 
     // 스크롤 컨테이너 사용으로 높이를 자연스럽게 증가 (최대 높이 제한 없음)
-    var taskCount = ganttTasks.length;
-    var baseHeight = 150;  // 기본 높이
-    var taskHeight = 45;   // 태스크당 높이 (더 여유있게)
-    var minHeight = 400;   // 최소 높이 (스크롤 컨테이너 내에서)
+    let taskCount = ganttTasks.length;
+    let baseHeight = 150;  // 기본 높이
+    let taskHeight = 45;   // 태스크당 높이 (더 여유있게)
+    let minHeight = 400;   // 최소 높이 (스크롤 컨테이너 내에서)
 
-    var dynamicHeight = Math.max(minHeight, baseHeight + (taskCount * taskHeight));
+    let dynamicHeight = Math.max(minHeight, baseHeight + (taskCount * taskHeight));
 
 
     try {
@@ -2510,7 +2510,7 @@ scwin.loadTasksToGantt = function (allTasks, displayYear, displayMonth) {
     // 간트차트.txt 방식으로 데이터 설정
 
     // 1. 기본 차트 속성 설정 (간트차트.txt 형식)
-    var chartOptions = {
+    let chartOptions = {
         caption: "",  // 제목 제거
         dateformat: "mm/dd/yyyy",
         outputdateformat: "mm/dd/yyyy",
@@ -2531,17 +2531,17 @@ scwin.loadTasksToGantt = function (allTasks, displayYear, displayMonth) {
     gantt_chart_unique.setChartAttribute(chartOptions);
 
     // 2. 카테고리 설정 (해당 월의 일별 카테고리만 표시)
-    var currentDate = new Date();
-    var currentYear = displayYear || scwin.currentGanttYear || currentDate.getFullYear();
-    var currentMonth = displayMonth || scwin.currentGanttMonth || (currentDate.getMonth() + 1);
+    let currentDate = new Date();
+    let currentYear = displayYear || scwin.currentGanttYear || currentDate.getFullYear();
+    let currentMonth = displayMonth || scwin.currentGanttMonth || (currentDate.getMonth() + 1);
 
-    var categoryData = scwin.createMonthlyCategories(currentYear, currentMonth);
+    let categoryData = scwin.createMonthlyCategories(currentYear, currentMonth);
     if (categoryData) {
         gantt_chart_unique.setCategories(categoryData);
     }
 
     // 3. processes와 tasks 데이터 생성 (년/월 정보 전달)
-    var ganttJSONData = scwin.createGanttJSONFromDataList_backup(ganttTasks, currentYear, currentMonth);
+    let ganttJSONData = scwin.createGanttJSONFromDataList_backup(ganttTasks, currentYear, currentMonth);
 
     // 4. JSON 데이터 설정
     if (ganttJSONData) {
@@ -2568,11 +2568,11 @@ scwin.loadTasksToGantt = function (allTasks, displayYear, displayMonth) {
  * 특정 월의 카테고리만 생성
  */
 scwin.createMonthlyCategories = function (year, month) {
-    var firstDay = new Date(year, month - 1, 1);
-    var lastDay = new Date(year, month, 0);
-    var totalDays = lastDay.getDate(); // 해당 월의 총 일수
+    let firstDay = new Date(year, month - 1, 1);
+    let lastDay = new Date(year, month, 0);
+    let totalDays = lastDay.getDate(); // 해당 월의 총 일수
 
-    var dailyCategories = [];
+    let dailyCategories = [];
 
     // FusionCharts가 인덱스 1부터 그리는 문제 해결을 위해 빈 칸 2개 추가
     // 첫 번째 빈 칸 (인덱스 0)
@@ -2590,8 +2590,8 @@ scwin.createMonthlyCategories = function (year, month) {
     // });
 
     // 1부터 총일수까지 실제 날짜 카테고리 생성
-    for (var day = 0; day <= totalDays; day++) {
-        var currentDate = new Date(year, month - 1, day); // 실제 날짜
+    for (let day = 0; day <= totalDays; day++) {
+        let currentDate = new Date(year, month - 1, day); // 실제 날짜
 
         dailyCategories.push({
             start: scwin.formatDate(currentDate),
@@ -2614,7 +2614,7 @@ scwin.createGanttCategories = function (tasks) {
 
 
     // 모든 태스크의 날짜 범위 수집
-    var allDates = [];
+    let allDates = [];
     tasks.forEach(function (task) {
         if (task.startDate) allDates.push(new Date(task.startDate));
         if (task.endDate) allDates.push(new Date(task.endDate));
@@ -2625,18 +2625,18 @@ scwin.createGanttCategories = function (tasks) {
     }
 
     // 최소, 최대 날짜 구하기
-    var minDate = new Date(Math.min.apply(null, allDates));
-    var maxDate = new Date(Math.max.apply(null, allDates));
+    let minDate = new Date(Math.min.apply(null, allDates));
+    let maxDate = new Date(Math.max.apply(null, allDates));
 
 
     // 주차별 카테고리 생성 (더 간단한 표시)
-    var categories = [];
-    var currentDate = new Date(minDate);
+    let categories = [];
+    let currentDate = new Date(minDate);
 
     // 시작일부터 종료일까지 주 단위로 카테고리 생성
     while (currentDate <= maxDate) {
-        var weekStart = new Date(currentDate);
-        var weekEnd = new Date(currentDate);
+        let weekStart = new Date(currentDate);
+        let weekEnd = new Date(currentDate);
         weekEnd.setDate(weekEnd.getDate() + 6); // 7일 후
 
         // 마지막 주는 최대 날짜로 제한
@@ -2702,12 +2702,12 @@ scwin.createGanttJSONFromDataList_backup = function (ganttTasks, displayYear, di
         return scwin.createDummyGanttData(displayYear, displayMonth);
     }
 
-    var processes = [];
-    var tasks = [];
+    let processes = [];
+    let tasks = [];
 
     // 해당 월의 시작일과 종료일 계산
-    var monthStart = null;
-    var monthEnd = null;
+    let monthStart = null;
+    let monthEnd = null;
     if (displayYear && displayMonth) {
         monthStart = new Date(displayYear, displayMonth - 1, 1);
         monthEnd = new Date(displayYear, displayMonth, 0);
@@ -2722,17 +2722,17 @@ scwin.createGanttJSONFromDataList_backup = function (ganttTasks, displayYear, di
         });
 
         // tasks (간트 바) - 해당 월과 겹치는 태스크만 표시
-        var taskStartDate = scwin.parseValidDate(task.startDate);
-        var taskEndDate = scwin.parseValidDate(task.endDate);
+        let taskStartDate = scwin.parseValidDate(task.startDate);
+        let taskEndDate = scwin.parseValidDate(task.endDate);
 
         // 유효하지 않은 날짜인 경우 해당 태스크는 그래프에 표시하지 않음 (processes에는 이미 추가됨)
         if (!taskStartDate || !taskEndDate) {
             return; // forEach의 현재 반복만 건너뛰기
         }
 
-        var shouldShowTask = true;
-        var actualStartDate = taskStartDate;
-        var actualEndDate = taskEndDate;
+        let shouldShowTask = true;
+        let actualStartDate = taskStartDate;
+        let actualEndDate = taskEndDate;
 
         if (monthStart && monthEnd) {
             // 태스크가 해당 월과 겹치는지 확인
@@ -2752,13 +2752,13 @@ scwin.createGanttJSONFromDataList_backup = function (ganttTasks, displayYear, di
 
         if (shouldShowTask) {
             // 1칸씩 밀리는 문제 해결: 시작일만 1일 앞당기고 종료일은 원래대로 유지
-            var adjustedStartDate = new Date(actualStartDate.getTime() - 24 * 60 * 60 * 1000);
-            var adjustedEndDate = actualEndDate;  // 종료일은 원래대로 유지
+            let adjustedStartDate = new Date(actualStartDate.getTime() - 24 * 60 * 60 * 1000);
+            let adjustedEndDate = actualEndDate;  // 종료일은 원래대로 유지
             
             // hover 툴팁에 표시할 원래 날짜 정보
-            var originalStartStr = scwin.convertToMMDDYYYY(actualStartDate);
-            var originalEndStr = scwin.convertToMMDDYYYY(actualEndDate);
-            var tooltipText = task.taskTitle + "<br/>기간: " + originalStartStr + " ~ " + originalEndStr;
+            let originalStartStr = scwin.convertToMMDDYYYY(actualStartDate);
+            let originalEndStr = scwin.convertToMMDDYYYY(actualEndDate);
+            let tooltipText = task.taskTitle + "<br/>기간: " + originalStartStr + " ~ " + originalEndStr;
             
             tasks.push({
                 id: task.taskId,
@@ -2799,26 +2799,26 @@ scwin.createGanttJSONFromDataList_backup = function (ganttTasks, displayYear, di
  * processes가 있지만 tasks가 없을 때 더미 tasks 생성
  */
 scwin.createDummyTasksForProcesses = function (processes, displayYear, displayMonth) {
-    var currentDate = new Date();
-    var year = displayYear || currentDate.getFullYear();
-    var month = displayMonth || (currentDate.getMonth() + 1);
+    let currentDate = new Date();
+    let year = displayYear || currentDate.getFullYear();
+    let month = displayMonth || (currentDate.getMonth() + 1);
 
 
-    var dummyTasks = [];
+    let dummyTasks = [];
 
     // 날짜 매핑 테스트를 위한 여러 개의 더미 태스크 생성
     if (processes.length > 0) {
-        var process = processes[0];
+        let process = processes[0];
         
         // 1일짜리 태스크들로 각 날짜별 매핑 테스트
-        var testDates = [1, 5, 10, 15, 20, 25];
+        let testDates = [1, 5, 10, 15, 20, 25];
         
-        for (var i = 0; i < testDates.length && i < 3; i++) { // 최대 3개만
-            var testDay = testDates[i];
+        for (let i = 0; i < testDates.length && i < 3; i++) { // 최대 3개만
+            let testDay = testDates[i];
             // 1칸씩 밀리는 문제 해결: 날짜를 1일 앞당겨서 생성
-            var testDate = new Date(year, month - 1, testDay - 1);
+            let testDate = new Date(year, month - 1, testDay - 1);
             // 사용자가 의도한 원래 날짜
-            var intentedDate = new Date(year, month - 1, testDay);
+            let intentedDate = new Date(year, month - 1, testDay);
             
             dummyTasks.push({
                 id: "test_mapping_" + testDay,
@@ -2853,9 +2853,9 @@ scwin.createDummyTasksForProcesses = function (processes, displayYear, displayMo
  * 더미 간트차트 데이터 생성 (데이터 없을 때 차트 구조 표시용)
  */
 scwin.createDummyGanttData = function (displayYear, displayMonth) {
-    var currentDate = new Date();
-    var year = displayYear || currentDate.getFullYear();
-    var month = displayMonth || (currentDate.getMonth() + 1);
+    let currentDate = new Date();
+    let year = displayYear || currentDate.getFullYear();
+    let month = displayMonth || (currentDate.getMonth() + 1);
 
 
     return {
@@ -2894,7 +2894,7 @@ scwin.createDummyGanttData = function (displayYear, displayMonth) {
  * 인덱스별 다른 색상 반환 (각 태스크마다 다른 색상)
  */
 scwin.getTaskColorByIndex = function (index) {
-    var colors = [
+    let colors = [
         "#FF6B6B",  // 빨간색
         "#4ECDC4",  // 청록색  
         "#45B7D1",  // 파란색
@@ -2934,7 +2934,7 @@ scwin.getTaskColorByPriority = function (priority) {
  * 보드별 색상 반환 (대안 색상 스키마)
  */
 scwin.getTaskColorByBoard = function (boardId) {
-    var colors = [
+    let colors = [
         "#FF6B6B",  // 빨간색
         "#4ECDC4",  // 청록색  
         "#45B7D1",  // 파란색
@@ -2946,7 +2946,7 @@ scwin.getTaskColorByBoard = function (boardId) {
     ];
 
     // 보드 ID를 기반으로 색상 인덱스 계산
-    var colorIndex = parseInt(boardId) % colors.length;
+    let colorIndex = parseInt(boardId) % colors.length;
     return colors[colorIndex];
 };
 
@@ -2962,12 +2962,12 @@ scwin.parseValidDate = function (dateInput) {
     }
 
     try {
-        var dateString = dateInput.toString().trim();
+        let dateString = dateInput.toString().trim();
         if (dateString === "" || dateString === "null" || dateString === "undefined") {
             return null;
         }
 
-        var parsedDate = new Date(dateString);
+        let parsedDate = new Date(dateString);
 
         // 유효한 날짜인지 확인
         if (isNaN(parsedDate.getTime())) {
@@ -2992,24 +2992,24 @@ scwin.convertToMMDDYYYY = function (dateInput) {
             if (isNaN(dateInput.getTime())) {
                 return "";
             }
-            var month = (dateInput.getMonth() + 1).toString().padStart(2, '0');
-            var day = dateInput.getDate().toString().padStart(2, '0');
-            var year = dateInput.getFullYear();
+            let month = (dateInput.getMonth() + 1).toString().padStart(2, '0');
+            let day = dateInput.getDate().toString().padStart(2, '0');
+            let year = dateInput.getFullYear();
             return month + "/" + day + "/" + year;
         }
 
         // 문자열인 경우
-        var dateString = dateInput.toString();
+        let dateString = dateInput.toString();
         if (dateString.trim() === "") {
             return "";
         }
 
         // yyyy-mm-dd -> mm/dd/yyyy 변환
-        var parts = dateString.split("-");
+        let parts = dateString.split("-");
         if (parts.length === 3) {
-            var year = parts[0];
-            var month = parts[1];
-            var day = parts[2];
+            let year = parts[0];
+            let month = parts[1];
+            let day = parts[2];
             return month + "/" + day + "/" + year;
         }
         return dateString;
@@ -3022,9 +3022,9 @@ scwin.convertToMMDDYYYY = function (dateInput) {
  * Date 객체를 mm/dd/yyyy 형식으로 변환
  */
 scwin.formatToMMDDYYYY = function (date) {
-    var month = (date.getMonth() + 1).toString().padStart(2, '0');
-    var day = date.getDate().toString().padStart(2, '0');
-    var year = date.getFullYear();
+    let month = (date.getMonth() + 1).toString().padStart(2, '0');
+    let day = date.getDate().toString().padStart(2, '0');
+    let year = date.getFullYear();
     return month + "/" + day + "/" + year;
 };
 
@@ -3033,7 +3033,7 @@ scwin.formatToMMDDYYYY = function (date) {
  */
 scwin.initGanttNavigation = function () {
     // 현재 날짜로 동적 초기화
-    var currentDate = new Date();
+    let currentDate = new Date();
     scwin.currentGanttYear = currentDate.getFullYear();
     scwin.currentGanttMonth = currentDate.getMonth() + 1;
 
@@ -3046,13 +3046,13 @@ scwin.initGanttNavigation = function () {
  * 간트차트 월 레이블 업데이트
  */
 scwin.updateGanttMonthLabel = function () {
-    var monthNames = ["1월", "2월", "3월", "4월", "5월", "6월",
+    let monthNames = ["1월", "2월", "3월", "4월", "5월", "6월",
         "7월", "8월", "9월", "10월", "11월", "12월"];
 
-    var labelText = scwin.currentGanttYear + "년 " + monthNames[scwin.currentGanttMonth - 1];
+    let labelText = scwin.currentGanttYear + "년 " + monthNames[scwin.currentGanttMonth - 1];
 
     // 레이블 컴포넌트 업데이트
-    var monthLabel = $p.getComponentById("lbl_gantt_current_month");
+    let monthLabel = $p.getComponentById("lbl_gantt_current_month");
     if (monthLabel) {
         monthLabel.setValue(labelText);
     }
@@ -3111,16 +3111,16 @@ scwin.refreshGanttChart = function () {
     // 전체 taskList를 현재 월 우선으로 정렬 (현재 월 태스크 위쪽, 나머지 아래쪽)
     
     // 해당 월의 시작일과 종료일 계산
-    var monthStart = new Date(scwin.currentGanttYear, scwin.currentGanttMonth - 1, 1);
-    var monthEnd = new Date(scwin.currentGanttYear, scwin.currentGanttMonth, 0);
+    let monthStart = new Date(scwin.currentGanttYear, scwin.currentGanttMonth - 1, 1);
+    let monthEnd = new Date(scwin.currentGanttYear, scwin.currentGanttMonth, 0);
     
     // 1단계: 모든 태스크를 날짜 상태에 따라 분류
-    var tasksWithDateStatus = scwin.taskList.map(function(task) {
-        var hasValidDates = task.startDate && task.endDate && 
+    let tasksWithDateStatus = scwin.taskList.map(function(task) {
+        let hasValidDates = task.startDate && task.endDate && 
                            task.startDate.trim() !== "" && task.endDate.trim() !== "";
         
-        var startDate = null;
-        var endDate = null;
+        let startDate = null;
+        let endDate = null;
         
         if (hasValidDates) {
             startDate = scwin.parseValidDate(task.startDate);
@@ -3138,19 +3138,19 @@ scwin.refreshGanttChart = function () {
     
     
     // 2단계: 현재 월 태스크, 다른 월 태스크, 날짜 없는 태스크로 분리
-    var currentMonthTasks = [];
-    var otherMonthTasks = [];
-    var tasksWithoutDates = [];
+    let currentMonthTasks = [];
+    let otherMonthTasks = [];
+    let tasksWithoutDates = [];
     
     tasksWithDateStatus.forEach(function(item) {
-        var task = item.task;
+        let task = item.task;
         
         if (!item.hasValidDates) {
             // 날짜가 없는 태스크는 맨 아래로
             tasksWithoutDates.push(task);
         } else {
             // 현재 월과 겹치는지 확인
-            var isOverlapping = item.startDate <= monthEnd && item.endDate >= monthStart;
+            let isOverlapping = item.startDate <= monthEnd && item.endDate >= monthStart;
             
             if (isOverlapping) {
                 currentMonthTasks.push(task);
@@ -3162,29 +3162,29 @@ scwin.refreshGanttChart = function () {
     
     // 3단계: 각 그룹을 시작날짜 순으로 정렬
     currentMonthTasks.sort(function(a, b) {
-        var dateA = scwin.parseValidDate(a.startDate);
-        var dateB = scwin.parseValidDate(b.startDate);
+        let dateA = scwin.parseValidDate(a.startDate);
+        let dateB = scwin.parseValidDate(b.startDate);
         return dateA.getTime() - dateB.getTime();
     });
     
     otherMonthTasks.sort(function(a, b) {
-        var dateA = scwin.parseValidDate(a.startDate);
-        var dateB = scwin.parseValidDate(b.startDate);
+        let dateA = scwin.parseValidDate(a.startDate);
+        let dateB = scwin.parseValidDate(b.startDate);
         return dateA.getTime() - dateB.getTime();
     });
     
     // 4단계: 우선순위에 따라 배치 (현재 월 → 다른 월 → 날짜 없는 태스크)
-    var sortedTaskList = currentMonthTasks.concat(otherMonthTasks).concat(tasksWithoutDates);
+    let sortedTaskList = currentMonthTasks.concat(otherMonthTasks).concat(tasksWithoutDates);
     
 
     // 간트차트 데이터 리스트를 정렬된 태스크로 구성 (모든 태스크를 row로 표시)
     dlt_gantt_schedule.removeAll();
 
-    for (var i = 0; i < sortedTaskList.length; i++) {
-        var task = sortedTaskList[i];
+    for (let i = 0; i < sortedTaskList.length; i++) {
+        let task = sortedTaskList[i];
 
         // 모든 태스크를 간트차트에 추가 (날짜 없는 태스크도 포함하여 정렬 순서 유지)
-        var hasValidDates = task.startDate && task.endDate && 
+        let hasValidDates = task.startDate && task.endDate && 
                            task.startDate.trim() !== "" && task.endDate.trim() !== "";
 
         dlt_gantt_schedule.insertRow(i);
@@ -3200,7 +3200,7 @@ scwin.refreshGanttChart = function () {
 
 
     // 해당 월의 카테고리 업데이트 (그래프는 해당 월 부분만 표시)
-    var categoryData = scwin.createMonthlyCategories(scwin.currentGanttYear, scwin.currentGanttMonth);
+    let categoryData = scwin.createMonthlyCategories(scwin.currentGanttYear, scwin.currentGanttMonth);
     if (categoryData) {
         gantt_chart_unique.setCategories(categoryData);
     }
@@ -3218,11 +3218,11 @@ scwin.filterTasksByMonth = function (tasks, year, month) {
             return false;
         }
 
-        var taskStartDate = new Date(task.startDate);
-        var taskEndDate = new Date(task.endDate);
+        let taskStartDate = new Date(task.startDate);
+        let taskEndDate = new Date(task.endDate);
 
-        var monthStart = new Date(year, month - 1, 1);
-        var monthEnd = new Date(year, month, 0);
+        let monthStart = new Date(year, month - 1, 1);
+        let monthEnd = new Date(year, month, 0);
 
         // 태스크가 해당 월과 겹치는지 확인
         return (taskStartDate <= monthEnd && taskEndDate >= monthStart);
@@ -3236,7 +3236,7 @@ scwin.filterTasksByMonth = function (tasks, year, month) {
 scwin.syncGanttWithKanban = function () {
 
     // 간트차트 뷰가 현재 활성화되어 있는지 확인
-    var ganttView = $p.getComponentById("grp_gantt_view");
+    let ganttView = $p.getComponentById("grp_gantt_view");
     if (!ganttView) {
         return;
     }
@@ -3244,7 +3244,7 @@ scwin.syncGanttWithKanban = function () {
     // 간트차트 뷰가 보이는 상태인지 안전하게 확인
     try {
         // WebSquare 컴포넌트에서 가시성을 확인하는 안전한 방법들
-        var isGanttVisible = false;
+        let isGanttVisible = false;
 
         // 방법 1: isVisible() 메소드 시도
         if (typeof ganttView.isVisible === 'function') {
@@ -3252,7 +3252,7 @@ scwin.syncGanttWithKanban = function () {
         }
         // 방법 2: DOM 스타일 확인
         else if (ganttView.getElement && ganttView.getElement()) {
-            var element = ganttView.getElement();
+            let element = ganttView.getElement();
             isGanttVisible = element.style.display !== 'none';
         }
         // 방법 3: 간단히 항상 동기화 (안전한 fallback)
@@ -3284,7 +3284,7 @@ scwin.loadGanttData = function () {
     dlt_gantt_schedule.removeAll();
 
     // 칸반의 태스크 데이터 확인 (여러 소스에서)
-    var taskData = null;
+    let taskData = null;
     
     // 1. scwin.taskList에서 확인
     if (scwin.taskList && scwin.taskList.length > 0) {
@@ -3293,7 +3293,7 @@ scwin.loadGanttData = function () {
     // 2. dlt_scwin.taskList DataList에서 확인  
     else {
         try {
-            var taskListComponent = $p.getComponentById("dlt_scwin.taskList");
+            let taskListComponent = $p.getComponentById("dlt_scwin.taskList");
             if (taskListComponent) {
                 taskData = taskListComponent.getAllJSON();
                 // scwin.taskList에도 동기화
@@ -3311,19 +3311,19 @@ scwin.loadGanttData = function () {
     // 전체 태스크를 현재 월 우선으로 정렬 (현재 월 태스크 위쪽, 나머지 아래쪽)
     
     // 현재 간트차트 월 정보
-    var currentYear = scwin.currentGanttYear || (new Date()).getFullYear();
-    var currentMonth = scwin.currentGanttMonth || ((new Date()).getMonth() + 1);
+    let currentYear = scwin.currentGanttYear || (new Date()).getFullYear();
+    let currentMonth = scwin.currentGanttMonth || ((new Date()).getMonth() + 1);
     
     // 해당 월의 시작일과 종료일 계산
-    var monthStart = new Date(currentYear, currentMonth - 1, 1);
-    var monthEnd = new Date(currentYear, currentMonth, 0);
+    let monthStart = new Date(currentYear, currentMonth - 1, 1);
+    let monthEnd = new Date(currentYear, currentMonth, 0);
     
     // 1단계: 모든 태스크를 유효/무효로 구분 (제외하지 않음)
-    var tasksWithDateStatus = taskData.map(function(task) {
+    let tasksWithDateStatus = taskData.map(function(task) {
         // 날짜 유효성 검사
-        var hasValidDates = false;
-        var startDate = null;
-        var endDate = null;
+        let hasValidDates = false;
+        let startDate = null;
+        let endDate = null;
         
         if (task.startDate && task.endDate && 
             task.startDate.trim() !== "" && task.endDate.trim() !== "") {
@@ -3345,19 +3345,19 @@ scwin.loadGanttData = function () {
     
     
     // 2단계: 현재 월 태스크, 다른 월 태스크, 날짜 없는 태스크로 분리
-    var currentMonthTasks = [];
-    var otherMonthTasks = [];
-    var tasksWithoutDates = [];
+    let currentMonthTasks = [];
+    let otherMonthTasks = [];
+    let tasksWithoutDates = [];
     
     tasksWithDateStatus.forEach(function(item) {
-        var task = item.task;
+        let task = item.task;
         
         if (!item.hasValidDates) {
             // 날짜가 없는 태스크는 맨 아래로
             tasksWithoutDates.push(task);
         } else {
             // 현재 월과 겹치는지 확인
-            var isOverlapping = item.startDate <= monthEnd && item.endDate >= monthStart;
+            let isOverlapping = item.startDate <= monthEnd && item.endDate >= monthStart;
             
             if (isOverlapping) {
                 currentMonthTasks.push(task);
@@ -3369,14 +3369,14 @@ scwin.loadGanttData = function () {
     
     // 3단계: 각 그룹을 시작날짜 순으로 정렬
     currentMonthTasks.sort(function(a, b) {
-        var dateA = scwin.parseValidDate(a.startDate);
-        var dateB = scwin.parseValidDate(b.startDate);
+        let dateA = scwin.parseValidDate(a.startDate);
+        let dateB = scwin.parseValidDate(b.startDate);
         return dateA.getTime() - dateB.getTime();
     });
     
     otherMonthTasks.sort(function(a, b) {
-        var dateA = scwin.parseValidDate(a.startDate);
-        var dateB = scwin.parseValidDate(b.startDate);
+        let dateA = scwin.parseValidDate(a.startDate);
+        let dateB = scwin.parseValidDate(b.startDate);
         return dateA.getTime() - dateB.getTime();
     });
     
@@ -3384,15 +3384,15 @@ scwin.loadGanttData = function () {
     taskData = currentMonthTasks.concat(otherMonthTasks).concat(tasksWithoutDates);
     
 
-    var validTaskIndex = 0;
-    for (var i = 0; i < taskData.length; i++) {
-        var task = taskData[i];
+    let validTaskIndex = 0;
+    for (let i = 0; i < taskData.length; i++) {
+        let task = taskData[i];
 
         // 간트차트 데이터 생성 (날짜 없는 태스크도 포함하여 정렬 순서 유지)
-        var hasValidDates = task.startDate && task.endDate && 
+        let hasValidDates = task.startDate && task.endDate && 
                            task.startDate.trim() !== "" && task.endDate.trim() !== "";
         
-        var ganttData = {
+        let ganttData = {
             taskId: task.taskId,
             taskTitle: task.taskTitle,
             startDate: hasValidDates ? task.startDate : "", // 빈값은 빈 문자열로 설정
@@ -3422,7 +3422,7 @@ scwin.loadGanttData = function () {
     // 간트차트에 태스크 데이터 표시
     if (validTaskIndex > 0) {
         // 현재 월로 초기화 (월별 네비게이션 기본 설정)
-        var currentDate = new Date();
+        let currentDate = new Date();
         scwin.currentGanttYear = currentDate.getFullYear();
         scwin.currentGanttMonth = currentDate.getMonth() + 1;
         scwin.updateGanttMonthLabel();
@@ -3433,7 +3433,7 @@ scwin.loadGanttData = function () {
         // 유효한 태스크가 없어도 계속 진행하여 더미 데이터 생성
         scwin.initGanttNavigation();
 
-        var currentDate = new Date();
+        let currentDate = new Date();
         scwin.currentGanttYear = currentDate.getFullYear();
         scwin.currentGanttMonth = currentDate.getMonth() + 1;
         scwin.updateGanttMonthLabel();
@@ -3447,9 +3447,9 @@ scwin.loadGanttData = function () {
  * 날짜 포맷팅 (mm/dd/yyyy)
  */
 scwin.formatDate = function (date) {
-    var month = (date.getMonth() + 1).toString().padStart(2, '0');
-    var day = date.getDate().toString().padStart(2, '0');
-    var year = date.getFullYear();
+    let month = (date.getMonth() + 1).toString().padStart(2, '0');
+    let day = date.getDate().toString().padStart(2, '0');
+    let year = date.getFullYear();
     return month + "/" + day + "/" + year;
 };
 
@@ -3457,13 +3457,13 @@ scwin.formatDate = function (date) {
 scwin.github_onclick = function (e) {
 
     // 현재 프로젝트 데이터 확인
-    var projectData = scwin.currentProjectData;
+    let projectData = scwin.currentProjectData;
     if (!projectData) {
         return;
     }
 
     // 현재 로그인된 사용자 정보 가져오기
-    var currentUserId = null;
+    let currentUserId = null;
     try {
         // 1. 프로젝트 데이터에서 사용자 ID 가져오기 (우선순위 1)
         if (projectData && projectData.userId) {
@@ -3501,7 +3501,7 @@ scwin.github_onclick = function (e) {
 
 
     // 프로젝트 정보를 팝업에 전달
-    var jsnPopupData = {
+    let jsnPopupData = {
         type: "json",
         name: "project_param",
         data: {
@@ -3512,7 +3512,7 @@ scwin.github_onclick = function (e) {
         }
     };
 
-    var options = {
+    let options = {
         id: "github_manager_popup",
         type: "wframePopup",
         width: "1000",
@@ -3531,22 +3531,22 @@ scwin.github_onclick = function (e) {
 
 // GitHub 팝업 닫기 액션
 scwin.github_popup_closeAction = function (argRuntimeID, argJsnInfo) {
-    var popObj = $p.getPopupWindow(argRuntimeID);
+    let popObj = $p.getPopupWindow(argRuntimeID);
     // GitHub 관련 데이터 새로고침 로직 추가 가능
     return true;
 };
 
 // 팝업 닫기 액션
 scwin.popup_closeAction = function (argRuntimeID, argJsnInfo) {
-    var popObj = $p.getPopupWindow(argRuntimeID);
+    let popObj = $p.getPopupWindow(argRuntimeID);
     return true;
 };
 
 scwin.add_task_submitdone = function (e) {
 
     // WebSquare 응답 구조에서 태스크 데이터 추출
-    var responseData = e.responseJSON;
-    var taskData = responseData.elData;
+    let responseData = e.responseJSON;
+    let taskData = responseData.elData;
 
 
     if (!taskData || !taskData.taskId) {
@@ -3554,7 +3554,7 @@ scwin.add_task_submitdone = function (e) {
     }
 
     // 실제 DB에서 받은 데이터로 카드 데이터 구성
-    var cardData = {
+    let cardData = {
         taskId: taskData.taskId,
         taskTitle: taskData.taskTitle,
         priority: taskData.priority || "MEDIUM",
@@ -3586,8 +3586,8 @@ scwin.createKanbanCardInBoard = function (cardData) {
     }
 
     // 해당 보드의 카드 컨테이너 찾기
-    var cardContainerId = "card_container_" + cardData.boardId;
-    var targetContainer = eval(cardContainerId);
+    let cardContainerId = "card_container_" + cardData.boardId;
+    let targetContainer = eval(cardContainerId);
 
     if (!targetContainer) {
         return;
@@ -3595,10 +3595,10 @@ scwin.createKanbanCardInBoard = function (cardData) {
 
 
     // 고유한 카드 ID 생성
-    var cardId = "card_" + cardData.taskId;
+    let cardId = "card_" + cardData.taskId;
 
     // 중복 생성 방지 - 이미 존재하는 카드는 생성하지 않음
-    var existingCard = $p.getComponentById(cardId);
+    let existingCard = $p.getComponentById(cardId);
     if (existingCard) {
         return existingCard;
     }
@@ -3606,7 +3606,7 @@ scwin.createKanbanCardInBoard = function (cardData) {
     // 카드 데이터 디버깅
 
     // 우선순위 값 정규화 (대소문자 통일 및 기본값 설정)
-    var normalizedPriority = "";
+    let normalizedPriority = "";
     if (cardData.priority && typeof cardData.priority === "string") {
         normalizedPriority = cardData.priority.toUpperCase();
     } else {
@@ -3614,8 +3614,8 @@ scwin.createKanbanCardInBoard = function (cardData) {
     }
 
     // 우선순위에 따른 CSS 클래스 결정
-    var priorityClass = "";
-    var priorityText = "";
+    let priorityClass = "";
+    let priorityText = "";
     if (normalizedPriority === "HIGH") {
         priorityClass = "priority-high";
         priorityText = "높음";
@@ -3631,7 +3631,7 @@ scwin.createKanbanCardInBoard = function (cardData) {
     }
 
     // 1. 메인 카드 그룹 생성 (드래그 가능하도록 설정)
-    var cardGroup = null;
+    let cardGroup = null;
     try {
         cardGroup = $p.dynamicCreate(
             cardId,
@@ -3657,7 +3657,7 @@ scwin.createKanbanCardInBoard = function (cardData) {
     scwin.setupDragEventsAsync(cardGroup, cardData, cardId);
 
     // 2. 카드 헤더 그룹 생성
-    var headerGroup = null;
+    let headerGroup = null;
     try {
         headerGroup = $p.dynamicCreate(
             cardId + "_header",
@@ -3679,7 +3679,7 @@ scwin.createKanbanCardInBoard = function (cardData) {
     }
 
     // 3. 작업 제목 생성
-    var titleSpan = null;
+    let titleSpan = null;
     try {
         titleSpan = $p.dynamicCreate(
             cardId + "_title",
@@ -3697,7 +3697,7 @@ scwin.createKanbanCardInBoard = function (cardData) {
     }
 
     // 4. 우선순위 배지 생성
-    var prioritySpan = null;
+    let prioritySpan = null;
     try {
         prioritySpan = $p.dynamicCreate(
             cardId + "_priority",
@@ -3715,7 +3715,7 @@ scwin.createKanbanCardInBoard = function (cardData) {
 
     // 5. 설명 생성 (있는 경우)
     if (cardData.taskDescription && cardData.taskDescription.trim()) {
-        var descSpan = $p.dynamicCreate(
+        let descSpan = $p.dynamicCreate(
             cardId + "_desc",
             "output",
             {
@@ -3730,7 +3730,7 @@ scwin.createKanbanCardInBoard = function (cardData) {
     }
 
     // 6. 메타데이터 그룹 생성
-    var metaGroup = $p.dynamicCreate(
+    let metaGroup = $p.dynamicCreate(
         cardId + "_meta",
         "group",
         {
@@ -3742,7 +3742,7 @@ scwin.createKanbanCardInBoard = function (cardData) {
 
     // 7. 담당자 정보 (있는 경우)
     if (cardData.projectUserId) {
-        var assigneeSpan = $p.dynamicCreate(
+        let assigneeSpan = $p.dynamicCreate(
             cardId + "_assignee",
             "output",
             {
@@ -3752,14 +3752,14 @@ scwin.createKanbanCardInBoard = function (cardData) {
         );
         if (assigneeSpan) {
             // 서버에서 담당자 우선으로 보내준 userName 사용
-            var userName = cardData.userName || scwin.getUserNameByUserId(cardData.projectUserId, cardData);
+            let userName = cardData.userName || scwin.getUserNameByUserId(cardData.projectUserId, cardData);
             assigneeSpan.setValue("담당자: " + userName);
         }
     }
 
     // 8. 마감일 (있는 경우)
     if (cardData.endDate) {
-        var dueDateSpan = $p.dynamicCreate(
+        let dueDateSpan = $p.dynamicCreate(
             cardId + "_due_date",
             "output",
             {
@@ -3784,7 +3784,7 @@ scwin.createKanbanCardInBoard = function (cardData) {
 scwin.createKanbanCard = function (cardData, columnType) {
 
     // 컬럼별 타겟 컨테이너 ID 매핑 (동적 생성된 컨테이너 사용)
-    var containerMap = {
+    let containerMap = {
         "todo": "card_container_BOARD_TODO_001",
         "inprogress": "card_container_BOARD_PROGRESS_001",
         "done": "card_container_BOARD_DONE_001"
@@ -3795,20 +3795,20 @@ scwin.createKanbanCard = function (cardData, columnType) {
         containerMap[columnType] = "card_container_" + cardData.boardId;
     }
 
-    var containerId = containerMap[columnType];
+    let containerId = containerMap[columnType];
     if (!containerId) {
         return;
     }
 
     // 타겟 컨테이너 객체 가져오기
-    var targetContainer = eval(containerId);
+    let targetContainer = eval(containerId);
     if (!targetContainer) {
         return;
     }
 
     // 우선순위에 따른 CSS 클래스 결정
-    var priorityClass = "priority-medium"; // 기본값
-    var priorityText = "보통";
+    let priorityClass = "priority-medium"; // 기본값
+    let priorityText = "보통";
     if (cardData.priority === "HIGH") {
         priorityClass = "priority-high";
         priorityText = "높음";
@@ -3818,10 +3818,10 @@ scwin.createKanbanCard = function (cardData, columnType) {
     }
 
     // 고유한 카드 ID 생성
-    var cardId = "card_" + (cardData.taskId || new Date().getTime());
+    let cardId = "card_" + (cardData.taskId || new Date().getTime());
 
     // 1. 메인 카드 그룹 생성
-    var cardGroup = $p.dynamicCreate(
+    let cardGroup = $p.dynamicCreate(
         cardId,
         "group",
         {
@@ -3835,7 +3835,7 @@ scwin.createKanbanCard = function (cardData, columnType) {
     );
 
     // 2. 카드 헤더 그룹 생성
-    var headerGroup = $p.dynamicCreate(
+    let headerGroup = $p.dynamicCreate(
         cardId + "_header",
         "group",
         {
@@ -3845,7 +3845,7 @@ scwin.createKanbanCard = function (cardData, columnType) {
     );
 
     // 3. 작업 제목 생성
-    var titleSpan = $p.dynamicCreate(
+    let titleSpan = $p.dynamicCreate(
         cardId + "_title",
         "output",
         {
@@ -3858,7 +3858,7 @@ scwin.createKanbanCard = function (cardData, columnType) {
     }
 
     // 4. 우선순위 배지 생성
-    var prioritySpan = $p.dynamicCreate(
+    let prioritySpan = $p.dynamicCreate(
         cardId + "_priority",
         "output",
         {
@@ -3872,7 +3872,7 @@ scwin.createKanbanCard = function (cardData, columnType) {
 
     // 5. 설명 생성 (있는 경우)
     if (cardData.taskDescription) {
-        var descSpan = $p.dynamicCreate(
+        let descSpan = $p.dynamicCreate(
             cardId + "_desc",
             "output",
             {
@@ -3886,7 +3886,7 @@ scwin.createKanbanCard = function (cardData, columnType) {
     }
 
     // 6. 메타데이터 그룹 생성
-    var metaGroup = $p.dynamicCreate(
+    let metaGroup = $p.dynamicCreate(
         cardId + "_meta",
         "group",
         {
@@ -3899,7 +3899,7 @@ scwin.createKanbanCard = function (cardData, columnType) {
     }
 
     // 7. 담당자 정보 그룹 생성
-    var assigneeGroup = $p.dynamicCreate(
+    let assigneeGroup = $p.dynamicCreate(
         cardId + "_assignee",
         "group",
         {
@@ -3912,7 +3912,7 @@ scwin.createKanbanCard = function (cardData, columnType) {
     }
 
     // 8. 담당자 아바타 생성
-    var avatarSpan = $p.dynamicCreate(
+    let avatarSpan = $p.dynamicCreate(
         cardId + "_avatar",
         "output",
         {
@@ -3922,7 +3922,7 @@ scwin.createKanbanCard = function (cardData, columnType) {
     );
     if (avatarSpan) {
         // 서버에서 담당자 우선으로 보내준 userName 사용
-        var userName = cardData.userName || scwin.getUserNameByUserId(cardData.projectUserId, cardData);
+        let userName = cardData.userName || scwin.getUserNameByUserId(cardData.projectUserId, cardData);
         if (userName && typeof userName === 'string' && userName.length > 0) {
             avatarSpan.setValue(userName.charAt(0)); // 사용자 이름의 첫 글자
         } else {
@@ -3932,7 +3932,7 @@ scwin.createKanbanCard = function (cardData, columnType) {
     }
 
     // 9. 담당자 이름 생성
-    var assigneeNameSpan = $p.dynamicCreate(
+    let assigneeNameSpan = $p.dynamicCreate(
         cardId + "_assignee_name",
         "output",
         {},
@@ -3940,7 +3940,7 @@ scwin.createKanbanCard = function (cardData, columnType) {
     );
     if (assigneeNameSpan) {
         // 서버에서 담당자 우선으로 보내준 userName 사용
-        var userName = cardData.userName || scwin.getUserNameByUserId(cardData.projectUserId, cardData);
+        let userName = cardData.userName || scwin.getUserNameByUserId(cardData.projectUserId, cardData);
         if (userName && typeof userName === 'string') {
             assigneeNameSpan.setValue(userName);
         } else {
@@ -3951,7 +3951,7 @@ scwin.createKanbanCard = function (cardData, columnType) {
 
     // 10. 마감일 생성 (있는 경우)
     if (cardData.endDate) {
-        var dueDateSpan = $p.dynamicCreate(
+        let dueDateSpan = $p.dynamicCreate(
             cardId + "_due_date",
             "output",
             {
@@ -3970,8 +3970,8 @@ scwin.createKanbanCard = function (cardData, columnType) {
 scwin.load_Board_submitdone = function (e) {
 
     // 응답에서 보드 데이터 추출
-    var responseData = e.responseJSON;
-    var boardList = responseData.boardVoList;
+    let responseData = e.responseJSON;
+    let boardList = responseData.boardVoList;
     let userHeader = responseData.userHeader;
     dm_userInfo.set("userId", userHeader.userId);
     dm_userInfo.set("userName", userHeader.userName);
@@ -3993,7 +3993,7 @@ scwin.load_Board_submitdone = function (e) {
  * 여러 소스에서 프로젝트 ID를 조회하여 반환
  */
 scwin.getProjectId = function () {
-    var projectId = null;
+    let projectId = null;
     
     // 1. 현재 프로젝트 데이터에서 가져오기
     if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
@@ -4011,7 +4011,7 @@ scwin.getProjectId = function () {
     // 3. URL 파라미터에서 가져오기
     if (!projectId) {
         try {
-            var urlParams = new URLSearchParams(window.location.search);
+            let urlParams = new URLSearchParams(window.location.search);
             projectId = urlParams.get('projectId');
         } catch (e) {
         }
@@ -4028,7 +4028,7 @@ scwin.refreshKanbanBoard = function () {
     
     try {
         // 1. 보드 목록 재로드
-        var projectId = scwin.getProjectId();
+        let projectId = scwin.getProjectId();
         if (!projectId) {
             return;
         }
@@ -4059,7 +4059,7 @@ scwin.createDynamicKanbanColumns = function (boardList) {
         return;
     }
 
-    var kanbanContainer = grp_kanban_board;
+    let kanbanContainer = grp_kanban_board;
     if (!kanbanContainer) {
         return;
     }
@@ -4074,7 +4074,7 @@ scwin.createDynamicKanbanColumns = function (boardList) {
     scwin.clearExistingKanbanColumns();
 
     // 1. 모든 컬럼을 먼저 생성
-    var validBoardIds = [];
+    let validBoardIds = [];
     for (let i = 0; i < boardList.length; i++) {
         const board = boardList[i];
 
@@ -4111,10 +4111,10 @@ scwin.createDynamicKanbanColumns = function (boardList) {
 scwin.load_Tasks_submitdone = function (e) {
 
     // 1. 응답에서 직접 태스크 목록 추출
-    var responseData = e.responseJSON;
+    let responseData = e.responseJSON;
 
     // 다중 보드 데이터 누적을 위해 기존 데이터에 추가
-    var newTasks = responseData.elData.taskVoList || [];
+    let newTasks = responseData.elData.taskVoList || [];
     if (!scwin.taskList) {
         scwin.taskList = [];
     }
@@ -4122,7 +4122,7 @@ scwin.load_Tasks_submitdone = function (e) {
 
     // 칸반 보드용 태스크 처리
     if (scwin.taskList && scwin.taskList.length > 0) {
-        var boardId = scwin.taskList[0].boardId; // 첫 번째 태스크의 boardId를 사용
+        let boardId = scwin.taskList[0].boardId; // 첫 번째 태스크의 boardId를 사용
 
         // 전체 태스크 데이터를 로컬에 저장 (필터링용)
         scwin.storeAllTasksData(boardId, scwin.taskList);
@@ -4133,9 +4133,9 @@ scwin.load_Tasks_submitdone = function (e) {
     } else {
 
         // boardId 추출 (검색 조건에서)
-        var searchCondition = $p.getComponentById("dm_search_task");
+        let searchCondition = $p.getComponentById("dm_search_task");
         if (searchCondition) {
-            var boardId = searchCondition.get("boardId");
+            let boardId = searchCondition.get("boardId");
             if (boardId) {
                 // 빈 데이터 저장 및 정렬/필터링 적용
                 scwin.storeAllTasksData(boardId, []);
@@ -4153,20 +4153,20 @@ scwin.load_Tasks_submitdone = function (e) {
  */
 scwin.clearExistingKanbanColumns = function () {
 
-    var kanbanContainer = grp_kanban_board;
+    let kanbanContainer = grp_kanban_board;
     if (!kanbanContainer) {
         return;
     }
 
     // 기존 보드 데이터가 있으면 해당 컬럼들 제거
-    var existingBoardList = dlt_boardListVo.getAllJSON();
+    let existingBoardList = dlt_boardListVo.getAllJSON();
     if (existingBoardList && existingBoardList.length > 0) {
         for (let i = 0; i < existingBoardList.length; i++) {
-            var board = existingBoardList[i];
-            var columnId = "grp_dynamic_" + board.boardId;
+            let board = existingBoardList[i];
+            let columnId = "grp_dynamic_" + board.boardId;
 
             try {
-                var existingColumn = eval(columnId);
+                let existingColumn = eval(columnId);
                 if (existingColumn) {
                     existingColumn.remove();
                 }
@@ -4177,10 +4177,10 @@ scwin.clearExistingKanbanColumns = function () {
 
     // WebSquare ID로 생성된 동적 컴포넌트들도 확인 제거
     try {
-        var children = kanbanContainer.getChildren();
+        let children = kanbanContainer.getChildren();
         for (let i = children.length - 1; i >= 0; i--) {
-            var child = children[i];
-            var childId = child.getID();
+            let child = children[i];
+            let childId = child.getID();
 
             // grp_dynamic_ 또는 card_container_로 시작하는 동적 컴포넌트 제거
             if (childId && (childId.startsWith("grp_dynamic_") || childId.startsWith("card_container_"))) {
@@ -4213,12 +4213,12 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
     }
 
 
-    var columnId = "grp_dynamic_" + board.boardId;
-    var cardContainerId = "card_container_" + board.boardId;
+    let columnId = "grp_dynamic_" + board.boardId;
+    let cardContainerId = "card_container_" + board.boardId;
 
     // 중복 생성 방지 - 이미 존재하는 컬럼인지 확인
     try {
-        var existingColumn = eval(columnId);
+        let existingColumn = eval(columnId);
         if (existingColumn) {
             return;
         }
@@ -4227,7 +4227,7 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
     }
 
     // 1. 메인 컬럼 그룹 생성
-    var columnGroup = $p.dynamicCreate(
+    let columnGroup = $p.dynamicCreate(
         columnId,
         "group",
         {
@@ -4243,7 +4243,7 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
     }
 
     // 2. 컬럼 헤더 생성
-    var headerGroup = $p.dynamicCreate(
+    let headerGroup = $p.dynamicCreate(
         columnId + "_header",
         "group",
         {
@@ -4258,7 +4258,7 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
     }
 
     // 3. 컬럼 제목 그룹 생성
-    var titleGroup = $p.dynamicCreate(
+    let titleGroup = $p.dynamicCreate(
         columnId + "_title_group",
         "group",
         {
@@ -4271,10 +4271,10 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
     }
 
     // 4. 상태 인디케이터 생성
-    var statusColor = scwin.getBoardStatusColor(
+    let statusColor = scwin.getBoardStatusColor(
         (board.boardTitle && typeof board.boardTitle === 'string') ? board.boardTitle : 'default'
     );
-    var statusIndicator = $p.dynamicCreate(
+    let statusIndicator = $p.dynamicCreate(
         columnId + "_status",
         "output",
         {
@@ -4287,7 +4287,7 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
     }
 
     // 5. 컬럼 제목 생성
-    var titleSpan = $p.dynamicCreate(
+    let titleSpan = $p.dynamicCreate(
         columnId + "_title",
         "output",
         {
@@ -4307,7 +4307,7 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
     // 6. 태스크 카운트 생성 (제거됨)
 
     // 7. 보드 액션 버튼 그룹 생성 (헤더 우측)
-    var actionGroup = $p.dynamicCreate(
+    let actionGroup = $p.dynamicCreate(
         columnId + "_action_group",
         "group",
         {
@@ -4319,7 +4319,7 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
     }
 
     // 8. 보드 삭제 버튼 생성
-    var deleteButton = $p.dynamicCreate(
+    let deleteButton = $p.dynamicCreate(
         columnId + "_delete_btn",
         "trigger",
         {
@@ -4348,7 +4348,7 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
     }
 
     // 9. 카드 컨테이너 생성 (드롭 존으로 설정)
-    var cardContainer = $p.dynamicCreate(
+    let cardContainer = $p.dynamicCreate(
         cardContainerId,
         "group",
         {
@@ -4367,7 +4367,7 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
     scwin.setupDropZoneAsync(cardContainer, board.boardId, cardContainerId);
 
     // 10. 카드 추가 버튼 생성
-    var addButton = $p.dynamicCreate(
+    let addButton = $p.dynamicCreate(
         columnId + "_add_btn",
         "trigger",
         {
@@ -4406,20 +4406,20 @@ scwin.createSingleKanbanColumn = function (board, index, container) {
  * 카드 락 요청
  */
 scwin.requestCardLock = function (taskId) {
-    var currentUserId = scwin.getCurrentUserId();
-    var currentUserName = scwin.getCurrentUserName();
+    let currentUserId = scwin.getCurrentUserId();
+    let currentUserName = scwin.getCurrentUserName();
 
 
     // 이미 다른 사용자가 락을 보유하고 있는지 확인
     if (scwin.lockedCards.has(taskId)) {
-        var lockInfo = scwin.lockedCards.get(taskId);
+        let lockInfo = scwin.lockedCards.get(taskId);
         if (lockInfo.userId !== currentUserId) {
             return false;
         }
     }
 
     // 락 정보 설정
-    var lockInfo = {
+    let lockInfo = {
         userId: currentUserId,
         userName: currentUserName,
         timestamp: Date.now()
@@ -4441,7 +4441,7 @@ scwin.requestCardLock = function (taskId) {
  * 카드 락 해제 (편집용)
  */
 scwin.releaseCardLock = function (taskId, isAutoRelease) {
-    var currentUserId = scwin.getCurrentUserId();
+    let currentUserId = scwin.getCurrentUserId();
 
 
     // 내가 락한 카드인지 확인
@@ -4466,20 +4466,20 @@ scwin.releaseCardLock = function (taskId, isAutoRelease) {
  * 카드 이동 락 요청 (신규)
  */
 scwin.requestCardMoveLock = function (taskId) {
-    var currentUserId = scwin.getCurrentUserId();
-    var currentUserName = scwin.getCurrentUserName();
+    let currentUserId = scwin.getCurrentUserId();
+    let currentUserName = scwin.getCurrentUserName();
 
 
     // 이미 다른 사용자가 락을 보유하고 있는지 확인
     if (scwin.lockedCards.has(taskId)) {
-        var lockInfo = scwin.lockedCards.get(taskId);
+        let lockInfo = scwin.lockedCards.get(taskId);
         if (lockInfo.userId !== currentUserId) {
             return false;
         }
     }
 
     // 이동 락 정보 설정
-    var moveLockInfo = {
+    let moveLockInfo = {
         userId: currentUserId,
         userName: currentUserName,
         timestamp: Date.now(),
@@ -4502,7 +4502,7 @@ scwin.requestCardMoveLock = function (taskId) {
  * 카드 이동 락 해제
  */
 scwin.releaseCardMoveLock = function (taskId, isAutoRelease) {
-    var currentUserId = scwin.getCurrentUserId();
+    let currentUserId = scwin.getCurrentUserId();
 
 
     // 내가 락한 카드인지 확인
@@ -4511,7 +4511,7 @@ scwin.releaseCardMoveLock = function (taskId, isAutoRelease) {
     }
 
     // 현재 락이 이동 락인지 확인
-    var currentLock = scwin.lockedCards.get(taskId);
+    let currentLock = scwin.lockedCards.get(taskId);
     if (!currentLock || currentLock.type !== "move" || currentLock.userId !== currentUserId) {
         return false;
     }
@@ -4533,13 +4533,13 @@ scwin.releaseCardMoveLock = function (taskId, isAutoRelease) {
  * 카드가 락되어 있는지 확인
  */
 scwin.isCardLocked = function (taskId) {
-    var currentUserId = scwin.getCurrentUserId();
+    let currentUserId = scwin.getCurrentUserId();
 
     if (!scwin.lockedCards.has(taskId)) {
         return false;
     }
 
-    var lockInfo = scwin.lockedCards.get(taskId);
+    let lockInfo = scwin.lockedCards.get(taskId);
     // 내가 락한 카드는 락되지 않은 것으로 처리
     return lockInfo.userId !== currentUserId;
 };
@@ -4548,11 +4548,11 @@ scwin.isCardLocked = function (taskId) {
  * 카드 락 WebSocket 메시지 전송
  */
 scwin.sendCardLockMessage = function (taskId, action) {
-    var currentUserId = scwin.getCurrentUserId();
-    var currentUserName = scwin.getCurrentUserName();
-    var projectId = $p.parent().dm_projectVo.get("projectId");
+    let currentUserId = scwin.getCurrentUserId();
+    let currentUserName = scwin.getCurrentUserName();
+    let projectId = $p.parent().dm_projectVo.get("projectId");
 
-    var message = {
+    let message = {
         type: "CARD_LOCK",
         taskId: taskId,
         userId: currentUserId,
@@ -4568,11 +4568,11 @@ scwin.sendCardLockMessage = function (taskId, action) {
  * 카드 이동 락 WebSocket 메시지 전송
  */
 scwin.sendCardMoveLockMessage = function (taskId, action) {
-    var currentUserId = scwin.getCurrentUserId();
-    var currentUserName = scwin.getCurrentUserName();
-    var projectId = $p.parent().dm_projectVo.get("projectId");
+    let currentUserId = scwin.getCurrentUserId();
+    let currentUserName = scwin.getCurrentUserName();
+    let projectId = $p.parent().dm_projectVo.get("projectId");
 
-    var message = {
+    let message = {
         type: "CARD_LOCK",
         taskId: taskId,
         userId: currentUserId,
@@ -4589,7 +4589,7 @@ scwin.sendCardMoveLockMessage = function (taskId, action) {
  */
 scwin.updateCardLockVisual = function (taskId, lockInfo) {
     try {
-        var cardElement = document.querySelector('[data-task-id="' + taskId + '"]');
+        let cardElement = document.querySelector('[data-task-id="' + taskId + '"]');
         if (!cardElement) {
             return;
         }
@@ -4614,7 +4614,7 @@ scwin.updateCardLockVisual = function (taskId, lockInfo) {
  */
 scwin.updateCardMoveLockVisual = function (taskId, lockInfo) {
     try {
-        var cardElement = document.querySelector('[data-task-id="' + taskId + '"]');
+        let cardElement = document.querySelector('[data-task-id="' + taskId + '"]');
         if (!cardElement) {
             return;
         }
@@ -4647,16 +4647,16 @@ scwin.updateCardMoveLockVisual = function (taskId, lockInfo) {
  */
 scwin.handleCardLockMessage = function (message) {
 
-    var currentUserId = scwin.getCurrentUserId();
+    let currentUserId = scwin.getCurrentUserId();
 
     // message 필드에서 액션과 사용자명 파싱 ("LOCK|사용자명", "UNLOCK|사용자명", "MOVE_LOCK|사용자명", "MOVE_UNLOCK|사용자명")
-    var messageParts = message.message ? message.message.split("|") : [];
-    var action = messageParts[0];
-    var userName = messageParts[1] || message.userId;
+    let messageParts = message.message ? message.message.split("|") : [];
+    let action = messageParts[0];
+    let userName = messageParts[1] || message.userId;
 
     if (action === "LOCK") {
         // 편집용 락킹
-        var lockInfo = {
+        let lockInfo = {
             userId: message.userId,
             userName: userName,
             timestamp: message.timestamp,
@@ -4675,7 +4675,7 @@ scwin.handleCardLockMessage = function (message) {
         
     } else if (action === "MOVE_LOCK") {
         //이동용 락킹 (신규 로직)
-        var moveLockInfo = {
+        let moveLockInfo = {
             userId: message.userId,
             userName: userName,
             timestamp: message.timestamp,
@@ -4688,7 +4688,7 @@ scwin.handleCardLockMessage = function (message) {
 
     } else if (action === "MOVE_UNLOCK") {
         //이동용 언락 (신규 로직)
-        var currentLock = scwin.lockedCards.get(message.taskId);
+        let currentLock = scwin.lockedCards.get(message.taskId);
         
         // 이동 락만 해제 (편집 락은 유지)
         if (currentLock && currentLock.type === "move") {
@@ -4702,9 +4702,9 @@ scwin.handleCardLockMessage = function (message) {
 scwin.handleDragStart = function (e) {
 
     // 드래그되는 카드 정보 저장
-    var cardElement = e.target;
-    var taskId = cardElement.getAttribute("data-task-id");
-    var currentBoardId = cardElement.getAttribute("data-board-id");
+    let cardElement = e.target;
+    let taskId = cardElement.getAttribute("data-task-id");
+    let currentBoardId = cardElement.getAttribute("data-board-id");
 
 
     // 필수 정보 유효성 검사
@@ -4715,8 +4715,8 @@ scwin.handleDragStart = function (e) {
 
     // 카드 락 확인 - 다른 사용자가 편집하거나 이동 중인지 체크
     if (scwin.isCardLocked(taskId)) {
-        var lockInfo = scwin.lockedCards.get(taskId);
-        var lockType = lockInfo.type === "move" ? "이동" : "편집";
+        let lockInfo = scwin.lockedCards.get(taskId);
+        let lockType = lockInfo.type === "move" ? "이동" : "편집";
         $c.win.alert(lockInfo.userName + "님이 현재 이 카드를 " + lockType + " 중입니다. 잠시 후 다시 시도해주세요.");
         e.preventDefault();
         return false;
@@ -4766,7 +4766,7 @@ scwin.handleDragEnd = function (e) {
     document.body.classList.remove("dragging-in-progress");
 
     // 모든 드롭 존의 하이라이트 제거
-    var dropZones = document.querySelectorAll(".drop-zone");
+    let dropZones = document.querySelectorAll(".drop-zone");
     dropZones.forEach(function (zone) {
         zone.classList.remove("drag-over");
     });
@@ -4781,7 +4781,7 @@ scwin.handleDragEnd = function (e) {
 scwin.cleanupDragState = function () {
 
     // 드래그 중인 모든 요소에서 스타일 제거
-    var draggingElements = document.querySelectorAll('.dragging');
+    let draggingElements = document.querySelectorAll('.dragging');
     draggingElements.forEach(function (element) {
         element.classList.remove("dragging");
     });
@@ -4790,7 +4790,7 @@ scwin.cleanupDragState = function () {
     document.body.classList.remove("dragging-in-progress");
 
     // 모든 드롭 존의 하이라이트 제거
-    var dropZones = document.querySelectorAll(".drop-zone, [data-drop-zone]");
+    let dropZones = document.querySelectorAll(".drop-zone, [data-drop-zone]");
     dropZones.forEach(function (zone) {
         zone.classList.remove("drag-over");
     });
@@ -4845,8 +4845,8 @@ scwin.handleDrop = function (e) {
     e.preventDefault();
     e.stopPropagation();
 
-    var dropZone = e.currentTarget;
-    var targetBoardId = dropZone.getAttribute("data-board-id");
+    let dropZone = e.currentTarget;
+    let targetBoardId = dropZone.getAttribute("data-board-id");
 
 
     // 드래그된 카드 정보 확인 (더 안전한 방식)
@@ -4854,12 +4854,12 @@ scwin.handleDrop = function (e) {
 
         // 1차 복구 시도: dataTransfer에서 정보 복구
         try {
-            var transferData = e.dataTransfer.getData("application/json");
+            let transferData = e.dataTransfer.getData("application/json");
             if (transferData) {
-                var dragInfo = JSON.parse(transferData);
+                let dragInfo = JSON.parse(transferData);
 
                 // DOM에서 해당 카드 찾기
-                var cardElement = document.querySelector('[data-task-id="' + dragInfo.taskId + '"]');
+                let cardElement = document.querySelector('[data-task-id="' + dragInfo.taskId + '"]');
                 if (cardElement) {
                     scwin.draggedCard = {
                         element: cardElement,
@@ -4874,11 +4874,11 @@ scwin.handleDrop = function (e) {
 
         // 2차 복구 시도: 드래그 중인 요소에서 정보 복구
         if (!scwin.draggedCard || !scwin.draggedCard.taskId) {
-            var draggedElements = document.querySelectorAll('.dragging');
+            let draggedElements = document.querySelectorAll('.dragging');
             if (draggedElements.length > 0) {
-                var draggedElement = draggedElements[0];
-                var taskId = draggedElement.getAttribute("data-task-id");
-                var sourceBoardId = draggedElement.getAttribute("data-board-id");
+                let draggedElement = draggedElements[0];
+                let taskId = draggedElement.getAttribute("data-task-id");
+                let sourceBoardId = draggedElement.getAttribute("data-board-id");
 
                 if (taskId && sourceBoardId) {
                     scwin.draggedCard = {
@@ -4899,9 +4899,9 @@ scwin.handleDrop = function (e) {
         }
     }
 
-    var draggedElement = scwin.draggedCard.element;
-    var sourceBoardId = scwin.draggedCard.sourceBoardId;
-    var taskId = scwin.draggedCard.taskId;
+    let draggedElement = scwin.draggedCard.element;
+    let sourceBoardId = scwin.draggedCard.sourceBoardId;
+    let taskId = scwin.draggedCard.taskId;
 
     // 같은 보드로 이동하는 경우 무시
     if (sourceBoardId === targetBoardId) {
@@ -5008,7 +5008,7 @@ scwin.setupDropZoneAsync = function (cardContainer, boardId, cardContainerId) {
         // 드롭 존 이벤트 핸들러 바인딩 (WebSquare 호환성을 위해 혼합 방식 사용)
 
         // 1. dragover 이벤트 - 다중 바인딩 방식
-        var dragoverHandler = function (e) {
+        let dragoverHandler = function (e) {
 
             // 강력한 기본 동작 방지
             if (e.preventDefault) {
@@ -5041,7 +5041,7 @@ scwin.setupDropZoneAsync = function (cardContainer, boardId, cardContainerId) {
         targetElement.addEventListener('dragover', dragoverHandler, true);
 
         // 2. 드롭 이벤트 - 다중 바인딩 방식
-        var dropHandler = function (e) {
+        let dropHandler = function (e) {
 
             e.preventDefault();
             e.stopPropagation();
@@ -5069,7 +5069,7 @@ scwin.setupDropZoneAsync = function (cardContainer, boardId, cardContainerId) {
         targetElement.ondrop = dropHandler;
 
         // 3. dragenter 이벤트 - 다중 바인딩 방식
-        var dragenterHandler = function (e) {
+        let dragenterHandler = function (e) {
             e.preventDefault();
             e.stopPropagation();
             if (e.currentTarget && e.currentTarget.classList) {
@@ -5083,7 +5083,7 @@ scwin.setupDropZoneAsync = function (cardContainer, boardId, cardContainerId) {
         targetElement.addEventListener('dragenter', dragenterHandler, true);
 
         // 4. dragleave 이벤트
-        var dragleaveHandler = function (e) {
+        let dragleaveHandler = function (e) {
             if (e.currentTarget && e.currentTarget.classList) {
                 e.currentTarget.classList.remove("drag-over");
             }
@@ -5117,10 +5117,10 @@ scwin.setupDropZoneAsync = function (cardContainer, boardId, cardContainerId) {
             window.globalDropBackup = true;
             document.addEventListener('drop', function (e) {
 
-                var dropZone = e.target.closest('[data-drop-zone="true"]');
+                let dropZone = e.target.closest('[data-drop-zone="true"]');
 
                 if (dropZone) {
-                    var targetBoardId = dropZone.getAttribute('data-board-id');
+                    let targetBoardId = dropZone.getAttribute('data-board-id');
 
                     // 속성 값이 없어도 진행 (디버깅용)
                     if (targetBoardId || true) {
@@ -5129,7 +5129,7 @@ scwin.setupDropZoneAsync = function (cardContainer, boardId, cardContainerId) {
 
                         if (typeof scwin.handleDrop === 'function') {
                             // 이벤트 객체 수정
-                            var modifiedEvent = {
+                            let modifiedEvent = {
                                 preventDefault: function () { if (e.preventDefault) e.preventDefault(); },
                                 stopPropagation: function () { if (e.stopPropagation) e.stopPropagation(); },
                                 currentTarget: dropZone,
@@ -5171,7 +5171,7 @@ scwin.moveCardToBoard = function (cardElement, targetBoardId, taskId) {
         }
 
         // 현재 보드 정보
-        var sourceBoardId = cardElement.getAttribute("data-board-id");
+        let sourceBoardId = cardElement.getAttribute("data-board-id");
 
         // 같은 보드로 이동하는 경우 처리하지 않음
         if (sourceBoardId === targetBoardId) {
@@ -5179,17 +5179,17 @@ scwin.moveCardToBoard = function (cardElement, targetBoardId, taskId) {
         }
 
         // 타겟 컴포넌트 찾기
-        var targetContainerId = "card_container_" + targetBoardId;
+        let targetContainerId = "card_container_" + targetBoardId;
 
         // WebSquare 컴포넌트 찾기
-        var targetContainer = eval(targetContainerId);
+        let targetContainer = eval(targetContainerId);
         if (!targetContainer) {
             return false;
         }
 
 
         // WebSquare 컴포넌트의 DOM 요소 찾기
-        var targetDOMElement = null;
+        let targetDOMElement = null;
         if (targetContainer.element && targetContainer.element.nodeType === 1) {
             targetDOMElement = targetContainer.element;
         } else if (targetContainer.render && targetContainer.render.nodeType === 1) {
@@ -5236,7 +5236,7 @@ scwin.update_task_board_submitdone = function (e) {
             return;
         }
 
-        var moveInfo = scwin.pendingCardMove;
+        let moveInfo = scwin.pendingCardMove;
 
         // DOM 업데이트 실행
         moveInfo.targetDOMElement.appendChild(moveInfo.cardElement);
@@ -5247,12 +5247,12 @@ scwin.update_task_board_submitdone = function (e) {
         scwin.updateLocalTaskCache(moveInfo.taskId, moveInfo.targetBoardId);
 
         // 이동 완료 알림
-        var sourceBoard = scwin.getBoardTitle(moveInfo.sourceBoardId);
-        var targetBoard = scwin.getBoardTitle(moveInfo.targetBoardId);
+        let sourceBoard = scwin.getBoardTitle(moveInfo.sourceBoardId);
+        let targetBoard = scwin.getBoardTitle(moveInfo.targetBoardId);
 
         // WebSocket을 통해 다른 사용자에게 알림
         if (scwin.isWebSocketConnected) {
-            var projectId = $p.parent().dm_projectVo.get("projectId");
+            let projectId = $p.parent().dm_projectVo.get("projectId");
             scwin.sendWebSocketMessage({
                 type: "CARD_MOVED",
                 taskId: moveInfo.taskId,
@@ -5279,7 +5279,7 @@ scwin.update_task_board_submiterror = function (e) {
     try {
         // 대기 중인 카드 이동 정보 확인
         if (scwin.pendingCardMove) {
-            var moveInfo = scwin.pendingCardMove;
+            let moveInfo = scwin.pendingCardMove;
             
             // 대기 정보 초기화
             scwin.pendingCardMove = null;
@@ -5295,14 +5295,14 @@ scwin.updateLocalTaskCache = function (taskId, newBoardId) {
             scwin.allTasksData = {};
         }
 
-        var movedTask = null;
-        var sourceBoardId = null;
+        let movedTask = null;
+        let sourceBoardId = null;
 
         // 모든 보드의 캐시에서 해당 태스크를 찾아서 제거
-        for (var boardId in scwin.allTasksData) {
+        for (let boardId in scwin.allTasksData) {
             if (scwin.allTasksData.hasOwnProperty(boardId)) {
-                var tasks = scwin.allTasksData[boardId];
-                for (var i = 0; i < tasks.length; i++) {
+                let tasks = scwin.allTasksData[boardId];
+                for (let i = 0; i < tasks.length; i++) {
                     if (tasks[i].taskId === taskId) {
                         movedTask = tasks[i];
                         sourceBoardId = boardId;
@@ -5350,7 +5350,7 @@ scwin.getBoardStatusColor = function (boardTitle) {
         return '#656d76'; // 기본 회색
     }
 
-    var title = boardTitle.toLowerCase();
+    let title = boardTitle.toLowerCase();
 
     if (title.includes('할 일') || title.includes('todo')) {
         return '#fb8500'; // 주황색
@@ -5370,8 +5370,8 @@ scwin.dynamicAddCard_onclick_fixed = function (boardId) {
 
     if (boardId) {
         // 해당 보드의 카드 컨테이너 찾기
-        var cardContainerId = "card_container_" + boardId;
-        var parentGroup = eval(cardContainerId);
+        let cardContainerId = "card_container_" + boardId;
+        let parentGroup = eval(cardContainerId);
 
         if (!parentGroup) {
             $c.win.alert("카드 컨테이너를 찾을 수 없습니다.");
@@ -5380,17 +5380,17 @@ scwin.dynamicAddCard_onclick_fixed = function (boardId) {
 
 
         // 동적 카드와 input 생성
-        var cardId = "dyn_card_" + new Date().getTime();
-        var cardOptions = {
+        let cardId = "dyn_card_" + new Date().getTime();
+        let cardOptions = {
             className: "project-card",
             style: "border-color: #2da44e; background-color: #f6ffed;"
         };
-        var newCard = $p.dynamicCreate(cardId, "group", cardOptions, parentGroup);
+        let newCard = $p.dynamicCreate(cardId, "group", cardOptions, parentGroup);
 
         if (newCard) {
             // 동적 input 생성
-            var inputId = "dyn_input_" + new Date().getTime();
-            var newInput = $p.dynamicCreate(inputId, "input", {
+            let inputId = "dyn_input_" + new Date().getTime();
+            let newInput = $p.dynamicCreate(inputId, "input", {
                 placeholder: "새 작업명을 입력하세요.",
                 style: "width: 100%; height: 24px;"
             }, newCard);
@@ -5421,15 +5421,15 @@ scwin.dynamicAddCard_onclick_fixed = function (boardId) {
  * 동적 input 키보드 이벤트 핸들러 (boardId 포함)
  */
 scwin.dynamicInput_onkeydown_with_board = function (e, boardId) {
-    var inputComponent = this;
-    var keyCode = e.keyCode;
+    let inputComponent = this;
+    let keyCode = e.keyCode;
 
     // boardId 가져오기 (파라미터 우선, 없으면 userData에서 가져오기)
-    var targetBoardId = boardId || inputComponent.getUserData("boardId");
+    let targetBoardId = boardId || inputComponent.getUserData("boardId");
 
 
     if (keyCode === 13) { // Enter 키
-        var input = inputComponent.getValue();
+        let input = inputComponent.getValue();
         if (input && input.trim()) {
 
             if (!targetBoardId) {
@@ -5445,7 +5445,7 @@ scwin.dynamicInput_onkeydown_with_board = function (e, boardId) {
             $p.executeSubmission("add_task");
 
             // input 카드 제거
-            var cardComponent = inputComponent.getParent();
+            let cardComponent = inputComponent.getParent();
             if (cardComponent) {
                 cardComponent.remove();
             }
@@ -5455,7 +5455,7 @@ scwin.dynamicInput_onkeydown_with_board = function (e, boardId) {
     } else if (keyCode === 27) { // ESC 키
 
         // 카드 제거
-        var cardComponent = inputComponent.getParent();
+        let cardComponent = inputComponent.getParent();
         if (cardComponent) {
             cardComponent.remove();
         }
@@ -5468,7 +5468,7 @@ scwin.dynamicInput_onkeydown_with_board = function (e, boardId) {
 scwin.load_Board_submit = function (e) {
 
     // 프로젝트 ID 확인
-    var projectId = dm_projectVo.get("projectId");
+    let projectId = dm_projectVo.get("projectId");
     if (!projectId) {
 
         // scwin.currentProjectData에서 프로젝트 ID를 찾아보기
@@ -5488,7 +5488,7 @@ scwin.load_Board_submit = function (e) {
  */
 scwin.load_Board_submiterror = function (e) {
 
-    var errorMessage = "보드 데이터를 로드하는데 실패했습니다.";
+    let errorMessage = "보드 데이터를 로드하는데 실패했습니다.";
 
     // 에러 타입별 처리
     if (e.responseJSON && e.responseJSON.message) {
@@ -5510,12 +5510,12 @@ scwin.load_Board_submiterror = function (e) {
 
 scwin.btn_settings_onclick = function (e) {
     // 현재 프로젝트 ID 가져오기
-    var projectId = null;
+    let projectId = null;
     if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
         projectId = scwin.currentProjectData.projectId;
     } else {
         // Fallback: URL 파라미터에서 추출
-        var urlParams = new URLSearchParams(window.location.search);
+        let urlParams = new URLSearchParams(window.location.search);
         projectId = urlParams.get('projectId');
     }
 
@@ -5524,7 +5524,7 @@ scwin.btn_settings_onclick = function (e) {
     }
 
     // taskModal과 동일한 방식으로 파라미터 구성
-    var param = {
+    let param = {
         "type": "json",
         "name": "projectInfo",
         "data": {
@@ -5533,7 +5533,7 @@ scwin.btn_settings_onclick = function (e) {
     };
 
     // taskModal과 동일한 방식으로 옵션 설정
-    var options = {
+    let options = {
         id: "projectSettingPopup",
         type: "wframePopup",
         width: "1922",
@@ -5555,7 +5555,7 @@ scwin.btn_settings_onclick = function (e) {
 // 설정 모달 닫기 액션
 scwin.projectSetting_closeAction = function (argRuntimeID, argJsnInfo) {
     // taskModal과 동일한 방식으로 처리
-    var popObj = $p.getPopupWindow(argRuntimeID);
+    let popObj = $p.getPopupWindow(argRuntimeID);
     
 
     return true; // 팝업 닫기 허용
@@ -5566,12 +5566,12 @@ scwin.closeProjectSettingModal = function () {
     
     try {
         // projectSettingPopup ID로 팝업 닫기
-        var result = $p.closePopup("projectSettingPopup");
+        let result = $p.closePopup("projectSettingPopup");
         
 
         if (!result) {
             // 다른 방법 시도
-            var popup = $p.getPopupWindow("projectSettingPopup");
+            let popup = $p.getPopupWindow("projectSettingPopup");
             if (popup && popup.close) {
                 popup.close();
             }
@@ -5592,12 +5592,12 @@ window.addEventListener('message', function (event) {
 //task 버튼 눌렀을 때 
 scwin.new_task_onclick = function (e) {
     // 클릭된 카드에서 taskId와 projectId 추출
-    var taskId = null;
-    var projectId = dm_projectVo.get("projectId");
+    let taskId = null;
+    let projectId = dm_projectVo.get("projectId");
 
     if (e && e.target) {
         // 클릭된 요소나 부모 요소에서 data-task-id 찾기
-        var currentElement = e.target;
+        let currentElement = e.target;
         while (currentElement && !taskId) {
             if (currentElement.getAttribute && currentElement.getAttribute("data-task-id")) {
                 taskId = currentElement.getAttribute("data-task-id");
@@ -5608,12 +5608,12 @@ scwin.new_task_onclick = function (e) {
     }
 
     // 보드 타이틀 가져오기
-    var boardTitle = "알 수 없음";
+    let boardTitle = "알 수 없음";
     if (e && e.target) {
-        var currentElement = e.target;
+        let currentElement = e.target;
         while (currentElement && boardTitle === "알 수 없음") {
             if (currentElement.getAttribute && currentElement.getAttribute("data-board-id")) {
-                var boardId = currentElement.getAttribute("data-board-id");
+                let boardId = currentElement.getAttribute("data-board-id");
                 boardTitle = scwin.getBoardTitle(boardId);
                 break;
             }
@@ -5622,25 +5622,25 @@ scwin.new_task_onclick = function (e) {
     }
 
     // 프로젝트 이름 가져오기
-    var projectName = "프로젝트";
+    let projectName = "프로젝트";
     if (scwin.currentProjectData && scwin.currentProjectData.projectName) {
         projectName = scwin.currentProjectData.projectName;
     }
 
     // 팝업 이름 동적 생성
-    var popupName = projectName + " / " + boardTitle;
+    let popupName = projectName + " / " + boardTitle;
 
 
     // 사용자 정보 가져오기 (안전한 방법으로)
-    var userId = scwin.getCurrentUserId();
+    let userId = scwin.getCurrentUserId();
     if (!userId) {
         return;
     }
 
-    var userName = userId; // userId를 userName으로 사용
-    var userImage = "/InsWebApp/images/default-avatar.png"; // 기본 아바타 이미지
+    let userName = userId; // userId를 userName으로 사용
+    let userImage = "/InsWebApp/images/default-avatar.png"; // 기본 아바타 이미지
 
-    var param = {
+    let param = {
         "type": "json",
         "name": "userInfo",
         "data": {
@@ -5653,7 +5653,7 @@ scwin.new_task_onclick = function (e) {
     };
 
     // 팝업 생성 옵션 지정
-    var options = {
+    let options = {
         id: "exa_popup",
         type: "wframePopup",
         width: "1350",
@@ -5674,22 +5674,22 @@ scwin.new_task_onclick = function (e) {
 
 // 화상통화 팝업 고유 ID 생성 함수
 scwin.generateVideoChatPopupId = function () {
-    var timestamp = Date.now();
-    var random = Math.floor(Math.random() * 1000);
+    let timestamp = Date.now();
+    let random = Math.floor(Math.random() * 1000);
     return "videoChatPopup_" + timestamp + "_" + random;
 };
 
 // 화상통화 버튼 클릭 이벤트
 scwin.btn_videoCall_onclick = function (e) {
     // 1. 고유 팝업 ID 생성
-    var uniquePopupId = scwin.generateVideoChatPopupId();
+    let uniquePopupId = scwin.generateVideoChatPopupId();
     
 
     // 2. 현재 화상통화 팝업 ID를 전역 변수에 저장 (닫기 시 사용)
     scwin.currentVideoChatPopupId = uniquePopupId;
 
     // 3. 프로젝트 ID 가져오기
-    var projectId = null;
+    let projectId = null;
 
     // 첫 번째 방법: currentProjectData에서 가져오기
     if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
@@ -5707,7 +5707,7 @@ scwin.btn_videoCall_onclick = function (e) {
 
     // 세 번째 방법: URL 파라미터에서 가져오기
     if (!projectId) {
-        var urlParams = new URLSearchParams(window.location.search);
+        let urlParams = new URLSearchParams(window.location.search);
         projectId = urlParams.get('projectId');
     }
 
@@ -5718,7 +5718,7 @@ scwin.btn_videoCall_onclick = function (e) {
 
     
     // 프로젝트 설정과 동일한 방식으로 파라미터 구성
-    var param = {
+    let param = {
         "type": "json",
         "name": "projectInfo",
         "data": {
@@ -5727,7 +5727,7 @@ scwin.btn_videoCall_onclick = function (e) {
     };
 
     // 기본 모달 옵션 설정 (동적 ID 사용)
-    var options = {
+    let options = {
         id: uniquePopupId,  // 동적 생성된 고유 ID 사용
         type: "wframePopup",
         width: "1920",      // 고정 크기로 테스트
@@ -5797,7 +5797,7 @@ scwin.closeVideoChatModal = function (isPipMode) {
     setTimeout(function () {
         try {
             
-            var selectors = [
+            let selectors = [
                 '#videoChatPopup',
                 '[id*="videoChatPopup"]',
                 '[id*="popup"][id*="video"]',
@@ -5807,7 +5807,7 @@ scwin.closeVideoChatModal = function (isPipMode) {
             ];
 
             selectors.forEach(function (selector) {
-                var elements = document.querySelectorAll(selector);
+                let elements = document.querySelectorAll(selector);
                 elements.forEach(function (element) {
                     
                     element.remove();
@@ -5815,7 +5815,7 @@ scwin.closeVideoChatModal = function (isPipMode) {
             });
 
             // 백드롭 제거
-            var backdrop = document.querySelector('.w2popup_backdrop');
+            let backdrop = document.querySelector('.w2popup_backdrop');
             if (backdrop) {
                 backdrop.remove();
                 
@@ -5829,9 +5829,9 @@ scwin.closeVideoChatModal = function (isPipMode) {
         setTimeout(function() {
             try {
                 // 모든 WebSquare 팝업 헤더를 다시 표시
-                var allHeaders = document.querySelectorAll('.w2window_header');
-                for (var i = 0; i < allHeaders.length; i++) {
-                    var header = allHeaders[i];
+                let allHeaders = document.querySelectorAll('.w2window_header');
+                for (let i = 0; i < allHeaders.length; i++) {
+                    let header = allHeaders[i];
                     // 화상통화 팝업이 아닌 헤더들만 복원
                     if (!header.closest('[id*="videoChatPopup"]')) {
                         header.style.display = '';
@@ -5842,9 +5842,9 @@ scwin.closeVideoChatModal = function (isPipMode) {
                 }
                 
                 // 추가로 WebSquare 기본 헤더 스타일 복원
-                var popupHeaders = document.querySelectorAll('.w2popup_window .w2window_header');
-                for (var j = 0; j < popupHeaders.length; j++) {
-                    var popupHeader = popupHeaders[j];
+                let popupHeaders = document.querySelectorAll('.w2popup_window .w2window_header');
+                for (let j = 0; j < popupHeaders.length; j++) {
+                    let popupHeader = popupHeaders[j];
                     // 화상통화 팝업이 아닌 헤더들만 복원
                     if (!popupHeader.closest('[id*="videoChatPopup"]')) {
                         popupHeader.style.display = '';
@@ -6131,16 +6131,16 @@ window.addEventListener('message', function (event) {
             
 
             // 1) videoChatPopup 관련 모든 요소 제거
-            var videoSelectors = [
+            let videoSelectors = [
                 '[id*="videoChatPopup"]',
                 '[id*="mf_wfr_mainContent_videoChatPopup"]',
                 '.videochat-popup',
                 '.video-chat-container'
             ];
 
-            var totalRemoved = 0;
+            let totalRemoved = 0;
             videoSelectors.forEach(function (selector) {
-                var elements = document.querySelectorAll(selector);
+                let elements = document.querySelectorAll(selector);
                 elements.forEach(function (element) {
                     
                     element.remove();
@@ -6459,7 +6459,7 @@ scwin.expandVideoChat = function () {
 
     try {
         // 현재 프로젝트 ID 가져오기
-        var projectId = null;
+        let projectId = null;
 
         // PIP 상태에서 projectId 가져오기
         if (scwin.pipVideoState && scwin.pipVideoState.projectId) {
@@ -6492,7 +6492,7 @@ scwin.expandVideoChat = function () {
         }
 
         // 전체 화상통화 모달 다시 열기
-        var param = {
+        let param = {
             "type": "json",
             "name": "projectInfo",
             "data": {
@@ -6501,7 +6501,7 @@ scwin.expandVideoChat = function () {
             }
         };
 
-        var options = {
+        let options = {
             id: "videoChatPopup",
             type: "wframePopup",
             width: "1920",
@@ -6746,11 +6746,11 @@ scwin.expandVideoChat = function () {
 scwin.add_board_onclick = function (e) {
 
     // 현재 프로젝트 ID 확인
-    var projectId = null;
+    let projectId = null;
     if (scwin.currentProjectData && scwin.currentProjectData.projectId) {
         projectId = scwin.currentProjectData.projectId;
     } else {
-        var urlParams = new URLSearchParams(window.location.search);
+        let urlParams = new URLSearchParams(window.location.search);
         projectId = urlParams.get('projectId');
     }
 
@@ -6792,7 +6792,7 @@ scwin.add_board_submitdone = function (e) {
  */
 scwin.add_board_submiterror = function (e) {
 
-    var errorMessage = "보드 생성에 실패했습니다.";
+    let errorMessage = "보드 생성에 실패했습니다.";
 
     if (e.responseJSON && e.responseJSON.message) {
         errorMessage += "\n원인: " + e.responseJSON.message;
@@ -6827,14 +6827,14 @@ scwin.delete_board_submitdone = function (e) {
  */
 scwin.delete_board_submiterror = function (e) {
 
-    var errorMessage = "보드 삭제에 실패했습니다.";
+    let errorMessage = "보드 삭제에 실패했습니다.";
 
     // 오류 메시지 상세화
     if (e.responseJSON && e.responseJSON.message) {
         errorMessage += "\n원인: " + e.responseJSON.message;
     } else if (e.responseText) {
         try {
-            var errorData = JSON.parse(e.responseText);
+            let errorData = JSON.parse(e.responseText);
             if (errorData.message) {
                 errorMessage += "\n원인: " + errorData.message;
             }
@@ -6862,17 +6862,17 @@ scwin.delete_board_submiterror = function (e) {
 scwin.createEmptyBoardWithInput = function (projectId) {
 
     try {
-        var kanbanContainer = grp_kanban_board;
+        let kanbanContainer = grp_kanban_board;
         if (!kanbanContainer) {
             return;
         }
 
         // 임시 보드 ID 생성
-        var tempBoardId = "temp_board_" + new Date().getTime();
-        var columnId = "grp_dynamic_" + tempBoardId;
+        let tempBoardId = "temp_board_" + new Date().getTime();
+        let columnId = "grp_dynamic_" + tempBoardId;
 
         // 1. 메인 컬럼 그룹 생성
-        var columnGroup = $p.dynamicCreate(
+        let columnGroup = $p.dynamicCreate(
             columnId,
             "group",
             {
@@ -6889,7 +6889,7 @@ scwin.createEmptyBoardWithInput = function (projectId) {
         }
 
         // 2. 컬럼 헤더 생성
-        var headerGroup = $p.dynamicCreate(
+        let headerGroup = $p.dynamicCreate(
             columnId + "_header",
             "group",
             {
@@ -6900,7 +6900,7 @@ scwin.createEmptyBoardWithInput = function (projectId) {
         );
 
         // 3. 제목 입력 영역 생성
-        var titleGroup = $p.dynamicCreate(
+        let titleGroup = $p.dynamicCreate(
             columnId + "_title_group",
             "group",
             {
@@ -6910,7 +6910,7 @@ scwin.createEmptyBoardWithInput = function (projectId) {
         );
 
         // 4. 상태 인디케이터 생성
-        var statusIndicator = $p.dynamicCreate(
+        let statusIndicator = $p.dynamicCreate(
             columnId + "_status",
             "output",
             {
@@ -6921,7 +6921,7 @@ scwin.createEmptyBoardWithInput = function (projectId) {
         );
 
         // 5. 보드명 입력 input 생성
-        var titleInput = $p.dynamicCreate(
+        let titleInput = $p.dynamicCreate(
             columnId + "_input",
             "input",
             {
@@ -6944,7 +6944,7 @@ scwin.createEmptyBoardWithInput = function (projectId) {
         }
 
         // 6. 빈 카드 컨테이너 생성
-        var cardContainer = $p.dynamicCreate(
+        let cardContainer = $p.dynamicCreate(
             columnId + "_container",
             "group",
             {
@@ -6956,7 +6956,7 @@ scwin.createEmptyBoardWithInput = function (projectId) {
         );
 
         // 7. 안내 텍스트 추가
-        var guideText = $p.dynamicCreate(
+        let guideText = $p.dynamicCreate(
             columnId + "_guide",
             "output",
             {
@@ -6978,15 +6978,15 @@ scwin.createEmptyBoardWithInput = function (projectId) {
  * 보드명 입력 input의 키보드 이벤트 처리
  */
 scwin.boardInput_onkeydown = function (e) {
-    var inputComponent = this;
-    var keyCode = e.keyCode;
+    let inputComponent = this;
+    let keyCode = e.keyCode;
 
     if (keyCode === 13) { // Enter 키 - 보드 생성
-        var boardTitle = inputComponent.getValue();
+        let boardTitle = inputComponent.getValue();
 
         if (boardTitle && boardTitle.trim() !== "") {
-            var projectId = inputComponent.getAttribute("data-project-id");
-            var tempBoardId = inputComponent.getAttribute("data-temp-board-id");
+            let projectId = inputComponent.getAttribute("data-project-id");
+            let tempBoardId = inputComponent.getAttribute("data-temp-board-id");
 
             // 임시 보드 ID 저장 (생성 성공 시 교체용)
             scwin.currentTempBoardId = tempBoardId;
@@ -7006,11 +7006,11 @@ scwin.boardInput_onkeydown = function (e) {
     } else if (keyCode === 27) { // ESC 키 - 취소
 
         // 임시 보드 컬럼 제거
-        var tempBoardId = inputComponent.getAttribute("data-temp-board-id");
-        var columnId = "grp_dynamic_" + tempBoardId;
+        let tempBoardId = inputComponent.getAttribute("data-temp-board-id");
+        let columnId = "grp_dynamic_" + tempBoardId;
 
         try {
-            var columnComponent = eval(columnId);
+            let columnComponent = eval(columnId);
             if (columnComponent) {
                 columnComponent.remove();
             }
@@ -7025,8 +7025,8 @@ scwin.boardInput_onkeydown = function (e) {
 scwin.removeTempBoard = function (tempBoardId) {
 
     try {
-        var tempColumnId = "grp_dynamic_" + tempBoardId;
-        var tempColumn = eval(tempColumnId);
+        let tempColumnId = "grp_dynamic_" + tempBoardId;
+        let tempColumn = eval(tempColumnId);
 
         if (tempColumn) {
             tempColumn.remove();
@@ -7049,10 +7049,10 @@ scwin.load_Tasks_With_UserName_submitdone = function (e) {
     scwin.isTaskListWithUserNameLoading = false;
 
     // 1. 응답에서 직접 태스크 목록 추출
-    var responseData = e.responseJSON;
+    let responseData = e.responseJSON;
 
     // 새로운 태스크만 처리 (누적하지 않음)
-    var newTasks = responseData.elData.taskVoList || [];
+    let newTasks = responseData.elData.taskVoList || [];
 
     // scwin.taskList에 태스크 데이터 할당 (간트차트 데이터 동기화용)
     if (!scwin.taskList) {
@@ -7063,9 +7063,9 @@ scwin.load_Tasks_With_UserName_submitdone = function (e) {
     // 칸반 보드용 태스크 처리 (보드별로 분리 저장)
     if (newTasks && newTasks.length > 0) {
         // 보드별로 태스크 데이터 분리
-        var tasksByBoard = {};
-        for (var i = 0; i < newTasks.length; i++) {
-            var task = newTasks[i];
+        let tasksByBoard = {};
+        for (let i = 0; i < newTasks.length; i++) {
+            let task = newTasks[i];
             if (!tasksByBoard[task.boardId]) {
                 tasksByBoard[task.boardId] = [];
             }
@@ -7073,12 +7073,12 @@ scwin.load_Tasks_With_UserName_submitdone = function (e) {
         }
 
         // 각 보드별로 데이터 저장 및 표시
-        for (var boardId in tasksByBoard) {
-            var boardTasks = tasksByBoard[boardId];
+        for (let boardId in tasksByBoard) {
+            let boardTasks = tasksByBoard[boardId];
             
             // 서버에서 받은 데이터 정렬 상태 확인
-            for (var i = 0; i < Math.min(boardTasks.length, 5); i++) {
-                var task = boardTasks[i];
+            for (let i = 0; i < Math.min(boardTasks.length, 5); i++) {
+                let task = boardTasks[i];
             }
             if (boardTasks.length > 5) {
             }
@@ -7100,9 +7100,9 @@ scwin.load_Tasks_With_UserName_submitdone = function (e) {
     } else {
 
         // boardId 추출 (검색 조건에서)
-        var searchCondition = $p.getComponentById("dm_search_task");
+        let searchCondition = $p.getComponentById("dm_search_task");
         if (searchCondition) {
-            var boardId = searchCondition.get("boardId");
+            let boardId = searchCondition.get("boardId");
             if (boardId) {
                 // 빈 데이터 저장 및 정렬/필터링 적용
                 scwin.storeAllTasksData(boardId, []);
@@ -7124,7 +7124,7 @@ scwin.load_Tasks_With_UserName_submiterror = function (e) {
     scwin.isTaskListWithUserNameLoading = false;
     
     // 오류 메시지 추출
-    var errorMessage = "태스크 목록을 로드하는데 실패했습니다.";
+    let errorMessage = "태스크 목록을 로드하는데 실패했습니다.";
     if (e && e.responseJSON && e.responseJSON.message) {
         errorMessage = e.responseJSON.message;
     } else if (e && e.message) {
@@ -7165,7 +7165,7 @@ scwin.loadAllBoardTasks = function(boardIds) {
             dm_search_task_batch.set("sortField", scwin.currentSortField);
             dm_search_task_batch.set("sortOrder", scwin.currentSortOrder);
         } else {
-            var batchSearchCondition = $p.getComponentById("dm_search_task_batch");
+            let batchSearchCondition = $p.getComponentById("dm_search_task_batch");
             if (batchSearchCondition) {
                 batchSearchCondition.set("boardIds", boardIds.join(","));
                 batchSearchCondition.set("sortField", scwin.currentSortField);
@@ -7192,16 +7192,16 @@ scwin.load_Tasks_With_UserName_Batch_submitdone = function (e) {
     scwin.isTaskListWithUserNameLoading = false;
 
     // 1. 응답에서 직접 태스크 목록 추출
-    var responseData = e.responseJSON;
-    var allTasks = responseData.elData.taskVoList || [];
+    let responseData = e.responseJSON;
+    let allTasks = responseData.elData.taskVoList || [];
 
     // scwin.taskList에 태스크 데이터 할당 (간트차트 데이터 동기화용)
     scwin.taskList = allTasks;
 
     // 2. 보드별로 태스크 데이터 분리
-    var tasksByBoard = {};
-    for (var i = 0; i < allTasks.length; i++) {
-        var task = allTasks[i];
+    let tasksByBoard = {};
+    for (let i = 0; i < allTasks.length; i++) {
+        let task = allTasks[i];
         if (!tasksByBoard[task.boardId]) {
             tasksByBoard[task.boardId] = [];
         }
@@ -7210,8 +7210,8 @@ scwin.load_Tasks_With_UserName_Batch_submitdone = function (e) {
 
 
     // 3. 각 보드별로 데이터 저장 및 표시
-    for (var boardId in tasksByBoard) {
-        var boardTasks = tasksByBoard[boardId];
+    for (let boardId in tasksByBoard) {
+        let boardTasks = tasksByBoard[boardId];
         
         // 전체 태스크 데이터를 로컬에 저장 (필터링용)
         scwin.storeAllTasksData(boardId, boardTasks);
@@ -7234,7 +7234,7 @@ scwin.load_Tasks_With_UserName_Batch_submiterror = function (e) {
     scwin.isTaskListWithUserNameLoading = false;
     
     // 오류 메시지 추출
-    var errorMessage = "배치 태스크 목록을 로드하는데 실패했습니다.";
+    let errorMessage = "배치 태스크 목록을 로드하는데 실패했습니다.";
     if (e && e.responseJSON && e.responseJSON.message) {
         errorMessage = e.responseJSON.message;
     } else if (e && e.message) {

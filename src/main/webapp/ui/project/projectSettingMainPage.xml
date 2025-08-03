@@ -170,7 +170,7 @@ scwin.onpageload = function() {
 scwin.forceRemoveHeaderAndAddLine = function() {
     try {
         // 모든 가능한 헤더 요소들 찾아서 제거
-        var headerSelectors = [
+        let headerSelectors = [
             '#mf_wfr_mainContent_projectSettingPopup_header',
             '[id*="projectSettingPopup_header"]',
             '.w2window_header',
@@ -178,7 +178,7 @@ scwin.forceRemoveHeaderAndAddLine = function() {
         ];
         
         headerSelectors.forEach(function(selector) {
-            var elements = document.querySelectorAll(selector);
+            let elements = document.querySelectorAll(selector);
             elements.forEach(function(el) {
                 if (el) {
                     el.style.setProperty('display', 'none', 'important');
@@ -193,7 +193,7 @@ scwin.forceRemoveHeaderAndAddLine = function() {
         });
         
         // 모달창 안에만 세로선 추가 - body 제외
-        var containers = [
+        let containers = [
             document.getElementById('grp_mainContainer'),
             document.getElementById('grp_contentArea'),
             document.querySelector('[id*="projectSettingPopup_body"]'),
@@ -202,7 +202,7 @@ scwin.forceRemoveHeaderAndAddLine = function() {
         
         containers.forEach(function(container, index) {
             if (container) {
-                var line = document.createElement('div');
+                let line = document.createElement('div');
                 line.id = 'customVerticalLine' + index;
                 // 모달 안에서만 보이도록 높이를 100%로 변경
                 line.style.cssText = 'position: absolute !important; top: 0 !important; left: 303px !important; width: 1px !important; height: 100% !important; background-color: #000000 !important; z-index: 999999 !important; pointer-events: none !important; display: block !important;';
@@ -212,7 +212,7 @@ scwin.forceRemoveHeaderAndAddLine = function() {
         });
         
         // 추가로 사이드메뉴에 직접 border 적용
-        var sideMenu = document.getElementById('grp_sideMenuArea');
+        let sideMenu = document.getElementById('grp_sideMenuArea');
         if (sideMenu) {
             sideMenu.style.setProperty('border-right', '5px solid #00ff00', 'important');
             sideMenu.style.setProperty('box-sizing', 'border-box', 'important');
@@ -232,7 +232,7 @@ scwin.forceRemoveHeaderAndAddLine = function() {
 scwin.requestProjectId = function() {
     
     
-    var projectId = prompt("프로젝트 ID를 입력하세요:");
+    let projectId = prompt("프로젝트 ID를 입력하세요:");
     
     if (projectId === null) {
         // 사용자가 취소를 눌렀을 때
@@ -252,8 +252,8 @@ scwin.requestProjectId = function() {
     
     
     // URL에 project_id 파라미터 추가하여 페이지 재로딩
-    var currentUrl = window.location.href;
-    var newUrl = currentUrl + "&project_id=" + projectId;
+    let currentUrl = window.location.href;
+    let newUrl = currentUrl + "&project_id=" + projectId;
     
     
     

@@ -189,8 +189,8 @@ scwin.videoPopupState = {
 
 // 화상통화 팝업 고유 ID 생성 함수
 scwin.generateVideoChatPopupId = function () {
-    var timestamp = Date.now();
-    var random = Math.floor(Math.random() * 1000);
+    let timestamp = Date.now();
+    let random = Math.floor(Math.random() * 1000);
     return "videoChatPopup_" + timestamp + "_" + random;
 };
 
@@ -203,7 +203,7 @@ scwin.openVideoChat = function() {
     }
     
     // 현재 프로젝트 ID 가져오기 (fallback 로직 사용)
-    var currentProjectId = null;
+    let currentProjectId = null;
     
     // 1차 시도: dm_projectVo에서 가져오기
     try {
@@ -221,7 +221,7 @@ scwin.openVideoChat = function() {
     // 3차 시도: URL 파라미터에서 가져오기
     if (!currentProjectId) {
         try {
-            var urlParams = new URLSearchParams(window.location.search);
+            let urlParams = new URLSearchParams(window.location.search);
             currentProjectId = urlParams.get('projectId');
             
         } catch (e) {
@@ -235,9 +235,9 @@ scwin.openVideoChat = function() {
     }
     
     // 고유한 팝업 ID 생성
-    var uniquePopupId = scwin.generateVideoChatPopupId();
+    let uniquePopupId = scwin.generateVideoChatPopupId();
     
-    var param = {
+    let param = {
         "type": "json",
         "name": "projectInfo",
         "data": {
@@ -245,7 +245,7 @@ scwin.openVideoChat = function() {
         }
     }
     
-    var options = {
+    let options = {
         id: uniquePopupId,
         type: "wframePopup",
         width: "390",       // 모바일 적정 크기
@@ -804,10 +804,10 @@ scwin.getUserNameByUserId = function (userId, taskData) {
 
         // 태스크 리스트에서 해당 userId의 userName 찾기
         if (dlt_taskList) {
-            var rowCount = dlt_taskList.getRowCount();
-            for (var i = 0; i < rowCount; i++) {
-                var projectUserId = dlt_taskList.getCellData(i, "projectUserId");
-                var userName = dlt_taskList.getCellData(i, "userName");
+            let rowCount = dlt_taskList.getRowCount();
+            for (let i = 0; i < rowCount; i++) {
+                let projectUserId = dlt_taskList.getCellData(i, "projectUserId");
+                let userName = dlt_taskList.getCellData(i, "userName");
                 if (projectUserId === userId && userName) {
                     return userName;
                 }
@@ -816,9 +816,9 @@ scwin.getUserNameByUserId = function (userId, taskData) {
 
         // 현재 로그인한 사용자의 정보인지 확인
         if (dm_userInfo) {
-            var currentUserId = dm_userInfo.get("userId");
+            let currentUserId = dm_userInfo.get("userId");
             if (userId === currentUserId) {
-                var userName = dm_userInfo.get("userName");
+                let userName = dm_userInfo.get("userName");
                 if (userName) {
                     return userName;
                 }

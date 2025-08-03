@@ -325,7 +325,7 @@ scwin.onpageload = function () {
 scwin.initializeProjectData = function () {
     try {
         // 팝업에서 전달받은 데이터 확인
-        var popupData = $p.getParameter("project_param");
+    let popupData = $p.getParameter("project_param");
         if (popupData) {
 
             // 프로젝트 정보를 폼에 설정
@@ -349,10 +349,10 @@ scwin.initializeEventHandlers = function () {
     try {
         // 검색 키워드 입력 이벤트 핸들러 (실시간 검색)
         setTimeout(function () {
-            var searchInput = document.querySelector('input[ref="data:dm_github_form.repoSearchKeyword"]');
+        let searchInput = document.querySelector('input[ref="data:dm_github_form.repoSearchKeyword"]');
             if (searchInput) {
                 searchInput.addEventListener('input', function () {
-                    var value = this.value;
+                let value = this.value;
                     setTimeout(function () {
                         scwin.filterRepositories(value);
                     }, 300); // 300ms 디바운스 적용
@@ -552,36 +552,36 @@ scwin.hideAllSections = function() {
         scwin.setLoading(false);
         
         // 2. 로그인 필요 섹션 숨기기
-        var loginSection = $p.getComponentById("login_required_section");
+    let loginSection = $p.getComponentById("login_required_section");
         if (loginSection) {
             loginSection.addClass("hidden");
             loginSection.setStyle("display", "none");
         }
         
         // 3. 메인 GitHub 컨텐츠 숨기기
-        var mainContent = $p.getComponentById("github_main_content");
+    let mainContent = $p.getComponentById("github_main_content");
         if (mainContent) {
             mainContent.setStyle("display", "none");
         }
         
         // 4. 저장소 관련 섹션들 숨기기
-        var repoLoadingSection = $p.getComponentById("repo_loading_section");
+    let repoLoadingSection = $p.getComponentById("repo_loading_section");
         if (repoLoadingSection) {
             repoLoadingSection.setStyle("display", "none");
         }
         
-        var repoEmptySection = $p.getComponentById("repo_empty_section");
+    let repoEmptySection = $p.getComponentById("repo_empty_section");
         if (repoEmptySection) {
             repoEmptySection.setStyle("display", "none");
         }
         
-        var repoCardsContainer = $p.getComponentById("repo_cards_container");
+    let repoCardsContainer = $p.getComponentById("repo_cards_container");
         if (repoCardsContainer) {
             repoCardsContainer.setStyle("display", "none");
         }
         
         // 5. 브랜치 관리 섹션 제거 (동적 생성된 요소)
-        var branchSection = $p.getComponentById("branch_management_section");
+    let branchSection = $p.getComponentById("branch_management_section");
         if (branchSection) {
             branchSection.remove();
         }
@@ -595,7 +595,7 @@ scwin.showLoginRequiredSection = function() {
     scwin.hideAllSections();
     
     // 로그인 섹션만 표시
-    var loginSection = $p.getComponentById("login_required_section");
+let loginSection = $p.getComponentById("login_required_section");
     if (loginSection) {
         loginSection.removeClass("hidden");
         loginSection.setStyle("display", "block");
@@ -613,12 +613,12 @@ scwin.showRepositorySelectionSection = function() {
     scwin.hideAllSections();
     
     // 메인 컨텐츠와 저장소 카드 컨테이너 표시
-    var mainContent = $p.getComponentById("github_main_content");
+let mainContent = $p.getComponentById("github_main_content");
     if (mainContent) {
         mainContent.setStyle("display", "block");
     }
     
-    var repoCardsContainer = $p.getComponentById("repo_cards_container");
+let repoCardsContainer = $p.getComponentById("repo_cards_container");
     if (repoCardsContainer) {
         repoCardsContainer.setStyle("display", "block");
     }
@@ -635,7 +635,7 @@ scwin.showBranchManagementSection = function(repositoryData) {
     scwin.hideAllSections();
     
     // 메인 컨텐츠 표시
-    var mainContent = $p.getComponentById("github_main_content");
+let mainContent = $p.getComponentById("github_main_content");
     if (mainContent) {
         mainContent.setStyle("display", "block");
     }
@@ -699,7 +699,7 @@ scwin.checkGitHubConnectionStatus = function() {
 scwin.checkAuthenticationStatus_submitdone = function (e) {
     scwin.setLoading(false);
 
-    var result = null;
+let result = null;
     if (e.responseJSON) {
         result = e.responseJSON;
     } else if (e.responseText) {
@@ -733,7 +733,7 @@ scwin.checkAuthenticationStatus_submiterror = function (e) {
 scwin.checkAuthStatus_submit_done = function (e) {
     scwin.setLoading(false);
 
-    var result = null;
+let result = null;
     try {
         if (e.responseJSON) {
             result = e.responseJSON;
@@ -916,16 +916,16 @@ scwin.showLoginRequiredUI = function () {
 scwin.createLoginRequiredSection = function () {
     try {
         // 기존 로그인 섹션이 있으면 제거
-        var existingLoginSection = $p.getComponentById("login_required_section");
+    let existingLoginSection = $p.getComponentById("login_required_section");
         if (existingLoginSection) {
             existingLoginSection.remove();
         }
 
         // 메인 컨테이너 찾기
-        var container = $p.getComponentById("github_main_content");
+    let container = $p.getComponentById("github_main_content");
 
         // 로그인 필요 섹션 그룹 생성
-        var loginSection = $p.dynamicCreate(
+    let loginSection = $p.dynamicCreate(
             "login_required_section",
             "group",
             {
@@ -936,7 +936,7 @@ scwin.createLoginRequiredSection = function () {
         );
 
         // 로그인 컨테이너 그룹 생성
-        var loginContainer = $p.dynamicCreate(
+    let loginContainer = $p.dynamicCreate(
             "login_container",
             "group",
             {
@@ -947,7 +947,7 @@ scwin.createLoginRequiredSection = function () {
         );
 
         // 제목 텍스트 생성
-        var titleSpan = $p.dynamicCreate(
+    let titleSpan = $p.dynamicCreate(
             "login_title",
             "span",
             {
@@ -959,7 +959,7 @@ scwin.createLoginRequiredSection = function () {
         titleSpan.setValue("GitHub Manager");
 
         // 설명 텍스트 생성
-        var descSpan = $p.dynamicCreate(
+    let descSpan = $p.dynamicCreate(
             "login_description",
             "span",
             {
@@ -971,7 +971,7 @@ scwin.createLoginRequiredSection = function () {
         descSpan.setValue("GitHub 레포지토리를 관리하려면 먼저 로그인해주세요.");
 
         // GitHub 로그인 버튼 생성
-        var loginButton = $p.dynamicCreate(
+    let loginButton = $p.dynamicCreate(
             "github_login_btn", 
             "trigger", 
             {
@@ -984,7 +984,7 @@ scwin.createLoginRequiredSection = function () {
         loginButton.bind("onclick", scwin.redirectToGitHubLogin);
 
         // 참고사항 섹션
-        var noteSection = $p.dynamicCreate(
+    let noteSection = $p.dynamicCreate(
             "note_section",
             "group",
             {
@@ -994,7 +994,7 @@ scwin.createLoginRequiredSection = function () {
             loginContainer
         );
 
-        var noteTitle = $p.dynamicCreate(
+    let noteTitle = $p.dynamicCreate(
             "note_title",
             "span",
             {
@@ -1005,7 +1005,7 @@ scwin.createLoginRequiredSection = function () {
         );
         noteTitle.setValue("참고사항");
 
-        var noteContent = $p.dynamicCreate(
+    let noteContent = $p.dynamicCreate(
             "note_content",
             "span",
             {
@@ -1121,13 +1121,13 @@ scwin.loadConnectedRepositories = function () {
 // 레포지토리 표시 업데이트
 scwin.updateRepositoryDisplay = function () {
     try {
-        var totalRepos = dlt_GitHubRepositoryVoList.getTotalRow();
-        var privateRepos = 0;
-        var publicRepos = 0;
+    let totalRepos = dlt_GitHubRepositoryVoList.getTotalRow();
+    let privateRepos = 0;
+    let publicRepos = 0;
 
         // 상태 카운트 계산
-        for (var i = 0; i < totalRepos; i++) {
-            var isPrivate = dlt_GitHubRepositoryVoList.getCellData(i, "isPrivate");
+        for let i = 0; i < totalRepos; i++) {
+        let isPrivate = dlt_GitHubRepositoryVoList.getCellData(i, "isPrivate");
             if (isPrivate && isPrivate.indexOf("Private") !== -1) {
                 privateRepos++;
             } else {
@@ -1136,10 +1136,10 @@ scwin.updateRepositoryDisplay = function () {
         }
 
         // 헤더 정보 업데이트
-        var countText = "총 " + totalRepos + "개 레포지토리 (" +
+    let countText = "총 " + totalRepos + "개 레포지토리 (" +
             publicRepos + "개 공개, " + privateRepos + "개 비공개)";
 
-        var countElement = document.getElementById("repo-count-info");
+    let countElement = document.getElementById("repo-count-info");
         if (countElement) {
             countElement.textContent = countText;
         }
@@ -1155,17 +1155,17 @@ scwin.updateRepositoryDisplay = function () {
 scwin.renderRepositoryCards = function (repositories) {
     try {
         // 카드 컨테이너 찾기
-        var cardsContainer = $p.getComponentById("repo_cards_container");
+    let cardsContainer = $p.getComponentById("repo_cards_container");
         if (!cardsContainer) {
             return;
         }
 
         // 컨테이너 스크롤 스타일 적용 (웹스퀘어 방식)
         try {
-            var containerComponent = $p.getComponentById("repo_cards_container");
+        let containerComponent = $p.getComponentById("repo_cards_container");
             if (containerComponent) {
                 // JavaScript 방식으로 스타일 적용
-                var realDomElement = document.getElementById(containerComponent.id);
+            let realDomElement = document.getElementById(containerComponent.id);
                 if (realDomElement) {
 
                     // 강제로 display: grid 적용
@@ -1202,14 +1202,14 @@ scwin.renderRepositoryCards = function (repositories) {
         }
 
         // 로딩 상태 숨기기
-        var loadingSection = $p.getComponentById("repo_loading_section");
+    let loadingSection = $p.getComponentById("repo_loading_section");
         if (loadingSection) {
             loadingSection.hide();
         }
 
         if (!repositories || repositories.length === 0) {
             // 빈 상태 표시
-            var emptySection = $p.getComponentById("repo_empty_section");
+        let emptySection = $p.getComponentById("repo_empty_section");
             if (emptySection) {
                 emptySection.show();
             }
@@ -1218,7 +1218,7 @@ scwin.renderRepositoryCards = function (repositories) {
         }
 
         // 빈 상태 숨기기
-        var emptySection = $p.getComponentById("repo_empty_section");
+    let emptySection = $p.getComponentById("repo_empty_section");
         if (emptySection) {
             emptySection.hide();
         }
@@ -1227,12 +1227,12 @@ scwin.renderRepositoryCards = function (repositories) {
         scwin.clearRepositoryCards();
 
         // 주의사항 문구 동적 생성 (카드 컨테이너의 부모에 생성)
-        var parentContainer = cardsContainer.getParent();
+    let parentContainer = cardsContainer.getParent();
         scwin.createAdminConnectionWarning(parentContainer);
 
         // 각 레포지토리를 카드로 렌더링
-        for (var i = 0; i < repositories.length; i++) {
-            var repo = repositories[i];
+        for let i = 0; i < repositories.length; i++) {
+        let repo = repositories[i];
             scwin.createRepositoryCard(repo, i, cardsContainer);
         }
 
@@ -1246,7 +1246,7 @@ scwin.renderRepositoryCards = function (repositories) {
 // 저장소 개수 업데이트
 scwin.updateRepositoryCount = function (count) {
     try {
-        var countElement = document.getElementById("repo-count-info");
+    let countElement = document.getElementById("repo-count-info");
         if (countElement) {
             countElement.textContent = "총 " + count + "개의 저장소";
         }
@@ -1258,7 +1258,7 @@ scwin.updateRepositoryCount = function (count) {
 scwin.formatDate = function (dateString) {
     try {
         if (!dateString) return "";
-        var date = new Date(dateString);
+    let date = new Date(dateString);
         return date.toLocaleDateString('ko-KR');
     } catch (e) {
         return dateString;
@@ -1268,11 +1268,11 @@ scwin.formatDate = function (dateString) {
 // 기존 카드 제거
 scwin.clearRepositoryCards = function () {
     try {
-        var cardsContainer = $p.getComponentById("repo_cards_container");
+    let cardsContainer = $p.getComponentById("repo_cards_container");
         if (cardsContainer) {
             // 자식 컴포넌트들을 모두 제거
-            var children = cardsContainer.getChildren();
-            for (var i = children.length - 1; i >= 0; i--) {
+        let children = cardsContainer.getChildren();
+            for let i = children.length - 1; i >= 0; i--) {
                 children[i].remove();
             }
         }
@@ -1284,13 +1284,13 @@ scwin.clearRepositoryCards = function () {
 scwin.createAdminConnectionWarning = function (container) {
     try {
         // 기존 주의사항 문구가 있으면 제거
-        var existingWarning = $p.getComponentById("admin_connection_warning");
+    let existingWarning = $p.getComponentById("admin_connection_warning");
         if (existingWarning) {
             existingWarning.remove();
         }
 
         // 간단한 주의사항 텍스트 생성 (기존 정적 형태와 동일하게)
-        var warningSpan = $p.dynamicCreate(
+    let warningSpan = $p.dynamicCreate(
             "admin_connection_warning",
             "span",
             {
@@ -1308,18 +1308,18 @@ scwin.createAdminConnectionWarning = function (container) {
 // 저장소 카드 생성 (웹스퀘어 방식)
 scwin.createRepositoryCard = function (repo, index, container) {
     try {
-        var cardId = "repo_card_" + index;
-        var isPrivate = repo.private || false;
-        var visibilityText = isPrivate ? "Private" : "Public";
-        var visibilityClass = isPrivate ? "private" : "public";
-        var language = repo.language || "Unknown";
-        var stars = repo.stargazers_count || 0;
-        var forks = repo.forks_count || 0;
-        var description = repo.description || "설명이 없습니다.";
-        var updatedAt = scwin.formatDate(repo.updated_at) || "업데이트 정보 없음";
+    let cardId = "repo_card_" + index;
+    let isPrivate = repo.private || false;
+    let visibilityText = isPrivate ? "Private" : "Public";
+    let visibilityClass = isPrivate ? "private" : "public";
+    let language = repo.language || "Unknown";
+    let stars = repo.stargazers_count || 0;
+    let forks = repo.forks_count || 0;
+    let description = repo.description || "설명이 없습니다.";
+    let updatedAt = scwin.formatDate(repo.updated_at) || "업데이트 정보 없음";
 
         // 카드 그룹 생성
-        var cardGroup = $p.dynamicCreate(
+    let cardGroup = $p.dynamicCreate(
             cardId,
             "group",
             {
@@ -1330,7 +1330,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         );
 
         // 카드 헤더 그룹
-        var headerGroup = $p.dynamicCreate(
+    let headerGroup = $p.dynamicCreate(
             cardId + "_header",
             "group",
             {
@@ -1341,7 +1341,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         );
 
         // 왼쪽 정보 그룹
-        var leftInfoGroup = $p.dynamicCreate(
+    let leftInfoGroup = $p.dynamicCreate(
             cardId + "_left_info",
             "group",
             {
@@ -1352,7 +1352,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         );
 
         // 소유자 이름
-        var ownerSpan = $p.dynamicCreate(
+    let ownerSpan = $p.dynamicCreate(
             cardId + "_owner",
             "span",
             {
@@ -1364,7 +1364,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         ownerSpan.setValue(repo.owner ? repo.owner.login : "");
 
         // 저장소 이름
-        var nameSpan = $p.dynamicCreate(
+    let nameSpan = $p.dynamicCreate(
             cardId + "_name",
             "span",
             {
@@ -1376,7 +1376,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         nameSpan.setValue(repo.name || "");
 
         // 가시성 표시
-        var visibilitySpan = $p.dynamicCreate(
+    let visibilitySpan = $p.dynamicCreate(
             cardId + "_visibility",
             "span",
             {
@@ -1389,7 +1389,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         visibilitySpan.setValue(visibilityText);
 
         // 설명
-        var descSpan = $p.dynamicCreate(
+    let descSpan = $p.dynamicCreate(
             cardId + "_desc",
             "span",
             {
@@ -1401,7 +1401,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         descSpan.setValue(description);
 
         // 통계 그룹
-        var statsGroup = $p.dynamicCreate(
+    let statsGroup = $p.dynamicCreate(
             cardId + "_stats",
             "group",
             {
@@ -1412,7 +1412,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         );
 
         // 별 개수
-        var starsSpan = $p.dynamicCreate(
+    let starsSpan = $p.dynamicCreate(
             cardId + "_stars",
             "span",
             {
@@ -1424,7 +1424,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         starsSpan.setValue("Stars: " + stars);
 
         // 포크 개수
-        var forksSpan = $p.dynamicCreate(
+    let forksSpan = $p.dynamicCreate(
             cardId + "_forks",
             "span",
             {
@@ -1436,7 +1436,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         forksSpan.setValue("Forks: " + forks);
 
         // 언어
-        var langSpan = $p.dynamicCreate(
+    let langSpan = $p.dynamicCreate(
             cardId + "_language",
             "span",
             {
@@ -1448,7 +1448,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         langSpan.setValue("Language: " + language);
 
         // 푸터 그룹
-        var footerGroup = $p.dynamicCreate(
+    let footerGroup = $p.dynamicCreate(
             cardId + "_footer",
             "group",
             {
@@ -1459,7 +1459,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         );
 
         // 업데이트 날짜
-        var updatedSpan = $p.dynamicCreate(
+    let updatedSpan = $p.dynamicCreate(
             cardId + "_updated",
             "span",
             {
@@ -1471,7 +1471,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         updatedSpan.setValue("업데이트: " + updatedAt);
 
         // 액션 버튼 그룹
-        var actionsGroup = $p.dynamicCreate(
+    let actionsGroup = $p.dynamicCreate(
             cardId + "_actions",
             "group",
             {
@@ -1482,7 +1482,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         );
 
         // 선택 버튼 (로그아웃 버튼 색상 적용)
-        var selectBtn = $p.dynamicCreate(
+    let selectBtn = $p.dynamicCreate(
             cardId + "_select_btn",
             "trigger",
             {
@@ -1497,7 +1497,7 @@ scwin.createRepositoryCard = function (repo, index, container) {
         });
 
         // GitHub 링크 버튼
-        var githubBtn = $p.dynamicCreate(
+    let githubBtn = $p.dynamicCreate(
             cardId + "_github_btn",
             "trigger",
             {
@@ -1523,12 +1523,12 @@ scwin.createRepositoryCard = function (repo, index, container) {
 // 선택된 카드 하이라이트
 scwin.highlightSelectedCard = function (selectedCardId) {
     try {
-        var container = $p.getComponentById("repo_cards_container");
+    let container = $p.getComponentById("repo_cards_container");
         if (container) {
-            var children = container.getChildren();
-            for (var i = 0; i < children.length; i++) {
-                var card = children[i];
-                var cardId = card.id || card.getId();
+        let children = container.getChildren();
+            for let i = 0; i < children.length; i++) {
+            let card = children[i];
+            let cardId = card.id || card.getId();
                 if (cardId === selectedCardId) {
                     // 선택된 카드 스타일
                     card.setStyle("border-color", "#007bff");
@@ -1550,8 +1550,8 @@ scwin.selectRepository = function (repoId, repoName, repoOwner, repoData) {
 
         // 현재 프로젝트에 이미 연결된 저장소가 있는지 확인
         if (scwin.currentRepository) {
-            var currentRepo = scwin.currentRepository.owner + "/" + scwin.currentRepository.name;
-            var selectedRepo = repoOwner + "/" + repoName;
+        let currentRepo = scwin.currentRepository.owner + "/" + scwin.currentRepository.name;
+        let selectedRepo = repoOwner + "/" + repoName;
 
             if (currentRepo === selectedRepo) {
                 $c.win.alert("이미 연결된 저장소입니다.");
@@ -1559,7 +1559,7 @@ scwin.selectRepository = function (repoId, repoName, repoOwner, repoData) {
             }
 
             // 다른 저장소가 이미 연결되어 있는 경우 교체 확인
-            var confirmMessage = "현재 프로젝트에 다른 저장소가 연결되어 있습니다.\n";
+        let confirmMessage = "현재 프로젝트에 다른 저장소가 연결되어 있습니다.\n";
             confirmMessage += "현재 연결된 저장소: " + currentRepo + "\n";
             confirmMessage += "새로 선택한 저장소: " + selectedRepo + "\n\n";
             confirmMessage += "저장소를 교체하시겠습니까?";
@@ -1581,7 +1581,7 @@ scwin.selectRepository = function (repoId, repoName, repoOwner, repoData) {
         };
 
         // DataMap에 개별 필드로 설정 (새로운 프로젝트 ID 헬퍼 함수 사용)
-        var projectId = scwin.getCurrentProjectId();
+    let projectId = scwin.getCurrentProjectId();
         dm_repository_select.set("projectId", projectId);
         dm_repository_select.set("githubRepositoryId", repoId ? repoId.toString() : "");
         dm_repository_select.set("repoOwner", repoOwner || "");
@@ -1601,10 +1601,10 @@ scwin.selectRepository = function (repoId, repoName, repoOwner, repoData) {
 scwin.sbm_connectRepository_submitdone = function (e) {
 
     try {
-        var response = e.responseJSON || e.response;
+    let response = e.responseJSON || e.response;
 
         if (response && response.success) {
-            var repoInfo = scwin.currentSelectingRepo;
+        let repoInfo = scwin.currentSelectingRepo;
             $c.win.alert("저장소가 성공적으로 프로젝트에 연결되었습니다:\n" + repoInfo.owner + "/" + repoInfo.name);
 
             // 브랜치 관리 화면으로 전환
@@ -1625,7 +1625,7 @@ scwin.sbm_connectRepository_submitdone = function (e) {
 scwin.sbm_connectRepository_submiterror = function (e) {
 
     try {
-        var errorMsg = "저장소 연결 중 오류가 발생했습니다.";
+    let errorMsg = "저장소 연결 중 오류가 발생했습니다.";
 
         if (e.responseText) {
             errorMsg += "\n오류 내용: " + e.responseText;
@@ -1644,14 +1644,14 @@ scwin.sbm_connectRepository_submiterror = function (e) {
 
 // 레포지토리 카드 HTML 생성
 scwin.createRepositoryCardHtml = function (repo) {
-    var isPrivate = repo.isPrivate;
-    var visibilityClass = isPrivate ? "private" : "public";
-    var visibilityText = isPrivate ? "[Private]" : "[Public]";
-    var language = repo.language || "Unknown";
-    var stars = parseInt(repo.stars) || 0;
-    var forks = parseInt(repo.forks) || 0;
-    var description = repo.description || "설명이 없습니다.";
-    var updatedAt = repo.updatedAt || "업데이트 정보 없음";
+let isPrivate = repo.isPrivate;
+let visibilityClass = isPrivate ? "private" : "public";
+let visibilityText = isPrivate ? "[Private]" : "[Public]";
+let language = repo.language || "Unknown";
+let stars = parseInt(repo.stars) || 0;
+let forks = parseInt(repo.forks) || 0;
+let description = repo.description || "설명이 없습니다.";
+let updatedAt = repo.updatedAt || "업데이트 정보 없음";
 
     return `
         <div class="repo-card" data-repo-id="${repo.id}" data-repo-name="${repo.name}" data-repo-owner="${repo.owner}">
@@ -1701,7 +1701,7 @@ scwin.createRepositoryCardHtml = function (repo) {
 // 카드 이벤트 연결
 scwin.attachCardEvents = function () {
     try {
-        var cards = document.querySelectorAll('.repo-card');
+    let cards = document.querySelectorAll('.repo-card');
         cards.forEach(function (card) {
             card.addEventListener('click', function (e) {
                 // 버튼 클릭 시에는 카드 선택 이벤트 방지
@@ -1709,9 +1709,9 @@ scwin.attachCardEvents = function () {
                     return;
                 }
 
-                var repoId = card.dataset.repoId;
-                var repoName = card.dataset.repoName;
-                var repoOwner = card.dataset.repoOwner;
+            let repoId = card.dataset.repoId;
+            let repoName = card.dataset.repoName;
+            let repoOwner = card.dataset.repoOwner;
 
                 // 기존 선택된 카드 스타일 제거
                 document.querySelectorAll('.repo-card').forEach(function (c) {
@@ -1735,7 +1735,7 @@ scwin.attachCardEvents = function () {
 //     try {
 
 //         // TODO: 2번 작업 - DB에 저장소 정보 저장
-//         var repositoryData = {
+//        let repositoryData = {
 //             githubRepoId: repoId,
 //             repoName: repoName,
 //             repoOwner: repoOwner,
@@ -1756,15 +1756,15 @@ scwin.attachCardEvents = function () {
 // 빈 레포지토리 상태 표시
 scwin.showEmptyRepositoryState = function () {
     try {
-        var countElement = document.getElementById("repo-count-info");
+    let countElement = document.getElementById("repo-count-info");
         if (countElement) {
             countElement.textContent = "연결된 레포지토리가 없습니다. 새 레포지토리를 연결해보세요.";
         }
 
         // UI 상태 업데이트
-        var cardsContainer = document.getElementById("repo_cards_container");
-        var loadingSection = document.getElementById("repo_loading_section");
-        var emptySection = document.getElementById("repo_empty_section");
+    let cardsContainer = document.getElementById("repo_cards_container");
+    let loadingSection = document.getElementById("repo_loading_section");
+    let emptySection = document.getElementById("repo_empty_section");
 
         if (loadingSection) {
             loadingSection.style.display = "none";
@@ -1785,9 +1785,9 @@ scwin.showEmptyRepositoryState = function () {
 // 레포지토리 로딩 상태 표시
 scwin.showRepositoryLoadingState = function () {
     try {
-        var cardsContainer = document.getElementById("repo_cards_container");
-        var loadingSection = document.getElementById("repo_loading_section");
-        var emptySection = document.getElementById("repo_empty_section");
+    let cardsContainer = document.getElementById("repo_cards_container");
+    let loadingSection = document.getElementById("repo_loading_section");
+    let emptySection = document.getElementById("repo_empty_section");
 
         if (cardsContainer) {
             cardsContainer.style.display = "none";
@@ -1824,12 +1824,12 @@ scwin.setLoading = function (isLoading, message) {
 // 로딩 표시 업데이트
 scwin.updateLoadingDisplay = function (isLoading) {
     try {
-        var loadingElement = document.getElementById("loading-overlay");
+    let loadingElement = document.getElementById("loading-overlay");
         if (loadingElement) {
             loadingElement.style.display = isLoading ? "flex" : "none";
 
             if (isLoading) {
-                var messageElement = loadingElement.querySelector(".loading-message");
+            let messageElement = loadingElement.querySelector(".loading-message");
                 if (messageElement) {
                     messageElement.textContent = dm_ui_state.get("loadingMessage") || "처리 중...";
                 }
@@ -1844,10 +1844,10 @@ scwin.formatDate = function (dateString) {
     if (!dateString) return "";
 
     try {
-        var date = new Date(dateString);
-        var now = new Date();
-        var diff = now - date;
-        var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    let date = new Date(dateString);
+    let now = new Date();
+    let diff = now - date;
+    let days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
         if (days === 0) {
             return "오늘";
@@ -1875,7 +1875,7 @@ scwin.getErrorMessage = function (error) {
         }
         if (error.responseText) {
             try {
-                var parsed = JSON.parse(error.responseText);
+            let parsed = JSON.parse(error.responseText);
                 if (parsed.message) return parsed.message;
                 if (parsed.error) return parsed.error;
             } catch (e) {
@@ -1913,16 +1913,16 @@ scwin.showBranchManagement = function (repoInfo) {
     try {
 
         // 저장소 정보 정규화 (데이터베이스 VO와 선택된 저장소 데이터 통일)
-        var normalizedRepoInfo = scwin.normalizeRepositoryInfo(repoInfo);
+    let normalizedRepoInfo = scwin.normalizeRepositoryInfo(repoInfo);
 
         // 주의사항 문구 제거 (브랜치 관리 화면에서는 불필요)
-        var existingWarning = $p.getComponentById("admin_connection_warning");
+    let existingWarning = $p.getComponentById("admin_connection_warning");
         if (existingWarning) {
             existingWarning.remove();
         }
 
         // 저장소 목록 숨기기
-        var cardsContainer = $p.getComponentById("repo_cards_container");
+    let cardsContainer = $p.getComponentById("repo_cards_container");
         if (cardsContainer) {
             cardsContainer.hide();
         }
@@ -1943,7 +1943,7 @@ scwin.showBranchManagement = function (repoInfo) {
 // 저장소 정보 정규화 (DB VO와 선택된 저장소 데이터 통일)
 scwin.normalizeRepositoryInfo = function (repoInfo) {
     try {
-        var normalized = {};
+    let normalized = {};
 
         // 데이터베이스 VO 형식인지 확인
         if (repoInfo.repoOwner && repoInfo.repoName) {
@@ -1978,16 +1978,16 @@ scwin.showBranchManagementView = function (repoInfo) {
 scwin.showBranchManagementSection = function (repoInfo) {
     try {
         // 기존 브랜치 관리 섹션 제거
-        var existingSection = $p.getComponentById("branch_management_section");
+    let existingSection = $p.getComponentById("branch_management_section");
         if (existingSection) {
             existingSection.remove();
         }
 
         // 메인 컨테이너 찾기
-        var mainContainer = $p.getComponentById("repo_cards_container").getParent();
+    let mainContainer = $p.getComponentById("repo_cards_container").getParent();
 
         // 브랜치 관리 섹션 생성
-        var branchSection = $p.dynamicCreate(
+    let branchSection = $p.dynamicCreate(
             "branch_management_section",
             "group",
             {
@@ -1998,7 +1998,7 @@ scwin.showBranchManagementSection = function (repoInfo) {
         );
 
         // 저장소 정보 헤더
-        var headerGroup = $p.dynamicCreate(
+    let headerGroup = $p.dynamicCreate(
             "branch_header",
             "group",
             {
@@ -2009,7 +2009,7 @@ scwin.showBranchManagementSection = function (repoInfo) {
         );
 
         // 저장소 제목
-        var titleSpan = $p.dynamicCreate(
+    let titleSpan = $p.dynamicCreate(
             "branch_title",
             "span",
             {
@@ -2021,7 +2021,7 @@ scwin.showBranchManagementSection = function (repoInfo) {
         titleSpan.setValue(repoInfo.owner + "/" + repoInfo.name);
 
         // 뒤로가기 버튼 (검정색)
-        var backBtn = $p.dynamicCreate(
+    let backBtn = $p.dynamicCreate(
             "back_to_repos_btn",
             "trigger",
             {
@@ -2036,7 +2036,7 @@ scwin.showBranchManagementSection = function (repoInfo) {
         });
 
         // 브랜치 액션 버튼 그룹 (새로고침 왼쪽, 나머지 오른쪽)
-        var actionGroup = $p.dynamicCreate(
+    let actionGroup = $p.dynamicCreate(
             "branch_actions",
             "group",
             {
@@ -2047,7 +2047,7 @@ scwin.showBranchManagementSection = function (repoInfo) {
         );
 
         // 새로고침 버튼 (녹색) - 왼쪽에 배치
-        var refreshBtn = $p.dynamicCreate(
+    let refreshBtn = $p.dynamicCreate(
             "refresh_branches_btn",
             "trigger",
             {
@@ -2062,7 +2062,7 @@ scwin.showBranchManagementSection = function (repoInfo) {
         });
 
         // 오른쪽 요소들을 위한 그룹
-        var rightGroup = $p.dynamicCreate(
+    let rightGroup = $p.dynamicCreate(
             "branch_right_actions",
             "group",
             {
@@ -2073,7 +2073,7 @@ scwin.showBranchManagementSection = function (repoInfo) {
         );
 
         // 브랜치명 라벨
-        var branchNameLabel = $p.dynamicCreate(
+    let branchNameLabel = $p.dynamicCreate(
             "branch_name_label",
             "span",
             {
@@ -2085,7 +2085,7 @@ scwin.showBranchManagementSection = function (repoInfo) {
         branchNameLabel.setValue("브랜치명:");
 
         // 브랜치명 입력 필드
-        var branchNameInput = $p.dynamicCreate(
+    let branchNameInput = $p.dynamicCreate(
             "branch_name_input",
             "input",
             {
@@ -2096,7 +2096,7 @@ scwin.showBranchManagementSection = function (repoInfo) {
         );
 
         // 기준브랜치 라벨
-        var baseBranchLabel = $p.dynamicCreate(
+    let baseBranchLabel = $p.dynamicCreate(
             "base_branch_label",
             "span",
             {
@@ -2108,7 +2108,7 @@ scwin.showBranchManagementSection = function (repoInfo) {
         baseBranchLabel.setValue("기준브랜치:");
 
         // 기준브랜치 입력 필드
-        var baseBranchInput = $p.dynamicCreate(
+    let baseBranchInput = $p.dynamicCreate(
             "base_branch_input",
             "input",
             {
@@ -2121,7 +2121,7 @@ scwin.showBranchManagementSection = function (repoInfo) {
         baseBranchInput.setValue(repoInfo.defaultBranch || "main");
 
         // 브랜치 생성 버튼 (황금색)
-        var createBtn = $p.dynamicCreate(
+    let createBtn = $p.dynamicCreate(
             "create_branch_btn",
             "trigger",
             {
@@ -2136,7 +2136,7 @@ scwin.showBranchManagementSection = function (repoInfo) {
         });
 
         // 브랜치 목록 컨테이너
-        var branchListContainer = $p.dynamicCreate(
+    let branchListContainer = $p.dynamicCreate(
             "branch_list_container",
             "group",
             {
@@ -2190,7 +2190,7 @@ scwin.loadBranches = function (repoInfo) {
 
         // 브랜치 조회 파라미터 설정
 
-        var projectId = scwin.getCurrentProjectId();
+    let projectId = scwin.getCurrentProjectId();
 
         dm_branch_params.set("owner", repoInfo.owner);
         dm_branch_params.set("repo", repoInfo.name);
@@ -2209,16 +2209,16 @@ scwin.loadBranches = function (repoInfo) {
 // 브랜치 로딩 상태 표시
 scwin.showBranchLoadingState = function () {
     try {
-        var container = $p.getComponentById("branch_list_container");
+    let container = $p.getComponentById("branch_list_container");
         if (container) {
             // 기존 내용 제거
-            var children = container.getChildren();
-            for (var i = children.length - 1; i >= 0; i--) {
+        let children = container.getChildren();
+            for let i = children.length - 1; i >= 0; i--) {
                 children[i].remove();
             }
 
             // 로딩 메시지 표시
-            var loadingSpan = $p.dynamicCreate(
+        let loadingSpan = $p.dynamicCreate(
                 "branch_loading",
                 "span",
                 {
@@ -2236,16 +2236,16 @@ scwin.showBranchLoadingState = function () {
 // 브랜치 에러 상태 표시
 scwin.showBranchErrorState = function (message) {
     try {
-        var container = $p.getComponentById("branch_list_container");
+    let container = $p.getComponentById("branch_list_container");
         if (container) {
             // 기존 내용 제거
-            var children = container.getChildren();
-            for (var i = children.length - 1; i >= 0; i--) {
+        let children = container.getChildren();
+            for let i = children.length - 1; i >= 0; i--) {
                 children[i].remove();
             }
 
             // 에러 메시지 표시
-            var errorSpan = $p.dynamicCreate(
+        let errorSpan = $p.dynamicCreate(
                 "branch_error",
                 "span",
                 {
@@ -2268,7 +2268,7 @@ scwin.showBranchErrorState = function (message) {
 scwin.sbm_loadBranches_submitdone = function (e) {
 
     try {
-        var response = e.responseJSON || e.response;
+    let response = e.responseJSON || e.response;
 
         // 401 인증 오류 체크 (백엔드에서 error_code가 AUTH_EXPIRED로 오는 경우)
         if (response && response.error_code === "AUTH_EXPIRED") {
@@ -2289,7 +2289,7 @@ scwin.sbm_loadBranches_submitdone = function (e) {
         }
 
         if (response && response.success) {
-            var branches = response.data || [];
+        let branches = response.data || [];
             
             // data가 문자열이면 JSON 파싱
             if (typeof branches === 'string') {
@@ -2322,7 +2322,7 @@ scwin.sbm_loadBranches_submiterror = function (e) {
 scwin.sbm_createBranch_submitdone = function (e) {
 
     try {
-        var response = e.responseJSON || e.response;
+    let response = e.responseJSON || e.response;
 
         // 401 인증 오류 체크 (백엔드에서 error_code가 AUTH_EXPIRED로 오는 경우)
         if (response && response.error_code === "AUTH_EXPIRED") {
@@ -2369,19 +2369,19 @@ scwin.sbm_createBranch_submiterror = function (e) {
 // 브랜치 목록 렌더링
 scwin.renderBranchList = function (branches) {
     try {
-        var container = $p.getComponentById("branch_list_container");
+    let container = $p.getComponentById("branch_list_container");
         if (!container) {
             return;
         }
 
         // 기존 내용 제거
-        var children = container.getChildren();
-        for (var i = children.length - 1; i >= 0; i--) {
+    let children = container.getChildren();
+        for let i = children.length - 1; i >= 0; i--) {
             children[i].remove();
         }
 
         if (!branches || branches.length === 0) {
-            var emptySpan = $p.dynamicCreate(
+        let emptySpan = $p.dynamicCreate(
                 "branch_empty",
                 "span",
                 {
@@ -2395,8 +2395,8 @@ scwin.renderBranchList = function (branches) {
         }
 
         // 브랜치 목록 생성
-        for (var i = 0; i < branches.length; i++) {
-            var branch = branches[i];
+        for let i = 0; i < branches.length; i++) {
+        let branch = branches[i];
             scwin.createBranchCard(branch, i, container);
         }
 
@@ -2408,18 +2408,18 @@ scwin.renderBranchList = function (branches) {
 // 브랜치 카드 생성
 scwin.createBranchCard = function (branch, index, container) {
     try {
-        var cardId = "branch_card_" + index;
-        var branchName = branch.name || "Unknown";
-        var commitSha = branch.commit ? branch.commit.sha : "Unknown";
-        var commitMessage = "최신 커밋"; // GitHub API 기본 브랜치 정보에는 커밋 메시지가 없음
-        var commitAuthor = "Unknown"; // GitHub API 기본 브랜치 정보에는 작성자 정보가 없음
-        var isProtected = branch.protected || false;
+    let cardId = "branch_card_" + index;
+    let branchName = branch.name || "Unknown";
+    let commitSha = branch.commit ? branch.commit.sha : "Unknown";
+    let commitMessage = "최신 커밋"; // GitHub API 기본 브랜치 정보에는 커밋 메시지가 없음
+    let commitAuthor = "Unknown"; // GitHub API 기본 브랜치 정보에는 작성자 정보가 없음
+    let isProtected = branch.protected || false;
 
         // 기본 브랜치 확인
-        var isDefault = (branchName === "main" || branchName === "master");
+    let isDefault = (branchName === "main" || branchName === "master");
 
         // 카드 그룹 생성
-        var cardGroup = $p.dynamicCreate(
+    let cardGroup = $p.dynamicCreate(
             cardId,
             "group",
             {
@@ -2430,7 +2430,7 @@ scwin.createBranchCard = function (branch, index, container) {
         );
 
         // 브랜치 정보 헤더
-        var headerGroup = $p.dynamicCreate(
+    let headerGroup = $p.dynamicCreate(
             cardId + "_header",
             "group",
             {
@@ -2441,7 +2441,7 @@ scwin.createBranchCard = function (branch, index, container) {
         );
 
         // 브랜치 이름
-        var nameSpan = $p.dynamicCreate(
+    let nameSpan = $p.dynamicCreate(
             cardId + "_name",
             "span",
             {
@@ -2453,7 +2453,7 @@ scwin.createBranchCard = function (branch, index, container) {
         nameSpan.setValue("브랜치: " + branchName);
 
         // 브랜치 상태
-        var statusGroup = $p.dynamicCreate(
+    let statusGroup = $p.dynamicCreate(
             cardId + "_status",
             "group",
             {
@@ -2465,7 +2465,7 @@ scwin.createBranchCard = function (branch, index, container) {
 
         // 삭제 버튼을 헤더의 오른쪽으로 이동 (기본 브랜치가 아닌 경우) - 큰 크기
         if (!isDefault) {
-            var deleteBtn = $p.dynamicCreate(
+        let deleteBtn = $p.dynamicCreate(
                 cardId + "_delete",
                 "trigger",
                 {
@@ -2479,7 +2479,7 @@ scwin.createBranchCard = function (branch, index, container) {
                 // deleteBranch 함수 호출 대신 직접 구현
                 if (confirm("정말로 '" + branchName + "' 브랜치를 삭제하시겠습니까?")) {
                     
-                    var repoInfo = scwin.currentRepository;
+                let repoInfo = scwin.currentRepository;
                     if (!repoInfo) {
                         $c.win.alert("저장소 정보를 찾을 수 없습니다.");
                         return;
@@ -2497,7 +2497,7 @@ scwin.createBranchCard = function (branch, index, container) {
 
         // 기본 뱃지를 헤더의 오른쪽으로 이동 (기본 브랜치인 경우) - 큰 크기
         if (isDefault) {
-            var defaultBadge = $p.dynamicCreate(
+        let defaultBadge = $p.dynamicCreate(
                 cardId + "_default",
                 "span",
                 {
@@ -2510,7 +2510,7 @@ scwin.createBranchCard = function (branch, index, container) {
         }
 
         if (isProtected) {
-            var protectedBadge = $p.dynamicCreate(
+        let protectedBadge = $p.dynamicCreate(
                 cardId + "_protected",
                 "span",
                 {
@@ -2523,7 +2523,7 @@ scwin.createBranchCard = function (branch, index, container) {
         }
 
         // 커밋 정보
-        var commitGroup = $p.dynamicCreate(
+    let commitGroup = $p.dynamicCreate(
             cardId + "_commit",
             "group",
             {
@@ -2533,7 +2533,7 @@ scwin.createBranchCard = function (branch, index, container) {
             cardGroup
         );
 
-        var commitSpan = $p.dynamicCreate(
+    let commitSpan = $p.dynamicCreate(
             cardId + "_commit_info",
             "span",
             {
@@ -2567,12 +2567,12 @@ scwin.showCreateBranchDialog = function (repoInfo) {
         }
         
         
-        var branchName = prompt("새 브랜치 이름을 입력하세요:");
+    let branchName = prompt("새 브랜치 이름을 입력하세요:");
         if (!branchName || !branchName.trim()) {
             return;
         }
         
-        var fromBranch = prompt("기준 브랜치 이름을 입력하세요:", repoInfo.default_branch || "main");
+    let fromBranch = prompt("기준 브랜치 이름을 입력하세요:", repoInfo.default_branch || "main");
         if (!fromBranch || !fromBranch.trim()) {
             return;
         }
@@ -2608,26 +2608,26 @@ scwin.createBranchFromInput = function (repoInfo) {
         
         
         // 입력 필드에서 브랜치명 가져오기
-        var branchNameInput = $p.getComponentById("branch_name_input");
+    let branchNameInput = $p.getComponentById("branch_name_input");
         if (!branchNameInput) {
             $c.win.alert("브랜치명 입력 필드를 찾을 수 없습니다.");
             return;
         }
         
-        var branchName = branchNameInput.getValue();
+    let branchName = branchNameInput.getValue();
         if (!branchName || !branchName.trim()) {
             $c.win.alert("브랜치명을 입력해주세요.");
             return;
         }
         
         // 입력 필드에서 기준 브랜치명 가져오기
-        var baseBranchInput = $p.getComponentById("base_branch_input");
+    let baseBranchInput = $p.getComponentById("base_branch_input");
         if (!baseBranchInput) {
             $c.win.alert("기준 브랜치 입력 필드를 찾을 수 없습니다.");
             return;
         }
         
-        var fromBranch = baseBranchInput.getValue();
+    let fromBranch = baseBranchInput.getValue();
         if (!fromBranch || !fromBranch.trim()) {
             $c.win.alert("기준 브랜치명을 입력해주세요.");
             return;
@@ -2655,7 +2655,7 @@ scwin.createBranchFromInput = function (repoInfo) {
 scwin.setPopupScrollMode = function(mode) {
     try {
         // 팝업 컨테이너 찾기
-        var popupElement = document.getElementById('mf_wfr_mainContent_github_manager_popup_wframe');
+    let popupElement = document.getElementById('mf_wfr_mainContent_github_manager_popup_wframe');
         
         if (!popupElement) {
             return;
@@ -2881,13 +2881,13 @@ scwin.checkCurrentRepository = function () {
 scwin.sbm_getCurrentRepository_submitdone = function (e) {
 
     try {
-        var response = e.responseJSON || e.response;
+    let response = e.responseJSON || e.response;
 
         if (response && response.success && response.repository) {
-            var repository = response.repository;
+        let repository = response.repository;
 
             // 저장소 정보를 repoInfo 형태로 변환
-            var repoInfo = {
+        let repoInfo = {
                 id: repository.githubRepositoryId,
                 name: repository.repoName,
                 owner: repository.repoOwner,
@@ -2920,7 +2920,7 @@ scwin.sbm_getCurrentRepository_submiterror = function (e) {
 scwin.sbm_deleteBranch_submitdone = function (e) {
     
     try {
-        var response = e.responseJSON || e.response;
+    let response = e.responseJSON || e.response;
         
         if (response && response.success) {
             $c.win.alert("성공: 브랜치 삭제 성공!");
@@ -2950,12 +2950,12 @@ scwin.sbm_deleteBranch_submitdone = function (e) {
 // 브랜치 삭제 실패 콜백
 scwin.sbm_deleteBranch_submiterror = function (e) {
     
-    var errorMsg = "브랜치 삭제에 실패했습니다.";
+let errorMsg = "브랜치 삭제에 실패했습니다.";
     if (e.responseJSON && e.responseJSON.error) {
         errorMsg += "\n\n오류: " + e.responseJSON.error;
     } else if (e.responseText) {
         try {
-            var parsed = JSON.parse(e.responseText);
+        let parsed = JSON.parse(e.responseText);
             if (parsed.error) {
                 errorMsg += "\n\n오류: " + parsed.error;
             }
@@ -2972,13 +2972,13 @@ scwin.showRepositorySelectionView = function () {
     try {
 
         // 브랜치 관리 섹션 숨기기
-        var branchSection = $p.getComponentById("branch_management_section");
+    let branchSection = $p.getComponentById("branch_management_section");
         if (branchSection) {
             branchSection.remove();
         }
 
         // 저장소 카드 컨테이너 표시
-        var cardsContainer = $p.getComponentById("repo_cards_container");
+    let cardsContainer = $p.getComponentById("repo_cards_container");
         if (cardsContainer) {
             cardsContainer.show();
         }
@@ -3027,11 +3027,11 @@ scwin.closeWindow_onclick = function () {
 // 기타 필요한 함수들
 scwin.onRepositorySelect = function () {
     try {
-        var selectedRow = dlt_connected_repositories.getFocusedRow();
+    let selectedRow = dlt_connected_repositories.getFocusedRow();
         if (selectedRow >= 0) {
-            var repoId = dlt_connected_repositories.getCellData(selectedRow, "projectRepoId");
-            var repoName = dlt_connected_repositories.getCellData(selectedRow, "repoName");
-            var repoOwner = dlt_connected_repositories.getCellData(selectedRow, "repoOwner");
+        let repoId = dlt_connected_repositories.getCellData(selectedRow, "projectRepoId");
+        let repoName = dlt_connected_repositories.getCellData(selectedRow, "repoName");
+        let repoOwner = dlt_connected_repositories.getCellData(selectedRow, "repoOwner");
 
 
             // 선택된 레포지토리 정보 설정
@@ -3039,7 +3039,7 @@ scwin.onRepositorySelect = function () {
             dm_github_form.set("currentRepo", repoOwner + "/" + repoName);
 
             // 브랜치 목록 로드
-            var repoInfo = {
+        let repoInfo = {
                 owner: repoOwner,
                 name: repoName
             };
@@ -3057,20 +3057,20 @@ scwin.filterRepositories = function (keyword) {
 
         if (!keyword || keyword.trim() === "") {
             // 필터 초기화 - 모든 행 표시
-            for (var i = 0; i < dlt_connected_repositories.getTotalRow(); i++) {
+            for let i = 0; i < dlt_connected_repositories.getTotalRow(); i++) {
                 dlt_connected_repositories.setRowVisible(i, true);
             }
             return;
         }
 
         keyword = keyword.toLowerCase();
-        var visibleCount = 0;
+    let visibleCount = 0;
 
-        for (var i = 0; i < dlt_connected_repositories.getTotalRow(); i++) {
-            var repoName = dlt_connected_repositories.getCellData(i, "repoName") || "";
-            var repoOwner = dlt_connected_repositories.getCellData(i, "repoOwner") || "";
+        for let i = 0; i < dlt_connected_repositories.getTotalRow(); i++) {
+        let repoName = dlt_connected_repositories.getCellData(i, "repoName") || "";
+        let repoOwner = dlt_connected_repositories.getCellData(i, "repoOwner") || "";
 
-            var isMatch = repoName.toLowerCase().includes(keyword) ||
+        let isMatch = repoName.toLowerCase().includes(keyword) ||
                 repoOwner.toLowerCase().includes(keyword);
 
             dlt_connected_repositories.setRowVisible(i, isMatch);
@@ -3085,7 +3085,7 @@ scwin.filterRepositories = function (keyword) {
 scwin.loadBranchesAlternative = function (owner, repo) {
 
     // 기존 함수 호출 방식으로 변경
-    var repoInfo = {
+let repoInfo = {
         owner: owner,
         name: repo
     };
@@ -3097,14 +3097,14 @@ scwin.loadBranchesAlternative = function (owner, repo) {
 // 웹훅 상태 확인
 scwin.checkWebhookStatus = function (owner, repo) {
 
-    var requestData = {
+let requestData = {
         owner: owner,
         repo: repo
     };
 
     try {
         $c.sbm.execute(sbm_checkWebhookStatus, requestData).then(function (e) {
-            var result = e.responseJSON || e;
+        let result = e.responseJSON || e;
             scwin.updateWebhookStatus(result);
         }).catch(function (e) {
             scwin.updateWebhookStatus({ exists: false, error: scwin.getErrorMessage(e) });
@@ -3123,16 +3123,16 @@ scwin.updateWebhookStatus = function (status) {
 
 // 브랜치 생성
 scwin.createBranch = function () {
-    var branchName = dm_github_form.get("newBranchName");
-    var sourceBranch = dm_github_form.get("sourceBranch");
-    var currentRepo = dm_github_form.get("currentRepo");
+let branchName = dm_github_form.get("newBranchName");
+let sourceBranch = dm_github_form.get("sourceBranch");
+let currentRepo = dm_github_form.get("currentRepo");
 
     if (!branchName || !sourceBranch || !currentRepo) {
         $c.win.alert("브랜치명, 소스 브랜치, 레포지토리를 모두 선택해주세요.");
         return;
     }
 
-    var parts = currentRepo.split("/");
+let parts = currentRepo.split("/");
     if (parts.length !== 2) {
         $c.win.alert("올바른 레포지토리가 선택되지 않았습니다.");
         return;
@@ -3140,7 +3140,7 @@ scwin.createBranch = function () {
 
     scwin.setLoading(true, "브랜치 생성 중...");
 
-    var requestData = {
+let requestData = {
         owner: parts[0],
         repo: parts[1],
         branchName: branchName,
@@ -3159,7 +3159,7 @@ scwin.createBranch = function () {
             scwin.addToHistory("create_branch", parts[1], branchName, "성공");
         }).catch(function (e) {
             scwin.setLoading(false);
-            var errorMsg = scwin.getErrorMessage(e);
+        let errorMsg = scwin.getErrorMessage(e);
             $c.win.alert("브랜치 생성에 실패했습니다.\n" + errorMsg);
             scwin.addToHistory("create_branch", parts[1], branchName, "실패");
         });
@@ -3170,7 +3170,7 @@ scwin.createBranch = function () {
 
 // 브랜치 삭제
 scwin.deleteBranch = function (branchName) {
-    var currentRepo = dm_github_form.get("currentRepo");
+let currentRepo = dm_github_form.get("currentRepo");
 
     if (!branchName || !currentRepo) {
         $c.win.alert("삭제할 브랜치와 레포지토리를 선택해주세요.");
@@ -3181,7 +3181,7 @@ scwin.deleteBranch = function (branchName) {
         return;
     }
 
-    var parts = currentRepo.split("/");
+let parts = currentRepo.split("/");
     if (parts.length !== 2) {
         $c.win.alert("올바른 레포지토리가 선택되지 않았습니다.");
         return;
@@ -3189,7 +3189,7 @@ scwin.deleteBranch = function (branchName) {
 
     scwin.setLoading(true, "브랜치 삭제 중...");
 
-    var requestData = {
+let requestData = {
         owner: parts[0],
         repo: parts[1],
         branchName: branchName
@@ -3206,7 +3206,7 @@ scwin.deleteBranch = function (branchName) {
             scwin.addToHistory("delete_branch", parts[1], branchName, "성공");
         }).catch(function (e) {
             scwin.setLoading(false);
-            var errorMsg = scwin.getErrorMessage(e);
+        let errorMsg = scwin.getErrorMessage(e);
             $c.win.alert("브랜치 삭제에 실패했습니다.\n" + errorMsg);
             scwin.addToHistory("delete_branch", parts[1], branchName, "실패");
         });
@@ -3227,7 +3227,7 @@ scwin.oauthPopup_closeAction = function () {
 scwin.checkCurrentRepository = function () {
     try {
         // 현재 프로젝트 ID 가져오기
-        var projectId = scwin.getCurrentProjectId();
+    let projectId = scwin.getCurrentProjectId();
         if (!projectId) {
             scwin.loadConnectedRepositories();
             return;
@@ -3272,7 +3272,7 @@ scwin.checkCurrentRepository = function () {
 scwin.getCurrentProjectId = function () {
     try {
         // 여러 방법으로 프로젝트 ID 찾기
-        var projectId = null;
+    let projectId = null;
 
         try {
             projectId = $p.getParameter("projectId") || $p.getParameter("project_id");
