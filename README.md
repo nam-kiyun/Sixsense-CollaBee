@@ -6,6 +6,14 @@
 
 COLLABEE는 개발 프로젝트 관리와 팀 커뮤니케이션을 위한 웹 기반 플랫폼입니다. 초급 개발자들이 프로젝트를 효율적으로 관리하고 팀원들과 원활하게 소통할 수 있도록 설계되었습니다.
 
+## ABOUT SIXSENSE
+
+오감을 제외한 제 6의 감각으로서 사용자에게 새로운 경험을 제공하는 팀
+
+- 남기윤(팀장) fordnam1@gmail.com
+- 황유석(부팀장) swh3190@gmail.com
+- 국다인(팀원) dorazi0423@gmail.com
+
 ## 주요 기능
 
 ### 1. 프로젝트 관리
@@ -55,17 +63,27 @@ COLLABEE는 개발 프로젝트 관리와 팀 커뮤니케이션을 위한 웹 �
 - **MyBatis** - 데이터베이스 매핑
 - **Maven** - 의존성 관리
 - **WebSocket** - 실시간 통신
+- **Proworks 5** - 통합 개발 플랫폼
 
 ### 프론트엔드
 
 - **WebSquare** - UI 프레임워크
+- **Matrix Mobile** - 모바일 프레임워크
 - **JavaScript/HTML/CSS**
 - **WebRTC** - 화상통화
 
 ### 데이터베이스
 
-- **MySQL/MariaDB**
+- **MariaDB** - 메인 데이터베이스
+- **Amazon RDS** - 클라우드 데이터베이스
 - **Redis** - 세션 및 캐시 관리
+
+### 인프라 및 배포
+
+- **Amazon EC2** - 클라우드 서버
+- **Apache Tomcat** - 웹 애플리케이션 서버
+- **Docker** - 컨테이너화
+- **Node.js** - 서버사이드 JavaScript 런타임
 
 ### 외부 연동
 
@@ -101,15 +119,19 @@ src/main/
 ## 스크린샷
 
 ### 칸반 보드
+
 ![칸반 보드](src/main/webapp/images/kanbanPage.PNG)
 
 ### 태스크 관리
+
 ![태스크 페이지](src/main/webapp/images/taskPage.PNG)
 
 ### 화상통화
+
 ![화상통화](src/main/webapp/images/videoChat.PNG)
 
 ### GitHub 연동
+
 ![GitHub 페이지](src/main/webapp/images/githubPage.PNG)
 
 ## 주요 컴포넌트
@@ -131,9 +153,3 @@ src/main/
 - OAuth 인증을 통한 저장소 연결
 - 브랜치 및 커밋 정보 동기화
 - 웹훅을 통한 실시간 업데이트
-
-### 4. 실시간 업데이트
-
-- WebSocket 기반 실시간 통신
-- 태스크 변경사항 알림
-- 프로젝트 업데이트 알림
