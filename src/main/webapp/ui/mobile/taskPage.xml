@@ -250,8 +250,6 @@ scwin.initializeChatWebSocket = function () {
                                 scwin.chatDate.add(todayText);
                             }
                             scwin.addChatMessage(data.userName, data.message, data.createdAt, false, data.userImage, data.commentId);
-                        } else {
-                            console.log("내 메시지 서버 에코 무시:", data.message);
                         }
                         break;
                     case 'delete-message':
@@ -272,11 +270,10 @@ scwin.initializeChatWebSocket = function () {
                         break;
 
                     default:
-                        console.warn("알 수 없는 메시지 타입:", data.type, data);
                         break;
                 }
             } catch (error) {
-                console.error("❌ 메시지 처리 오류:", error);
+                // 메시지 처리 오류 발생
             }
         };
 
@@ -289,7 +286,7 @@ scwin.initializeChatWebSocket = function () {
         };
 
     } catch (error) {
-        console.error("❌ WebSocket 초기화 실패:", error);
+        // WebSocket 초기화 실패
     }
 };
 
@@ -448,7 +445,6 @@ scwin.deleteChat = function (chat) {
     let insertBeforeTarget = group.childControlList.find(c => c.render === firstChild) ?? null;
 
     if (idx === -1) {
-        console.warn("삭제 대상이 그룹 안에 존재하지 않습니다.");
         return;
     }
 
@@ -626,7 +622,6 @@ scwin.btn_back_onclick = function() {
     try {
         $p.closePopup();
     } catch(e) {
-        console.error("팝업 닫기 오류:", e);
         if (window.parent && window.parent.$p && window.parent.$p.closePopup) {
             window.parent.$p.closePopup();
         }

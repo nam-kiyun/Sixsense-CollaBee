@@ -132,21 +132,16 @@ scwin.onpageload = function () {
     if (grp_main) {
         grp_main.hide();
     }
-    
-    console.log("모바일 프로젝트 페이지 로드 완료");
 };
 
 // 프로젝트 데이터 설정 함수 (부모에서 호출)
 scwin.setProjectData = function(projectData) {
-    console.log("모바일 projectMainPage에 프로젝트 데이터 설정:", projectData);
-    
     // 전역 변수에 저장
     scwin.currentProjectData = projectData;
     
     // dm_projectVo에 설정
     if (projectData && projectData.projectId) {
         dm_projectVo.set("projectId", projectData.projectId);
-        console.log("dm_projectVo에 프로젝트 ID 설정 완료:", projectData.projectId);
         
         // 프로젝트명 업데이트
         scwin.updateProjectName(projectData.projectName);
@@ -168,10 +163,9 @@ scwin.updateProjectName = function(projectName) {
     try {
         if (output_projectName) {
             output_projectName.setValue(projectName);
-            console.log("프로젝트명 업데이트:", projectName);
         }
     } catch(e) {
-        console.error("프로젝트명 업데이트 오류:", e);
+        // 프로젝트명 업데이트 오류
     }
 };
 
@@ -203,10 +197,8 @@ scwin.generateVideoChatPopupId = function () {
 // 화상통화 팝업 열기 함수
 scwin.openVideoChat = function() {
     
-    
     // 이미 팝업이 열려있다면 새로 열지 않음
     if (scwin.videoPopupState.isOpen && scwin.videoPopupState.currentPopupId) {
-        
         return;
     }
     
@@ -216,7 +208,6 @@ scwin.openVideoChat = function() {
     // 1차 시도: dm_projectVo에서 가져오기
     try {
         currentProjectId = dm_projectVo.get("projectId");
-        
     } catch (e) {
        
     }
@@ -240,12 +231,8 @@ scwin.openVideoChat = function() {
     
     // 모든 방법이 실패한 경우
     if (!currentProjectId) {
-        
-        alert("프로젝트 정보를 찾을 수 없습니다. 페이지를 새로고침 해주세요.");
         return;
     }
-    
-    
     
     // 고유한 팝업 ID 생성
     var uniquePopupId = scwin.generateVideoChatPopupId();
@@ -276,13 +263,11 @@ scwin.openVideoChat = function() {
     scwin.videoPopupState.isOpen = true;
     scwin.videoPopupState.currentPopupId = uniquePopupId;
     
-    
     $p.openPopup("/InsWebApp/ui/videochat/webRTCVideoChatPage.xml", options);
 };
 
 // 화상통화 팝업 닫기 액션
 scwin.videoChat_closeAction = function(argRuntimeID, argJsnInfo) {
-    
     
     try {
         // 팝업 닫기
@@ -294,35 +279,26 @@ scwin.videoChat_closeAction = function(argRuntimeID, argJsnInfo) {
         
         // 팝업 상태 초기화
         scwin.videoPopupState.isOpen = false;
-        scwin.videoPopupState.currentPopupId = null;
-        
-     
-        
+        scwin.videoPopupState.currentPopupId = null;    
     } catch (e) {
-        
-        
         // 오류 발생 시에도 상태 초기화
         scwin.videoPopupState.isOpen = false;
         scwin.videoPopupState.currentPopupId = null;
     }
-    
     return true;
 };
 
 // 보드 목록 로드
 scwin.loadBoardList = function() {
-    console.log("보드 목록 로드 시작");
     if (dm_projectVo.get("projectId")) {
         $c.sbm.execute(load_Board);
     } else {
-        console.log("프로젝트 ID가 없어 보드 목록을 로드하지 않습니다.");
+
     }
 };
 
 // 보드 목록 로드 완료 콜백
 scwin.load_Board_submitdone = function(e) {
-    console.log("보드 목록 로드 응답:", e.responseJSON);
-    
     const boardListVo = e.responseJSON.boardVoList;
     if (boardListVo && boardListVo.length > 0) {
         scwin.currentBoardList = boardListVo;
@@ -334,14 +310,12 @@ scwin.load_Board_submitdone = function(e) {
             scwin.loadTaskList(boardListVo[0].boardId);
         }
     } else {
-        console.log("보드 목록이 비어있습니다.");
         scwin.renderNoBoardsMessage();
     }
 };
 
 // 보드 버튼들 동적 생성
 scwin.renderBoardButtons = function(boardList) {
-    console.log("보드 버튼 렌더링:", boardList);
     
     try {
         // 기존 버튼들 제거
@@ -349,7 +323,6 @@ scwin.renderBoardButtons = function(boardList) {
         
         const buttonContainer = grp_boardButtons;
         if (!buttonContainer) {
-            console.error("보드 버튼 컨테이너를 찾을 수 없습니다.");
             return;
         }
         
@@ -384,23 +357,19 @@ scwin.renderBoardButtons = function(boardList) {
             }
         }
         
-        console.log("보드 버튼 렌더링 완료:", boardList.length + "개");
-        
     } catch(e) {
-        console.error("보드 버튼 렌더링 오류:", e);
+        
     }
 };
 
 // 보드 버튼 클릭 이벤트
 scwin.onBoardButtonClick = function(boardId, boardTitle, buttonId) {
-    console.log("보드 버튼 클릭:", boardId, boardTitle);
     
     try {
         // 모든 보드 버튼에서 active 클래스 제거
         scwin.dynamicComponents.forEach(comp => {
             if (comp.type === "board_button" && comp.component) {
                 comp.component.removeClass("active");
-                console.log("active 클래스 제거:", comp.id);
             }
         });
         
@@ -408,9 +377,8 @@ scwin.onBoardButtonClick = function(boardId, boardTitle, buttonId) {
         const clickedButton = $p.getComponentById(buttonId);
         if (clickedButton) {
             clickedButton.addClass("active");
-            console.log("active 클래스 추가:", buttonId);
         } else {
-            console.error("클릭된 버튼을 찾을 수 없습니다:", buttonId);
+
         }
         
         // 선택된 보드 ID 저장
@@ -420,14 +388,12 @@ scwin.onBoardButtonClick = function(boardId, boardTitle, buttonId) {
         scwin.loadTaskList(boardId);
         
     } catch(e) {
-        console.error("보드 버튼 클릭 처리 오류:", e);
+        // 보드 버튼 클릭 처리 오류
     }
 };
 
 // 태스크 목록 로드
 scwin.loadTaskList = function(boardId) {
-    console.log("태스크 목록 로드 시작:", boardId);
-    
     try {
         // 검색 조건 설정
         dm_search_task.set("boardId", boardId);
@@ -438,61 +404,49 @@ scwin.loadTaskList = function(boardId) {
         $c.sbm.execute(load_Tasks_With_UserName);
         
     } catch(e) {
-        console.error("태스크 목록 로드 오류:", e);
+        // 태스크 목록 로드 오류
     }
 };
 
 // 태스크 목록 로드 완료 콜백
 scwin.load_Tasks_submitdone = function(e) {
-    console.log("태스크 목록 로드 응답:", e.responseJSON);
-    
     const taskVoList = e.responseJSON.elData.taskVoList;
     if (taskVoList) {
         scwin.currentTaskList = taskVoList;
         scwin.renderTaskCards(taskVoList);
     } else {
-        console.log("태스크 목록이 비어있습니다.");
         scwin.renderNoTasksMessage();
     }
 };
 
 // 사용자 이름을 포함한 태스크 목록 로드 완료 콜백
 scwin.load_Tasks_With_UserName_submitdone = function(e) {
-    console.log("사용자 이름 포함 태스크 목록 로드 응답:", e.responseJSON);
-    
     try {
         const taskVoList = e.responseJSON.elData.taskVoList;
         if (taskVoList && taskVoList.length > 0) {
-            console.log("태스크 데이터 확인:", taskVoList[0]);
             scwin.currentTaskList = taskVoList;
             scwin.renderTaskCards(taskVoList);
         } else {
-            console.log("태스크 목록이 비어있습니다.");
             scwin.renderNoTasksMessage();
         }
     } catch (error) {
-        console.error("태스크 데이터 처리 중 오류:", error);
         scwin.renderNoTasksMessage();
     }
 };
 
 // 사용자 이름을 포함한 태스크 목록 로드 오류 콜백
 scwin.load_Tasks_With_UserName_submiterror = function(e) {
-    console.error("사용자 이름 포함 태스크 목록 로드 실패:", e);
     scwin.renderNoTasksMessage();
 };
 
 // 태스크 카드들 동적 생성
 scwin.renderTaskCards = function(taskList) {
-    console.log("태스크 카드 렌더링:", taskList);
-    
     try {
         // 기존 태스크 카드들 제거
         scwin.clearTaskCards();
         
         const mainGroup = grp_mainGroup;
         if (!mainGroup) {
-            console.error("메인 그룹을 찾을 수 없습니다.");
             return;
         }
         
@@ -507,10 +461,8 @@ scwin.renderTaskCards = function(taskList) {
             scwin.createTaskCard(task, i);
         }
         
-        console.log("태스크 카드 렌더링 완료:", taskList.length + "개");
-        
     } catch(e) {
-        console.error("태스크 카드 렌더링 오류:", e);
+        // 태스크 카드 렌더링 오류
     }
 };
 
@@ -530,7 +482,6 @@ scwin.createTaskCard = function(task, index) {
         );
         
         if (!taskCard) {
-            console.error("태스크 카드 생성 실패:", cardId);
             return;
         }
         
@@ -594,7 +545,7 @@ scwin.createTaskCard = function(task, index) {
         });
         
     } catch(e) {
-        console.error("태스크 카드 생성 오류:", e);
+        
     }
 };
 
@@ -639,8 +590,6 @@ scwin.getPriorityLabel = function(priority) {
 
 // 태스크 카드 클릭 이벤트
 scwin.onTaskCardClick = function(task) {
-    console.log("태스크 카드 클릭:", task);
-    debugger;
     try {
         // 고유한 팝업 ID 생성 (타임스탬프 사용으로 중복 방지)
         const uniquePopupId = "taskPagePopup_" + task.taskId + "_" + Date.now();
@@ -667,30 +616,28 @@ scwin.onTaskCardClick = function(task) {
             }
         };
         
-        console.log("taskPage 팝업 열기 - 태스크 ID:", task.taskId);
         $p.openPopup("/InsWebApp/ui/mobile/taskPage.xml", taskPageOptions);
         
     } catch(e) {
-        console.error("태스크 페이지 열기 오류:", e);
         alert("태스크 상세 페이지를 열 수 없습니다.");
     }
 };
 
 // taskPage 팝업 닫기 액션
 scwin.taskPage_closeAction = function(argRuntimeID, argJsnInfo) {
-    console.log("taskPage 팝업 닫기 - ID:", argRuntimeID);
+    
     
     try {
         // 태스크 데이터가 변경되었을 수 있으므로 태스크 목록 새로고침
         if (scwin.selectedBoardId) {
-            console.log("태스크 목록 새로고침:", scwin.selectedBoardId);
+            
             scwin.loadTaskList(scwin.selectedBoardId);
         }
         
-        console.log("taskPage 팝업 닫기 완료");
+        
         
     } catch (e) {
-        console.error("taskPage 팝업 닫기 오류:", e);
+        
     }
     
     // closeAction 함수에서는 true를 반환해야 팝업이 정상적으로 닫힘
@@ -732,7 +679,7 @@ scwin.renderNoTasksMessage = function() {
             });
         }
     } catch(e) {
-        console.error("태스크 없음 메시지 생성 오류:", e);
+        
     }
 };
 
@@ -771,7 +718,7 @@ scwin.renderNoBoardsMessage = function() {
             });
         }
     } catch(e) {
-        console.error("보드 없음 메시지 생성 오류:", e);
+        
     }
 };
 
@@ -796,7 +743,7 @@ scwin.clearTaskCards = function() {
         );
         
     } catch(e) {
-        console.error("태스크 카드 정리 오류:", e);
+        
     }
 };
 
@@ -821,7 +768,7 @@ scwin.clearBoardButtons = function() {
         );
         
     } catch(e) {
-        console.error("보드 버튼 정리 오류:", e);
+        
     }
 };
 
@@ -837,7 +784,7 @@ scwin.clearDynamicComponents = function() {
         });
         scwin.dynamicComponents = [];
     } catch(e) {
-        console.error("동적 컴포넌트 정리 오류:", e);
+        
     }
 };
 
@@ -881,7 +828,7 @@ scwin.getUserNameByUserId = function (userId, taskData) {
         // 모든 방법이 실패하면 userId 반환
         return userId || "담당자 없음";
     } catch (e) {
-        console.error("사용자 이름 조회 실패:", e);
+        
         return userId || "담당자 없음";
     }
 };

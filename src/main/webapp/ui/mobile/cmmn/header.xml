@@ -65,13 +65,9 @@ scwin.notice = function () {
                 $h.view.notification(callback, opt);
             })
             .catch(err => {
-                console.error("인코딩 중 오류 발생:", err);
             });
 
     });
-
-    eventSource.onopen = () => console.log("연결완료");
-    eventSource.onerror = (err) => console.log("오류발생", err);
 }
 async function fetchAndConvertToBase64(url) {
     const response = await fetch(url);

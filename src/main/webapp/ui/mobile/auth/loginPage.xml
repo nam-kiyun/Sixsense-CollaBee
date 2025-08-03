@@ -57,22 +57,12 @@
             grecaptcha.render(actualDomId, {
                 sitekey: "6LdornErAAAAAD-oky4HtvcskvmYnoLi_i4Dc2f3",
             });
-            $p.log("reCAPTCHA 렌더링 요청 완료: " + actualDomId);
         });
 
-    } else {
-        if (recaptchaComponent === null) {
-            $p.log("Error: 'recaptcha-container' 컴포넌트를 찾을 수 없습니다. ID를 확인하세요.");
-        }
-        if (typeof grecaptcha === "undefined") {
-            $p.log("Error: grecaptcha API를 찾을 수 없거나 준비되지 않았습니다. reCAPTCHA 스크립트 로딩을 확인하세요.");
-        }
     }
-
     document.addEventListener('keydown', function (event) {
         if (event.key === 'Enter') {
             scwin.login_button_onclick();
-            console.log('엔터 키가 눌렸습니다!');
         }
     });
 };
@@ -201,14 +191,12 @@ scwin.sbm_rechapcher_submitdone = async function (e) {
 //리캡챠 오류 실행
 scwin.sbm_recaptcha_submiterror = function (e) {
     const responseData = e.responseJSON;
-    console.log(responseData);
 };
 
 
 //로그인 완료 실행
 scwin.sbm_login_submitdone = async function (e) {
     const responseData = e.responseJSON;
-    console.log(responseData);
     if (responseData.elHeader.resMsg === "EL.ERROR.LOGIN.0002") {
         await $c.win.alert("로그인 정보가 올바르지 않습니다.");
     } else if (responseData.elHeader.resMsg === "EL.ERROR.LOGIN.0001") {
