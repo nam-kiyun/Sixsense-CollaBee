@@ -61,7 +61,8 @@
 		<servlet-class>inswave.matrix.mobile.servlet.MatrixMobileServlet</servlet-class>
 		<init-param>
 			<param-name>MATRIX_MOBILE_HOME</param-name>
-			<param-value>C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home</param-value>
+			<!-- <param-value>C:\InswaveToolSP1\workspace\InsWebApp\matrix_mobile_home</param-value> -->
+			<param-value>/usr/local/tomcat/volume/matrix_mobile_home</param-value>
 		</init-param>
 	</servlet>
 	<servlet-mapping>

@@ -394,13 +394,13 @@
  */
 
 /** @type {boolean} 초기화 플래그 (페이지 로드 시 팝업 방지용) */
-var isInitializing = false;
+let isInitializing = false;
 
 /** @type {Array} 역할 변경 대기 목록 */
-var pendingChanges = [];
+let pendingChanges = [];
 
 /** @type {Array} 원본 사용자 데이터 */
-var originalData = [];
+let originalData = [];
 
 /**
  * 페이지 로드 시 초기화
@@ -413,11 +413,11 @@ scwin.onpageload = function() {
     isInitializing = true;
     
     // 여러 방법으로 project_id 파라미터 가져오기 (DetailPage와 동일한 방식)
-    var projectId = $p.getParameter("projectId");
+    let projectId = $p.getParameter("projectId");
     
     // URL에서 직접 파라미터 추출
     if (!projectId) {
-        var urlParams = new URLSearchParams(window.location.search);
+        let urlParams = new URLSearchParams(window.location.search);
         projectId = urlParams.get('projectId');
     }
     
@@ -427,14 +427,14 @@ scwin.onpageload = function() {
     }
     
     if (!projectId) {
-        var urlParams = new URLSearchParams(window.location.search);
+        let urlParams = new URLSearchParams(window.location.search);
         projectId = urlParams.get('project_id');
     }
     
     // 부모 프레임에서 파라미터 가져오기
     if (!projectId) {
         try {
-            var parentFrame = $p.parent();
+            let parentFrame = $p.parent();
             if (parentFrame && parentFrame.scwin && parentFrame.scwin.projectId) {
                 projectId = parentFrame.scwin.projectId;
             }
@@ -511,17 +511,17 @@ scwin.loadProjectUsers = function(projectId) {
                 dl_projectUsers.removeAll();
                 
                 // 응답 데이터에서 프로젝트 사용자 목록 추출
-                var projectUserList = data.projectUserListVo.projectUserVoList || [];
+                let projectUserList = data.projectUserListVo.projectUserVoList || [];
                 
                 
                 // 데이터리스트에 데이터 추가 및 원본 데이터 저장
                 originalData = []; // 초기화
-                for (var i = 0; i < projectUserList.length; i++) {
-                    var user = projectUserList[i];
-                    var rowIndex = dl_projectUsers.insertRow();
+                for (let i = 0; i < projectUserList.length; i++) {
+                    let user = projectUserList[i];
+                    let rowIndex = dl_projectUsers.insertRow();
                     // 기본 프로필 이미지 URL
-                    var defaultProfileImage = "https://collabee.s3.ap-northeast-2.amazonaws.com/defaultUserImage.png";
-                    var profileImageUrl = user.profileImageUrl && user.profileImageUrl.trim() !== "" ? user.profileImageUrl : defaultProfileImage;
+                    let defaultProfileImage = "https://collabee.s3.ap-northeast-2.amazonaws.com/defaultUserImage.png";
+                    let profileImageUrl = user.profileImageUrl && user.profileImageUrl.trim() !== "" ? user.profileImageUrl : defaultProfileImage;
                     
                     dl_projectUsers.setCellData(rowIndex, "userId", user.userId || "");
                     dl_projectUsers.setCellData(rowIndex, "userName", user.userName || "");
@@ -587,8 +587,8 @@ scwin.input_search_onkeyup = function(e) {
  */
 scwin.btn_search_onclick = function(e) {
     // 직접 input에서 값 가져오기
-    var searchValue = input_search.getValue();
-    var projectId = dm_search.get("projectId");
+    let searchValue = input_search.getValue();
+    let projectId = dm_search.get("projectId");
     
     if (!searchValue || searchValue.trim() === "") {
         scwin.showSearchMessage("사용자 ID를 입력해주세요.", true);
@@ -596,7 +596,7 @@ scwin.btn_search_onclick = function(e) {
     }
     
     // 이메일 형식 검증
-    var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    let emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(searchValue.trim())) {
         scwin.showSearchMessage("올바른 이메일 형식을 입력해주세요.", true);
         return;
@@ -660,7 +660,7 @@ scwin.showSearchMessage = function(message, isError) {
         output_searchMessage.setValue(message);
         
         // 스타일 적용
-        var color = isError ? "#dc3545" : "#28a745"; // 빨간색 또는 초록색
+        let color = isError ? "#dc3545" : "#28a745"; // 빨간색 또는 초록색
         output_searchMessage.setStyle("color", color);
         output_searchMessage.setStyle("display", "block");
         
@@ -690,10 +690,10 @@ scwin.hideSearchMessage = function() {
  * @param {Object} result - 검색 결과 데이터
  */
 scwin.handleSearchResult = function(result) {
-    var found = result.found;
-    var isProjectMember = result.isProjectMember;
-    var email = result.email;
-    var userName = result.userName;
+    let found = result.found;
+    let isProjectMember = result.isProjectMember;
+    let email = result.email;
+    let userName = result.userName;
     
     // 기존 메시지 숨김
     scwin.hideSearchMessage();
@@ -773,8 +773,8 @@ scwin.recheckUserMembership = function(userId, projectId, callback) {
  */
 scwin.btn_addUser_onclick = function(e) {
     // 현재 검색된 사용자 정보 확인
-    var searchValue = input_search.getValue();
-    var projectId = dm_search.get("projectId");
+    let searchValue = input_search.getValue();
+    let projectId = dm_search.get("projectId");
     
     if (!searchValue || searchValue.trim() === "") {
         scwin.showSearchMessage("먼저 사용자를 검색해주세요.", true);
@@ -782,10 +782,10 @@ scwin.btn_addUser_onclick = function(e) {
     }
     
     // 검색 결과에서 사용자 정보 확인
-    var found = dm_searchResult.get("found");
-    var isProjectMember = dm_searchResult.get("isProjectMember");
-    var userName = dm_searchResult.get("userName");
-    var resultEmail = dm_searchResult.get("email");
+    let found = dm_searchResult.get("found");
+    let isProjectMember = dm_searchResult.get("isProjectMember");
+    let userName = dm_searchResult.get("userName");
+    let resultEmail = dm_searchResult.get("email");
     
     
     
@@ -918,8 +918,8 @@ scwin.btn_emailInviteModalConfirm_onclick = function(e) {
     
     
     if (scwin.pendingEmailInvite) {
-        var userEmail = scwin.pendingEmailInvite.userEmail;
-        var projectId = scwin.pendingEmailInvite.projectId;
+        let userEmail = scwin.pendingEmailInvite.userEmail;
+        let projectId = scwin.pendingEmailInvite.projectId;
         
         scwin.closeEmailInviteConfirmModal();
         scwin.sendProjectInviteEmail(userEmail, projectId);
@@ -982,13 +982,13 @@ scwin.sendProjectInviteEmail = function(userEmail, projectId) {
  * @param {string} userId - 초대할 사용자 ID
  */
 scwin.inviteUser = function(userId) {
-    var projectId = dm_search.get("projectId");
+    let projectId = dm_search.get("projectId");
     
     
     
     try {
         // 워크플로우 실행
-        var option = {
+        let option = {
             id: "wf_inviteUser",
             action: "action_inviteUser",
             success: function(data) {
@@ -1026,11 +1026,11 @@ scwin.grd_projectUsers_oncellchange = function(e) {
     
     // 역할 컬럼이 변경된 경우에만 처리
     if (e.colID === "role") {
-        var rowIndex = e.rowIndex;
-        var userId = dl_projectUsers.getCellData(rowIndex, "userId");
-        var userName = dl_projectUsers.getCellData(rowIndex, "userName");
-        var newRole = e.newValue;
-        var oldRole = e.oldValue;
+        let rowIndex = e.rowIndex;
+        let userId = dl_projectUsers.getCellData(rowIndex, "userId");
+        let userName = dl_projectUsers.getCellData(rowIndex, "userName");
+        let newRole = e.newValue;
+        let oldRole = e.oldValue;
         
         
         
@@ -1045,7 +1045,7 @@ scwin.grd_projectUsers_oncellchange = function(e) {
 scwin.changeUserRole = function(userId, userName, newRole) {
     
     
-    var projectId = dm_search.get("projectId");
+    let projectId = dm_search.get("projectId");
     
     // 일단 권한 변경 기능은 추후 구현 예정
     $c.win.alert("권한 변경 기능은 현재 개발 중입니다.\n" + userName + "의 역할을 " + 
@@ -1063,7 +1063,7 @@ scwin.changeUserRole = function(userId, userName, newRole) {
 scwin.renderUserList = function() {
     
     
-    var userListContainer = document.getElementById("grp_userDataList");
+    let userListContainer = document.getElementById("grp_userDataList");
     if (!userListContainer) {
         
         return;
@@ -1073,12 +1073,12 @@ scwin.renderUserList = function() {
     userListContainer.innerHTML = "";
     
     // 데이터리스트에서 사용자 정보 가져오기
-    var userCount = dl_projectUsers.getTotalRow();
+    let userCount = dl_projectUsers.getTotalRow();
     
     
     if (userCount === 0) {
         // 사용자가 없는 경우 메시지 표시
-        var noDataDiv = document.createElement("div");
+        let noDataDiv = document.createElement("div");
         noDataDiv.style.cssText = "padding:40px;text-align:center;color:#666666;font-size:16px;";
         noDataDiv.innerHTML = "프로젝트에 참여하는 멤버가 없습니다.";
         userListContainer.appendChild(noDataDiv);
@@ -1086,42 +1086,42 @@ scwin.renderUserList = function() {
     }
     
     // 각 사용자에 대해 HTML 생성
-    for (var i = 0; i < userCount; i++) {
-        var userId = dl_projectUsers.getCellData(i, "userId");
-        var userName = dl_projectUsers.getCellData(i, "userName");
-        var email = dl_projectUsers.getCellData(i, "email");
-        var role = dl_projectUsers.getCellData(i, "role");
+    for (let i = 0; i < userCount; i++) {
+        let userId = dl_projectUsers.getCellData(i, "userId");
+        let userName = dl_projectUsers.getCellData(i, "userName");
+        let email = dl_projectUsers.getCellData(i, "email");
+        let role = dl_projectUsers.getCellData(i, "role");
         
         // 사용자 행 생성
-        var userRow = document.createElement("div");
+        let userRow = document.createElement("div");
         userRow.className = "user-row";
         userRow.style.cssText = "display:flex;padding:16px 24px;border-bottom:1px solid #e9ecef;align-items:center;";
         
         // 사용자명
-        var nameDiv = document.createElement("div");
+        let nameDiv = document.createElement("div");
         nameDiv.style.cssText = "flex:1;text-align:center;font-size:16px;color:#333333;font-family:Inter,sans-serif;";
         nameDiv.textContent = userName;
         
         // 이메일
-        var emailDiv = document.createElement("div");
+        let emailDiv = document.createElement("div");
         emailDiv.style.cssText = "flex:2;text-align:center;font-size:16px;color:#666666;font-family:Inter,sans-serif;";
         emailDiv.textContent = email;
         
         // 역할 선택
-        var roleDiv = document.createElement("div");
+        let roleDiv = document.createElement("div");
         roleDiv.style.cssText = "flex:1;text-align:center;";
         
-        var roleSelect = document.createElement("select");
+        let roleSelect = document.createElement("select");
         roleSelect.style.cssText = "width:100px;height:36px;border:1px solid #ddd;border-radius:6px;padding:0 8px;font-size:14px;font-family:Inter,sans-serif;";
         
         // 관리자 옵션
-        var adminOption = document.createElement("option");
+        let adminOption = document.createElement("option");
         adminOption.value = "admin";
         adminOption.textContent = "관리자";
         if (role === "admin") adminOption.selected = true;
         
         // 에디터 옵션
-        var editorOption = document.createElement("option");
+        let editorOption = document.createElement("option");
         editorOption.value = "editor";
         editorOption.textContent = "에디터";
         if (role === "editor") editorOption.selected = true;
@@ -1132,7 +1132,7 @@ scwin.renderUserList = function() {
         // 역할 변경 이벤트 리스너
         roleSelect.addEventListener("change", function(userId, userName) {
             return function(e) {
-                var newRole = e.target.value;
+                let newRole = e.target.value;
                 scwin.changeUserRole(userId, userName, newRole);
             };
         }(userId, userName));
@@ -1177,15 +1177,15 @@ scwin.grd_projectUsers_onafterchange = function(e) {
     // oncellchange가 작동하지 않는 경우를 위한 대안
     if (e && e.colID === "role") {
         
-        var rowIndex = e.rowIndex;
-        var userId = dl_projectUsers.getCellData(rowIndex, "userId");
-        var userName = dl_projectUsers.getCellData(rowIndex, "userName");
-        var newRole = e.newValue;
-        var oldRole = e.oldValue;
+        let rowIndex = e.rowIndex;
+        let userId = dl_projectUsers.getCellData(rowIndex, "userId");
+        let userName = dl_projectUsers.getCellData(rowIndex, "userName");
+        let newRole = e.newValue;
+        let oldRole = e.oldValue;
         
         // oncellchange와 동일한 로직 수행
         if (newRole !== oldRole && newRole && oldRole && !isInitializing) {
-            var existingIndex = pendingChanges.findIndex(function(change) {
+            let existingIndex = pendingChanges.findIndex(function(change) {
                 return change.userId === userId;
             });
             
@@ -1208,16 +1208,16 @@ scwin.grd_projectUsers_onafterchange = function(e) {
 
 // 직접 select 요소의 change 이벤트를 감지하는 함수 추가
 scwin.attachSelectChangeEvents = function() {
-    var attempts = 0;
-    var maxAttempts = 10;
+    let attempts = 0;
+    let maxAttempts = 10;
     
     function tryAttachEvents() {
         attempts++;
         
         // 다양한 셀렉터로 select 요소 찾기
-        var selects = document.querySelectorAll('#grd_projectUsers select');
-        var allSelects = document.querySelectorAll('select'); // 모든 select
-        var gridContainer = document.querySelector('#grd_projectUsers');
+        let selects = document.querySelectorAll('#grd_projectUsers select');
+        let allSelects = document.querySelectorAll('select'); // 모든 select
+        let gridContainer = document.querySelector('#grd_projectUsers');
         
        
         
@@ -1236,14 +1236,14 @@ scwin.attachSelectChangeEvents = function() {
                     select.addEventListener('change', function(event) {
                         
                         
-                        var newValue = event.target.value;
-                        var rowElement = event.target.closest('tr');
-                        var rowIndex = Array.from(rowElement.parentNode.children).indexOf(rowElement) - 1; // 헤더 제외
+                        let newValue = event.target.value;
+                        let rowElement = event.target.closest('tr');
+                        let rowIndex = Array.from(rowElement.parentNode.children).indexOf(rowElement) - 1; // 헤더 제외
                         
                         if (rowIndex >= 0) {
-                            var userId = dl_projectUsers.getCellData(rowIndex, "userId");
-                            var userName = dl_projectUsers.getCellData(rowIndex, "userName");
-                            var oldValue = dl_projectUsers.getCellData(rowIndex, "role");
+                            let userId = dl_projectUsers.getCellData(rowIndex, "userId");
+                            let userName = dl_projectUsers.getCellData(rowIndex, "userName");
+                            let oldValue = dl_projectUsers.getCellData(rowIndex, "role");
                             
                             
                             
@@ -1252,7 +1252,7 @@ scwin.attachSelectChangeEvents = function() {
                                 dl_projectUsers.setCellData(rowIndex, "role", newValue);
                                 
                                 // 변경사항 저장
-                                var existingIndex = pendingChanges.findIndex(function(change) {
+                                let existingIndex = pendingChanges.findIndex(function(change) {
                                     return change.userId === userId;
                                 });
                                 
@@ -1288,9 +1288,9 @@ scwin.attachSelectChangeEvents = function() {
 
 
 // 변경사항 임시 저장용 배열
-var pendingChanges = [];
+let pendingChanges = [];
 // 원본 데이터 저장용 배열
-var originalData = [];
+let originalData = [];
 
 // GridView 셀 변경 이벤트 핸들러 (웹스퀘어 네이티브 방식)
 scwin.grd_projectUsers_oncellchange = function(e) {
@@ -1306,18 +1306,18 @@ scwin.grd_projectUsers_oncellchange = function(e) {
     
     // 역할 컬럼이 변경된 경우에만 처리
     if (e.colID === "role") {
-        var rowIndex = e.rowIndex;
-        var userId = dl_projectUsers.getCellData(rowIndex, "userId");
-        var userName = dl_projectUsers.getCellData(rowIndex, "userName");
-        var newRole = e.newValue;
-        var oldRole = e.oldValue;
+        let rowIndex = e.rowIndex;
+        let userId = dl_projectUsers.getCellData(rowIndex, "userId");
+        let userName = dl_projectUsers.getCellData(rowIndex, "userName");
+        let newRole = e.newValue;
+        let oldRole = e.oldValue;
         
         
         
         // 역할이 실제로 변경된 경우에만 처리
         if (newRole !== oldRole && newRole && oldRole) {
             // 임시 변경사항에 추가 (기존 변경사항이 있으면 업데이트)
-            var existingIndex = pendingChanges.findIndex(function(change) {
+            let existingIndex = pendingChanges.findIndex(function(change) {
                 return change.userId === userId;
             });
             
@@ -1325,7 +1325,7 @@ scwin.grd_projectUsers_oncellchange = function(e) {
                 pendingChanges[existingIndex].newRole = newRole;
                 
             } else {
-                var newChange = {
+                let newChange = {
                     userId: userId,
                     userName: userName,
                     oldRole: oldRole,
@@ -1354,16 +1354,16 @@ scwin.detectRoleChanges = function() {
     
     pendingChanges = []; // 기존 변경사항 초기화
     
-    var userCount = dl_projectUsers.getTotalRow();
+    let userCount = dl_projectUsers.getTotalRow();
     
     
-    for (var i = 0; i < userCount; i++) {
-        var currentUserId = dl_projectUsers.getCellData(i, "userId");
-        var currentUserName = dl_projectUsers.getCellData(i, "userName");
-        var currentRole = dl_projectUsers.getCellData(i, "role");
+    for (let i = 0; i < userCount; i++) {
+        let currentUserId = dl_projectUsers.getCellData(i, "userId");
+        let currentUserName = dl_projectUsers.getCellData(i, "userName");
+        let currentRole = dl_projectUsers.getCellData(i, "role");
         
         // 원본 데이터에서 같은 사용자 찾기
-        var originalUser = originalData.find(function(user) {
+        let originalUser = originalData.find(function(user) {
             return user.userId === currentUserId;
         });
         
@@ -1403,22 +1403,22 @@ scwin.btn_save_onclick = function(e) {
         return;
     }
     
-    var projectId = dm_search.get("projectId");
+    let projectId = dm_search.get("projectId");
     
     // 관리자 수 검증
-    var finalAdminCount = 0;
-    var userCount = dl_projectUsers.getTotalRow();
+    let finalAdminCount = 0;
+    let userCount = dl_projectUsers.getTotalRow();
     
-    for (var i = 0; i < userCount; i++) {
-        var userId = dl_projectUsers.getCellData(i, "userId");
-        var currentRole = dl_projectUsers.getCellData(i, "role");
+    for (let i = 0; i < userCount; i++) {
+        let userId = dl_projectUsers.getCellData(i, "userId");
+        let currentRole = dl_projectUsers.getCellData(i, "role");
         
         // 변경사항이 있는지 확인
-        var pendingChange = pendingChanges.find(function(change) {
+        let pendingChange = pendingChanges.find(function(change) {
             return change.userId === userId;
         });
         
-        var finalRole = pendingChange ? pendingChange.newRole : currentRole;
+        let finalRole = pendingChange ? pendingChange.newRole : currentRole;
         if (finalRole === "admin") {
             finalAdminCount++;
         }
@@ -1430,7 +1430,7 @@ scwin.btn_save_onclick = function(e) {
     }
     
     // 변경사항 확인 메시지
-    var changeList = pendingChanges.map(function(change) {
+    let changeList = pendingChanges.map(function(change) {
         return change.userName + ": " + (change.oldRole === "admin" ? "관리자" : "에디터") + 
                " → " + (change.newRole === "admin" ? "관리자" : "에디터");
     }).join("\n");
@@ -1453,12 +1453,12 @@ scwin.saveRoleChanges = function(index) {
         return;
     }
     
-    var change = pendingChanges[index];
-    var projectId = dm_search.get("projectId");
+    let change = pendingChanges[index];
+    let projectId = dm_search.get("projectId");
     
     
     
-    var requestData = "projectId=" + encodeURIComponent(projectId) + 
+    let requestData = "projectId=" + encodeURIComponent(projectId) + 
                       "&userId=" + encodeURIComponent(change.userId) + 
                       "&role=" + encodeURIComponent(change.newRole);
     
@@ -1495,15 +1495,15 @@ scwin.saveRoleChanges = function(index) {
 
 // 사용자 역할 변경 함수 (기존 함수는 유지하되 사용하지 않음)
 scwin.changeUserRole = function(userId, userName, newRole) {
-    var projectId = dm_search.get("projectId");
+    let projectId = dm_search.get("projectId");
     
     // 관리자를 에디터로 바꿀 때 관리자 수 확인
     if (newRole === "editor") {
-        var adminCount = 0;
-        var userCount = dl_projectUsers.getTotalRow();
+        let adminCount = 0;
+        let userCount = dl_projectUsers.getTotalRow();
         
-        for (var i = 0; i < userCount; i++) {
-            var role = dl_projectUsers.getCellData(i, "role");
+        for (let i = 0; i < userCount; i++) {
+            let role = dl_projectUsers.getCellData(i, "role");
             if (role === "admin") {
                 adminCount++;
             }
@@ -1603,11 +1603,11 @@ scwin.grd_projectUsers_onafterchange = function(e) {
 scwin.makeProfileImagesRound = function() {
     try {
         // 그리드뷰 내의 모든 이미지 찾기
-        var gridElement = document.getElementById('grd_projectUsers');
+        let gridElement = document.getElementById('grd_projectUsers');
         if (gridElement) {
-            var images = gridElement.querySelectorAll('img');
-            for (var i = 0; i < images.length; i++) {
-                var img = images[i];
+            let images = gridElement.querySelectorAll('img');
+            for (let i = 0; i < images.length; i++) {
+                let img = images[i];
                 img.style.borderRadius = '50%';
                 img.style.objectFit = 'cover';
                 img.style.width = '40px';
@@ -1615,8 +1615,8 @@ scwin.makeProfileImagesRound = function() {
             }
             
             // 이미지 컨테이너도 둥글게
-            var cells = gridElement.querySelectorAll('td[columnid="profileImageUrl"], .w2grid_cell[columnid="profileImageUrl"]');
-            for (var j = 0; j < cells.length; j++) {
+            let cells = gridElement.querySelectorAll('td[columnid="profileImageUrl"], .w2grid_cell[columnid="profileImageUrl"]');
+            for (let j = 0; j < cells.length; j++) {
                 cells[j].style.borderRadius = '50%';
                 cells[j].style.overflow = 'hidden';
             }

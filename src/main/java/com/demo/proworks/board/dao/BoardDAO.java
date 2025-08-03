@@ -97,9 +97,7 @@ public class BoardDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAbstract
      * @throws ElException
      */
     public List<BoardVo> selectBoardsByProject(String projectId) throws ElException {
-        System.out.println("BoardDAO.selectBoardsByProject - projectId: " + projectId);
         List<BoardVo> result = (List<BoardVo>) list("com.demo.proworks.board.selectBoardsByProject", projectId);
-        System.out.println("BoardDAO - SQL 실행 결과 개수: " + (result != null ? result.size() : 0));
         return result;
     }
 

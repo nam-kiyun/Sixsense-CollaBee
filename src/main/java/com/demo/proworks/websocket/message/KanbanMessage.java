@@ -3,9 +3,6 @@ package com.demo.proworks.websocket.message;
 /**
  * 칸반 보드 WebSocket 메시지 클래스
  * 클라이언트와 서버 간 통신을 위한 메시지 구조
- * 
- * @author Claude AI
- * @since 2025-01-15
  */
 public class KanbanMessage {
     

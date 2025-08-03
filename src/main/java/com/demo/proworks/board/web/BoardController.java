@@ -99,35 +99,26 @@ public class BoardController {
     @RequestMapping(value = "board/create")
     @ElDescription(sub = "보드 등록처리", desc = "보드를 등록 처리 한다.")
     public void insertBoard(BoardVo boardVo) throws Exception {    	 
-    	System.out.println("🔍 보드 생성 전 boardId: " + boardVo.getBoardId());
     	
     	boardService.insertBoard(boardVo);
     	
-    	System.out.println("🔍 보드 생성 후 boardId: " + boardVo.getBoardId());
     	
     	// Redis 캐시에 새 보드 추가 (캐시 무효화 대신 직접 업데이트)
     	if (boardVo.getProjectId() != null) {
     	    try {
     	        kanbanRedisService.addBoardToProjectCache(boardVo.getProjectId(), boardVo);
-    	        System.out.println("✅ 보드 등록으로 인한 프로젝트 캐시 업데이트: " + boardVo.getProjectId());
     	    } catch (Exception cacheException) {
-    	        System.err.println("⚠️ 캐시 업데이트 실패, 캐시 무효화로 처리: " + cacheException.getMessage());
     	        kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
     	    }
     	}
     	
-    	// 🔄 WebSocket을 통한 실시간 보드 생성 브로드캐스트
+    	// WebSocket을 통한 실시간 보드 생성 브로드캐스트
     	try {
-    	    System.out.println("🔍 보드 생성 후 WebSocket 브로드캐스트 시도");
-    	    System.out.println("- projectId: " + boardVo.getProjectId());
-    	    System.out.println("- boardId: " + boardVo.getBoardId());
-    	    System.out.println("- boardTitle: " + boardVo.getBoardTitle());
     	    
     	    if (boardVo.getProjectId() != null) {
     	        // 실제 생성된 boardId 사용 (GENERATED 대신)
     	        String actualBoardId = boardVo.getBoardId();
     	        if (actualBoardId == null || actualBoardId.trim().isEmpty()) {
-    	            System.err.println("⚠️ 보드 생성 후에도 boardId가 null입니다. WebSocket 브로드캐스트 생략");
     	            return;
     	        }
     	        
@@ -139,15 +130,11 @@ public class BoardController {
     	        messageData.put("boardTitle", boardVo.getBoardTitle());
     	        messageData.put("timestamp", System.currentTimeMillis());
     	        
-    	        System.out.println("🔄 WebSocket 핸들러 호출 시작 (실제 boardId: " + actualBoardId + ")");
     	        // 모든 사용자에게 실시간 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
     	        kanbanWebSocketHandler.handleBoardCreatedMessage(messageData);
-    	        System.out.println("📡 보드 생성 WebSocket 브로드캐스트 완료: " + actualBoardId);
     	    } else {
-    	        System.out.println("⚠️ projectId가 null이어서 WebSocket 브로드캐스트 생략");
     	    }
     	} catch (Exception broadcastException) {
-    	    System.err.println("⚠️ WebSocket 브로드캐스트 실패 (기능은 정상 처리됨): " + broadcastException.getMessage());
     	    broadcastException.printStackTrace();
     	}
     }
@@ -169,7 +156,6 @@ public class BoardController {
     	// Redis 캐시 무효화 - 보드 정보 변경은 복잡하므로 무효화 유지
     	if (boardVo.getProjectId() != null) {
     	    kanbanRedisService.invalidateProjectCache(boardVo.getProjectId());
-    	    System.out.println("🗑️ 보드 갱신으로 인한 프로젝트 캐시 무효화: " + boardVo.getProjectId());
     	}
     }
 
@@ -184,7 +170,6 @@ public class BoardController {
     @RequestMapping(value="BoardDel")
     @ElDescription(sub = "보드 삭제처리", desc = "보드를 삭제 처리한다.")    
     public void deleteBoard(BoardVo boardVo) throws Exception {
-        System.out.println("🗑️ 보드 삭제 요청: " + boardVo.getBoardId() + " (프로젝트: " + boardVo.getProjectId() + ")");
         
         // 삭제 전 보드 정보 백업 (WebSocket 메시지용)
         String deletedBoardId = boardVo.getBoardId();
@@ -197,35 +182,26 @@ public class BoardController {
                 BoardVo existingBoard = boardService.selectBoard(boardVo);
                 if (existingBoard != null) {
                     deletedBoardTitle = existingBoard.getBoardTitle();
-                    System.out.println("📋 DB에서 보드 제목 조회: " + deletedBoardTitle);
                 }
             } catch (Exception e) {
-                System.err.println("⚠️ 보드 제목 조회 실패, 기본값 사용: " + e.getMessage());
                 deletedBoardTitle = "삭제된 보드";
             }
         }
         
         // 보드 삭제 실행
         boardService.deleteBoard(boardVo);
-        System.out.println("✅ 보드 DB 삭제 완료: " + deletedBoardId);
         
         // Redis 캐시에서 보드 제거 (캐시 무효화 대신 직접 업데이트)
         if (projectId != null && deletedBoardId != null) {
             try {
                 kanbanRedisService.removeBoardFromProjectCache(projectId, deletedBoardId);
-                System.out.println("✅ 보드 삭제로 인한 프로젝트 캐시 업데이트: " + projectId);
             } catch (Exception cacheException) {
-                System.err.println("⚠️ 캐시 업데이트 실패, 캐시 무효화로 처리: " + cacheException.getMessage());
                 kanbanRedisService.invalidateProjectCache(projectId);
             }
         }
         
-        // 🔄 WebSocket을 통한 실시간 보드 삭제 브로드캐스트
+        // WebSocket을 통한 실시간 보드 삭제 브로드캐스트
         try {
-            System.out.println("🔍 보드 삭제 후 WebSocket 브로드캐스트 시도");
-            System.out.println("- projectId: " + projectId);
-            System.out.println("- deletedBoardId: " + deletedBoardId);
-            System.out.println("- deletedBoardTitle: " + deletedBoardTitle);
             
             if (projectId != null && deletedBoardId != null) {
                 // 보드 삭제 메시지 브로드캐스트
@@ -236,15 +212,11 @@ public class BoardController {
                 messageData.put("boardTitle", deletedBoardTitle != null ? deletedBoardTitle : "삭제된 보드");
                 messageData.put("timestamp", System.currentTimeMillis());
                 
-                System.out.println("🔄 WebSocket 핸들러 호출 시작");
                 // 모든 사용자에게 실시간 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
                 kanbanWebSocketHandler.handleBoardDeletedMessage(messageData);
-                System.out.println("📡 보드 삭제 WebSocket 브로드캐스트 완료: " + deletedBoardId);
             } else {
-                System.out.println("⚠️ projectId 또는 boardId가 null이어서 WebSocket 브로드캐스트 생략");
             }
         } catch (Exception broadcastException) {
-            System.err.println("⚠️ WebSocket 브로드캐스트 실패 (기능은 정상 처리됨): " + broadcastException.getMessage());
             broadcastException.printStackTrace();
         }
     }
@@ -262,7 +234,6 @@ public class BoardController {
     @ElDescription(sub = "프로젝트별 보드 목록 조회", desc = "프로젝트 ID를 기준으로 보드 목록을 조회한다.")    
     @SuppressWarnings("unchecked")
     public List<BoardVo> selectBoardsByProject(ProjectVo projectVo) throws Exception {
-        System.out.println("🔍 보드 목록 조회 요청 - projectId: " + projectVo.getProjectId());
         
         if (projectVo.getProjectId() == null || projectVo.getProjectId().trim().isEmpty()) {
             throw new IllegalArgumentException("프로젝트 ID가 필요합니다.");
@@ -271,36 +242,29 @@ public class BoardController {
         String projectId = projectVo.getProjectId();
         
         try {
-            // 1. Redis 캐시에서 먼저 조회 시도
+            // Redis 캐시에서 먼저 조회 시도
             List<java.util.Map<String, Object>> cachedBoards = kanbanRedisService.getProjectBoardsFromCache(projectId);
             if (cachedBoards != null) {
-                System.out.println("✅ Redis 캐시에서 보드 목록 조회 성공: " + cachedBoards.size() + "개");
                 // Map을 BoardVo로 변환
                 List<BoardVo> boardList = convertMapListToBoardVoList(cachedBoards);
                 return boardList;
             }
             
-            // 2. 캐시 미스 - DB에서 조회
-            System.out.println("⚠️ Redis 캐시 미스 - DB에서 조회 시작");
+            // 캐시 미스 - DB에서 조회
             List<BoardVo> boardList = boardService.selectBoardsByProject(projectId);
-            System.out.println("📊 DB에서 조회된 보드 개수: " + (boardList != null ? boardList.size() : 0));
             
-            // 3. 조회 결과를 Redis에 캐싱
+            // 조회 결과를 Redis에 캐싱
             if (boardList != null && !boardList.isEmpty()) {
                 // BoardVo 리스트를 Map 리스트로 변환
                 List<java.util.Map<String, Object>> boardMapList = convertBoardVoListToMapList(boardList);
                 kanbanRedisService.cacheProjectBoards(projectId, boardMapList);
-                System.out.println("💾 DB 조회 결과를 Redis에 캐싱 완료");
             }
             
             return boardList;
             
         } catch (Exception e) {
-            System.err.println("❌ 보드 목록 조회 중 오류 발생: " + e.getMessage());
             // Redis 오류 시 DB에서 직접 조회
-            System.out.println("🔄 Redis 오류로 인한 DB 직접 조회 시도");
             List<BoardVo> boardList = boardService.selectBoardsByProject(projectId);
-            System.out.println("📊 DB 직접 조회된 보드 개수: " + (boardList != null ? boardList.size() : 0));
             return boardList;
         }
     }

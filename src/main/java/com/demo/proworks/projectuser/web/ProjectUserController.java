@@ -257,7 +257,6 @@ public class ProjectUserController {
             }
             
         } catch (Exception e) {
-            e.printStackTrace();
             result.put("found", false);
             result.put("isProjectMember", false);
             result.put("error", "사용자 검색 중 오류가 발생했습니다.");
@@ -356,7 +355,6 @@ public class ProjectUserController {
             }
             
         } catch (Exception e) {
-            e.printStackTrace();
             result.put("success", false);
             result.put("message", "사용자 초대 중 오류가 발생했습니다: " + e.getMessage());
         }
@@ -404,7 +402,6 @@ public class ProjectUserController {
             }
             
         } catch (Exception e) {
-            e.printStackTrace();
             result.put("success", false);
             result.put("message", "역할 변경 중 오류가 발생했습니다: " + e.getMessage());
         }
@@ -458,7 +455,6 @@ public class ProjectUserController {
             }
             
         } catch (Exception e) {
-            e.printStackTrace();
             result.put("success", false);
             result.put("role", null);
             result.put("isAdmin", false);

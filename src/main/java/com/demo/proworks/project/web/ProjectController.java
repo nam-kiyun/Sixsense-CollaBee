@@ -68,15 +68,7 @@ public class ProjectController {
     @ElDescription(sub="프로젝트 정보를 담는 테이블 목록조회",desc="페이징을 처리하여 프로젝트 정보를 담는 테이블 목록 조회를 한다.")               
     public ProjectListVo selectListProject(ProjectVo projectVo) throws Exception {    	   	
         
-        // userId가 있으면 사용자 참여 프로젝트 조회, 없으면 전체 조회
-        List<ProjectVo> projectList;
-        if (projectVo.getUserId() != null && !projectVo.getUserId().trim().isEmpty()) {
-            //System.out.println("사용자 참여 프로젝트 조회: " + projectVo.getUserId());
-            projectList = projectService.selectUserParticipatedProjects(projectVo.getUserId());
-        } else {
-            //System.out.println("전체 프로젝트 조회");
-            projectList = projectService.selectListProject(projectVo);
-        }
+        List<ProjectVo> projectList = projectService.selectUserParticipatedProjects(projectVo.getUserId());
         
         long totCnt = projectList != null ? projectList.size() : 0;
 	
@@ -148,7 +140,6 @@ public class ProjectController {
                 }
             } catch (Exception e) {
                 
-                e.printStackTrace();
             }
         }
         
@@ -209,19 +200,12 @@ public class ProjectController {
     public void insertProjectWithFile(@ModelAttribute ProjectVo projectVo,
             @RequestParam(value = "file", required = false) MultipartFile file) throws Exception {
         
-//        System.out.println("=== 프로젝트 생성 요청 ===");
-//        System.out.println("프로젝트명: " + projectVo.getProjectName());
-//        System.out.println("설명: " + projectVo.getDescription());
-//        System.out.println("이메일 전송시간: " + projectVo.getEmailSendTime());
-//        System.out.println("사용자ID: " + projectVo.getUserId());
-//        System.out.println("파일 존재 여부: " + (file != null && !file.isEmpty()));
 //        
         String bucketName = "collabee";
         
         // 1. 이미지 파일이 있으면 S3 업로드 처리
         if (file != null && !file.isEmpty()) {
             try {
-                System.out.println("파일 업로드 시작 - 파일명: " + file.getOriginalFilename() + ", 크기: " + file.getSize());
                 
                 String originalName = file.getOriginalFilename();
                 String s3Key = "projectImage/" + System.currentTimeMillis() + "_" + originalName;
@@ -235,30 +219,21 @@ public class ProjectController {
                 String fileUrl = "https://" + bucketName + ".s3.ap-northeast-2.amazonaws.com/" + s3Key;
                 projectVo.setProjectImageUrl(fileUrl);
                 
-                System.out.println("파일 업로드 완료 - URL: " + fileUrl);
             } catch (Exception e) {
-                System.err.println("파일 업로드 실패: " + e.getMessage());
-                e.printStackTrace();
                 throw new Exception("이미지 업로드 중 오류가 발생했습니다: " + e.getMessage());
             }
         } else {
-            System.out.println("업로드할 파일이 없어 기본 이미지 URL 사용");
             // 파일이 없으면 null로 두거나 기본 이미지 URL 설정
             projectVo.setProjectImageUrl(null);
         }
         
         // 2. 프로젝트 생성
         try {
-            System.out.println("프로젝트 서비스 호출 시작");
             projectService.insertProject(projectVo);
-            System.out.println("프로젝트 생성 완료");
         } catch (Exception e) {
-            System.err.println("프로젝트 생성 실패: " + e.getMessage());
-            e.printStackTrace();
             throw new Exception("프로젝트 생성 중 오류가 발생했습니다: " + e.getMessage());
         }
         
-        System.out.println("=== 프로젝트 생성 완료 ===");
     }
        
     /**
@@ -380,7 +355,6 @@ public class ProjectController {
     	    
     	}
     	
-    	// WebSquare용 성공 응답 반환
     	Map<String, Object> result = new HashMap<>();
     	result.put("success", true);
     	result.put("message", "프로젝트 정보가 성공적으로 업데이트되었습니다.");
@@ -460,7 +434,6 @@ public class ProjectController {
             result.put("message", "프로젝트가 성공적으로 삭제되었습니다.");
             
         } catch (Exception e) {
-            e.printStackTrace();
             result.put("success", false);
             result.put("message", "프로젝트 삭제 중 오류가 발생했습니다: " + e.getMessage());
         }
@@ -563,7 +536,6 @@ public class ProjectController {
             
         } catch (Exception e) {
             
-            e.printStackTrace();
             
             result.put("success", false);
             result.put("message", "이미지 업로드 중 오류가 발생했습니다: " + e.getMessage());

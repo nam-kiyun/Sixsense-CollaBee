@@ -7,8 +7,6 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,12 +25,10 @@ import com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo;
 
 /**
  * GitHub 통합 서비스 구현체
- * test 디렉터리의 Node.js 로직을 Java로 포팅
  */
 @Service("gitHubService")
 public class GitHubServiceImpl implements GitHubService {
     
-    private static final Logger logger = LoggerFactory.getLogger(GitHubServiceImpl.class);
     
     @Resource(name = "gitHubDAO")
     private GitHubDAO gitHubDAO;
@@ -52,13 +48,10 @@ public class GitHubServiceImpl implements GitHubService {
     @Resource(name = "repositoryBranchServiceImpl")
     private com.demo.proworks.repobranch.service.RepositoryBranchService repositoryBranchService;
 
-    // ==============================
     // GitHub OAuth 인증 관리
-    // ==============================
     
     @Override
     public Map<String, Object> generateOAuthUrl(Map<String, Object> param) throws Exception {
-        logger.info("GitHub OAuth URL 생성 시작");
         
         Map<String, Object> result = new HashMap<>();
         
@@ -77,10 +70,8 @@ public class GitHubServiceImpl implements GitHubService {
             result.put("auth_url", authUrl);
             result.put("success", true);
             
-            logger.info("GitHub OAuth URL 생성 완료: {}", authUrl);
             
         } catch (Exception e) {
-            logger.error("GitHub OAuth URL 생성 실패", e);
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -91,29 +82,21 @@ public class GitHubServiceImpl implements GitHubService {
     @Override
     @Transactional
     public Map<String, Object> processOAuthCallback(Map<String, Object> param) throws Exception {
-        logger.info("GitHub OAuth 콜백 처리 시작");
         
         Map<String, Object> result = new HashMap<>();
         
         try {
             String code = (String) param.get("code");
             String state = (String) param.get("state");
-            String userId = (String) param.get("user_id"); // 세션에서 받은 사용자 ID
+            String userId = (String) param.get("user_id");
             
-            // 디버깅 로그 추가
-            logger.info("서비스 processOAuthCallback - 받은 파라미터: {}", param);
-            logger.info("서비스 processOAuthCallback - userId: '{}' (length: {})", userId, userId != null ? userId.length() : "null");
-            logger.info("서비스 processOAuthCallback - userId is null? {}", userId == null);
-            logger.info("서비스 processOAuthCallback - userId is empty? {}", userId != null && userId.trim().isEmpty());
             
-            // GitHub API 호출하여 액세스 토큰 획득 (elfw.properties에서 설정값 읽기)
-            String clientId = System.getProperty("GITHUB_CLIENT_ID", "Iv23liShQFpINkvH7lCV");
-            String clientSecret = System.getProperty("GITHUB_CLIENT_SECRET", "ac534ffba44e6eae3ee74832e406724bfea12620");
+            // GitHub API 호출하여 액세스 토큰 획득
+            String clientId = System.getProperty("GITHUB_CLIENT_ID");
+            String clientSecret = System.getProperty("GITHUB_CLIENT_SECRET");
             
-            logger.info("GitHub OAuth 설정 - ClientID: {}, ClientSecret: {}****", clientId, clientSecret.substring(0, 8));
             
             Map<String, Object> tokenResponse = gitHubApiUtil.exchangeCodeForToken(code, clientId, clientSecret);
-            logger.info("GitHub 토큰 교환 결과: {}", tokenResponse.get("success"));
             
             if ((Boolean) tokenResponse.get("success")) {
                 @SuppressWarnings("unchecked")
@@ -128,10 +111,8 @@ public class GitHubServiceImpl implements GitHubService {
                 String projectId = (String) param.get("project_id");
                 UserPersonalTokenVo userToken = null;
                 if (userId != null && !userId.trim().isEmpty()) {
-                    logger.info("userId가 있으므로 linkGitHubUserWithUserId 호출: userId='{}'", userId);
                     userToken = linkGitHubUserWithUserId(accessToken, userId, projectId);
                 } else {
-                    logger.warn("userId가 null이거나 빈 문자열이므로 기본 linkGitHubUser 호출: userId='{}'", userId);
                     userToken = linkGitHubUser(accessToken, projectId); // 기본 방식
                 }
                 
@@ -147,7 +128,6 @@ public class GitHubServiceImpl implements GitHubService {
             }
             
         } catch (Exception e) {
-            logger.error("GitHub OAuth 콜백 처리 실패", e);
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -158,14 +138,12 @@ public class GitHubServiceImpl implements GitHubService {
     @Override
     @Transactional
     public UserPersonalTokenVo linkGitHubUser(String accessToken, String projectId) throws Exception {
-        logger.error("linkGitHubUser 호출됨 - userId 파라미터가 없어서 GitHub 연동을 진행할 수 없습니다.");
         throw new RuntimeException("사용자 ID가 제공되지 않아 GitHub 연동을 진행할 수 없습니다. 다시 로그인해주세요.");
     }
 
     @Override
     @Transactional
     public UserPersonalTokenVo linkGitHubUserWithUserId(String accessToken, String userId, String projectId) throws Exception {
-        logger.info("GitHub 사용자 연동 시작 (userId: {}, projectId: {})", userId, projectId);
         
         UserPersonalTokenVo userToken = null;
         
@@ -173,15 +151,12 @@ public class GitHubServiceImpl implements GitHubService {
             // GitHub API로 사용자 정보 조회
             Map<String, Object> userInfo = gitHubApiUtil.getUserInfo(accessToken);
             String githubUserId = userInfo.get("login").toString();
-            logger.info("GitHub 사용자 정보 조회 완료: {}", githubUserId);
             
             // USER_PERSONAL_TOKENS 테이블에 저장할 데이터 준비
             UserPersonalTokenVo tokenVo = new UserPersonalTokenVo();
-            // userPersonalTokenId는 AUTO_INCREMENT이므로 설정하지 않음
             tokenVo.setUserId(userId);
             tokenVo.setAccessToken(accessToken);
             tokenVo.setScope("repo read:user admin:repo_hook");
-            // createdAt은 NOW()로 처리하므로 설정하지 않음
             
             // 기존 토큰 정보 확인
             UserPersonalTokenVo queryVo = new UserPersonalTokenVo();
@@ -192,20 +167,17 @@ public class GitHubServiceImpl implements GitHubService {
             if (existingToken == null) {
                 // 새 사용자 - INSERT
                 userPersonalTokenService.insertUserPersonalToken(tokenVo);
-                logger.info("새 OAuth 토큰 저장 완료: userId={}, projectId={}", userId, projectId);
             } else {
                 // 기존 사용자 - UPDATE
                 existingToken.setAccessToken(accessToken);
                 existingToken.setScope("repo read:user admin:repo_hook");
                 userPersonalTokenService.updateUserPersonalToken(existingToken);
                 tokenVo = existingToken;
-                logger.info("기존 OAuth 토큰 업데이트 완료: userId={}, projectId={}", userId, projectId);
             }
             
             userToken = tokenVo;
             
         } catch (Exception e) {
-            logger.error("GitHub 사용자 연동 실패 (userId: {}, projectId: {})", userId, projectId, e);
             throw e;
         }
         
@@ -214,19 +186,14 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Override
     public Map<String, Object> checkAppInstallation(Map<String, Object> param) throws Exception {
-        logger.info("GitHub App 설치 상태 확인 시작");
         
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // TODO: GitHub API로 App 설치 상태 확인
-            // test 디렉터리의 auth.js의 checkAppInstallation 함수 참고
-            
             result.put("installed", true);
             result.put("success", true);
             
         } catch (Exception e) {
-            logger.error("GitHub App 설치 상태 확인 실패", e);
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -236,7 +203,6 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Override
     public Map<String, Object> processAppInstallation(Map<String, Object> param) throws Exception {
-        logger.info("GitHub App 설치 완료 처리 시작");
         
         Map<String, Object> result = new HashMap<>();
         
@@ -247,9 +213,6 @@ public class GitHubServiceImpl implements GitHubService {
             String repoOwner = (String) param.get("repo_owner");
             String repoName = (String) param.get("repo_name");
             String userId = (String) param.get("user_id");
-            
-            logger.info("GitHub App 설치 완료: installation_id={}, setup_action={}, projectRepoId={}", 
-                       installationId, setupAction, projectRepoId);
             
             if (installationId == null || installationId.trim().isEmpty()) {
                 result.put("success", false);
@@ -270,10 +233,7 @@ public class GitHubServiceImpl implements GitHubService {
                         existingToken.setCreatedAt(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
                         
                         gitHubDAO.updateGitHubAppToken(existingToken);
-                        logger.info("기존 GitHub App Token 업데이트 완료: userId={}, installationId={}", 
-                                   userId, installationId);
                     } else {
-                        // 새 항목 생성 (ID는 AUTO_INCREMENT로 자동 생성)
                         com.demo.proworks.githubapptoken.vo.GithubAppTokenVo tokenVo = 
                             new com.demo.proworks.githubapptoken.vo.GithubAppTokenVo();
                         tokenVo.setUserId(userId);
@@ -281,8 +241,6 @@ public class GitHubServiceImpl implements GitHubService {
                         tokenVo.setCreatedAt(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
                         
                         String tokenId = gitHubDAO.insertGitHubAppToken(tokenVo);
-                        logger.info("새 GitHub App Token 생성 완료: tokenId={}, userId={}, installationId={}", 
-                                   tokenId, userId, installationId);
                     }
                     
                     result.put("success", true);
@@ -291,14 +249,11 @@ public class GitHubServiceImpl implements GitHubService {
                     result.put("message", "GitHub App Installation ID가 성공적으로 저장되었습니다.");
                     
                 } catch (Exception e) {
-                    logger.error("GitHub App Installation ID 저장 실패", e);
                     result.put("success", false);
                     result.put("error", "Installation ID 저장 실패: " + e.getMessage());
                     return result;
                 }
             } else {
-                // projectRepoId가 없는 경우 일반적인 설치 완료 처리
-                logger.info("ProjectRepoId가 없어서 일반 설치 완료로 처리: installationId={}", installationId);
                 result.put("success", true);
                 result.put("installation_id", installationId);
                 result.put("message", "GitHub App 설치가 완료되었습니다.");
@@ -314,10 +269,7 @@ public class GitHubServiceImpl implements GitHubService {
             installLog.put("user_id", userId);
             installLog.put("installed_at", new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()));
             
-            logger.info("GitHub App 설치 로그: {}", installLog);
-                
         } catch (Exception e) {
-            logger.error("GitHub App 설치 완료 처리 실패", e);
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -325,13 +277,9 @@ public class GitHubServiceImpl implements GitHubService {
         return result;
     }
 
-    // ==============================
     // GitHub 레포지토리 관리
-    // ==============================
-    
     @Override
     public GitHubRepositoryListVo getRepositories(Map<String, Object> param) throws Exception {
-        logger.info("GitHub 레포지토리 목록 조회 시작");
         
         GitHubRepositoryListVo result = new GitHubRepositoryListVo();
         
@@ -378,10 +326,8 @@ public class GitHubServiceImpl implements GitHubService {
             
             result.setGitHubRepositoryVoList(repositories);
             
-            logger.info("GitHub 레포지토리 목록 조회 완료: {} 개", repositories.size());
             
         } catch (Exception e) {
-            logger.error("GitHub 레포지토리 목록 조회 실패", e);
             throw e;
         }
         
@@ -390,7 +336,6 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Override
     public GitHubRepositoryVo getRepository(Map<String, Object> param) throws Exception {
-        logger.info("GitHub 레포지토리 상세 조회 시작");
         
         GitHubRepositoryVo repository = new GitHubRepositoryVo();
         
@@ -428,10 +373,8 @@ public class GitHubServiceImpl implements GitHubService {
                 repository.setPushedAt((String) repoData.get("pushed_at"));
             }
             
-            logger.info("GitHub 레포지토리 상세 조회 완료");
             
         } catch (Exception e) {
-            logger.error("GitHub 레포지토리 상세 조회 실패", e);
             throw e;
         }
         
@@ -441,47 +384,32 @@ public class GitHubServiceImpl implements GitHubService {
     @Override
     @Transactional
     public Map<String, Object> selectRepository(Map<String, Object> param) throws Exception {
-        System.out.println("=== 레포지토리 선택 처리 시작 ===");
-        System.out.println("서비스 - 받은 파라미터: " + param);
         
         Map<String, Object> result = new HashMap<>();
         
         try {
             // 파라미터 상세 로그
             String projectId = (String) param.get("project_id");
-            System.out.println("project_id: " + projectId);
-            System.out.println("github_repository_id: " + param.get("github_repository_id"));
-            System.out.println("repo_owner: " + param.get("repo_owner"));
-            System.out.println("repo_name: " + param.get("repo_name"));
-            System.out.println("default_branch: " + param.get("default_branch"));
-            System.out.println("github_app_installation_id: " + param.get("github_app_installation_id"));
             
             // 기존 연결된 저장소 확인 (프로젝트 ID 기반)
-            System.out.println("기존 연결된 저장소 확인 (프로젝트 ID: " + projectId + ")");
             ProjectRepositoryVo existingRepo = gitHubDAO.selectProjectRepositoryByProjectId(projectId);
             
             if (existingRepo != null) {
-                System.out.println("기존 연결된 저장소 발견: " + existingRepo.getRepoOwner() + "/" + existingRepo.getRepoName());
                 
                 // 저장소 변경 여부 확인
                 boolean isRepositoryChanged = !existingRepo.getRepoOwner().equals(param.get("repo_owner")) || 
                                             !existingRepo.getRepoName().equals(param.get("repo_name"));
                 
                 if (isRepositoryChanged) {
-                    System.out.println("저장소 변경 감지: " + existingRepo.getRepoOwner() + "/" + existingRepo.getRepoName() + 
-                                     " → " + param.get("repo_owner") + "/" + param.get("repo_name"));
                     
-                    // 🔥 기존 브랜치 데이터 정리
+                    // 기존 브랜치 데이터 정리
                     try {
                         int deletedBranches = gitHubDAO.deleteAllBranchesByProjectRepoId(existingRepo.getProjectRepoId());
-                        System.out.println("기존 브랜치 " + deletedBranches + "개 삭제 완료");
                     } catch (Exception e) {
-                        System.out.println("기존 브랜치 삭제 실패: " + e.getMessage());
-                        // 브랜치 삭제 실패해도 저장소 업데이트는 계속 진행
+                    	e.printStackTrace();
                     }
                 }
                 
-                System.out.println("기존 저장소 정보 업데이트");
                 
                 // 기존 저장소 정보 업데이트
                 Map<String, Object> updateParam = new HashMap<>();
@@ -501,10 +429,8 @@ public class GitHubServiceImpl implements GitHubService {
                 result.put("repository_changed", isRepositoryChanged);
                 
             } else {
-                System.out.println("새로운 저장소 연결");
                 // 새로운 저장소 연결
                 String recordId = gitHubDAO.insertProjectRepository(param);
-                System.out.println("DB 저장 완료, recordId: " + recordId);
                 
                 result.put("success", true);
                 result.put("record_id", recordId);
@@ -512,11 +438,7 @@ public class GitHubServiceImpl implements GitHubService {
                 result.put("action", "created");
             }
             
-            System.out.println("레포지토리 선택 처리 완료");
-            
         } catch (Exception e) {
-            System.out.println("레포지토리 선택 처리 실패: " + e.getMessage());
-            e.printStackTrace();
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -526,8 +448,6 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Override
     public ProjectRepositoryVo getCurrentRepositoryByProjectId(String projectId) throws Exception {
-        System.out.println("=== 프로젝트 ID로 연결된 레포지토리 조회 시작 ===");
-        System.out.println("프로젝트 ID: " + projectId);
         
         ProjectRepositoryVo repository = null;
         
@@ -535,44 +455,25 @@ public class GitHubServiceImpl implements GitHubService {
             repository = gitHubDAO.selectProjectRepositoryByProjectId(projectId);
             
             if (repository != null) {
-                System.out.println("연결된 저장소 발견: " + repository.getRepoOwner() + "/" + repository.getRepoName());
             } else {
-                System.out.println("연결된 저장소 없음");
             }
             
         } catch (Exception e) {
-            System.out.println("프로젝트 ID로 레포지토리 조회 실패: " + e.getMessage());
-            e.printStackTrace();
             throw e;
         }
         
         return repository;
     }
     
-    // 현재 사용자 ID 가져오기 헬퍼 메소드
-    private String getCurrentUserId() {
-        try {
-            // 현재 스레드에서 사용자 ID 가져오기
-            // 실제 구현에서는 SecurityContext나 ThreadLocal에서 가져와야 함
-            return "fordnam1@gmail.com"; // 임시로 하드코딩
-        } catch (Exception e) {
-            System.out.println("현재 사용자 ID 가져오기 실패: " + e.getMessage());
-            return null;
-        }
-    }
-    
     @Override
     public ProjectRepositoryVo getCurrentRepository(String userId) throws Exception {
-        logger.info("현재 선택된 레포지토리 조회 시작: {}", userId);
         
         ProjectRepositoryVo repository = null;
         
         try {
             repository = gitHubDAO.selectProjectRepositoryByUserId(userId);
-            logger.info("현재 선택된 레포지토리 조회 완료");
             
         } catch (Exception e) {
-            logger.error("현재 선택된 레포지토리 조회 실패", e);
             throw e;
         }
         
@@ -581,13 +482,11 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Override
     public Map<String, Object> getCurrentRepository(Map<String, Object> param) throws Exception {
-        System.out.println("=== 현재 선택된 레포지토리 조회 (Map 형태) ===");
         
         Map<String, Object> result = new HashMap<>();
         
         try {
             String userId = (String) param.get("user_id");
-            System.out.println("조회 대상 userId: " + userId);
             
             if (userId == null || userId.trim().isEmpty()) {
                 result.put("success", false);
@@ -599,9 +498,8 @@ public class GitHubServiceImpl implements GitHubService {
             ProjectRepositoryVo repository = getCurrentRepository(userId);
             
             if (repository != null) {
-                System.out.println("연결된 저장소 발견: " + repository.getRepoOwner() + "/" + repository.getRepoName());
                 
-                // VO를 Map으로 변환 (ProjectRepositoryVo에 실제 존재하는 필드만 사용)
+                // VO를 Map으로 변환
                 Map<String, Object> repositoryMap = new HashMap<>();
                 repositoryMap.put("projectRepoId", repository.getProjectRepoId());
                 repositoryMap.put("projectId", repository.getProjectId());
@@ -615,14 +513,11 @@ public class GitHubServiceImpl implements GitHubService {
                 result.put("repository", repositoryMap);
                 
             } else {
-                System.out.println("연결된 저장소가 없습니다.");
                 result.put("success", false);
                 result.put("error", "연결된 저장소가 없습니다.");
             }
             
         } catch (Exception e) {
-            System.out.println("현재 저장소 조회 실패: " + e.getMessage());
-            e.printStackTrace();
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -630,13 +525,10 @@ public class GitHubServiceImpl implements GitHubService {
         return result;
     }
 
-    // ==============================
     // GitHub 브랜치 관리 (간소화)
-    // ==============================
     
     @Override
     public List<RepositoryBranchVo> getBranchesFromDatabase(Map<String, Object> param) throws Exception {
-        logger.info("DB에서 브랜치 목록 조회 시작: {}", param);
         
         List<RepositoryBranchVo> branches = null;
         
@@ -645,14 +537,11 @@ public class GitHubServiceImpl implements GitHubService {
             branches = gitHubDAO.selectRepositoryBranches(param);
             
             if (branches != null) {
-                logger.info("DB에서 브랜치 {} 개 조회 완료", branches.size());
             } else {
-                logger.info("DB에서 조회된 브랜치 없음");
                 branches = new ArrayList<>(); // null 대신 빈 리스트 반환
             }
             
         } catch (Exception e) {
-            logger.error("DB 브랜치 조회 실패: {}", e.getMessage(), e);
             throw e;
         }
         
@@ -662,7 +551,6 @@ public class GitHubServiceImpl implements GitHubService {
     @Override
     @Transactional
     public Map<String, Object> syncInitialBranches(Map<String, Object> param) throws Exception {
-        logger.info("저장소 연결 시 초기 브랜치 동기화 시작: {}", param);
         
         Map<String, Object> result = new HashMap<>();
         
@@ -676,7 +564,6 @@ public class GitHubServiceImpl implements GitHubService {
                 throw new IllegalArgumentException("필수 파라미터 누락: access_token, owner, repo, project_repo_id");
             }
             
-            logger.info("GitHub API로 전체 브랜치 목록 조회: {}/{}", owner, repo);
             
             // GitHub API를 통해 전체 브랜치 목록 조회
             Map<String, Object> apiResponse = gitHubApiUtil.getBranches(accessToken, owner, repo);
@@ -692,7 +579,6 @@ public class GitHubServiceImpl implements GitHubService {
             int skippedCount = 0;
             
             if (branches != null && !branches.isEmpty()) {
-                logger.info("GitHub에서 {} 개의 브랜치 발견", branches.size());
                 
                 for (Map<String, Object> branchData : branches) {
                     try {
@@ -706,7 +592,6 @@ public class GitHubServiceImpl implements GitHubService {
                         existsParam.put("branch_name", branchName);
                         
                         if (gitHubDAO.selectBranchExists(existsParam) > 0) {
-                            logger.debug("브랜치가 이미 존재하여 스킵: {}", branchName);
                             skippedCount++;
                             continue;
                         }
@@ -722,16 +607,13 @@ public class GitHubServiceImpl implements GitHubService {
                         gitHubDAO.insertRepositoryBranch(branchVo);
                         savedCount++;
                         
-                        logger.debug("브랜치 저장 완료: {} (SHA: {})", branchName, sha);
                         
                     } catch (Exception e) {
-                        logger.error("브랜치 저장 실패: {}", branchData.get("name"), e);
                         // 개별 브랜치 실패는 전체 동기화를 중단하지 않음
                     }
                 }
             }
             
-            logger.info("초기 브랜치 동기화 완료 - 저장: {}개, 스킵: {}개", savedCount, skippedCount);
             
             result.put("success", true);
             result.put("message", "초기 브랜치 동기화 완료");
@@ -740,10 +622,8 @@ public class GitHubServiceImpl implements GitHubService {
             result.put("total_branches", branches != null ? branches.size() : 0);
             
         } catch (Exception e) {
-            logger.error("초기 브랜치 동기화 실패", e);
             result.put("success", false);
             result.put("error", e.getMessage());
-            // 동기화 실패해도 예외는 던지지 않음 (저장소 연결은 성공)
         }
         
         return result;
@@ -752,7 +632,6 @@ public class GitHubServiceImpl implements GitHubService {
     @Override
     @Transactional
     public Map<String, Object> deleteBranch(Map<String, Object> param) throws Exception {
-        logger.info("GitHub 브랜치 삭제 시작");
         
         Map<String, Object> result = new HashMap<>();
         
@@ -774,10 +653,8 @@ public class GitHubServiceImpl implements GitHubService {
             result.put("success", true);
             result.put("message", "브랜치 삭제 완료");
             
-            logger.info("GitHub 브랜치 삭제 완료");
             
         } catch (Exception e) {
-            logger.error("GitHub 브랜치 삭제 실패", e);
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -787,17 +664,14 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Override
     public Map<String, Object> compareBranches(Map<String, Object> param) throws Exception {
-        logger.info("GitHub 브랜치 비교 시작");
         
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // TODO: GitHub API로 브랜치 비교 (ahead/behind)
             
             result.put("success", true);
             
         } catch (Exception e) {
-            logger.error("GitHub 브랜치 비교 실패", e);
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -805,14 +679,11 @@ public class GitHubServiceImpl implements GitHubService {
         return result;
     }
 
-    // ==============================
     // GitHub 웹훅 관리
-    // ==============================
     
     @Override
     @Transactional
     public Map<String, Object> createWebhook(Map<String, Object> param) throws Exception {
-        logger.info("GitHub 웹훅 생성 시작");
         
         Map<String, Object> result = new HashMap<>();
         
@@ -835,18 +706,14 @@ public class GitHubServiceImpl implements GitHubService {
                 result.put("message", "웹훅 생성 완료");
                 result.put("webhook", webhookData);
                 
-                // DB에 웹훅 정보 저장 (선택사항)
-                // TODO: 필요시 github_webhook 테이블에 저장
                 
             } else {
                 result.put("success", false);
                 result.put("error", "GitHub API 웹훅 생성 실패");
             }
             
-            logger.info("GitHub 웹훅 생성 완료");
             
         } catch (Exception e) {
-            logger.error("GitHub 웹훅 생성 실패", e);
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -856,19 +723,14 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Override
     public Map<String, Object> getWebhookStatus(Map<String, Object> param) throws Exception {
-        logger.info("GitHub 웹훅 상태 확인 시작");
         
         Map<String, Object> result = new HashMap<>();
         
         try {
-            // TODO: GitHub API로 웹훅 상태 확인
-            // test 디렉터리의 webhooks.js의 상태 확인 로직 참고
-            
             result.put("exists", true);
             result.put("active", true);
             
         } catch (Exception e) {
-            logger.error("GitHub 웹훅 상태 확인 실패", e);
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -879,7 +741,6 @@ public class GitHubServiceImpl implements GitHubService {
     @Override
     @Transactional
     public Map<String, Object> deleteWebhook(Map<String, Object> param) throws Exception {
-        logger.info("GitHub 웹훅 삭제 시작");
         
         Map<String, Object> result = new HashMap<>();
         
@@ -890,7 +751,6 @@ public class GitHubServiceImpl implements GitHubService {
             result.put("message", "웹훅 삭제 완료");
             
         } catch (Exception e) {
-            logger.error("GitHub 웹훅 삭제 실패", e);
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -901,7 +761,6 @@ public class GitHubServiceImpl implements GitHubService {
     @Override
     @Transactional
     public Map<String, Object> processWebhookEvent(Map<String, Object> param) throws Exception {
-        logger.info("GitHub 웹훅 이벤트 처리 시작");
         
         Map<String, Object> result = new HashMap<>();
         
@@ -926,8 +785,6 @@ public class GitHubServiceImpl implements GitHubService {
             @SuppressWarnings("unchecked")
             Map<String, Object> eventInfo = (Map<String, Object>) validationResult.get("event_info");
             
-            // 웹훅 이벤트는 github_webhook 테이블에 자동으로 기록되므로 별도 저장하지 않음
-            
             // 이벤트 타입별 처리
             switch (eventType) {
                 case "push":
@@ -943,7 +800,6 @@ public class GitHubServiceImpl implements GitHubService {
                     processDeleteEvent(param);
                     break;
                 default:
-                    logger.info("처리되지 않은 이벤트 타입: {}", eventType);
             }
             
             result.put("success", true);
@@ -951,7 +807,6 @@ public class GitHubServiceImpl implements GitHubService {
             result.put("message", "웹훅 이벤트 처리 완료");
             
         } catch (Exception e) {
-            logger.error("GitHub 웹훅 이벤트 처리 실패", e);
             result.put("success", false);
             result.put("error", e.getMessage());
         }
@@ -961,7 +816,6 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Override
     public List<GithubWebhookVo> getWebhookEventLogs(Map<String, Object> param) throws Exception {
-        logger.info("웹훅 이벤트 로그 조회 시작");
         
         List<GithubWebhookVo> result = new ArrayList<>();
         
@@ -970,29 +824,23 @@ public class GitHubServiceImpl implements GitHubService {
             // 실제 웹훅 이벤트는 웹훅 테이블 자체에 기록되므로 별도 이벤트 로그 테이블은 사용하지 않음
             result = new ArrayList<>(); // 임시로 빈 리스트 반환
             
-            logger.info("웹훅 이벤트 로그 조회 완료: {} 개", result.size());
             
         } catch (Exception e) {
-            logger.error("웹훅 이벤트 로그 조회 실패", e);
             throw e;
         }
         
         return result;
     }
 
-    // ==============================
     // 웹훅 이벤트 처리 헬퍼 메서드들
-    // ==============================
     
     @Transactional
     private void processPushEvent(Map<String, Object> param) throws Exception {
-        logger.info("Push 이벤트 처리");
         
         try {
             // 페이로드에서 이벤트 정보 파싱
             String payload = (String) param.get("payload");
             if (payload == null || payload.trim().isEmpty()) {
-                logger.warn("Push 이벤트 페이로드가 비어있습니다.");
                 return;
             }
             
@@ -1022,27 +870,18 @@ public class GitHubServiceImpl implements GitHubService {
                 senderLogin = (String) pusher.get("name");
             }
             
-            logger.info("Push 이벤트 파싱: ref={}, branchName={}, repository={}, pusher={}", 
-                ref, branchName, repositoryName, senderLogin);
-            
-            // Push 이벤트는 브랜치 생성/삭제가 아닌 커밋 푸시이므로 별도 DB 처리하지 않음
-            logger.info("Push 이벤트 처리 완료: {} -> {}", senderLogin, branchName);
-            
         } catch (Exception e) {
-            logger.error("Push 이벤트 처리 실패", e);
             throw e;
         }
     }
     
     @Transactional
     private void processPullRequestEvent(Map<String, Object> param) throws Exception {
-        logger.info("Pull Request 이벤트 처리");
         
         try {
             // 페이로드에서 이벤트 정보 파싱
             String payload = (String) param.get("payload");
             if (payload == null || payload.trim().isEmpty()) {
-                logger.warn("Pull Request 이벤트 페이로드가 비어있습니다.");
                 return;
             }
             
@@ -1068,27 +907,20 @@ public class GitHubServiceImpl implements GitHubService {
                 senderLogin = (String) sender.get("login");
             }
             
-            logger.info("Pull Request 이벤트 파싱: action={}, number={}, sender={}", 
-                action, prNumber, senderLogin);
-            
             // PR 이벤트는 현재 별도 DB 처리하지 않음 (필요시 추가)
-            logger.info("Pull Request 이벤트 처리 완료: {} #{} by {}", action, prNumber, senderLogin);
             
         } catch (Exception e) {
-            logger.error("Pull Request 이벤트 처리 실패", e);
             throw e;
         }
     }
     
     @Transactional
     private void processCreateEvent(Map<String, Object> param) throws Exception {
-        logger.info("Create 이벤트 처리");
         
         try {
             // 페이로드에서 이벤트 정보 파싱
             String payload = (String) param.get("payload");
             if (payload == null || payload.trim().isEmpty()) {
-                logger.warn("Create 이벤트 페이로드가 비어있습니다.");
                 return;
             }
             
@@ -1113,32 +945,25 @@ public class GitHubServiceImpl implements GitHubService {
                 }
                 repoName = (String) repository.get("name");
             }
-            
-            logger.info("브랜치 생성 이벤트 파싱: refType={}, refName={}, repository={}/{}", 
-                refType, refName, repoOwner, repoName);
             
             if ("branch".equals(refType) && refName != null && repoOwner != null && repoName != null) {
                 // repository_branch 테이블에 브랜치 추가
                 insertBranchToDatabase(repoOwner, repoName, refName, payloadMap);
             }
             
-            logger.info("Create 이벤트 처리 완료: {} {}", refType, refName);
             
         } catch (Exception e) {
-            logger.error("Create 이벤트 처리 실패", e);
             throw e;
         }
     }
     
     @Transactional
     private void processDeleteEvent(Map<String, Object> param) throws Exception {
-        logger.info("Delete 이벤트 처리");
         
         try {
             // 페이로드에서 이벤트 정보 파싱
             String payload = (String) param.get("payload");
             if (payload == null || payload.trim().isEmpty()) {
-                logger.warn("Delete 이벤트 페이로드가 비어있습니다.");
                 return;
             }
             
@@ -1164,44 +989,34 @@ public class GitHubServiceImpl implements GitHubService {
                 repoName = (String) repository.get("name");
             }
             
-            logger.info("브랜치 삭제 이벤트 파싱: refType={}, refName={}, repository={}/{}", 
-                refType, refName, repoOwner, repoName);
-            
             if ("branch".equals(refType) && refName != null && repoOwner != null && repoName != null) {
                 // repository_branch 테이블에서 브랜치 삭제
                 deleteBranchFromDatabase(repoOwner, repoName, refName);
             }
             
-            logger.info("Delete 이벤트 처리 완료: {} {}", refType, refName);
             
         } catch (Exception e) {
-            logger.error("Delete 이벤트 처리 실패", e);
             throw e;
         }
     }
     
-    // ==============================
     // 웹훅 이벤트 처리 헬퍼 메서드들
-    // ==============================
     
     /**
      * 브랜치 생성 시 repository_branch 테이블에 데이터 삽입 (중복 방지)
      */
     @Transactional
     private void insertBranchToDatabase(String repoOwner, String repoName, String branchName, Map<String, Object> payloadMap) throws Exception {
-        logger.info("데이터베이스에 브랜치 추가: {}/{} - {}", repoOwner, repoName, branchName);
         
         try {
             // 먼저 해당 저장소가 project_repository에 등록되어 있는지 확인
             String projectRepoId = findProjectRepoId(repoOwner, repoName);
             if (projectRepoId == null) {
-                logger.warn("프로젝트에 연결되지 않은 저장소의 브랜치 생성 이벤트: {}/{}", repoOwner, repoName);
                 return;
             }
             
             // 중복 브랜치 확인 - 이미 존재하는지 검사
             if (isBranchExists(projectRepoId, branchName)) {
-                logger.warn("브랜치가 이미 존재합니다. 중복 생성 방지: {}/{} - {}", repoOwner, repoName, branchName);
                 return;
             }
             
@@ -1225,13 +1040,10 @@ public class GitHubServiceImpl implements GitHubService {
             }
             
             int insertResult = repositoryBranchService.insertRepositoryBranch(branchVo);
-            logger.info("브랜치 데이터베이스 삽입 완료: {} (result: {})", branchName, insertResult);
             
         } catch (org.springframework.dao.DuplicateKeyException e) {
             // 유니크 제약 조건 위반 시 (데이터베이스 레벨에서의 중복 방지)
-            logger.warn("브랜치 중복 생성 감지 (DB 제약): {}/{} - {}", repoOwner, repoName, branchName);
         } catch (Exception e) {
-            logger.error("브랜치 데이터베이스 삽입 실패: {}/{} - {}", repoOwner, repoName, branchName, e);
             throw e;
         }
     }
@@ -1241,13 +1053,11 @@ public class GitHubServiceImpl implements GitHubService {
      */
     @Transactional
     private void deleteBranchFromDatabase(String repoOwner, String repoName, String branchName) throws Exception {
-        logger.info("데이터베이스에서 브랜치 삭제: {}/{} - {}", repoOwner, repoName, branchName);
         
         try {
             // 먼저 해당 저장소가 project_repository에 등록되어 있는지 확인
             String projectRepoId = findProjectRepoId(repoOwner, repoName);
             if (projectRepoId == null) {
-                logger.warn("프로젝트에 연결되지 않은 저장소의 브랜치 삭제 이벤트: {}/{}", repoOwner, repoName);
                 return;
             }
             
@@ -1257,10 +1067,8 @@ public class GitHubServiceImpl implements GitHubService {
             branchVo.setBranchName(branchName);
             
             int deleteResult = repositoryBranchService.deleteRepositoryBranchByProjectRepoIdAndBranchName(branchVo);
-            logger.info("브랜치 데이터베이스 삭제 완료: {} (result: {})", branchName, deleteResult);
             
         } catch (Exception e) {
-            logger.error("브랜치 데이터베이스 삭제 실패: {}/{} - {}", repoOwner, repoName, branchName, e);
             throw e;
         }
     }
@@ -1284,7 +1092,6 @@ public class GitHubServiceImpl implements GitHubService {
             return null;
             
         } catch (Exception e) {
-            logger.error("프로젝트 저장소 ID 조회 실패: {}/{}", repoOwner, repoName, e);
             throw e;
         }
     }
@@ -1302,11 +1109,9 @@ public class GitHubServiceImpl implements GitHubService {
             int count = gitHubDAO.selectBranchExists(searchParam);
             boolean exists = count > 0;
             
-            logger.debug("브랜치 존재 여부 확인: {} (projectRepoId: {}) = {}", branchName, projectRepoId, exists);
             return exists;
             
         } catch (Exception e) {
-            logger.error("브랜치 존재 여부 확인 실패: {} (projectRepoId: {})", branchName, projectRepoId, e);
             throw e;
         }
     }
@@ -1317,7 +1122,7 @@ public class GitHubServiceImpl implements GitHubService {
     
     @Override
     public List<Map<String, Object>> getIssues(Map<String, Object> param) throws Exception {
-        // TODO: GitHub 이슈 목록 조회 구현
+    
         return new ArrayList<>();
     }
     
@@ -1429,13 +1234,11 @@ public class GitHubServiceImpl implements GitHubService {
         // 임시로 기본값 반환 (실제 구현 시 수정 필요)
         String projectRepoId = "1"; // 기본 프로젝트 레포지토리 ID
         
-        // TODO: 실제 구현 시 다음 중 하나의 방식으로 구현
         // 1. HttpSession에서 현재 선택된 프로젝트 정보 가져오기
         // 2. SecurityContext에서 현재 사용자의 기본 프로젝트 가져오기
         // 3. 파라미터로 전달된 프로젝트 ID 사용
         // 4. 사용자별 최근 사용 프로젝트 조회
         
-        logger.debug("현재 프로젝트 레포지토리 ID: {}", projectRepoId);
         return projectRepoId;
     }
 }

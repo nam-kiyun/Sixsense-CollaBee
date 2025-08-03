@@ -18,9 +18,7 @@ import com.demo.proworks.userpersonaltoken.vo.UserPersonalTokenVo;
  */
 public interface GitHubService {
 
-    // ==============================
     // GitHub OAuth 인증 관리
-    // ==============================
     
     /**
      * GitHub OAuth 인증 URL 생성
@@ -73,9 +71,7 @@ public interface GitHubService {
      */
     Map<String, Object> processAppInstallation(Map<String, Object> param) throws Exception;
 
-    // ==============================
     // GitHub 레포지토리 관리
-    // ==============================
     
     /**
      * 사용자의 GitHub 레포지토리 목록 조회
@@ -125,10 +121,7 @@ public interface GitHubService {
      */
     ProjectRepositoryVo getCurrentRepositoryByProjectId(String projectId) throws Exception;
 
-    // ==============================
-    // GitHub 브랜치 관리 (간소화)
-    // ==============================
-    
+    // GitHub 브랜치 관리 
     /**
      * 브랜치 목록 조회 (DB 기반)
      * @param param 조회 조건 (project_repo_id)
@@ -161,9 +154,7 @@ public interface GitHubService {
      */
     Map<String, Object> compareBranches(Map<String, Object> param) throws Exception;
 
-    // ==============================
     // GitHub 웹훅 관리
-    // ==============================
     
     /**
      * GitHub 웹훅 생성
@@ -205,9 +196,8 @@ public interface GitHubService {
      */
     List<GithubWebhookVo> getWebhookEventLogs(Map<String, Object> param) throws Exception;
 
-    // ==============================
     // GitHub 이슈 및 PR 관리
-    // ==============================
+    // TODO
     
     /**
      * 레포지토리의 이슈 목록 조회
@@ -241,9 +231,7 @@ public interface GitHubService {
      */
     Map<String, Object> createPullRequest(Map<String, Object> param) throws Exception;
 
-    // ==============================
     // GitHub 커밋 및 히스토리
-    // ==============================
     
     /**
      * 브랜치의 커밋 히스토리 조회
@@ -269,9 +257,7 @@ public interface GitHubService {
      */
     Map<String, Object> logBranchActivity(Map<String, Object> param) throws Exception;
 
-    // ==============================
     // GitHub 동기화 및 통합
-    // ==============================
     
     /**
      * 프로젝트와 GitHub 레포지토리 동기화
@@ -297,9 +283,7 @@ public interface GitHubService {
      */
     Map<String, Object> syncGitHubActivityToProWorks(Map<String, Object> param) throws Exception;
 
-    // ==============================
     // 통계 및 모니터링
-    // ==============================
     
     /**
      * 프로젝트별 GitHub 활동 통계 조회
@@ -332,9 +316,7 @@ public interface GitHubService {
      */
     Map<String, Object> getApiUsage(String accessToken) throws Exception;
 
-    // ==============================
     // 설정 및 관리
-    // ==============================
     
     /**
      * GitHub 통합 설정 조회

@@ -17,9 +17,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * 칸반 보드 WebSocket 핸들러 실시간 카드 이동 및 업데이트 처리
- * 
- * @author Claude AI
- * @since 2025-01-15
  */
 @Component
 public class KanbanWebSocketHandler extends TextWebSocketHandler {
@@ -51,8 +48,7 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 		String sessionId = session.getId();
 		sessions.put(sessionId, session);
 
-		System.out.println("WebSocket 연결 성공: " + sessionId);
-		System.out.println("현재 활성 세션 수: " + sessions.size());
+		// WebSocket 연결 성공
 
 		// 연결 성공 메시지 전송
 		KanbanMessage welcomeMessage = new KanbanMessage();
@@ -66,13 +62,13 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 	@Override
 	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
 		String payload = message.getPayload();
-		System.out.println("받은 메시지: " + payload);
+		// 메시지 수신
 
 		try {
 			KanbanMessage kanbanMessage = objectMapper.readValue(payload, KanbanMessage.class);
 			processMessage(session, kanbanMessage);
 		} catch (Exception e) {
-			System.err.println("메시지 처리 오류: " + e.getMessage());
+			// 메시지 처리 오류
 			e.printStackTrace();
 
 			// 에러 메시지 전송
@@ -89,15 +85,13 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 	@Override
 	public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
 		String sessionId = session.getId();
-		System.err.println("WebSocket 전송 오류: " + sessionId);
+		// WebSocket 전송 오류
 		
-		// EOFException은 클라이언트 연결 끊김으로 인한 정상적인 상황
 		if (exception instanceof java.io.EOFException) {
-			System.out.println("클라이언트 연결 종료로 인한 EOFException (정상): " + sessionId);
+			// 클라이언트 연결 종료
 			// 세션 정리는 afterConnectionClosed에서 처리되므로 여기서는 로깅만
 		} else {
-			// 다른 전송 오류는 상세 로그 출력
-			System.err.println("예상치 못한 WebSocket 전송 오류: " + exception.getClass().getSimpleName());
+			// 예상치 못한 WebSocket 전송 오류
 			exception.printStackTrace();
 		}
 		
@@ -106,7 +100,7 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 			try {
 				session.close();
 			} catch (Exception e) {
-				System.err.println("세션 종료 중 오류: " + e.getMessage());
+				// 세션 종료 중 오류
 			}
 		}
 	}
@@ -144,7 +138,8 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 			handlePing(session, message);
 			break;
 		default:
-			System.out.println("알 수 없는 메시지 타입: " + message.getType());
+			// 알 수 없는 메시지 타입
+			break;
 		}
 	}
 
@@ -169,18 +164,16 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 			
 			// 프로젝트 첫 참여자인 경우 Redis 캐시 워밍
 			if (projectSessions.get(projectId).size() == 1) {
-				System.out.println("🔥 프로젝트 첫 참여자 - Redis 캐시 워밍 시작: " + projectId);
 				try {
 					kanbanRedisService.warmUpProjectCache(projectId);
-					System.out.println("✅ 프로젝트 캐시 워밍 완료: " + projectId);
 				} catch (Exception e) {
-					System.err.println("❌ 프로젝트 캐시 워밍 실패: " + e.getMessage());
+					// 프로젝트 캐시 워밍 실패
 				}
 			}
 			
-			System.out.println("사용자 참여: " + userId + " (세션: " + sessionId + ", 프로젝트: " + projectId + ")");
+			// 사용자 참여 성공
 		} else {
-			System.out.println("사용자 참여: " + userId + " (세션: " + sessionId + ", 프로젝트 정보 없음)");
+			// 사용자 참여 (프로젝트 정보 없음)
 		}
 
 		// 참여 확인 메시지 전송
@@ -198,14 +191,11 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 	 * 카드 이동 처리 (Redis 저장 + 실시간 브로드캐스트)
 	 */
 	private void handleCardMove(WebSocketSession session, KanbanMessage message) {
-		System.out.println("=== 카드 이동 처리 시작 ===");
-		System.out.println("📦 받은 메시지: " + message.getTaskId() + " (" + message.getFromBoardId() + " → " + message.getToBoardId() + ")");
-		System.out.println("👤 사용자: " + message.getUserId());
-		System.out.println("🏷️ 프로젝트: " + message.getProjectId());
+		// 카드 이동 처리 시작
 
 		// 메시지 유효성 검증
 		if (message.getTaskId() == null || message.getToBoardId() == null) {
-			System.err.println("❌ 잘못된 카드 이동 메시지: " + message);
+			// 잘못된 카드 이동 메시지
 			return;
 		}
 
@@ -218,9 +208,7 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 				message.getUserId(),
 				message.getProjectId()
 			);
-			System.out.println("✅ Redis 저장 완료: " + message.getTaskId());
 		} catch (Exception e) {
-			System.err.println("❌ Redis 저장 실패: " + e.getMessage());
 			e.printStackTrace();
 			// Redis 실패해도 실시간 동기화는 계속 진행
 		}
@@ -237,29 +225,23 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 
 		// 3. 실시간 브로드캐스트
 		broadcastToAll(broadcastMessage);
-		System.out.println("📡 실시간 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
 	}
 
 	/**
-	 * 🔄 카드 락/언락 처리 (편집 및 이동 락킹)
+	 *  카드 락/언락 처리 (편집 및 이동 락킹)
 	 */
 	private void handleCardLock(WebSocketSession session, KanbanMessage message) {
-		System.out.println("=== 카드 락 처리 시작 ===");
-		System.out.println("📦 받은 메시지: " + message.getTaskId() + " (" + message.getMessage() + ")");
-		System.out.println("👤 사용자: " + message.getUserId());
-		System.out.println("🏷️ 프로젝트: " + message.getProjectId());
+		// 카드 락 처리 시작
 
 		// 메시지 유효성 검증
 		if (message.getTaskId() == null || message.getMessage() == null) {
-			System.err.println("❌ 잘못된 카드 락 메시지: " + message);
+			// 잘못된 카드 락 메시지
 			return;
 		}
 
 		// 메시지에서 액션 추출 (LOCK, UNLOCK, MOVE_LOCK, MOVE_UNLOCK)
 		String[] messageParts = message.getMessage().split("\\|");
 		String action = messageParts.length > 0 ? messageParts[0] : "";
-		
-		System.out.println("🔒 락 액션: " + action);
 
 		// 브로드캐스트용 메시지 생성 (원본 메시지 그대로 전달)
 		KanbanMessage broadcastMessage = new KanbanMessage();
@@ -270,43 +252,19 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 		broadcastMessage.setProjectId(message.getProjectId());
 		broadcastMessage.setTimestamp(System.currentTimeMillis());
 
-		// 실시간 브로드캐스트 (프로젝트별 또는 전체)
-		if (message.getProjectId() != null) {
-			// 프로젝트별 브로드캐스트 (성능 최적화)
-			try {
-				java.util.Map<String, Object> messageData = new java.util.HashMap<>();
-				messageData.put("type", "CARD_LOCK");
-				messageData.put("taskId", message.getTaskId());
-				messageData.put("userId", message.getUserId());
-				messageData.put("message", message.getMessage());
-				messageData.put("projectId", message.getProjectId());
-				messageData.put("timestamp", System.currentTimeMillis());
-				
-				broadcastToProject(message.getProjectId(), messageData);
-				System.out.println("📡 프로젝트별 락 브로드캐스트 완료: " + message.getProjectId());
-			} catch (Exception e) {
-				System.err.println("❌ 프로젝트별 브로드캐스트 실패, 전체 브로드캐스트로 대체");
-				broadcastToAll(broadcastMessage);
-			}
-		} else {
-			// 전체 브로드캐스트 (fallback)
-			broadcastToAll(broadcastMessage);
-			System.out.println("📡 전체 락 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
-		}
+		// CARD_LOCK 메시지는 taskId 기반이므로 항상 모든 세션에 브로드캐스트
+		broadcastToAll(broadcastMessage);
 	}
 
 	/**
 	 * 태스크 업데이트 처리 (태스크 정보 변경 시 실시간 동기화)
 	 */
 	private void handleTaskUpdated(WebSocketSession session, KanbanMessage message) {
-		System.out.println("=== 태스크 업데이트 처리 시작 ===");
-		System.out.println("📦 받은 메시지: " + message.getTaskId() + " (보드: " + message.getBoardId() + ")");
-		System.out.println("👤 사용자: " + message.getUserId());
-		System.out.println("🏷️ 프로젝트: " + message.getProjectId());
+		// 태스크 업데이트 처리 시작
 
 		// 메시지 유효성 검증
 		if (message.getTaskId() == null || message.getBoardId() == null) {
-			System.err.println("❌ 잘못된 태스크 업데이트 메시지: " + message);
+			// 잘못된 태스크 업데이트 메시지
 			return;
 		}
 
@@ -322,21 +280,15 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 
 		// 전체 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
 		broadcastToAll(broadcastMessage);
-		System.out.println("📡 태스크 업데이트 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
 	}
 
 	/**
 	 * 태스크 삭제 처리 (태스크 삭제 시 실시간 동기화)
 	 */
 	private void handleTaskDeleted(WebSocketSession session, KanbanMessage message) {
-		System.out.println("=== 태스크 삭제 처리 시작 ===");
-		System.out.println("📦 받은 메시지: " + message.getTaskId() + " (보드: " + message.getBoardId() + ")");
-		System.out.println("👤 사용자: " + message.getUserId());
-		System.out.println("🏷️ 프로젝트: " + message.getProjectId());
 
 		// 메시지 유효성 검증
 		if (message.getTaskId() == null || message.getBoardId() == null) {
-			System.err.println("❌ 잘못된 태스크 삭제 메시지: " + message);
 			return;
 		}
 
@@ -352,21 +304,15 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 
 		// 전체 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
 		broadcastToAll(broadcastMessage);
-		System.out.println("📡 태스크 삭제 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
 	}
 
 	/**
 	 * 보드 생성 처리 (보드 생성 시 실시간 동기화)
 	 */
 	private void handleBoardCreated(WebSocketSession session, KanbanMessage message) {
-		System.out.println("=== 보드 생성 처리 시작 ===");
-		System.out.println("📦 받은 메시지: " + message.getBoardId() + " (제목: " + message.getMessage() + ")");
-		System.out.println("👤 사용자: " + message.getUserId());
-		System.out.println("🏷️ 프로젝트: " + message.getProjectId());
 
 		// 메시지 유효성 검증
 		if (message.getBoardId() == null || message.getProjectId() == null) {
-			System.err.println("❌ 잘못된 보드 생성 메시지: " + message);
 			return;
 		}
 
@@ -381,7 +327,6 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 
 		// 전체 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
 		broadcastToAll(broadcastMessage);
-		System.out.println("📡 보드 생성 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
 	}
 
 	/**
@@ -400,7 +345,6 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 			// 내부 핸들러 호출
 			handleBoardCreated(null, message);
 		} catch (Exception e) {
-			System.err.println("❌ 보드 생성 메시지 처리 실패: " + e.getMessage());
 		}
 	}
 
@@ -408,14 +352,9 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 	 * 보드 삭제 처리 (보드 삭제 시 실시간 동기화)
 	 */
 	private void handleBoardDeleted(WebSocketSession session, KanbanMessage message) {
-		System.out.println("=== 보드 삭제 처리 시작 ===");
-		System.out.println("📦 받은 메시지: " + message.getBoardId() + " (제목: " + message.getMessage() + ")");
-		System.out.println("👤 사용자: " + message.getUserId());
-		System.out.println("🏷️ 프로젝트: " + message.getProjectId());
 
 		// 메시지 유효성 검증
 		if (message.getBoardId() == null || message.getProjectId() == null) {
-			System.err.println("❌ 잘못된 보드 삭제 메시지: " + message);
 			return;
 		}
 
@@ -430,7 +369,6 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 
 		// 전체 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
 		broadcastToAll(broadcastMessage);
-		System.out.println("📡 보드 삭제 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
 	}
 
 	/**
@@ -449,7 +387,6 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 			// 내부 핸들러 호출
 			handleBoardDeleted(null, message);
 		} catch (Exception e) {
-			System.err.println("❌ 보드 삭제 메시지 처리 실패: " + e.getMessage());
 		}
 	}
 
@@ -457,14 +394,9 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 	 * 태스크 생성 처리 (태스크 생성 시 실시간 동기화)
 	 */
 	private void handleTaskCreated(WebSocketSession session, KanbanMessage message) {
-		System.out.println("=== 태스크 생성 처리 시작 ===");
-		System.out.println("📦 받은 메시지: " + message.getTaskId() + " (보드: " + message.getBoardId() + ")");
-		System.out.println("👤 사용자: " + message.getUserId());
-		System.out.println("🏷️ 프로젝트: " + message.getProjectId());
 
 		// 메시지 유효성 검증
 		if (message.getTaskId() == null || message.getBoardId() == null) {
-			System.err.println("❌ 잘못된 태스크 생성 메시지: " + message);
 			return;
 		}
 
@@ -480,7 +412,6 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 
 		// 전체 브로드캐스트 (클라이언트에서 프로젝트 ID로 필터링)
 		broadcastToAll(broadcastMessage);
-		System.out.println("📡 태스크 생성 브로드캐스트 완료 - 활성 세션: " + sessions.size() + "개");
 	}
 
 	/**
@@ -511,9 +442,7 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 			
 			// 브로드캐스트 실행
 			broadcastToAll(message);
-			System.out.println("📡 태스크 생성 상세 정보 브로드캐스트 완료: " + message.getTaskId());
 		} catch (Exception e) {
-			System.err.println("❌ 태스크 생성 메시지 처리 실패: " + e.getMessage());
 		}
 	}
 
@@ -533,7 +462,6 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 	 */
 	private void sendToSession(WebSocketSession session, KanbanMessage message) {
 		if (session == null) {
-			System.err.println("세션이 null입니다. 메시지 전송 불가");
 			return;
 		}
 		
@@ -542,18 +470,13 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 				String json = objectMapper.writeValueAsString(message);
 				session.sendMessage(new TextMessage(json));
 			} else {
-				System.out.println("세션이 닫혀있어 메시지 전송 건너뜀: " + session.getId());
 			}
 		} catch (java.io.EOFException e) {
-			System.out.println("클라이언트 연결 종료로 인한 전송 실패 (정상): " + session.getId());
 		} catch (IOException e) {
 			if (e.getMessage() != null && e.getMessage().contains("Connection reset")) {
-				System.out.println("연결 리셋으로 인한 전송 실패 (정상): " + session.getId());
 			} else {
-				System.err.println("메시지 전송 실패: " + e.getMessage());
 			}
 		} catch (Exception e) {
-			System.err.println("예상치 못한 메시지 전송 오류: " + e.getMessage());
 		}
 	}
 
@@ -565,7 +488,6 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 		try {
 			json = objectMapper.writeValueAsString(message);
 		} catch (Exception e) {
-			System.err.println("메시지 직렬화 실패: " + e.getMessage());
 			return;
 		}
 
@@ -575,19 +497,14 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 					session.sendMessage(new TextMessage(json));
 				}
 			} catch (java.io.EOFException e) {
-				System.out.println("클라이언트 연결 종료로 인한 브로드캐스트 실패 (정상): " + session.getId());
 			} catch (IOException e) {
 				if (e.getMessage() != null && e.getMessage().contains("Connection reset")) {
-					System.out.println("연결 리셋으로 인한 브로드캐스트 실패 (정상): " + session.getId());
 				} else {
-					System.err.println("브로드캐스트 전송 실패: " + e.getMessage());
 				}
 			} catch (Exception e) {
-				System.err.println("예상치 못한 브로드캐스트 오류: " + e.getMessage());
 			}
 		});
 
-		System.out.println("메시지 브로드캐스트 완료: " + sessions.size() + "개 세션");
 	}
 
 	/**
@@ -595,7 +512,6 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 	 */
 	public void broadcastToProject(String projectId, java.util.Map<String, Object> messageData) {
 		if (projectId == null || messageData == null) {
-			System.err.println("❌ 프로젝트 브로드캐스트 실패: projectId 또는 messageData가 null입니다.");
 			return;
 		}
 
@@ -613,14 +529,12 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 		try {
 			json = objectMapper.writeValueAsString(message);
 		} catch (Exception e) {
-			System.err.println("❌ 프로젝트 브로드캐스트 메시지 직렬화 실패: " + e.getMessage());
 			return;
 		}
 
 		// 해당 프로젝트의 세션들 가져오기
 		java.util.Set<String> projectSessionIds = projectSessions.get(projectId);
 		if (projectSessionIds == null || projectSessionIds.isEmpty()) {
-			System.out.println("ℹ️ 프로젝트에 활성 세션이 없음: " + projectId);
 			return;
 		}
 
@@ -635,22 +549,16 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 					session.sendMessage(new TextMessage(json));
 					successCount++;
 				} catch (java.io.EOFException e) {
-					System.out.println("클라이언트 연결 종료로 인한 프로젝트 브로드캐스트 실패 (정상): " + sessionId);
 				} catch (IOException e) {
 					if (e.getMessage() != null && e.getMessage().contains("Connection reset")) {
-						System.out.println("연결 리셋으로 인한 프로젝트 브로드캐스트 실패 (정상): " + sessionId);
 					} else {
-						System.err.println("❌ 프로젝트 브로드캐스트 전송 실패 (세션: " + sessionId + "): " + e.getMessage());
 					}
 				} catch (Exception e) {
-					System.err.println("❌ 예상치 못한 프로젝트 브로드캐스트 오류 (세션: " + sessionId + "): " + e.getMessage());
 				}
 			} else {
-				System.out.println("⚠️ 비활성 세션 발견 (정리 필요): " + sessionId);
 			}
 		}
 
-		System.out.println("📡 프로젝트 브로드캐스트 완료: " + projectId + " (" + successCount + "/" + totalSessions + " 세션)");
 	}
 
 	/**
@@ -675,12 +583,11 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 				// 프로젝트에 세션이 더 이상 없으면 프로젝트 자체를 제거
 				if (projectSessionSet.isEmpty()) {
 					projectSessions.remove(projectId);
-					System.out.println("프로젝트의 모든 세션 해제됨: " + projectId);
 				}
 			}
 		}
 		
-		// 🔄 연결 해제된 사용자의 모든 락 해제 알림
+		// 연결 해제된 사용자의 모든 락 해제 알림
 		try {
 			String disconnectedUserId = getUserIdBySessionId(sessionId);
 			if (disconnectedUserId != null && projectId != null) {
@@ -693,30 +600,21 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 				unlockMessage.put("timestamp", System.currentTimeMillis());
 				
 				broadcastToProject(projectId, unlockMessage);
-				System.out.println("🔓 연결 해제된 사용자의 락 해제 알림 전송: " + disconnectedUserId);
 			}
 		} catch (Exception e) {
-			System.err.println("❌ 연결 해제 락 해제 알림 실패: " + e.getMessage());
 		}
 		
-		System.out.println("WebSocket 연결 해제: " + sessionId + (projectId != null ? " (프로젝트: " + projectId + ")" : ""));
-		System.out.println("현재 활성 세션 수: " + sessions.size());
 		
 		// 모든 사용자가 나가면 데이터 보호 후 캐시 무효화
 		if (sessions.size() == 0) {
-			System.out.println("🗑️ 모든 사용자 연결 해제 - 데이터 보호 및 캐시 무효화 시작");
 			try {
 				// 1단계: 미처리된 태스크 이동 데이터를 즉시 DB에 저장 (데이터 손실 방지)
-				System.out.println("💾 1단계: 미처리 데이터 즉시 DB 저장");
 				kanbanBatchService.processImmediateBatch();
 				
 				// 2단계: 모든 프로젝트의 캐시 무효화
-				System.out.println("🗑️ 2단계: 프로젝트 캐시 무효화");
 				kanbanRedisService.deleteKeysByPattern("kanban:project:*");
 				
-				System.out.println("✅ 데이터 보호 및 캐시 무효화 완료 - 다음 접속 시 최신 DB 데이터로 로드됩니다");
 			} catch (Exception e) {
-				System.err.println("❌ 데이터 보호 및 캐시 무효화 실패: " + e.getMessage());
 				e.printStackTrace();
 			}
 		}
@@ -730,7 +628,7 @@ public class KanbanWebSocketHandler extends TextWebSocketHandler {
 	}
 	
 	/**
-	 * 🔄 세션 ID로 사용자 ID 조회 (락 해제용)
+	 * 세션 ID로 사용자 ID 조회 (락 해제용)
 	 */
 	private String getUserIdBySessionId(String sessionId) {
 		for (java.util.Map.Entry<String, String> entry : userSessions.entrySet()) {

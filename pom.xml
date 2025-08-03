@@ -527,29 +527,46 @@
 		</dependency>
 
 		<!--  local jar -->
-		<dependency>
+		<!--<dependency>
 			<groupId>commons-net</groupId>
 			<artifactId>commons-net</artifactId>
 			<version>3.9.0</version>
 			<scope>system</scope>
 			<systemPath>${project.lib.path}/commons-net-3.9.0.jar</systemPath>
-		</dependency>
-		
+		</dependency>-->
 		<dependency>
+		    <groupId>commons-net</groupId>
+		    <artifactId>commons-net</artifactId>
+		    <version>3.11.1</version> 
+	    </dependency>
+	    
+		<!--<dependency>
 			<groupId>inswave-spring</groupId>
 			<artifactId>inswave-spring</artifactId>
 			<version>1.1</version>
 			<scope>system</scope>
 			<systemPath>${project.lib.path}/inswave-spring-1.1.jar</systemPath>
 		</dependency>
-		
+		-->
 		<dependency>
+		    <groupId>inswave-spring</groupId>
+		    <artifactId>inswave-spring</artifactId>
+		    <version>1.1</version>
+		    <scope>system</scope>
+		    <systemPath>${project.basedir}/lib/inswave-spring-1.1.jar</systemPath>
+		</dependency>
+		<dependency>
+		    <groupId>com.jcraft</groupId>
+		    <artifactId>jsch</artifactId>
+		    <version>0.1.55</version>
+		</dependency>
+		<!--<dependency>
 			<groupId>jsch</groupId>
 			<artifactId>jsch</artifactId>
 			<version>0.1.55</version>
 			<scope>system</scope>
 			<systemPath>${project.lib.path}/jsch-0.1.55.jar</systemPath>
-		</dependency>
+		</dependency>-->
 		
 		<!--<dependency>
 			<groupId>log4jdbc3</groupId>
@@ -559,28 +576,42 @@
 			<systemPath>${project.lib.path}/log4jdbc3-1.2.jar</systemPath>
 		</dependency>-->
 
-		<dependency>
+		<!--<dependency>
 			<groupId>p6spy</groupId>
 			<artifactId>p6spy</artifactId>
 			<version>1.0</version>
 			<scope>system</scope>
 			<systemPath>${project.lib.path}/p6spy.jar</systemPath>
-		</dependency>
-
+		</dependency>-->
 		<dependency>
+		    <groupId>p6spy</groupId>
+		    <artifactId>p6spy</artifactId>
+		    <version>3.9.1</version> 
+		</dependency>
+		<!--<dependency>
 			<groupId>org.springmodules</groupId>
 			<artifactId>spring-modules-validation</artifactId>
 			<version>0.9</version>
 			<scope>system</scope>
 			<systemPath>${project.lib.path}/spring-modules-validation-0.9.jar</systemPath>
+		</dependency>-->
+		<dependency>
+		    <groupId>org.springmodules</groupId>
+		    <artifactId>spring-modules-validation</artifactId>
+		    <version>0.9</version>
+		    <scope>system</scope>
+		    <systemPath>${project.basedir}/lib/spring-modules-validation-0.9.jar</systemPath>
 		</dependency>
-
 		<dependency>
 			<groupId>javax.xml.bind</groupId>
 			<artifactId>jaxb-api</artifactId>
 			<version>2.3.1</version>
 		</dependency>
-		
+		<dependency>
+		    <groupId>org.mariadb.jdbc</groupId>
+		    <artifactId>mariadb-java-client</artifactId>
+		    <version>3.4.1</version>
+		</dependency>
 		<!-- JDK 11이상
 		<dependency>
 			<groupId>com.sun.xml.bind</groupId>

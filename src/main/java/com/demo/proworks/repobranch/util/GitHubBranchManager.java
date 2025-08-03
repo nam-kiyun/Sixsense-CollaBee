@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @subject : GitHub Repository Branch 관리를 위한 유틸리티
  * @description : GitHub API를 통한 브랜치 관리 기능 제공
  * @author : 남기윤
- * @since : 2025/07/07W
+ * @since : 2025/07/07
  */
 @Component
 public class GitHubBranchManager {
@@ -176,27 +176,21 @@ public class GitHubBranchManager {
 				// private-key.pem을 사용하여 Installation Token 생성
 				try {
 					String installationToken = gitHubApiClient.getInstallationToken(appToken.getGithubAppInstallationId());
-					System.out.println("✅ Installation Token 생성 성공: " + appToken.getGithubAppInstallationId());
-					System.out.println("🔑 생성된 Token (앞 20자): " + installationToken.substring(0, Math.min(20, installationToken.length())) + "...");
 					return installationToken;
 				} catch (Exception e2) {
-					System.out.println("❌ Installation Token 생성 실패: " + e2.getMessage());
 					// Installation Token 실패 시 Personal Token으로 폴백
 				}
 			}
 		} catch (Exception e) {
-			System.out.println("Installation ID 조회 실패, Personal Token으로 폴백: " + e.getMessage());
 		}
 			
 		try {
 			// 2. Personal Token 폴백
 			String personalToken = userPersonalTokenService.getToken(userId);
 			if (personalToken != null && !personalToken.isEmpty()) {
-				System.out.println("Personal Token 폴백 사용");
 				return personalToken;
 			}
 		} catch (Exception e) {
-			System.out.println("Personal Token 조회도 실패: " + e.getMessage());
 		}
 		
 		throw new RuntimeException("사용 가능한 GitHub 토큰이 없습니다. GitHub App 설치 또는 Personal Token 설정이 필요합니다.");
@@ -278,7 +272,6 @@ public class GitHubBranchManager {
 			return createBranch(repoFullName, branchName, sourceBranch, installationToken);
 
 		} catch (Exception e) {
-			System.out.println("⚠️ Installation Token 실패, OAuth 토큰으로 재시도: " + e.getMessage());
 
 			// OAuth 토큰으로 재시도
 			return createBranch(repoFullName, branchName, sourceBranch, userAccessToken);
@@ -305,7 +298,6 @@ public class GitHubBranchManager {
 			return deleteBranch(repoFullName, branchName, installationToken);
 
 		} catch (Exception e) {
-			System.out.println("⚠️ Installation Token 실패, OAuth 토큰으로 재시도: " + e.getMessage());
 
 			// OAuth 토큰으로 재시도
 			return deleteBranch(repoFullName, branchName, userAccessToken);
@@ -384,7 +376,6 @@ public class GitHubBranchManager {
 			return getRepositoryInfo(repoFullName, installationToken);
 
 		} catch (Exception e) {
-			System.out.println("⚠️ Installation Token 실패, OAuth 토큰으로 재시도: " + e.getMessage());
 
 			// OAuth 토큰으로 재시도
 			return getRepositoryInfo(repoFullName, userAccessToken);

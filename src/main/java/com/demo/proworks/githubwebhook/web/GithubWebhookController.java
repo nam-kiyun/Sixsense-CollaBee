@@ -21,6 +21,7 @@ import com.demo.proworks.githubwebhook.vo.GithubWebhookVo;
 import com.inswave.elfw.annotation.ElDescription;
 import com.inswave.elfw.annotation.ElService;
 import com.inswave.elfw.annotation.ElValidator;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
  * @subject     : GitHub 웹훅 관련 처리를 담당하는 Controller
@@ -50,7 +51,7 @@ public class GithubWebhookController {
      * @param userAccessToken 사용자 액세스 토큰
      * @return ResponseEntity<Map<String, Object>>
      */
-    @ElService(key = "SvcGHWEBHOOKCREATE01")
+    @ElService(key = "/github/webhooks/create")
     @RequestMapping(value = "/github/webhooks/create")
     @ElDescription(sub = "GitHub 웹훅 생성", desc = "GitHub API를 통해 웹훅을 생성합니다.")
     public @ResponseBody ResponseEntity<Map<String, Object>> createWebhook(HttpServletRequest request,
@@ -88,7 +89,7 @@ public class GithubWebhookController {
      * @param userAccessToken 사용자 액세스 토큰
      * @return ResponseEntity<Map<String, Object>>
      */
-    @ElService(key = "SvcGHWEBHOOKSTATUS01")
+    @ElService(key = "/github/webhooks/status")
     @RequestMapping(value = "/github/webhooks/status")
     @ElDescription(sub = "GitHub 웹훅 상태 조회", desc = "GitHub 웹훅의 상태를 확인합니다.")
     public @ResponseBody ResponseEntity<Map<String, Object>> getWebhookStatus(HttpServletRequest request,
@@ -117,7 +118,7 @@ public class GithubWebhookController {
      * @param userAccessToken 사용자 액세스 토큰
      * @return ResponseEntity<Map<String, Object>>
      */
-    @ElService(key = "SvcGHWEBHOOKDELETE01")
+    @ElService(key = "/github/webhooks/delete")
     @RequestMapping(value = "/github/webhooks/delete")
     @ElDescription(sub = "GitHub 웹훅 삭제", desc = "GitHub API를 통해 웹훅을 삭제합니다.")
     public @ResponseBody ResponseEntity<Map<String, Object>> deleteWebhook(HttpServletRequest request,
@@ -153,7 +154,8 @@ public class GithubWebhookController {
      * @param payload 웹훅 페이로드
      * @return ResponseEntity<Map<String, Object>>
      */
-    @ElService(key = "SvcGHWEBHOOKEVENT01")
+    @ElService(key = "/github/webhook")
+	@RequestMapping(value = "/github/webhook")
     @PostMapping(value = "/github/webhook")
     @ElDescription(sub = "GitHub 웹훅 이벤트 처리", desc = "GitHub에서 전송된 웹훅 이벤트를 처리합니다.")
     public @ResponseBody ResponseEntity<Map<String, Object>> handleWebhookEvent(HttpServletRequest request,
@@ -165,8 +167,6 @@ public class GithubWebhookController {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            System.out.println("🔔 웹훅 이벤트 수신: " + eventType + " (배송 ID: " + delivery + ")");
-            
             String processResult = githubWebhookService.processWebhookEvent(eventType, payload, signature);
             
             result.put("success", true);
@@ -178,8 +178,6 @@ public class GithubWebhookController {
             return new ResponseEntity<>(result, HttpStatus.OK);
             
         } catch (Exception e) {
-            System.err.println("❌ 웹훅 이벤트 처리 실패: " + e.getMessage());
-            
             result.put("success", false);
             result.put("message", "웹훅 이벤트 처리에 실패했습니다: " + e.getMessage());
             result.put("error", e.getMessage());
@@ -196,7 +194,7 @@ public class GithubWebhookController {
      * @param request HttpServletRequest
      * @return ResponseEntity<Map<String, Object>>
      */
-    @ElService(key = "SvcGHWEBHOOKHEALTH01")
+    @ElService(key = "/github/webhooks/health")
     @RequestMapping(value = "/github/webhooks/health")
     @ElDescription(sub = "웹훅 서비스 헬스 체크", desc = "웹훅 서비스의 상태를 확인합니다.")
     public @ResponseBody ResponseEntity<Map<String, Object>> healthCheck(HttpServletRequest request) {
