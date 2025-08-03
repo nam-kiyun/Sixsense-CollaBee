@@ -144,7 +144,6 @@ public class GithubAppTokenServiceImpl implements GithubAppTokenService {
         try {
             return gitHubApiClient.getRepoInstallationToken(userAccessToken, repoOwner);
         } catch (Exception e) {
-            System.err.println("❌ Error generating installation token: " + e.getMessage());
             throw new Exception("Installation 토큰 생성 실패: " + e.getMessage());
         }
     }
@@ -163,7 +162,6 @@ public class GithubAppTokenServiceImpl implements GithubAppTokenService {
             
             return null; // Installation ID가 없음
         } catch (Exception e) {
-            System.err.println("❌ Error getting installation ID: " + e.getMessage());
             throw new Exception("Installation ID 조회 실패: " + e.getMessage());
         }
     }
@@ -186,7 +184,6 @@ public class GithubAppTokenServiceImpl implements GithubAppTokenService {
                 return null;
             }
         } catch (Exception e) {
-            System.err.println("❌ Error refreshing installation ID: " + e.getMessage());
             throw new Exception("Installation ID 갱신 실패: " + e.getMessage());
         }
     }
@@ -199,7 +196,6 @@ public class GithubAppTokenServiceImpl implements GithubAppTokenService {
         try {
             return gitHubDAO.selectGitHubAppTokenByUserId(userId);
         } catch (Exception e) {
-            System.err.println("❌ Error selecting app token by user id: " + e.getMessage());
             throw new Exception("사용자 ID로 App Token 조회 실패: " + e.getMessage());
         }
     }

@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * GitHub API 호출 유틸리티
- * test 디렉터리의 GitHubApiClient와 axios 호출을 Java로 포팅
  */
 @Component
 public class GitHubApiUtil {
