@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @subject : GitHub Repository Branch 관리를 위한 유틸리티
  * @description : GitHub API를 통한 브랜치 관리 기능 제공
  * @author : 남기윤
- * @since : 2025/07/07W
+ * @since : 2025/07/07
  */
 @Component
 public class GitHubBranchManager {
