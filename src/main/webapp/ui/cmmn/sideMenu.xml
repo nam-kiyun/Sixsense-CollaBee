@@ -130,7 +130,6 @@ scwin.onpageload = function() {
 
 // 사용자 정보 설정 및 프로젝트 목록 로드
 scwin.setUserInfo = function(userId) {
-    console.log("사용자 정보 설정:", userId);
     dm_sideMenu.set("userName", userId);
     dmp_projectVo.set("userId", userId);
     scwin.loadUserProjects();
@@ -141,11 +140,8 @@ scwin.loadUserProjects = function() {
     const userId = dm_sideMenu.get("userName");
     
     if (!userId) {
-        console.log("사용자 정보가 없어 프로젝트 목록을 조회하지 않습니다.");
         return;
     }
-    
-    console.log("프로젝트 목록 조회 시작:", userId);
     dmp_projectVo.set("userId", userId);
     dmp_projectVo.set("pageIndex", "1");
     dmp_projectVo.set("pageSize", "100");
@@ -156,14 +152,11 @@ scwin.loadUserProjects = function() {
 
 // 프로젝트 목록 조회 완료 후 처리 (개선된 버전)
 scwin.sbm_selectProjectList_submitdone = function(e) {
-    console.log("프로젝트 목록 조회 완료:", e);
-    
     // error 수신시
     const elData = e.responseJSON.elData;
     const elHeader = e.responseJSON.elHeader;
 
     if (elHeader == null || elHeader == "" || elHeader == "undefined" || elHeader.resSuc == false) {
-        console.error("프로젝트 목록 조회 오류 - 에러코드: " + (elHeader ? elHeader.resCode : "unknown") + ", 에러메시지: " + (elHeader ? elHeader.resMsg : "unknown"));
         // 에러가 발생해도 기본 프로젝트 메뉴는 표시
         scwin.renderDefaultProjects();
         return;
@@ -186,11 +179,9 @@ scwin.notifyMainContentWithProjectData = function() {
             const mainContentWindow = parent.wfr_mainContent.getWindow();
             if (mainContentWindow && mainContentWindow.scwin && mainContentWindow.scwin.updateProjectDataFromSideMenu) {
                 mainContentWindow.scwin.updateProjectDataFromSideMenu(scwin.projectList);
-                console.log("메인 콘텐츠에 프로젝트 데이터 전달 완료:", scwin.projectList.length, "개");
             }
         }
     } catch(e) {
-        console.log("메인 콘텐츠에 프로젝트 데이터 전달 중 오류:", e);
     }
 };
 
@@ -230,17 +221,12 @@ scwin.renderDefaultProjects = function() {
             projectText: messageText,
             projectId: "no_projects"
         });
-        
-        console.log("기본 프로젝트 메뉴 렌더링 완료 ($p.dynamicCreate)");
     } catch(e) {
-        console.error("기본 프로젝트 메뉴 렌더링 오류:", e);
     }
 };
 
 // 프로젝트 메뉴들을 동적으로 렌더링 ($p.dynamicCreate 사용)
 scwin.renderProjectMenus = function(projectList) {
-    console.log("프로젝트 메뉴 렌더링:", projectList);
-    
     // 기존 프로젝트 메뉴들 제거
     scwin.clearProjectMenus();
     
@@ -250,20 +236,15 @@ scwin.renderProjectMenus = function(projectList) {
     }
     
     try {
-        // $p.dynamicCreate를 사용하여 프로젝트 메뉴 생성
         for (let i = 0; i < projectList.length; i++) {
             const project = projectList[i];
             scwin.createProjectMenuItem(project, i);
         }
-        
-        console.log("$p.dynamicCreate 방식으로 프로젝트 메뉴 생성 완료");
-        
     } catch(e) {
-        console.error("프로젝트 메뉴 렌더링 오류:", e);
     }
 };
 
-// $p.dynamicCreate로 개별 프로젝트 메뉴 아이템 생성
+// 개별 프로젝트 메뉴 아이템 생성
 scwin.createProjectMenuItem = function(project, index) {
     const projectId = project.projectId;
     const menuId = "grp_dynamic_project_" + projectId;
@@ -321,21 +302,12 @@ scwin.createProjectMenuItem = function(project, index) {
             projectText: projectText,
             projectId: projectId
         });
-        
-        console.log("프로젝트 메뉴 아이템 생성 완료:", project.projectName);
-        
     } catch(e) {
-        console.error("프로젝트 메뉴 아이템 생성 오류:", e);
     }
 };
 
-// 프로젝트 메뉴 이벤트 리스너 등록 ($p.dynamicCreate로 생성된 컴포넌트는 이미 이벤트가 바인딩됨)
-scwin.attachProjectEventListeners = function() {
-    // $p.dynamicCreate로 생성할 때 이미 이벤트가 바인딩되므로 이 함수는 더 이상 필요하지 않음
-    console.log("프로젝트 메뉴 이벤트 리스너는 이미 바인딩됨 ($p.dynamicCreate)");
-};
 
-// 기존 프로젝트 메뉴들 제거 (간소화)
+// 기존 프로젝트 메뉴들 제거
 scwin.clearProjectMenus = function() {
     try {
         if (scwin.dynamicComponents && scwin.dynamicComponents.length > 0) {
@@ -347,19 +319,13 @@ scwin.clearProjectMenus = function() {
                 }
             }
             scwin.dynamicComponents = [];
-            console.log("동적 프로젝트 메뉴 컴포넌트들 제거 완료");
         }
-        
-        console.log("프로젝트 메뉴 정리 완룜");
     } catch(e) {
-        console.error("프로젝트 메뉴 정리 오류:", e);
     }
 };
 
 // 프로젝트 메뉴 클릭 이벤트 처리
 scwin.onProjectMenuClick = function(project) {
-    console.log("프로젝트 메뉴 클릭:", project);
-    
     const menuKey = "project_" + project.projectId;
     scwin.changeSelectedMenu(menuKey);
     
@@ -368,59 +334,39 @@ scwin.onProjectMenuClick = function(project) {
         const parentFrame = $p.parent();
         
         if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
-            console.log("부모 changeMenu 함수 호출:", menuKey);
             parentFrame.scwin.changeMenu(menuKey, project);
         } else if (parent && parent.scwin && parent.scwin.changeMenu) {
-            console.log("부모 changeMenu 함수 호출 (parent):", menuKey);
             parent.scwin.changeMenu(menuKey, project);
-        } else if (window.parent && window.parent.scwin && window.parent.scwin.changeMenu) {
-            console.log("부모 changeMenu 함수 호출 (window.parent):", menuKey);
-            window.parent.scwin.changeMenu(menuKey, project);
-        } else {
-            console.error("부모 창의 changeMenu 함수를 찾을 수 없습니다.");
         }
     } catch(e) {
-        console.error("부모 창 메뉴 변경 오류:", e);
     }
 };
 
 // 메뉴 클릭 이벤트
 scwin.menu_dashboard_onclick = function(e) {
-    console.log("=== 대시보드 메뉴 클릭 ===");
     scwin.changeSelectedMenu("dashboard");
     // 부모 창의 메뉴 변경 함수 호출
     try {
         const parentFrame = $p.parent();
         
         if (parentFrame && parentFrame.scwin && parentFrame.scwin.changeMenu) {
-            console.log("부모 changeMenu 함수 호출 시작 ($p.parent)");
             parentFrame.scwin.changeMenu("dashboard");
-            console.log("부모 changeMenu 함수 호출 완료");
         } else if (parent && parent.scwin && parent.scwin.changeMenu) {
-            console.log("부모 changeMenu 함수 호출 시작 (parent)");
             parent.scwin.changeMenu("dashboard");
-            console.log("부모 changeMenu 함수 호출 완료");
         } else {
             const winParent = window.parent;
-            
             if (winParent && winParent.scwin && winParent.scwin.changeMenu) {
-                console.log("부모 changeMenu 함수 호출 시작 (window.parent)");
                 winParent.scwin.changeMenu("dashboard");
-                console.log("부모 changeMenu 함수 호출 완료");
             } else {
-                console.error("부모 창의 changeMenu 함수를 찾을 수 없습니다.");
             }
         }
     } catch(e) {
-        console.error("부모 창 메뉴 변경 오류:", e);
     }
 };
 
-// 선택된 메뉴 스타일 변경 ($p.dynamicCreate로 생성된 컴포넌트 대응)
+// 선택된 메뉴 스타일 변경 
 scwin.changeSelectedMenu = function(selectedMenu) {
     try {
-        console.log("메뉴 선택 변경 시작:", selectedMenu);
-        
         // 기존 선택 해제
         grp_dashboard.removeClass("selected-menu");
         grp_dashboard.setStyle("background-color", "transparent");
@@ -458,13 +404,9 @@ scwin.changeSelectedMenu = function(selectedMenu) {
                 }
             }
         }
-        
-        console.log("메뉴 선택 완료:", selectedMenu);
-        
         // 데이터맵에도 선택된 메뉴 저장
         dm_sideMenu.set("selectedMenu", selectedMenu);
     } catch(e) {
-        console.log("메뉴 스타일 변경 오류:", e);
     }
 };
 
@@ -475,8 +417,6 @@ scwin.updateSelectedMenu = function(menuType) {
 
 // 외부에서 프로젝트 메뉴를 선택할 수 있는 함수 (메인 콘텐츠의 프로젝트 카드 클릭용)
 scwin.selectProjectMenuFromExternal = function(projectId, projectData) {
-    console.log("외부에서 프로젝트 메뉴 선택 요청:", projectId, projectData);
-    
     const menuKey = "project_" + projectId;
     
     // 메뉴 선택 상태 변경
@@ -490,7 +430,6 @@ scwin.selectProjectMenuFromExternal = function(projectId, projectData) {
 
 // 프로젝트 추가 후 목록 새로고침
 scwin.refreshProjectList = function() {
-    console.log("프로젝트 목록 새로고침");
     scwin.loadUserProjects();
     
     // 메인 콘텐츠에도 즉시 갱신 요청
@@ -500,28 +439,16 @@ scwin.refreshProjectList = function() {
 };
 
 scwin.btn_addProject_onclick = function(e) {
-    console.log("=== 프로젝트 추가 버튼 클릭 ===");
-    
     try {
         // 부모 창의 모달 열기 함수 호출
         const parentFrame = $p.parent();
         
         if (parentFrame && parentFrame.scwin && parentFrame.scwin.openProjectAddModal) {
-            console.log("부모 openProjectAddModal 함수 호출 ($p.parent)");
             parentFrame.scwin.openProjectAddModal();
         } else if (parent && parent.scwin && parent.scwin.openProjectAddModal) {
-            console.log("부모 openProjectAddModal 함수 호출 (parent)");
             parent.scwin.openProjectAddModal();
-        } else if (window.parent && window.parent.scwin && window.parent.scwin.openProjectAddModal) {
-            console.log("부모 openProjectAddModal 함수 호출 (window.parent)");
-            window.parent.scwin.openProjectAddModal();
-        } else {
-            console.error("부모 창의 openProjectAddModal 함수를 찾을 수 없습니다.");
-            $c.win.alert("프로젝트 추가 모달을 열 수 없습니다.");
         }
     } catch(e) {
-        console.error("프로젝트 추가 모달 열기 오류:", e);
-        $c.win.alert("프로젝트 추가 모달 열기 중 오류가 발생했습니다.");
     }
 };
 ]]></script>
