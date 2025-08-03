@@ -8,8 +8,6 @@ import java.net.URL;
 import java.util.Map;
 import java.util.HashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Component
 public class GitHubApiUtil {
     
-    private static final Logger logger = LoggerFactory.getLogger(GitHubApiUtil.class);
     
     private static final String GITHUB_API_BASE_URL = "https://api.github.com";
     private static final String USER_AGENT = "ProWorks-GitHub-Integration";
@@ -88,7 +85,6 @@ public class GitHubApiUtil {
     private Map<String, Object> makeRequest(String method, String endpoint, Map<String, Object> payload, String accessToken) throws Exception {
         String fullUrl = GITHUB_API_BASE_URL + endpoint;
         
-        logger.debug("GitHub API 요청: {} {}", method, fullUrl);
         
         URL url = new URL(fullUrl);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -138,7 +134,6 @@ public class GitHubApiUtil {
             // 401 에러 감지 및 표시
             if (responseCode == 401) {
                 result.put("is_auth_error", true);
-                logger.warn("GitHub API 401 인증 오류 감지: {}", endpoint);
             }
             
             if (response.length() > 0) {
@@ -158,15 +153,12 @@ public class GitHubApiUtil {
                         if (responseCode == 401 && jsonResponse.containsKey("message")) {
                             String errorMessage = (String) jsonResponse.get("message");
                             result.put("auth_error_message", errorMessage);
-                            logger.warn("GitHub API 401 인증 오류 메시지: {}", errorMessage);
                         }
                     }
                 } catch (Exception e) {
-                    System.out.println("⚠️ JSON 파싱 실패: " + e.getMessage());
                     result.put("data", response.toString());
                 }
             } else {
-                System.out.println("💭 빈 응답 본문");
                 result.put("data", null);
             }
             
@@ -180,7 +172,6 @@ public class GitHubApiUtil {
                 result.put("rate_limit_reset", Long.parseLong(rateLimitReset));
             }
             
-            logger.debug("GitHub API 응답: {} - {}", responseCode, response.length() > 100 ? response.substring(0, 100) + "..." : response.toString());
             
             return result;
             
@@ -199,7 +190,6 @@ public class GitHubApiUtil {
      * @throws Exception
      */
     public Map<String, Object> exchangeCodeForToken(String code, String clientId, String clientSecret) throws Exception {
-        logger.info("OAuth 액세스 토큰 교환 시작");
         
         URL url = new URL("https://github.com/login/oauth/access_token");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -247,7 +237,6 @@ public class GitHubApiUtil {
                 result.put("data", tokenResponse);
             }
             
-            logger.info("OAuth 액세스 토큰 교환 완료: {}", responseCode);
             
             return result;
             
@@ -263,7 +252,6 @@ public class GitHubApiUtil {
      * @throws Exception
      */
     public Map<String, Object> getUserInfo(String accessToken) throws Exception {
-        logger.info("GitHub 사용자 정보 조회");
         
         Map<String, Object> response = get("/user", accessToken);
         
@@ -287,7 +275,6 @@ public class GitHubApiUtil {
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> getRepositories(String accessToken, String type, String sort, int perPage) throws Exception {
-        logger.info("GitHub 레포지토리 목록 조회");
         
         String endpoint = String.format("/user/repos?type=%s&sort=%s&per_page=%d", type, sort, perPage);
         Map<String, Object> response = get(endpoint, accessToken);
@@ -308,7 +295,6 @@ public class GitHubApiUtil {
      * @throws Exception
      */
     public Map<String, Object> getBranches(String accessToken, String owner, String repo) throws Exception {
-        logger.info("GitHub 브랜치 목록 조회: {}/{}", owner, repo);
         
         String endpoint = String.format("/repos/%s/%s/branches", owner, repo);
         Map<String, Object> response = get(endpoint, accessToken);
@@ -331,7 +317,6 @@ public class GitHubApiUtil {
      * @throws Exception
      */
     public Map<String, Object> createBranch(String accessToken, String owner, String repo, String branchName, String sourceSha) throws Exception {
-        logger.info("GitHub 브랜치 생성: {}/{} - {}", owner, repo, branchName);
         
         String endpoint = String.format("/repos/%s/%s/git/refs", owner, repo);
         
@@ -363,7 +348,6 @@ public class GitHubApiUtil {
      * @throws Exception
      */
     public Map<String, Object> deleteBranch(String accessToken, String owner, String repo, String branchName) throws Exception {
-        logger.info("GitHub 브랜치 삭제: {}/{} - {}", owner, repo, branchName);
         
         String endpoint = String.format("/repos/%s/%s/git/refs/heads/%s", owner, repo, branchName);
         Map<String, Object> response = delete(endpoint, accessToken);
@@ -387,7 +371,6 @@ public class GitHubApiUtil {
      * @throws Exception
      */
     public Map<String, Object> createWebhook(String accessToken, String owner, String repo, String webhookUrl, String[] events, String secret) throws Exception {
-        logger.info("GitHub 웹훅 생성: {}/{}", owner, repo);
         
         String endpoint = String.format("/repos/%s/%s/hooks", owner, repo);
         
@@ -421,7 +404,6 @@ public class GitHubApiUtil {
      * @throws Exception
      */
     public Map<String, Object> getRateLimit(String accessToken) throws Exception {
-        logger.info("GitHub API 사용량 확인");
         
         Map<String, Object> response = get("/rate_limit", accessToken);
         
@@ -449,7 +431,6 @@ public class GitHubApiUtil {
      * @throws Exception
      */
     public String generateInstallationToken(String installationId) throws Exception {
-        logger.info("Installation Token 생성: {}", installationId);
         
         // JWT 토큰 생성이 필요하지만 현재는 GitHubApiClient의 로직을 사용
         // TODO: JWT 생성 로직 추가 또는 GitHubApiClient 사용
@@ -465,7 +446,6 @@ public class GitHubApiUtil {
      * @throws Exception
      */
     public boolean isCollaborator(String accessToken, String repoFullName, String username) throws Exception {
-        logger.info("Collaborator 권한 확인: {} in {}", username, repoFullName);
         
         String endpoint = String.format("/repos/%s/collaborators/%s", repoFullName, username);
         
@@ -474,7 +454,6 @@ public class GitHubApiUtil {
             return (Boolean) response.get("success");
         } catch (Exception e) {
             // 404 또는 403 등의 경우 collaborator가 아님
-            logger.warn("Collaborator 권한 확인 실패: {}", e.getMessage());
             return false;
         }
     }
@@ -489,36 +468,19 @@ public class GitHubApiUtil {
      * @throws Exception
      */
     public Map<String, Object> inviteCollaborator(String accessToken, String repoFullName, String username, String permission) throws Exception {
-        System.out.println("=== 배포환경 GitHubApiUtil.inviteCollaborator ===");
-        logger.info("Collaborator 초대: {} to {} with {}", username, repoFullName, permission);
         
-        System.out.println("🌍 배포환경 API 호출 상세:");
-        System.out.println("   - 대상 사용자: " + username);
-        System.out.println("   - 레포지토리: " + repoFullName);
-        System.out.println("   - 권한: " + permission);
-        System.out.println("   - 토큰 상태: " + (accessToken != null ? "존재(" + accessToken.length() + "자)" : "null"));
         if (accessToken != null && accessToken.length() > 8) {
-            System.out.println("   - 토큰 형식 체크: " + accessToken.substring(0, 4) + "..." + accessToken.substring(accessToken.length() - 4));
         }
         
         String endpoint = String.format("/repos/%s/collaborators/%s", repoFullName, username);
-        System.out.println("   - API 엔드포인트: " + endpoint);
         
         Map<String, Object> payload = new HashMap<>();
         payload.put("permission", permission);
-        System.out.println("   - 요청 데이터: " + payload);
         
-        System.out.println("📡 배포환경 GitHub API PUT 요청 시작...");
         Map<String, Object> response = put(endpoint, payload, accessToken);
-        System.out.println("📡 배포환경 GitHub API PUT 응답: " + response);
         
-        System.out.println("🔍 배포환경 응답 분석:");
-        System.out.println("   - success: " + response.get("success"));
-        System.out.println("   - statusCode: " + response.get("statusCode"));
-        System.out.println("   - data: " + response.get("data"));
         
         if ((Boolean) response.get("success")) {
-            System.out.println("✅ 배포환경 초대 API 성공!");
             
             // 상태코드 별 상세 분석
             Object statusCode = response.get("statusCode");
@@ -529,22 +491,11 @@ public class GitHubApiUtil {
             
             if (statusCode != null) {
                 int code = (Integer) statusCode;
-                System.out.println("🔍 상태코드 분석: " + code);
                 if (code == 201) {
-                    System.out.println("   ✅ 201 Created: 새로운 초대가 성공적으로 생성됨");
-                    System.out.println("   📧 GitHub에서 이메일 발송됨 (이것이 메일이 안 오는 원인!)");
-                    System.out.println("   📬 대상 사용자(asdfasfdvnvqwv)의 GitHub 설정 확인 필요:");
-                    System.out.println("     - GitHub > Settings > Notifications > Email");
-                    System.out.println("     - 이메일 주소 인증 상태");
-                    System.out.println("     - 스팸함 확인");
                 } else if (code == 204) {
-                    System.out.println("   ✅ 204 No Content: 사용자가 이미 콜라보레이터임");
-                    System.out.println("   ⚠️ 이미 권한이 있어 새 초대 메일이 발송되지 않음");
                 } else {
-                    System.out.println("   🔍 기타 상태코드: " + code);
                 }
             } else {
-                System.out.println("   ⚠️ 상태코드를 찾을 수 없음");
             }
             
             Map<String, Object> result = new HashMap<>();
@@ -553,39 +504,28 @@ public class GitHubApiUtil {
             result.put("username", username);
             result.put("repository", repoFullName);
             result.put("permission", permission);
-            System.out.println("=== 배포환경 GitHubApiUtil 성공 ===");
             return result;
         } else {
-            System.out.println("❌ 배포환경 초대 API 실패!");
-            System.out.println("🔍 실패 상세 분석:");
             
             Object statusCode = response.get("statusCode");
             Object errorData = response.get("data");
             
-            System.out.println("   - HTTP 상태코드: " + statusCode);
-            System.out.println("   - 에러 데이터: " + errorData);
             
             if (statusCode != null) {
                 int code = (Integer) statusCode;
                 switch (code) {
                     case 401:
-                        System.out.println("   ❌ 401 Unauthorized: 토큰이 만료되었거나 권한이 부족함");
                         break;
                     case 403:
-                        System.out.println("   ❌ 403 Forbidden: 레포지토리에 대한 권한이 없음");
                         break;
                     case 404:
-                        System.out.println("   ❌ 404 Not Found: 레포지토리 또는 사용자를 찾을 수 없음");
                         break;
                     case 422:
-                        System.out.println("   ❌ 422 Unprocessable Entity: 요청 데이터에 문제가 있음");
                         break;
                     default:
-                        System.out.println("   ❌ " + code + ": 알 수 없는 오류");
                 }
             }
             
-            System.out.println("=== 배포환경 GitHubApiUtil 실패 ===");
             throw new Exception("Collaborator 초대 실패: " + response.get("data"));
         }
     }

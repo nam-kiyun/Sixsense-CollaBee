@@ -11,13 +11,10 @@ import com.demo.proworks.githubapptoken.vo.GithubAppTokenVo;
 
 /**
  * GitHub 통합 DAO 인터페이스
- * test 디렉터리의 데이터베이스 기능을 기반으로 작성
  */
 public interface GitHubDAO {
 
-    // ==============================
     // GitHub 사용자 관리
-    // ==============================
     
     /**
      * GitHub 사용자 Personal Token 저장
@@ -28,7 +25,7 @@ public interface GitHubDAO {
     String insertGitHubAppToken(Map<String, Object> param) throws Exception;
     
     /**
-     * GitHub App Token 저장 (VO 사용)
+     * GitHub App Token 저장 
      * @param tokenVo GitHub App Token 정보
      * @return 등록된 토큰 ID
      * @throws Exception
@@ -37,13 +34,13 @@ public interface GitHubDAO {
     
     /**
      * GitHub 사용자 Personal Token 업데이트
-     * @param param GitHub 사용자 정보 (Map)
+     * @param param GitHub 사용자 정보 
      * @throws Exception
      */
     void updateGitHubAppToken(Map<String, Object> param) throws Exception;
     
     /**
-     * GitHub App Token 업데이트 (VO 사용)
+     * GitHub App Token 업데이트 
      * @param tokenVo GitHub App Token 정보
      * @throws Exception
      */
@@ -58,8 +55,8 @@ public interface GitHubDAO {
     GithubAppTokenVo selectGitHubAppTokenByUserId(String userId) throws Exception;
     
     /**
-     * 프로젝트 레포 ID로 GitHub App Token 조회 (Deprecated - userId 사용 권장)
-     * @param projectRepoId 프로젝트 레포 ID (실제로는 userId 파라미터)
+     * 프로젝트 레포 ID로 GitHub App Token 조회
+     * @param projectRepoId 프로젝트 레포 ID
      * @return GitHub App Token 정보
      * @throws Exception
      * @deprecated Use selectGitHubAppTokenByUserId(String userId) instead
@@ -67,9 +64,7 @@ public interface GitHubDAO {
     @Deprecated
     GithubAppTokenVo selectGitHubAppTokenByProjectRepoId(String projectRepoId) throws Exception;
 
-    // ==============================
     // GitHub 레포지토리 관리
-    // ==============================
     
     /**
      * 사용자의 선택된 레포지토리 정보 조회
@@ -118,11 +113,7 @@ public interface GitHubDAO {
      */
     Map<String, Object> selectProjectRepositoryByGitHubId(String githubRepoId) throws Exception;
 
-    // ==============================
     // GitHub 브랜치 관리
-    // ==============================
-    
-    
     /**
      * GitHub 브랜치 정보 저장
      * @param repositoryBranchVo GitHub 브랜치 정보
@@ -162,9 +153,7 @@ public interface GitHubDAO {
      */
     int deleteAllBranchesByProjectRepoId(String projectRepoId) throws Exception;
 
-    // ==============================
     // GitHub 웹훅 관리
-    // ==============================
     
     /**
      * GitHub 웹훅 생성
@@ -191,9 +180,7 @@ public interface GitHubDAO {
     Map<String, Object> selectRepositoryWebhookByRepoId(String githubRepoId) throws Exception;
 
 
-    // ==============================
     // 통계 및 모니터링
-    // ==============================
     
     /**
      * 프로젝트별 GitHub 활동 통계 조회
@@ -219,9 +206,7 @@ public interface GitHubDAO {
      */
     Map<String, Object> selectRepositoryConnectionStatus(String projectRepoId) throws Exception;
 
-    // ==============================
     // 헬스 체크 및 테스트
-    // ==============================
     
     /**
      * 데이터베이스 연결 테스트

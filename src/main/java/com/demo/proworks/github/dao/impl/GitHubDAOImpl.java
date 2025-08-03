@@ -24,9 +24,7 @@ public class GitHubDAOImpl implements GitHubDAO {
     @Resource(name = "sqlSession")
     private SqlSession sqlSession;
 
-    // ==============================
     // GitHub 사용자 관리
-    // ==============================
     
     @Override
     public String insertGitHubAppToken(Map<String, Object> param) throws Exception {
@@ -58,9 +56,7 @@ public class GitHubDAOImpl implements GitHubDAO {
         return sqlSession.selectOne("com.demo.proworks.github.selectGitHubAppTokenByProjectRepoId", projectRepoId);
     }
 
-    // ==============================
     // GitHub 레포지토리 관리
-    // ==============================
     
     @Override
     public ProjectRepositoryVo selectProjectRepositoryByUserId(String userId) throws Exception {
@@ -79,20 +75,14 @@ public class GitHubDAOImpl implements GitHubDAO {
     
     @Override
     public String insertProjectRepository(Map<String, Object> param) throws Exception {
-        System.out.println("=== DAO insertProjectRepository 시작 ===");
-        System.out.println("DAO - 받은 파라미터: " + param);
         
         try {
-            System.out.println("MyBatis insert 실행 전");
             sqlSession.insert("com.demo.proworks.github.insertProjectRepository", param);
-            System.out.println("MyBatis insert 실행 후");
             
             String recordId = param.get("project_repo_id") != null ? param.get("project_repo_id").toString() : null;
-            System.out.println("생성된 recordId: " + recordId);
             
             return recordId;
         } catch (Exception e) {
-            System.out.println("DAO insertProjectRepository 실패: " + e.getMessage());
             e.printStackTrace();
             throw e;
         }
@@ -108,9 +98,7 @@ public class GitHubDAOImpl implements GitHubDAO {
         return sqlSession.selectOne("com.demo.proworks.github.selectProjectRepositoryByGitHubId", githubRepoId);
     }
 
-    // ==============================
     // GitHub 브랜치 관리
-    // ==============================
     
     
     @Override
@@ -140,9 +128,7 @@ public class GitHubDAOImpl implements GitHubDAO {
         return sqlSession.delete("com.demo.proworks.github.deleteAllBranchesByProjectRepoId", projectRepoId);
     }
 
-    // ==============================
     // GitHub 웹훅 관리
-    // ==============================
     
     @Override
     public String insertRepositoryWebhook(GithubWebhookVo githubWebhookVo) throws Exception {
@@ -162,9 +148,7 @@ public class GitHubDAOImpl implements GitHubDAO {
     }
 
 
-    // ==============================
     // 통계 및 모니터링
-    // ==============================
     
     @Override
     public Map<String, Object> selectProjectGitHubActivityStats(Map<String, Object> param) throws Exception {
@@ -181,9 +165,7 @@ public class GitHubDAOImpl implements GitHubDAO {
         return sqlSession.selectOne("com.demo.proworks.github.selectRepositoryConnectionStatus", projectRepoId);
     }
 
-    // ==============================
     // 헬스 체크 및 테스트
-    // ==============================
     
     @Override
     public boolean testDatabaseConnection() throws Exception {

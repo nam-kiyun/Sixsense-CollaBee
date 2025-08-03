@@ -8,20 +8,16 @@ import java.util.HashMap;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * GitHub 웹훅 처리 유틸리티
- * test 디렉터리의 webhook-server.js 로직을 Java로 포팅
  */
 @Component
 public class GitHubWebhookUtil {
     
-    private static final Logger logger = LoggerFactory.getLogger(GitHubWebhookUtil.class);
     
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -35,12 +31,10 @@ public class GitHubWebhookUtil {
      */
     public boolean verifySignature(String payload, String signature, String secret) {
         if (signature == null || signature.isEmpty()) {
-            logger.warn("웹훅 서명이 없습니다");
             return false;
         }
         
         if (secret == null || secret.isEmpty()) {
-            logger.warn("웹훅 시크릿이 설정되지 않았습니다");
             return false;
         }
         
@@ -62,7 +56,6 @@ public class GitHubWebhookUtil {
             return timingSafeEquals(signature, expectedSignature.toString());
             
         } catch (NoSuchAlgorithmException | InvalidKeyException | java.io.UnsupportedEncodingException e) {
-            logger.error("웹훅 서명 검증 중 오류 발생", e);
             return false;
         }
     }
@@ -287,7 +280,6 @@ public class GitHubWebhookUtil {
      * @throws Exception
      */
     public Map<String, Object> extractEventInfo(String eventType, String payloadJson) throws Exception {
-        logger.debug("웹훅 이벤트 정보 추출: {}", eventType);
         
         switch (eventType) {
             case "push":
@@ -317,19 +309,15 @@ public class GitHubWebhookUtil {
         Map<String, Object> result = new HashMap<>();
         
         try {
-            logger.info("웹훅 이벤트 검증 시작: {} ({})", eventType, deliveryId);
             
             // 서명 검증 (시크릿이 설정된 경우만)
             if (secret != null && !secret.isEmpty()) {
                 if (!verifySignature(payloadJson, signature, secret)) {
-                    logger.error("웹훅 서명 검증 실패");
                     result.put("success", false);
                     result.put("error", "Invalid webhook signature");
                     return result;
                 }
-                logger.debug("웹훅 서명 검증 성공");
             } else {
-                logger.warn("웹훅 시크릿이 설정되지 않음 - 서명 검증 생략");
             }
             
             // 이벤트 정보 추출
@@ -342,10 +330,8 @@ public class GitHubWebhookUtil {
             result.put("payload_json", payloadJson);
             result.put("signature", signature);
             
-            logger.info("웹훅 이벤트 검증 완료: {}", eventType);
             
         } catch (Exception e) {
-            logger.error("웹훅 이벤트 검증 중 오류 발생", e);
             result.put("success", false);
             result.put("error", "Webhook event validation failed: " + e.getMessage());
         }
