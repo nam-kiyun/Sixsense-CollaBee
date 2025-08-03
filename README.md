@@ -83,7 +83,7 @@ COLLABEE는 개발 프로젝트 관리와 팀 커뮤니케이션을 위한 웹 �
 - **Amazon EC2** - 클라우드 서버
 - **Apache Tomcat** - 웹 애플리케이션 서버
 - **Docker** - 컨테이너화
-- **Node.js** - 서버사이드 JavaScript 런타임
+- **Node.js** - smee.io 서비스 이용
 
 ### 외부 연동
 
