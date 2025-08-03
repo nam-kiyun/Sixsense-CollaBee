@@ -49,12 +49,10 @@
 };
 
 scwin.onresize = function (e) {
-    // resize 이벤트 정의
     window.onresize = function () {
         scwin.applyResponsiveWidth();
     };
 
-    // 페이지 로딩 시에도 한 번 실행
     scwin.applyResponsiveWidth();
 };
 
@@ -109,7 +107,7 @@ scwin.signup_button_onclick = function (e) {
     let name = name_input.getValue();
 
     let isValid = true;
-    let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; //이메일 정규식
+    let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; 
     let pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*()_+={}\[\]:;"'<>,.?/-]).{8,}$/;
 
     // 1. 이름

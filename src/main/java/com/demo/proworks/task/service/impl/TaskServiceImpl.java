@@ -183,7 +183,6 @@ public class TaskServiceImpl implements TaskService {
 	@Transactional(rollbackFor = Exception.class)
 	public int saveTask(TaskUpdateVo updateVo) throws Exception {
 
-		// Task 내용 업데이트
 		TaskVo taskVo = new TaskVo();
 
 		taskVo.setTaskId(updateVo.getTaskId());
@@ -218,11 +217,9 @@ public class TaskServiceImpl implements TaskService {
 			fileSrcDAO.insertFileSrcList(fileSrcVos);
 		}
 
-		// 🔄 Redis 캐시 직접 업데이트 (캐시 무효화 대신 성능 최적화)
 		try {
 			String projectId = this.getProjectIdByBoardId(updateVo.getBoardId());
 			if (projectId != null && kanbanRedisService.isRedisConnected()) {
-				// 업데이트된 태스크 속성들을 캐시에 직접 반영
 				java.util.Map<String, Object> cacheProperties = new java.util.HashMap<>();
 				cacheProperties.put("taskTitle", updateVo.getTaskTitle());
 				cacheProperties.put("priority", updateVo.getPriority());
@@ -233,15 +230,11 @@ public class TaskServiceImpl implements TaskService {
 				cacheProperties.put("projectUserId", updateVo.getProjectUserId());
 				cacheProperties.put("projectRepoId", updateVo.getProjectRepoId());
 				
-				// null 값들 제거 (캐시에 불필요한 null 저장 방지)
 				cacheProperties.entrySet().removeIf(entry -> entry.getValue() == null);
 				
 				kanbanRedisService.updateTaskPropertiesInCache(projectId, updateVo.getTaskId(), cacheProperties);
-				System.out.println("✅ 태스크 저장 완료 및 Redis 캐시 직접 업데이트: " + updateVo.getTaskId());
 			}
 		} catch (Exception cacheException) {
-			System.err.println("⚠️ Redis 캐시 업데이트 실패, 무효화로 대체: " + cacheException.getMessage());
-			// 캐시 업데이트 실패 시 기존 방식(무효화)으로 대체
 			try {
 				String projectId = this.getProjectIdByBoardId(updateVo.getBoardId());
 				if (projectId != null && kanbanRedisService.isRedisConnected()) {
@@ -358,12 +351,7 @@ public class TaskServiceImpl implements TaskService {
 	 * @return 단건 조회 결과
 	 * @throws Exception
 	 */
-	/*
-	 * public TaskVo selectTask(TaskVo taskVo) throws Exception { TaskVo resultVO =
-	 * taskDAO.selectTask(taskVo);
-	 * 
-	 * return resultVO; }
-	 */
+
 	public TaskUpdateVo selectTask(TaskUpdateVo updateVo) throws Exception {
 		TaskUpdateVo resultVO = new TaskUpdateVo();
 
@@ -430,7 +418,6 @@ public class TaskServiceImpl implements TaskService {
      * @throws Exception
      */
 	public int insertTask(TaskVo taskVo) throws Exception {
-		System.out.println("TaskService.insertTask - 입력 데이터: " + taskVo.toString());
 		
 		// 필수 값 유효성 검사
 		if (taskVo.getTaskTitle() == null || taskVo.getTaskTitle().trim().isEmpty()) {
@@ -451,32 +438,27 @@ public class TaskServiceImpl implements TaskService {
 		if (projectId == null) {
 			throw new IllegalArgumentException("보드에 연결된 프로젝트를 찾을 수 없습니다.");
 		}
-		System.out.println("조회된 프로젝트 ID: " + projectId);
-		
+
 		// 2. PROJECT_USER_ID 조회 (세션의 userId와 projectId로 조회)
 		String currentUserId = this.getCurrentUserIdFromSession();
 		if (currentUserId == null) {
 			throw new IllegalArgumentException("로그인 정보를 찾을 수 없습니다. 다시 로그인해주세요.");
 		}
-		System.out.println("세션에서 가져온 현재 사용자 ID: " + currentUserId);
+
 		
 		String projectUserId = this.getProjectUserIdByUserIdAndProjectId(currentUserId, projectId);
 		if (projectUserId == null) {
 			throw new IllegalArgumentException("해당 프로젝트에 참여하지 않은 사용자입니다.");
 		}
 		taskVo.setProjectUserId(projectUserId);
-		System.out.println("조회된 PROJECT_USER_ID: " + projectUserId);
 		
 		// 3. PROJECT_REPO_ID 조회 (projectId로 조회, 없으면 null)
 		String projectRepoId = this.getProjectRepoIdByProjectId(projectId);
 		taskVo.setProjectRepoId(projectRepoId); // null일 수 있음
-		System.out.println("조회된 PROJECT_REPO_ID: " + projectRepoId);
-		
-		System.out.println("TaskService.insertTask - 처리 전 데이터: " + taskVo.toString());
+
 		
 		int result = taskDAO.insertTask(taskVo);
-		
-		System.out.println("TaskService.insertTask - DB 삽입 결과: " + result + ", 생성된 taskId: " + taskVo.getTaskId());
+
 		
 		// 태스크 생성 시 담당자를 생성자로 자동 지정
 		if (result > 0 && taskVo.getTaskId() != null) {

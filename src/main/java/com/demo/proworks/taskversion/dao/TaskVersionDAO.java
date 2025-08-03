@@ -52,9 +52,6 @@ public class TaskVersionDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAb
 	 * @return TaskVersionVo 버전관리를 위한 Task(업무) 정보
 	 * @throws ElException
 	 */
-//    public TaskVersionVo selectTaskVersion(TaskVersionVo vo) throws ElException {
-//        return (TaskVersionVo) selectByPk("com.demo.proworks.taskversion.selectTaskVersion", vo);
-//    }
 	public List<TaskVersionVo> selectTaskVersionByTaskId(TaskVersionVo vo) throws ElException {
 		return (List<TaskVersionVo>) list("com.demo.proworks.taskversion.selectTaskVersion", vo);
 	}
@@ -88,9 +85,6 @@ public class TaskVersionDAO extends com.demo.proworks.cmmn.dao.ProworksDefaultAb
 	 * @return 번호
 	 * @throws ElException
 	 */
-//    public int insertTaskVersion(TaskVersionVo vo) throws ElException {    	
-//        return insert("com.demo.proworks.taskversion.insertTaskVersion", vo);
-//    }
 	public String insertTaskVersion(TaskVersionVo vo) throws ElException {
 		insert("com.demo.proworks.taskversion.insertTaskVersion", vo);
 		return vo.getTaskVersionId();

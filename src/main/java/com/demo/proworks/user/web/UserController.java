@@ -91,7 +91,7 @@ public class UserController {
 		LoginInfo info = loginProcess.processLogin(request, id, password);
 
 		session.setAttribute("userId", id);
-		System.out.println("==================="+session.getAttribute("userId"));
+
 		if (info != null) {
 			AppLog.debug("- Login 정보 : " + info.toString());
 		} else {
@@ -111,7 +111,6 @@ public class UserController {
     @ElDescription(sub = "로그인 폼 페이지 로드", desc = "로그인 폼 페이지를 로드한다.")           
     public void loginFrm(LoginVo loginVo, HttpServletRequest request) throws Exception {    
 		String id = loginVo.getId();
-		
 		loginProcess.processLogout(request, id);
     }
 
@@ -194,14 +193,12 @@ public class UserController {
 	@RequestMapping(value = "user/checkpassword")
 	@ElDescription(sub = "회원정보 수정시 회원의 비밀번호를 확인", desc = "회원정보 수정시 회원의 비밀번호를 확인한다")
 	public UserVo selectUser(UserVo userVo) throws Exception {
-		// 사용자 조회
 		UserVo selectUserVo = userService.selectUser(userVo);
 
 		if (selectUserVo == null) {
 			throw new IllegalArgumentException("사용자 정보가 존재하지 않습니다.");
 		}
 
-		// 비밀번호 비교
 		String rawPassword = userVo.getPassword();
 
 		String encodedPassword = selectUserVo.getPassword();
@@ -277,14 +274,12 @@ public class UserController {
 			@RequestParam(value = "fileData", required = false) MultipartFile file, HttpSession session) throws Exception {
 		String bucketName = "collabee";
 
-		// 1. 비밀번호 암호화
 		String rawPassword = userVo.getPassword();
 		if (rawPassword != null && !rawPassword.isEmpty()) {
 			String encodedPassword = passwordEncoder.encode(rawPassword);
 			userVo.setPassword(encodedPassword);
 		}
 
-		// 2. S3 업로드
 		if (file != null && !file.isEmpty()) {
 			String originalName = file.getOriginalFilename();
 			String s3Key = "userImage/" + System.currentTimeMillis() + "_" + originalName;
