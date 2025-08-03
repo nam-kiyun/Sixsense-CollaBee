@@ -155,31 +155,23 @@ public class ProjectServiceImpl implements ProjectService {
 	 */
 	@Transactional
 	public int insertProject(ProjectVo projectVo) throws Exception {
-		System.out.println("ProjectServiceImpl.insertProject - 프로젝트 생성 시작: " + projectVo.getProjectName());
 
 		// 1. 프로젝트 생성
-		System.out.println("🔧 프로젝트 생성 전 - projectId: " + projectVo.getProjectId());
 		int result = projectDAO.insertProject(projectVo);
-		System.out.println("🔧 프로젝트 생성 후 - projectId: " + projectVo.getProjectId() + ", result: " + result);
 
 		if (result > 0) {
-			System.out.println("✅ 프로젝트 생성 성공 - projectId: " + projectVo.getProjectId());
 
 			String createdProjectId = projectVo.getProjectId();
 			if (createdProjectId != null && !createdProjectId.trim().isEmpty()) {
 				// 2. 프로젝트 생성자를 project_user 테이블에 추가 (관리자 권한)
 				addProjectCreatorToProjectUser(projectVo);
-				System.out.println("✅ 프로젝트 생성자 project_user 테이블 추가 완료 - projectId: " + createdProjectId);
 
 				// 3. 생성된 프로젝트 ID로 기본 보드 3개 생성
 				createDefaultBoards(createdProjectId);
-				System.out.println("✅ 기본 보드 3개 생성 완료 - projectId: " + createdProjectId);
 			} else {
-				System.err.println("❌ 생성된 프로젝트 ID가 null이거나 빈 문자열입니다: " + createdProjectId);
 				throw new Exception("프로젝트 ID를 가져올 수 없습니다.");
 			}
 		} else {
-			System.err.println("❌ 프로젝트 생성 실패 - result: " + result);
 			throw new Exception("프로젝트 생성에 실패했습니다.");
 		}
 
@@ -193,7 +185,6 @@ public class ProjectServiceImpl implements ProjectService {
 	 * @throws Exception
 	 */
 	private void createDefaultBoards(String projectId) throws Exception {
-		System.out.println("ProjectServiceImpl.createDefaultBoards - 기본 보드 생성 시작: " + projectId);
 
 		// 기본 보드 정보 정의
 		String[] defaultBoardTitles = { "할 일", "진행중", "완료" };
@@ -203,20 +194,15 @@ public class ProjectServiceImpl implements ProjectService {
 			boardVo.setProjectId(projectId);
 			boardVo.setBoardTitle(boardTitle);
 
-			System.out.println("🔧 기본 보드 생성 중: " + boardTitle + " (projectId: " + projectId + ")");
 
 			int boardResult = boardService.insertBoard(boardVo);
 
 			if (boardResult > 0) {
-				System.out.println("✅ 기본 보드 생성 성공: " + boardTitle + " (boardId: " + boardVo.getBoardId() + ", result: "
-						+ boardResult + ")");
 			} else {
-				System.err.println("❌ 기본 보드 생성 실패: " + boardTitle + " (result: " + boardResult + ")");
 				throw new Exception("기본 보드 생성에 실패했습니다: " + boardTitle);
 			}
 		}
 
-		System.out.println("✅ 모든 기본 보드 생성 완료");
 	}
 
 	/**
@@ -439,7 +425,7 @@ public class ProjectServiceImpl implements ProjectService {
 
 //							if (emailHour == currentHour) {
 								//sendTodoTasksToUsers(project.getProjectId());
-								sseController.sendNotification(project);
+//								sseController.sendNotification(project);
 //							}
 						}
 					} catch (Exception e) {
@@ -578,73 +564,50 @@ public class ProjectServiceImpl implements ProjectService {
 	 * @throws Exception
 	 */
 	public List<ProjectVo> selectUserParticipatedProjects(String userId) throws Exception {
-//		System.out.println("=== selectUserParticipatedProjects 메서드 호출됨 ===");
-//		System.out.println("1. 입력 파라미터 - userId: " + userId);
 
 		// 사용자가 참여한 프로젝트 목록 조회
-//		System.out.println("2. DAO에서 프로젝트 목록 조회 시작...");
 		List<ProjectVo> projects = projectDAO.selectUserParticipatedProjects(userId);
 
-//		System.out.println("3. DAO에서 반환된 프로젝트 개수: " + (projects != null ? projects.size() : "null"));
 		if (projects != null) {
-//			System.out.println("4. 프로젝트 목록 상세:");
 			for (int i = 0; i < projects.size(); i++) {
 				ProjectVo p = projects.get(i);
-//				System.out.println("   프로젝트[" + i + "] - ID: " + p.getProjectId() + ", 이름: " + p.getProjectName());
 			}
 		}
 
 		// 각 프로젝트에 대해 참여자 정보를 추가로 조회하여 설정
 		if (projects != null && !projects.isEmpty()) {
-//			System.out.println("5. 각 프로젝트에 대해 참여자 정보 조회 시작...");
 			for (int i = 0; i < projects.size(); i++) {
 				ProjectVo project = projects.get(i);
-//				System.out.println("   [" + i + "] 프로젝트 처리 중 - ID: " + project.getProjectId() + ", 이름: "
-//						+ project.getProjectName());
 
 				if (project.getProjectId() != null) {
-//					System.out.println("   [" + i + "] selectProjectUsers 호출 - projectId: " + project.getProjectId());
 					// 프로젝트 참여자 정보 조회
 					List<ProjectUserVo> projectUsers = selectProjectUsers(project.getProjectId());
 
-//					System.out.println("   [" + i + "] selectProjectUsers 결과 - 참여자 수: "
-//							+ (projectUsers != null ? projectUsers.size() : "null"));
 					if (projectUsers != null) {
 						for (int j = 0; j < projectUsers.size(); j++) {
 							ProjectUserVo pu = projectUsers.get(j);
-//							System.out.println("      참여자[" + j + "] - userId: " + pu.getUserId() + ", userName: "
 //									+ pu.getUserName() + ", role: " + pu.getRole());
 						}
 					}
 
 					// ProjectVo에 참여자 정보 설정
 					project.setProjectUsers(projectUsers);
-//					System.out.println("   [" + i + "] 프로젝트에 참여자 정보 설정 완료");
 
 					// 설정 후 확인
 					List<ProjectUserVo> setProjectUsers = project.getProjectUsers();
-//					System.out.println("   [" + i + "] 설정 확인 - 프로젝트에 설정된 참여자 수: "
-//							+ (setProjectUsers != null ? setProjectUsers.size() : "null"));
 				} else {
-					System.out.println("   [" + i + "] 프로젝트 ID가 null이므로 건너뜀");
 				}
 			}
 		} else {
-			System.out.println("5. 조회된 프로젝트가 없어 참여자 정보 조회 건너뜀");
 		}
 
-//		System.out.println("6. 최종 반환할 프로젝트 목록:");
 		if (projects != null) {
 			for (int i = 0; i < projects.size(); i++) {
 				ProjectVo finalProject = projects.get(i);
 				List<ProjectUserVo> finalUsers = finalProject.getProjectUsers();
-//				System.out.println("   최종[" + i + "] - ID: " + finalProject.getProjectId() + ", 이름: "
-//						+ finalProject.getProjectName() + ", 참여자 수: "
-//						+ (finalUsers != null ? finalUsers.size() : "null"));
 			}
 		}
 
-//		System.out.println("=== selectUserParticipatedProjects 메서드 완료 ===");
 		return projects;
 	}
 
@@ -659,13 +622,10 @@ public class ProjectServiceImpl implements ProjectService {
 	 * @throws Exception
 	 */
 	public List<ProjectUserVo> selectProjectUsers(String projectId) throws Exception {
-//		System.out.println("   >>> selectProjectUsers 호출 - projectId: " + projectId);
 		List<ProjectUserVo> result = projectDAO.selectProjectUsers(projectId);
-//		System.out.println("   >>> selectProjectUsers DAO 결과 - 참여자 수: " + (result != null ? result.size() : "null"));
 		if (result != null) {
 			for (int i = 0; i < result.size(); i++) {
 				ProjectUserVo pu = result.get(i);
-//				System.out.println("   >>> DAO 참여자[" + i + "] - userId: " + pu.getUserId() + ", userName: "
 //						+ pu.getUserName() + ", role: " + pu.getRole());
 			}
 		}
